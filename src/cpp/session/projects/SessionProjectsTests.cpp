@@ -135,6 +135,12 @@ protected:
       });
    }
 
+   bool filterMonitorEntry(ProjectContext* pContext, const FilePath& path)
+   {
+      return pContext->fileMonitorFilterWithCoverage(
+            FileInfo(path), pContext->createFileMonitorFilterContext());
+   }
+
    void reconcileScanStatus(ProjectContext* pContext, bool failed)
    {
       // The R directory was observed in both snapshots; only an unrelated
@@ -159,6 +165,7 @@ protected:
 
    void registerFileMonitor(ProjectContext* pContext, const FilePath& failedDirectory = FilePath())
    {
+      pContext->resetFileMonitorCoverage();
       tree<FileInfo> files;
       core::system::FileScannerOptions options;
       options.recursive = true;
@@ -171,7 +178,7 @@ protected:
       FileMonitorFilterContext filter = pContext->createFileMonitorFilterContext();
       options.filter = [pContext, filter](const FileInfo& info)
       {
-         return pContext->fileMonitorFilter(info, filter);
+         return pContext->fileMonitorFilterWithCoverage(info, filter);
       };
       ASSERT_FALSE(core::system::scanFiles(
             FileInfo(pContext->directory().getAbsolutePath(), true),
@@ -544,6 +551,111 @@ TEST_F(PackageProjectInfoTests, ExcludesIgnoredRDirectoryContents)
    writeDescription("Package: after\nVersion: 0.2.0\n");
    EXPECT_EQ("after", context.packageInfo().name());
 }
+
+TEST_F(PackageProjectInfoTests, ExcludedHelperWaitsForSourceCoverage)
+{
+   json::Array ignores;
+   ignores.push_back("/R/helper.R");
+   ASSERT_FALSE(prefs::userPrefs().setFileMonitorIgnoredComponents(ignores));
+   writeDescription("Package: before\nVersion: 0.1.0\n");
+   ASSERT_FALSE(projectDir_.completeChildPath("R").ensureDirectory());
+   FilePath helper = projectDir_.completeChildPath("R/helper.R");
+   ASSERT_FALSE(writeStringToFile(helper, "helper <- function() TRUE\n"));
+   ASSERT_FALSE(writeStringToFile(projectDir_.completeChildPath("NAMESPACE"), "import(compiler)\n"));
+   ProjectContext context;
+   openProject(&context, "None", "", true);
+   modules::diagnostics::monitorProjectNamespace(context);
+   EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
+   EXPECT_TRUE(r_util::RSourceIndex::getImportedPackages().empty());
+   writeDescription("Package: after\nVersion: 0.2.0\n");
+   EXPECT_EQ("after", context.packageInfo().name());
+
+   ASSERT_FALSE(prefs::userPrefs().setFileMonitorIgnoredComponents(json::Array()));
+   EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
+   registerFileMonitor(&context);
+   EXPECT_EQ(projectDir_, context.packageDirectoryInProject());
+   EXPECT_EQ(std::set<std::string>{"compiler"}, r_util::RSourceIndex::getImportedPackages());
+}
+
+TEST_F(PackageProjectInfoTests, NewlyFilteredHelperDoesNotDependOnDeliveredEvents)
+{
+   json::Array ignores;
+   ignores.push_back("/R/helper.R");
+   ASSERT_FALSE(prefs::userPrefs().setFileMonitorIgnoredComponents(ignores));
+   writeDescription("Package: localpkg\nVersion: 0.1.0\n");
+   ASSERT_FALSE(projectDir_.completeChildPath("R").ensureDirectory());
+   ProjectContext context;
+   openProject(&context, "None", "", true);
+   ASSERT_EQ(projectDir_, context.packageDirectoryInProject());
+
+   FilePath helper = projectDir_.completeChildPath("R/helper.R");
+   ASSERT_FALSE(writeStringToFile(helper, "helper <- function() TRUE\n"));
+   ASSERT_FALSE(filterMonitorEntry(&context, helper));
+   EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
+
+   // Ignored removals need not reach the subscriber either.
+   ASSERT_FALSE(helper.remove());
+   EXPECT_EQ(projectDir_, context.packageDirectoryInProject());
+
+   ASSERT_FALSE(writeStringToFile(helper, "helper <- function() TRUE\n"));
+   ASSERT_FALSE(filterMonitorEntry(&context, helper));
+   notifyFileChanged(&context, helper, core::system::FileChangeEvent::FileRemoved);
+   EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
+}
+
+TEST_F(PackageProjectInfoTests, ExcludedSourceSubdirectoryDisablesPackageCoverage)
+{
+   json::Array ignores;
+   ignores.push_back("/R/private");
+   ASSERT_FALSE(prefs::userPrefs().setFileMonitorIgnoredComponents(ignores));
+   writeDescription("Package: localpkg\nVersion: 0.1.0\n");
+   ASSERT_FALSE(projectDir_.completeChildPath("R/private").ensureDirectory());
+   ASSERT_FALSE(writeStringToFile(projectDir_.completeChildPath("R/private/helper.R"), "helper <- function() TRUE\n"));
+   ProjectContext context;
+   openProject(&context, "None", "", true);
+   EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
+}
+
+TEST_F(PackageProjectInfoTests, IgnoredNonSourceFileDoesNotDisablePackageCoverage)
+{
+   json::Array ignores;
+   ignores.push_back("/R/notes.txt");
+   ASSERT_FALSE(prefs::userPrefs().setFileMonitorIgnoredComponents(ignores));
+   writeDescription("Package: localpkg\nVersion: 0.1.0\n");
+   ASSERT_FALSE(projectDir_.completeChildPath("R").ensureDirectory());
+   ASSERT_FALSE(writeStringToFile(projectDir_.completeChildPath("R/notes.txt"), "notes"));
+   ProjectContext context;
+   openProject(&context, "None", "", true);
+   EXPECT_EQ(projectDir_, context.packageDirectoryInProject());
+}
+
+#ifndef _WIN32
+TEST_F(PackageProjectInfoTests, LinkedHelperUsesFallbackUntilReplacedByObservedSource)
+{
+   writeDescription("Package: localpkg\nVersion: 0.1.0\n");
+   ASSERT_FALSE(projectDir_.completeChildPath("R").ensureDirectory());
+   FilePath external;
+   ASSERT_FALSE(FilePath::tempFilePath(external));
+   ASSERT_FALSE(writeStringToFile(external, "helper <- function() TRUE\n"));
+   RemoveOnExitScope removeExternal(external, ERROR_LOCATION);
+   FilePath helper = projectDir_.completeChildPath("R/helper.R");
+   ASSERT_EQ(0, ::symlink(external.getAbsolutePath().c_str(), helper.getAbsolutePath().c_str()));
+   ProjectContext context;
+   openProject(&context, "None", "", true);
+   EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
+
+   ASSERT_EQ(0, ::unlink(helper.getAbsolutePath().c_str()));
+   ASSERT_FALSE(writeStringToFile(helper, "helper <- function() TRUE\n"));
+   EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
+   notifyFileChanged(&context, helper, core::system::FileChangeEvent::FileModified);
+   EXPECT_EQ(projectDir_, context.packageDirectoryInProject());
+
+   ASSERT_FALSE(helper.remove());
+   ASSERT_EQ(0, ::symlink(external.getAbsolutePath().c_str(), helper.getAbsolutePath().c_str()));
+   notifyFileChanged(&context, helper, core::system::FileChangeEvent::FileModified);
+   EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
+}
+#endif
 
 TEST_F(PackageProjectInfoTests, UnignoredPackageWaitsForMonitorCoverage)
 {

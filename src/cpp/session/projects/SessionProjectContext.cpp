@@ -825,6 +825,12 @@ bool isIgnoredMonitorPath(const std::string& path, const FileMonitorFilterContex
    return false;
 }
 
+bool isRSourcePath(const FilePath& path)
+{
+   std::string extension = path.getExtensionLowerCase();
+   return extension == ".r" || extension == ".s";
+}
+
 void eraseDirectoriesWithin(std::set<FilePath>* directories, const FilePath& path)
 {
    auto it = directories->lower_bound(path);
@@ -849,6 +855,35 @@ FileMonitorFilterContext ProjectContext::createFileMonitorFilterContext() const
    return context;
 }
 
+void ProjectContext::resetFileMonitorCoverage()
+{
+   packageFilterContext_.reset();
+   std::lock_guard<std::mutex> lock(unmonitoredSourcesMutex_);
+   unmonitoredSources_.clear();
+}
+
+void ProjectContext::noteUnmonitoredSource(const FileInfo& info) const
+{
+   FilePath path(info.absolutePath());
+   bool sourceFile = isRSourcePath(path);
+   bool directory = info.isDirectory() || (info.isSymlink() && !sourceFile);
+   if (sourceFile || directory)
+   {
+      std::lock_guard<std::mutex> lock(unmonitoredSourcesMutex_);
+      unmonitoredSources_[path] = directory;
+   }
+}
+
+bool ProjectContext::fileMonitorFilterWithCoverage(
+      const FileInfo& info,
+      const FileMonitorFilterContext& context) const
+{
+   bool accepted = fileMonitorFilter(info, context);
+   if (!accepted || info.isSymlink())
+      noteUnmonitoredSource(info);
+   return accepted;
+}
+
 void ProjectContext::onDeferredInit(bool newSession)
 {
    // update DESCRIPTION file index
@@ -869,7 +904,7 @@ void ProjectContext::onDeferredInit(bool newSession)
                             this, Success());
 
    // Use separate Git handles for monitor and session-thread filtering.
-   packageFilterContext_.reset();
+   resetFileMonitorCoverage();
    FileMonitorFilterContext context = createFileMonitorFilterContext();
 
    // High-churn directories that fileMonitorFilter always excludes. Passing
@@ -894,7 +929,7 @@ void ProjectContext::onDeferredInit(bool newSession)
    core::system::file_monitor::registerMonitor(
          directory(),
          true,
-         boost::bind(&ProjectContext::fileMonitorFilter, this, _1, context),
+         boost::bind(&ProjectContext::fileMonitorFilterWithCoverage, this, _1, context),
          cb,
          excludedPaths);
 }
@@ -914,6 +949,8 @@ void ProjectContext::fileMonitorRegistered(
    for (const FileInfo& info : files)
    {
       FilePath path(info.absolutePath());
+      if (info.isSymlink())
+         noteUnmonitoredSource(info);
       if (info.scanFailed())
          failedMonitorDirectories_.insert(path);
       else if (info.isDirectory() && !info.isSymlink())
@@ -941,10 +978,31 @@ void ProjectContext::fileMonitorFilesChanged(
    module_context::enqueFileChangedEvents(directory(), events);
 
    // Update coverage before notifying package metadata and diagnostics.
+   if (!packageFilterContext_)
+      packageFilterContext_ = boost::make_shared<FileMonitorFilterContext>(
+            createFileMonitorFilterContext());
    for (const auto& event : events)
    {
       const FileInfo& info = event.fileInfo();
       FilePath path(info.absolutePath());
+      if (event.type() != core::system::FileChangeEvent::FileRemoved)
+      {
+         // Native file events do not always populate symlink metadata.
+         bool linked = info.isSymlink() ||
+               ((info.isDirectory() || isRSourcePath(path)) && path.isSymlink());
+         if (linked || !fileMonitorFilter(info, *packageFilterContext_))
+            noteUnmonitoredSource(FileInfo(info.absolutePath(), info.isDirectory(), linked));
+         else if (!info.scanFailed())
+         {
+            // Only a delivered, accepted observation can restore coverage.
+            // Removing an ignore rule alone does not populate the index.
+            std::lock_guard<std::mutex> lock(unmonitoredSourcesMutex_);
+            unmonitoredSources_.erase(path);
+         }
+      }
+      // Keep excluded paths across removals: an older queued removal must not
+      // erase a newer exclusion recorded on the monitor thread. Coverage
+      // checks below ignore entries that are no longer present on disk.
       if (event.type() == core::system::FileChangeEvent::FileRemoved)
       {
          eraseDirectoriesWithin(&failedMonitorDirectories_, path);
@@ -1020,6 +1078,7 @@ void ProjectContext::fileMonitorTermination(const Error& error)
       monitoredDirectories_.clear();
       failedMonitorDirectories_.clear();
       sourceIndexExcludedDirectories_.clear();
+      resetFileMonitorCoverage();
 
       // notify end-user if this was an error condition
       if (error)
@@ -1261,6 +1320,30 @@ FilePath ProjectContext::resolvePackageDirectoryInProject() const
          return FilePath();
    for (const FilePath& excludedDir : sourceIndexExcludedDirectories_)
       if (indexedDir.isWithin(excludedDir) || excludedDir.isWithin(indexedDir.completeChildPath("R")))
+         return FilePath();
+
+   // A directory entry alone does not establish coverage for its files.
+   // The monitor records excluded sources and links even though those entries
+   // cannot produce usable source-index updates. Copy only relevant paths
+   // while holding the lock; filesystem queries run on the session thread.
+   std::vector<FilePath> uncovered;
+   FilePath rDirectory = indexedDir.completeChildPath("R");
+   FilePath testDirectory = indexedDir.completeChildPath("tests");
+   {
+      std::lock_guard<std::mutex> lock(unmonitoredSourcesMutex_);
+      for (const auto& entry : unmonitoredSources_)
+      {
+         const FilePath& path = entry.first;
+         if ((!entry.second && path.isWithin(indexedDir)) ||
+             (entry.second && (indexedDir.isWithin(path) ||
+                               path.isWithin(rDirectory) || path.isWithin(testDirectory))))
+         {
+            uncovered.push_back(path);
+         }
+      }
+   }
+   for (const FilePath& path : uncovered)
+      if (path.exists() || path.isSymlink())
          return FilePath();
 
    if (!packageFilterContext_)

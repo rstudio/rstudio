@@ -18,6 +18,7 @@
 
 #include <vector>
 #include <map>
+#include <mutex>
 #include <set>
 
 #include <boost/utility.hpp>
@@ -292,6 +293,10 @@ private:
    bool fileMonitorFilter(const core::FileInfo& fileInfo,
                           const FileMonitorFilterContext& context) const;
 
+   bool fileMonitorFilterWithCoverage(const core::FileInfo& fileInfo,
+                                      const FileMonitorFilterContext& context) const;
+   void noteUnmonitoredSource(const core::FileInfo& fileInfo) const;
+   void resetFileMonitorCoverage();
    FileMonitorFilterContext createFileMonitorFilterContext() const;
    core::FilePath resolvePackageDirectoryInProject() const;
 
@@ -328,6 +333,11 @@ private:
    std::set<core::FilePath> monitoredDirectories_;
    std::set<core::FilePath> failedMonitorDirectories_;
    mutable std::set<core::FilePath> sourceIndexExcludedDirectories_;
+   // The monitor thread records exclusions; the session thread consumes them.
+   // The value distinguishes directories (or possible linked directories)
+   // from individual R source files.
+   mutable std::mutex unmonitoredSourcesMutex_;
+   mutable std::map<core::FilePath, bool> unmonitoredSources_;
    mutable core::FilePath indexedPackageDirectory_;
    mutable boost::shared_ptr<FileMonitorFilterContext> packageFilterContext_;
    std::vector<std::string> monitorSubscribers_;
