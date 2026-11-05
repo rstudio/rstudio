@@ -66,7 +66,7 @@ public class TerminalInfoDialog extends ModalDialogBase
          diagnostics.append(constants_.shellText()).append(TerminalShellInfo.getShellName(cpi.getShellType())).append("'\n");
          diagnostics.append(constants_.handleText()).append(cpi.getHandle()).append("'\n");
          diagnostics.append(constants_.sequenceText()).append(cpi.getTerminalSequence()).append("'\n");
-         diagnostics.append(constants_.restartedText()).append(cpi.getRestarted()).append("\n");
+         diagnostics.append(constants_.restartedText()).append(cpi.getRestarted()).append("'\n");
          if (!BrowseCap.isWindowsDesktop())
             diagnostics.append(constants_.busyText()).append(cpi.getHasChildProcs()).append("'\n");
          diagnostics.append(constants_.exitCodeText()).append(cpi.getExitCode()).append("'\n");

@@ -33,15 +33,23 @@ test.describe('Terminal Diagnostics dialog', () => {
     await expect(box).toHaveValue(/Global Terminal Information/);
   });
 
-  test('puts each section heading on its own line', async ({ rstudioPage: page }) => {
+  test('underlines each section heading on its own line', async ({ rstudioPage: page }) => {
     await executeCommand(page, 'showTerminalInfo');
     const box = page.locator(DIALOG).getByRole('textbox');
     await expect(box).toHaveValue(/Global Terminal Information/);
 
     const text = await box.inputValue();
     expect(text.match(/Global Terminal Information/g)).toHaveLength(1);
-    for (const heading of ['Current Terminal Session Information', 'System Information']) {
-      expect(text).toMatch(new RegExp(`(^|\\n)${heading}\\n-+\\n`));
+    const headings = [
+      'Global Terminal Information',
+      'Current Terminal Session Information',
+      'System Information',
+      'Connection Information',
+      'Local-echo Match Failures',
+    ];
+    for (const heading of headings) {
+      const underline = '-'.repeat(heading.length);
+      expect(text).toMatch(new RegExp(`(^|\\n)${heading}\\n${underline}\\n`));
     }
   });
 });
