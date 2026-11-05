@@ -232,6 +232,71 @@ TEST_F(FileMonitorReconciliationTests, DuplicateDirectoryAdditionPreservesScanFa
    EXPECT_EQ(files_.end(), monitor::findFile(files_.begin(), files_.end(), source_.getAbsolutePath()));
 }
 
+TEST_F(FileMonitorReconciliationTests, FailedDirectoryAdditionCanRecoverFromItsOwnEvent)
+{
+   FilePath nested = blocked_.completeChildPath("sub/helper.R");
+   ASSERT_FALSE(nested.getParent().ensureDirectory());
+   ASSERT_FALSE(writeStringToFile(nested, "helper <- function() TRUE\n"));
+   options_.filter = [this](const FileInfo& info)
+   {
+      return FilePath(info.absolutePath()) != blocked_;
+   };
+   ASSERT_FALSE(system::scanFiles(FileInfo(root_), options_, &files_));
+   options_.filter.clear();
+   failScan_ = true;
+   ASSERT_FALSE(reconcile(root_, false, true));
+   auto dir = monitor::findFile(files_.begin(), files_.end(), blocked_.getAbsolutePath());
+   ASSERT_NE(files_.end(), dir);
+   EXPECT_TRUE(dir->scanFailed());
+   ASSERT_EQ(1, events_.size());
+   EXPECT_EQ(FileChangeEvent::FileAdded, events_.front().type());
+   EXPECT_TRUE(events_.front().fileInfo().scanFailed());
+
+   failScan_ = false;
+   ASSERT_FALSE(reconcile(blocked_, false, true));
+   expectScanStatus(false);
+   EXPECT_NE(files_.end(), monitor::findFile(files_.begin(), files_.end(), nested.getAbsolutePath()));
+}
+
+TEST_F(FileMonitorReconciliationTests, ShallowFileReplacementIndexesNewDirectory)
+{
+   ASSERT_FALSE(blocked_.remove());
+   ASSERT_FALSE(writeStringToFile(blocked_, "initial file\n"));
+   ASSERT_FALSE(system::scanFiles(FileInfo(root_), options_, &files_));
+   ASSERT_FALSE(blocked_.remove());
+   FilePath nested = blocked_.completeChildPath("sub/helper.R");
+   ASSERT_FALSE(nested.getParent().ensureDirectory());
+   ASSERT_FALSE(writeStringToFile(nested, "helper <- function() TRUE\n"));
+   ASSERT_FALSE(reconcile(root_, false, true));
+   auto dir = monitor::findFile(files_.begin(), files_.end(), blocked_.getAbsolutePath());
+   ASSERT_NE(files_.end(), dir);
+   EXPECT_TRUE(dir->isDirectory());
+   EXPECT_NE(files_.end(), monitor::findFile(files_.begin(), files_.end(), nested.getAbsolutePath()));
+   ASSERT_GE(events_.size(), 2);
+   EXPECT_EQ(FileChangeEvent::FileRemoved, events_[0].type());
+   EXPECT_FALSE(events_[0].fileInfo().isDirectory());
+   EXPECT_EQ(FileChangeEvent::FileAdded, events_[1].type());
+   EXPECT_TRUE(events_[1].fileInfo().isDirectory());
+}
+
+TEST_F(FileMonitorReconciliationTests, ShallowDirectoryReplacementRemovesDescendants)
+{
+   ASSERT_FALSE(writeStringToFile(source_, "x <- 1\n"));
+   ASSERT_FALSE(system::scanFiles(FileInfo(root_), options_, &files_));
+   ASSERT_FALSE(blocked_.remove());
+   ASSERT_FALSE(writeStringToFile(blocked_, "replacement file\n"));
+   ASSERT_FALSE(reconcile(root_, false, true));
+   auto file = monitor::findFile(files_.begin(), files_.end(), blocked_.getAbsolutePath());
+   ASSERT_NE(files_.end(), file);
+   EXPECT_FALSE(file->isDirectory());
+   EXPECT_EQ(0, files_.number_of_children(file));
+   EXPECT_NE(events_.end(), std::find_if(events_.begin(), events_.end(), [this](const FileChangeEvent& event)
+   {
+      return event.type() == FileChangeEvent::FileRemoved &&
+             event.fileInfo().absolutePath() == source_.getAbsolutePath();
+   }));
+}
+
 TEST_F(FileMonitorReconciliationTests, IgnoresStaleDirectoryEventAfterFileReplacement)
 {
    ASSERT_FALSE(system::scanFiles(FileInfo(root_), options_, &files_));

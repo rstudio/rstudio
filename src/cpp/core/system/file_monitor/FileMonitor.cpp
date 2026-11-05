@@ -171,6 +171,7 @@ Error processFileAdded(
 
    }
 
+   Error scanError;
    if (recursive && shouldTraverse(fileChange.fileInfo()))
    {
       tree<FileInfo> subTree;
@@ -179,9 +180,12 @@ Error processFileAdded(
       options.yield = true;
       options.filter = filter;
       options.onBeforeScanDir = onBeforeScanDir;
-      Error error = scanFiles(fileChange.fileInfo(), options, &subTree);
-      if (error)
-         return error;
+      scanError = scanFiles(fileChange.fileInfo(), options, &subTree);
+      if (isNotFoundError(scanError))
+         return scanError;
+
+      // Retain failed scans so consumers see lost coverage and a later event
+      // for this directory can find the node and retry the scan.
 
       // merge in the sub-tree
       tree<FileInfo>::sibling_iterator addedIter =
@@ -209,7 +213,7 @@ Error processFileAdded(
                fileInfoPathLessThan,
                false);
 
-   return Success();
+   return scanError;
 }
 
 void processFileModified(tree<FileInfo>::iterator parentIt,
@@ -386,7 +390,7 @@ Error discoverAndProcessFileChanges(
          {
             processFileRemoved(it,
                                fileChange,
-                               recursive,
+                               recursive || recursiveMonitor,
                                pTree,
                                &fileChanges);
             break;

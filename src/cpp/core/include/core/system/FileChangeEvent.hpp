@@ -121,12 +121,22 @@ void collectFileChangeEvents(PreviousIterator prevBegin,
       else if (currFile.empty())
          comp = -1;
       else
-         comp = fileInfoPathCompare(prevFile, currFile);
+         comp = prevFile.absolutePath().compare(currFile.absolutePath());
 
       if (comp == 0)
       {
-         if (currFile.lastWriteTime() != prevFile.lastWriteTime() ||
-             currFile.scanFailed() != prevFile.scanFailed())
+         if (prevFile.isDirectory() != currFile.isDirectory())
+         {
+            // Replace an entry only after removing its old type. Sorting
+            // directories first would otherwise announce a new directory
+            // before the old file's removal, which then deletes the new node.
+            if (!filter || filter(prevFile))
+               pEvents->emplace_back(FileChangeEvent::FileRemoved, prevFile);
+            if (!filter || filter(currFile))
+               pEvents->emplace_back(FileChangeEvent::FileAdded, currFile);
+         }
+         else if (currFile.lastWriteTime() != prevFile.lastWriteTime() ||
+                  currFile.scanFailed() != prevFile.scanFailed())
          {
             if (!filter || filter(currFile))
             {
