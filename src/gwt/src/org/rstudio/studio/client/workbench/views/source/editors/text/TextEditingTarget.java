@@ -422,7 +422,7 @@ public class TextEditingTarget implements
       HandlerRegistration addAttachHandler(AttachEvent.Handler handler);
    }
 
-   private class SaveProgressIndicator implements ProgressIndicator
+   private class SaveProgressIndicator extends DocUpdateSentinel.SaveIndicator
    {
       public SaveProgressIndicator(FileSystemItem file,
                                    TextFileType fileType,
@@ -523,6 +523,17 @@ public class TextEditingTarget implements
 
       public void onError(final String message)
       {
+         reportError(message, false);
+      }
+
+      @Override
+      public void onFileInUseError(final String message)
+      {
+         reportError(message, true);
+      }
+
+      private void reportError(final String message, final boolean fileInUse)
+      {
          isSaving_ = false;
 
          // in case the error occurred saving a document that wasn't
@@ -536,7 +547,7 @@ public class TextEditingTarget implements
             {
                // do not show the error if it is a transient autosave related issue - this can occur fairly frequently
                // when attempting to save files that are being backed up by external software
-               if (message.contains(DocUpdateSentinel.FILE_IN_USE_ERROR_MESSAGE) && suppressFileLockError_)
+               if (fileInUse && suppressFileLockError_)
                {
                   if (executeOnSilentFailure_ != null)
                      executeOnSilentFailure_.execute();

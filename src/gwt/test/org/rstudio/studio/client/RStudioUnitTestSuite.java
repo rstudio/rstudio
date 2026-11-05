@@ -51,6 +51,7 @@ import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerItemCodecTests
 import org.rstudio.studio.client.projects.model.ProjectMRUEntryTests;
 import org.rstudio.studio.client.projects.model.ProjectTemplateWidgetTests;
 import org.rstudio.studio.client.rsconnect.ui.EnvironmentVariablesDialogTests;
+import org.rstudio.studio.client.server.ServerErrorCauseTests;
 import org.rstudio.studio.client.workbench.WorkbenchListManagerTests;
 import org.rstudio.studio.client.workbench.model.SessionOpenerTests;
 import org.rstudio.studio.client.workbench.model.SessionTests;
@@ -141,6 +142,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(VcsStateTests.class);
       suite.addTestSuite(AppCommandMenuImageTests.class);
       suite.addTestSuite(TriStateCheckboxCellTests.class);
+      suite.addTestSuite(ServerErrorCauseTests.class);
 
       return suite;
    }
