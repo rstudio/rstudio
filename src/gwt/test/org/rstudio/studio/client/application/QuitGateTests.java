@@ -28,14 +28,14 @@ public class QuitGateTests extends GWTTestCase
    {
       QuitGate gate = new QuitGate();
       assertFalse(gate.isClosed());
-      assertTrue(gate.start());
+      assertNotNull(gate.start());
       assertTrue(gate.isClosed());
-      assertFalse(gate.start()); // a second quit while the first runs
+      assertNull(gate.start()); // a second quit while the first runs
       assertNull(gate.claim());
 
       // the first quit failed or was aborted
       gate.reopen();
-      assertTrue(gate.start());
+      assertNotNull(gate.start());
    }
 
    public void testClaimReservesTheQuit()
@@ -46,14 +46,16 @@ public class QuitGateTests extends GWTTestCase
       assertTrue(gate.isClosed());
 
       // nobody else quits while the claim is held
-      assertFalse(gate.start());
+      assertNull(gate.start());
       assertNull(gate.claim());
 
       // the holder starts its quit once, and the gate stays closed for it
-      assertTrue(claim.start());
+      QuitGate.Attempt attempt = claim.start();
+      assertNotNull(attempt);
+      assertTrue(attempt.isCurrent());
       assertTrue(gate.isClosed());
-      assertFalse(claim.start()); // a consumed claim is not reusable
-      assertFalse(gate.start());
+      assertNull(claim.start()); // a consumed claim is not reusable
+      assertNull(gate.start());
    }
 
    public void testReleaseReopensTheGate()
@@ -62,13 +64,13 @@ public class QuitGateTests extends GWTTestCase
       QuitGate.Claim claim = gate.claim();
       claim.release();
       assertFalse(gate.isClosed());
-      assertFalse(claim.start()); // released: the quit must be claimed again
+      assertNull(claim.start()); // released: the quit must be claimed again
 
       QuitGate.Claim next = gate.claim();
       assertNotNull(next);
       claim.release(); // an old claim cannot release a newer one
       assertTrue(gate.isClosed());
-      assertTrue(next.start());
+      assertNotNull(next.start());
    }
 
    public void testReopenDropsAHeldClaim()
@@ -76,21 +78,21 @@ public class QuitGateTests extends GWTTestCase
       QuitGate gate = new QuitGate();
       QuitGate.Claim claim = gate.claim();
       gate.reopen();
-      assertFalse(claim.start());
-      assertTrue(gate.start());
+      assertNull(claim.start());
+      assertNotNull(gate.start());
    }
 
    public void testAStalledQuitNoLongerRefusesTheNext()
    {
       QuitGate gate = new QuitGate();
-      assertTrue(gate.start(1000));
-      assertFalse(gate.start(1000 + QuitGate.kStaleQuitMs - 1));
+      assertNotNull(gate.start(1000));
+      assertNull(gate.start(1000 + QuitGate.kStaleQuitMs - 1));
       assertNull(gate.claim(1000 + QuitGate.kStaleQuitMs - 1));
 
       // the next quit closes the gate afresh
-      assertTrue(gate.start(1000 + QuitGate.kStaleQuitMs));
+      assertNotNull(gate.start(1000 + QuitGate.kStaleQuitMs));
       assertTrue(gate.isClosed());
-      assertFalse(gate.start(1000 + QuitGate.kStaleQuitMs + 1));
+      assertNull(gate.start(1000 + QuitGate.kStaleQuitMs + 1));
    }
 
    public void testAStaleClaimIsDroppedByTheNextQuit()
@@ -99,7 +101,70 @@ public class QuitGateTests extends GWTTestCase
       QuitGate.Claim claim = gate.claim(0);
       QuitGate.Claim next = gate.claim(QuitGate.kStaleQuitMs);
       assertNotNull(next);
-      assertFalse(claim.start()); // superseded
-      assertTrue(next.start());
+      assertNull(claim.start()); // superseded
+      assertNotNull(next.start());
+   }
+
+   public void testOnlyTheLatestAttemptsFailureReopensTheGate()
+   {
+      QuitGate gate = new QuitGate();
+      QuitGate.Attempt stalled = gate.start(0);
+      QuitGate.Attempt latest = gate.start(QuitGate.kStaleQuitMs);
+      assertFalse(stalled.isCurrent());
+      assertTrue(latest.isCurrent());
+
+      // the stalled quit fails late: the one that replaced it goes on
+      assertFalse(stalled.fail());
+      assertTrue(gate.isClosed());
+      assertTrue(latest.isCurrent());
+
+      assertTrue(latest.fail());
+      assertFalse(gate.isClosed());
+      assertFalse(latest.isCurrent());
+      assertFalse(latest.fail()); // undone once
+   }
+
+   public void testAClaimReplacesAStalledAttempt()
+   {
+      QuitGate gate = new QuitGate();
+      QuitGate.Attempt stalled = gate.start(0);
+      QuitGate.Claim claim = gate.claim(QuitGate.kStaleQuitMs);
+      assertFalse(stalled.isCurrent());
+
+      // its late failure must not reopen the gate under the claim, or
+      // undo what the claimer is arming
+      assertFalse(stalled.fail());
+      assertTrue(gate.isClosed());
+      assertTrue(claim.start().isCurrent());
+   }
+
+   public void testNoFailureUndoesAQuitTheSessionAccepted()
+   {
+      QuitGate gate = new QuitGate();
+      QuitGate.Attempt stalled = gate.start(0);
+      QuitGate.Attempt latest = gate.start(QuitGate.kStaleQuitMs);
+
+      // the session read the stalled quit's request first and is exiting;
+      // the latest request fails with it
+      stalled.acknowledged();
+      assertFalse(latest.fail());
+      assertTrue(gate.isClosed());
+
+      // until the session reports that quit aborted
+      gate.reopen();
+      QuitGate.Attempt next = gate.start(QuitGate.kStaleQuitMs + 1);
+      assertTrue(next.fail());
+   }
+
+   public void testAnAcceptanceAfterTheAbortIsIgnored()
+   {
+      QuitGate gate = new QuitGate();
+      QuitGate.Attempt aborted = gate.start(0);
+      gate.reopen(); // the abort event overtook the quit's own answer
+      aborted.acknowledged();
+
+      QuitGate.Attempt next = gate.start(1);
+      assertTrue(next.fail());
+      assertFalse(gate.isClosed());
    }
 }

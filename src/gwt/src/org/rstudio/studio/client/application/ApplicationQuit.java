@@ -403,7 +403,8 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                               RVersionSpec switchToRVersion,
                               Command onQuitAcknowledged)
    {
-      if (!quitGate_.start())
+      QuitGate.Attempt attempt = quitGate_.start();
+      if (attempt == null)
       {
          // the save prompts have usually just been answered, so say why
          // nothing follows (and let a tutorial caller fail rather than wait)
@@ -421,7 +422,8 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
          return false;
       }
 
-      new QuitCommand(callContext,
+      new QuitCommand(attempt,
+                      callContext,
                       progressMessage,
                       saveChanges,
                       switchToProject,
@@ -457,13 +459,15 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                                  RVersionSpec switchToRVersion,
                                  String rExecutablePath)
       {
-         if (!claim_.start())
+         QuitGate.Attempt attempt = claim_.start();
+         if (attempt == null)
          {
             Debug.logToConsole("Ignoring quit request: its claim was released");
             return false;
          }
 
-         new QuitCommand(null,
+         new QuitCommand(attempt,
+                         null,
                          progressMessage,
                          saveChanges,
                          switchToProject,
@@ -767,7 +771,8 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
    
    private class QuitCommand implements Command 
    {
-      public QuitCommand(TutorialApiCallContext callContext,
+      public QuitCommand(QuitGate.Attempt attempt,
+                         TutorialApiCallContext callContext,
                          String progressMessage,
                          boolean saveChanges,
                          String switchToProject,
@@ -775,6 +780,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                          String rExecutablePath,
                          Command onQuitAcknowledged)
       {
+         attempt_ = attempt;
          callContext_ = callContext;
          progressMessage_ = progressMessage;
          saveChanges_ = saveChanges;
@@ -811,13 +817,20 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
          barrier.addBarrierReleasedHandler((releasedEvent) ->
          {
             // All last chance save operations have completed (or possibly
-            // failed). Now do the real quit.
+            // failed). Now do the real quit -- unless a later quit replaced
+            // this one meanwhile: that one arms the desktop frame and sends
+            // quit_session itself, and must not be overwritten
+            if (!attempt_.isCurrent())
+            {
+               quitNotStarted(constants_.quitAlreadyInProgressMessage(), progress);
+               return;
+            }
 
             // notify the desktop frame that we are about to quit
             final int quitType = switchToProject_ == null
                   ? DesktopFrame.PENDING_QUIT_AND_EXIT
                   : DesktopFrame.PENDING_QUIT_RESTART_AND_RELOAD;
-            
+
             isQuitting_ = true;
             DesktopFrameHelper.setPendingQuit(quitType, rExecutablePath_, (String frameError) ->
             {
@@ -826,6 +839,11 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                   // the desktop frame does not know a quit is coming, so the
                   // session's exit would be taken for a crash: do not quit
                   quitNotStarted(frameError, progress);
+                  return;
+               }
+               if (!attempt_.isCurrent())
+               {
+                  quitNotStarted(constants_.quitAlreadyInProgressMessage(), progress);
                   return;
                }
 
@@ -841,6 +859,10 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                         {
                            if (response)
                            {
+                              // the session is exiting for this attempt,
+                              // whether or not a later one replaced it
+                              attempt_.acknowledged();
+
                               // clear progress only if we aren't switching projects
                               // (otherwise we want to leave progress up until
                               // the app reloads)
@@ -896,15 +918,22 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
        * The quit did not start: admit the next one, fail a tutorial caller,
        * and leave nothing armed in the desktop frame (an update install
        * recorded for this quit, the R it named) for a later, unrelated quit.
+       * Only while this attempt is still the one in charge, though (see
+       * {@link QuitGate.Attempt#fail}): a replaced attempt's late failure
+       * would otherwise cancel the quit that replaced it, and a quit the
+       * session accepted goes ahead whichever request then fails.
        */
       private void quitNotStarted(String message, GlobalProgressDelayer progress)
       {
-         isQuitting_ = false;
-         quitGate_.reopen();
          progress.dismiss();
          if (quitProgress_ == progress)
             quitProgress_ = null;
-         DesktopFrameHelper.setPendingQuit(DesktopFrame.PENDING_QUIT_NONE, () -> {});
+
+         if (attempt_.fail())
+         {
+            isQuitting_ = false;
+            DesktopFrameHelper.setPendingQuit(DesktopFrame.PENDING_QUIT_NONE, () -> {});
+         }
 
          if (callContext_ != null)
          {
@@ -915,6 +944,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
          }
       }
 
+      private final QuitGate.Attempt attempt_;
       private final TutorialApiCallContext callContext_;
       private final boolean saveChanges_;
       private final String switchToProject_;
