@@ -20,4 +20,10 @@ public class NavigationMethods
    public final static int HIGHLIGHT_LINE = 1;
    public final static int DEBUG_STEP = 2;
    public final static int DEBUG_END = 3;
+
+   // To the position given, then on to the document's first Git change as
+   // its gutter markers show it, once they are current (the Git pane's
+   // go-to-change: the position is the line Git reports, which the markers
+   // can place differently).
+   public final static int GIT_FIRST_CHANGE = 4;
 }

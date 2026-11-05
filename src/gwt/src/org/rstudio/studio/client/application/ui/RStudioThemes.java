@@ -91,6 +91,13 @@ public class RStudioThemes
       return Document.get().getBody().hasClassName("editor_dark");
    }
 
+   // Whether the IDE's chrome is dark (rstudio-themes-dark), by the same test
+   // initializeThemes uses to apply it.
+   public static boolean isDarkTheme()
+   {
+      return activeTheme_ != null && activeTheme_.contains("dark");
+   }
+
    public static String suggestThemeFromAceTheme(AceTheme aceTheme, String rstudioTheme)
    {
       if (StringUtil.equals(rstudioTheme, "classic") || (aceTheme == null))

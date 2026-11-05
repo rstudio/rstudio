@@ -330,6 +330,7 @@ public class GitPane extends WorkbenchPane implements Display, BranchCaptionChan
       menu.addItem(commands_.vcsIgnore().createMenuItem(false));
       menu.addSeparator();
       menu.addItem(commands_.vcsOpen().createMenuItem(false));
+      menu.addItem(commands_.vcsOpenAtFirstChange().createMenuItem(false));
 
       menu.showRelativeTo(clientX, clientY, ElementIds.GIT_TAB_CONTEXT);
    }

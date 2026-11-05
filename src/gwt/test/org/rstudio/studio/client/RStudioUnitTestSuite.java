@@ -45,6 +45,7 @@ import org.rstudio.studio.client.common.debugging.ErrorManagerTests;
 import org.rstudio.studio.client.common.filetypes.FileIconRendererTests;
 import org.rstudio.studio.client.common.filetypes.FileIconTests;
 import org.rstudio.studio.client.common.r.RTokenizerTests;
+import org.rstudio.studio.client.common.rstudioapi.model.ChoiceListDialogTests;
 import org.rstudio.studio.client.common.shell.ConsoleErrorTrackerTests;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerItemCodecTests;
 import org.rstudio.studio.client.projects.model.ProjectMRUEntryTests;
@@ -106,6 +107,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(DefaultChunkOptionsPopupPanelTests.class);
       suite.addTestSuite(ChunkOptionsPopupPanelTests.class);
       suite.addTestSuite(EnvironmentVariablesDialogTests.class);
+      suite.addTestSuite(ChoiceListDialogTests.class);
       suite.addTestSuite(ProjectTemplateWidgetTests.class);
       suite.addTestSuite(TextCursorTests.class);
       suite.addTestSuite(SessionScopeTests.class);

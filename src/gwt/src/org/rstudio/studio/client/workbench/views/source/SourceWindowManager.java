@@ -538,7 +538,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    {
       return navigateToPath(file.getPath(),
                      new OpenSourceFileEvent(file, position, null, navMethod),
-                     navMethod == NavigationMethods.DEFAULT);
+                     navMethod == NavigationMethods.DEFAULT ||
+                     navMethod == NavigationMethods.GIT_FIRST_CHANGE);
    }
 
    public NavigationResult navigateToCodeBrowser(String path,

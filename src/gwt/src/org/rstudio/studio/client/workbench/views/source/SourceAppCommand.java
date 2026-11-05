@@ -162,6 +162,18 @@ public class SourceAppCommand
          });
    }
 
+   // The state toolbar buttons for this column follow; for a button not made
+   // by createToolbarButton, which tracks the changes itself.
+   public boolean isButtonVisible()
+   {
+      return buttonVisible_;
+   }
+
+   public boolean isButtonEnabled()
+   {
+      return buttonEnabled_;
+   }
+
    public void setVisible(boolean visible)
    {
       setVisible(true, visible, visible);
