@@ -94,8 +94,15 @@ export async function stageInstaller(
   onProgress: (fraction: number) => void = () => undefined,
   idleTimeoutMs = kDownloadIdleTimeoutMs,
 ): Promise<string> {
+  // the name comes from the builds API and becomes a file that is checked
+  // and then run, so only the builds site's own name for the version being
+  // installed is accepted (the one pruneStagedInstallers() recognizes, too)
+  if (!/\.exe$/i.test(entry.filename) || installerVersion(entry.filename) !== entry.version) {
+    throw new Error(`the builds site named an unexpected installer file for RStudio ${entry.version}`);
+  }
+
   await mkdir(dir, { recursive: true });
-  const target = path.join(dir, path.basename(entry.filename));
+  const target = path.join(dir, entry.filename);
   if (await verifyInstaller(target, entry)) {
     return target;
   }

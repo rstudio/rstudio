@@ -76,6 +76,25 @@ describe('installer staging', () => {
       assert.equal(progress[progress.length - 1], 1);
     });
 
+    it('refuses, before downloading, any name but the installer of the version offered', async () => {
+      const names = [
+        'RStudio-2026.12.0-daily-9.dmg',
+        'RStudio-2026.12.0-daily-10.exe',
+        'RStudio-pro-2026.12.0-daily-9.pro1.exe',
+        '..\\RStudio-2026.12.0-daily-9.exe',
+        'RStudio-2026.12.0-daily-9.exe:stream',
+        'RStudio’; Start-Process calc; ’.exe',
+      ];
+      const { fetch, calls } = serving(bytes);
+      for (const name of names) {
+        let failure = '';
+        await stageInstaller(dir, artifact(name), fetch).catch((error: Error) => (failure = error.message));
+        assert.include(failure, 'unexpected installer file', name);
+      }
+      assert.equal(calls(), 0);
+      assert.deepEqual(readdirSync(dir), []);
+    });
+
     it('rejects a download whose checksum does not match and leaves nothing behind', async () => {
       const entry = artifact('RStudio-2026.12.0-daily-9.exe');
       const tampered = Buffer.from('this stands in for an NSIS inst@ller');
