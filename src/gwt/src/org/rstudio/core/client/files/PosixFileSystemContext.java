@@ -57,14 +57,22 @@ public abstract class PosixFileSystemContext implements FileSystemContext
     * sibling under its own path rather than as `<dir>/../sub`: the server
     * lists that fine, but the breadcrumb and every path taken from the
     * listing would carry the `..` along. `..` never climbs above the root
-    * (`/`, `~`, or a Windows drive); with no root to anchor it, a leading
-    * `..` is kept.
+    * (`/`, `~`, a Windows drive, or a UNC host); with no root to anchor it,
+    * a leading `..` is kept.
     */
    public static String normalizePath(String path)
    {
       String root = "";
       String rest = path;
-      if (path.startsWith("/"))
+      if (path.startsWith("//"))
+      {
+         // a Windows UNC path, in the `//server/share` form the server
+         // reports it in; the host is the root
+         int slash = path.indexOf('/', 2);
+         root = slash == -1 ? path : path.substring(0, slash);
+         rest = slash == -1 ? "" : path.substring(slash);
+      }
+      else if (path.startsWith("/"))
       {
          root = "/";
          rest = path.substring(1);
