@@ -17,15 +17,10 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     String retryButtonLabel();
     String licensingLimitCaption();
     String quitRunningSessionsMessage(String userMsg);
-    String unableToConnectMessage();
-    String errorTransmissionMessage();
     String goHomeButtonLabel();
     String cannotConnectRCaption();
     String cannotConnectRMessage(String userMessage, int errorCode);
     String rStudioInitializationErrorCaption();
-    String helpUsingRStudioLinkName();
-    String communityForumLinkName();
-    String rStudioSupportLinkName();
     String focusedElementLabel();
     String loadingWorkspaceMessage();
     String savingWorkspaceImageMessage();

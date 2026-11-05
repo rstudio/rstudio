@@ -357,7 +357,7 @@ public class DocUpdateSentinel
                {
                   // do not show the error if it is a transient autosave related issue - this can occur fairly frequently
                   // when attempting to save files that are being backed up by external software
-                  if (!message.contains(constants_.processStillBeingUsedTextEditingTarget()))
+                  if (!message.contains(FILE_IN_USE_ERROR_MESSAGE))
                   {
                      loggedAutosaveError_ = true;
 
@@ -1080,6 +1080,11 @@ public class DocUpdateSentinel
 
    public final static String PROPERTY_TRUE = "true";
    public final static String PROPERTY_FALSE = "false";
+   // Windows' text for ERROR_SHARING_VIOLATION. The OS supplies it in its own
+   // language, so it must not be translated with the UI; matching only works
+   // on English Windows.
+   public static final String FILE_IN_USE_ERROR_MESSAGE =
+      "The process cannot access the file because it is being used by another process";
    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 
 }
