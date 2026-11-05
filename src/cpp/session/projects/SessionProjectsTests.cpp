@@ -366,6 +366,50 @@ TEST_F(PackageProjectInfoTests, RefreshesNamespaceEventsWithDotPackagePath)
    EXPECT_TRUE(r_util::RSourceIndex::getImportFromDirectives().empty());
 }
 
+TEST_F(PackageProjectInfoTests, ExternalPackageKeepsMetadataWithoutPackageDiagnostics)
+{
+   FilePath externalDir;
+   ASSERT_FALSE(FilePath::tempFilePath(externalDir));
+   ASSERT_FALSE(externalDir.ensureDirectory());
+   RemoveOnExitScope removeScope(externalDir, ERROR_LOCATION);
+   ASSERT_FALSE(writeStringToFile(
+         externalDir.completeChildPath("DESCRIPTION"),
+         "Package: externalpkg\nVersion: 0.1.0\n"));
+   ASSERT_FALSE(writeStringToFile(
+         externalDir.completeChildPath("NAMESPACE"),
+         "import(splines)\nimportFrom(stats, median)\n"));
+
+   writeDescription("Package: rootpkg\nVersion: 0.1.0\n");
+   FilePath namespaceFile = projectDir_.completeChildPath("NAMESPACE");
+   ASSERT_FALSE(writeStringToFile(namespaceFile, "import(compiler)\nimportFrom(utils, head)\n"));
+   ProjectContext context;
+   openProject(&context, "None", "", true);
+   modules::diagnostics::monitorProjectNamespace(context);
+   notifyFileChanged(&context, namespaceFile, core::system::FileChangeEvent::FileAdded);
+   ASSERT_FALSE(r_util::RSourceIndex::getImportedPackages().empty());
+   ASSERT_FALSE(r_util::RSourceIndex::getImportFromDirectives().empty());
+
+   r_util::RProjectConfig config = context.config();
+   config.buildType = r_util::kBuildTypePackage;
+   config.packagePath = externalDir.getAbsolutePath();
+   context.setConfig(config);
+   EXPECT_TRUE(context.isPackageProject());
+   EXPECT_EQ("externalpkg", context.packageInfo().name());
+   EXPECT_EQ(externalDir, context.packageDirectory());
+   EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
+   EXPECT_TRUE(r_util::RSourceIndex::getImportedPackages().empty());
+   EXPECT_TRUE(r_util::RSourceIndex::getImportFromDirectives().empty());
+
+   // External files are not monitored by the project. Even an explicit event
+   // must not populate imports for a directory outside the source index.
+   notifyFileChanged(
+         &context,
+         externalDir.completeChildPath("NAMESPACE"),
+         core::system::FileChangeEvent::FileModified);
+   EXPECT_TRUE(r_util::RSourceIndex::getImportedPackages().empty());
+   EXPECT_TRUE(r_util::RSourceIndex::getImportFromDirectives().empty());
+}
+
 namespace {
 
 TEST(SessionProjectsTests, ResolveWrittenEditorThemePreservesWhenKeyOmitted)

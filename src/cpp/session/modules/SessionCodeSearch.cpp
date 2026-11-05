@@ -858,8 +858,15 @@ public:
                   boost::function<void(const Entry&)> operation,
                   boost::function<bool(const Entry&)> filter = boost::function<bool(const Entry&)>())
    {
+      // Match monitor paths for PackagePath values such as . and ./pkg.
+      // Lexical normalization keeps a trailing dot, so remove that directory
+      // marker explicitly without resolving symlinks or touching the filesystem.
+      FilePath lookupPath(parentPath.getLexicallyNormalPath());
+      if (lookupPath.getFilename() == ".")
+         lookupPath = lookupPath.getParent();
+
       EntryTree::iterator parentItr;
-      if (!findParent(parentPath, &parentItr))
+      if (!findParent(lookupPath, &parentItr))
          return;
       
       EntryTree::leaf_iterator it = pEntries_->begin_leaf(parentItr);
@@ -2861,7 +2868,7 @@ void addAllProjectSymbols(const Entry& entry,
 
 void addAllProjectSymbols(std::set<std::string>* pSymbols)
 {
-   FilePath packageDir = projects::projectContext().packageDirectory();
+   FilePath packageDir = projects::projectContext().packageDirectoryInProject();
 
    if (!packageDir.isEmpty())
       projectIndex().walkFiles(
@@ -2917,12 +2924,23 @@ TEST(SourceFileIndexTests, WalkFilesExcludesSiblingSymbols)
    ASSERT_TRUE(index.get(projectDir.completeChildPath("pkg/R/inside.R")));
    ASSERT_TRUE(index.get(projectDir.completeChildPath("scripts/outside.R")));
 
-   std::set<std::string> symbols;
+   for (const std::string& packagePath : {"pkg", "./pkg", "pkg/."})
+   {
+      SCOPED_TRACE(packagePath);
+      std::set<std::string> symbols;
+      index.walkFiles(
+            projectDir.completeChildPath(packagePath),
+            boost::bind(callbacks::addAllProjectSymbols, _1, &symbols));
+      const std::set<std::string> expected = {"inside", "deeper"};
+      EXPECT_EQ(expected, symbols);
+   }
+
+   std::set<std::string> rootSymbols;
    index.walkFiles(
-         projectDir.completeChildPath("pkg"),
-         boost::bind(callbacks::addAllProjectSymbols, _1, &symbols));
-   const std::set<std::string> expected = {"inside", "deeper"};
-   EXPECT_EQ(expected, symbols);
+         projectDir.completeChildPath("."),
+         boost::bind(callbacks::addAllProjectSymbols, _1, &rootSymbols));
+   const std::set<std::string> expectedRoot = {"before", "inside", "deeper", "outside"};
+   EXPECT_EQ(expectedRoot, rootSymbols);
 }
 
 #endif

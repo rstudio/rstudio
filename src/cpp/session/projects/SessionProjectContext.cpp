@@ -1136,6 +1136,15 @@ FilePath ProjectContext::packageDirectory() const
    return directory();
 }
 
+FilePath ProjectContext::packageDirectoryInProject() const
+{
+   FilePath packageDir = packageDirectory();
+   if (!packageDir.isEmpty() && packageDir.isWithin(directory()))
+      return packageDir;
+
+   return FilePath();
+}
+
 const r_util::RPackageInfo& ProjectContext::packageInfo() const
 {
    if (!packageInfoInitialized_ || !isMonitoringDirectory(packageDirectory()))

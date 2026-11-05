@@ -1725,8 +1725,9 @@ void ParseStatus::resolveLookupContext()
    //
    // https://github.com/rstudio/rstudio/issues/19056
    projects::ProjectContext& context = projects::projectContext();
-   if (context.isPackageProject() &&
-       (filePath_.isEmpty() || filePath_.isWithin(context.packageDirectory())))
+   FilePath packageDir = context.packageDirectoryInProject();
+   if (!packageDir.isEmpty() && context.isPackageProject() &&
+       (filePath_.isEmpty() || filePath_.isWithin(packageDir)))
    {
       isPackageProject_ = true;
       packageName_ = context.packageInfo().name();

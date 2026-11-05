@@ -387,7 +387,8 @@ Error getAvailableSymbolsForProject(const FilePath& filePath,
 
 void addTestPackageSymbols(std::set<std::string>* pSymbols)
 {
-   if (!projects::projectContext().isPackageProject())
+   if (projects::projectContext().packageDirectoryInProject().isEmpty() ||
+       !projects::projectContext().isPackageProject())
       return;
 
    PackageSymbolRegistry& registry = packageSymbolRegistry();
@@ -421,10 +422,12 @@ Error getAllAvailableRSymbols(const FilePath& filePath,
    //
    // For R package development, when linting a 'test' file, we can
    // safely assume that the package itself will be loaded.
-   FilePath projDir = projects::projectContext().packageDirectory();
+   projects::ProjectContext& context = projects::projectContext();
+   FilePath packageDir = context.packageDirectoryInProject();
+   FilePath projDir = packageDir.isEmpty() ? context.directory() : packageDir;
    Error error;
 
-   if (projects::projectContext().isPackageProject() && filePath.isWithin(projDir))
+   if (!packageDir.isEmpty() && context.isPackageProject() && filePath.isWithin(packageDir))
    {
       DEBUG("- Package file: '" << filePath.getAbsolutePath() << "'");
       error = getAvailableSymbolsForPackage(filePath, documentId, pSymbols);
@@ -1040,6 +1043,9 @@ void onFilesChanged(
       const FilePath& packageDir,
       const std::vector<core::system::FileChangeEvent>& events)
 {
+   if (packageDir.isEmpty())
+      return;
+
    // Normalize the full file paths so PackagePath: . matches monitor events.
    // This is lexical so removed files still match, without resolving symlinks.
    std::string namespacePath = packageDir.completePath("NAMESPACE").getLexicallyNormalPath();
@@ -1054,13 +1060,13 @@ void onFilesChanged(
 
 void afterSessionInitHook(bool newSession)
 {
-   if (projects::projectContext().hasProject() &&
-      projects::projectContext().packageDirectory().completePath("NAMESPACE").exists())
+   if (!projects::projectContext().packageDirectoryInProject().isEmpty())
    {
-      onNAMESPACEchanged(projects::projectContext().packageDirectory());
+      onNAMESPACEchanged(projects::projectContext().packageDirectoryInProject());
    }
 
-   if (projects::projectContext().isPackageProject())
+   if (!projects::projectContext().packageDirectoryInProject().isEmpty() &&
+       projects::projectContext().isPackageProject())
    {
       std::string packageName = projects::projectContext().packageInfo().name();
       RSourceIndex::addGloballyInferredPackage(packageName);
@@ -1126,14 +1132,14 @@ void monitorProjectNamespace(projects::ProjectContext& context)
    projects::FileMonitorCallbacks cb;
    cb.onFilesChanged = [&context](const std::vector<core::system::FileChangeEvent>& events)
    {
-      onFilesChanged(context.packageDirectory(), events);
+      onFilesChanged(context.packageDirectoryInProject(), events);
    };
    context.subscribeToFileMonitor("Diagnostics", cb);
 
    context.onConfigChanged.connect(
-         [&context, packageDir = context.packageDirectory()]() mutable
+         [&context, packageDir = context.packageDirectoryInProject()]() mutable
          {
-            FilePath updatedDir = context.packageDirectory();
+            FilePath updatedDir = context.packageDirectoryInProject();
             if (updatedDir != packageDir)
             {
                packageDir = updatedDir;
