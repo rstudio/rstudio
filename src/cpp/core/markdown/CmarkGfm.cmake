@@ -25,13 +25,21 @@ function(add_rstudio_cmark_gfm)
       C_STANDARD_REQUIRED ON
       POSITION_INDEPENDENT_CODE ON
    )
-   target_compile_definitions(rstudio-cmark-gfm PUBLIC
+   target_compile_definitions(rstudio-cmark-gfm PRIVATE
       CMARK_GFM_STATIC_DEFINE CMARK_GFM_EXTENSIONS_STATIC_DEFINE)
-   target_include_directories(rstudio-cmark-gfm BEFORE PUBLIC
+   target_include_directories(rstudio-cmark-gfm BEFORE PRIVATE
       "${CMARK_BINARY_DIR}"
       "${CMARK_SOURCE_DIR}/src"
       "${CMARK_SOURCE_DIR}/extensions"
    )
+   # Only the adapter needs these headers. In particular, upstream utf8.h must
+   # not shadow utf8cpp's header in session sources or other core consumers.
+   set_property(SOURCE markdown/CmarkGfm.cpp APPEND PROPERTY INCLUDE_DIRECTORIES
+      "${CMARK_BINARY_DIR}"
+      "${CMARK_SOURCE_DIR}/src"
+      "${CMARK_SOURCE_DIR}/extensions")
+   set_property(SOURCE markdown/CmarkGfm.cpp APPEND PROPERTY COMPILE_DEFINITIONS
+      CMARK_GFM_STATIC_DEFINE CMARK_GFM_EXTENSIONS_STATIC_DEFINE)
 
    include(GenerateExportHeader)
    generate_export_header(rstudio-cmark-gfm

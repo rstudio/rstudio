@@ -28,7 +28,9 @@ use the complete upstream checkout to run upstream's own CMake test project.
 
 `CmarkGfm.cmake` builds a static C99 library, generates platform/export/version
 headers in the build tree, and avoids upstream install rules and project-wide
-compiler changes. Runtime source licenses are BSD-2-Clause and MIT; retain all
+compiler changes. Its include paths and static-library definitions are confined
+to cmark and its adapter, so upstream headers such as `utf8.h` cannot shadow
+other dependencies in core consumers. Runtime source licenses are BSD-2-Clause and MIT; retain all
 of `COPYING`, including its component attributions.
 
 ## Compatibility decisions
