@@ -205,22 +205,32 @@ Error NotebookQueueUnit::parseOptions(json::Object* pOptions)
    {
       *pOptions = jsonOptions.getObject();
    }
-   
-   // if this chunk defines a 'file' option, then we'll read
-   // the contents of that file and use it for code. note that
-   // any existing code in the chunk will be ignored.
-   std::string file;
-   Error readError = core::json::readObject(*pOptions, "file", file);
-   if (!readError)
-   {
-      FilePath resolvedPath = module_context::resolveAliasedPath(file);
-      
-      std::string code;
-      Error error = core::readStringFromFile(resolvedPath, &code);
-      if (!error)
-         replaceCode(code);
-   }
 
+   return Success();
+}
+
+Error NotebookQueueUnit::replaceCodeFromFileOption(const json::Object& options,
+                                                   const FilePath& baseDir,
+                                                   FilePath* pFilePath)
+{
+   // as in knitr, a 'file' option supplies the chunk's code, and any code
+   // in the chunk itself is ignored
+   std::string file;
+   if (json::readObject(options, "file", file) || file.empty())
+      return Success();
+
+   *pFilePath = file[0] == '~'
+                   ? module_context::resolveAliasedPath(file)
+                   : baseDir.completePath(file);
+
+   // R's parser rejects '\r', so CRLF files (the default on Windows) must be
+   // normalized; knitr's readLines() does the same
+   std::string code;
+   Error error = core::readStringFromFile(*pFilePath, &code, string_utils::LineEndingPosix);
+   if (error)
+      return error;
+
+   replaceCode(code);
    return Success();
 }
 

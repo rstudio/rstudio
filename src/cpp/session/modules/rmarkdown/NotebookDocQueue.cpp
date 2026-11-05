@@ -216,6 +216,11 @@ std::string NotebookDocQueue::docId() const
    return docId_;
 }
 
+std::string NotebookDocQueue::docPath() const
+{
+   return docPath_;
+}
+
 int NotebookDocQueue::pixelWidth() const
 {
    return pixelWidth_;

@@ -18,6 +18,7 @@
 
 #include "SessionRmdNotebook.hpp"
 
+#include <shared_core/FilePath.hpp>
 #include <shared_core/json/Json.hpp>
 
 #include <list>
@@ -70,6 +71,9 @@ public:
    void updateFrom(const NotebookQueueUnit& other);
    bool hasPendingRanges();
    void replaceCode(const std::string& code);
+   core::Error replaceCodeFromFileOption(const core::json::Object& options,
+                                         const core::FilePath& baseDir,
+                                         core::FilePath* pFilePath);
 
    // accessors
    std::string docId() const;
