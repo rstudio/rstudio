@@ -140,11 +140,17 @@ protected:
       pContext->augmentRbuildignore();
    }
 
-   void registerFileMonitor(ProjectContext* pContext)
+   void registerFileMonitor(ProjectContext* pContext, const FilePath& failedDirectory = FilePath())
    {
       tree<FileInfo> files;
       core::system::FileScannerOptions options;
       options.recursive = true;
+      options.onBeforeScanDir = [failedDirectory](const FileInfo& info) -> Error
+      {
+         if (!failedDirectory.isEmpty() && FilePath(info.absolutePath()) == failedDirectory)
+            return systemError(boost::system::errc::no_space_on_device, ERROR_LOCATION);
+         return Success();
+      };
       FileMonitorFilterContext filter = pContext->createFileMonitorFilterContext();
       options.filter = [pContext, filter](const FileInfo& info)
       {
@@ -547,6 +553,56 @@ TEST_F(PackageProjectInfoTests, UnignoredPackageWaitsForMonitorCoverage)
    EXPECT_EQ(packageDir, context.packageDirectoryInProject());
    EXPECT_EQ("after", context.packageInfo().name());
    EXPECT_EQ(std::set<std::string>{"compiler"}, r_util::RSourceIndex::getImportedPackages());
+}
+
+TEST_F(PackageProjectInfoTests, RemovedCMakeMarkerWaitsForFreshIndexSnapshot)
+{
+   writeDescription("Package: before\nVersion: 0.1.0\n", "build/pkg");
+   FilePath packageDir = projectDir_.completeChildPath("build/pkg");
+   ASSERT_FALSE(packageDir.completeChildPath("R").ensureDirectory());
+   ASSERT_FALSE(writeStringToFile(packageDir.completeChildPath("NAMESPACE"), "import(compiler)\n"));
+   FilePath marker = projectDir_.completeChildPath("build/CMakeCache.txt");
+   ASSERT_FALSE(writeStringToFile(marker, "cache"));
+   ProjectContext context;
+   openProject(&context, "Package", "build/pkg", true);
+   modules::diagnostics::monitorProjectNamespace(context);
+   EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
+
+   ASSERT_FALSE(marker.remove());
+   notifyFileChanged(&context, marker, core::system::FileChangeEvent::FileRemoved);
+   EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
+   writeDescription("Package: after\nVersion: 0.2.0\n", "build/pkg");
+   EXPECT_EQ("after", context.packageInfo().name());
+
+   registerFileMonitor(&context);
+   EXPECT_EQ(packageDir, context.packageDirectoryInProject());
+   EXPECT_EQ(std::set<std::string>{"compiler"}, r_util::RSourceIndex::getImportedPackages());
+}
+
+TEST_F(PackageProjectInfoTests, FailedDirectoryRegistrationDisablesPackageCoverage)
+{
+   writeDescription("Package: before\nVersion: 0.1.0\n");
+   ASSERT_FALSE(projectDir_.completeChildPath("R/sub").ensureDirectory());
+   ASSERT_FALSE(writeStringToFile(projectDir_.completeChildPath("R/sub/helper.R"), "helper <- function() TRUE\n"));
+   ASSERT_FALSE(writeStringToFile(projectDir_.completeChildPath("NAMESPACE"), "import(compiler)\n"));
+
+   for (const std::string& path : {"R", "R/sub"})
+   {
+      SCOPED_TRACE(path);
+      ProjectContext context;
+      openProject(&context, "None", "", true, false);
+      modules::diagnostics::monitorProjectNamespace(context);
+      registerFileMonitor(&context, projectDir_.completeChildPath(path));
+      EXPECT_TRUE(context.hasFileMonitor());
+      EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
+      EXPECT_TRUE(r_util::RSourceIndex::getImportedPackages().empty());
+
+      writeDescription("Package: after\nVersion: 0.2.0\n");
+      EXPECT_EQ("after", context.packageInfo().name());
+      registerFileMonitor(&context);
+      EXPECT_EQ(projectDir_, context.packageDirectoryInProject());
+      EXPECT_EQ(std::set<std::string>{"compiler"}, r_util::RSourceIndex::getImportedPackages());
+   }
 }
 
 TEST_F(PackageProjectInfoTests, RefreshesImportsAcrossIgnoreRuleChanges)

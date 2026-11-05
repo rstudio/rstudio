@@ -97,7 +97,9 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
                 const FileScannerOptions& options,
                 tree<FileInfo>* pTree)
 {
-   // clear all existing
+   // Keep failed directory entries distinguishable from successfully scanned
+   // empty directories, and clear the flag when a later scan succeeds.
+   fromNode->setScanFailed(false);
    pTree->erase_children(fromNode);
 
    // create FilePath for root
@@ -112,14 +114,20 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
    {
       Error error = options.onBeforeScanDir(*fromNode);
       if (error)
+      {
+         fromNode->setScanFailed(true);
          return error;
+      }
    }
 
    // read directory contents
    std::vector<std::string> names;
    Error error = scanDir(fromNode->absolutePath(), &names);
    if (error)
+   {
+      fromNode->setScanFailed(true);
       return error;
+   }
 
    // iterate over the names
    for (const std::string& name : names)
@@ -129,6 +137,7 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
       {
          Error error = core::systemError(boost::system::errc::interrupted, ERROR_LOCATION);
          error.setExpected();
+         fromNode->setScanFailed(true);
          return error;
       }
 

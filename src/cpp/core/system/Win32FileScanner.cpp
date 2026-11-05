@@ -77,7 +77,9 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
                 const core::system::FileScannerOptions& options,
                 tree<FileInfo>* pTree)
 {
-   // clear all existing
+   // Keep failed directory entries distinguishable from successfully scanned
+   // empty directories, and clear the flag when a later scan succeeds.
+   fromNode->setScanFailed(false);
    pTree->erase_children(fromNode);
 
    // create FilePath for root
@@ -92,14 +94,20 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
    {
       Error error = options.onBeforeScanDir(*fromNode);
       if (error)
+      {
+         fromNode->setScanFailed(true);
          return error;
+      }
    }
 
    // read directory entries
    std::vector<FilePath> children;
    Error error = rootPath.getChildren(children);
    if (error)
+   {
+      fromNode->setScanFailed(true);
       return error;
+   }
 
    // convert to FileInfo and sort using alphasort equivalent (for
    // compatibility with scandir, which is what is used in our
@@ -119,7 +127,10 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
    {
       // check for interrupts
       if (boost::this_thread::interruption_requested())
+      {
+         fromNode->setScanFailed(true);
          return core::systemError(boost::system::errc::interrupted, ERROR_LOCATION);
+      }
 
       // apply filter if we have one
       if (options.filter && !options.filter(childFileInfo))

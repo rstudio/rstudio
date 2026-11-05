@@ -172,7 +172,10 @@ bool isWithinIgnoredDirectory(const FilePath& filePath, const std::vector<FilePa
       if (cacheIt != s_ignoredDirCache.end())
       {
          if (cacheIt->second)
+         {
+            projectContext().noteSourceIndexExcludedDirectory(parentPath);
             return true;
+         }
          continue;
       }
 
@@ -180,7 +183,10 @@ bool isWithinIgnoredDirectory(const FilePath& filePath, const std::vector<FilePa
       s_ignoredDirCache[parentStr] = ignored;
 
       if (ignored)
+      {
+         projectContext().noteSourceIndexExcludedDirectory(parentPath);
          return true;
+      }
    }
 
    return false;

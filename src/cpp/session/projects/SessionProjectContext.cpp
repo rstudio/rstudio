@@ -825,6 +825,13 @@ bool isIgnoredMonitorPath(const std::string& path, const FileMonitorFilterContex
    return false;
 }
 
+void eraseDirectoriesWithin(std::set<FilePath>* directories, const FilePath& path)
+{
+   auto it = directories->lower_bound(path);
+   while (it != directories->end() && it->isWithin(path))
+      it = directories->erase(it);
+}
+
 } // end anonymous namespace
 
 FileMonitorFilterContext ProjectContext::createFileMonitorFilterContext() const
@@ -901,10 +908,17 @@ void ProjectContext::fileMonitorRegistered(
    hasFileMonitor_ = true;
    fileMonitorInitialized_ = true;
    monitoredDirectories_.clear();
+   failedMonitorDirectories_.clear();
+   sourceIndexExcludedDirectories_.clear();
    monitoredDirectories_.insert(directory());
    for (const FileInfo& info : files)
-      if (info.isDirectory() && !info.isSymlink())
-         monitoredDirectories_.insert(FilePath(info.absolutePath()));
+   {
+      FilePath path(info.absolutePath());
+      if (info.scanFailed())
+         failedMonitorDirectories_.insert(path);
+      else if (info.isDirectory() && !info.isSymlink())
+         monitoredDirectories_.insert(path);
+   }
 
    // Changes between the initial metadata read and monitor registration may
    // appear only in the initial snapshot, without a separate file event.
@@ -931,16 +945,28 @@ void ProjectContext::fileMonitorFilesChanged(
    {
       const FileInfo& info = event.fileInfo();
       FilePath path(info.absolutePath());
+      if (event.type() == core::system::FileChangeEvent::FileRemoved)
+      {
+         eraseDirectoriesWithin(&failedMonitorDirectories_, path);
+         eraseDirectoriesWithin(&sourceIndexExcludedDirectories_, path);
+      }
+      else if (info.scanFailed())
+      {
+         failedMonitorDirectories_.insert(path);
+      }
+      else
+      {
+         failedMonitorDirectories_.erase(path);
+      }
+
       if ((event.type() == core::system::FileChangeEvent::FileRemoved ||
-           !info.isDirectory() || info.isSymlink()) &&
+           !info.isDirectory() || info.isSymlink() || info.scanFailed()) &&
           (info.isDirectory() || monitoredDirectories_.count(path) != 0))
       {
-         auto it = monitoredDirectories_.lower_bound(path);
-         while (it != monitoredDirectories_.end() && it->isWithin(path))
-            it = monitoredDirectories_.erase(it);
+         eraseDirectoriesWithin(&monitoredDirectories_, path);
       }
-      else if (event.type() == core::system::FileChangeEvent::FileAdded &&
-               info.isDirectory() && !info.isSymlink())
+      else if (event.type() != core::system::FileChangeEvent::FileRemoved &&
+               info.isDirectory() && !info.isSymlink() && !info.scanFailed())
       {
          monitoredDirectories_.insert(path);
       }
@@ -985,6 +1011,8 @@ void ProjectContext::fileMonitorTermination(const Error& error)
       // do this only once
       hasFileMonitor_ = false;
       monitoredDirectories_.clear();
+      failedMonitorDirectories_.clear();
+      sourceIndexExcludedDirectories_.clear();
 
       // notify end-user if this was an error condition
       if (error)
@@ -1176,6 +1204,11 @@ FilePath ProjectContext::packageDirectory() const
    return directory();
 }
 
+void ProjectContext::noteSourceIndexExcludedDirectory(const FilePath& directory) const
+{
+   sourceIndexExcludedDirectories_.insert(directory);
+}
+
 FilePath ProjectContext::packageDirectoryInProject() const
 {
    FilePath packageDir = resolvePackageDirectoryInProject();
@@ -1216,6 +1249,12 @@ FilePath ProjectContext::resolvePackageDirectoryInProject() const
 
    if (fileMonitorInitialized_ && monitoredDirectories_.count(indexedDir) == 0)
       return FilePath();
+   for (const FilePath& failedDir : failedMonitorDirectories_)
+      if (failedDir.isWithin(indexedDir) || indexedDir.isWithin(failedDir))
+         return FilePath();
+   for (const FilePath& excludedDir : sourceIndexExcludedDirectories_)
+      if (indexedDir.isWithin(excludedDir) || excludedDir.isWithin(indexedDir.completeChildPath("R")))
+         return FilePath();
 
    if (!packageFilterContext_)
       packageFilterContext_ = boost::make_shared<FileMonitorFilterContext>(
@@ -1225,7 +1264,12 @@ FilePath ProjectContext::resolvePackageDirectoryInProject() const
    // Check every ancestor, since filtering one removes its whole subtree.
    for (FilePath dir = indexedDir; dir != directory(); dir = dir.getParent())
    {
-      if (dir.isSymlink() || modules::code_search::isIgnoredDirectory(dir, true) ||
+      if (modules::code_search::isIgnoredDirectory(dir, true))
+      {
+         noteSourceIndexExcludedDirectory(dir);
+         return FilePath();
+      }
+      if (dir.isSymlink() ||
           !fileMonitorFilter(FileInfo(dir.getAbsolutePath(), true), *packageFilterContext_))
       {
          return FilePath();
@@ -1240,9 +1284,13 @@ FilePath ProjectContext::resolvePackageDirectoryInProject() const
       FileInfo info(path.getAbsolutePath(), name == "R");
       if (path.isSymlink() || !fileMonitorFilter(info, *packageFilterContext_))
          return FilePath();
+      if (name == "R" && modules::code_search::isIgnoredDirectory(path, true))
+      {
+         noteSourceIndexExcludedDirectory(path);
+         return FilePath();
+      }
       if (name == "R" &&
           (isIgnoredMonitorPath(path.getAbsolutePath() + "/", *packageFilterContext_) ||
-           modules::code_search::isIgnoredDirectory(path, true) ||
            (fileMonitorInitialized_ && path.exists() && monitoredDirectories_.count(path) == 0)))
       {
          return FilePath();

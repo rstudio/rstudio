@@ -236,6 +236,9 @@ public:
    // return an empty path (as does a session with no project).
    core::FilePath packageDirectoryInProject() const;
 
+   // Retain source-index exclusions until a fresh monitor snapshot is indexed.
+   void noteSourceIndexExcludedDirectory(const core::FilePath& directory) const;
+
    // Metadata and package detection share the DESCRIPTION refreshed by the
    // file monitor. Without monitoring, refresh on demand.
    const core::r_util::RPackageInfo& packageInfo() const;
@@ -323,6 +326,8 @@ private:
    bool hasFileMonitor_;
    bool fileMonitorInitialized_;
    std::set<core::FilePath> monitoredDirectories_;
+   std::set<core::FilePath> failedMonitorDirectories_;
+   mutable std::set<core::FilePath> sourceIndexExcludedDirectories_;
    mutable core::FilePath indexedPackageDirectory_;
    mutable boost::shared_ptr<FileMonitorFilterContext> packageFilterContext_;
    std::vector<std::string> monitorSubscribers_;
