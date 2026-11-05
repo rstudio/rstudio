@@ -2,9 +2,9 @@
 // Files "Search in" field. base-prefs.jsonc sets native_file_dialogs=false
 // suite-wide, so Desktop shows the GWT chooser too.
 //
-// Choose hands the caller the directory the chooser shows. #18938: a listing's
-// arrival wiped the chooser's path after it was set, so Choose returned an
-// empty path and blanked the caller's field.
+// Choose returns the selected folder, or the current directory when nothing
+// is selected. #18938: a listing's arrival wiped the chooser's path after it
+// was set. #18958: selecting the parent row returned the literal path `..`.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
@@ -95,6 +95,42 @@ test.describe('Choose Directory dialog', () => {
     const chooser = await openChooserAt(page, base);
     await chooser.getByText(SUBFOLDER, { exact: true }).dblclick();
     await expect(chooser.locator(CURRENT_LOCATION)).toHaveText(SUBFOLDER, { timeout: TIMEOUTS.fileOpen });
+
+    await chooser.locator(CHOOSE_BTN).click();
+    await expect(chooser).toBeHidden();
+    await expect(page.locator(SEARCH_IN_TEXT)).toHaveValue(new RegExp(`/${BASE_NAME}/${SUBFOLDER}$`));
+  });
+
+  test('choosing a selected parent row returns the parent folder', async ({ rstudioPage: page }) => {
+    const chooser = await openChooserAt(page, base);
+    await chooser.getByText(SUBFOLDER, { exact: true }).dblclick();
+    await expect(chooser.locator(CURRENT_LOCATION)).toHaveText(SUBFOLDER, { timeout: TIMEOUTS.fileOpen });
+
+    // A single click selects the synthetic .. row without navigating (#18958).
+    await chooser.getByText('..', { exact: true }).click();
+    await expect(chooser.locator(CURRENT_LOCATION)).toHaveText(SUBFOLDER);
+    await chooser.locator(CHOOSE_BTN).click();
+    await expect(chooser).toBeHidden();
+    await expect(page.locator(SEARCH_IN_TEXT)).toHaveValue(new RegExp(`/${BASE_NAME}$`));
+  });
+
+  test('double-clicking the parent row navigates to the parent folder', async ({ rstudioPage: page }) => {
+    const chooser = await openChooserAt(page, base);
+    await chooser.getByText(SUBFOLDER, { exact: true }).dblclick();
+    await expect(chooser.locator(CURRENT_LOCATION)).toHaveText(SUBFOLDER, { timeout: TIMEOUTS.fileOpen });
+
+    await chooser.getByText('..', { exact: true }).dblclick();
+    await expect(chooser.locator(CURRENT_LOCATION)).toHaveText(BASE_NAME, { timeout: TIMEOUTS.fileOpen });
+    await expect(chooser.getByText(SUBFOLDER, { exact: true })).toBeVisible();
+    await chooser.locator(CHOOSE_BTN).click();
+    await expect(chooser).toBeHidden();
+    await expect(page.locator(SEARCH_IN_TEXT)).toHaveValue(new RegExp(`/${BASE_NAME}$`));
+  });
+
+  test('choosing a selected child row returns the child folder', async ({ rstudioPage: page }) => {
+    const chooser = await openChooserAt(page, base);
+    await chooser.getByText(SUBFOLDER, { exact: true }).click();
+    await expect(chooser.locator(CURRENT_LOCATION)).toHaveText(BASE_NAME);
 
     await chooser.locator(CHOOSE_BTN).click();
     await expect(chooser).toBeHidden();
