@@ -62,6 +62,177 @@ TEST(SessionProjectsTests, IsPackageProjectFalseWithoutProject)
    EXPECT_FALSE(projectContext().isPackageProject());
 }
 
+class PackageProjectInfoTests : public ::testing::Test
+{
+protected:
+   void SetUp() override
+   {
+      ASSERT_FALSE(FilePath::tempFilePath(projectDir_));
+      ASSERT_FALSE(projectDir_.ensureDirectory());
+   }
+
+   void TearDown() override
+   {
+      EXPECT_FALSE(projectDir_.remove());
+   }
+
+   void writeDescription(const std::string& contents, const std::string& subdir = "")
+   {
+      FilePath dir = projectDir_.completeChildPath(subdir);
+      ASSERT_FALSE(dir.ensureDirectory());
+      ASSERT_FALSE(writeStringToFile(dir.completeChildPath("DESCRIPTION"), contents));
+   }
+
+   void openProject(ProjectContext* pContext,
+                    const std::string& buildType,
+                    const std::string& packagePath = "",
+                    bool enableCodeIndexing = false)
+   {
+      FilePath projectFile = projectDir_.completeChildPath("test.Rproj");
+      ASSERT_FALSE(writeStringToFile(
+            projectFile,
+            std::string("Version: 1.0\nEnableCodeIndexing: ") +
+            (enableCodeIndexing ? "Yes" : "No") + "\nBuildType: " + buildType +
+            "\nPackagePath: " + packagePath + "\n"));
+      std::string userError;
+      Error error = pContext->startup(projectFile, &userError);
+      ASSERT_FALSE(error) << error.asString() << " " << userError;
+
+      // Resolve build paths and metadata without initializing session-wide
+      // callbacks or starting a monitor for this temporary project context.
+      pContext->setConfig(pContext->config());
+   }
+
+   FilePath projectDir_;
+};
+
+TEST_F(PackageProjectInfoTests, ReadsPackageWithNonPackageBuildTypes)
+{
+   writeDescription(R"(Package: localpkg
+Version: 0.1.0
+Imports: utils
+LinkingTo: Rcpp
+)");
+
+   for (const std::string& buildType : {"None", "Makefile", "Custom"})
+   {
+      SCOPED_TRACE(buildType);
+      ProjectContext context;
+      openProject(&context, buildType);
+      r_util::RProjectConfig config = context.config();
+      config.makefilePath = "build";
+      config.customScriptPath = "build.sh";
+      context.setConfig(config);
+      ASSERT_TRUE(context.isPackageProject());
+      EXPECT_EQ("localpkg", context.packageInfo().name());
+      EXPECT_EQ("utils", context.packageInfo().imports());
+      EXPECT_EQ("Rcpp", context.packageInfo().linkingTo());
+   }
+}
+
+TEST_F(PackageProjectInfoTests, RecognizesPackagePathBeforeFileMonitoring)
+{
+   writeDescription("Package: nestedpkg\nVersion: 0.1.0\n", "pkg");
+   ProjectContext context;
+   openProject(&context, "Package", "pkg");
+
+   EXPECT_EQ(projectDir_.completeChildPath("pkg"), context.buildTargetPath());
+   EXPECT_TRUE(context.isPackageProject());
+   EXPECT_EQ("nestedpkg", context.packageInfo().name());
+}
+
+TEST_F(PackageProjectInfoTests, RefreshesMetadataWithoutFileMonitoring)
+{
+   writeDescription("Package: before\nVersion: 0.1.0\nImports: utils\nLinkingTo: Rcpp\n");
+   ProjectContext context;
+   openProject(&context, "Package");
+   ASSERT_FALSE(context.hasFileMonitor());
+   ASSERT_EQ("utils", context.packageInfo().imports());
+
+   writeDescription("Package: after\nVersion: 0.2.0\n");
+   EXPECT_TRUE(context.isPackageProject());
+   EXPECT_EQ("after", context.packageInfo().name());
+   EXPECT_EQ("0.2.0", context.packageInfo().version());
+   EXPECT_TRUE(context.packageInfo().imports().empty());
+   EXPECT_TRUE(context.packageInfo().linkingTo().empty());
+}
+
+TEST_F(PackageProjectInfoTests, ClearsMetadataForInvalidOrRemovedDescription)
+{
+   writeDescription("Package: valid\nVersion: 0.1.0\n");
+   ProjectContext context;
+   openProject(&context, "Package");
+   ASSERT_TRUE(context.isPackageProject());
+
+   writeDescription("Package: missingversion\n");
+   EXPECT_FALSE(context.isPackageProject());
+   EXPECT_TRUE(context.packageInfo().empty());
+
+   writeDescription("Package: \nVersion: 0.1.0\n");
+   EXPECT_FALSE(context.isPackageProject());
+   EXPECT_TRUE(context.packageInfo().empty());
+
+   writeDescription("Package: restored\nVersion: 0.2.0\n");
+   EXPECT_TRUE(context.isPackageProject());
+   EXPECT_EQ("restored", context.packageInfo().name());
+
+   ASSERT_FALSE(projectDir_.completeChildPath("DESCRIPTION").remove());
+   EXPECT_FALSE(context.isPackageProject());
+   EXPECT_TRUE(context.packageInfo().empty());
+}
+
+TEST_F(PackageProjectInfoTests, ChangesPackageDirectoryWithBuildConfiguration)
+{
+   writeDescription("Package: rootpkg\nVersion: 0.1.0\nImports: utils\n");
+   writeDescription("Package: nestedpkg\nVersion: 0.2.0\n", "pkg");
+   ProjectContext context;
+   openProject(&context, "None");
+   EXPECT_EQ("rootpkg", context.packageInfo().name());
+
+   r_util::RProjectConfig config = context.config();
+   config.buildType = r_util::kBuildTypePackage;
+   config.packagePath = "pkg";
+   context.setConfig(config);
+   EXPECT_TRUE(context.isPackageProject());
+   EXPECT_EQ("nestedpkg", context.packageInfo().name());
+   EXPECT_TRUE(context.packageInfo().imports().empty());
+
+   config.buildType = r_util::kBuildTypeNone;
+   context.setConfig(config);
+   EXPECT_TRUE(context.isPackageProject());
+   EXPECT_EQ("rootpkg", context.packageInfo().name());
+   EXPECT_EQ("utils", context.packageInfo().imports());
+}
+
+TEST_F(PackageProjectInfoTests, RefreshesSharedMetadataWhenDescriptionChanges)
+{
+   writeDescription("Package: before\nVersion: 0.1.0\nImports: utils\n");
+   ProjectContext context;
+   openProject(&context, "None", "", true);
+   ASSERT_TRUE(context.hasFileMonitor());
+   ASSERT_TRUE(context.isPackageProject());
+   ASSERT_EQ("before", context.packageInfo().name());
+
+   writeDescription("Package: after\nVersion: 0.2.0\n");
+   context.updatePackageInfo();
+   EXPECT_TRUE(context.isPackageProject());
+   EXPECT_EQ("after", context.packageInfo().name());
+   EXPECT_TRUE(context.packageInfo().imports().empty());
+
+   ASSERT_FALSE(projectDir_.completeChildPath("DESCRIPTION").remove());
+   context.updatePackageInfo();
+   EXPECT_FALSE(context.isPackageProject());
+   EXPECT_TRUE(context.packageInfo().empty());
+}
+
+TEST_F(PackageProjectInfoTests, RespectsDescriptionType)
+{
+   writeDescription("Package: book\nVersion: 0.1.0\nType: Book\n");
+   ProjectContext context;
+   openProject(&context, "None");
+   EXPECT_FALSE(context.isPackageProject());
+}
+
 TEST(SessionProjectsTests, ResolveWrittenEditorThemePreservesWhenKeyOmitted)
 {
    // No editor_theme key in the request -> keep the existing on-disk value.

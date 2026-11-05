@@ -113,7 +113,8 @@ class ProjectContext : boost::noncopyable
 {
 public:
    ProjectContext()
-      : isNewProject_(false),
+      : packageInfoInitialized_(false),
+        isNewProject_(false),
         hasFileMonitor_(false),
         reduceRemoteFilesystemOpsResolved_(false),
         reduceRemoteFilesystemOps_(false)
@@ -224,10 +225,13 @@ public:
       return buildOptions_;
    }
 
-   const core::r_util::RPackageInfo& packageInfo() const
-   {
-      return packageInfo_;
-   }
+   // The package build target, or the project directory for other build types.
+   core::FilePath packageDirectory() const;
+
+   // Metadata and package detection share the DESCRIPTION refreshed by the
+   // file monitor. Without monitoring, refresh on demand.
+   const core::r_util::RPackageInfo& packageInfo() const;
+   void updatePackageInfo() const;
    
    // is this an R package project?
    bool isPackageProject();
@@ -281,7 +285,6 @@ private:
 
    void updateDefaultEncoding();
    void updateBuildTargetPath();
-   void updatePackageInfo();
 
    void augmentRbuildignore();
 
@@ -300,7 +303,8 @@ private:
    std::string defaultEncoding_;
    core::FilePath buildTargetPath_;
    RProjectBuildOptions buildOptions_;
-   core::r_util::RPackageInfo packageInfo_;
+   mutable core::r_util::RPackageInfo packageInfo_;
+   mutable bool packageInfoInitialized_;
    bool isNewProject_;
 
    bool hasFileMonitor_;

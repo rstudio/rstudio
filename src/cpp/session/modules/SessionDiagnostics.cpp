@@ -421,7 +421,7 @@ Error getAllAvailableRSymbols(const FilePath& filePath,
    //
    // For R package development, when linting a 'test' file, we can
    // safely assume that the package itself will be loaded.
-   FilePath projDir = projects::projectContext().directory();
+   FilePath projDir = projects::projectContext().packageDirectory();
    Error error;
 
    if (projects::projectContext().isPackageProject() && filePath.isWithin(projDir))
@@ -446,7 +446,7 @@ Error getAllAvailableRSymbols(const FilePath& filePath,
       addTestPackageSymbols(pSymbols);
    }
 
-   if (filePath.isWithin(projects::projectContext().directory().completeChildPath("tests/testthat")))
+   if (filePath.isWithin(projDir.completeChildPath("tests/testthat")))
    {
       PackageSymbolRegistry& registry = packageSymbolRegistry();
       registry.fillNamespaceSymbols("testthat", pSymbols, false);
@@ -992,7 +992,7 @@ void onNAMESPACEchanged()
    if (!projects::projectContext().hasProject())
       return;
 
-   FilePath NAMESPACE(projects::projectContext().directory().completePath("NAMESPACE"));
+   FilePath NAMESPACE(projects::projectContext().packageDirectory().completePath("NAMESPACE"));
    if (!NAMESPACE.exists())
       return;
 
@@ -1034,7 +1034,7 @@ void onNAMESPACEchanged()
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 {
    std::string namespacePath =
-      projects::projectContext().directory().completePath("NAMESPACE").getAbsolutePath();
+      projects::projectContext().packageDirectory().completePath("NAMESPACE").getAbsolutePath();
 
    for (const core::system::FileChangeEvent& event : events)
    {
@@ -1047,7 +1047,7 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 void afterSessionInitHook(bool newSession)
 {
    if (projects::projectContext().hasProject() &&
-      projects::projectContext().directory().completePath("NAMESPACE").exists())
+      projects::projectContext().packageDirectory().completePath("NAMESPACE").exists())
    {
       onNAMESPACEchanged();
    }

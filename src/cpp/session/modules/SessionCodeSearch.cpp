@@ -2856,11 +2856,11 @@ void addAllProjectSymbols(const Entry& entry,
 
 void addAllProjectSymbols(std::set<std::string>* pSymbols)
 {
-   FilePath buildTarget = projects::projectContext().buildTargetPath();
-   
-   if (!buildTarget.isEmpty())
+   FilePath packageDir = projects::projectContext().packageDirectory();
+
+   if (!packageDir.isEmpty())
       projectIndex().walkFiles(
-               buildTarget,
+               packageDir,
                boost::bind(callbacks::addAllProjectSymbols, _1, pSymbols));
    
    // Add in symbols made available as part of registration of native routines,
