@@ -300,8 +300,9 @@ public class CppCompletionRequest
          case CppDiagnostic.IGNORED: return "ignored";
          case CppDiagnostic.NOTE:    return "note";
          case CppDiagnostic.WARNING: return "warning";
-         case CppDiagnostic.ERROR:   return "error";
-         case CppDiagnostic.FATAL:   return "fatal";
+         // the editor has no "fatal" lint type; show fatal errors as errors
+         case CppDiagnostic.ERROR:
+         case CppDiagnostic.FATAL:   return "error";
          default: return "";
       }
    }
