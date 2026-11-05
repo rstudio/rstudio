@@ -536,7 +536,7 @@ public class TextEditingTarget implements
             {
                // do not show the error if it is a transient autosave related issue - this can occur fairly frequently
                // when attempting to save files that are being backed up by external software
-               if (message.contains(constants_.onErrorMessage()) && suppressFileLockError_)
+               if (message.contains(DocUpdateSentinel.FILE_IN_USE_ERROR_MESSAGE) && suppressFileLockError_)
                {
                   if (executeOnSilentFailure_ != null)
                      executeOnSilentFailure_.execute();

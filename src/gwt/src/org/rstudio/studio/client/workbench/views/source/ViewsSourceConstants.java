@@ -307,7 +307,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
     String expandCapitalized();
     String collapseOrExpandCodeChunk(String hintText);
     String editsStillBeingBackedUp();
-    String processStillBeingUsedTextEditingTarget();
     String errorAutosavingFile();
     String rStudioUnableToAutosave();
     String couldNotSavePathPlusMessage(String path, String message);
