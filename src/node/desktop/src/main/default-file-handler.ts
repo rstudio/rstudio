@@ -21,12 +21,12 @@ import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { isAutomated } from './utils';
 
 // The R-specific extensions RStudio registers in Info.plist.in. Generic ones it
-// also registers (md, html, css, js, tex) are left to the user's existing choice.
+// also registers (qmd, md, html, css, js, tex) are left to the user's existing
+// choice; .qmd is often owned by Positron, VS Code or the Quarto app.
 export const kRFileExtensions = [
   'R',
   'Rmd',
   'Rmarkdown',
-  'qmd',
   'Rnw',
   'Rtex',
   'Rd',
