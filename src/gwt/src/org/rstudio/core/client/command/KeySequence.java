@@ -163,18 +163,6 @@ public class KeySequence
       return builder.toString();
    }
 
-   /**
-    * This sequence in aria-keyshortcuts format, or null if it has more than
-    * one key combination, which the format can't express.
-    */
-   public String toAriaKeyShortcuts()
-   {
-      if (keyCombinations_.size() != 1)
-         return null;
-
-      return keyCombinations_.get(0).toAriaKeyShortcut();
-   }
-
    @Override
    public int hashCode()
    {

@@ -162,59 +162,6 @@ public class KeyCombination
       return KeyboardHelper.keyNameFromKeyCode(keyCode_);
    }
 
-   /**
-    * This combination in aria-keyshortcuts format, e.g. "Control+Shift+K", or
-    * null when the key has no unambiguous name in that format.
-    */
-   public String toAriaKeyShortcut()
-   {
-      String key = ariaKeyName();
-      if (key == null)
-         return null;
-
-      return (isCtrlPressed() ? "Control+" : "")
-            + (isAltPressed() ? "Alt+" : "")
-            + (isShiftPressed() ? "Shift+" : "")
-            + (isMetaPressed() ? "Meta+" : "")
-            + key;
-   }
-
-   private String ariaKeyName()
-   {
-      // aria-keyshortcuts uses KeyboardEvent.key values, which differ from
-      // RStudio's names for these keys.
-      switch (keyCode_)
-      {
-         case KeyCodes.KEY_LEFT:  return "ArrowLeft";
-         case KeyCodes.KEY_RIGHT: return "ArrowRight";
-         case KeyCodes.KEY_UP:    return "ArrowUp";
-         case KeyCodes.KEY_DOWN:  return "ArrowDown";
-         case KeyCodes.KEY_SPACE: return "Space";
-         default:                 break;
-      }
-
-      // "+" is the format's separator. Its key code is shared with "=".
-      if (StringUtil.equals(key_, "+"))
-         return null;
-      if (StringUtil.equals(key_, "Backslash"))
-         return "\\";
-
-      // Prefer the key code's name: shortcuts parsed from strings carry keys
-      // re-capitalized from lower case, e.g. "Pageup".
-      String name = keyCode_ > 0 ? KeyboardHelper.keyNameFromKeyCode(keyCode_) : key_;
-
-      // Numpad names are KeyboardEvent.code values; their key values are the
-      // same as the main keyboard's, so the shortcut would be ambiguous.
-      if (StringUtil.isNullOrEmpty(name) ||
-          name.contains("+") ||
-          name.toLowerCase().startsWith("numpad"))
-      {
-         return null;
-      }
-
-      return name.length() == 1 ? name.toUpperCase() : name;
-   }
-
    @Override
    public int hashCode()
    {

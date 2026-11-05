@@ -719,8 +719,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       }
       else if (!StringUtil.isNullOrEmpty(shortcut))
       {
-         text.append("<td class=\"" + MENU_SHORTCUT_CLASS + "\" align=right nowrap>" +
-                     "&nbsp;&nbsp;&nbsp;&nbsp;" + shortcut + "</td>");
+         text.append("<td align=right nowrap>&nbsp;&nbsp;&nbsp;&nbsp;" + shortcut + "</td>");
       }
       else
       {
@@ -729,16 +728,6 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       text.append("</tr></table>");
 
       return text.toString();
-   }
-
-   /**
-    * The shortcut in aria-keyshortcuts format, or null if there is none or it
-    * can't be expressed in that format.
-    */
-   public String getAriaKeyShortcuts()
-   {
-      KeyboardShortcut shortcut = getShortcut();
-      return shortcut == null ? null : shortcut.getKeySequence().toAriaKeyShortcuts();
    }
 
    public KeyboardShortcut getShortcut()
@@ -878,9 +867,6 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    private boolean executedFromShortcut_ = false;
 
    private static boolean enableNoHandlerAssertions_ = true;
-
-   // Marks the cell that shows a menu item's shortcut; see AppMenuItem
-   public static final String MENU_SHORTCUT_CLASS = "rstudio-menu-shortcut";
 
    public static final String WINDOW_MODE_BACKGROUND = "background";
    public static final String WINDOW_MODE_MAIN = "main";
