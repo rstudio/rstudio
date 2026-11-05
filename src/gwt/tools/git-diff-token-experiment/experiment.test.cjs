@@ -5,9 +5,45 @@
 
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
-const { STRATEGIES, TOKEN_STRATEGIES, createEngine, timedOut, tokenize, validateChunks } = require('./engine.cjs');
+const { STRATEGIES, TOKEN_STRATEGIES, createEngine, createProductionEngine, timedOut, tokenize, validateChunks } = require('./engine.cjs');
 const { syntheticCases } = require('./fixtures.cjs');
 const engine = createEngine();
+
+test('shipped provider and gutter match the bounded experiment in both bundle formats', () => {
+   for (const minified of [false, true]) {
+      const production = createProductionEngine({ minified });
+      for (const fixture of syntheticCases()) {
+         const options = { budgetMs: 5000, splitView: true };
+         const expected = engine.compute(fixture.base, fixture.lines, 'bounded', options);
+         const actual = production.compute(fixture.base, fixture.lines, 'current', options);
+         assert(!actual.failed && !timedOut(actual));
+         assert.deepEqual(actual.chunks, expected.chunks, fixture.name);
+         assert.deepEqual(actual.characterRanges, expected.characterRanges, fixture.name);
+         validateChunks(fixture.base, fixture.lines, actual.chunks);
+      }
+   }
+});
+
+test('shipped mode switching preserves coarse selection mapping and character highlights', () => {
+   const separated = syntheticCases().find(item => item.name === 'separated-blocks-"}"');
+   const base = ['header()', 'keep_this_meaningful_statement()', ...separated.base, 'tail()'];
+   const lines = ['header()', 'inserted()', 'keep_this_meaningful_statement()', ...separated.lines, 'tail()'];
+   const production = createProductionEngine();
+   const result = production.compute(base, lines, 'current', {
+      boundedLimits: { groupReads: 0 }, reviewTransitions: [true, false, true],
+      transformPositions: [{ row: 5, column: 0, isOriginal: true }, { row: 6, column: 0, isOriginal: false }]
+   });
+   assert(!result.failed);
+   assert.deepEqual(result.transformedPositions, [{ row: 6, column: 0 }, { row: 5, column: 0 }]);
+   for (const transition of result.transitions) {
+      assert.equal(transition.pending, false);
+      assert.deepEqual(transition.chunks, result.chunks);
+      if (transition.visible) {
+         assert.deepEqual(transition.delivered.characterRanges, result.characterRanges);
+         assert(transition.delivered.characterChanges[1] > 0);
+      }
+   }
+});
 
 test('tokens preserve exact equality across the single-character token limit', () => {
    const lines = Array.from({ length: 21010 }, (_, i) => `statement_${i}()`);

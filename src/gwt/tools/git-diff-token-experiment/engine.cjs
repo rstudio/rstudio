@@ -4,6 +4,7 @@
  */
 
 const assert = require('node:assert/strict');
+const { execFileSync } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 const { performance } = require('node:perf_hooks');
@@ -13,6 +14,16 @@ const { BOUNDED_LIMITS, installBoundedRefinement } = require('./bounded.cjs');
 const ROOT = path.resolve(__dirname, '../../../..');
 const TOKEN_STRATEGIES = ['bare', 'indent', 'padded', 'indent-padded', 'structured'];
 const STRATEGIES = ['current', ...TOKEN_STRATEGIES, 'line-only', 'bounded'];
+const BASELINE = require('./history.json').selectedAt;
+const baselineSources = new Map();
+function readBaseline(file) {
+   const relative = path.relative(ROOT, file);
+   if (!baselineSources.has(relative))
+      baselineSources.set(relative, execFileSync('git', ['show', `${BASELINE}:${relative}`], {
+         cwd: ROOT, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024
+      }));
+   return baselineSources.get(relative);
+}
 
 // Standalone so the same function can run inside Ace's VM. The first four
 // token variants key on complete lines, like the existing fallback. The
@@ -72,12 +83,12 @@ function createEngine() {
    const context = vm.createContext({ console, setTimeout, clearTimeout, performance, experiment: state });
    context.window = context;
    const aceDir = path.join(ROOT, 'src/gwt/src/org/rstudio/studio/client/workbench/views/source/editors/text/ace');
-   vm.runInContext(fs.readFileSync(path.join(aceDir, 'ace-uncompressed.js'), 'utf8'), context);
+   vm.runInContext(readBaseline(path.join(aceDir, 'ace-uncompressed.js')), context);
    context.require('ace/lib/dom').useStrictCSP(true);
 
    // Instrument only the in-memory provider. Preserve its algorithms and
    // surface the timeout phase that the public provider currently discards.
-   let provider = fs.readFileSync(path.join(aceDir, 'ext-diff-uncompressed.js'), 'utf8');
+   let provider = readBaseline(path.join(aceDir, 'ext-diff-uncompressed.js'));
    provider = replaceOnce(
       provider,
       'var hitTimeout = lineAlignmentResult.hitTimeout;',
@@ -178,7 +189,7 @@ function createEngine() {
    vm.runInContext(`(${installBoundedRefinement.toString()})(require("ace/ext/diff/providers/default"), experiment);`, context);
 
    vm.runInContext(`var experimentTokenize = ${tokenize.toString()};`, context);
-   let gutter = fs.readFileSync(path.join(ROOT, 'src/gwt/acesupport/git_diff_gutter.js'), 'utf8');
+   let gutter = readBaseline(path.join(ROOT, 'src/gwt/acesupport/git_diff_gutter.js'));
    gutter = replaceOnce(
       gutter,
       'if (chunk.charChanges)',
@@ -249,6 +260,35 @@ function createEngine() {
       }`
    );
    vm.runInContext(gutter, context);
+   return createRunner(context, state);
+}
+
+// Load the shipped source without rewriting either algorithm or gutter code.
+// Only test-controlled provider options and timeout observation are wrapped.
+function createProductionEngine({ minified = false } = {}) {
+   const state = {};
+   const context = vm.createContext({ console, setTimeout, clearTimeout, performance });
+   context.window = context;
+   const aceDir = path.join(ROOT, 'src/gwt/src/org/rstudio/studio/client/workbench/views/source/editors/text/ace');
+   const suffix = minified ? '.js' : '-uncompressed.js';
+   vm.runInContext(fs.readFileSync(path.join(aceDir, 'ace' + suffix), 'utf8'), context);
+   context.require('ace/lib/dom').useStrictCSP(true);
+   vm.runInContext(fs.readFileSync(path.join(aceDir, 'ext-diff' + suffix), 'utf8'), context);
+   const Provider = context.require('ace/ext/diff/providers/default').DiffProvider;
+   const compute = Provider.prototype.compute;
+   Provider.prototype.compute = function(base, lines, options) {
+      const chunks = compute.call(this, base, lines, {
+         ...options, maxComputationTimeMs: state.budgetMs,
+         ...(state.customBoundedLimits ? { boundedRefinement: state.boundedLimits } : {})
+      });
+      state.alignmentTimeouts.push(chunks.hitTimeout);
+      return chunks;
+   };
+   vm.runInContext(fs.readFileSync(path.join(ROOT, 'src/gwt/acesupport/git_diff_gutter.js'), 'utf8'), context);
+   return createRunner(context, state, true);
+}
+
+function createRunner(context, state, production = false) {
    const Gutter = context.require('rstudio/git_diff_gutter').GitDiffGutter;
 
    function compute(base, lines, strategy = 'current', options = {}) {
@@ -262,7 +302,7 @@ function createEngine() {
          strategy, budgetMs, rawOnly: !!options.rawOnly,
          alignmentTimeouts: [], lineAlignments: [], refinementTimeouts: 0,
          refinementMs: 0, characterRefinementCalls: 0,
-         boundedGroups: [], boundedLimits
+         boundedGroups: [], boundedLimits, customBoundedLimits: options.boundedLimits
       });
       let chunks;
       const model = {
@@ -328,8 +368,8 @@ function createEngine() {
          ms: performance.now() - started,
          transitions,
          transformedPositions,
-         refinementMs: state.refinementMs,
-         characterRefinementCalls: state.characterRefinementCalls,
+         refinementMs: production ? null : state.refinementMs,
+         characterRefinementCalls: production ? null : state.characterRefinementCalls,
          boundedGroups: JSON.parse(JSON.stringify(state.boundedGroups)),
          alignmentTimeouts: state.alignmentTimeouts.slice(),
          lineAlignments: JSON.parse(JSON.stringify(state.lineAlignments)),
@@ -366,4 +406,4 @@ function validateChunks(base, lines, chunks) {
    assert.deepEqual(restored, base);
 }
 
-module.exports = { ROOT, STRATEGIES, TOKEN_STRATEGIES, createEngine, timedOut, tokenize, validateChunks };
+module.exports = { ROOT, STRATEGIES, TOKEN_STRATEGIES, createEngine, createProductionEngine, timedOut, tokenize, validateChunks };

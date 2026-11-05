@@ -1,8 +1,10 @@
 # Git gutter diff experiments
 
 Experiment for [rstudio/rstudio#19218](https://github.com/rstudio/rstudio/issues/19218).
-This directory contains runnable prototypes and a comparison harness. It does not
-change the shipped editor or vendored Ace files.
+This directory contains the original prototypes and a comparison harness for
+the shipped bounded-refinement implementation. Historical candidates are loaded
+from the pinned `history.json` baseline; `production` loads the working tree's
+actual Ace bundles and gutter code.
 
 ## Run
 
@@ -24,7 +26,7 @@ checks passed; it does **not** mean a candidate is suitable to ship.
 
 ## Prototype
 
-`engine.cjs` loads the bundled Ace and the actual `git_diff_gutter.js` in a Node
+`engine.cjs` loads the baseline Ace and `git_diff_gutter.js` in a Node
 VM, enables strict CSP, then inserts the candidate into `computeChunks` in memory.
 The production `update` path still handles whitespace preferences, and the real
 `computeChunks` still trims common prefixes/suffixes and handles empty sides.
@@ -36,8 +38,8 @@ whole-range failure guard. They measure tokenization as part of the elapsed time
 The token and line-only candidates use the current raw-text path when review is
 attached. The bounded candidate shares its hunk policy across both modes and
 adds separately budgeted review highlights without changing those hunks.
-This branch is exercised without a DOM;
-rendering and mode switching are not validated in the IDE. For the provider
+These comparisons run without a DOM. A separate browser integration test covers
+the production editor components (see below). For the provider
 option, a headless test also exercises the real view-attachment and update-flush
 methods with event and DOM plumbing stubbed.
 
@@ -51,6 +53,7 @@ methods with event and DOM plumbing stubbed.
 | structured | Identifiers keyed on trimmed text, with original leading/trailing whitespace and padding |
 | line-only | Original lines with the provider's experimental `skipCharacterRefinement` option |
 | bounded | Original line heuristics with limited refinement for small or ambiguous groups; fixed hunks in review |
+| production | Shipped provider option and gutter integration, without rewriting their source |
 
 The structured variant preserves both exact equality and the provider's initial
 trimmed-line equality, as well as indentation and the short-line threshold for
@@ -291,7 +294,46 @@ views. This is stronger evidence than the previous two strategies. It does not
 establish exact raw-diff parity for arbitrary files: forced exhaustion tests
 intentionally produce coarser hunks, consistently in both views.
 
-This is still a local, headless experiment. A production change would need a
+At this stage it was a local, headless experiment. A production change needed a
 supported provider option/status API, the review-refresh integration, and IDE
 verification of rendering, navigation, peeks, individual reverts, and mode
-switching. No production source or generated Ace bundle has been modified.
+switching. The integration below supplies those changes.
+
+## Production integration
+
+The bounded policy now lives in `rstudio-ace`'s default provider, behind the
+opt-in `boundedRefinement` option. RStudio enables it for both views and requests
+additional character highlights only in side-by-side review. `hitTimeout` is
+preserved through the public provider API, replacing the elapsed-time heuristic
+and token fallback. A coarse hunk's `isCoarse` flag survives common-prefix offsets
+and keeps selection mapping independent of its partial character highlights.
+
+`sync-ace-commits` pins both `rstudio/rstudio-ace` and an exact source commit.
+That source also includes the pending Ace PR #13 tokenizer fixes already present
+in RStudio's bundles. Before adding bounded refinement, that combined source
+rebuilt the existing core and diff bundles byte-for-byte. `build-ace` now accepts
+an `ACE_SOURCE_DIR` environment override for building a dedicated Ace worktree;
+its output paths always refer to this RStudio checkout. The complete build
+changed only the two diff bundles.
+
+The five-sample production run used the same 29 cases. All production hunks and
+review character ranges matched the bounded prototype. All 145 timing pairs and
+29 open/close/reopen checks preserved boundaries, with no failed samples. Medians:
+
+| Case | Baseline gutter | Production gutter | Production review |
+| --- | ---: | ---: | ---: |
+| 300-line replacement | 289.6 ms | 13.9 ms | 14.1 ms |
+| 800-line replacement | 499.8 ms (no markers) | 99.4 ms | 99.8 ms |
+| Large historical Java change | 253.3 ms | 221.4 ms | 228.8 ms |
+
+The original granularity/highlight caveats still apply. Production timing uses
+the actual algorithms and getter instrumentation is absent; internal alignment
+and read-count comparisons are reported only for the instrumented candidates.
+
+Verification includes both minified and uncompressed bundles, the 20-test Node
+suite, and `test/git_diff_test.html` in the existing browser runner. The browser
+test uses the real RStudio editor, gutter, and split-view components and checks
+character/whole-line rendering, mode switches, navigation, peeks, individual
+reverts, and selection mapping through mixed coarse/refined hunks. The complete
+browser suite passed 731 checks across 10 pages. These are component tests, not
+a full RStudio application/session E2E run.

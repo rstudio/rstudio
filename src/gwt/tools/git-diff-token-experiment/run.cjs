@@ -9,10 +9,12 @@ const { execFileSync, spawnSync } = require('node:child_process');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { ROOT, STRATEGIES, createEngine, timedOut, validateChunks } = require('./engine.cjs');
+const { ROOT, STRATEGIES: EXPERIMENTAL_STRATEGIES, createEngine, createProductionEngine, timedOut, validateChunks } = require('./engine.cjs');
 const { syntheticCases } = require('./fixtures.cjs');
 const { BOUNDED_LIMITS } = require('./bounded.cjs');
 const manifest = require('./history.json');
+const STRATEGIES = [...EXPERIMENTAL_STRATEGIES, 'production'];
+const isBounded = strategy => strategy === 'bounded' || strategy === 'production';
 
 const git = (...args) => execFileSync('git', args, { cwd: ROOT, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 });
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -101,7 +103,12 @@ function main(args) {
       }
    }
 
-   const engine = createEngine();
+   const experimental = createEngine();
+   const production = createProductionEngine();
+   const engine = { compute(base, lines, strategy, options) {
+      return strategy === 'production' ? production.compute(base, lines, 'current', options) :
+         experimental.compute(base, lines, strategy, options);
+   } };
    const cases = syntheticCases().concat(historicalCases());
    const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'rstudio-token-diff-'));
    const report = {
@@ -146,12 +153,12 @@ function main(args) {
             entry.strategies[strategy] = {
                accurate, complete,
                matchesRaw: complete && rawComplete ? same(accurate.chunks, raw.chunks) : null,
-               matchesLineAlignments: complete && rawComplete ? same(accurate.lineAlignments, raw.lineAlignments) : null,
+               matchesLineAlignments: strategy !== 'production' && complete && rawComplete ? same(accurate.lineAlignments, raw.lineAlignments) : null,
                matchesGit: complete && sameFinalNewline ? same(accurate.chunks, gitResult) : null,
                matchesExpected: complete && fixture.expected ? same(accurate.chunks, fixture.expected) : null,
                samples: []
             };
-            if (strategy === 'line-only' || strategy === 'bounded') {
+            if (strategy === 'line-only' || isBounded(strategy)) {
                const review = engine.compute(base, lines, strategy, {
                   budgetMs: 5000, rawOnly: true, splitView: true
                });
@@ -164,9 +171,14 @@ function main(args) {
                   reviewMatchesRawCharacterRanges: reviewComplete && rawComplete ? same(review.characterRanges, raw.characterRanges) : null,
                   matchesReviewBoundaries: reviewComplete && complete ? same(accurate.chunks, review.chunks) : null
                });
-               if (strategy === 'bounded') {
-                  validateBoundedWork(accurate);
-                  validateBoundedWork(review);
+               if (isBounded(strategy)) {
+                  if (strategy === 'bounded') {
+                     validateBoundedWork(accurate);
+                     validateBoundedWork(review);
+                  } else if (complete && reviewComplete) {
+                     assert.deepEqual(accurate.chunks, entry.strategies.bounded.accurate.chunks, fixture.name);
+                     assert.deepEqual(review.characterRanges, entry.strategies.bounded.review.characterRanges, fixture.name);
+                  }
                   const toggled = engine.compute(base, lines, strategy, {
                      budgetMs: 5000, reviewTransitions: [true, false, true]
                   });
@@ -196,16 +208,18 @@ function main(args) {
             for (let offset = 0; offset < STRATEGIES.length; offset++) {
                const strategy = STRATEGIES[(sample + offset) % STRATEGIES.length];
                let review;
-               if (strategy === 'bounded' && sample % 2 === 0)
+               if (isBounded(strategy) && sample % 2 === 0)
                   review = engine.compute(base, lines, strategy, { splitView: true });
                const result = engine.compute(base, lines, strategy);
                if (!result.failed)
                   validateChunks(base, lines, result.chunks);
                entry.strategies[strategy].samples.push(result);
-               if (strategy === 'bounded') {
+               if (isBounded(strategy)) {
                   review ||= engine.compute(base, lines, strategy, { splitView: true });
-                  validateBoundedWork(result);
-                  validateBoundedWork(review);
+                  if (strategy === 'bounded') {
+                     validateBoundedWork(result);
+                     validateBoundedWork(review);
+                  }
                   if (!review.failed)
                      validateChunks(base, lines, review.chunks);
                   if (!result.failed && !review.failed)
@@ -216,7 +230,8 @@ function main(args) {
          }
          for (const strategy of STRATEGIES)
             entry.strategies[strategy].timing = statistics(entry.strategies[strategy].samples);
-         entry.strategies.bounded.reviewTiming = statistics(entry.strategies.bounded.reviewSamples);
+         for (const strategy of ['bounded', 'production'])
+            entry.strategies[strategy].reviewTiming = statistics(entry.strategies[strategy].reviewSamples);
          report.cases.push(entry);
          console.log(`${report.cases.length}/${cases.length} ${fixture.name}`);
       }
@@ -229,26 +244,31 @@ function main(args) {
       summary[strategy] = {
          historyRawComparable: history.filter(item => item.matchesRaw !== null).length,
          historyRawMismatches: history.filter(item => item.matchesRaw === false).length,
+         historyLineAlignmentComparable: history.filter(item => item.matchesLineAlignments !== null).length,
          historyLineAlignmentMismatches: history.filter(item => item.matchesLineAlignments === false).length,
          historyGitComparable: history.filter(item => item.matchesGit !== null).length,
          historyGitMismatches: history.filter(item => item.matchesGit === false).length,
          expectedMismatches: report.cases.filter(item => item.strategies[strategy].matchesExpected === false).map(item => item.name),
          failedTimingRuns: report.cases.reduce((n, item) => n + item.strategies[strategy].timing.failedRuns, 0)
       };
-      if (strategy === 'line-only' || strategy === 'bounded') {
+      if (strategy === 'line-only' || isBounded(strategy)) {
          const all = report.cases.map(item => item.strategies[strategy]);
          Object.assign(summary[strategy], {
             reviewRawComparable: all.filter(item => item.reviewMatchesRawCharacterRanges !== null).length,
             reviewRawCharacterRangeMismatches: all.filter(item => item.reviewMatchesRawCharacterRanges === false).length,
             reviewRawChunkMismatches: all.filter(item => item.reviewMatchesRawChunks === false).length,
             reviewBoundaryChanges: report.cases.filter(item => item.strategies[strategy].matchesReviewBoundaries === false).map(item => item.name),
-            characterRefinementCalls: all.reduce((n, item) => n + item.accurate.characterRefinementCalls, 0)
+            characterRefinementCalls: strategy === 'production' ? null : all.reduce((n, item) => n + item.accurate.characterRefinementCalls, 0)
          });
-         if (strategy === 'bounded') {
+         if (isBounded(strategy)) {
             Object.assign(summary[strategy], {
                transitionCasesComplete: all.filter(item => item.transitionsComplete).length,
                pairedTimingComparisons: all.reduce((n, item) => n + item.samples.filter((sample, i) => !sample.failed && !item.reviewSamples[i].failed).length, 0),
-               failedReviewTimingRuns: all.reduce((n, item) => n + item.reviewTiming.failedRuns, 0),
+               failedReviewTimingRuns: all.reduce((n, item) => n + item.reviewTiming.failedRuns, 0)
+            });
+         }
+         if (strategy === 'bounded') {
+            Object.assign(summary[strategy], {
                maxCanonicalReads: Math.max(...all.map(item => item.accurate.boundedGroups.reduce((n, group) => n + group.reads, 0))),
                maxCanonicalCharacters: Math.max(...all.map(item => item.accurate.boundedGroups.reduce((n, group) => n + group.characters, 0))),
                skippedSizeGroups: all.reduce((n, item) => n + item.accurate.boundedGroups.filter(group => group.reason === 'size').length, 0),
