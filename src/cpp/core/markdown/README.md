@@ -39,7 +39,7 @@ of `COPYING`, including its component attributions.
 | Fenced/indented code, emphasis, lists, HTML blocks | CommonMark parsing rules. These are intentional grammar changes. |
 | `x^2`, `x^(a + b)` | RStudio inline extension, including inline formatting and reference links. Bare superscripts resolve after enclosing emphasis and links. Code and escaped carets stay literal. Nesting is bounded at 16; unmatched or depth-limited superscripts do not repeatedly scan the remaining input. |
 | Smart punctuation, hard wrapping | `CMARK_OPT_SMART`, `CMARK_OPT_HARDBREAKS`. Smart punctuation now also curls apostrophes in contractions. |
-| MathJax, YAML/Pandoc metadata, `htmlPreserve` | Existing RStudio preprocessing/restoration remains shared. Code exclusion covers tilde fences, up to three leading spaces, and closing fences at least as long as the opener. Math restoration respects HTML escaping. |
+| MathJax, YAML/Pandoc metadata, `htmlPreserve` | RStudio metadata stripping and math restoration remain shared. cmark block boundaries constrain code exclusion, including multiline spans with matching backtick runs and nested/fenced code blocks. Math restoration respects HTML escaping. |
 | Authored HTML in previews, tutorials, presentations | Retained with `CMARK_OPT_UNSAFE`, preserving the existing caller contract. This migration does **not** make those surfaces HTML sanitizers. |
 | Help descriptions requesting escaping | Escape raw HTML nodes, remove Markdown images, and preserve generated Markdown formatting. Keep the existing strict URL allowlist. Rejected links keep the formatted label, rather than the original Markdown source. |
 | Code highlighting | cmark emits `language-r` / `language-cpp`; the preview detector and bundled stylesheets accept those as well as the old classes. |
@@ -64,6 +64,12 @@ The wrapper serializes rendering because upstream registration **and** inline
 parsing mutate global tables. The superscript adapter uses the pinned upstream
 inline parser API and parser structure; recheck that interface during upgrades.
 Vendor source remains untouched.
+
+When the input contains potential math delimiters, cmark first identifies block
+boundaries so math preprocessing cannot join backticks across paragraphs, list
+items, headings or table cells. Matching backtick runs within each inline block
+and whole code blocks are excluded from math substitution. This preliminary
+parse uses the same mutex as rendering; inputs without math delimiters skip it.
 
 ## Reproducing comparisons
 
@@ -102,10 +108,10 @@ Local validation on macOS arm64:
 
 - All nine upstream test suites passed at the pinned revision.
 - All 74 vendored files reproduce the upstream bytes exactly.
-- The 17 Markdown integration tests passed with cmark; the 11 shared tests
+- The 20 Markdown integration tests passed with cmark; the 11 shared tests
   also passed with Sundown. They cover the actual help, preview and presentation
   contracts, extension toggles, concurrent parsers, and bounded superscripts.
-- The complete cmark core test run passed 825 tests, with 12 environment/platform
+- The complete cmark core test run passed 828 tests, with 12 environment/platform
   skips and three disabled tests. The first sandboxed run could not register
   filesystem monitors; the successful run used normal OS access.
 - Both changed session translation units passed compilation checks; the actual
@@ -124,6 +130,16 @@ Local validation on macOS arm64:
   is not byte-identical and is not a claim of complete visual equivalence.
 - The knitted shipped presentation template was equivalent after normalization.
   The expanded presentation fixture differed only in the apostrophe in `don't`.
+
+The initial PR's Snyk Code scan reported nine findings in the unmodified
+upstream sources. Four concern `src/main.c`, the upstream CLI, which is excluded
+from `CMARK_SOURCES` and is not linked into RStudio. Five flag copies reached from
+`src/blocks.c` (lines 748, 757, 761, 1462 and 1464 at the pinned revision).
+Those paths bound their input slices by the supplied buffer length and copy
+through `cmark_strbuf_put`, which grows the destination before `memmove`;
+the UTF-8 validation path also uses this buffer helper. These appear to be
+static-analysis false positives, but the CI findings remain open for security
+review. No scan exclusions or upstream source changes were added to hide them.
 
 Before removing the fallback, exercise previews, custom completion help, and
 tutorials in the IDE on Windows, Linux, and macOS. R Presentations are soft

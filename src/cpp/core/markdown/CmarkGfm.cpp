@@ -41,6 +41,24 @@ namespace core {
 namespace markdown {
 namespace {
 
+std::mutex& parserMutex()
+{
+   static std::mutex mutex;
+   return mutex;
+}
+
+void attachGfmExtensions(cmark_parser* parser, const Extensions& extensions)
+{
+   cmark_gfm_core_extensions_ensure_registered();
+   for (const auto& extension : {std::make_pair("table", extensions.tables),
+                                 std::make_pair("strikethrough", extensions.strikethrough),
+                                 std::make_pair("autolink", extensions.autolink)})
+   {
+      if (extension.second)
+         cmark_parser_attach_syntax_extension(parser, cmark_find_syntax_extension(extension.first));
+   }
+}
+
 struct SuperscriptState
 {
    int depth = 0;
@@ -119,13 +137,25 @@ bool isSuperscript(cmark_node* node)
 
 Error resolveSuperscripts(cmark_node* document, cmark_syntax_extension* extension)
 {
-   std::vector<cmark_node*> nodes;
+   // Cache inherited depth during traversal; walking ancestors per marker
+   // would be quadratic in documents with deeply nested block containers.
+   std::vector<std::pair<cmark_node*, int>> nodes;
+   int inheritedDepth = 0;
    std::unique_ptr<cmark_iter, decltype(&cmark_iter_free)> iter(
       cmark_iter_new(document), cmark_iter_free);
    while (cmark_iter_next(iter.get()) != CMARK_EVENT_DONE)
    {
+      cmark_node* node = cmark_iter_get_node(iter.get());
       if (cmark_iter_get_event_type(iter.get()) == CMARK_EVENT_ENTER)
-         nodes.push_back(cmark_iter_get_node(iter.get()));
+      {
+         nodes.emplace_back(node, inheritedDepth);
+         if (isSuperscript(node))
+            ++inheritedDepth;
+      }
+      else if (isSuperscript(node))
+      {
+         --inheritedDepth;
+      }
    }
    iter.reset();
 
@@ -136,18 +166,13 @@ Error resolveSuperscripts(cmark_node* document, cmark_syntax_extension* extensio
    std::unordered_map<cmark_node*, int> suffixDepths;
    for (auto it = nodes.rbegin(); it != nodes.rend(); ++it)
    {
-      cmark_node* node = *it;
+      cmark_node* node = it->first;
       if (cmark_node_get_syntax_extension(node) == extension)
       {
          std::vector<cmark_node*> contents;
          cmark_node* partial = nullptr;
          std::size_t prefixLength = 0;
-         int depth = suffixDepths[cmark_node_next(node)];
-         for (cmark_node* parent = cmark_node_parent(node); parent; parent = cmark_node_parent(parent))
-         {
-            if (isSuperscript(parent))
-               ++depth;
-         }
+         int depth = suffixDepths[cmark_node_next(node)] + it->second;
          // Once a suffix reaches the depth limit, earlier markers must not
          // repeatedly walk it. The cached suffix depth keeps this linear.
          for (cmark_node* next = cmark_node_next(node); depth < 16 && next; next = cmark_node_next(next))
@@ -190,6 +215,16 @@ Error resolveSuperscripts(cmark_node* document, cmark_syntax_extension* extensio
             }
             cmark_node_set_on_enter(node, "<sup>");
             cmark_node_set_on_exit(node, "</sup>");
+         }
+         else
+         {
+            // Custom inline delimiters are omitted from image alternative
+            // text. Unresolved carets must behave like ordinary literal text.
+            if (!cmark_node_set_type(node, CMARK_NODE_TEXT))
+               return systemError(boost::system::errc::invalid_argument,
+                                  "Could not preserve literal caret", ERROR_LOCATION);
+            cmark_node_set_syntax_extension(node, nullptr);
+            cmark_node_set_literal(node, "^");
          }
       }
       int depth = 0;
@@ -302,6 +337,122 @@ Error filterNodes(cmark_node* document,
 
 } // anonymous namespace
 
+Error cmarkGfmMathRanges(const std::string& input,
+                         const Extensions& extensions,
+                         std::vector<html_utils::TextRange>* pRanges)
+{
+   std::lock_guard<std::mutex> lock(parserMutex());
+   std::unique_ptr<cmark_parser, decltype(&cmark_parser_free)> parser(
+      cmark_parser_new(CMARK_OPT_STRIKETHROUGH_DOUBLE_TILDE), cmark_parser_free);
+   if (!parser)
+      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
+   attachGfmExtensions(parser.get(), extensions);
+   cmark_parser_feed(parser.get(), input.data(), input.size());
+   std::unique_ptr<cmark_node, decltype(&cmark_node_free)> document(
+      cmark_parser_finish(parser.get()), cmark_node_free);
+   if (!document)
+      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
+
+   std::vector<std::size_t> lines{0};
+   for (std::size_t i = 0; i < input.size(); ++i)
+   {
+      if (input[i] == '\r' || input[i] == '\n')
+      {
+         if (input[i] == '\r' && i + 1 < input.size() && input[i + 1] == '\n')
+            ++i;
+         lines.push_back(i + 1);
+      }
+   }
+   lines.push_back(input.size());
+
+   using OffsetRange = std::pair<std::size_t, std::size_t>;
+   std::vector<OffsetRange> codeRanges;
+   std::unique_ptr<cmark_iter, decltype(&cmark_iter_free)> iter(
+      cmark_iter_new(document.get()), cmark_iter_free);
+   while (cmark_iter_next(iter.get()) != CMARK_EVENT_DONE)
+   {
+      if (cmark_iter_get_event_type(iter.get()) != CMARK_EVENT_ENTER)
+         continue;
+      cmark_node* node = cmark_iter_get_node(iter.get());
+      cmark_node_type type = cmark_node_get_type(node);
+      bool cell = std::string(cmark_node_get_type_string(node)) == "table_cell";
+      if (type != CMARK_NODE_CODE_BLOCK && type != CMARK_NODE_PARAGRAPH &&
+          type != CMARK_NODE_HEADING && !cell)
+         continue;
+      int firstLine = cmark_node_get_start_line(node);
+      int lastLine = cmark_node_get_end_line(node);
+      if (firstLine <= 0 || lastLine < firstLine || static_cast<std::size_t>(lastLine) >= lines.size())
+         continue;
+      std::size_t begin = lines[firstLine - 1];
+      std::size_t end = lines[lastLine];
+      if (type == CMARK_NODE_CODE_BLOCK)
+      {
+         codeRanges.emplace_back(begin, end);
+         continue;
+      }
+      if (cell)
+      {
+         // Table cells have separate inline scopes even on the same line.
+         end = std::min(end, begin + std::max(0, cmark_node_get_end_column(node)));
+         begin = std::min(end, begin + std::max(0, cmark_node_get_start_column(node) - 1));
+      }
+
+      // Match equal-length backtick runs only inside this inline block. A
+      // reverse index avoids repeatedly scanning unmatched runs. Block prefixes
+      // (such as '> ') stay in the source but cannot change delimiter lengths.
+      std::vector<OffsetRange> ticks;
+      for (std::size_t pos = begin; pos < end;)
+      {
+         pos = input.find('`', pos);
+         if (pos == std::string::npos || pos >= end)
+            break;
+         std::size_t finish = pos + 1;
+         while (finish < end && input[finish] == '`')
+            ++finish;
+         ticks.emplace_back(pos, finish);
+         pos = finish;
+      }
+      std::vector<std::size_t> next(ticks.size(), ticks.size());
+      std::vector<bool> escaped(ticks.size(), false);
+      std::unordered_map<std::size_t, std::size_t> last;
+      for (std::size_t i = ticks.size(); i-- > 0;)
+      {
+         std::size_t backslash = ticks[i].first;
+         while (backslash > begin && input[backslash - 1] == '\\')
+            --backslash;
+         escaped[i] = (ticks[i].first - backslash) % 2 != 0;
+         std::size_t length = ticks[i].second - ticks[i].first;
+         // An escaped first backtick is literal; the rest can open a span.
+         auto found = last.find(length - (escaped[i] ? 1 : 0));
+         if (found != last.end())
+            next[i] = found->second;
+         last[length] = i;
+      }
+      for (std::size_t i = 0; i < ticks.size(); ++i)
+      {
+         if (next[i] == ticks.size())
+            continue;
+         codeRanges.emplace_back(ticks[i].first + (escaped[i] ? 1 : 0), ticks[next[i]].second);
+         i = next[i];
+      }
+   }
+
+   std::sort(codeRanges.begin(), codeRanges.end());
+   std::size_t pos = 0;
+   for (const auto& range : codeRanges)
+   {
+      if (range.second <= pos)
+         continue;
+      if (range.first > pos)
+         pRanges->emplace_back(true, input.begin() + pos, input.begin() + range.first);
+      pRanges->emplace_back(false, input.begin() + std::max(pos, range.first), input.begin() + range.second);
+      pos = range.second;
+   }
+   if (pos < input.size())
+      pRanges->emplace_back(true, input.begin() + pos, input.end());
+   return Success();
+}
+
 Error renderCmarkGfm(const std::string& input,
                      const Extensions& extensions,
                      const HTMLOptions& options,
@@ -320,9 +471,7 @@ Error renderCmarkGfm(const std::string& input,
 
    // Both registration and inline parsing mutate upstream global tables of
    // special characters. Serialize access even though each parser is local.
-   static std::mutex mutex;
-   std::lock_guard<std::mutex> lock(mutex);
-   cmark_gfm_core_extensions_ensure_registered();
+   std::lock_guard<std::mutex> lock(parserMutex());
 
    int flags = CMARK_OPT_VALIDATE_UTF8 | CMARK_OPT_STRIKETHROUGH_DOUBLE_TILDE;
    if (options.smartypants)
@@ -345,14 +494,7 @@ Error renderCmarkGfm(const std::string& input,
    if (!parser)
       return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
 
-   for (const auto& extension : {std::make_pair("table", extensions.tables),
-                                 std::make_pair("strikethrough", extensions.strikethrough),
-                                 std::make_pair("autolink", extensions.autolink)})
-   {
-      if (extension.second)
-         cmark_parser_attach_syntax_extension(
-            parser.get(), cmark_find_syntax_extension(extension.first));
-   }
+   attachGfmExtensions(parser.get(), extensions);
 
    if (extensions.superscript)
    {

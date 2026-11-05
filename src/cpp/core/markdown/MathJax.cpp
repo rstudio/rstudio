@@ -116,7 +116,22 @@ MathJaxFilter::MathJaxFilter(const std::vector<html_utils::ExcludePattern>& excl
       }
    }
 
-   // now iterate through the ranges and substitute a guid for math blocks
+   filterRanges(ranges, pInput);
+}
+
+MathJaxFilter::MathJaxFilter(const std::vector<html_utils::TextRange>& ranges,
+                             std::string* pInput,
+                             std::string* pHTMLOutput,
+                             bool escapeHtml)
+   : pHTMLOutput_(pHTMLOutput), escapeHtml_(escapeHtml)
+{
+   filterRanges(ranges, pInput);
+}
+
+void MathJaxFilter::filterRanges(const std::vector<html_utils::TextRange>& ranges,
+                                std::string* pInput)
+{
+   // Iterate through the ranges and substitute a guid for math blocks.
    std::string filteredInput;
    for (const TextRange& range : ranges)
    {

@@ -17,10 +17,16 @@
 #define CORE_MARKDOWN_CMARK_GFM_HPP
 
 #include <core/markdown/Markdown.hpp>
+#include <core/HtmlUtils.hpp>
 
 namespace rstudio {
 namespace core {
 namespace markdown {
+
+// Locate code within CommonMark block boundaries before substituting math.
+Error cmarkGfmMathRanges(const std::string& input,
+                         const Extensions& extensions,
+                         std::vector<html_utils::TextRange>* pRanges);
 
 // Render after RStudio's metadata, math and html-preserve preprocessing.
 Error renderCmarkGfm(const std::string& input,

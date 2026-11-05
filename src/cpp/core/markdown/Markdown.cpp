@@ -356,41 +356,48 @@ Error markdownToHTML(const std::string& markdownInput,
                      std::string* pHTMLOutput)
 
 {
-   // exclude fenced code blocks
-   using namespace rstudio::core::html_utils;
-   std::vector<ExcludePattern> excludePatterns;
-   // A closer must use at least as many delimiters as its opener. Match the
-   // complete block so a shorter fence within it cannot end math exclusion.
-   excludePatterns.push_back(ExcludePattern(boost::regex(
-      R"(^ {0,3}(`{3,})(?!`)[^`\r\n]*(?:\r?\n|\z)[\s\S]*?(?:^ {0,3}\1`*[ \t]*\r?$|\z))")));
-   excludePatterns.push_back(ExcludePattern(boost::regex(
-      R"(^ {0,3}(~{3,})(?!~)[^\r\n]*(?:\r?\n|\z)[\s\S]*?(?:^ {0,3}\1~*[ \t]*\r?$|\z))")));
-
-   // exclude inline verbatim code
-   excludePatterns.push_back(ExcludePattern(boost::regex("`[^\\n]+?`")));
-
-   // exclude indented code blocks
-   excludePatterns.push_back(ExcludePattern(
-      boost::regex("(\\A|\\A\\s*\\n|\\n\\s*\\n)(( {4}|\\t)[^\\n]*\\n)*(( {4}|\\t)[^\\n]*)")));
-
    std::string input = markdownInput;
+   if (extensions.stripMetadata)
+      stripMetadata(&input);
+
    boost::scoped_ptr<MathJaxFilter> pMathFilter;
-   if (extensions.ignoreMath)
+   if (extensions.ignoreMath && input.find_first_of("$\\") != std::string::npos)
    {
+#ifdef RSTUDIO_USE_CMARK_GFM
+      std::vector<html_utils::TextRange> ranges;
+      Error error = cmarkGfmMathRanges(input, extensions, &ranges);
+      if (error)
+         return error;
+      pMathFilter.reset(new MathJaxFilter(ranges, &input, pHTMLOutput, options.escape));
+#else
+      // exclude fenced code blocks
+      using namespace rstudio::core::html_utils;
+      std::vector<ExcludePattern> excludePatterns;
+      // A closer must use at least as many delimiters as its opener. Match the
+      // complete block so a shorter fence within it cannot end math exclusion.
+      excludePatterns.push_back(ExcludePattern(boost::regex(
+         R"(^ {0,3}(`{3,})(?!`)[^`\r\n]*(?:\r?\n|\z)[\s\S]*?(?:^ {0,3}\1`*[ \t]*\r?$|\z))")));
+      excludePatterns.push_back(ExcludePattern(boost::regex(
+         R"(^ {0,3}(~{3,})(?!~)[^\r\n]*(?:\r?\n|\z)[\s\S]*?(?:^ {0,3}\1~*[ \t]*\r?$|\z))")));
+
+      // exclude inline verbatim code
+      excludePatterns.push_back(ExcludePattern(boost::regex("`[^\\n]+?`")));
+
+      // exclude indented code blocks
+      excludePatterns.push_back(ExcludePattern(
+         boost::regex("(\\A|\\A\\s*\\n|\\n\\s*\\n)(( {4}|\\t)[^\\n]*\\n)*(( {4}|\\t)[^\\n]*)")));
+
       pMathFilter.reset(new MathJaxFilter(excludePatterns,
                                           &input,
                                           pHTMLOutput,
                                           options.escape));
+#endif
    }
 
    // respect html-preserve
    html_utils::HtmlPreserver htmlPreserver;
    if (extensions.htmlPreserve)
       htmlPreserver.preserve(&input);
-
-   // strip yaml front-matter / pandoc metadata if requested
-   if (extensions.stripMetadata)
-      stripMetadata(&input);
 
    // special case of empty input after stripping metadata
    if (input.empty())

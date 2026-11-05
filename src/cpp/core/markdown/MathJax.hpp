@@ -49,9 +49,15 @@ public:
                  std::string* pInput,
                  std::string* pHTMLOutput,
                  bool escapeHtml);
+   MathJaxFilter(const std::vector<html_utils::TextRange>& ranges,
+                 std::string* pInput,
+                 std::string* pHTMLOutput,
+                 bool escapeHtml);
    ~MathJaxFilter();
 
 private:
+   void filterRanges(const std::vector<html_utils::TextRange>& ranges, std::string* pInput);
+
    void filter(const boost::regex& re,
                std::string* pInput,
                std::map<std::string,MathBlock>* pMathBlocks)

@@ -205,6 +205,25 @@ TEST(MarkdownTest, MathExclusionRespectsCodeDelimiterLengths)
    EXPECT_EQ("<pre><code>~~~\n$x_1$\n</code></pre>\n", render("~~~~\n~~~\n$x_1$\n~~~~\n"));
    EXPECT_EQ("<pre><code>$x_1$\n</code></pre>\n", render("````\n$x_1$\n"));
    EXPECT_EQ("<p><code>a ` $x_1$</code></p>\n", render("``a ` $x_1$``"));
+   EXPECT_EQ("<p><code>$x_1$</code></p>\n", render("```$x_1$```"));
+   EXPECT_EQ("<p><code>a $x_1$</code></p>\n", render("`a\n$x_1$`"));
+   EXPECT_EQ("<p><code>a ` $x_1$</code></p>\n", render("``a\n` $x_1$``"));
+   EXPECT_EQ("<p>`<code>$x_1$</code></p>\n", render(R"(\``$x_1$`)"));
+   EXPECT_NE(std::string::npos, render("> `a\n> $x_1$`").find("<code>a $x_1$</code>"));
+   EXPECT_NE(std::string::npos, render("- `a\n  $x_1$`").find("<code>a $x_1$</code>"));
+}
+
+TEST(MarkdownTest, CodeExclusionRespectsInlineBlockBoundaries)
+{
+   for (const std::string input : {"`a\n\n$x_1$\n\nb`", "`a\n# $x_1$\nb`",
+                                   "- `a\n- $x_1$\n- b`",
+                                   "| a | b | c |\n|---|---|---|\n| `a | $x_1$ | b` |"})
+   {
+      SCOPED_TRACE(input);
+      EXPECT_TRUE(isMathJaxRequired(render(input)));
+   }
+   EXPECT_NE(std::string::npos, render("`code` and $x_1$").find(R"(\( x_1 \))"));
+   EXPECT_NE(std::string::npos, render("---\ntitle: test\n---\n`a\n$x_1$`").find("<code>a $x_1$</code>"));
 }
 
 TEST(MarkdownTest, BareSuperscriptsRespectEnclosingInlineMarkup)
@@ -216,6 +235,22 @@ TEST(MarkdownTest, BareSuperscriptsRespectEnclosingInlineMarkup)
    EXPECT_EQ("<p>x<sup><em>n</em></sup></p>\n", render("x^*n*"));
    EXPECT_EQ("<p><em>done</em> x<sup>2*</sup></p>\n", render("*done* x^2*"));
    EXPECT_EQ("<p>x^ next</p>\n", render("x^ next"));
+}
+
+TEST(MarkdownTest, LiteralCaretsSurviveInImageAlternativeText)
+{
+   EXPECT_NE(std::string::npos, render("![x^ y](plot.png)").find("alt=\"x^ y\""));
+   EXPECT_NE(std::string::npos, render("![x^](plot.png)").find("alt=\"x^\""));
+   EXPECT_NE(std::string::npos, render("![x\\^2](plot.png)").find("alt=\"x^2\""));
+}
+
+TEST(MarkdownTest, SuperscriptsWithinDeepBlockquotes)
+{
+   std::string input(10000, '>');
+   input += " ";
+   for (int i = 0; i < 10000; ++i)
+      input += "x^2 ";
+   EXPECT_NE(std::string::npos, render(input).find("x<sup>2</sup>"));
 }
 
 TEST(MarkdownTest, UnsupportedLegacyOptionsAreExplicit)
