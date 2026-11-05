@@ -865,19 +865,28 @@ void ProjectContext::resetFileMonitorCoverage()
 void ProjectContext::noteUnmonitoredSource(const FileInfo& info) const
 {
    FilePath path(info.absolutePath());
-   bool sourceFile = isRSourcePath(path);
-   bool directory = info.isDirectory() || (info.isSymlink() && !sourceFile);
-   if (sourceFile || directory)
-   {
-      std::lock_guard<std::mutex> lock(unmonitoredSourcesMutex_);
-      unmonitoredSources_[path] = directory;
-   }
+   UnmonitoredSource type;
+   if (info.isDirectory())
+      type = UnmonitoredSource::Directory;
+   else if (isRSourcePath(path))
+      type = UnmonitoredSource::File;
+   else if (info.isSymlink())
+      type = UnmonitoredSource::Link;
+   else
+      return;
+
+   std::lock_guard<std::mutex> lock(unmonitoredSourcesMutex_);
+   unmonitoredSources_[path] = type;
 }
 
 bool ProjectContext::fileMonitorFilterWithCoverage(
       const FileInfo& info,
       const FileMonitorFilterContext& context) const
 {
+   // The registered root is scanned even when its spelling is a symlink
+   // or hidden directory; the filter applies to entries beneath it.
+   if (FilePath(info.absolutePath()) == directory())
+      return true;
    bool accepted = fileMonitorFilter(info, context);
    if (!accepted || info.isSymlink())
       noteUnmonitoredSource(info);
@@ -949,7 +958,7 @@ void ProjectContext::fileMonitorRegistered(
    for (const FileInfo& info : files)
    {
       FilePath path(info.absolutePath());
-      if (info.isSymlink())
+      if (info.isSymlink() && path != directory())
          noteUnmonitoredSource(info);
       if (info.scanFailed())
          failedMonitorDirectories_.insert(path);
@@ -988,9 +997,9 @@ void ProjectContext::fileMonitorFilesChanged(
       if (event.type() != core::system::FileChangeEvent::FileRemoved)
       {
          // Native file events do not always populate symlink metadata.
-         bool linked = info.isSymlink() ||
-               ((info.isDirectory() || isRSourcePath(path)) && path.isSymlink());
-         if (linked || !fileMonitorFilter(info, *packageFilterContext_))
+         bool linked = path != directory() && (info.isSymlink() ||
+               ((info.isDirectory() || isRSourcePath(path)) && path.isSymlink()));
+         if (linked || (path != directory() && !fileMonitorFilter(info, *packageFilterContext_)))
             noteUnmonitoredSource(FileInfo(info.absolutePath(), info.isDirectory(), linked));
          else if (!info.scanFailed())
          {
@@ -1018,7 +1027,7 @@ void ProjectContext::fileMonitorFilesChanged(
       }
 
       if ((event.type() == core::system::FileChangeEvent::FileRemoved ||
-           !info.isDirectory() || info.isSymlink()) &&
+           !info.isDirectory() || (info.isSymlink() && path != directory())) &&
           (info.isDirectory() || monitoredDirectories_.count(path) != 0))
       {
          eraseDirectoriesWithin(&monitoredDirectories_, path);
@@ -1031,7 +1040,7 @@ void ProjectContext::fileMonitorFilesChanged(
          monitoredDirectories_.erase(path);
       }
       else if (event.type() != core::system::FileChangeEvent::FileRemoved &&
-               info.isDirectory() && !info.isSymlink())
+               info.isDirectory() && (!info.isSymlink() || path == directory()))
       {
          monitoredDirectories_.insert(path);
       }
@@ -1322,33 +1331,65 @@ FilePath ProjectContext::resolvePackageDirectoryInProject() const
       if (indexedDir.isWithin(excludedDir) || excludedDir.isWithin(indexedDir.completeChildPath("R")))
          return FilePath();
 
+   if (!packageFilterContext_)
+      packageFilterContext_ = boost::make_shared<FileMonitorFilterContext>(
+            createFileMonitorFilterContext());
+
    // A directory entry alone does not establish coverage for its files.
-   // The monitor records excluded sources and links even though those entries
-   // cannot produce usable source-index updates. Copy only relevant paths
-   // while holding the lock; filesystem queries run on the session thread.
-   std::vector<FilePath> uncovered;
+   // Copy relevant observations while holding the lock; resolving ambiguous
+   // links and checking directory filters stays on the session thread.
+   std::vector<std::pair<FilePath, UnmonitoredSource>> uncovered;
    FilePath rDirectory = indexedDir.completeChildPath("R");
    FilePath testDirectory = indexedDir.completeChildPath("tests");
+   auto inSourceDirectory = [&](const FilePath& path)
+   {
+      return path.isWithin(rDirectory) || path.isWithin(testDirectory);
+   };
    {
       std::lock_guard<std::mutex> lock(unmonitoredSourcesMutex_);
       for (const auto& entry : unmonitoredSources_)
       {
          const FilePath& path = entry.first;
-         if ((!entry.second && path.isWithin(indexedDir)) ||
-             (entry.second && (indexedDir.isWithin(path) ||
-                               path.isWithin(rDirectory) || path.isWithin(testDirectory))))
+         if ((entry.second == UnmonitoredSource::File && path.isWithin(indexedDir)) ||
+             (entry.second != UnmonitoredSource::File &&
+              (indexedDir.isWithin(path) || inSourceDirectory(path))))
          {
-            uncovered.push_back(path);
+            uncovered.push_back(entry);
          }
       }
    }
-   for (const FilePath& path : uncovered)
-      if (path.exists() || path.isSymlink())
-         return FilePath();
+   for (const auto& entry : uncovered)
+   {
+      const FilePath& path = entry.first;
+      if (entry.second != UnmonitoredSource::File)
+      {
+         // A linked CSV or other fixture is not a source directory. Retain
+         // the observation so a later target-type change is checked again.
+         if (path.isDirectory())
+            return FilePath();
+         continue;
+      }
 
-   if (!packageFilterContext_)
-      packageFilterContext_ = boost::make_shared<FileMonitorFilterContext>(
-            createFileMonitorFilterContext());
+      // Windows can report children of excluded directories. Files in such
+      // non-source trees (for example .worktrees) do not belong to the package.
+      bool ignoredAncestor = false;
+      if (!inSourceDirectory(path))
+      {
+         for (FilePath dir = path.getParent();
+              dir != indexedDir && dir.isWithin(indexedDir);
+              dir = dir.getParent())
+         {
+            if (modules::code_search::isIgnoredDirectory(dir, true) ||
+                !fileMonitorFilter(FileInfo(dir.getAbsolutePath(), true), *packageFilterContext_))
+            {
+               ignoredAncestor = true;
+               break;
+            }
+         }
+      }
+      if (!ignoredAncestor && (path.exists() || path.isSymlink()))
+         return FilePath();
+   }
 
    // The scanner does not recurse into symlinked or excluded directories.
    // Check every ancestor, since filtering one removes its whole subtree.

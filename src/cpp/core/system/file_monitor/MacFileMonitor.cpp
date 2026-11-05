@@ -650,6 +650,15 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
             LOG_ERROR(error);
          }
       }
+      else
+      {
+         // Keep a failed node so removing an ignore rule triggers a complete
+         // recovery scan even when the directory entry itself is unchanged.
+         impl::invalidateDirectory(
+               fileInfo,
+               &(pContext->fileTree),
+               pContext->callbacks.onFilesChanged);
+      }
    }
 }
 

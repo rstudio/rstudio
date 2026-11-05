@@ -74,6 +74,13 @@ void processFileRemoved(tree<FileInfo>::iterator parentIt,
                         tree<FileInfo>* pTree,
                         std::vector<FileChangeEvent>* pFileChanges);
 
+// Discard stale descendants when a previously observed directory is filtered.
+// Retain the directory as incomplete so a later accepted event can recover it.
+void invalidateDirectory(
+   const FileInfo& fileInfo,
+   tree<FileInfo>* pTree,
+   const boost::function<void(const std::vector<FileChangeEvent>&)>& onFilesChanged);
+
 // A recursive monitor must rebuild failed subtrees even when the current
 // event ordinarily requests only a shallow scan.
 Error discoverAndProcessFileChanges(

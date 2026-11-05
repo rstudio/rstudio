@@ -212,6 +212,43 @@ TEST_F(FileMonitorReconciliationTests, ShallowRescanIndexesNewlyIncludedDirector
    }));
 }
 
+TEST_F(FileMonitorReconciliationTests, FilteredDirectoryRecoversCompleteSubtree)
+{
+   FilePath nested = blocked_.completeChildPath("sub/helper.R");
+   ASSERT_FALSE(nested.getParent().ensureDirectory());
+   ASSERT_FALSE(writeStringToFile(nested, "helper <- function() TRUE\n"));
+   ASSERT_FALSE(system::scanFiles(FileInfo(root_), options_, &files_));
+   auto invalidate = [this]()
+   {
+      events_.clear();
+      monitor::invalidateDirectory(
+            FileInfo(blocked_.getAbsolutePath(), true),
+            &files_,
+            [this](const std::vector<FileChangeEvent>& events) { events_ = events; });
+   };
+   invalidate();
+   expectScanStatus(true);
+   EXPECT_EQ(files_.end(), monitor::findFile(files_.begin(), files_.end(), nested.getAbsolutePath()));
+   EXPECT_NE(events_.end(), std::find_if(events_.begin(), events_.end(), [nested](const FileChangeEvent& event)
+   {
+      return event.type() == FileChangeEvent::FileRemoved &&
+             event.fileInfo().absolutePath() == nested.getAbsolutePath();
+   }));
+   invalidate();
+   EXPECT_TRUE(events_.empty());
+
+   // No file timestamps changed: the failed directory must still trigger a
+   // recursive recovery and republish every discarded descendant.
+   ASSERT_FALSE(reconcile(blocked_, false, true));
+   expectScanStatus(false);
+   EXPECT_NE(files_.end(), monitor::findFile(files_.begin(), files_.end(), nested.getAbsolutePath()));
+   EXPECT_NE(events_.end(), std::find_if(events_.begin(), events_.end(), [nested](const FileChangeEvent& event)
+   {
+      return event.type() == FileChangeEvent::FileAdded &&
+             event.fileInfo().absolutePath() == nested.getAbsolutePath();
+   }));
+}
+
 TEST_F(FileMonitorReconciliationTests, DuplicateDirectoryAdditionPreservesScanFailure)
 {
    ASSERT_FALSE(writeStringToFile(source_, "x <- 1\n"));

@@ -281,6 +281,32 @@ void processFileRemoved(tree<FileInfo>::iterator parentIt,
    }
 }
 
+void invalidateDirectory(
+   const FileInfo& fileInfo,
+   tree<FileInfo>* pTree,
+   const boost::function<void(const std::vector<FileChangeEvent>&)>& onFilesChanged)
+{
+   auto it = impl::findFile(pTree->begin(), pTree->end(), fileInfo);
+   if (it == pTree->end() || !it->isDirectory() ||
+       (it->isSymlink() && it != pTree->begin()))
+   {
+      return;
+   }
+
+   std::vector<FileChangeEvent> fileChanges;
+   if (!it->scanFailed())
+   {
+      it->setScanFailed(true);
+      fileChanges.emplace_back(FileChangeEvent::FileModified, *it);
+   }
+   tree<FileInfo> subtree(it);
+   for (auto child = ++subtree.begin(); child != subtree.end(); ++child)
+      fileChanges.emplace_back(FileChangeEvent::FileRemoved, *child);
+   pTree->erase_children(it);
+   if (!fileChanges.empty())
+      onFilesChanged(fileChanges);
+}
+
 Error discoverAndProcessFileChanges(
    const FileInfo& fileInfo,
    bool recursive,

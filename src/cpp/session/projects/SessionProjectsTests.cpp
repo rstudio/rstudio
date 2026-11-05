@@ -141,6 +141,15 @@ protected:
             FileInfo(path), pContext->createFileMonitorFilterContext());
    }
 
+   void notifyDirectoryStatus(ProjectContext* pContext, const FilePath& path, bool failed)
+   {
+      FileInfo info(path.getAbsolutePath(), true, path.isSymlink());
+      info.setScanFailed(failed);
+      pContext->fileMonitorFilesChanged({
+         core::system::FileChangeEvent(core::system::FileChangeEvent::FileModified, info)
+      });
+   }
+
    void reconcileScanStatus(ProjectContext* pContext, bool failed)
    {
       // The R directory was observed in both snapshots; only an unrelated
@@ -616,6 +625,28 @@ TEST_F(PackageProjectInfoTests, ExcludedSourceSubdirectoryDisablesPackageCoverag
    EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
 }
 
+TEST_F(PackageProjectInfoTests, FilteredWorktreeChildDoesNotDisablePackageCoverage)
+{
+   writeDescription("Package: localpkg\nVersion: 0.1.0\n");
+   ASSERT_FALSE(projectDir_.completeChildPath("R").ensureDirectory());
+   FilePath child = projectDir_.completeChildPath(".worktrees/feature--foo/R/helper.R");
+   ASSERT_FALSE(child.getParent().ensureDirectory());
+   ASSERT_FALSE(writeStringToFile(child, "helper <- function() TRUE\n"));
+   FilePath namespaceFile = projectDir_.completeChildPath("NAMESPACE");
+   ASSERT_FALSE(writeStringToFile(namespaceFile, "import(compiler)\n"));
+   ProjectContext context;
+   openProject(&context, "None", "", true);
+   modules::diagnostics::monitorProjectNamespace(context);
+   notifyFileChanged(&context, namespaceFile, core::system::FileChangeEvent::FileModified);
+   ASSERT_EQ(projectDir_, context.packageDirectoryInProject());
+   ASSERT_EQ(std::set<std::string>{"compiler"}, r_util::RSourceIndex::getImportedPackages());
+
+   // Windows can deliver child events even inside an excluded directory.
+   ASSERT_FALSE(filterMonitorEntry(&context, child));
+   EXPECT_EQ(projectDir_, context.packageDirectoryInProject());
+   EXPECT_EQ(std::set<std::string>{"compiler"}, r_util::RSourceIndex::getImportedPackages());
+}
+
 TEST_F(PackageProjectInfoTests, IgnoredNonSourceFileDoesNotDisablePackageCoverage)
 {
    json::Array ignores;
@@ -630,6 +661,31 @@ TEST_F(PackageProjectInfoTests, IgnoredNonSourceFileDoesNotDisablePackageCoverag
 }
 
 #ifndef _WIN32
+TEST_F(PackageProjectInfoTests, LinkedNonSourceFixtureKeepsPackageCoverage)
+{
+   writeDescription("Package: localpkg\nVersion: 0.1.0\n");
+   ASSERT_FALSE(projectDir_.completeChildPath("R").ensureDirectory());
+   ASSERT_FALSE(projectDir_.completeChildPath("tests/fixtures").ensureDirectory());
+   FilePath external;
+   ASSERT_FALSE(FilePath::tempFilePath(external));
+   ASSERT_FALSE(writeStringToFile(external, "x,y\n1,2\n"));
+   RemoveOnExitScope removeExternal(external, ERROR_LOCATION);
+   FilePath fixture = projectDir_.completeChildPath("tests/fixtures/data.csv");
+   ASSERT_EQ(0, ::symlink(external.getAbsolutePath().c_str(), fixture.getAbsolutePath().c_str()));
+   ProjectContext context;
+   openProject(&context, "None", "", true);
+   EXPECT_EQ(projectDir_, context.packageDirectoryInProject());
+
+   // A target can become a directory without any project monitor event.
+   ASSERT_FALSE(external.remove());
+   ASSERT_FALSE(external.ensureDirectory());
+   ASSERT_FALSE(writeStringToFile(external.completeChildPath("helper.R"), "helper <- function() TRUE\n"));
+   EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
+   ASSERT_FALSE(external.remove());
+   ASSERT_FALSE(writeStringToFile(external, "x,y\n1,2\n"));
+   EXPECT_EQ(projectDir_, context.packageDirectoryInProject());
+}
+
 TEST_F(PackageProjectInfoTests, LinkedHelperUsesFallbackUntilReplacedByObservedSource)
 {
    writeDescription("Package: localpkg\nVersion: 0.1.0\n");
@@ -937,6 +993,11 @@ TEST_F(PackageProjectInfoTests, AllowsLinkedProjectRoot)
 
    EXPECT_TRUE(linkedContext.isPackageProject());
    EXPECT_EQ("rootpkg", linkedContext.packageInfo().name());
+   EXPECT_EQ(linkedRoot, linkedContext.packageDirectoryInProject());
+   registerFileMonitor(&linkedContext);
+   notifyDirectoryStatus(&linkedContext, linkedRoot, true);
+   EXPECT_TRUE(linkedContext.packageDirectoryInProject().isEmpty());
+   notifyDirectoryStatus(&linkedContext, linkedRoot, false);
    EXPECT_EQ(linkedRoot, linkedContext.packageDirectoryInProject());
 }
 
