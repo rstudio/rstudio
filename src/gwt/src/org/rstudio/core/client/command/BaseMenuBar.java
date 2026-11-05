@@ -26,6 +26,7 @@ import org.rstudio.core.client.widget.events.GlassVisibilityEvent;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -173,6 +174,10 @@ public class BaseMenuBar extends MenuBar
       // like messing with all that now
       eventBus_ = RStudioGinjector.INSTANCE.getEventBus();
       commandHandler_ = new HandlerRegistrations();
+
+      // See the ONMOUSEDOWN case in onBrowserEvent()
+      if (!vertical)
+         sinkEvents(Event.ONMOUSEDOWN);
    }
 
    private MenuItem getTargetedMenuItem(Event event)
@@ -249,8 +254,17 @@ public class BaseMenuBar extends MenuBar
       }
       else if (event.getTypeInt() == Event.ONFOCUS)
       {
+         EventTarget previous = event.getRelatedEventTarget();
+         if (!vertical_ && previous != null && Element.is(previous))
+            trackFocusFrom(Element.as(previous));
+         super.onBrowserEvent(event);
+      }
+      else if (event.getTypeInt() == Event.ONMOUSEDOWN)
+      {
+         // Focus coming from an iframe (e.g. the Help pane) has no relatedTarget,
+         // but before a click moves focus, the iframe is still the active element.
          if (!vertical_)
-            trackFocusFrom(event.getRelatedEventTarget());
+            trackFocusFrom(DomUtils.getActiveElement());
          super.onBrowserEvent(event);
       }
       else
@@ -262,19 +276,20 @@ public class BaseMenuBar extends MenuBar
    /**
     * Start tracking focus when the menubar is entered from outside the menus,
     * whether by Tab, click or shortcut. Focus coming back from one of the
-    * menus' own popups isn't an entry.
+    * menus' own popups isn't an entry, and the body isn't worth restoring.
+    *
+    * @return true if tracking started
     */
-   private void trackFocusFrom(EventTarget previous)
+   private boolean trackFocusFrom(Element previous)
    {
-      if (previous == null || !Element.is(previous))
-         return;
+      if (previous == null || previous == Document.get().getBody())
+         return false;
 
-      Element previousEl = Element.as(previous);
-      String role = previousEl.getAttribute("role");
+      String role = previous.getAttribute("role");
       if (role.equals("menu") || role.equals("menubar"))
-         return;
+         return false;
 
-      focusTracker().save(previousEl);
+      return focusTracker().save(previous);
    }
 
    private FocusTracker focusTracker()
@@ -443,7 +458,7 @@ public class BaseMenuBar extends MenuBar
          return;
 
       Element active = DomUtils.getActiveElement();
-      if (focusTracker().save(active))
+      if (trackFocusFrom(active))
          active.blur();
 
       // Open the menu explicitly: another menu may already be open, e.g. when
