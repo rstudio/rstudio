@@ -18,6 +18,7 @@
 
 #include <vector>
 #include <map>
+#include <set>
 
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
@@ -116,6 +117,7 @@ public:
       : packageInfoInitialized_(false),
         isNewProject_(false),
         hasFileMonitor_(false),
+        fileMonitorInitialized_(false),
         reduceRemoteFilesystemOpsResolved_(false),
         reduceRemoteFilesystemOps_(false)
    {
@@ -187,6 +189,7 @@ public:
 
    // signal emitted when config changes
    RSTUDIO_BOOST_SIGNAL<void()> onConfigChanged;
+   mutable RSTUDIO_BOOST_SIGNAL<void(const core::FilePath&)> onPackageDirectoryChanged;
 
    core::Error readVcsOptions(RProjectVcsOptions* pOptions) const;
    core::Error writeVcsOptions(const RProjectVcsOptions& options) const;
@@ -286,6 +289,9 @@ private:
    bool fileMonitorFilter(const core::FileInfo& fileInfo,
                           const FileMonitorFilterContext& context) const;
 
+   FileMonitorFilterContext createFileMonitorFilterContext() const;
+   core::FilePath resolvePackageDirectoryInProject() const;
+
    core::FilePath vcsOptionsFilePath() const;
    core::Error buildOptionsFile(core::Settings* pOptionsFile) const;
    core::FilePath assistantOptionsFilePath() const;
@@ -315,6 +321,9 @@ private:
    bool isNewProject_;
 
    bool hasFileMonitor_;
+   bool fileMonitorInitialized_;
+   std::set<core::FilePath> monitoredDirectories_;
+   mutable core::FilePath indexedPackageDirectory_;
    mutable boost::shared_ptr<FileMonitorFilterContext> packageFilterContext_;
    std::vector<std::string> monitorSubscribers_;
 

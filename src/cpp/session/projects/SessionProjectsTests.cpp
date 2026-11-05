@@ -29,6 +29,7 @@
 #include <shared_core/json/Json.hpp>
 
 #include <core/FileSerializer.hpp>
+#include <core/system/FileScanner.hpp>
 #include <core/r_util/RPackageInfo.hpp>
 
 #include <gtest/gtest.h>
@@ -79,6 +80,7 @@ protected:
    void SetUp() override
    {
       fileMonitorUseGitignore_ = prefs::userPrefs().fileMonitorUseGitignore();
+      ignoredComponents_ = prefs::userPrefs().fileMonitorIgnoredComponents();
       importedPackages_ = r_util::RSourceIndex::getImportedPackages();
       importFromDirectives_ = r_util::RSourceIndex::getImportFromDirectives();
       ASSERT_FALSE(FilePath::tempFilePath(projectDir_));
@@ -88,6 +90,7 @@ protected:
    void TearDown() override
    {
       EXPECT_FALSE(prefs::userPrefs().setFileMonitorUseGitignore(fileMonitorUseGitignore_));
+      EXPECT_FALSE(prefs::userPrefs().setFileMonitorIgnoredComponents(ignoredComponents_));
       r_util::RSourceIndex::setImportedPackages(importedPackages_);
       r_util::RSourceIndex::setImportFromDirectives(importFromDirectives_);
       EXPECT_FALSE(projectDir_.remove());
@@ -103,7 +106,8 @@ protected:
    void openProject(ProjectContext* pContext,
                     const std::string& buildType,
                     const std::string& packagePath = "",
-                    bool enableCodeIndexing = false)
+                    bool enableCodeIndexing = false,
+                    bool registerMonitor = true)
    {
       FilePath projectFile = projectDir_.completeChildPath("test.Rproj");
       ASSERT_FALSE(writeStringToFile(
@@ -118,6 +122,8 @@ protected:
       // Resolve build paths and metadata without initializing session-wide
       // callbacks or starting a monitor for this temporary project context.
       pContext->setConfig(pContext->config());
+      if (enableCodeIndexing && registerMonitor)
+         registerFileMonitor(pContext);
    }
 
    void notifyFileChanged(ProjectContext* pContext,
@@ -137,15 +143,34 @@ protected:
    void registerFileMonitor(ProjectContext* pContext)
    {
       tree<FileInfo> files;
-      auto root = files.insert(files.begin(), FileInfo(projectDir_.getAbsolutePath(), true));
-      files.append_child(
-            root,
-            FileInfo(projectDir_.completeChildPath("DESCRIPTION").getAbsolutePath(), false));
+      core::system::FileScannerOptions options;
+      options.recursive = true;
+      FileMonitorFilterContext filter = pContext->createFileMonitorFilterContext();
+      options.filter = [pContext, filter](const FileInfo& info)
+      {
+         return pContext->fileMonitorFilter(info, filter);
+      };
+      ASSERT_FALSE(core::system::scanFiles(
+            FileInfo(pContext->directory().getAbsolutePath(), true),
+            options,
+            &files));
       pContext->fileMonitorRegistered(core::system::file_monitor::Handle(), files);
+   }
+
+   void initializeGit()
+   {
+      ASSERT_FALSE(prefs::userPrefs().setFileMonitorUseGitignore(true));
+      ASSERT_TRUE(prefs::userPrefs().fileMonitorUseGitignore());
+      // Match libgit2's workdir spelling (macOS temporary paths can use /var).
+      projectDir_ = FilePath(projectDir_.getCanonicalPath());
+      git_repository* repo = nullptr;
+      ASSERT_EQ(0, git_repository_init(&repo, projectDir_.getAbsolutePath().c_str(), 0));
+      git_repository_free(repo);
    }
 
    FilePath projectDir_;
    bool fileMonitorUseGitignore_;
+   json::Array ignoredComponents_;
    std::set<std::string> importedPackages_;
    r_util::RSourceIndex::ImportFromMap importFromDirectives_;
 };
@@ -278,7 +303,7 @@ TEST_F(PackageProjectInfoTests, RefreshesSharedMetadataWhenDescriptionChanges)
 TEST_F(PackageProjectInfoTests, RefreshesDescriptionBeforeNotifyingMonitorSubscribers)
 {
    ProjectContext context;
-   openProject(&context, "None", "", true);
+   openProject(&context, "None", "", true, false);
    ASSERT_TRUE(context.hasFileMonitor());
    ASSERT_FALSE(context.isPackageProject());
 
@@ -440,18 +465,14 @@ TEST_F(PackageProjectInfoTests, KeepsMetadataWithoutCodeIndexing)
 
 TEST_F(PackageProjectInfoTests, KeepsMetadataForExcludedPackageDirectories)
 {
-   ASSERT_FALSE(prefs::userPrefs().setFileMonitorUseGitignore(true));
-   ASSERT_TRUE(prefs::userPrefs().fileMonitorUseGitignore());
-   // Match libgit2's workdir spelling (macOS temporary paths can use /var).
-   projectDir_ = FilePath(projectDir_.getCanonicalPath());
-   git_repository* repo = nullptr;
-   ASSERT_EQ(0, git_repository_init(&repo, projectDir_.getAbsolutePath().c_str(), 0));
-   git_repository_free(repo);
+   initializeGit();
    ASSERT_FALSE(writeStringToFile(
          projectDir_.completeChildPath(".gitignore"),
          "/pkg/\n/ignored/\n/ignored-r/R/\n"));
 
-   for (const std::string& packagePath : {"pkg", "ignored/pkg", ".hidden/pkg", "node_modules/pkg", "ignored-r"})
+   ASSERT_FALSE(projectDir_.completeChildPath("build").ensureDirectory());
+   ASSERT_FALSE(writeStringToFile(projectDir_.completeChildPath("build/CMakeCache.txt"), "cache"));
+   for (const std::string& packagePath : {"pkg", "ignored/pkg", ".hidden/pkg", "node_modules/pkg", "ignored-r", "build/pkg"})
    {
       SCOPED_TRACE(packagePath);
       writeDescription("Package: before\nVersion: 0.1.0\n", packagePath);
@@ -484,6 +505,74 @@ TEST_F(PackageProjectInfoTests, KeepsMetadataForExcludedPackageDirectories)
    ProjectContext context;
    openProject(&context, "Package", "pkg", true);
    EXPECT_EQ(projectDir_.completeChildPath("pkg"), context.packageDirectoryInProject());
+}
+
+TEST_F(PackageProjectInfoTests, ExcludesIgnoredRDirectoryContents)
+{
+   json::Array ignores;
+   ignores.push_back("/R/");
+   ASSERT_FALSE(prefs::userPrefs().setFileMonitorIgnoredComponents(ignores));
+   writeDescription("Package: before\nVersion: 0.1.0\n");
+   ASSERT_FALSE(projectDir_.completeChildPath("R").ensureDirectory());
+   ProjectContext context;
+   openProject(&context, "None", "", true);
+   EXPECT_TRUE(context.isPackageProject());
+   EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
+   writeDescription("Package: after\nVersion: 0.2.0\n");
+   EXPECT_EQ("after", context.packageInfo().name());
+}
+
+TEST_F(PackageProjectInfoTests, UnignoredPackageWaitsForMonitorCoverage)
+{
+   initializeGit();
+   writeDescription("Package: before\nVersion: 0.1.0\n", "pkg");
+   FilePath packageDir = projectDir_.completeChildPath("pkg");
+   ASSERT_FALSE(packageDir.completeChildPath("R").ensureDirectory());
+   ASSERT_FALSE(writeStringToFile(packageDir.completeChildPath("NAMESPACE"), "import(compiler)\n"));
+   FilePath ignoreFile = projectDir_.completeChildPath(".gitignore");
+   ASSERT_FALSE(writeStringToFile(ignoreFile, "/pkg/\n"));
+   ProjectContext context;
+   openProject(&context, "Package", "pkg", true);
+   modules::diagnostics::monitorProjectNamespace(context);
+   r_util::RSourceIndex::setImportedPackages({});
+   EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
+
+   ASSERT_FALSE(writeStringToFile(ignoreFile, "# now included\n"));
+   EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
+   writeDescription("Package: after\nVersion: 0.2.0\n", "pkg");
+   EXPECT_EQ("after", context.packageInfo().name());
+   EXPECT_TRUE(r_util::RSourceIndex::getImportedPackages().empty());
+
+   registerFileMonitor(&context);
+   EXPECT_EQ(packageDir, context.packageDirectoryInProject());
+   EXPECT_EQ("after", context.packageInfo().name());
+   EXPECT_EQ(std::set<std::string>{"compiler"}, r_util::RSourceIndex::getImportedPackages());
+}
+
+TEST_F(PackageProjectInfoTests, RefreshesImportsAcrossIgnoreRuleChanges)
+{
+   initializeGit();
+   writeDescription("Package: localpkg\nVersion: 0.1.0\n");
+   ASSERT_FALSE(projectDir_.completeChildPath("R").ensureDirectory());
+   FilePath namespaceFile = projectDir_.completeChildPath("NAMESPACE");
+   ASSERT_FALSE(writeStringToFile(namespaceFile, "import(compiler)\n"));
+   FilePath ignoreFile = projectDir_.completeChildPath(".gitignore");
+   ASSERT_FALSE(writeStringToFile(ignoreFile, "# included\n"));
+   ProjectContext context;
+   openProject(&context, "None", "", true);
+   modules::diagnostics::monitorProjectNamespace(context);
+   notifyFileChanged(&context, namespaceFile, core::system::FileChangeEvent::FileModified);
+   ASSERT_EQ(std::set<std::string>{"compiler"}, r_util::RSourceIndex::getImportedPackages());
+
+   ASSERT_FALSE(writeStringToFile(ignoreFile, "/R/\n"));
+   ASSERT_FALSE(writeStringToFile(namespaceFile, "import(splines)\n"));
+   notifyFileChanged(&context, namespaceFile, core::system::FileChangeEvent::FileModified);
+   EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
+   EXPECT_TRUE(r_util::RSourceIndex::getImportedPackages().empty());
+
+   ASSERT_FALSE(writeStringToFile(ignoreFile, "# included again\n"));
+   EXPECT_EQ(projectDir_, context.packageDirectoryInProject());
+   EXPECT_EQ(std::set<std::string>{"splines"}, r_util::RSourceIndex::getImportedPackages());
 }
 
 TEST_F(PackageProjectInfoTests, ExternalPackageKeepsMetadataWithoutPackageDiagnostics)
@@ -593,6 +682,37 @@ TEST_F(PackageProjectInfoTests, LinkedPackageKeepsMetadataWithoutPackageDiagnost
       // Linked directories have no watch, so metadata must refresh on demand.
       ASSERT_FALSE(writeStringToFile(description, "Package: updatedpkg\nVersion: 0.2.0\n"));
       EXPECT_EQ("updatedpkg", context.packageInfo().name());
+   }
+}
+
+TEST_F(PackageProjectInfoTests, DoesNotCacheLinkedPackageContents)
+{
+   FilePath externalDir;
+   ASSERT_FALSE(FilePath::tempFilePath(externalDir));
+   ASSERT_FALSE(externalDir.ensureDirectory());
+   RemoveOnExitScope removeScope(externalDir, ERROR_LOCATION);
+   ASSERT_FALSE(externalDir.completeChildPath("R").ensureDirectory());
+   ASSERT_FALSE(writeStringToFile(externalDir.completeChildPath("NAMESPACE"), "import(compiler)\n"));
+   ASSERT_FALSE(writeStringToFile(
+         externalDir.completeChildPath("DESCRIPTION"),
+         "Package: before\nVersion: 0.1.0\n"));
+
+   for (const std::string& name : {"R", "DESCRIPTION", "NAMESPACE"})
+   {
+      SCOPED_TRACE(name);
+      writeDescription("Package: before\nVersion: 0.1.0\n");
+      FilePath path = projectDir_.completeChildPath(name);
+      ASSERT_FALSE(path.removeIfExists());
+      ASSERT_EQ(0, ::symlink(
+            externalDir.completeChildPath(name).getAbsolutePath().c_str(),
+            path.getAbsolutePath().c_str()));
+      ProjectContext context;
+      openProject(&context, "None", "", true);
+      EXPECT_TRUE(context.isPackageProject());
+      EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
+      writeDescription("Package: after\nVersion: 0.2.0\n");
+      EXPECT_EQ("after", context.packageInfo().name());
+      ASSERT_FALSE(path.remove());
    }
 }
 

@@ -76,31 +76,6 @@ namespace session {
 namespace modules {
 namespace code_search {
 
-namespace {
-
-// Cache of directory-path -> is-ignored results. Cleared when the file
-// monitor is enabled or disabled, when a marker file changes, or when
-// a directory that is ignored by name is created or deleted.
-std::unordered_map<std::string, bool> s_ignoredDirCache;
-
-// Marker files whose presence determines whether a directory is ignored.
-// If any of these change, s_ignoredDirCache must be invalidated.
-static const char* s_ignoredDirMarkerFiles[] = {
-   "CMakeCache.txt",
-   "activate.R",
-   "packrat.lock"
-};
-
-// Directories that are ignored by name alone (no marker file needed).
-// If one of these is created or deleted, s_ignoredDirCache must be invalidated.
-static const char* s_ignoredDirNames[] = {
-   "__pycache__",
-   "node_modules",
-   "packrat",
-   "renv",
-   "revdep"
-};
-
 bool isIgnoredDirectory(const FilePath& dirPath, bool isPackageProject)
 {
    std::string dirName = dirPath.getFilename();
@@ -129,6 +104,31 @@ bool isIgnoredDirectory(const FilePath& dirPath, bool isPackageProject)
 
    return false;
 }
+
+namespace {
+
+// Cache of directory-path -> is-ignored results. Cleared when the file
+// monitor is enabled or disabled, when a marker file changes, or when
+// a directory that is ignored by name is created or deleted.
+std::unordered_map<std::string, bool> s_ignoredDirCache;
+
+// Marker files whose presence determines whether a directory is ignored.
+// If any of these change, s_ignoredDirCache must be invalidated.
+static const char* s_ignoredDirMarkerFiles[] = {
+   "CMakeCache.txt",
+   "activate.R",
+   "packrat.lock"
+};
+
+// Directories that are ignored by name alone (no marker file needed).
+// If one of these is created or deleted, s_ignoredDirCache must be invalidated.
+static const char* s_ignoredDirNames[] = {
+   "__pycache__",
+   "node_modules",
+   "packrat",
+   "renv",
+   "revdep"
+};
 
 bool isWithinIgnoredDirectory(const FilePath& filePath, const std::vector<FilePath>& ignoreDirs)
 {

@@ -1129,23 +1129,22 @@ SEXP rs_lintDirectory(SEXP directorySEXP)
 
 void monitorProjectNamespace(projects::ProjectContext& context)
 {
+   context.onPackageDirectoryChanged.connect(onNAMESPACEchanged);
+   context.onConfigChanged.connect([&context]() { context.packageDirectoryInProject(); });
+
    projects::FileMonitorCallbacks cb;
+   cb.onMonitoringEnabled = [&context](const tree<FileInfo>&)
+   {
+      // Refresh even without a scope transition: NAMESPACE may have changed
+      // between session initialization and the initial monitor snapshot.
+      onNAMESPACEchanged(context.packageDirectoryInProject());
+   };
+   cb.onMonitoringDisabled = [&context]() { context.packageDirectoryInProject(); };
    cb.onFilesChanged = [&context](const std::vector<core::system::FileChangeEvent>& events)
    {
       onFilesChanged(context.packageDirectoryInProject(), events);
    };
    context.subscribeToFileMonitor("Diagnostics", cb);
-
-   context.onConfigChanged.connect(
-         [&context, packageDir = context.packageDirectoryInProject()]() mutable
-         {
-            FilePath updatedDir = context.packageDirectoryInProject();
-            if (updatedDir != packageDir)
-            {
-               packageDir = updatedDir;
-               onNAMESPACEchanged(packageDir);
-            }
-         });
 }
 
 core::Error initialize()
