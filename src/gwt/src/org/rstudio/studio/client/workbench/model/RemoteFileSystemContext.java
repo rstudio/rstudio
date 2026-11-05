@@ -94,8 +94,6 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
       final String newPath = combine(workingDir_, relativeOrAbsolutePath);
 
       final FileSystemItem newPathEntry = FileSystemItem.createDir(newPath);
-      
-      final ArrayList<FileSystemItem> fsi = new ArrayList<>();
 
       server_.listFiles(
             newPathEntry,
@@ -126,6 +124,7 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
                      return;
 
                   final JsArray<FileSystemItem> files = response.getFiles();
+                  ArrayList<FileSystemItem> fsi = new ArrayList<>();
                   for (int i = 0; i < files.length(); i++)
                      fsi.add(files.get(i));
                   
