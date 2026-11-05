@@ -72,6 +72,7 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     String tabKeyFocusAnnouncement();
     String toolBarVisibilityAnnouncement();
     String warningBarsAnnouncement();
+    String plotChangedAnnouncement();
     String sessionSuspendAnnouncement();
     String unregisteredLiveAnnouncementMessage();
     String closeRemoteSessionCaption();

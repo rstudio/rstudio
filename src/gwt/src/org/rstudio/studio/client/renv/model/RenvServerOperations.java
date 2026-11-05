@@ -26,12 +26,15 @@ public interface RenvServerOperations extends BuildServerOperations
    void renvInit(String projDir, ServerRequestCallback<VoidResponse> requestCallback);
    void renvActions(String action, ServerRequestCallback<JsArray<RenvAction>> requestCallback);
 
-   // installs the requested version of R (via rig) in a background job, the
-   // build for 'architecture' when it's not empty; completion is reported
-   // through RInstallCompletedEvent
+   // installs the requested version of R (via rig) in a background job, into
+   // 'directory', the build for 'architecture' when it's not empty;
+   // completion is reported through RInstallCompletedEvent
    void rigInstallRVersion(String version,
+                           String directory,
                            String architecture,
                            ServerRequestCallback<String> requestCallback);
+
+   void rigGetInstallDir(ServerRequestCallback<String> requestCallback);
 
    // asks rig, for each build of R this machine runs, whether it has an
    // installer for the requested version

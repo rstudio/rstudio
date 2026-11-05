@@ -26,6 +26,9 @@
 namespace rstudio {
 namespace core {
 class Error;
+namespace system {
+class ProcessOperations;
+} // namespace system
 } // namespace core
 } // namespace rstudio
 
@@ -76,21 +79,45 @@ std::string agentStderrTail(const std::string& text, std::size_t maxLength);
 // Exposed for testing.
 core::FilePath nesLanguageServerPath(const core::FilePath& installPath);
 
-// Whether an agent request made at requestTime has been pending long enough at
-// now that the idle sweep should cancel it as dropped. requestTime is when the
-// request was queued, which can precede the write to the agent. Exposed for testing.
-bool isAgentRequestExpired(std::chrono::steady_clock::time_point requestTime,
-                           std::chrono::steady_clock::time_point now);
+// Accumulates the time the session spends servicing events, which is the only
+// time agent requests can be written and agent replies read. Each gap between
+// ticks counts for at most maxGap, so time R spends blocked in code that
+// doesn't service events isn't charged to requests waiting on the agent.
+class ServicedClock
+{
+public:
+   explicit ServicedClock(std::chrono::steady_clock::duration maxGap);
 
-// Drive the agent reply loop and expiry sweep without a running agent: register
-// a pending request whose clock started at requestTime (onResult receives
-// whether it was cancelled), queue a raw reply as if read from the agent, and
-// run one background-processing pass. Exposed for testing.
+   void tick(std::chrono::steady_clock::time_point now);
+   std::chrono::steady_clock::duration elapsed() const;
+
+private:
+   std::chrono::steady_clock::duration maxGap_;
+   std::chrono::steady_clock::duration elapsed_;
+   std::chrono::steady_clock::time_point lastTick_;
+   bool ticked_ = false;
+};
+
+// How long the agent has to answer a request with the given method, in
+// serviced time, before the idle sweep cancels it as dropped. Exposed for testing.
+std::chrono::steady_clock::duration agentRequestTimeout(const std::string& method);
+
+// Hooks that drive the agent request and reply handling without a running
+// agent, each standing in for the production step its name describes.
+// onResult receives whether the request was cancelled. Exposed for testing.
 void addPendingAgentRequestForTesting(const std::string& requestId,
-                                      std::chrono::steady_clock::time_point requestTime,
+                                      const std::string& method,
+                                      bool written,
+                                      std::chrono::steady_clock::time_point now,
                                       const std::function<void(bool)>& onResult);
 void queueAgentReplyForTesting(const std::string& reply);
-void runBackgroundProcessingForTesting(bool isIdle);
+void queueAgentNotificationForTesting(const std::string& method);
+void focusDocumentForTesting(const std::string& documentId);
+void resendFocusForTesting();
+void resetForNewAgentForTesting();
+void writeQueuedAgentRequestsForTesting(core::system::ProcessOperations& operations);
+void runBackgroundProcessingForTesting(bool isIdle,
+                                       std::chrono::steady_clock::time_point now);
 
 // Synchronously stop the assistant agent, waiting for the process to exit so
 // its file handles are released. Returns true if the agent stopped (or was not

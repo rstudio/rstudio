@@ -65,9 +65,10 @@ class RInstallJob : public boost::enable_shared_from_this<RInstallJob>
 {
 public:
    static boost::shared_ptr<RInstallJob> create(const std::string& version,
-                                                const std::string& architecture)
+                                               const std::string& directory,
+                                               const std::string& architecture)
    {
-      boost::shared_ptr<RInstallJob> pJob(new RInstallJob(version, architecture));
+      boost::shared_ptr<RInstallJob> pJob(new RInstallJob(version, directory, architecture));
       pJob->initialize();
       return pJob;
    }
@@ -109,8 +110,10 @@ public:
    }
 
 private:
-   RInstallJob(const std::string& version, const std::string& architecture)
-      : version_(version), architecture_(architecture)
+   RInstallJob(const std::string& version,
+               const std::string& directory,
+               const std::string& architecture)
+      : version_(version), directory_(directory), architecture_(architecture)
    {
    }
 
@@ -163,7 +166,7 @@ private:
 
    // Have rig install the requested version of R. Installing in admin mode
    // needs sudo, which can't be answered from here, so R is always installed
-   // in user mode (into the home directory), even when rig itself is
+   // in user mode, at the confirmed destination, even when rig itself is
    // configured for admin mode.
    void installR(const std::string& rigPath)
    {
@@ -175,6 +178,7 @@ private:
          args.push_back("--arch");
          args.push_back(architecture_);
       }
+      log("Installing into " + directory_ + "\n");
       log("$ " + rigPath + " " + core::algorithm::join(args, " ") + "\n");
 
       boost::shared_ptr<RInstallJob> self = shared_from_this();
@@ -218,7 +222,9 @@ private:
       // LaunchAgent that sets RSTUDIO_WHICH_R); what the install adds or
       // changes is put back when the job finishes (#19229)
       std::vector<std::string> notes;
-      Error beginError = r::exec::RFunction(".rs.rig.userInstallBegin", rigPath, installSnapshotPath().getAbsolutePath()).call(&notes);
+      Error beginError = r::exec::RFunction(".rs.rig.userInstallBegin", rigPath, installSnapshotPath().getAbsolutePath())
+            .addParam("directory", directory_)
+            .call(&notes);
       logNotes(notes);
       if (beginError)
       {
@@ -231,16 +237,21 @@ private:
       options.terminateChildren = true;
       options.exitWithParent = true;
 
+      // rig installs into the confirmed destination (its RIG_R_INSTALL_DIR
+      // override), which the snapshot above was taken for as well
+      core::system::Options environment;
+      core::system::environment(&environment);
+      core::system::setenv(&environment, "RIG_R_INSTALL_DIR", directory_);
+
 #ifndef _WIN32
       // rig also appends to the shell startup files unless its user-mode
       // quick-link directory precedes /usr/local/bin on its PATH
-      core::system::Options environment;
-      core::system::environment(&environment);
       std::string home = core::system::getenv(environment, "HOME");
       if (!home.empty())
          core::system::addToPath(&environment, home + "/.local/bin", true);
-      options.environment = environment;
 #endif
+
+      options.environment = environment;
 
       Error error = module_context::processSupervisor().runProgram(rigPath, args, options, callbacks);
       if (error)
@@ -276,7 +287,17 @@ private:
       json::Value installed;
       if (ok)
       {
-         Error lookupError = findInstalledRVersion(version_, architecture_, &installed);
+         // later checks this session (e.g. after a reload) must not reuse a
+         // list of installations without the new R
+         Error cacheError = r::exec::RFunction(".rs.rInstallations.clearCache").call();
+         if (cacheError)
+            LOG_ERROR(cacheError);
+
+         Error lookupError = r::exec::RFunction(".rs.rig.installedRVersion")
+               .addParam("version", version_)
+               .addParam("directory", directory_)
+               .addParam("architecture", architecture_)
+               .call(&installed);
          if (lookupError)
             LOG_ERROR(lookupError);
 
@@ -324,6 +345,7 @@ private:
 
 private:
    std::string version_;
+   std::string directory_;
    std::string architecture_;
    boost::shared_ptr<jobs::Job> pJob_;
    bool processRunning_ = false;
@@ -332,6 +354,20 @@ private:
 
 // only one installation runs at a time
 boost::shared_ptr<RInstallJob> s_pInstallJob;
+
+Error rigGetInstallDir(const json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
+{
+   if (options().programMode() != kSessionProgramModeDesktop)
+      return Error(json::errc::MethodUnexpected, ERROR_LOCATION);
+
+   std::string directory;
+   Error error = r::exec::RFunction(".rs.rig.defaultInstallDir").call(&directory);
+   if (error)
+      return error;
+   pResponse->setResult(directory);
+   return Success();
+}
 
 void onShutdown(bool)
 {
@@ -359,8 +395,8 @@ Error rigInstallRVersion(const json::JsonRpcRequest& request,
    if (options().programMode() != kSessionProgramModeDesktop)
       return Error(json::errc::MethodUnexpected, ERROR_LOCATION);
 
-   std::string version;
-   Error error = json::readParams(request.params, &version);
+   std::string version, directory;
+   Error error = json::readParams(request.params, &version, &directory);
    if (error)
       return error;
 
@@ -369,11 +405,11 @@ Error rigInstallRVersion(const json::JsonRpcRequest& request,
 
    // the build of R to install where there's a choice; empty for rig's default
    std::string architecture;
-   if (request.params.getSize() > 1)
+   if (request.params.getSize() > 2)
    {
-      if (!request.params[1].isString())
+      if (!request.params[2].isString())
          return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
-      architecture = request.params[1].getString();
+      architecture = request.params[2].getString();
    }
    if (!architecture.empty() && architecture != "arm64" && architecture != "x86_64")
       return Error(json::errc::ParamInvalid, ERROR_LOCATION);
@@ -381,7 +417,22 @@ Error rigInstallRVersion(const json::JsonRpcRequest& request,
    if (s_pInstallJob && s_pInstallJob->running())
       return Error("RInstallInProgress", 1, "An R installation is already in progress", ERROR_LOCATION);
 
-   s_pInstallJob = RInstallJob::create(version, architecture);
+   std::string normalizedDirectory;
+   error = r::exec::RFunction(".rs.rig.validateInstallDir")
+         .addParam("directory", directory)
+         .call(&normalizedDirectory);
+   if (error)
+      return error;
+
+   // the root is recorded so that its R is found again after a restart;
+   // failing to record it is no reason to refuse the install
+   error = r::exec::RFunction(".rs.rig.rememberInstallDir")
+         .addParam("directory", normalizedDirectory)
+         .call();
+   if (error)
+      LOG_ERROR(error);
+
+   s_pInstallJob = RInstallJob::create(version, normalizedDirectory, architecture);
    pResponse->setResult(s_pInstallJob->jobId());
    return Success();
 }
@@ -413,17 +464,6 @@ Error rigCheckRVersion(const json::JsonRpcRequest& request,
 
 } // anonymous namespace
 
-Error findInstalledRVersion(const std::string& version,
-                            const std::string& architecture,
-                            json::Value* pInstalled)
-{
-   r::exec::RFunction findInstalled(".rs.findInstalledRVersion");
-   findInstalled.addParam("version", version);
-   if (!architecture.empty())
-      findInstalled.addParam("architecture", architecture);
-   return findInstalled.call(pInstalled);
-}
-
 std::string installInProgress()
 {
    return s_pInstallJob && s_pInstallJob->running() ? s_pInstallJob->version() : std::string();
@@ -442,6 +482,7 @@ Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "rig_install_r_version", rigInstallRVersion))
+      (bind(registerRpcMethod, "rig_get_install_dir", rigGetInstallDir))
       (bind(registerRpcMethod, "rig_check_r_version", rigCheckRVersion))
       (bind(sourceModuleRFile, "SessionRig.R"));
 

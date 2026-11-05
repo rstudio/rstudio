@@ -1,5 +1,6 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
+import { CRAN_REPOS } from '@utils/constants';
 
 test.describe('Console command effects', () => {
   let consoleActions: ConsolePaneActions;
@@ -50,7 +51,7 @@ test.describe('Console command effects', () => {
 
   test('install.packages() reports not-available for a non-existent package', async () => {
     await consoleActions.executeInConsole(
-      "install.packages('fake_package', repos = 'https://cran.r-project.org')",
+      `install.packages('fake_package', repos = '${CRAN_REPOS}')`,
     );
     await expect(consoleActions.consolePane.consoleOutput).toContainText(
       "‘fake_package’ is not available",

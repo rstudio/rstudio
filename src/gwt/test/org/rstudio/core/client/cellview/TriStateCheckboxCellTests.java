@@ -23,7 +23,7 @@ public class TriStateCheckboxCellTests extends GWTTestCase
    private static String render(Boolean value)
    {
       SafeHtmlBuilder sb = new SafeHtmlBuilder();
-      new TriStateCheckboxCell<String>(null).render(new Cell.Context(0, 0, "key"), value, sb);
+      new TriStateCheckboxCell<String>(null, key -> "Stage " + key).render(new Cell.Context(0, 0, "key"), value, sb);
       return sb.toSafeHtml().asString();
    }
 
@@ -46,6 +46,29 @@ public class TriStateCheckboxCellTests extends GWTTestCase
    public void testIndeterminateIsTaggedForContrastThemes()
    {
       assertTagged(render(null), "rstudio-glyph-checkbox-indeterminate");
+   }
+
+   private static void assertCheckbox(String html, String checked)
+   {
+      assertTrue(html, html.contains("role=\"checkbox\""));
+      assertTrue(html, html.contains("aria-checked=\"" + checked + "\""));
+      assertTrue(html, html.contains("aria-label=\"Stage key\""));
+      assertFalse(html, html.contains("alt="));
+   }
+
+   public void testCheckedIsExposedAsCheckedCheckbox()
+   {
+      assertCheckbox(render(true), "true");
+   }
+
+   public void testUncheckedIsExposedAsUncheckedCheckbox()
+   {
+      assertCheckbox(render(false), "false");
+   }
+
+   public void testIndeterminateIsExposedAsMixedCheckbox()
+   {
+      assertCheckbox(render(null), "mixed");
    }
 
    @Override

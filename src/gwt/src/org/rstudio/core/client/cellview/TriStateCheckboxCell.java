@@ -16,6 +16,7 @@ package org.rstudio.core.client.cellview;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -49,9 +50,15 @@ public class TriStateCheckboxCell<TKey> implements Cell<Boolean>
       ImageResource checkboxOff2x();
    }
 
-   public TriStateCheckboxCell(SelectionModel<TKey> selectionModel)
+   /**
+    * @param labeler Supplies the checkbox's accessible name for a row key,
+    *    e.g. "Stage R/foo.R".
+    */
+   public TriStateCheckboxCell(SelectionModel<TKey> selectionModel,
+                               Function<TKey, String> labeler)
    {
       selectionModel_ = selectionModel;
+      labeler_ = labeler;
       consumedEvents_ = new HashSet<>();
       consumedEvents_.add("click");
       consumedEvents_.add("keydown");
@@ -116,34 +123,42 @@ public class TriStateCheckboxCell<TKey> implements Cell<Boolean>
    }
 
    @Override
+   @SuppressWarnings("unchecked")
    public void render(Context context, Boolean value, SafeHtmlBuilder sb)
    {
       ImageResource2x img;
       String glyph;
+      String checked;
       if (value == null)
       {
          img = new ImageResource2x(RES.checkboxIndeterminate2x());
          glyph = "rstudio-glyph-checkbox-indeterminate";
+         checked = "mixed";
       }
       else if (value)
       {
          img = new ImageResource2x(RES.checkboxOn2x());
          glyph = "rstudio-glyph-checkbox-on";
+         checked = "true";
       }
       else
       {
          img = new ImageResource2x(RES.checkboxOff2x());
          glyph = "rstudio-glyph-checkbox-off";
+         checked = "false";
       }
 
       // Contrast themes do not recolor bitmaps; these classes let themeStyles.css
-      // redraw the checkbox in the contrast theme's text color.
+      // redraw the checkbox in the contrast theme's text color. There is no alt:
+      // ARIA in HTML permits alt="" only on images with no role or role="none".
       sb.append(SafeHtmlUtil.createOpenTag("img",
             "class", "rstudio-forced-colors-glyph " + glyph,
             "src", img.getSafeUri().asString(),
             "width", Integer.toString(img.getWidth()),
             "height", Integer.toString(img.getHeight()),
-            "alt", ""));
+            "role", "checkbox",
+            "aria-checked", checked,
+            "aria-label", labeler_.apply((TKey) context.getKey())));
    }
 
    @Override
@@ -163,5 +178,6 @@ public class TriStateCheckboxCell<TKey> implements Cell<Boolean>
    private final HashSet<String> consumedEvents_;
    private boolean mouseInCheckbox_;
    private final SelectionModel<TKey> selectionModel_;
+   private final Function<TKey, String> labeler_;
    private static final Resources RES = GWT.create(Resources.class);
 }

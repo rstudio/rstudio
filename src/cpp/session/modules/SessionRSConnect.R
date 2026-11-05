@@ -271,8 +271,17 @@
   app$config_url <- if (rsconnect:::isPositConnectCloudServer(server)) {
     paste(rsconnect:::connectCloudUrls()$ui, account, "content", app$id, sep = "/")
   } else if (rsconnect:::isConnectServer(server)) {
-    prefix <- sub("/__api__", "", hostUrl)
-    paste(prefix, "connect/#/apps", app$id, sep = "/")
+    # rsconnect (>= 1.11.1) provides the dashboard URL; older versions don't,
+    # so build it from the content GUID (Connect 2026.01.0 and later accept
+    # only GUIDs in dashboard URLs, not integer ids)
+    dashboardUrl <- app$dashboard_url
+    if (is.character(dashboardUrl) && length(dashboardUrl) == 1L &&
+        !is.na(dashboardUrl) && nzchar(dashboardUrl)) {
+      dashboardUrl
+    } else {
+      prefix <- sub("/__api__", "", hostUrl)
+      paste(prefix, "connect/#/apps", app$guid, sep = "/")
+    }
   } else {
     prefix <- "https://www.shinyapps.io/admin/#/applications"
     paste(prefix, app$id, sep = "/")

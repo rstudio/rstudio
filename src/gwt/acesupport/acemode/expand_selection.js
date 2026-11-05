@@ -28,8 +28,6 @@ var Utils = require("mode/utils");
 
 (function() {
 
-   var self = this;
-
    var $debuggingEnabled = false;
    function debuglog(/*...*/)
    {
@@ -158,34 +156,35 @@ var Utils = require("mode/utils");
    }
 
 
-   var $handlersAttached = false;
-   function ensureOnChangeHandlerAttached()
+   // A document change invalidates an editor's selection history. The
+   // listener goes on each editor, not on Editor.prototype: registering on
+   // the prototype gives it an event registry that every editor created
+   // afterwards inherits and shares, cross-wiring their events.
+   function ensureOnChangeHandlerAttached(editor)
    {
-      if (!$handlersAttached)
+      if (!editor.$onClearSelectionHistory)
       {
-         self.on("change", self.$onClearSelectionHistory);
-         $handlersAttached = true;
+         editor.$onClearSelectionHistory = function()
+         {
+            editor.$clearSelectionHistory();
+         };
+         editor.on("change", editor.$onClearSelectionHistory);
       }
    }
 
-   function ensureOnChangeHandlerDetached()
+   function ensureOnChangeHandlerDetached(editor)
    {
-      if ($handlersAttached)
+      if (editor.$onClearSelectionHistory)
       {
-         self.off("change", self.$onClearSelectionHistory);
-         $handlersAttached = false;
+         editor.off("change", editor.$onClearSelectionHistory);
+         editor.$onClearSelectionHistory = null;
       }
    }
-
-   this.$onClearSelectionHistory = function()
-   {
-      return self.$clearSelectionHistory();
-   };
 
    this.$clearSelectionHistory = function()
    {
       this.$selectionRangeHistory = null;
-      this.off("change", this.$clearSelectionHistory);
+      ensureOnChangeHandlerDetached(this);
    };
 
    this.$acceptSelection = function(selection, newRange, oldRange)
@@ -450,7 +449,7 @@ var Utils = require("mode/utils");
       debuglog("Begin new expand selection session");
       debuglog("----------------------------------");
 
-      ensureOnChangeHandlerAttached();
+      ensureOnChangeHandlerAttached(this);
 
       // Extract some useful objects / variables.
       var session = this.getSession();
@@ -535,7 +534,7 @@ var Utils = require("mode/utils");
 
       // No more history means we don't need to track
       // document changed any more.
-      ensureOnChangeHandlerDetached();
+      ensureOnChangeHandlerDetached(this);
       return this.getSelectionRange();
 
    };

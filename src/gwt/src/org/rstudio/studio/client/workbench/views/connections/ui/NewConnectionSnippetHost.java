@@ -315,7 +315,7 @@ public class NewConnectionSnippetHost extends Composite
             idxParams++;
             
             final String secondKey = snippetParts.get(idxParams).getKey();
-            Label secondLabel = new Label(secondKey + ":");
+            FormLabel secondLabel = new FormLabel(secondKey + ":");
             secondLabel.addStyleName(RES.styles().secondLabel());
             connGrid.setWidget(idxRow, 2, secondLabel);
             connGrid.getRowFormatter().setVerticalAlign(idxRow, HasVerticalAlignment.ALIGN_TOP);
@@ -323,6 +323,7 @@ public class NewConnectionSnippetHost extends Composite
             final TextBox secondTextbox = new TextBox();
             secondTextbox.setText(snippetParts.get(idxParams).getValue());
             secondTextbox.addStyleName(RES.styles().secondTextbox());
+            secondLabel.setFor(secondTextbox);
             connGrid.setWidget(idxRow, 3, secondTextbox);
             connGrid.getCellFormatter().getElement(idxRow, 3).setAttribute("colspan", "2");
             

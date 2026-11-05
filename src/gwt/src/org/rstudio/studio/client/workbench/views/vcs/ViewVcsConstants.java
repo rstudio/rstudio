@@ -183,4 +183,8 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
     String openWorktreeMainWindowUnavailable();
     String noWorktreesToRemove();
     String removeWorktreeConfirm(String path);
+    String stageFile(String path);
+    String commitFile(String path);
+    String changedFiles();
+    String filesToCommit();
 }

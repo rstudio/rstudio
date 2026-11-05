@@ -128,7 +128,7 @@ public class VisualModeChunk
       chunkCallbacks_ = chunkCallbacks;
       sync_ = sync;
       codeExecution_ = target.getCodeExecutor();
-      parent_ = target.getDocDisplay();
+      parent_ = target.getPrimaryDisplay();
       target_ = target;
       events_ = events;
       fileTypes_ = fileTypes;
@@ -531,7 +531,7 @@ public class VisualModeChunk
    private boolean isRunnableChunk(Scope scope)
    {
       return TextEditingTargetScopeHelper.isRunnableChunk(
-         target_.getDocDisplay(),
+         target_.getPrimaryDisplay(),
          scope.getPreamble().getRow()
       );
    }
