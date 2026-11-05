@@ -29,6 +29,8 @@ import org.rstudio.studio.client.renv.RenvConstants;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RadioButton;
@@ -99,9 +101,12 @@ public class InstallRDialog extends ModalDialog<InstallRDialog.Choice>
    // be chosen, with a note when that leaves only the emulated x64 build.
    private Widget createBuildChoice(String version, List<String> offered, List<String> available)
    {
+      RES.styles().ensureInjected();
+
       Label label = new Label(constants_.rInstallBuild());
       VerticalPanel choices = new VerticalPanel();
       FieldSetPanel group = new FieldSetPanel(label);
+      group.addStyleName(RES.styles().buildChoice());
       group.add(choices);
 
       String name = DOM.createUniqueId();
@@ -117,7 +122,11 @@ public class InstallRDialog extends ModalDialog<InstallRDialog.Choice>
       }
 
       if (!available.contains(offered.get(0)) && available.contains("x86_64"))
-         choices.add(new Label(constants_.rVersionX64OnlyNote(version)));
+      {
+         Label note = new Label(constants_.rVersionX64OnlyNote(version));
+         note.addStyleName(RES.styles().buildNote());
+         choices.add(note);
+      }
 
       VerticalPanel panel = new VerticalPanel();
       panel.add(new VerticalSpacer("12px"));
@@ -187,5 +196,19 @@ public class InstallRDialog extends ModalDialog<InstallRDialog.Choice>
    private final List<String> architectures_ = new ArrayList<>();
    private final List<RadioButton> buttons_ = new ArrayList<>();
    private final List<Boolean> availableBuilds_ = new ArrayList<>();
+
+   interface Styles extends CssResource
+   {
+      String buildChoice();
+      String buildNote();
+   }
+
+   interface Resources extends ClientBundle
+   {
+      @Source("InstallRDialog.css")
+      Styles styles();
+   }
+
+   private static final Resources RES = GWT.create(Resources.class);
    private static final RenvConstants constants_ = GWT.create(RenvConstants.class);
 }

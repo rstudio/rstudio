@@ -1,0 +1,19 @@
+@external gwt-RadioButton;
+
+/* the fieldset groups the build choice for screen readers only */
+fieldset.buildChoice {
+   border: none;
+   padding: 0;
+   margin: 0;
+}
+
+/* the same indent for the radio buttons and the note below them, on every
+   platform (RStudio redraws radio buttons on Linux and high-DPI Windows) */
+fieldset.buildChoice .gwt-RadioButton input[type="radio"] {
+   margin-left: 5px;
+}
+
+.buildNote {
+   margin-left: 5px;
+   font-style: italic;
+}
