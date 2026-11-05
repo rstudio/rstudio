@@ -1407,9 +1407,11 @@ bool isJsonFile(const FilePath& filePath)
    return boost::algorithm::ends_with(mimeType, "json");
 }
 
-// The content heuristic used when file(1) is unavailable or gives no answer:
-// text files don't contain consecutive null bytes. Only a prefix is read, as
-// binary formats declare themselves early and the file may be enormous.
+// The content heuristic used when file(1) is unavailable or gives no answer.
+// Text has no null bytes, except UTF-16 (recognized by its BOM), where they
+// pad ASCII characters; a null code unit there still marks binary data. Like
+// git, only a prefix is read: the file may be enormous, and compressed or
+// encrypted data is all but sure to contain a null byte within it.
 bool hasTextContent(const FilePath& targetPath)
 {
    const std::streamsize kProbeSize = 8192;
@@ -1426,13 +1428,21 @@ bool hasTextContent(const FilePath& targetPath)
    pStream->read(&contents[0], kProbeSize);
    contents.resize(static_cast<std::size_t>(pStream->gcount()));
 
-   std::string nullBytes;
-   nullBytes.push_back('\0');
-   nullBytes.push_back('\0');
-   return !boost::algorithm::contains(contents, nullBytes);
-}
+   bool isUtf16 =
+      boost::algorithm::starts_with(contents, "\xFF\xFE") ||
+      boost::algorithm::starts_with(contents, "\xFE\xFF");
 
-} // anonymous namespace
+   if (!isUtf16)
+      return contents.find('\0') == std::string::npos;
+
+   for (std::size_t i = 0; i + 1 < contents.size(); i += 2)
+   {
+      if (contents[i] == '\0' && contents[i + 1] == '\0')
+         return false;
+   }
+
+   return true;
+}
 
 FilePath findFileCommand()
 {
@@ -1452,12 +1462,9 @@ FilePath findFileCommand()
 #endif
 }
 
-bool isTextFile(const FilePath& targetPath)
-{
-   return isTextFile(targetPath, findFileCommand());
-}
-
-bool isTextFile(const FilePath& targetPath, const FilePath& fileCommand)
+// pFileCommand is null to look file(1) up, which is deferred until the
+// cheaper checks have failed since it searches the PATH
+bool isTextFileImpl(const FilePath& targetPath, const FilePath* pFileCommand)
 {
    if (hasTextMimeType(targetPath))
       return true;
@@ -1470,6 +1477,8 @@ bool isTextFile(const FilePath& targetPath, const FilePath& fileCommand)
 
    if (targetPath.getSize() == 0)
       return true;
+
+   FilePath fileCommand = pFileCommand ? *pFileCommand : findFileCommand();
 
    // no file(1) on this host (slim container images, for example); fall
    // back to inspecting the contents, as we always do on Windows
@@ -1506,11 +1515,18 @@ bool isTextFile(const FilePath& targetPath, const FilePath& fileCommand)
    // an error. treat that as "unknown", not "binary".
    if (result.exitStatus != 0 || fileType.empty())
    {
-      WLOGF("'{}' could not determine the type of '{}' (exit status {}): {}",
-            fileCommand.getAbsolutePath(),
-            targetPath.getAbsolutePath(),
-            result.exitStatus,
-            boost::algorithm::trim_copy(result.stdErr));
+      // a broken file(1) (a missing magic database, say) fails this way for
+      // every file, so report it once rather than on every open
+      static bool s_warned = false;
+      if (!s_warned)
+      {
+         s_warned = true;
+         WLOGF("'{}' could not determine the type of '{}' (exit status {}): {}",
+               fileCommand.getAbsolutePath(),
+               targetPath.getAbsolutePath(),
+               result.exitStatus,
+               boost::algorithm::trim_copy(result.stdErr));
+      }
       return hasTextContent(targetPath);
    }
 
@@ -1521,6 +1537,18 @@ bool isTextFile(const FilePath& targetPath, const FilePath& fileCommand)
           boost::algorithm::ends_with(fileType, "x-empty") ||
           boost::algorithm::equals(fileType, "application/json") ||
           boost::algorithm::equals(fileType, "application/postscript");
+}
+
+} // anonymous namespace
+
+bool isTextFile(const FilePath& targetPath)
+{
+   return isTextFileImpl(targetPath, nullptr);
+}
+
+bool isTextFile(const FilePath& targetPath, const FilePath& fileCommand)
+{
+   return isTextFileImpl(targetPath, &fileCommand);
 }
 
 void editFile(const core::FilePath& filePath, int lineNumber, int column)

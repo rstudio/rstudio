@@ -28,6 +28,7 @@
 #include <core/http/Request.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
+#include <core/system/ShellUtils.hpp>
 #include <shared_core/FilePath.hpp>
 
 #include <session/SessionOptions.hpp>
@@ -1297,14 +1298,25 @@ TEST_F(IsTextFileTest, UnavailableFileCommandInspectsContents)
    EXPECT_FALSE(isTextFile(binary, core::FilePath()));
 }
 
-TEST_F(IsTextFileTest, ContentInspectionReadsOnlyAPrefix)
+TEST_F(IsTextFileTest, ContentInspectionRejectsAnyNullOutsideUtf16)
 {
-   // the heuristic must not buffer a whole (possibly huge) file: null bytes
-   // past the probe window are not seen, which is the accepted trade-off
-   std::string contents(64 * 1024, 'x');
-   contents += "\n" + binaryContents();
-   core::FilePath lateNulls = makeTempFile(".unmapped19435", contents);
-   EXPECT_TRUE(isTextFile(lateNulls, core::FilePath()));
+   // a single null byte marks binary data; requiring two in a row let most
+   // encrypted files through
+   std::string lone = "all: build";
+   lone.push_back('\0');
+   lone += "\n";
+   core::FilePath loneNull = makeTempFile(".unmapped19435", lone);
+   EXPECT_FALSE(isTextFile(loneNull, core::FilePath()));
+
+   // UTF-16LE with a BOM: "a" then U+4E00, whose bytes straddle a null pair
+   const char utf16[] = "\xFF\xFE" "a\0" "\0\x4E" "\n\0";
+   core::FilePath utf16Text = makeTempFile(".unmapped19435", std::string(utf16, sizeof(utf16) - 1));
+   EXPECT_TRUE(isTextFile(utf16Text, core::FilePath()));
+
+   // ... but a null code unit is still binary
+   const char utf16Null[] = "\xFF\xFE" "a\0" "\0\0" "\n\0";
+   core::FilePath utf16Binary = makeTempFile(".unmapped19435", std::string(utf16Null, sizeof(utf16Null) - 1));
+   EXPECT_FALSE(isTextFile(utf16Binary, core::FilePath()));
 }
 
 #ifndef _WIN32
@@ -1323,7 +1335,27 @@ TEST_F(IsTextFileTest, MissingFileCommandInspectsContents)
    EXPECT_FALSE(isTextFile(binary, missing));
 }
 
-TEST_F(IsTextFileTest, FileCommandAnswerIsHonored)
+// The stand-ins for file(1) are scripts in the temp directory. Where that is
+// mounted noexec they cannot answer, which would fail these tests or let them
+// pass via the content fallback, so skip them instead.
+class IsTextFileStandInTest : public IsTextFileTest
+{
+protected:
+   void SetUp() override
+   {
+      core::FilePath probe = makeFileCommand("text/plain");
+      core::system::ProcessResult result;
+      core::Error error = core::system::runCommand(
+         core::shell_utils::escape(probe),
+         core::system::ProcessOptions(),
+         &result);
+
+      if (error || result.exitStatus != 0)
+         GTEST_SKIP() << "cannot run scripts in " << probe.getParent().getAbsolutePath();
+   }
+};
+
+TEST_F(IsTextFileStandInTest, FileCommandAnswerIsHonored)
 {
    // when file(1) does answer, its verdict wins over the content heuristic
    core::FilePath text = makeTempFile(".unmapped19435", "all: build\n");
@@ -1333,7 +1365,7 @@ TEST_F(IsTextFileTest, FileCommandAnswerIsHonored)
    EXPECT_TRUE(isTextFile(binary, makeFileCommand("text/plain; charset=us-ascii")));
 }
 
-TEST_F(IsTextFileTest, EmptyFileCommandAnswerInspectsContents)
+TEST_F(IsTextFileStandInTest, EmptyFileCommandAnswerInspectsContents)
 {
    core::FilePath text = makeTempFile(".unmapped19435", "all: build\n");
    EXPECT_TRUE(isTextFile(text, makeFileCommand("")));
