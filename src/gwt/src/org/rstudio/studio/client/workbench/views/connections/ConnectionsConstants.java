@@ -86,4 +86,5 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
     String loadingObjectsMessage();
     String viewTableTitle();
     String installationPath();
+    String licenseLabel();
 }

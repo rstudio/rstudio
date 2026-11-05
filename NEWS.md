@@ -30,6 +30,8 @@
 - ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the text fields in custom project templates (from a package's `inst/rstudio/templates/project` or `~/.R/rstudio/templates/project`) without their labels.
 - ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the custom CA bundle path field in Publishing options, and the environment variable list in the Publish dialog, without a label.
 - ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the list in the dialog for choosing a Posit Connect Cloud account without a label.
+- ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the text box in the Terminal Diagnostics dialog without a label.
+- ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the license text on the ODBC driver install page of the New Connection dialog without its "License:" label.
 
 ### Dependencies
 - Quarto 1.11.9
