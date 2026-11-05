@@ -172,6 +172,7 @@ MimeType s_mimeTypes[] =
       { "rprofvis",     "text/x-r-profile" },
       { "vcxproj",      "text/xml" },
       { "bib",          "text/plain" },
+      { "lock",         "text/plain" },
 
       { "tif",          "image/tiff" },
       { "tiff",         "image/tiff" },

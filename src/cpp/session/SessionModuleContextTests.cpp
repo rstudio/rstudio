@@ -1234,6 +1234,106 @@ TEST(PositAssistantInstallationTest, EmptyEnvironmentVariableLeavesInstallationE
    EXPECT_TRUE(module_context::isPositAssistantInstallationEnabledByAdmin());
 }
 
+// isTextFile() with file(1) unavailable, missing, or answering (#19435)
+class IsTextFileTest : public ::testing::Test
+{
+protected:
+   void TearDown() override
+   {
+      for (core::FilePath& file : tempFiles_)
+         file.removeIfExists();
+   }
+
+   core::FilePath makeTempFile(const std::string& extension,
+                               const std::string& contents)
+   {
+      core::FilePath path;
+      core::Error error = core::FilePath::tempFilePath(extension, path);
+      EXPECT_FALSE(error) << error.asString();
+      error = core::writeStringToFile(path, contents);
+      EXPECT_FALSE(error) << error.asString();
+      tempFiles_.push_back(path);
+      return path;
+   }
+
+   static std::string binaryContents()
+   {
+      std::string contents = "PK";
+      contents.push_back('\0');
+      contents.push_back('\0');
+      contents += "payload";
+      return contents;
+   }
+
+#ifndef _WIN32
+   // a stand-in for file(1) that always answers with the given mime type
+   core::FilePath makeFileCommand(const std::string& mimeType)
+   {
+      core::FilePath script = makeTempFile(".sh", "#!/bin/sh\necho '" + mimeType + "'\n");
+      core::Error error = script.changeFileMode(core::FileMode::USER_READ_WRITE_EXECUTE);
+      EXPECT_FALSE(error) << error.asString();
+      return script;
+   }
+#endif
+
+   std::vector<core::FilePath> tempFiles_;
+};
+
+TEST_F(IsTextFileTest, LockFilesAreTextByExtension)
+{
+   // renv.lock is JSON, but .lock is answered from the mime table so that
+   // no subprocess is needed at all
+   core::FilePath lockFile = makeTempFile(".lock", "{\n  \"R\": {}\n}\n");
+   EXPECT_EQ("text/plain", lockFile.getMimeContentType());
+   EXPECT_TRUE(isTextFile(lockFile, core::FilePath()));
+}
+
+TEST_F(IsTextFileTest, UnavailableFileCommandInspectsContents)
+{
+   core::FilePath text = makeTempFile(".unmapped19435", "all: build\n");
+   EXPECT_TRUE(isTextFile(text, core::FilePath()));
+
+   core::FilePath binary = makeTempFile(".unmapped19435", binaryContents());
+   EXPECT_FALSE(isTextFile(binary, core::FilePath()));
+}
+
+#ifndef _WIN32
+
+TEST_F(IsTextFileTest, MissingFileCommandInspectsContents)
+{
+   // the command runs through the shell, which exits 127 with nothing on
+   // stdout when the program does not exist; that used to read as "binary"
+   core::FilePath missing("/nonexistent/rstudio-19435/file");
+   ASSERT_FALSE(missing.exists());
+
+   core::FilePath text = makeTempFile(".unmapped19435", "all: build\n");
+   EXPECT_TRUE(isTextFile(text, missing));
+
+   core::FilePath binary = makeTempFile(".unmapped19435", binaryContents());
+   EXPECT_FALSE(isTextFile(binary, missing));
+}
+
+TEST_F(IsTextFileTest, FileCommandAnswerIsHonored)
+{
+   // when file(1) does answer, its verdict wins over the content heuristic
+   core::FilePath text = makeTempFile(".unmapped19435", "all: build\n");
+   EXPECT_FALSE(isTextFile(text, makeFileCommand("application/octet-stream")));
+
+   core::FilePath binary = makeTempFile(".unmapped19435", binaryContents());
+   EXPECT_TRUE(isTextFile(binary, makeFileCommand("text/plain; charset=us-ascii")));
+}
+
+TEST_F(IsTextFileTest, EmptyFileCommandAnswerInspectsContents)
+{
+   core::FilePath text = makeTempFile(".unmapped19435", "all: build\n");
+   EXPECT_TRUE(isTextFile(text, makeFileCommand("")));
+
+   core::FilePath binary = makeTempFile(".unmapped19435", binaryContents());
+   EXPECT_FALSE(isTextFile(binary, makeFileCommand("")));
+}
+
+#endif
+
 } // namespace tests
 } // namespace module_context
 } // namespace session

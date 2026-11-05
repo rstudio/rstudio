@@ -192,8 +192,11 @@ core::FilePath findProgram(const std::string& name);
 bool addTinytexToPathIfNecessary();
 bool isPdfLatexInstalled();
 
-// is the file a text file
+// is the file a text file? the second form takes the path to file(1), or an
+// empty path when it is unavailable, in which case the contents are inspected
+core::FilePath findFileCommand();
 bool isTextFile(const core::FilePath& targetPath);
+bool isTextFile(const core::FilePath& targetPath, const core::FilePath& fileCommand);
 
 // edit a file (line and column are 1-based; a negative line means "no position")
 void editFile(const core::FilePath& targetPath, int lineNumber = -1, int column = 1);
