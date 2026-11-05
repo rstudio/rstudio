@@ -132,6 +132,41 @@ test.describe('Choose Directory dialog', () => {
     }
   });
 
+  test('choosing while a missing folder is loading reports an error without choosing the fallback', async ({ rstudioPage: page }) => {
+    const chooser = await openChooserAt(page, base);
+    const original = await page.locator(SEARCH_IN_TEXT).inputValue();
+    const missing = `missing-${Date.now()}`;
+    const listing = await holdListFiles(page);
+
+    try {
+      await chooser.getByRole('button', { name: 'Go to directory' }).click();
+      const prompt = page.getByRole('dialog', { name: 'Go To Folder' });
+      await prompt.locator(TEXT_ENTRY).fill(`${base}/${missing}`);
+      await prompt.getByRole('button', { name: 'OK' }).click();
+      await expect.poll(
+        () => listing.heldPaths().some((p) => p.endsWith(`/${missing}`)),
+        { timeout: TIMEOUTS.fileOpen },
+      ).toBe(true);
+      await chooser.locator(CHOOSE_BTN).click();
+
+      listing.release();
+      const error = page.getByRole('dialog', { name: 'Error', exact: true });
+      await expect(error).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      await error.getByRole('button', { name: 'OK' }).click();
+      await expect(chooser).toBeVisible();
+      await expect(page.locator(SEARCH_IN_TEXT)).toHaveValue(original);
+
+      // Explicitly choosing after the error still returns the shown folder.
+      const fallback = await chooser.locator('#file_dialog_name_prompt').inputValue();
+      expect(fallback).not.toBe('');
+      await chooser.locator(CHOOSE_BTN).click();
+      await expect(chooser).toBeHidden();
+      await expect(page.locator(SEARCH_IN_TEXT)).toHaveValue(fallback);
+    } finally {
+      await listing.cleanup();
+    }
+  });
+
   test('opening the chooser focuses the folder list without selecting a folder', async ({ rstudioPage: page }) => {
     // a selection would change the folder Choose returns (#19315)
     const chooser = await openChooser(page);

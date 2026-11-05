@@ -23,6 +23,17 @@ public interface FileSystemContext
    public interface Callbacks
    {
       void onNavigated();
+
+      /**
+       * Navigation succeeded only by listing a fallback directory. Callers
+       * with a pending operation must cancel it before handling the arrival.
+       */
+      default void onNavigatedToFallback(String errorMessage)
+      {
+         onNavigated();
+         onError(errorMessage);
+      }
+
       void onError(String errorMessage);
       void onDirectoryCreated(FileSystemItem directory);
    }

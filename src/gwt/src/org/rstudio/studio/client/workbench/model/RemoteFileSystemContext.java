@@ -84,6 +84,13 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
     */
    public void cd(String relativeOrAbsolutePath, final String fallbackPath)
    {
+      cd(relativeOrAbsolutePath, fallbackPath, null);
+   }
+
+   private void cd(String relativeOrAbsolutePath,
+                   final String fallbackPath,
+                   final String navigationError)
+   {
       final String newPath = combine(workingDir_, relativeOrAbsolutePath);
 
       final FileSystemItem newPathEntry = FileSystemItem.createDir(newPath);
@@ -102,8 +109,9 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
                {
                   if (fallbackPath != null)
                   {
-                     // try fallback if supplied
-                     cd(fallbackPath, null);
+                     // Preserve the original error so a fallback listing
+                     // cannot be mistaken for the requested destination.
+                     cd(fallbackPath, null, error.getUserMessage());
                   }
                   else if (callbacks_ != null)
                      callbacks_.onError(error.getUserMessage());
@@ -120,7 +128,12 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
                   contents_ = fsi.toArray(new FileSystemItem[0]);
                   
                   if (callbacks_ != null)
-                     callbacks_.onNavigated();
+                  {
+                     if (navigationError != null)
+                        callbacks_.onNavigatedToFallback(navigationError);
+                     else
+                        callbacks_.onNavigated();
+                  }
                }
             });
    }
