@@ -88,6 +88,28 @@ test('skipping refinement retains short-line groups that the character pass spli
    }
 });
 
+test('opening review refreshes cached line-only chunks without a pending edit', () => {
+   const fixture = syntheticCases().find(item => item.name === 'separated-blocks-"}"');
+   const raw = engine.compute(fixture.base, fixture.lines, 'current', { budgetMs: 5000, rawOnly: true });
+   const lineOnly = engine.compute(fixture.base, fixture.lines, 'line-only', { budgetMs: 5000 });
+   const toggled = engine.compute(fixture.base, fixture.lines, 'line-only', {
+      budgetMs: 5000, reviewTransitions: [true, false, true]
+   });
+   assert(!raw.failed && !lineOnly.failed && !toggled.failed);
+   assert(!timedOut(raw) && !timedOut(lineOnly) && !timedOut(toggled));
+   assert(raw.characterChanges.some(count => count > 0));
+   for (const transition of toggled.transitions) {
+      assert.equal(transition.pending, false);
+      const expected = transition.visible ? raw : lineOnly;
+      assert.deepEqual(transition.chunks, expected.chunks);
+      assert.deepEqual(transition.characterRanges, expected.characterRanges);
+      if (transition.visible) {
+         assert.deepEqual(transition.delivered.chunks, raw.chunks);
+         assert.deepEqual(transition.delivered.characterRanges, raw.characterRanges);
+      }
+   }
+});
+
 test('completed fixture diffs cover all changes and revert to the comparison base', () => {
    for (const fixture of syntheticCases().filter(item => !item.name.startsWith('replace-'))) {
       for (const strategy of STRATEGIES) {

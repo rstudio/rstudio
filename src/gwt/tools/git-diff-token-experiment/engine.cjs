@@ -52,6 +52,20 @@ function replaceOnce(source, before, after) {
    return source.replace(before, after);
 }
 
+function describeChunks(chunks) {
+   // Convert out of the VM so assertions use the host Array prototype.
+   return {
+      chunks: Array.from(chunks, chunk => [
+         chunk.old.start.row, chunk.old.end.row, chunk.new.start.row, chunk.new.end.row
+      ]),
+      characterChanges: Array.from(chunks, chunk => chunk.charChanges?.length || 0),
+      characterRanges: Array.from(chunks, chunk => Array.from(chunk.charChanges || [], change => [
+         change.old.start.row, change.old.start.column, change.old.end.row, change.old.end.column,
+         change.new.start.row, change.new.start.column, change.new.end.row, change.new.end.column
+      ]))
+   };
+}
+
 function createEngine() {
    const state = {};
    const context = vm.createContext({ console, setTimeout, clearTimeout, performance, experiment: state });
@@ -151,6 +165,19 @@ function createEngine() {
       'if (this.lastDiffMs >= MAX_COMPUTATION_MS && isWholeDocument(chunks, base, lines))',
       'if (!experiment.rawOnly && this.lastDiffMs >= MAX_COMPUTATION_MS && isWholeDocument(chunks, base, lines))'
    );
+   // Attaching review normally flushes only a pending edit. A cached line-only
+   // result also needs recomputing, even when the document has not changed.
+   gutter = replaceOnce(
+      gutter,
+      'this.splitView = view;',
+      `var refinementModeChanged = experiment.strategy === "line-only" && !!this.splitView !== !!view;
+      this.splitView = view;
+      if (refinementModeChanged) {
+         this.updatePending = true;
+         if (!view)
+            this.flushUpdate();
+      }`
+   );
    vm.runInContext(gutter, context);
    const Gutter = context.require('rstudio/git_diff_gutter').GitDiffGutter;
 
@@ -173,25 +200,52 @@ function createEngine() {
       };
       const started = performance.now();
       Gutter.prototype.update.call(model);
-      const ms = performance.now() - started;
+      const transitions = [];
+      if (options.reviewTransitions) {
+         // Use the real setSplitView / flushUpdate methods with only DOM and
+         // event plumbing stubbed. The document remains unchanged throughout.
+         const noop = () => {};
+         function view() {
+            return {
+               baseEditor: { on: noop, off: noop, commands: { addCommand: noop, removeCommand: noop } },
+               setBaseLines: noop,
+               setChunks: result => { model.deliveredChunks = result; }
+            };
+         }
+         Object.assign(model, {
+            chunks, updatePending: false,
+            splitView: options.splitView ? view() : null,
+            update: Gutter.prototype.update,
+            flushUpdate: Gutter.prototype.flushUpdate,
+            closePeek: noop, notifyStatus: noop,
+            closePeekCommand: () => ({ name: 'closeGitPeek' }),
+            setChunks(result) {
+               chunks = this.chunks = result;
+               if (this.splitView)
+                  this.splitView.setChunks(result);
+            }
+         });
+         for (const visible of options.reviewTransitions) {
+            assert.equal(typeof visible, 'boolean');
+            model.deliveredChunks = undefined;
+            Gutter.prototype.setSplitView.call(model, visible ? view() : null);
+            transitions.push({
+               visible, pending: model.updatePending,
+               ...describeChunks(chunks),
+               delivered: model.deliveredChunks ? describeChunks(model.deliveredChunks) : null
+            });
+         }
+      }
       return {
-         ms,
+         ms: performance.now() - started,
+         transitions,
          refinementMs: state.refinementMs,
          characterRefinementCalls: state.characterRefinementCalls,
          alignmentTimeouts: state.alignmentTimeouts.slice(),
          lineAlignments: JSON.parse(JSON.stringify(state.lineAlignments)),
          refinementTimeouts: state.refinementTimeouts,
          failed: model.diffFailed,
-         // Convert out of the VM so assertions use the host Array prototype.
-         chunks: Array.from(chunks, chunk => [
-            chunk.old.start.row, chunk.old.end.row,
-            chunk.new.start.row, chunk.new.end.row
-         ]),
-         characterChanges: Array.from(chunks, chunk => chunk.charChanges?.length || 0),
-         characterRanges: Array.from(chunks, chunk => Array.from(chunk.charChanges || [], change => [
-            change.old.start.row, change.old.start.column, change.old.end.row, change.old.end.column,
-            change.new.start.row, change.new.start.column, change.new.end.row, change.new.end.column
-         ]))
+         ...describeChunks(chunks)
       };
    }
    return { compute };

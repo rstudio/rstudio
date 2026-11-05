@@ -35,8 +35,9 @@ character ranges that describe tokens, and retain the existing elapsed-time /
 whole-range failure guard. They measure tokenization as part of the elapsed time.
 With a side-by-side review view attached all candidates use the current raw-text path, so
 character highlights remain available. This branch is exercised without a DOM;
-view attachment, rendering, and switching between modes are not implemented or
-validated in the IDE.
+rendering and mode switching are not validated in the IDE. For the provider
+option, a headless test also exercises the real view-attachment and update-flush
+methods with event and DOM plumbing stubbed.
 
 | Strategy | Representation |
 | --- | --- |
@@ -62,6 +63,11 @@ hashes, weighted matching, boundary placement, short-line joining, and whitespac
 scanning are unchanged. Coarse internal mappings still go through the existing
 line-range conversion; the public result omits character changes when the option
 is enabled. The option defaults off and stays off while review is attached.
+Opening or closing review marks the cached diff for recomputation and flushes
+it through the existing update path. Without this, opening review with no
+pending edit would reuse cached line-only chunks and show no character ranges.
+The transition test checks open, close, and reopen without changing the document,
+including the exact chunks and character ranges delivered to the mock view.
 This prototype retains the existing elapsed-time/whole-range failure guard and
 does not add a public timeout-status API.
 
