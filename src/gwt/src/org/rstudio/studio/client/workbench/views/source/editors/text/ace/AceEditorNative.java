@@ -540,8 +540,21 @@ public class AceEditorNative extends JavaScriptObject
       {
          // Keep the surrounding text for anchors and lookarounds, but only
          // select matches wholly contained in the requested range.
-         if (match.index + match[0].length > end)
+         if (match.index > end)
             break;
+         if (match.index + match[0].length > end)
+         {
+            // Retry an overlong match with an end constraint so alternatives
+            // can backtrack within the range, retaining assertion context.
+            // Only add this constraint when needed; ordinary searches avoid
+            // checking the remaining document for every match.
+            var remaining = re.unicode
+               ? Array.from(text.substring(end)).length
+               : text.length - end;
+            re = new RegExp("(?:" + re.source + ")(?=[\\s\\S]{" + remaining + "})", re.flags);
+            re.lastIndex = match.index;
+            continue;
+         }
          ranges.push(Range.fromPoints(
             toPosition(match.index),
             toPosition(match.index + match[0].length)));

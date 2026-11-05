@@ -266,6 +266,19 @@ test.describe('Editor', () => {
       await expect.poll(() => editor.getCursorPosition()).toEqual({ row: 0, column: 0 });
       await page.locator(SELECT_ALL_BUTTON).click();
       await expect.poll(() => editor.getCursorPosition()).toEqual({ row: 0, column: 0 });
+
+      // An alternative crossing the range end must not hide valid matches,
+      // including an alternative starting at the same position.
+      for (const [pattern, expected] of [['a\\nb\\nx|b', 'b'], ['a\\nb\\nx|a', 'a']]) {
+        await page.locator(FIND_INPUT).fill(pattern);
+        await consoleActions.executeInConsole(
+          '.rs.api.setSelectionRanges(c(1, 1, 3, 1), id = .rs.api.getSourceEditorContext()$id)',
+          { wait: true },
+        );
+        await page.locator(`${SOURCE_PANEL_SELECTOR} .rstudio-find-replace-in-selection-checkbox input`).check();
+        await page.locator(SELECT_ALL_BUTTON).click();
+        await expect.poll(() => editor.getSelectedText()).toBe(expected);
+      }
     } finally {
       await regex.setChecked(originalRegex);
       await page.locator(CLOSE_FIND_BAR).click();
