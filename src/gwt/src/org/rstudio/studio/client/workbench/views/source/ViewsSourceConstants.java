@@ -156,11 +156,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
     String openLinkMacCommand();
     String openLinkNotMacCommand();
     String findingDefinition();
-    String ignored();
-    String note();
-    String warningLowercase();
-    String error();
-    String fatal();
     String noMatchesParentheses();
     String pagingLabelTextOf(int index, int textLength);
     String numberOfOccurrencesReplaced(int occurrences);
