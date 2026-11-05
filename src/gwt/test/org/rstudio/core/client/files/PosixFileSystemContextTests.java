@@ -37,10 +37,17 @@ public class PosixFileSystemContextTests extends GWTTestCase
    {
       assertEquals("/", PosixFileSystemContext.normalizePath("/.."));
       assertEquals("/", PosixFileSystemContext.normalizePath("/home/../.."));
-      assertEquals("~", PosixFileSystemContext.normalizePath("~/.."));
       assertEquals("C:/", PosixFileSystemContext.normalizePath("C:/.."));
       assertEquals("C:/", PosixFileSystemContext.normalizePath("C:/Users/../.."));
       assertEquals("//server/", PosixFileSystemContext.normalizePath("//server/share/../.."));
+   }
+
+   public void testHomeAliasKeepsLeadingDotDot()
+   {
+      assertEquals("~/..", PosixFileSystemContext.normalizePath("~/.."));
+      assertEquals("~/../bob", PosixFileSystemContext.normalizePath("~/../bob"));
+      assertEquals("~/../shared", PosixFileSystemContext.normalizePath("~/proj/../../shared"));
+      assertEquals("~/..", PosixFileSystemContext.normalizePath("~/../a/.."));
    }
 
    public void testUncPathKeepsHostRoot()

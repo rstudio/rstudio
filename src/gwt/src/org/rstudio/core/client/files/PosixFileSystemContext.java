@@ -56,9 +56,10 @@ public abstract class PosixFileSystemContext implements FileSystemContext
     * Collapses `.` and `..` segments lexically, so a typed `../sub` lists the
     * sibling under its own path rather than as `<dir>/../sub`: the server
     * lists that fine, but the breadcrumb and every path taken from the
-    * listing would carry the `..` along. `..` never climbs above the root
-    * (`/`, `~`, a Windows drive, or a UNC host); with no root to anchor it,
-    * a leading `..` is kept.
+    * listing would carry the `..` along. `..` never climbs above a
+    * filesystem root (`/`, a Windows drive, or a UNC host). `~` only stands
+    * for the home directory, which has a parent, so a leading `..` after it
+    * is kept for the server to resolve, as it is with no root at all.
     */
    public static String normalizePath(String path)
    {
@@ -100,7 +101,7 @@ public abstract class PosixFileSystemContext implements FileSystemContext
             parts.add(part);
          else if (!parts.isEmpty() && !parts.get(parts.size() - 1).equals(".."))
             parts.remove(parts.size() - 1);
-         else if (root.isEmpty())
+         else if (root.isEmpty() || root.equals("~"))
             parts.add("..");
       }
 
