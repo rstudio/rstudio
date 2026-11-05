@@ -1150,12 +1150,19 @@ FilePath ProjectContext::packageDirectoryInProject() const
    // including any dot components. Normalize only the package-relative suffix
    // so PackagePath: . and ./pkg match those registered index keys.
    std::string relativePath = packageDir.getRelativePath(directory());
-   if (relativePath.empty() || relativePath == ".")
-      return directory();
+   FilePath indexedDir = directory();
+   if (!relativePath.empty() && relativePath != ".")
+   {
+      indexedDir = directory().completeChildPath(relativePath);
+      if (indexedDir.getFilename() == ".")
+         indexedDir = indexedDir.getParent();
+   }
 
-   FilePath indexedDir = directory().completeChildPath(relativePath);
-   if (indexedDir.getFilename() == ".")
-      indexedDir = indexedDir.getParent();
+   // Lexical normalization can change the target when a symlink precedes
+   // ".." (for example, link/../pkg). Only use the normalized index path when
+   // it still refers to the actual package directory.
+   if (packageDir != indexedDir && !packageDir.isEquivalentTo(indexedDir))
+      return FilePath();
 
    // The project scanner does not recurse into directory symlinks below its
    // registered root. Those packages need the same fallback as external ones.

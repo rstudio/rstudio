@@ -460,7 +460,6 @@ TEST_F(PackageProjectInfoTests, LinkedPackageKeepsMetadataWithoutPackageDiagnost
    RemoveOnExitScope removeScope(externalDir, ERROR_LOCATION);
    FilePath packageDir = externalDir.completeChildPath("pkg");
    ASSERT_FALSE(packageDir.ensureDirectory());
-   FilePath description = packageDir.completeChildPath("DESCRIPTION");
    ASSERT_FALSE(writeStringToFile(
          packageDir.completeChildPath("NAMESPACE"),
          "import(splines)\nimportFrom(stats, median)\n"));
@@ -472,14 +471,27 @@ TEST_F(PackageProjectInfoTests, LinkedPackageKeepsMetadataWithoutPackageDiagnost
          externalDir.getAbsolutePath().c_str(),
          projectDir_.completeChildPath("parent-link").getAbsolutePath().c_str()));
 
+   FilePath subdir = externalDir.completeChildPath("subdir");
+   ASSERT_FALSE(subdir.ensureDirectory());
+   ASSERT_EQ(0, ::symlink(
+         subdir.getAbsolutePath().c_str(),
+         projectDir_.completeChildPath("up-link").getAbsolutePath().c_str()));
+   ASSERT_FALSE(writeStringToFile(
+         externalDir.completeChildPath("NAMESPACE"),
+         "import(splines)\nimportFrom(stats, median)\n"));
+
+   // Both normalized destinations exist, but refer to different packages.
    writeDescription("Package: rootpkg\nVersion: 0.1.0\n");
+   writeDescription("Package: decoypkg\nVersion: 0.1.0\n", "pkg");
    ProjectContext context;
    openProject(&context, "None", "", true);
    modules::diagnostics::monitorProjectNamespace(context);
 
-   for (const std::string& packagePath : {"pkg-link", "parent-link/pkg"})
+   for (const std::string& packagePath : {"pkg-link", "parent-link/pkg", "up-link/../pkg", "up-link/.."})
    {
       SCOPED_TRACE(packagePath);
+      FilePath actualDir = packagePath == "up-link/.." ? externalDir : packageDir;
+      FilePath description = actualDir.completeChildPath("DESCRIPTION");
       ASSERT_FALSE(writeStringToFile(description, "Package: linkedpkg\nVersion: 0.1.0\n"));
       r_util::RProjectConfig config = context.config();
       config.buildType = r_util::kBuildTypePackage;
