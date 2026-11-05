@@ -815,54 +815,255 @@ public class AceEditor implements DocDisplay
       if (!cursor.moveToPosition(position))
          return false;
 
+      // prefixes like theme_ and scale_ are common outside ggplot2 (#19415),
+      // so a prefix match only counts when the call is joined to a neighbor
+      // with '+' (or patchwork's '&'); a call known by name counts on its own.
+      // A call inside an 'if' branch or a braced block is joined through that
+      // 'if' or block, so it is recorded here until the walk reaches it
+      boolean sawBranchCall = false;
+
+      // 'else' branches being skipped back to their 'if'; the calls there are
+      // alternatives to the cursor's branch, so only count through the 'if'
+      int skippedBranches = 0;
+
+      // braced blocks entered through their closing brace, to read their last
+      // statement; a statement boundary inside returns to the opening brace
+      List<TokenCursor> blocks = new ArrayList<>();
+
+      // whether the calls still to be read feed a pipe, so are not part of
+      // the chain; an 'if', 'else' or block starts a new expression and resets this
+      boolean piped = false;
+
+      // whether a binary '+' follows the current token at this level
+      boolean plusFollows = false;
       while (true)
       {
-         if (cursor.isRightBracket())
+         boolean jumped = false;
+         if (cursor.valueEquals("}"))
+         {
+            // read the block's last statement; its join is found at the opening brace
+            blocks.add(cursor.cloneCursor());
+            piped = false;
+            plusFollows = false;
+            if (!moveToPreviousCodeToken(cursor))
+               return false;
+            continue;
+         }
+         else if (cursor.isRightBracket())
          {
             if (!cursor.bwdToMatchingToken())
                return false;
+            jumped = true;
          }
-         else if (cursor.isLeftBracket() || cursor.valueEquals(";"))
+         else if ((cursor.isLeftBracket() && !cursor.valueEquals("{")) || cursor.valueEquals(",") || cursor.valueEquals(";"))
          {
-            // the cursor sits inside this bracket's arguments; any chain lies outside it
-            return false;
+            // the cursor sits inside this bracket's arguments (or past a
+            // sibling argument); any chain lies outside this expression
+            if (blocks.isEmpty())
+               return false;
+
+            // inside a block, this ends its last statement
+            cursor = blocks.get(blocks.size() - 1);
+            if (!cursor.bwdToMatchingToken())
+               return false;
+            continue;
+         }
+         else if (cursor.valueEquals("{"))
+         {
+            if (blocks.isEmpty())
+               return false;
+
+            // back at the opening brace of an entered block; a call recorded
+            // inside it is joined through the block
+            blocks.remove(blocks.size() - 1);
+            if (skippedBranches == 0 && sawBranchCall)
+            {
+               GgplotJoin join = joinBefore(cursor);
+               if (join == GgplotJoin.PLUS)
+                  return true;
+               if (join == GgplotJoin.NONE && blocks.isEmpty())
+                  sawBranchCall = false;
+            }
+         }
+         else if (cursor.valueEquals("else"))
+         {
+            // the other branch is a separate expression: skip back to the 'if'
+            // opening it, so that only an enclosing chain ('p + if (x) a else b')
+            // joins the two branches
+            skippedBranches++;
+            piped = false;
+         }
+         else if (cursor.valueEquals("if"))
+         {
+            if (skippedBranches > 0)
+               skippedBranches--;
+            piped = false;
+
+            // a call recorded in one of this if's branches is joined through
+            // the 'if'; after 'else' the join belongs to an outer 'if', and
+            // inside a block it may belong to the block
+            if (skippedBranches == 0 && sawBranchCall)
+            {
+               GgplotJoin join = joinBefore(cursor);
+               if (join == GgplotJoin.PLUS)
+                  return true;
+               if (join == GgplotJoin.NONE && blocks.isEmpty())
+                  sawBranchCall = false;
+            }
          }
          else if (PIPE_OPERATORS.contains(cursor.currentValue()))
          {
-            // a ggplot chain piped into another call is no longer a ggplot chain
-            return false;
+            piped = true;
          }
-         else if (cursor.hasType("identifier") &&
-                  cursor.peekFwd(1).valueEquals("(") &&
-                  isGgplotFunctionName(cursor.currentValue()))
+         else if (!piped && cursor.hasType("identifier") && cursor.peekFwd(1).valueEquals("("))
          {
-            return true;
+            String name = cursor.currentValue();
+            boolean known = GGPLOT_FUNCTIONS.contains(name);
+            if (known || isGgplotPrefixedFunctionName(name))
+            {
+               if (skippedBranches > 0 || !blocks.isEmpty())
+               {
+                  sawBranchCall = true;
+               }
+               else if (known || plusFollows)
+               {
+                  return true;
+               }
+               else
+               {
+                  GgplotJoin join = joinBefore(cursor);
+                  if (join == GgplotJoin.PLUS)
+                     return true;
+                  if (join == GgplotJoin.BRANCH)
+                     sawBranchCall = true;
+               }
+            }
          }
+
+         // after a jump the cursor is on a left bracket; the token before it
+         // is followed by whatever followed the matching right bracket
+         if (!jumped)
+            plusFollows = cursor.valueEquals("+");
 
          int row = cursor.getRow();
          boolean leadingOperator = cursor.isLookingAtBinaryOp();
-         if (!cursor.moveToPreviousToken())
+         if (!moveToPreviousCodeToken(cursor))
             return false;
 
          // a new row only continues the statement across a binary operator
-         // (trailing or leading) or a comma
-         if (cursor.getRow() != row &&
+         // (trailing or leading), after 'else', or around a control-flow
+         // header; a skipped branch is read back to its 'if' regardless
+         if (skippedBranches == 0 &&
+             cursor.getRow() != row &&
              !leadingOperator &&
              !cursor.isLookingAtBinaryOp() &&
-             !cursor.valueEquals(","))
+             !cursor.valueEquals("else") &&
+             !CONTROL_FLOW_HEADER_KEYWORDS.contains(cursor.currentValue()) &&
+             !(cursor.isRightBracket() && controlFlowHeaderKeyword(cursor) != null))
          {
-            return false;
+            if (blocks.isEmpty())
+               return false;
+
+            // inside a block, this ends its last statement
+            cursor = blocks.get(blocks.size() - 1);
+            if (!cursor.bwdToMatchingToken())
+               return false;
          }
       }
    }
 
-   private static boolean isGgplotFunctionName(String name)
+   // Moves to the previous token that is code. The code model keeps
+   // section-heading comments, which are stepped over, and chunk delimiters,
+   // which end the statement (false, as does the start of the document).
+   private static boolean moveToPreviousCodeToken(TokenCursor cursor)
+   {
+      do
+      {
+         if (!cursor.moveToPreviousToken() || cursor.hasType("codebegin", "codeend"))
+            return false;
+      }
+      while (cursor.hasType("comment"));
+
+      return true;
+   }
+
+   // how the expression starting at the cursor is joined to what precedes it
+   private enum GgplotJoin
+   {
+      NONE,
+      PLUS,    // a binary '+' (or patchwork's '&')
+      BRANCH   // 'else': the join belongs to the enclosing 'if'
+   }
+
+   // The header of an enclosing 'if' is transparent, since the 'if' takes
+   // the value of its branch ('p + if (x) geom_point()').
+   private static GgplotJoin joinBefore(TokenCursor cursor)
+   {
+      TokenCursor clone = cursor.cloneCursor();
+      while (true)
+      {
+         if (!moveToPreviousCodeToken(clone))
+            return GgplotJoin.NONE;
+
+         if (clone.isRightBracket())
+         {
+            if (!"if".equals(controlFlowHeaderKeyword(clone)))
+               return GgplotJoin.NONE;
+
+            // on to the 'if' keyword
+            clone.bwdToMatchingToken();
+            moveToPreviousCodeToken(clone);
+         }
+         else if (clone.valueEquals("else"))
+         {
+            return GgplotJoin.BRANCH;
+         }
+         else if (GGPLOT_JOIN_OPERATORS.contains(clone.currentValue()))
+         {
+            return hasLeftOperand(clone) ? GgplotJoin.PLUS : GgplotJoin.NONE;
+         }
+         else
+         {
+            return GgplotJoin.NONE;
+         }
+      }
+   }
+
+   // whether the operator at the cursor is binary (has a left operand) rather than unary
+   private static boolean hasLeftOperand(TokenCursor cursor)
+   {
+      TokenCursor clone = cursor.cloneCursor();
+      if (!moveToPreviousCodeToken(clone))
+         return false;
+
+      if (clone.isLeftBracket())
+         return false;
+      else if (clone.isRightBracket())
+         return controlFlowHeaderKeyword(clone) == null;
+      else
+         return !clone.hasType("keyword", "punctuation");
+   }
+
+   // the keyword whose header ('if', 'for', 'while' or 'function') the right
+   // bracket at the cursor closes, or null when it closes a call or a grouped
+   // expression
+   private static String controlFlowHeaderKeyword(TokenCursor cursor)
+   {
+      TokenCursor clone = cursor.cloneCursor();
+      if (!clone.bwdToMatchingToken() || !moveToPreviousCodeToken(clone))
+         return null;
+
+      String value = clone.currentValue();
+      return CONTROL_FLOW_HEADER_KEYWORDS.contains(value) ? value : null;
+   }
+
+   private static boolean isGgplotPrefixedFunctionName(String name)
    {
       for (String prefix : GGPLOT_FUNCTION_PREFIXES)
          if (name.startsWith(prefix))
             return !GGPLOT_FUNCTION_EXCLUSIONS.contains(name);
 
-      return GGPLOT_FUNCTIONS.contains(name);
+      return false;
    }
 
    private boolean shouldIndentOnPaste()
@@ -5344,6 +5545,7 @@ public class AceEditor implements DocDisplay
          "shadow_mark", "shadow_null", "shadow_trail", "shadow_wake",
          "view_follow", "view_static", "view_step", "view_step_manual", "view_zoom", "view_zoom_manual"));
 
+   // function name prefixes used by ggplot2 (and extensions) for plot components
    private static final String[] GGPLOT_FUNCTION_PREFIXES = {
          "geom_", "stat_", "scale_", "theme_", "facet_", "coord_", "annotation_", "transition_"
    };
@@ -5351,6 +5553,14 @@ public class AceEditor implements DocDisplay
    // theme_* helpers that act on the global theme rather than on a plot
    private static final Set<String> GGPLOT_FUNCTION_EXCLUSIONS = new HashSet<>(Arrays.asList(
          "theme_set", "theme_get", "theme_update", "theme_replace"));
+
+   // operators that add a component to a plot: '+', and patchwork's '&', which
+   // adds to every plot in a composition ('(p1 | p2) & theme_bw()'). Its '*'
+   // is left out, since '*' is far more often arithmetic.
+   private static final Set<String> GGPLOT_JOIN_OPERATORS = new HashSet<>(Arrays.asList("+", "&"));
+
+   private static final Set<String> CONTROL_FLOW_HEADER_KEYWORDS = new HashSet<>(Arrays.asList(
+         "if", "for", "while", "function", "\\"));
    private RnwCompletionContext rnwContext_;
    private CppCompletionContext cppContext_;
    private CompletionContext context_ = null;
