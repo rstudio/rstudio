@@ -465,7 +465,7 @@ void ProjectContext::augmentRbuildignore()
 {
    // These ignores describe files at the project root. A package in a
    // separate PackagePath does not contain them.
-   if (isPackageProject() && packageDirectory() == directory())
+   if (isPackageProject() && packageDirectory().isEquivalentTo(directory()))
    {
       // constants
       const char * const kIgnoreRproj = R"(^.*\.Rproj$)";

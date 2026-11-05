@@ -265,6 +265,8 @@ public:
    static core::r_util::RProjectConfig defaultConfig();
 
 private:
+   friend class PackageProjectInfoTests;
+
    // deferred init handler (this allows other modules to reliably subscribe
    // to our file monitoring events with no concern that they'll miss
    // onMonitoringEnabled)

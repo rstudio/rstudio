@@ -15,6 +15,8 @@
 
 #include <session/projects/SessionProjects.hpp>
 
+#include "../modules/SessionDiagnostics.hpp"
+
 #include <boost/optional.hpp>
 
 #include <shared_core/FilePath.hpp>
@@ -62,17 +64,23 @@ TEST(SessionProjectsTests, IsPackageProjectFalseWithoutProject)
    EXPECT_FALSE(projectContext().isPackageProject());
 }
 
+} // anonymous namespace
+
 class PackageProjectInfoTests : public ::testing::Test
 {
 protected:
    void SetUp() override
    {
+      importedPackages_ = r_util::RSourceIndex::getImportedPackages();
+      importFromDirectives_ = r_util::RSourceIndex::getImportFromDirectives();
       ASSERT_FALSE(FilePath::tempFilePath(projectDir_));
       ASSERT_FALSE(projectDir_.ensureDirectory());
    }
 
    void TearDown() override
    {
+      r_util::RSourceIndex::setImportedPackages(importedPackages_);
+      r_util::RSourceIndex::setImportFromDirectives(importFromDirectives_);
       EXPECT_FALSE(projectDir_.remove());
    }
 
@@ -103,7 +111,14 @@ protected:
       pContext->setConfig(pContext->config());
    }
 
+   void augmentBuildIgnores(ProjectContext* pContext)
+   {
+      pContext->augmentRbuildignore();
+   }
+
    FilePath projectDir_;
+   std::set<std::string> importedPackages_;
+   r_util::RSourceIndex::ImportFromMap importFromDirectives_;
 };
 
 TEST_F(PackageProjectInfoTests, ReadsPackageWithNonPackageBuildTypes)
@@ -232,6 +247,67 @@ TEST_F(PackageProjectInfoTests, RespectsDescriptionType)
    openProject(&context, "None");
    EXPECT_FALSE(context.isPackageProject());
 }
+
+TEST_F(PackageProjectInfoTests, AugmentsBuildIgnoresWithDotPackagePath)
+{
+   writeDescription("Package: rootpkg\nVersion: 0.1.0\n");
+   ProjectContext context;
+   openProject(&context, "Package", ".");
+   augmentBuildIgnores(&context);
+
+   std::string contents;
+   ASSERT_FALSE(readStringFromFile(projectDir_.completeChildPath(".Rbuildignore"), &contents));
+   EXPECT_NE(std::string::npos, contents.find(R"(^.*\.Rproj$)"));
+   EXPECT_NE(std::string::npos, contents.find(R"(^\.Rproj\.user$)"));
+}
+
+TEST_F(PackageProjectInfoTests, DoesNotAugmentBuildIgnoresForSeparatePackagePath)
+{
+   writeDescription("Package: nestedpkg\nVersion: 0.1.0\n", "pkg");
+   ProjectContext context;
+   openProject(&context, "Package", "pkg");
+   augmentBuildIgnores(&context);
+
+   EXPECT_FALSE(projectDir_.completeChildPath(".Rbuildignore").exists());
+   EXPECT_FALSE(projectDir_.completeChildPath("pkg/.Rbuildignore").exists());
+}
+
+TEST_F(PackageProjectInfoTests, RefreshesNamespaceImportsWhenPackagePathChanges)
+{
+   writeDescription("Package: first\nVersion: 0.1.0\n", "first");
+   writeDescription("Package: second\nVersion: 0.1.0\n", "second");
+   writeDescription("Package: third\nVersion: 0.1.0\n", "third");
+   ASSERT_FALSE(writeStringToFile(
+         projectDir_.completeChildPath("first/NAMESPACE"),
+         "import(compiler)\nimportFrom(utils, head)\n"));
+   ASSERT_FALSE(writeStringToFile(
+         projectDir_.completeChildPath("second/NAMESPACE"),
+         "import(splines)\nimportFrom(stats, median)\n"));
+
+   ProjectContext context;
+   openProject(&context, "None");
+   modules::diagnostics::monitorProjectNamespace(context);
+
+   r_util::RProjectConfig config = context.config();
+   config.buildType = r_util::kBuildTypePackage;
+   config.packagePath = "first";
+   context.setConfig(config);
+   EXPECT_EQ(std::set<std::string>{"compiler"}, r_util::RSourceIndex::getImportedPackages());
+   EXPECT_EQ(1u, r_util::RSourceIndex::getImportFromDirectives().at("utils").count("head"));
+
+   config.packagePath = "second";
+   context.setConfig(config);
+   EXPECT_EQ(std::set<std::string>{"splines"}, r_util::RSourceIndex::getImportedPackages());
+   EXPECT_EQ(0u, r_util::RSourceIndex::getImportFromDirectives().count("utils"));
+   EXPECT_EQ(1u, r_util::RSourceIndex::getImportFromDirectives().at("stats").count("median"));
+
+   config.packagePath = "third";
+   context.setConfig(config);
+   EXPECT_TRUE(r_util::RSourceIndex::getImportedPackages().empty());
+   EXPECT_TRUE(r_util::RSourceIndex::getImportFromDirectives().empty());
+}
+
+namespace {
 
 TEST(SessionProjectsTests, ResolveWrittenEditorThemePreservesWhenKeyOmitted)
 {

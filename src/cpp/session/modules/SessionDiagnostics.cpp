@@ -984,15 +984,20 @@ SEXP rs_lintRFile(SEXP filePathSEXP)
    return r::sexp::create(builder, &protect);
 }
 
-void onNAMESPACEchanged()
+void onNAMESPACEchanged(const FilePath& packageDir)
 {
    using namespace r::exec;
    using namespace r::sexp;
 
-   if (!projects::projectContext().hasProject())
+   // A new package directory or a removed/invalid NAMESPACE must not retain
+   // imports from the previous file.
+   RSourceIndex::setImportedPackages({});
+   RSourceIndex::setImportFromDirectives({});
+
+   if (packageDir.isEmpty())
       return;
 
-   FilePath NAMESPACE(projects::projectContext().packageDirectory().completePath("NAMESPACE"));
+   FilePath NAMESPACE(packageDir.completePath("NAMESPACE"));
    if (!NAMESPACE.exists())
       return;
 
@@ -1040,7 +1045,7 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
    {
       std::string eventPath = event.fileInfo().absolutePath();
       if (eventPath == namespacePath)
-         onNAMESPACEchanged();
+         onNAMESPACEchanged(projects::projectContext().packageDirectory());
    }
 }
 
@@ -1049,7 +1054,7 @@ void afterSessionInitHook(bool newSession)
    if (projects::projectContext().hasProject() &&
       projects::projectContext().packageDirectory().completePath("NAMESPACE").exists())
    {
-      onNAMESPACEchanged();
+      onNAMESPACEchanged(projects::projectContext().packageDirectory());
    }
 
    if (projects::projectContext().isPackageProject())
@@ -1113,6 +1118,20 @@ SEXP rs_lintDirectory(SEXP directorySEXP)
 
 } // anonymous namespace
 
+void monitorProjectNamespace(projects::ProjectContext& context)
+{
+   context.onConfigChanged.connect(
+         [&context, packageDir = context.packageDirectory()]() mutable
+         {
+            FilePath updatedDir = context.packageDirectory();
+            if (updatedDir != packageDir)
+            {
+               packageDir = updatedDir;
+               onNAMESPACEchanged(packageDir);
+            }
+         });
+}
+
 core::Error initialize()
 {
    using namespace rstudio::core;
@@ -1120,6 +1139,7 @@ core::Error initialize()
    using namespace module_context;
 
    events().afterSessionInitHook.connect(afterSessionInitHook);
+   monitorProjectNamespace(projects::projectContext());
 
    session::projects::FileMonitorCallbacks cb;
    cb.onFilesChanged = onFilesChanged;
