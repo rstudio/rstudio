@@ -1,12 +1,10 @@
 name: "Test: E2E Playwright RStudio (Scheduled Rotation and Run-All, Open Source)"
 
-# One workflow that drives the reusable per-OS E2E "engines" six ways:
+# One workflow that drives the reusable per-OS E2E "engines" five ways:
 #   - Weekday cron (Mon-Fri): a fixed slate per weekday, so the engines in those
 #     slates get a run during the week without running the whole matrix daily.
-#     The slates cover some of the engines. macos14 gets its weekly run from
-#     the Friday cron below, and the rest are reached only by the Sunday runs.
-#   - Friday afternoon cron: macOS 14 alone, timed to land inside the October
-#     2026 brownout windows for the deprecated macos-14 image (see the pick job).
+#     The slates cover some of the engines; the rest are reached only by the
+#     Sunday runs.
 #   - Weekly cron (Sunday 08:00): every Linux x86_64 engine, for a full-matrix
 #     snapshot of that group.
 #   - Weekly cron (Sunday 12:00): every Linux arm64 engine. Four hours after the
@@ -51,7 +49,6 @@ on:
     - cron: '0 8 * * 0'     # Sunday 08:00 UTC (4 AM EDT) -- every Linux x86_64 engine (this string must match the check in the pick job and the concurrency group below)
     - cron: '0 12 * * 0'    # Sunday 12:00 UTC (8 AM EDT) -- every Linux arm64 engine (this string must match the check in the pick job and the concurrency group below)
     - cron: '0 16 * * 0'    # Sunday 16:00 UTC (noon EDT) -- every macOS and Windows engine (this string must match the check in the pick job and the concurrency group below)
-    - cron: '0 16 * * 5'    # Friday 16:00 UTC (noon EDT) -- macOS 14 only (this string must match the check in the pick job and the concurrency group below)
   workflow_dispatch:
     inputs:
       version:
@@ -64,24 +61,12 @@ on:
         default: false
 
 concurrency:
-  # The Friday 16:00 macOS 14 cron gets its own group: it would otherwise share
-  # the one pending slot with the Friday 08:00 weekday slate, and only one run
-  # per group can be pending (a third trigger cancels the pending one rather
-  # than queueing behind it). Either outcome can push the macOS 14 run out of
-  # the brownout window it is timed to land in. Every other trigger keeps the
-  # shared group, which caps the fleet at one full rotation at a time.
-  #
-  # Two trade-offs come with the split. The macOS 14 run may now overlap a
-  # weekday slate, contending for the shared macOS runner pool if a morning
-  # slate is still going at 16:00 -- Friday's 08:00 slate contains macos26, so
-  # that contention is live, exactly as it was when this cron ran on Monday.
-  # And because macos14 is in ENGINES below, a run-everything dispatch (group
-  # "main") can now run the macOS 14 engine at the same time as this cron does,
-  # which a single shared group used to make impossible.
-  #
-  # The three Sunday crons get a group each for the same reason: sharing "main"
-  # would make each later run queue behind the earlier one, and since only one
-  # run per group can be pending, a fourth trigger would cancel it outright.
+  # The weekday cron and manual dispatch share the "main" group, which caps the
+  # fleet at one full rotation at a time. The three Sunday crons get a group
+  # each: sharing "main" would make each later run queue behind the earlier one,
+  # and since only one run per group can be pending (a further trigger cancels
+  # the pending one rather than queueing behind it), a third would cancel it
+  # outright.
   # Four hours is less slack than the original two-way split had, so this is
   # tighter than ideal for a daily-install fleet that overruns -- but each run
   # still gets its own group, so an overrun delays or cancels only that run's
@@ -92,8 +77,7 @@ concurrency:
   # against the account-wide concurrent-job limit regardless of pool.
   group: >-
     pw-scheduled-e2e-${{
-    github.event.schedule == '0 16 * * 5' && 'macos14'
-    || github.event.schedule == '0 8 * * 0' && 'sunday-linux-x86_64'
+    github.event.schedule == '0 8 * * 0' && 'sunday-linux-x86_64'
     || github.event.schedule == '0 12 * * 0' && 'sunday-linux-arm64'
     || github.event.schedule == '0 16 * * 0' && 'sunday-macos-windows'
     || 'main' }}
@@ -120,8 +104,7 @@ jobs:
           set -euo pipefail
           # workflow_dispatch runs every engine; each Sunday cron runs every
           # engine of one platform/architecture group; the weekday cron
-          # (Mon-Fri) runs a fixed slate per day; the Friday afternoon cron
-          # runs macOS 14 alone.
+          # (Mon-Fri) runs a fixed slate per day.
           #
           # ENGINES is the single source of truth for what exists. Every engine
           # appears exactly once, tagged with the platform and architecture it
@@ -157,9 +140,8 @@ jobs:
           # These url_keys must agree with each config's daily_platform_key.
           #
           # The weekday slates below name more slots than distinct engines:
-          # macos26, windows2025 and ubuntu24s each appear twice. Of those in
-          # no slate, macos14 runs on the Friday 16:00 cron and the rest only
-          # in a Sunday selection.
+          # macos26, windows2025 and ubuntu24s each appear twice. Those in no
+          # slate run only in a Sunday selection.
           ENGINES='[
             {"key":"ubuntu22-x86_64","platform":"linux","arch":"x86_64","os":"ubuntu-22-x86_64","name":"Ubuntu 22 (x86_64)","url_key":"jammy_amd64"},
             {"key":"ubuntu22-arm64","platform":"linux","arch":"arm64","os":"ubuntu-22-arm64","name":"Ubuntu 22 (arm64)","url_key":"jammy_arm64"},
@@ -180,7 +162,6 @@ jobs:
             {"key":"ubuntu24s","platform":"linux","arch":"x86_64"},
             {"key":"macos15","platform":"macos","arch":"x86_64"},
             {"key":"windows2025","platform":"windows","arch":"x86_64"},
-            {"key":"macos14","platform":"macos","arch":"arm64"},
             {"key":"macos26","platform":"macos","arch":"arm64"},
             {"key":"macos27","platform":"macos","arch":"arm64"}
           ]'
@@ -234,23 +215,6 @@ jobs:
           elif [ "${{ github.event.schedule }}" = "0 16 * * 0" ]; then
             SEL=$(jq -cn --argjson e "$ENGINES" \
               '[$e[] | select(.platform=="macos" or .platform=="windows") | .key]')
-          elif [ "${{ github.event.schedule }}" = "0 16 * * 5" ]; then
-            # macOS 14 runs on its own Friday-afternoon cron instead of in a
-            # weekday slate, so its runs land inside the October 2026 brownout
-            # windows for the deprecated macos-14 image. The eight windows all
-            # run 14:00-00:00 UTC, on Oct 5, 12, 19 and 26 (Mondays), Oct 16, 23
-            # and 30 (Fridays) and Oct 29 (Thursday); the 08:00 slates miss all
-            # eight by six hours. A Friday 16:00 run therefore lands inside
-            # three of them -- one fewer than Monday's four, which is the cost of
-            # this slot. Verified against actions/runner-images#13518.
-            # Those failures are the point -- early warning that the image is
-            # fully retired on 2026-11-02. No brownout window falls on a Sunday,
-            # so none of the three Sunday crons is affected before that date,
-            # but a dispatch launched inside any of the eight windows will hit
-            # one. After the retirement date this run, the Sunday macOS+Windows
-            # run, and every dispatch fail until macos14 is removed from this
-            # workflow and from ENGINES above.
-            SEL='["macos14"]'
           else
             case "$(date -u +%u)" in   # %u: 1=Mon .. 7=Sun
               1) SEL='["ubuntu24d-x86_64","macos26","rocky9-x86_64"]' ;;
@@ -266,9 +230,9 @@ jobs:
           fi
           # Nothing selected means every job below is skipped by its own if:, and
           # the run reports green having tested nothing. The weekday case has its
-          # own loud fallback and the Friday branch is a literal, so this guard is
-          # really for the three Sunday filters -- and for a dispatch, if ENGINES
-          # itself ever came back empty.
+          # own loud fallback, so this guard is really for the three Sunday
+          # filters -- and for a dispatch, if ENGINES itself ever came back
+          # empty.
           if [ "$SEL" = "[]" ]; then
             echo "::error::No engines selected for this trigger. Check the platform and arch tags in ENGINES against the filters in this step."
             exit 1
@@ -462,21 +426,6 @@ jobs:
       build_from_source: ${{ inputs.build_from_source || false }}
       # Same universal macOS .dmg the arm64 engines test; the daily manifest
       # ships one "macos" installer for both architectures.
-      rstudio_installer_url: ${{ needs.resolve.outputs.macos }}
-
-  macos14:
-    name: macOS 14 arm64
-    needs: [pick, resolve]
-    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'macos14') }}
-    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-14-arm64.yml
-    secrets:
-      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
-      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
-      OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
-    with:
-      skip_e2e_deps_cache_save: true
-      project: desktop
-      build_from_source: ${{ inputs.build_from_source || false }}
       rstudio_installer_url: ${{ needs.resolve.outputs.macos }}
 
   windows2025:
