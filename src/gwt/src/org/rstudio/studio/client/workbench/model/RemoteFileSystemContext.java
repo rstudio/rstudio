@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.model;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.files.PosixFileSystemContext;
@@ -54,6 +55,7 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
    
    public void setwd(String relativeOrAbsolutePath)
    {
+      navigation_.invalidate();
       workingDir_ = combine(pwd(), relativeOrAbsolutePath);
       contents_ = null;
       if (callbacks_ != null)
@@ -84,6 +86,11 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
     */
    public void cd(String relativeOrAbsolutePath, final String fallbackPath)
    {
+      // Only the latest navigation may update the listing or notify the dialog:
+      // onNavigated() can release an accept waiting for that directory.
+      navigation_.invalidate();
+      final Invalidation.Token token = navigation_.getInvalidationToken();
+
       final String newPath = combine(workingDir_, relativeOrAbsolutePath);
 
       final FileSystemItem newPathEntry = FileSystemItem.createDir(newPath);
@@ -100,6 +107,9 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
                @Override
                public void onError(ServerError error)
                {
+                  if (token.isInvalid())
+                     return;
+
                   if (fallbackPath != null)
                   {
                      // try fallback if supplied
@@ -111,7 +121,10 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
 
                @Override
                public void onResponseReceived(final DirectoryListing response)
-               { 
+               {
+                  if (token.isInvalid())
+                     return;
+
                   final JsArray<FileSystemItem> files = response.getFiles();
                   for (int i = 0; i < files.length(); i++)
                      fsi.add(files.get(i));
@@ -170,6 +183,7 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
       return fileTypeRegistry_.getIconForFile(item);
    }
 
+   private final Invalidation navigation_ = new Invalidation();
    private final FilesServerOperations server_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final GlobalDisplay globalDisplay_;

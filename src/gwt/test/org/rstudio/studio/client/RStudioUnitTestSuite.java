@@ -52,6 +52,7 @@ import org.rstudio.studio.client.projects.model.ProjectMRUEntryTests;
 import org.rstudio.studio.client.projects.model.ProjectTemplateWidgetTests;
 import org.rstudio.studio.client.rsconnect.ui.EnvironmentVariablesDialogTests;
 import org.rstudio.studio.client.workbench.WorkbenchListManagerTests;
+import org.rstudio.studio.client.workbench.model.RemoteFileSystemContextTests;
 import org.rstudio.studio.client.workbench.model.SessionOpenerTests;
 import org.rstudio.studio.client.workbench.model.SessionTests;
 import org.rstudio.studio.client.workbench.prefs.model.PrefsTests;
@@ -113,6 +114,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(SessionScopeTests.class);
       suite.addTestSuite(SessionTests.class);
       suite.addTestSuite(SessionOpenerTests.class);
+      suite.addTestSuite(RemoteFileSystemContextTests.class);
       suite.addTestSuite(WorkbenchListManagerTests.class);
       suite.addTestSuite(ErrorManagerTests.class);
       suite.addTestSuite(ConsoleErrorTrackerTests.class);
