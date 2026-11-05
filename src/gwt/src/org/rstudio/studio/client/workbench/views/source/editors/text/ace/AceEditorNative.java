@@ -520,8 +520,13 @@ public class AceEditorNative extends JavaScriptObject
       var lines = this.session.getDocument().getAllLines();
       var doc = new Document(lines);
       var text = doc.getValue();
-      re.lastIndex = range ? doc.positionToIndex(range.start) : 0;
+      var offset = range ? doc.positionToIndex(range.start) : 0;
       var end = range ? doc.positionToIndex(range.end) : text.length;
+      var artificialEnd = end < text.length;
+      // Match the selected text, as Replace All does. In Selection expands
+      // its range to whole lines, so the only artificial line boundary is
+      // the empty line after a trailing newline at a non-document endpoint.
+      text = text.substring(offset, end);
 
       // Matches are ordered; walk the lines once instead of scanning from
       // the start of the document for every match's offset conversion.
@@ -538,26 +543,11 @@ public class AceEditorNative extends JavaScriptObject
       var match;
       while ((match = re.exec(text)))
       {
-         // Keep the surrounding text for anchors and lookarounds, but only
-         // select matches wholly contained in the requested range.
-         if (match.index > end)
+         if (artificialEnd && match.index == text.length)
             break;
-         if (match.index + match[0].length > end)
-         {
-            // Retry an overlong match with an end constraint so alternatives
-            // can backtrack within the range, retaining assertion context.
-            // Only add this constraint when needed; ordinary searches avoid
-            // checking the remaining document for every match.
-            var remaining = re.unicode
-               ? Array.from(text.substring(end)).length
-               : text.length - end;
-            re = new RegExp("(?:" + re.source + ")(?=[\\s\\S]{" + remaining + "})", re.flags);
-            re.lastIndex = match.index;
-            continue;
-         }
          ranges.push(Range.fromPoints(
-            toPosition(match.index),
-            toPosition(match.index + match[0].length)));
+            toPosition(offset + match.index),
+            toPosition(offset + match.index + match[0].length)));
 
          // Empty matches must advance, including past Unicode code points.
          if (!match[0].length)

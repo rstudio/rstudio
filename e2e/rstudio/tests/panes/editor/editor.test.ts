@@ -50,6 +50,7 @@ test.describe('Editor', () => {
       'editor_select_all_multiline.R',
       'editor_select_all_rename.R',
       'editor_select_all_empty.R',
+      'editor_select_all_large.R',
       'editor_shortcuts.R',
       'editor_find_from_selection.R',
       'editor_comment_indent.R',
@@ -339,6 +340,39 @@ test.describe('Editor', () => {
       await expect.poll(() => editor.getSelectionRanges()).toEqual(
         positions.map(position => ({ start: position, end: position })),
       );
+    } finally {
+      await regex.setChecked(originalRegex);
+      await page.locator(CLOSE_FIND_BAR).click();
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/19249
+  test('greedy regex select all handles a large unselected Unicode suffix', async ({ rstudioPage: page }) => {
+    const content = '# selected\n' + '# 😀\n'.repeat(10000);
+    await writeAndOpenFile(page, sandbox.dir, 'editor_select_all_large.R', content);
+    const editor = new AceEditor(page, '# selected');
+    await waitForActiveDocument(page, `${sandbox.dir}/editor_select_all_large.R`, TIMEOUTS.fileOpen);
+    await executeCommand(page, 'findReplace');
+    await expect(page.locator(FIND_INPUT)).toBeVisible({ timeout: TIMEOUTS.consoleReady });
+
+    const regex = page.locator(REGEX_CHECKBOX);
+    const originalRegex = await regex.isChecked();
+    try {
+      await regex.check();
+      await page.locator(FIND_INPUT).fill('[\\s\\S]*');
+      await consoleActions.executeInConsole(
+        '.rs.api.setSelectionRanges(c(1, 1, 2, 1), id = .rs.api.getSourceEditorContext()$id)',
+        { wait: true },
+      );
+      await page.locator(`${SOURCE_PANEL_SELECTOR} .rstudio-find-replace-in-selection-checkbox input`).check();
+      // Time only the synchronous search, excluding browser-driver latency.
+      const elapsed = await page.locator(SELECT_ALL_BUTTON).evaluate(button => {
+        const start = performance.now();
+        (button as HTMLElement).click();
+        return performance.now() - start;
+      });
+      expect(elapsed).toBeLessThan(2000);
+      await expect.poll(() => editor.getSelectedText()).toBe('# selected\n');
     } finally {
       await regex.setChecked(originalRegex);
       await page.locator(CLOSE_FIND_BAR).click();
