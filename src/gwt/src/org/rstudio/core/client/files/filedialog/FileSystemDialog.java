@@ -275,7 +275,9 @@ public abstract class FileSystemDialog extends ModalDialogBase
       // user accepted. Never run a deferred Save, Open, or Choose against it.
       acceptOnNavigated_ = false;
       onNavigated();
-      onError(errorMessage);
+      // The context can finish navigating after Cancel or Escape closed us.
+      if (isAttached())
+         onError(errorMessage);
    }
 
    /**

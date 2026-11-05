@@ -81,7 +81,8 @@ test.describe('Choose Directory dialog', () => {
   test.afterEach(async ({ rstudioPage: page }) => {
     // after a failure the chooser, or a prompt over it, can still be up, and
     // its glass would block the Cancel click below
-    if (await page.locator(CHOOSER).isVisible())
+    if (await page.locator(CHOOSER).isVisible() ||
+        await page.getByRole('alertdialog', { name: 'Error', exact: true }).isVisible())
       await dismissBlockingModals(page);
 
     const findDialog = page.locator(FIND_DIALOG);
@@ -164,6 +165,39 @@ test.describe('Choose Directory dialog', () => {
       await expect(page.locator(SEARCH_IN_TEXT)).toHaveValue(fallback);
     } finally {
       await listing.cleanup();
+    }
+  });
+
+  test('canceling a missing-folder navigation does not show a late error', async ({ rstudioPage: page }) => {
+    const chooser = await openChooserAt(page, base);
+    // Keep the input node after the dialog detaches: its value changes when
+    // the fallback callback runs, giving the no-error assertion a real gate.
+    const pathInput = await chooser.locator('#file_dialog_name_prompt').elementHandle();
+    expect(pathInput).not.toBeNull();
+    const original = await pathInput!.inputValue();
+    const missing = `missing-${Date.now()}`;
+    const listing = await holdListFiles(page);
+
+    try {
+      await chooser.getByRole('button', { name: 'Go to directory' }).click();
+      const prompt = page.getByRole('dialog', { name: 'Go To Folder' });
+      await prompt.locator(TEXT_ENTRY).fill(`${base}/${missing}`);
+      await prompt.getByRole('button', { name: 'OK' }).click();
+      await expect.poll(
+        () => listing.heldPaths().some((p) => p.endsWith(`/${missing}`)),
+        { timeout: TIMEOUTS.fileOpen },
+      ).toBe(true);
+      await chooser.locator(CHOOSE_BTN).click();
+      await chooser.getByRole('button', { name: 'Cancel' }).click();
+      await expect(chooser).toBeHidden();
+
+      listing.release();
+      await expect.poll(() => pathInput!.inputValue(), { timeout: TIMEOUTS.fileOpen }).not.toBe(original);
+      await expect(page.getByRole('alertdialog', { name: 'Error', exact: true })).toHaveCount(0);
+      await expect(page.locator(FIND_DIALOG)).toBeVisible();
+    } finally {
+      await listing.cleanup();
+      await pathInput?.dispose();
     }
   });
 
