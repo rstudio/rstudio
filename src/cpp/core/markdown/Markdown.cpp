@@ -369,7 +369,17 @@ Error markdownToHTML(const std::string& markdownInput,
    boost::scoped_ptr<MathJaxFilter> pMathFilter;
    if (extensions.ignoreMath && input.find_first_of("$\\") != std::string::npos)
    {
-      pMathFilter.reset(new MathJaxFilter(&input, pHTMLOutput, options.escape));
+      std::vector<std::pair<std::size_t, std::size_t>> htmlBlocks;
+#ifdef RSTUDIO_USE_CMARK_GFM
+      if (input.find('<') != std::string::npos &&
+          (input.find("```") != std::string::npos || input.find("~~~") != std::string::npos))
+      {
+         Error error = cmarkHtmlBlockRanges(input, extensions, &htmlBlocks);
+         if (error)
+            return error;
+      }
+#endif
+      pMathFilter.reset(new MathJaxFilter(&input, pHTMLOutput, options.escape, htmlBlocks));
    }
 
    // respect html-preserve

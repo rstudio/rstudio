@@ -75,7 +75,10 @@ when literal code contains math delimiters across lines. Metadata is removed
 before math processing, and exclusion searches cache future matches to avoid
 repeatedly scanning the document suffix after every code span. Only the
 earliest fence opener searches for its closer, so overlapping candidates do
-not repeatedly scan to the end of the document.
+not repeatedly scan to the end of the document. When math, HTML and fences
+occur together, a cmark prepass supplies top-level HTML block ranges so
+fence-like content there cannot hide later equations. Fence exclusions honor
+the pinned parser's 255-character effective delimiter limit.
 
 ## Reproducing comparisons
 
@@ -113,10 +116,10 @@ plots, columns, superscripts, MathJax, and authored HTML/video.
 Local validation on macOS arm64:
 
 - All nine upstream test suites passed at the pinned revision.
-- The 23 Markdown integration tests passed with cmark; the 13 shared tests
+- The 24 Markdown integration tests passed with cmark; the 13 shared tests
   also passed with Sundown. They cover the actual help, preview and presentation
   contracts, extension toggles, concurrent parsers, and bounded superscripts.
-- The complete cmark core test run passed 831 tests, with 12 environment/platform
+- The complete cmark core test run passed 832 tests, with 12 environment/platform
   skips and three disabled tests. The first sandboxed run could not register
   filesystem monitors; the successful run used normal OS access.
 - Both changed session translation units passed compilation checks; the actual

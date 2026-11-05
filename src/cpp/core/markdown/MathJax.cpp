@@ -16,6 +16,7 @@
 #include "MathJax.hpp"
 
 #include <algorithm>
+#include <iterator>
 
 #include <boost/bind/bind.hpp>
 #include <boost/function.hpp>
@@ -54,11 +55,40 @@ struct CodePattern
    bool fenced;
 };
 
+bool searchCodePattern(
+   const CodePattern& pattern,
+   const std::string& input,
+   std::string::const_iterator pos,
+   const std::vector<std::pair<std::size_t, std::size_t>>& htmlBlocks,
+   boost::match_flag_type flags,
+   boost::smatch* pMatch)
+{
+   while (regex_utils::search(pos, input.end(), *pMatch, pattern.begin, flags))
+   {
+      if (!pattern.fenced)
+         return true;
+      std::size_t offset = (*pMatch)[0].first - input.begin();
+      auto block = std::upper_bound(
+         htmlBlocks.begin(), htmlBlocks.end(), offset,
+         [](std::size_t offset, const auto& range) { return offset < range.first; });
+      if (block == htmlBlocks.begin() || offset >= std::prev(block)->second)
+         return true;
+      // A fence-like line in raw HTML is content, not a Markdown opener.
+      if (flags & boost::match_continuous)
+         break;
+      pos = input.begin() + std::prev(block)->second;
+      flags |= boost::match_prev_avail | boost::match_not_bob;
+   }
+   *pMatch = boost::smatch();
+   return false;
+}
+
 }
 
 MathJaxFilter::MathJaxFilter(std::string* pInput,
                              std::string* pHTMLOutput,
-                             bool escapeHtml)
+                             bool escapeHtml,
+                             const std::vector<std::pair<std::size_t, std::size_t>>& htmlBlocks)
    : pHTMLOutput_(pHTMLOutput), escapeHtml_(escapeHtml)
 {
    // Retain column-zero fence openers: the legacy filter cannot determine
@@ -96,8 +126,8 @@ MathJaxFilter::MathJaxFilter(std::string* pInput,
          // where a new block can start without a blank line. Inline spans do
          // not create this boundary: following spaces are still paragraph text.
          boost::smatch atBoundary;
-         if (afterFence && regex_utils::search(pos, inputEnd, atBoundary, patterns[i].begin,
-                                               flags | boost::match_continuous))
+         if (afterFence && searchCodePattern(patterns[i], *pInput, pos, htmlBlocks,
+                                             flags | boost::match_continuous, &atBoundary))
          {
             next = atBoundary;
          }
@@ -106,8 +136,7 @@ MathJaxFilter::MathJaxFilter(std::string* pInput,
             next = boost::smatch();
             if (pos != pInput->begin())
                flags |= boost::match_not_bob;
-            if (!regex_utils::search(pos, inputEnd, next, patterns[i].begin, flags))
-               next = boost::smatch();
+            searchCodePattern(patterns[i], *pInput, pos, htmlBlocks, flags, &next);
          }
          searched[i] = true;
          if (!next.empty() &&
@@ -126,8 +155,14 @@ MathJaxFilter::MathJaxFilter(std::string* pInput,
             // A closer must use the same character and at least as many
             // delimiters as its opener. Search only for the chosen block.
             std::string delimiter = match[1];
+            std::size_t length = delimiter.size();
+#ifdef RSTUDIO_USE_CMARK_GFM
+            // The pinned parser stores fence_length in a byte and caps it at
+            // 255 in blocks.c. Exclusions must end where that parser closes.
+            length = std::min(length, std::size_t(255));
+#endif
             boost::regex closer("^ {0,3}" + delimiter.substr(0, 1) + "{" +
-                                 std::to_string(delimiter.size()) + ",}[ \\t]*\\r?$");
+                                 std::to_string(length) + ",}[ \\t]*\\r?$");
             boost::smatch end;
             range.end = regex_utils::search(range.end, inputEnd, end, closer,
                                             boost::match_prev_avail | boost::match_not_bob)

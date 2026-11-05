@@ -238,6 +238,27 @@ TEST(MarkdownTest, MathExclusionRespectsCodeDelimiterLengths)
    EXPECT_EQ("<p><code>a ` $x_1$</code></p>\n", render("``a ` $x_1$``"));
    EXPECT_EQ("<p><code>$x_1$</code></p>\n", render("``` $x_1$ ```"));
    EXPECT_EQ("<p>text <code>$x_1$</code></p>\n", render("text ``` $x_1$ ```"));
+   EXPECT_TRUE(isMathJaxRequired(render(std::string(256, '`') + "\ncode\n" +
+                                        std::string(255, '`') + "\n\n$x_1$")));
+   EXPECT_TRUE(isMathJaxRequired(render(std::string(256, '~') + "\ncode\n" +
+                                        std::string(255, '~') + "\n\n$x_1$")));
+}
+
+TEST(MarkdownTest, FenceTextInHtmlDoesNotHideFollowingMath)
+{
+   for (const std::string html : {"<pre>\n~~~\n</pre>", "<div>\n~~~\n</div>",
+                                  "<!--\n~~~\n-->", "<custom>\n~~~\n</custom>",
+                                  "<pre>\n```\n</pre>"})
+   {
+      SCOPED_TRACE(html);
+      std::string output = render(html + "\n\n$x_1$");
+      EXPECT_NE(std::string::npos, output.find(html));
+      EXPECT_NE(std::string::npos, output.find("\\( x_1 \\)"));
+   }
+   // A real code block containing HTML still ends only at its own closer.
+   EXPECT_FALSE(isMathJaxRequired(render("```\n<pre>\n~~~\n</pre>\n$x_1$\n```")));
+   EXPECT_FALSE(isMathJaxRequired(render("<pre>\n~~~\n</pre>\n```\n$x_1$\n```")));
+   EXPECT_FALSE(isMathJaxRequired(render("<div>\n~~~\n\n```\n$x_1$\n```")));
 }
 
 TEST(MarkdownTest, MathExclusionPreservesExistingBlockBehavior)

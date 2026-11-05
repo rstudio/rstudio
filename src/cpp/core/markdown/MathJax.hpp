@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <utility>
 
 #include <boost/utility.hpp>
 #include <boost/regex.hpp>
@@ -45,7 +46,8 @@ class MathJaxFilter : boost::noncopyable
 public:
    MathJaxFilter(std::string* pInput,
                  std::string* pHTMLOutput,
-                 bool escapeHtml);
+                 bool escapeHtml,
+                 const std::vector<std::pair<std::size_t, std::size_t>>& htmlBlocks);
    ~MathJaxFilter();
 
 private:

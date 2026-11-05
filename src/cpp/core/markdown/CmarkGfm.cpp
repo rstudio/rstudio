@@ -350,6 +350,47 @@ Error filterNodes(cmark_node* document,
 
 } // anonymous namespace
 
+Error cmarkHtmlBlockRanges(
+   const std::string& input,
+   const Extensions& extensions,
+   std::vector<std::pair<std::size_t, std::size_t>>* pRanges)
+{
+   std::lock_guard<std::mutex> lock(parserMutex());
+   std::unique_ptr<cmark_parser, decltype(&cmark_parser_free)> parser(
+      cmark_parser_new(CMARK_OPT_VALIDATE_UTF8), cmark_parser_free);
+   if (!parser)
+      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
+   attachGfmExtensions(parser.get(), extensions);
+   cmark_parser_feed(parser.get(), input.data(), input.size());
+   std::unique_ptr<cmark_node, decltype(&cmark_node_free)> document(
+      cmark_parser_finish(parser.get()), cmark_node_free);
+   if (!document)
+      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
+
+   std::vector<std::size_t> lines{0};
+   for (std::size_t i = 0; i < input.size(); ++i)
+      if (input[i] == '\n')
+         lines.push_back(i + 1);
+
+   pRanges->clear();
+   // The filter recognizes column-zero fence openers only. HTML blocks in
+   // quotes/lists require container prefixes, so only top-level blocks can
+   // contain such candidates. Their line ranges map directly to the input.
+   for (cmark_node* node = cmark_node_first_child(document.get()); node; node = cmark_node_next(node))
+   {
+      if (cmark_node_get_type(node) != CMARK_NODE_HTML_BLOCK)
+         continue;
+      int begin = cmark_node_get_start_line(node);
+      int end = cmark_node_get_end_line(node);
+      if (begin > 0 && end >= begin && static_cast<std::size_t>(begin) <= lines.size())
+      {
+         pRanges->emplace_back(lines[begin - 1],
+                              static_cast<std::size_t>(end) < lines.size() ? lines[end] : input.size());
+      }
+   }
+   return Success();
+}
+
 Error renderCmarkGfm(const std::string& input,
                      const Extensions& extensions,
                      const HTMLOptions& options,
