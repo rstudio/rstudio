@@ -188,6 +188,50 @@ TEST_F(FileMonitorReconciliationTests, ShallowRecoveryRebuildsNestedSourcesForRe
    }));
 }
 
+TEST_F(FileMonitorReconciliationTests, ShallowRescanIndexesNewlyIncludedDirectories)
+{
+   FilePath nested = blocked_.completeChildPath("sub/helper.R");
+   ASSERT_FALSE(nested.getParent().ensureDirectory());
+   ASSERT_FALSE(writeStringToFile(nested, "helper <- function() TRUE\n"));
+   options_.filter = [this](const FileInfo& info)
+   {
+      return FilePath(info.absolutePath()) != blocked_;
+   };
+   ASSERT_FALSE(system::scanFiles(FileInfo(root_), options_, &files_));
+   ASSERT_EQ(files_.end(), monitor::findFile(files_.begin(), files_.end(), blocked_.getAbsolutePath()));
+
+   // Removing an ignore rule can first generate an ordinary shallow event
+   // for the parent of an existing, populated directory.
+   options_.filter.clear();
+   ASSERT_FALSE(reconcile(root_, false, true));
+   EXPECT_NE(files_.end(), monitor::findFile(files_.begin(), files_.end(), nested.getAbsolutePath()));
+   EXPECT_NE(events_.end(), std::find_if(events_.begin(), events_.end(), [nested](const FileChangeEvent& event)
+   {
+      return event.type() == FileChangeEvent::FileAdded &&
+             event.fileInfo().absolutePath() == nested.getAbsolutePath();
+   }));
+}
+
+TEST_F(FileMonitorReconciliationTests, DuplicateDirectoryAdditionPreservesScanFailure)
+{
+   ASSERT_FALSE(writeStringToFile(source_, "x <- 1\n"));
+   failScan_ = true;
+   ASSERT_FALSE(system::scanFiles(FileInfo(root_), options_, &files_));
+   ASSERT_FALSE(monitor::processFileAdded(
+         files_.begin(),
+         FileChangeEvent(FileChangeEvent::FileAdded, FileInfo(blocked_)),
+         true,
+         options_.filter,
+         options_.onBeforeScanDir,
+         &files_,
+         &events_));
+   auto dir = monitor::findFile(files_.begin(), files_.end(), blocked_.getAbsolutePath());
+   ASSERT_NE(files_.end(), dir);
+   EXPECT_TRUE(dir->scanFailed());
+   EXPECT_TRUE(events_.empty());
+   EXPECT_EQ(files_.end(), monitor::findFile(files_.begin(), files_.end(), source_.getAbsolutePath()));
+}
+
 TEST_F(FileMonitorReconciliationTests, IgnoresStaleDirectoryEventAfterFileReplacement)
 {
    ASSERT_FALSE(system::scanFiles(FileInfo(root_), options_, &files_));

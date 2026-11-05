@@ -153,13 +153,19 @@ Error processFileAdded(
                                                         fileChange.fileInfo());
    if (it != pTree->end(parentIt))
    {
-      if (fileChange.fileInfo() != *it)
+      // Directory notifications contain no scan result. A queued addition
+      // must preserve a failure recorded by the initial scan until a retry
+      // actually scans the directory and registers its watch successfully.
+      FileInfo updatedInfo = fileChange.fileInfo();
+      if (updatedInfo.isDirectory() && it->isDirectory())
+         updatedInfo.setScanFailed(it->scanFailed());
+      if (updatedInfo != *it)
       {
-         pTree->replace(it, fileChange.fileInfo());
+         pTree->replace(it, updatedInfo);
 
          // add it to the fileChanges
          pFileChanges->push_back(FileChangeEvent(FileChangeEvent::FileModified,
-                                                 fileChange.fileInfo()));
+                                                 updatedInfo));
       }
       return Success();
 
@@ -362,8 +368,9 @@ Error discoverAndProcessFileChanges(
          {
             Error error = processFileAdded(it,
                                            fileChange,
-                                           recursive,
+                                           recursive || recursiveMonitor,
                                            filter,
+                                           onBeforeScanDir,
                                            pTree,
                                            &fileChanges);
             if (error)
