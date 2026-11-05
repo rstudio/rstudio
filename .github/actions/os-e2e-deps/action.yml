@@ -486,6 +486,14 @@ runs:
           ask = FALSE,
           upgrade = FALSE
         )
+        # On R 4.1, PPM's newest httpuv binary is 1.6.10, which aborts rsession when a Shiny or
+        # plumber server shuts down, so build the current release from source instead.
+        if (getRversion() < "4.2.0") {
+          src <- available.packages(type = "source")
+          have <- tryCatch(packageVersion("httpuv"), error = function(e) package_version("0"))
+          if (have < src["httpuv", "Version"])
+            install.packages("httpuv", type = "source")
+        }
         # When requested, also install the harness's REQUIRED_PACKAGES set now
         # so it lands in the cached library rather than being installed by the
         # Playwright globalSetup at test time (a source compile on distros
