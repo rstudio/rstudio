@@ -27,6 +27,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.DOM;
@@ -37,6 +38,7 @@ import com.google.gwt.user.client.ui.MenuItemSeparator;
 import com.google.gwt.user.client.ui.UIObject;
 
 import elemental2.dom.DomGlobal;
+import elemental2.dom.EventListener;
 
 public class BaseMenuBar extends MenuBar
                          implements CommandHandler
@@ -61,8 +63,9 @@ public class BaseMenuBar extends MenuBar
    }
 
    /**
-    * Saves and restores current focus so keyboard use of Server main menu doesn't
-    * leave keyboard focus indeterminate after using them.
+    * Saves the element that had focus before the main menubar was entered, by
+    * shortcut, Tab or click, and restores it when a command runs or Escape is
+    * pressed on the bar, so focus isn't left on the body afterwards.
     */
    private class FocusTracker implements CommandHandler
    {
@@ -80,24 +83,19 @@ public class BaseMenuBar extends MenuBar
       }
 
       /**
-       * Store currently focused element and start monitoring focus changes.
+       * Store the given element and start monitoring focus changes.
+       *
+       * @return true if tracking started; false if already tracking or the element is null
        */
-      public void save()
+      public boolean save(Element focused)
       {
-         // Don't recapture currently active element if we already have one, e.g. user
+         // Don't recapture the focused element if we already have one, e.g. user
          // hits another main menu shortcut while menu still open from previous one
-         if (tracking())
-            return;
+         if (tracking() || focused == null)
+            return false;
 
-         originallyActiveElement_ = DomUtils.getActiveElement();
-         if (originallyActiveElement_ == null)
-            return;
-
-         // Monitor focus changes to know if user has, for example, clicked the
-         // mouse outside the menus. Using method reference instead of lambda so
-         // listener can be removed later.
-         DomGlobal.document.addEventListener("focusin", this::focusInCallback);
-         originallyActiveElement_.blur();
+         originallyActiveElement_ = focused;
+         DomGlobal.document.addEventListener("focusin", focusInListener_);
 
          if (tabHandlerReg_ == null)
          {
@@ -125,6 +123,7 @@ public class BaseMenuBar extends MenuBar
                }
             });
          }
+         return true;
       }
 
       /**
@@ -155,7 +154,7 @@ public class BaseMenuBar extends MenuBar
             tabHandlerReg_.removeHandler();
             tabHandlerReg_ = null;
          }
-         DomGlobal.document.removeEventListener("focusin", this::focusInCallback);
+         DomGlobal.document.removeEventListener("focusin", focusInListener_);
       }
 
       public boolean tracking()
@@ -165,16 +164,16 @@ public class BaseMenuBar extends MenuBar
 
       private void focusInCallback(elemental2.dom.Event event)
       {
-         if (!tracking())
-            return;
-
-         // If menu has no selection then it is no longer being used
-         if (getSelectedItem() == null)
-            restore();
+         // If the menu has no selection, focus has moved somewhere else, e.g. the
+         // user clicked outside the menus. Leave it there.
+         if (tracking() && getSelectedItem() == null)
+            cancel();
       }
 
       private Element originallyActiveElement_;
       private HandlerRegistration tabHandlerReg_;
+      // A single instance, so removeEventListener() gets the listener that was added
+      private final EventListener focusInListener_ = this::focusInCallback;
    }
 
    public BaseMenuBar(boolean vertical)
@@ -261,10 +260,41 @@ public class BaseMenuBar extends MenuBar
          // Don't forward browser event to superclass, effectively
          // hiding this event from the GWT MenuBar class.
       }
+      else if (event.getTypeInt() == Event.ONFOCUS)
+      {
+         if (!vertical_)
+            trackFocusFrom(event.getRelatedEventTarget());
+         super.onBrowserEvent(event);
+      }
       else
       {
          super.onBrowserEvent(event);
       }
+   }
+
+   /**
+    * Start tracking focus when the menubar is entered from outside the menus,
+    * whether by Tab, click or shortcut. Focus coming back from one of the
+    * menus' own popups isn't an entry.
+    */
+   private void trackFocusFrom(EventTarget previous)
+   {
+      if (previous == null || !Element.is(previous))
+         return;
+
+      Element previousEl = Element.as(previous);
+      String role = previousEl.getAttribute("role");
+      if (role.equals("menu") || role.equals("menubar"))
+         return;
+
+      focusTracker().save(previousEl);
+   }
+
+   private FocusTracker focusTracker()
+   {
+      if (focusTracker_ == null)
+         focusTracker_ = new FocusTracker();
+      return focusTracker_;
    }
 
    @Override
@@ -413,12 +443,11 @@ public class BaseMenuBar extends MenuBar
    }
 
    /**
-    * Activate a menu item, tracking where keyboard focus was beforehand so we
-    * can restore it user is done using the menu.
+    * Open a menu with focus on its first item, tracking where keyboard focus
+    * was beforehand so we can restore it when the user is done with the menu.
     *
     * Only intended for use by the main menubar in RStudio Server, when a menu
-    * is activated via keyboard shortcut. If menu is being used via mouse, we
-    * don't make any explicit attempt to restore focus after menu is closed.
+    * is activated via keyboard shortcut.
     */
    public void keyboardActivateItem(int index)
    {
@@ -426,15 +455,13 @@ public class BaseMenuBar extends MenuBar
       if (item == null)
          return;
 
-      if (focusTracker_ == null)
-         focusTracker_ = new FocusTracker();
-      focusTracker_.save();
+      Element active = DomUtils.getActiveElement();
+      if (focusTracker().save(active))
+         active.blur();
 
-      // set focus
       getElement().focus();
-
-      // activate item
-      doItemAction(item, true, true);
+      selectItem(item);
+      moveSelectionDown();
    }
 
    @Override
