@@ -456,16 +456,17 @@ public class BaseMenuBar extends MenuBar
    @Override
    public void onCommand(AppCommand command)
    {
-      // Restore focus when a command is fired so any resulting modal dialog can pick up
-      // the correct focused element when it does its own focus push/pop. The menubar's
-      // own registration is used, since onUnload() removes all of them.
-      if (focusTracker_ != null)
-         focusTracker_.restore();
-
       if (command.getExecutedFromShortcut())
       {
          closeAllChildren(false);
       }
+
+      // Restore focus when a command is fired so any resulting modal dialog can pick up
+      // the correct focused element when it does its own focus push/pop. This comes after
+      // closing menus, which can focus a parent menu. The menubar's own registration is
+      // used, since onUnload() removes all of them.
+      if (focusTracker_ != null)
+         focusTracker_.restore();
    }
 
    /**
