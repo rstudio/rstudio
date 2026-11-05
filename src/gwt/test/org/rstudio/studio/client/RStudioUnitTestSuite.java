@@ -31,6 +31,7 @@ import org.rstudio.core.client.dom.DomUtilsTests;
 import org.rstudio.core.client.files.ConfigFileBackedTests;
 import org.rstudio.core.client.files.FileSystemItemTests;
 import org.rstudio.core.client.files.PosixFileSystemContextTests;
+import org.rstudio.core.client.files.filedialog.FileDialogNavigationTests;
 import org.rstudio.core.client.layout.BinarySplitLayoutPanelTests;
 import org.rstudio.core.client.widget.CommandShortcutReferenceTests;
 import org.rstudio.core.client.widget.FastSelectTableTests;
@@ -115,6 +116,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(SessionTests.class);
       suite.addTestSuite(SessionOpenerTests.class);
       suite.addTestSuite(RemoteFileSystemContextTests.class);
+      suite.addTestSuite(FileDialogNavigationTests.class);
       suite.addTestSuite(WorkbenchListManagerTests.class);
       suite.addTestSuite(ErrorManagerTests.class);
       suite.addTestSuite(ConsoleErrorTrackerTests.class);
