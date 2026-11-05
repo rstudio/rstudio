@@ -1407,9 +1407,57 @@ bool isJsonFile(const FilePath& filePath)
    return boost::algorithm::ends_with(mimeType, "json");
 }
 
+// The content heuristic used when file(1) is unavailable or gives no answer:
+// text files don't contain consecutive null bytes. Only a prefix is read, as
+// binary formats declare themselves early and the file may be enormous.
+bool hasTextContent(const FilePath& targetPath)
+{
+   const std::streamsize kProbeSize = 8192;
+
+   std::shared_ptr<std::istream> pStream;
+   Error error = targetPath.openForRead(pStream);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return true;
+   }
+
+   std::string contents(kProbeSize, '\0');
+   pStream->read(&contents[0], kProbeSize);
+   contents.resize(static_cast<std::size_t>(pStream->gcount()));
+
+   std::string nullBytes;
+   nullBytes.push_back('\0');
+   nullBytes.push_back('\0');
+   return !boost::algorithm::contains(contents, nullBytes);
+}
+
 } // anonymous namespace
 
+FilePath findFileCommand()
+{
+#ifdef _WIN32
+   return FilePath();
+#else
+# ifdef __APPLE__
+   // the behavior of the 'file' command in the macOS High Sierra beta
+   // changed such that '--mime' no longer ensured that mime-type strings
+   // were actually emitted. prefer the system copy, which is known to
+   // accept the '-I' flag isTextFile() uses instead on macOS
+   FilePath systemFile("/usr/bin/file");
+   if (systemFile.exists())
+      return systemFile;
+# endif
+   return findProgram("file");
+#endif
+}
+
 bool isTextFile(const FilePath& targetPath)
+{
+   return isTextFile(targetPath, findFileCommand());
+}
+
+bool isTextFile(const FilePath& targetPath, const FilePath& fileCommand)
 {
    if (hasTextMimeType(targetPath))
       return true;
@@ -1423,17 +1471,13 @@ bool isTextFile(const FilePath& targetPath)
    if (targetPath.getSize() == 0)
       return true;
 
-#ifndef _WIN32
+   // no file(1) on this host (slim container images, for example); fall
+   // back to inspecting the contents, as we always do on Windows
+   if (fileCommand.isEmpty())
+      return hasTextContent(targetPath);
 
-   std::string fileCommand = "file";
-
-   // the behavior of the 'file' command in the macOS High Sierra beta
-   // changed such that '--mime' no longer ensured that mime-type strings
-   // were actually emitted. using '-I' instead appears to work around this.
 #ifdef __APPLE__
    const char * const kMimeTypeArg = "-I";
-   if (FilePath::exists("/usr/bin/file"))
-      fileCommand = "/usr/bin/file";
 #else
    const char * const kMimeTypeArg = "--mime";
 #endif
@@ -1450,12 +1494,25 @@ bool isTextFile(const FilePath& targetPath)
    if (error)
    {
       LOG_ERROR(error);
-      return !!error;
+      return hasTextContent(targetPath);
    }
 
    // strip encoding
    std::string fileType = boost::algorithm::trim_copy(result.stdOut);
    fileType = fileType.substr(0, fileType.find(';'));
+
+   // the command runs through the shell, so a failure to launch it (or a
+   // failure within it) comes back as a non-zero exit status rather than
+   // an error. treat that as "unknown", not "binary".
+   if (result.exitStatus != 0 || fileType.empty())
+   {
+      WLOGF("'{}' could not determine the type of '{}' (exit status {}): {}",
+            fileCommand.getAbsolutePath(),
+            targetPath.getAbsolutePath(),
+            result.exitStatus,
+            boost::algorithm::trim_copy(result.stdErr));
+      return hasTextContent(targetPath);
+   }
 
    // check value
    return boost::algorithm::starts_with(fileType, "text/") ||
@@ -1464,25 +1521,6 @@ bool isTextFile(const FilePath& targetPath)
           boost::algorithm::ends_with(fileType, "x-empty") ||
           boost::algorithm::equals(fileType, "application/json") ||
           boost::algorithm::equals(fileType, "application/postscript");
-#else
-
-   // read contents of file
-   std::string contents;
-   Error error = core::readStringFromFile(targetPath, &contents);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return !!error;
-   }
-
-   // does it have null bytes?
-   std::string nullBytes;
-   nullBytes.push_back('\0');
-   nullBytes.push_back('\0');
-   return !boost::algorithm::contains(contents, nullBytes);
-
-#endif
-
 }
 
 void editFile(const core::FilePath& filePath, int lineNumber, int column)

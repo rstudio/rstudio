@@ -28,6 +28,7 @@
 - ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the text fields in custom project templates (from a package's `inst/rstudio/templates/project` or `~/.R/rstudio/templates/project`) without their labels.
 - ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the custom CA bundle path field in Publishing options, and the environment variable list in the Publish dialog, without a label.
 - ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the list in the dialog for choosing a Posit Connect Cloud account without a label.
+- ([#19435](https://github.com/rstudio/rstudio/issues/19435)): Fixed an issue where `renv.lock` and other text files with an unrecognized extension could not be opened in the source editor ("File is binary rather than text") on hosts without the `file` utility. `.lock` files are now recognized as text, and when `file` is missing or fails the file's contents are inspected instead.
 
 ### Dependencies
 - Quarto 1.11.9
