@@ -67,6 +67,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChu
 import org.rstudio.studio.client.workbench.views.vcs.common.model.VcsStateTests;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalLocalEchoTests;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalSessionSocketTests;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalWebSocketTests;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextUiTests;
 import org.rstudio.studio.client.rmarkdown.model.YamlTreeTests;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.DefaultChunkOptionsPopupPanelTests;
@@ -101,6 +102,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(AnsiCodeTests.class);
       suite.addTestSuite(TerminalLocalEchoTests.class);
       suite.addTestSuite(TerminalSessionSocketTests.class);
+      suite.addTestSuite(TerminalWebSocketTests.class);
       suite.addTestSuite(JobManagerTests.class);
       suite.addTestSuite(URIUtilsTests.class);
       suite.addTestSuite(RChunkHeaderParserTests.class);
