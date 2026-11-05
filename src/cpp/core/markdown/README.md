@@ -8,30 +8,26 @@ sources can be removed after platform and IDE-level validation.
 
 ## Dependency
 
-`cmark-gfm/` contains unmodified upstream `src/` and `extensions/` directories,
-the upstream version declaration, README, complete license, and a `REVISION`
-file. The pin is
-[`27d942c8b0a62d192f616e5bf3578f4b6a89e180`](https://github.com/github/cmark-gfm/commit/27d942c8b0a62d192f616e5bf3578f4b6a89e180).
-Upstream's most recent release is still
-[`0.29.0.gfm.13`](https://github.com/github/cmark-gfm/releases/tag/0.29.0.gfm.13)
-(July 2023), but development has continued; this pin includes subsequent fixes,
-including the autolink pointer-overflow fix at that revision. It is a commit
-after that release, not a new tagged release.
+`src/cpp/ext/CMakeLists.txt` declares cmark-gfm with the standard
+`dependency()` / `fetch()` mechanism. It pins
+[`27d942c8b0a62d192f616e5bf3578f4b6a89e180`](https://github.com/github/cmark-gfm/commit/27d942c8b0a62d192f616e5bf3578f4b6a89e180),
+a commit after the `0.29.0.gfm.13` release that includes subsequent fixes,
+including the autolink pointer-overflow fix at that revision.
 
-Run `src/cpp/tools/sync-cmark-gfm` from any working directory to reproduce the
-vendor tree, or pass `--revision <full-commit-sha>` to update it. The script uses
-`gh api` and Python's standard library. Review the source list and version in
-`CmarkGfm.cmake`, `dependencies/metadata/general.txt`, and `NOTICE` on updates.
-No download, re2c, Python, or upstream CLI is required to build RStudio: the
-generated C scanners are included. The vendor directory is a source subset;
-use the complete upstream checkout to run upstream's own CMake test project.
+The dependency uses `CUSTOM TRUE` to build only the static runtime library,
+without upstream's CLI, installation rules or global compiler settings.
+`ALWAYS_FETCH TRUE` keeps the adapter tied to the pinned internal parser API;
+an arbitrary system version is not interchangeable. The standard
+`FETCHCONTENT_SOURCE_DIR_CMARK-GFM` override can supply an existing checkout.
+No cmark-gfm source files are stored in this repository.
 
-`CmarkGfm.cmake` builds a static C99 library, generates platform/export/version
-headers in the build tree, and avoids upstream install rules and project-wide
-compiler changes. Its include paths and static-library definitions are confined
-to cmark and its adapter, so upstream headers such as `utf8.h` cannot shadow
-other dependencies in core consumers. Runtime source licenses are BSD-2-Clause and MIT; retain all
-of `COPYING`, including its component attributions.
+The external target generates platform/export/version headers in its build
+directory. Include paths and static-library definitions are confined to cmark
+and its adapter, so upstream headers such as `utf8.h` cannot shadow other
+dependencies in core consumers. Updating cmark requires changing its revision
+in `src/cpp/ext/CMakeLists.txt`, reviewing the source list and adapter API, and
+regenerating dependency notices. Runtime source licenses are BSD-2-Clause and
+MIT; the full upstream `COPYING` file supplies the component attributions.
 
 ## Compatibility decisions
 
@@ -41,7 +37,7 @@ of `COPYING`, including its component attributions.
 | Fenced/indented code, emphasis, lists, HTML blocks | CommonMark parsing rules. These are intentional grammar changes. |
 | `x^2`, `x^(a + b)` | RStudio inline extension, including inline formatting and reference links. Bare superscripts resolve after enclosing emphasis and links. Code and escaped carets stay literal. Nesting is bounded at 16; unmatched or depth-limited superscripts do not repeatedly scan the remaining input. |
 | Smart punctuation, hard wrapping | `CMARK_OPT_SMART`, `CMARK_OPT_HARDBREAKS`. Smart punctuation now also curls apostrophes in contractions. |
-| MathJax, YAML/Pandoc metadata, `htmlPreserve` | RStudio metadata stripping and math restoration remain shared. cmark block boundaries constrain code exclusion, including multiline spans with matching backtick runs and nested/fenced code blocks. Math restoration respects HTML escaping. |
+| MathJax, YAML/Pandoc metadata, `htmlPreserve` | RStudio preprocessing remains shared. Code exclusion recognizes matching backtick runs on one line and closing fences at least as long as the opener. Math restoration respects HTML escaping. |
 | Authored HTML in previews, tutorials, presentations | Retained with `CMARK_OPT_UNSAFE`, preserving the existing caller contract. This migration does **not** make those surfaces HTML sanitizers. |
 | Help descriptions requesting escaping | Escape raw HTML nodes, remove Markdown images, and preserve generated Markdown formatting. Keep the existing strict URL allowlist. Rejected links keep the formatted label, rather than the original Markdown source. |
 | Code highlighting | cmark emits `language-r` / `language-cpp`; the preview detector and bundled stylesheets accept those as well as the old classes. |
@@ -65,13 +61,14 @@ because the old renderer did not enable their behavior.
 The wrapper serializes rendering because upstream registration **and** inline
 parsing mutate global tables. The superscript adapter uses the pinned upstream
 inline parser API and parser structure; recheck that interface during upgrades.
-Vendor source remains untouched.
+Upstream source remains untouched.
 
-When the input contains potential math delimiters, cmark first identifies block
-boundaries so math preprocessing cannot join backticks across paragraphs, list
-items, headings or table cells. Matching backtick runs within each inline block
-and whole code blocks are excluded from math substitution. This preliminary
-parse uses the same mutex as rendering; inputs without math delimiters skip it.
+The shared MathJax filter retains its existing pattern-based code exclusions.
+It does not fully implement CommonMark block and inline grammar: for example,
+math in a multiline inline-code span can still be converted. This also occurs
+with the original Sundown pipeline; this migration fixes matching backtick runs
+on one line without replacing the legacy math processor. Use a fenced code
+block when literal code contains math delimiters across lines.
 
 ## Reproducing comparisons
 
@@ -109,7 +106,6 @@ plots, columns, superscripts, MathJax, and authored HTML/video.
 Local validation on macOS arm64:
 
 - All nine upstream test suites passed at the pinned revision.
-- All 74 vendored files reproduce the upstream bytes exactly.
 - The 20 Markdown integration tests passed with cmark; the 11 shared tests
   also passed with Sundown. They cover the actual help, preview and presentation
   contracts, extension toggles, concurrent parsers, and bounded superscripts.
@@ -120,7 +116,7 @@ Local validation on macOS arm64:
   preview/highlighting, presentation media classification and column splitting
   accepted the old and new HTML in a focused harness.
 - AddressSanitizer and UndefinedBehaviorSanitizer checks passed with the
-  adapter, preprocessing and 34 vendored C translation units instrumented,
+  adapter, preprocessing and 34 upstream C translation units instrumented,
   including the knitted presentations, invalid UTF-8, unsafe links, images
   containing markup, escaped HTML and formatted rejected links in tables,
   math containing HTML, long fences, and deeply nested/unmatched superscripts.
@@ -133,8 +129,7 @@ Local validation on macOS arm64:
 - The knitted shipped presentation template was equivalent after normalization.
   The expanded presentation fixture differed only in the apostrophe in `don't`.
 
-The initial PR's Snyk Code scan reported nine findings in the unmodified
-upstream sources. Four concern `src/main.c`, the upstream CLI, which is excluded
+A scan of the unmodified upstream sources reported nine findings. Four concern `src/main.c`, the upstream CLI, which is excluded
 from `CMARK_SOURCES` and is not linked into RStudio. Five flag copies reached from
 `src/blocks.c` (lines 748, 757, 761, 1462 and 1464 at the pinned revision).
 Those paths bound their input slices by the supplied buffer length and copy

@@ -17,13 +17,6 @@ project (CORE)
 
 add_subdirectory(tex/synctex)
 
-# Keep Sundown available temporarily for differential testing and rollback.
-# See markdown/README.md for the intentional CommonMark behavior changes.
-option(RSTUDIO_USE_CMARK_GFM "Use the cmark-gfm Markdown renderer" ON)
-if(RSTUDIO_USE_CMARK_GFM)
-   include(markdown/CmarkGfm.cmake)
-endif()
-
 # include files
 file(GLOB_RECURSE CORE_HEADER_FILES "*.h*")
 
@@ -362,6 +355,14 @@ define_source_file_names(rstudio-core)
 if(RSTUDIO_USE_CMARK_GFM)
    target_compile_definitions(rstudio-core PUBLIC RSTUDIO_USE_CMARK_GFM)
    target_link_libraries(rstudio-core rstudio-cmark-gfm)
+   # Keep cmark's internal headers (including utf8.h) private to the adapter.
+   set_property(SOURCE markdown/CmarkGfm.cpp APPEND PROPERTY INCLUDE_DIRECTORIES
+      "${CMARK_GFM_BINARY_DIR}"
+      "${CMARK_GFM_BINARY_DIR}/cmark-gfm"
+      "${CMARK_GFM_SOURCE_DIR}/src"
+      "${CMARK_GFM_SOURCE_DIR}/extensions")
+   set_property(SOURCE markdown/CmarkGfm.cpp APPEND PROPERTY COMPILE_DEFINITIONS
+      CMARK_GFM_STATIC_DEFINE CMARK_GFM_EXTENSIONS_STATIC_DEFINE)
 endif()
 
 # link dependencies

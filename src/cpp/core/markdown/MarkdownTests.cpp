@@ -205,25 +205,20 @@ TEST(MarkdownTest, MathExclusionRespectsCodeDelimiterLengths)
    EXPECT_EQ("<pre><code>~~~\n$x_1$\n</code></pre>\n", render("~~~~\n~~~\n$x_1$\n~~~~\n"));
    EXPECT_EQ("<pre><code>$x_1$\n</code></pre>\n", render("````\n$x_1$\n"));
    EXPECT_EQ("<p><code>a ` $x_1$</code></p>\n", render("``a ` $x_1$``"));
-   EXPECT_EQ("<p><code>$x_1$</code></p>\n", render("```$x_1$```"));
-   EXPECT_EQ("<p><code>a $x_1$</code></p>\n", render("`a\n$x_1$`"));
-   EXPECT_EQ("<p><code>a ` $x_1$</code></p>\n", render("``a\n` $x_1$``"));
-   EXPECT_EQ("<p>`<code>$x_1$</code></p>\n", render(R"(\``$x_1$`)"));
-   EXPECT_NE(std::string::npos, render("> `a\n> $x_1$`").find("<code>a $x_1$</code>"));
-   EXPECT_NE(std::string::npos, render("- `a\n  $x_1$`").find("<code>a $x_1$</code>"));
+   EXPECT_EQ("<p><code>$x_1$</code></p>\n", render("``` $x_1$ ```"));
+   EXPECT_EQ("<p>text <code>$x_1$</code></p>\n", render("text ``` $x_1$ ```"));
 }
 
-TEST(MarkdownTest, CodeExclusionRespectsInlineBlockBoundaries)
+TEST(MarkdownTest, MathExclusionPreservesExistingBlockBehavior)
 {
-   for (const std::string input : {"`a\n\n$x_1$\n\nb`", "`a\n# $x_1$\nb`",
-                                   "- `a\n- $x_1$\n- b`",
-                                   "| a | b | c |\n|---|---|---|\n| `a | $x_1$ | b` |"})
+   for (const std::string input : {"text <span title=\"`\">\n`a $x_1$ b`</span>",
+                                   "| h |\n| --- |\n   | `a $x_1$ b` |",
+                                   "`a $x_1$ b`\n| h |\n| --- |"})
    {
       SCOPED_TRACE(input);
-      EXPECT_TRUE(isMathJaxRequired(render(input)));
+      EXPECT_NE(std::string::npos, render(input).find("<code>a $x_1$ b</code>"));
    }
-   EXPECT_NE(std::string::npos, render("`code` and $x_1$").find(R"(\( x_1 \))"));
-   EXPECT_NE(std::string::npos, render("---\ntitle: test\n---\n`a\n$x_1$`").find("<code>a $x_1$</code>"));
+   EXPECT_TRUE(isMathJaxRequired(render("> ```\n> code\n$x_1$")));
 }
 
 TEST(MarkdownTest, BareSuperscriptsRespectEnclosingInlineMarkup)
