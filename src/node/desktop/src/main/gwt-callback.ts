@@ -77,6 +77,17 @@ import { buildInfo } from './build-info';
 import { showPersistentSplashScreen } from './splash-screen';
 import { harvestRendererTiming, startupCheckpoint } from './startup-timing';
 
+/**
+ * The executable a session is launched from for the R the client names:
+ * sessions launched from bin\R.exe fail to load on Windows, so the
+ * architecture-specific executable is used, as the Choose R dialog does.
+ * Applied wherever the client's path is taken, so that the R prepared by
+ * setPendingRVersion() is the one setPendingQuit() then finds.
+ */
+export function preparedRExecutablePath(rExecutablePath: string): string {
+  return process.platform === 'win32' ? fixWindowsRExecutablePath(rExecutablePath) : rExecutablePath;
+}
+
 export enum PendingQuit {
   PendingQuitNone,
   PendingQuitAndExit,
@@ -1302,13 +1313,15 @@ export class GwtCallback extends EventEmitter {
    * recorded, or why not.
    */
   setPendingQuit(pendingQuit: number, rExecutablePath = ''): string {
-    if (rExecutablePath && !this.preparedRVersions.has(rExecutablePath)) {
+    // the client names the R as it was given to setPendingRVersion()
+    const rPath = rExecutablePath ? preparedRExecutablePath(rExecutablePath) : '';
+    if (rPath && !this.preparedRVersions.has(rPath)) {
       const interpolation = { escapeValue: false };
       return i18next.t('gwtCallbackTs.rExecutableNotPrepared', { path: rExecutablePath, interpolation }) || rExecutablePath;
     }
 
     this.pendingQuit = pendingQuit;
-    this.pendingRVersion = rExecutablePath;
+    this.pendingRVersion = rPath;
 
     // a quit that was abandoned (e.g. the session refused it) leaves no R
     // switch or update install behind for some later, unrelated quit
@@ -1326,9 +1339,7 @@ export class GwtCallback extends EventEmitter {
    * it (see setPendingQuit).
    */
   async setPendingRVersion(rExecutablePath: string): Promise<string> {
-    // sessions launched from bin\R.exe fail to load on Windows; use the
-    // architecture-specific executable as the Choose R dialog does
-    const rPath = process.platform === 'win32' ? fixWindowsRExecutablePath(rExecutablePath) : rExecutablePath;
+    const rPath = preparedRExecutablePath(rExecutablePath);
 
     // the client escapes the message for display itself
     const interpolation = { escapeValue: false };

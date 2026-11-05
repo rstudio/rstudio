@@ -36,7 +36,6 @@ test.describe('aborted project switch', () => {
     );
 
     await executeInConsole(page, '.Last <- function() stop("not quitting")', { wait: true });
-    const promptsBefore = await page.evaluate(() => window.rstudio?.console?.promptCount ?? 0);
     await page.evaluate((p) => {
       const r = window.rstudio;
       if (!r)
@@ -44,16 +43,15 @@ test.describe('aborted project switch', () => {
       r.project.open(p);
     }, rproj);
 
-    // R refuses the quit from .Last() and returns to its prompt; the bridge
-    // is told the quit was aborted and reports the session usable again
+    // R refuses the quit from .Last(); the bridge is told the quit was
+    // aborted and reports the session usable again. Whether R reissues its
+    // prompt on the way back is not relied on: a command run to completion
+    // shows the console is taking input again
     await expect(page.locator('#rstudio_workbench_panel_console')).toContainText(/Error in \.Last\(\)\s*: not quitting/, {
       timeout: 30000,
     });
-    await page.waitForFunction(
-      (before) => (window.rstudio?.console?.promptCount ?? 0) > before && window.rstudio?.ready === true,
-      promptsBefore,
-      { timeout: 30000, polling: 50 },
-    );
+    await page.waitForFunction(() => window.rstudio?.ready === true, null, { timeout: 30000, polling: 50 });
+    await executeInConsole(page, 'invisible(NULL)', { wait: true });
     expect(await page.evaluate(() => window.rstudio?.project.isActive())).toBe(false);
 
     // an ordinary quit now. Were the aborted switch still written down, the
