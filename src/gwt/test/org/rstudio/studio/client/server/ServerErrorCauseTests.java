@@ -29,33 +29,26 @@ public class ServerErrorCauseTests extends GWTTestCase
       ServerErrorCause cause = new ServerErrorCause(
          32, "system",
          "Le processus ne peut pas acceder au fichier car ce fichier est utilise par un autre processus");
-      assertTrue(cause.isWindowsFileInUse());
-   }
-
-   public void testLockViolationMatches()
-   {
-      // ERROR_LOCK_VIOLATION: another process locked part of the file
-      ServerErrorCause cause = new ServerErrorCause(33, "system", "");
-      assertTrue(cause.isWindowsFileInUse());
+      assertTrue(cause.isWindowsSharingViolation());
    }
 
    public void testOtherSystemCodeDoesNotMatch()
    {
       // ERROR_ACCESS_DENIED
       ServerErrorCause cause = new ServerErrorCause(5, "system", "Access is denied");
-      assertFalse(cause.isWindowsFileInUse());
+      assertFalse(cause.isWindowsSharingViolation());
    }
 
    public void testCode32InAnotherCategoryDoesNotMatch()
    {
       // only "system" codes are Win32 codes on Windows
       ServerErrorCause cause = new ServerErrorCause(32, "generic", "Broken pipe");
-      assertFalse(cause.isWindowsFileInUse());
+      assertFalse(cause.isWindowsSharingViolation());
    }
 
    public void testMissingCategoryDoesNotMatch()
    {
       ServerErrorCause cause = new ServerErrorCause(32, null, "");
-      assertFalse(cause.isWindowsFileInUse());
+      assertFalse(cause.isWindowsSharingViolation());
    }
 }
