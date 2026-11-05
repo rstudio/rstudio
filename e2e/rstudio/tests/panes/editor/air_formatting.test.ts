@@ -37,11 +37,20 @@
  *   14. checked + file outside the active project + save       → Air formats
  *       (the format-on-save path is no longer gated on project membership,
  *       #17774)
+ *   15. checked + untitled document + manual reformat          → Air formats
+ *       (the format_code RPC used to reject the untitled document's null
+ *       path, #19406)
+ *   16. checked + require-toml + air.toml + untitled document + manual
+ *       reformat → Air formats with the project air.toml (an untitled
+ *       document counts as living in the open project, #19406)
  *
  * Detection: air.toml uses 12-space indent — unmistakable signal. Air with
  * default settings (case 6) is exercised via the save path, where the
  * built-in formatter never runs (maybeFormatOnUserInitiatedSave skips it),
- * so any formatting change on save proves Air ran.
+ * so any formatting change on save proves Air ran. Case 15 is the one
+ * manual-reformat case that relies on Air's default output: with "require
+ * air.toml" off, useBuiltinFormatter() returns false before it consults the
+ * format_context result, so the built-in formatter cannot run there either.
  */
 
 import { expect } from '@playwright/test';
@@ -249,6 +258,33 @@ async function removeAirConfig(consoleActions: ConsolePaneActions): Promise<void
   await waitForAirTomlCache(consoleActions.page, false);
 }
 
+/**
+ * Open a new untitled R script and fill it with the suite's messy code. The
+ * document has no path, which is the point: the format RPCs must cope with
+ * that (#19406).
+ */
+async function openUntitledDocument(page: Page): Promise<void> {
+  // The afterEach reset leaves an untitled placeholder active, which also
+  // has a null path -- so wait for a *different* active document with a
+  // null path, or the text below could land in the placeholder while the
+  // new tab is still being created.
+  const placeholderId = await page.evaluate(() => window.rstudio?.documents.active()?.id ?? null);
+  await executeCommand(page, 'newSourceDoc');
+  await expect
+    .poll(async () => {
+      const doc = await page.evaluate(() => window.rstudio?.documents.active() ?? null);
+      return doc !== null && doc.id !== placeholderId && doc.path === null;
+    })
+    .toBe(true);
+  // Type through the Ace API rather than the keyboard: focus can drift off
+  // a freshly created tab on slow CI, and the text itself isn't under test.
+  await page.evaluate(() => {
+    const editor = window.rstudio?.documents.activeEditor();
+    if (!editor) throw new Error('no active source editor for the untitled document');
+    editor.setValue('x<-1+2+3\ny<-list(a=1,b=2,c=3)');
+  });
+}
+
 /** Create the test R file with messy code and open it in the editor. */
 async function openTestFile(
   consoleActions: ConsolePaneActions,
@@ -387,8 +423,11 @@ function expectAirFormatted(content: string): void {
 /**
  * Air formatted without an air.toml: the suite's 12-indent config is absent
  * and the synthesized config carries the default editor settings, so the
- * output looks like ordinary tidied code. Callers must only use this on the
- * save path, where the built-in formatter cannot run -- there, any formatting
+ * output looks like ordinary tidied code -- identical to what the built-in
+ * formatter produces for this input. Callers must only use this where the
+ * built-in formatter cannot run: the save path, which never runs it, or a
+ * manual reformat with Air enabled and "require air.toml" off, where
+ * useBuiltinFormatter() returns false unconditionally. There, any formatting
  * change proves Air ran.
  */
 function expectAirDefaultFormatted(content: string): void {
@@ -700,6 +739,44 @@ test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
     // The afterEach cleanup closes all source tabs; remove the out-of-project
     // file explicitly since it lives outside the dir cleanup() unlinks.
     await consoleActions.executeInConsole(`unlink("${outsidePath}")`, { wait: true });
+  });
+
+  // --- Reformat Selection works in an untitled document (#19406) ---
+
+  test('15: checked, untitled document, manual reformat uses Air', async () => {
+    // #19406: with Air enabled, "Reformat Selection" silently did nothing in
+    // an unsaved document while "Reformat Document" worked. The client sent
+    // the untitled document's null path with the format_code request, and
+    // the backend rejected it with a parameter type mismatch before
+    // formatting anything. With "require air.toml" off the client never
+    // falls back to the built-in formatter when Air is enabled, so any
+    // change to the buffer proves the RPC round trip succeeded.
+    test.skip(!airAvailable, 'Air binary not available (.rs.air.ensureAvailable could not resolve it)');
+    await setAirPrefs(page, true, false);
+    await removeAirConfig(consoleActions);
+    await openUntitledDocument(page);
+
+    await reformatCode(page, sourceActions);
+    const content = await sourceActions.getEditorContent();
+    expectAirDefaultFormatted(content);
+  });
+
+  test('16: checked + require-toml, air.toml present, untitled document, manual reformat uses the project air.toml', async () => {
+    // An untitled document counts as living in the open project, so the
+    // format_context RPC reports the project air.toml (which is what gates
+    // the formatter choice under "require air.toml") and format_code
+    // formats with it. Before #19406 the same RPC failed on the null path,
+    // and the client's error fallback happened to pick Air, which then ran
+    // without the project config; the 12-space indent pins down that the
+    // project air.toml is now actually used.
+    test.skip(!airAvailable, 'Air binary not available (.rs.air.ensureAvailable could not resolve it)');
+    await setAirPrefs(page, true, false, true);
+    await createAirConfig(consoleActions);
+    await openUntitledDocument(page);
+
+    await reformatCode(page, sourceActions);
+    const content = await sourceActions.getEditorContent();
+    expectAirFormatted(content);
   });
 
 });

@@ -51,6 +51,50 @@ bool isHeaderExtension(const std::string& ex)
    return ex == ".h" || ex == ".hh" || ex == ".hpp";
 }
 
+// fix up '-std=' arguments: remove C++ '-std' flags when compiling
+// C sources, and remove C-only '-std' flags when compiling C++ sources
+void removeMismatchedStdArgs(const std::string& filename, std::vector<std::string>* pArgs)
+{
+   if (FilePath(filename).hasExtensionLowerCase(".c"))
+   {
+      // remove C++ std flags (e.g. -std=c++20) from C compilations
+      core::algorithm::expel_if(*pArgs, [](const std::string& arg)
+      {
+         return arg.find("-std") == 0 && arg.find("++") != std::string::npos;
+      });
+   }
+   else
+   {
+      // remove C-only std flags (e.g. -std=c11) from C++ compilations
+      core::algorithm::expel_if(*pArgs, [](const std::string& arg)
+      {
+         return arg.find("-std") == 0 && arg.find("++") == std::string::npos;
+      });
+   }
+}
+
+// the clang driver finds the macOS SDK through these variables
+class SdkEnvironmentScope : boost::noncopyable
+{
+public:
+   SdkEnvironmentScope()
+   {
+#ifdef __APPLE__
+      const char* sdkRootPath("/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk");
+      if (core::system::getenv("SDKROOT").empty() && FilePath(sdkRootPath).exists())
+         sdkRootScope_.reset(new core::system::EnvironmentScope("SDKROOT", sdkRootPath));
+
+      const char* developerDirPath = "/Library/Developer/CommandLineTools";
+      if (core::system::getenv("DEVELOPER_DIR").empty() && FilePath(developerDirPath).exists())
+         developerDirScope_.reset(new core::system::EnvironmentScope("DEVELOPER_DIR", developerDirPath));
+#endif
+   }
+
+private:
+   boost::scoped_ptr<core::system::EnvironmentScope> sdkRootScope_;
+   boost::scoped_ptr<core::system::EnvironmentScope> developerDirScope_;
+};
+
 } // anonymous namespace
 
 bool SourceIndex::isSourceFile(const FilePath& filePath)
@@ -161,22 +205,8 @@ std::map<std::string,TranslationUnit>
 TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
                                                 bool alwaysReparse)
 {
-#ifdef __APPLE__
+   SdkEnvironmentScope sdkScope;
 
-   // ensure SDK_ROOT is set
-   boost::scoped_ptr<core::system::EnvironmentScope> sdkRootScope;
-   const char* sdkRootPath("/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk");
-   if (core::system::getenv("SDKROOT").empty() && FilePath(sdkRootPath).exists())
-      sdkRootScope.reset(new core::system::EnvironmentScope("SDKROOT", sdkRootPath));
-
-   // ensure DEVELOPER_DIR is set
-   boost::scoped_ptr<core::system::EnvironmentScope> developerDirScope;
-   const char* developerDirPath = "/Library/Developer/CommandLineTools";
-   if (core::system::getenv("DEVELOPER_DIR").empty() && FilePath(developerDirPath).exists())
-      developerDirScope.reset(new core::system::EnvironmentScope("DEVELOPER_DIR", developerDirPath));
-
-#endif
-   
    FilePath filePath(filename);
 
    boost::scoped_ptr<core::PerformanceTimer> pTimer;
@@ -257,25 +287,8 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
    if (verbose_ >= 3)
      args.push_back("-v");
    
-   // fix up '-std=' arguments: remove C++ '-std' flags when compiling
-   // C sources, and remove C-only '-std' flags when compiling C++ sources
-   if (FilePath(filename).hasExtensionLowerCase(".c"))
-   {
-      // remove C++ std flags (e.g. -std=c++20) from C compilations
-      core::algorithm::expel_if(args, [](const std::string& arg)
-      {
-         return arg.find("-std") == 0 && arg.find("++") != std::string::npos;
-      });
-   }
-   else
-   {
-      // remove C-only std flags (e.g. -std=c11) from C++ compilations
-      core::algorithm::expel_if(args, [](const std::string& arg)
-      {
-         return arg.find("-std") == 0 && arg.find("++") == std::string::npos;
-      });
-   }
-   
+   removeMismatchedStdArgs(filename, &args);
+
    // report to user if requested
    if (verbose_ > 1)
    {
@@ -320,6 +333,42 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
       LOG_ERROR_MESSAGE("Error parsing translation unit " + filename);
       return TranslationUnit();
    }
+}
+
+std::vector<std::string> SourceIndex::commandLineDiagnostics(const std::string& filename,
+                                                             std::vector<std::string> args)
+{
+   std::vector<std::string> messages;
+
+   // parse the same way getTranslationUnit() would, but with the file empty
+   SdkEnvironmentScope sdkScope;
+   removeMismatchedStdArgs(filename, &args);
+   core::system::ProcessArgs argsArray(args);
+
+   UnsavedFiles emptyFile;
+   emptyFile.update(filename, "", false);
+
+   CXTranslationUnit tu = clang().parseTranslationUnit(
+                         index_,
+                         filename.c_str(),
+                         argsArray.args(),
+                         gsl::narrow_cast<int>(argsArray.argCount()),
+                         emptyFile.unsavedFilesArray(),
+                         emptyFile.numUnsavedFiles(),
+                         CXTranslationUnit_None);
+   if (tu == nullptr)
+      return messages;
+
+   unsigned numDiagnostics = clang().getNumDiagnostics(tu);
+   for (unsigned i = 0; i < numDiagnostics; i++)
+   {
+      Diagnostic diagnostic(clang().getDiagnostic(tu, i));
+      if (diagnostic.location().empty())
+         messages.push_back(diagnostic.spelling());
+   }
+
+   clang().disposeTranslationUnit(tu);
+   return messages;
 }
 
 Cursor SourceIndex::referencedCursorForFileLocation(const FileLocation &loc)

@@ -41,15 +41,79 @@ public abstract class PosixFileSystemContext implements FileSystemContext
 
       // Is it absolute?
       if (isAbsolute(name))
-         return name;
+         return normalizePath(name);
 
       if (root == null || root.length() == 0)
-         return name;
+         return normalizePath(name);
 
       if (root.endsWith("/"))
-         return root + name;
+         return normalizePath(root + name);
       else
-         return root + "/" + name;
+         return normalizePath(root + "/" + name);
+   }
+
+   /**
+    * Collapses `.` and `..` segments lexically, so a typed `../sub` lists the
+    * sibling under its own path rather than as `<dir>/../sub`: the server
+    * lists that fine, but the breadcrumb and every path taken from the
+    * listing would carry the `..` along. `..` never climbs above a
+    * filesystem root (`/`, a Windows drive, or a UNC host). `~` only stands
+    * for the home directory, which has a parent, so a leading `..` after it
+    * is kept for the server to resolve, as it is with no root at all.
+    */
+   public static String normalizePath(String path)
+   {
+      String root = "";
+      String rest = path;
+      if (path.startsWith("//"))
+      {
+         // a Windows UNC path, in the `//server/share` form the server
+         // reports it in; the host is the root
+         int slash = path.indexOf('/', 2);
+         root = slash == -1 ? path : path.substring(0, slash);
+         rest = slash == -1 ? "" : path.substring(slash);
+      }
+      else if (path.startsWith("/"))
+      {
+         root = "/";
+         rest = path.substring(1);
+      }
+      else if (path.equals("~") || path.startsWith("~/"))
+      {
+         root = "~";
+         rest = path.substring(1);
+      }
+      else if (path.length() >= 2
+               && isAsciiLetter(path.charAt(0))
+               && path.charAt(1) == ':')
+      {
+         root = path.substring(0, 2);
+         rest = path.substring(2);
+      }
+
+      ArrayList<String> parts = new ArrayList<>();
+      for (String part : rest.split("/"))
+      {
+         if (part.isEmpty() || part.equals("."))
+            continue;
+
+         if (!part.equals(".."))
+            parts.add(part);
+         else if (!parts.isEmpty() && !parts.get(parts.size() - 1).equals(".."))
+            parts.remove(parts.size() - 1);
+         else if (root.isEmpty() || root.equals("~"))
+            parts.add("..");
+      }
+
+      String joined = StringUtil.join(parts, "/");
+      if (root.isEmpty())
+         return joined;
+      else if (root.equals("/"))
+         return "/" + joined;
+      else if (joined.isEmpty())
+         return root.equals("~") ? "~" : root + "/";
+      else
+         return root + "/" + joined;
    }
 
    public FileSystemItem[] parseDir(String dirPath)
@@ -88,7 +152,7 @@ public abstract class PosixFileSystemContext implements FileSystemContext
       return false;
    }
 
-   private boolean isAsciiLetter(char c)
+   private static boolean isAsciiLetter(char c)
    {
       return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
    }

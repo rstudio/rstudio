@@ -170,17 +170,20 @@ public class DirectoryContentsWidget extends Composite
 
    private void commitSelection(FileSystemItem item)
    {
+      SelectionCommitEvent.fire(DirectoryContentsWidget.this, resolveItem(item));
+   }
+
+   /**
+    * The item a listed row stands for: the `..` row is the parent directory,
+    * and a macOS Finder alias / Windows shortcut is its target, so acting on
+    * the row navigates into the target instead of cd-ing into the link file.
+    */
+   private FileSystemItem resolveItem(FileSystemItem item)
+   {
       if (StringUtil.equals(item.getName(), ".."))
-      {
          item = parentDirectory_;
-      }
 
-      // follow macOS Finder aliases / Windows shortcuts so committing a
-      // directory link navigates into its target instead of cd-ing into
-      // the link file
-      item = item.resolveAliasTarget();
-
-      SelectionCommitEvent.fire(DirectoryContentsWidget.this, item);
+      return item.resolveAliasTarget();
    }
 
    public void setSelectedRow(Integer row)
@@ -197,6 +200,16 @@ public class DirectoryContentsWidget extends Composite
    public FileSystemItem getSelectedItem()
    {
       return table_.getSelectedItem();
+   }
+
+   /**
+    * @return the item the selected row stands for (see resolveItem), or null
+    * when nothing is selected
+    */
+   public FileSystemItem getSelectedTarget()
+   {
+      FileSystemItem item = getSelectedItem();
+      return item == null ? null : resolveItem(item);
    }
 
    public void showProgress(boolean show)
