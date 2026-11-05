@@ -536,6 +536,16 @@ public class TextEditingTarget implements
       {
          isSaving_ = false;
 
+         // do not show the error if it is a transient autosave related issue - this can occur fairly frequently
+         // when attempting to save files that are being backed up by external software
+         if (fileInUse && suppressFileLockError_)
+         {
+            if (executeOnSilentFailure_ != null)
+               executeOnSilentFailure_.execute();
+
+            return;
+         }
+
          // in case the error occurred saving a document that wasn't
          // in the foreground
          view_.ensureVisible();
@@ -545,16 +555,6 @@ public class TextEditingTarget implements
             @Override
             public void execute()
             {
-               // do not show the error if it is a transient autosave related issue - this can occur fairly frequently
-               // when attempting to save files that are being backed up by external software
-               if (fileInUse && suppressFileLockError_)
-               {
-                  if (executeOnSilentFailure_ != null)
-                     executeOnSilentFailure_.execute();
-
-                  return;
-               }
-
                globalDisplay_.showErrorMessage(constants_.errorSavingFile(), message);
             }
          };
