@@ -14,11 +14,13 @@
  */
 package org.rstudio.core.client.command;
 
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.regex.Pattern.ReplaceOperation;
 
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.MenuItem;
 
 public class AppMenuItem extends MenuItem
@@ -29,6 +31,7 @@ public class AppMenuItem extends MenuItem
       cmd_ = cmd;
       mainMenu_ = mainMenu;
       setTitle(cmd_.getDesc());
+      updateKeyShortcuts();
    }
 
    public AppMenuItem(AppCommand cmd, boolean mainMenu, ScheduledCommand cmdWrapper)
@@ -37,6 +40,7 @@ public class AppMenuItem extends MenuItem
       cmd_ = cmd;
       mainMenu_ = mainMenu;
       setTitle(cmd.getDesc());
+      updateKeyShortcuts();
    }
 
    @Override
@@ -63,6 +67,27 @@ public class AppMenuItem extends MenuItem
       setHTML(cmd_.getMenuHTML(mainMenu_));
       setTitle(cmd_.getDesc());
       setChecked(cmd_.isChecked());
+      updateKeyShortcuts();
+   }
+
+   /**
+    * Expose the shortcut through aria-keyshortcuts rather than the item's
+    * name, where macOS modifier symbols would be read out. Shortcuts the
+    * attribute can't express stay in the name.
+    */
+   private void updateKeyShortcuts()
+   {
+      Element shortcutCell = DomUtils.getFirstElementWithClassName(
+            getElement(), AppCommand.MENU_SHORTCUT_CLASS);
+      String keys = cmd_.getAriaKeyShortcuts();
+      if (shortcutCell == null || keys == null)
+      {
+         getElement().removeAttribute("aria-keyshortcuts");
+         return;
+      }
+
+      getElement().setAttribute("aria-keyshortcuts", keys);
+      shortcutCell.setAttribute("aria-hidden", "true");
    }
 
    public boolean cmdVisible()
