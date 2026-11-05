@@ -250,7 +250,7 @@ void stripMetadata(std::string* pInput)
       for(std::size_t i=0; i<lines.size(); i++)
       {
          const std::string& line = lines[i];
-         if (boost::algorithm::trim_copy(line).empty() && !inFrontMatter)
+         if (boost::algorithm::trim_copy(line).empty())
          {
             continue;
          }
@@ -356,28 +356,6 @@ Error markdownToHTML(const std::string& markdownInput,
                      std::string* pHTMLOutput)
 
 {
-   // exclude fenced code blocks
-   using namespace rstudio::core::html_utils;
-   std::vector<ExcludePattern> excludePatterns;
-   // Preserve the filter's column-zero opener rule: without parsing enclosing
-   // lists, an indented fence can otherwise consume math outside its container.
-   // A closer must use at least as many delimiters as its opener.
-   excludePatterns.push_back(ExcludePattern(boost::regex(
-      R"(^(`{3,})(?!`)[^`\r\n]*(?:\r?\n|\z)[\s\S]*?(?:^ {0,3}\1`*[ \t]*\r?$|\z))")));
-   excludePatterns.push_back(ExcludePattern(boost::regex(
-      R"(^(~{3,})(?!~)[^\r\n]*(?:\r?\n|\z)[\s\S]*?(?:^ {0,3}\1~*[ \t]*\r?$|\z))")));
-
-   // exclude inline verbatim code
-   // Prefer complete spans with matching backtick runs. Retain the historical
-   // pattern as a fallback for the other inputs supported by this filter.
-   excludePatterns.push_back(ExcludePattern(boost::regex(
-      R"((?<!`)(`+)(?!`)[^\r\n]*?(?<!`)\1(?!`))")));
-   excludePatterns.push_back(ExcludePattern(boost::regex("`[^\\n]+?`")));
-
-   // exclude indented code blocks
-   excludePatterns.push_back(ExcludePattern(
-      boost::regex("(\\A|\\A\\s*\\n|\\n\\s*\\n)(( {4}|\\t)[^\\n]*\\n)*(( {4}|\\t)[^\\n]*)")));
-
    std::string input = markdownInput;
    // Remove metadata before processing math so delimiters in the header
    // cannot pair with an equation in the document body.
@@ -387,10 +365,7 @@ Error markdownToHTML(const std::string& markdownInput,
    boost::scoped_ptr<MathJaxFilter> pMathFilter;
    if (extensions.ignoreMath && input.find_first_of("$\\") != std::string::npos)
    {
-      pMathFilter.reset(new MathJaxFilter(excludePatterns,
-                                          &input,
-                                          pHTMLOutput,
-                                          options.escape));
+      pMathFilter.reset(new MathJaxFilter(&input, pHTMLOutput, options.escape));
    }
 
    // respect html-preserve

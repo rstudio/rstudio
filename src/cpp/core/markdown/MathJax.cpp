@@ -21,6 +21,7 @@
 #include <boost/function.hpp>
 #include <boost/algorithm/string.hpp>
 
+#include <core/HtmlUtils.hpp>
 #include <core/RegexUtils.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
@@ -42,14 +43,37 @@ bool hasLessThanThreeNewlines(const std::string& str)
    return std::count(str.begin(), str.end(), '\n') < 3;
 }
 
+struct CodePattern
+{
+   CodePattern(const std::string& pattern, bool fenced = false)
+      : begin(pattern), fenced(fenced)
+   {
+   }
+
+   boost::regex begin;
+   bool fenced;
+};
+
 }
 
-MathJaxFilter::MathJaxFilter(const std::vector<html_utils::ExcludePattern>& excludePatterns,
-                             std::string* pInput,
+MathJaxFilter::MathJaxFilter(std::string* pInput,
                              std::string* pHTMLOutput,
                              bool escapeHtml)
    : pHTMLOutput_(pHTMLOutput), escapeHtml_(escapeHtml)
 {
+   // Retain column-zero fence openers: the legacy filter cannot determine
+   // where an enclosing list ends. Match only the opener until it is selected,
+   // so a fence nested in another code block never scans for its own closer.
+   const std::vector<CodePattern> patterns = {
+      CodePattern(R"(^(`{3,})(?!`)[^`\r\n]*(?:\r?\n|\z))", true),
+      CodePattern(R"(^(~{3,})(?!~)[^\r\n]*(?:\r?\n|\z))", true),
+      // Prefer matching backtick runs on one line, with the historical
+      // pattern retained as a fallback for other inputs.
+      CodePattern(R"((?<!`)(`+)(?!`)[^\r\n]*?(?<!`)\1(?!`))"),
+      CodePattern(R"(`[^\n]+?`)"),
+      CodePattern(R"((\A|\A\s*\n|\n\s*\n)(( {4}|\t)[^\n]*\n)*(( {4}|\t)[^\n]*))")
+   };
+
    // divide the document into ranges (some of which will be processed
    // and some of which will not -- we don't process some regions so that
    // we don't need to worry about mathjax ambiguity within code regions)
@@ -58,63 +82,56 @@ MathJaxFilter::MathJaxFilter(const std::vector<html_utils::ExcludePattern>& excl
    std::string::const_iterator inputEnd = pInput->end();
    // Retain future matches (including exhaustion) instead of searching the
    // entire suffix for every pattern after each inline code span.
-   std::vector<TextRange> nextMatches(excludePatterns.size(), TextRange(false, inputEnd, inputEnd));
-   std::vector<bool> searched(excludePatterns.size(), false);
+   std::vector<boost::smatch> nextMatches(patterns.size());
+   std::vector<bool> searched(patterns.size(), false);
    while (pos != inputEnd)
    {
-      // try all of the exclude patterns
-      std::vector<TextRange> matchedRanges;
-      for (std::size_t i = 0; i < excludePatterns.size(); ++i)
+      std::size_t closest = patterns.size();
+      for (std::size_t i = 0; i < patterns.size(); ++i)
       {
-         TextRange& next = nextMatches[i];
-         if (searched[i] && next.begin >= pos)
+         boost::smatch& next = nextMatches[i];
+         auto flags = pos == pInput->begin() ? boost::match_default : boost::match_prev_avail;
+         // The indented-code pattern's \A also applies at an exclusion's end
+         // (e.g. indented code immediately following a closing fence). Probe
+         // only this position before reusing a cached future match or miss.
+         boost::smatch atBoundary;
+         if (regex_utils::search(pos, inputEnd, atBoundary, patterns[i].begin,
+                                 flags | boost::match_continuous))
          {
-            if (next.begin != inputEnd)
-               matchedRanges.push_back(next);
-            continue;
+            next = atBoundary;
          }
-
+         else if (!searched[i] || (!next.empty() && next[0].first < pos))
+         {
+            next = boost::smatch();
+            if (pos != pInput->begin())
+               flags |= boost::match_not_bob;
+            if (!regex_utils::search(pos, inputEnd, next, patterns[i].begin, flags))
+               next = boost::smatch();
+         }
          searched[i] = true;
-         next = TextRange(false, inputEnd, inputEnd);
-         const html_utils::ExcludePattern& pattern = excludePatterns[i];
-         boost::smatch m;
-         auto flags = pos == pInput->begin() ? boost::match_default
-                                            : boost::match_prev_avail | boost::match_not_bob;
-         if (regex_utils::search(pos, inputEnd, m, pattern.begin, flags))
-         {
-            // set begin and end (may change if there is an end pattern)
-            std::string::const_iterator begin = m[0].first;
-            std::string::const_iterator end = m[0].second;
-
-            // check for a second match
-            if (!pattern.end.empty())
-            {
-               if (regex_utils::search(end, inputEnd, m, pattern.end))
-               {
-                  // update end to be the end of the match
-                  end = m[0].second;
-               }
-               else
-               {
-                  // didn't find a matching end pattern so set the end to the
-                  // end of the document -- this will cause us to exclude the
-                  // rest of the document from processing
-                  end = inputEnd;
-               }
-            }
-
-            // add the matched range to our list
-            next = TextRange(false, begin, end);
-            matchedRanges.push_back(next);
-         }
+         if (!next.empty() &&
+             (closest == patterns.size() || next[0].first < nextMatches[closest][0].first))
+            closest = i;
       }
 
       // if we found at least one matched range then find the closest one,
       // add it to our list, and continue
-      if (!matchedRanges.empty())
+      if (closest != patterns.size())
       {
-         // find the closest range
-         TextRange range = findClosestRange(pos, matchedRanges);
+         const boost::smatch& match = nextMatches[closest];
+         TextRange range(false, match[0].first, match[0].second);
+         if (patterns[closest].fenced)
+         {
+            // A closer must use the same character and at least as many
+            // delimiters as its opener. Search only for the chosen block.
+            std::string delimiter = match[1];
+            boost::regex closer("^ {0,3}" + delimiter.substr(0, 1) + "{" +
+                                 std::to_string(delimiter.size()) + ",}[ \\t]*\\r?$");
+            boost::smatch end;
+            range.end = regex_utils::search(range.end, inputEnd, end, closer,
+                                            boost::match_prev_avail | boost::match_not_bob)
+               ? end[0].second : inputEnd;
+         }
 
          // mark everything before the match as requiring processing
          ranges.push_back(TextRange(true, pos, range.begin));

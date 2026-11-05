@@ -73,7 +73,9 @@ math processor. Fence openers must remain at column zero because the filter
 cannot determine where an enclosing list ends. Use top-level fenced code blocks
 when literal code contains math delimiters across lines. Metadata is removed
 before math processing, and exclusion searches cache future matches to avoid
-repeatedly scanning the document suffix after every code span.
+repeatedly scanning the document suffix after every code span. Only the
+earliest fence opener searches for its closer, so overlapping candidates do
+not repeatedly scan to the end of the document.
 
 ## Reproducing comparisons
 
@@ -111,10 +113,10 @@ plots, columns, superscripts, MathJax, and authored HTML/video.
 Local validation on macOS arm64:
 
 - All nine upstream test suites passed at the pinned revision.
-- The 22 Markdown integration tests passed with cmark; the 12 shared tests
+- The 23 Markdown integration tests passed with cmark; the 13 shared tests
   also passed with Sundown. They cover the actual help, preview and presentation
   contracts, extension toggles, concurrent parsers, and bounded superscripts.
-- The complete cmark core test run passed 830 tests, with 12 environment/platform
+- The complete cmark core test run passed 831 tests, with 12 environment/platform
   skips and three disabled tests. The first sandboxed run could not register
   filesystem monitors; the successful run used normal OS access.
 - Both changed session translation units passed compilation checks; the actual

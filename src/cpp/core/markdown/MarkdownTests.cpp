@@ -170,6 +170,8 @@ TEST(MarkdownTest, MetadataAndMath)
    EXPECT_FALSE(isMathJaxRequired(render("~~~r\n$x_1$\n~~~\n")));
    EXPECT_EQ("<p>\\[ x_1 \\]</p>\n", render("---\ntitle: '$$'\n---\n\n$$x_1$$"));
    EXPECT_EQ("<p>\\[ x_1 \\]</p>\n", render("% $$\n\n$$x_1$$"));
+   EXPECT_EQ("<p>body</p>\n", render("---\ntitle: |\n  $$\n\n  x_1\n  $$\n---\n\nbody"));
+   EXPECT_EQ("<p>body</p>\n", render("---\ntitle: example\n\nauthor: name\n---\n\nbody"));
 }
 
 TEST(MarkdownTest, MathAmongManyCodeSpans)
@@ -183,6 +185,15 @@ TEST(MarkdownTest, MathAmongManyCodeSpans)
    EXPECT_NE(std::string::npos, html.find("\\( x_1 \\)"));
    EXPECT_NE(std::string::npos, html.find("\\( x_2 \\)"));
    EXPECT_NE(std::string::npos, html.find("<code>$literal$\n</code>"));
+}
+
+TEST(MarkdownTest, OverlappingFencesDoNotRescanTheDocument)
+{
+   std::string input;
+   for (int i = 0; i < 10000; ++i)
+      input += "```text\n~~~text\n```\n\n";
+   input += "$x_1$";
+   EXPECT_NE(std::string::npos, render(input).find("\\( x_1 \\)"));
 }
 
 TEST(MarkdownTest, HtmlPreserve)
@@ -235,6 +246,10 @@ TEST(MarkdownTest, MathExclusionPreservesExistingBlockBehavior)
    EXPECT_TRUE(isMathJaxRequired(render("> ```\n> code\n$x_1$")));
    EXPECT_TRUE(isMathJaxRequired(render("- item\n\n  ```\n  code\n\n$x_1$")));
    EXPECT_TRUE(isMathJaxRequired(render("- item\n\n  ~~~\n  code\n\n$x_1$")));
+   EXPECT_EQ("<pre><code>code\n</code></pre>\n<pre><code>$x_1$\n</code></pre>\n",
+             render("~~~\ncode\n~~~\n    $x_1$\n"));
+   EXPECT_EQ("<pre><code>code\n</code></pre>\n<pre><code>$x_1$\n</code></pre>\n",
+             render("```\ncode\n```\n    $x_1$\n"));
 }
 
 TEST(MarkdownTest, SuperscriptsDoNotNestLinks)
