@@ -280,7 +280,7 @@ jobs:
       # Save the tools / R-libs caches only from main-scoped runs (the seed
       # and scheduled workflows), and only on a key miss. A cache saved from a
       # PR run lands in that PR's merge-ref scope, which no other branch can
-      # restore -- each copy is pure pressure on the repo's 10 GB Actions
+      # restore -- each copy is pure pressure on the repo's Actions
       # cache quota, and that pressure is what evicts main's copies and sends
       # every PR build cold in the first place.
       - name: Save rstudio-tools deps
@@ -331,7 +331,7 @@ jobs:
       # hashFiles key rotates. Same poison-resistance pattern macOS uses.
       # Save only from main-scoped runs, and only on a key miss: a cache saved
       # from a PR run lands in that PR's merge-ref scope, which no other
-      # branch can restore -- each copy is pure pressure on the repo's 10 GB
+      # branch can restore -- each copy is pure pressure on the repo's
       # Actions cache quota, and that pressure is what evicts main's copy and
       # sends every PR build cold in the first place.
       - name: Save GWT output
@@ -582,7 +582,7 @@ jobs:
       # already S3/CDN-backed, and GH Actions cache scoping means concurrent
       # PRs can't share a cache entry with each other anyway (only with their
       # base branch), so caching here would just duplicate the same bytes
-      # into the shared 10 GB cache quota without saving meaningful time.
+      # into the shared cache quota without saving meaningful time.
       - name: Download RStudio Server .deb
         if: inputs.build_from_source == false || inputs.rstudio_installer_url != ''
         env:

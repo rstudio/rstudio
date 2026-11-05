@@ -187,4 +187,7 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
     String commitFile(String path);
     String changedFiles();
     String filesToCommit();
+    String goToFirstChangeColumn();
+    String goToFirstChange(String path);
+    String goToFirstChangeTitle();
 }

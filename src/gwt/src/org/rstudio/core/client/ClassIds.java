@@ -73,6 +73,9 @@ public class ClassIds
    // The pane holding the base version in a side-by-side Git diff
    public final static String EDITOR_DIFF_VIEW = "editor_diff_view";
 
+   // The editor toolbar's toggle for the side-by-side Git diff
+   public final static String EDITOR_DIFF_VIEW_TOGGLE = "editor_diff_view_toggle";
+
    // WindowFrameButton (combined with unique suffix for each panel)
    public final static String PANEL_MIN_BTN = "panel_min_btn";
    public final static String PANEL_MAX_BTN = "panel_max_btn";

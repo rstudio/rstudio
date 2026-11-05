@@ -48,6 +48,8 @@ import org.rstudio.core.client.widget.ToolbarPopupMenuButton;
 import org.rstudio.core.client.widget.UserPrefMenuItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.ThemeChangedEvent;
+import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.ImageMenuItem;
 import org.rstudio.studio.client.common.dependencies.model.Dependency;
@@ -72,6 +74,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
 import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
+import org.rstudio.studio.client.workbench.views.source.SourceAppCommand;
 import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
@@ -350,6 +353,10 @@ public class TextEditingTargetWidget
    public void setEditorSplit(String type)
    {
       manageEditorSplit(type);
+
+      // the requested state, as getEditorSplit reports it while a split
+      // waits on layout
+      diffSplitButton_.setLatched(StringUtil.equals(getEditorSplit(), TextEditingTarget.EDITOR_SPLIT_DIFF));
    }
 
    @Override
@@ -485,7 +492,17 @@ public class TextEditingTargetWidget
          width = splitPanel_.getOffsetWidth();
          height = splitPanel_.getOffsetHeight();
 
-         splitPanel_.remove(editorWidget);
+         if (liveDiffPanel_ != null)
+         {
+            splitPanel_.remove(liveDiffPanel_);
+            liveDiffPanel_.remove(editorWidget);
+            liveDiffPanel_ = null;
+            liveDiffHeader_ = null;
+         }
+         else
+         {
+            splitPanel_.remove(editorWidget);
+         }
          if (splitEditor_ != null)
             splitPanel_.remove(splitEditor_.asWidget());
          if (diffSplitWidget_ != null)
@@ -519,10 +536,18 @@ public class TextEditingTargetWidget
 
          editorPanel_.remove(editorWidget);
 
-         // the base version reads on the left, the live document on the right
+         // the base version reads on the left, the live document on the
+         // right, each below a header naming its side of the comparison (the
+         // base pane carries its own)
+         liveDiffPanel_ = new DockLayoutPanel(Unit.PX);
+         liveDiffHeader_ = GitDiffSplitWidget.createLiveHeader();
+         liveDiffHeaderHeight_ = diffSplitWidget_.getHeaderHeight();
+         liveDiffPanel_.addNorth(liveDiffHeader_, liveDiffHeaderHeight_);
+         liveDiffPanel_.add(editorWidget);
+
          splitPanel_ = new NotifyingSplitLayoutPanel(SPLITTER_SIZE, events_);
          splitPanel_.addWest(diffSplitWidget_, width / 2.0);
-         splitPanel_.add(editorWidget);
+         splitPanel_.add(liveDiffPanel_);
 
          editorPanel_.add(splitPanel_);
       }
@@ -549,6 +574,23 @@ public class TextEditingTargetWidget
          splitEditor_.onResize();
       if (diffSplitWidget_ != null)
          diffSplitWidget_.onResize();
+      syncDiffHeaderHeight();
+   }
+
+   // Gives the live side's header the height the base pane measures for its
+   // own (the editor's font sets it; see GitDiffSplitWidget.getHeaderHeight).
+   private void syncDiffHeaderHeight()
+   {
+      if (liveDiffPanel_ == null || diffSplitWidget_ == null)
+         return;
+
+      int height = diffSplitWidget_.getHeaderHeight();
+      if (height == liveDiffHeaderHeight_)
+         return;
+
+      liveDiffHeaderHeight_ = height;
+      liveDiffPanel_.setWidgetSize(liveDiffHeader_, height);
+      liveDiffPanel_.forceLayout();
    }
 
    // The side-by-side diff pane; the editor inside it belongs to the editing
@@ -1162,7 +1204,38 @@ public class TextEditingTargetWidget
             splitEditorMenu,
             false);
 
+      // The side-by-side Git diff, which the gutter markers drive: shown, as
+      // its command is, for a document in a Git project with the markers on.
+      // A latching button rather than the command's own, to show the state,
+      // with an icon of its own: a checkable command's image is its menu
+      // check mark.
+      diffSplitCommand_ = mgr.getSourceCommand(commands_.vcsShowChangesSideBySide(), column_);
+      diffSplitButton_ = new LatchingToolbarButton(
+            ToolbarButton.NoText,
+            commands_.vcsShowChangesSideBySide().getLabel(),
+            false, /* textIndicatesState */
+            ClassIds.EDITOR_DIFF_VIEW_TOGGLE,
+            diffSplitIcon(),
+            event -> target_.toggleDiffSplit());
+
+      // ApplicationThemes applies the new theme's classes in a handler of its
+      // own, registered first, so the theme is current by the time this runs
+      releaseOnDismiss_.add(events_.addHandler(ThemeChangedEvent.TYPE, event ->
+            diffSplitButton_.setLeftImage(diffSplitIcon())));
+      diffSplitButton_.setLatched(StringUtil.equals(getEditorSplit(), TextEditingTarget.EDITOR_SPLIT_DIFF));
+      releaseOnDismiss_.add(diffSplitCommand_.addVisibleChangedHandler(event ->
+      {
+         if (StringUtil.equals(column_.getName(), event.getColumnName()))
+            syncDiffSplitButton();
+      }));
+      releaseOnDismiss_.add(diffSplitCommand_.addEnabledChangedHandler(event ->
+      {
+         if (StringUtil.equals(column_.getName(), event.getColumnName()))
+            syncDiffSplitButton();
+      }));
+
       toolbar.addRightSeparator();
+      toolbar.addRightWidget(diffSplitButton_);
       toolbar.addRightWidget(splitEditorButton_);
 
       toolbar.addRightSeparator();
@@ -1515,6 +1588,7 @@ public class TextEditingTargetWidget
       // adaptToFileType runs before the widget is initialized -- the width
       // gate is manageToolbarSizes's, reapplied on every layout pass
       splitEditorButton_.setVisible(!visualRmdMode);
+      syncDiffSplitButton();
 
       // update modes for filetype
       syncWrapMode();
@@ -1599,6 +1673,7 @@ public class TextEditingTargetWidget
       if (desiredSplitState_ != null)
          manageEditorSplit(desiredSplitState_);
 
+      syncDiffHeaderHeight();
       ResizeEvent.fire(this, getOffsetWidth(), getOffsetHeight());
 
    }
@@ -1649,6 +1724,28 @@ public class TextEditingTargetWidget
       // editor splits are a source-mode feature; in visual mode the button
       // would open a menu of uniformly disabled commands
       splitEditorButton_.setVisible(width >= 590 && !isVisualMode());
+      toolbarFitsSplitButtons_ = width >= 590;
+      syncDiffSplitButton();
+   }
+
+   // The toggle's icon has a variant for dark themes, whose toolbars only dim
+   // their images; it is swapped in as the theme changes.
+   private static ImageResource diffSplitIcon()
+   {
+      return new ImageResource2x(RStudioThemes.isDarkTheme()
+            ? StandardIcons.INSTANCE.diffSideBySideDark2x()
+            : StandardIcons.INSTANCE.diffSideBySide2x());
+   }
+
+   // Shown where its command is available for this column's document, and,
+   // like the split editor button, in source mode on a toolbar wide enough.
+   private void syncDiffSplitButton()
+   {
+      diffSplitButton_.setVisible(
+            diffSplitCommand_.isButtonVisible() &&
+            toolbarFitsSplitButtons_ &&
+            !isVisualMode());
+      diffSplitButton_.setEnabled(diffSplitCommand_.isButtonEnabled());
       toolbar_.invalidateSeparators();
    }
    
@@ -1847,6 +1944,15 @@ public class TextEditingTargetWidget
    public void setFontSize(double size)
    {
       editor_.setFontSize(size);
+
+      // (the diff headers take the new size from the stylesheet, once it is
+      // updated)
+      Scheduler.get().scheduleDeferred(() ->
+      {
+         if (diffSplitWidget_ != null)
+            diffSplitWidget_.onResize();
+         syncDiffHeaderHeight();
+      });
    }
 
    public StatusBar getStatusBar()
@@ -2658,6 +2764,10 @@ public class TextEditingTargetWidget
    private TextEditorContainer editorContainer_;
    private DockLayoutPanel editorPanel_;
    private NotifyingSplitLayoutPanel splitPanel_;
+   // the live editor below its header, while the side-by-side diff is up
+   private DockLayoutPanel liveDiffPanel_;
+   private Widget liveDiffHeader_;
+   private int liveDiffHeaderHeight_ = 0;
    private AceEditor splitEditor_;
    private GitDiffSplitWidget diffSplitWidget_;
    private final ArrayList<HandlerRegistration> splitEditorRegistrations_ = new ArrayList<>();
@@ -2700,6 +2810,10 @@ public class TextEditingTargetWidget
    private LatchingToolbarButton toggleDocOutlineButton_;
    private LatchingToolbarButton toggleVisualModeOutlineButton_;
    private ToolbarMenuButton splitEditorButton_;
+   private SourceAppCommand diffSplitCommand_;
+   private LatchingToolbarButton diffSplitButton_;
+   // the width gate shared by the split editor and diff toggle buttons
+   private boolean toolbarFitsSplitButtons_ = true;
    private CheckBox showWhitespaceCharactersCheckbox_;
    private ToolbarPopupMenuButton rmdFormatButton_;
    private ToolbarPopupMenuButton runDocumentMenuButton_;
