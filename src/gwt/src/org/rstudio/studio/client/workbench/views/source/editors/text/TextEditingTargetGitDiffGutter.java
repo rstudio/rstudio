@@ -31,6 +31,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.GitDiffGutterNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.GitDiffSplitNative;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
@@ -58,17 +59,21 @@ import com.google.inject.Provider;
 public class TextEditingTargetGitDiffGutter
 {
    // closeDiffSplit closes the document's side-by-side view, for when the
-   // gutter driving it goes away; see detach().
+   // gutter driving it goes away; see detach(). statusChanged is run when
+   // what getChangeCount() and getChangeIndexAtCursor() report may have
+   // moved.
    public TextEditingTargetGitDiffGutter(DocDisplay docDisplay,
                                          DocUpdateSentinel sentinel,
                                          ArrayList<HandlerRegistration> releaseOnDismiss,
-                                         Command closeDiffSplit)
+                                         Command closeDiffSplit,
+                                         Command statusChanged)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
 
       docDisplay_ = docDisplay;
       sentinel_ = sentinel;
       closeDiffSplit_ = closeDiffSplit;
+      statusChanged_ = statusChanged;
 
       if (isGitSession())
       {
@@ -187,6 +192,42 @@ public class TextEditingTargetGitDiffGutter
          gutter.showChangeAtCursor();
    }
 
+   // Goes to the document's first change as the markers show it, once they
+   // are current -- for a gutter still attaching (a document just opened),
+   // once it has attached, provided the cursor has stayed put meanwhile, as
+   // the gutter itself asks while the base is fetched. Without markers the
+   // cursor stays.
+   public void goToFirstChange()
+   {
+      if (!isEnabled())
+         return;
+
+      if (gutter_ == null)
+         firstChangeCursor_ = docDisplay_.getCursorPosition();
+      else
+         gutter_.goToFirstChangeWhenFresh();
+   }
+
+   // The number of changes, as seen from the given view; -1 when there is no
+   // base to count them against (no gutter, an untracked file, or a base not
+   // fetched yet), or the diff against it gave up.
+   public int getChangeCount(DocDisplay display)
+   {
+      GitDiffGutterNative gutter = gutterFor(display);
+      if (gutter == null || !gutter.canCountChanges())
+         return -1;
+
+      return gutter.getChangeCount();
+   }
+
+   // The position of the change at the given view's cursor among the
+   // document's changes, or -1 when the cursor is not on one.
+   public int getChangeIndexAtCursor(DocDisplay display)
+   {
+      GitDiffGutterNative gutter = gutterFor(display);
+      return (gutter == null) ? -1 : gutter.getChangeIndexAtCursor();
+   }
+
    // Called as the document becomes and stops being the active one (see
    // TextEditingTarget); a refresh that came in while hidden is run now that
    // the markers are seen.
@@ -289,13 +330,26 @@ public class TextEditingTargetGitDiffGutter
             attachSplit();
          if (diffSplitWidget_ != null)
             attachDiffSplit();
-         refresh();
+
+         // a pending go-to-first-change makes the first fetch, and waits
+         // on it (see refreshBase)
+         Position firstChangeCursor = firstChangeCursor_;
+         firstChangeCursor_ = null;
+         if (firstChangeCursor != null &&
+             firstChangeCursor.isEqualTo(docDisplay_.getCursorPosition()))
+         {
+            gutter_.goToFirstChangeWhenFresh();
+         }
+         else
+         {
+            refresh();
+         }
       });
    }
 
    private void attachDiffSplit()
    {
-      diffSplit_ = GitDiffSplitNative.create(gutter_, diffSplitWidget_.getElement());
+      diffSplit_ = GitDiffSplitNative.create(gutter_, diffSplitWidget_.getEditorContainer());
 
       // the same re-fetch on focus as the editor views: an index moved from
       // outside (staging in the Terminal) is picked up on a click into the
@@ -342,6 +396,7 @@ public class TextEditingTargetGitDiffGutter
       GitDiffGutterNative gutter = GitDiffGutterNative.create(editor.getWidget().getEditor());
       gutter.setIgnoreWhitespace(prefs_.gitDiffIgnoreWhitespace().getValue());
       gutter.setBaseRefresher(this::refreshBase);
+      gutter.setStatusListener(statusChanged_);
       return gutter;
    }
 
@@ -376,6 +431,7 @@ public class TextEditingTargetGitDiffGutter
    {
       refreshTimer_.cancel();
       refreshDeferred_ = false;
+      firstChangeCursor_ = null;
       invalidation_.invalidate();
       basePath_ = null;
       baseContents_ = null;
@@ -407,6 +463,9 @@ public class TextEditingTargetGitDiffGutter
 
       // a disposed gutter has nothing left to revert, so these are harmless
       runBaseCallbacks();
+
+      if (!dismissed_)
+         statusChanged_.execute();
    }
 
    // Refresh triggers arrive in bursts (a commit fires several, a focus
@@ -437,14 +496,18 @@ public class TextEditingTargetGitDiffGutter
          // The old base must not outlive the path (Save As) or the encoding
          // (Reopen with Encoding) it was fetched for: a revert in the gap
          // before the new one arrives would restore the wrong contents.
+         boolean hadPath = basePath_ != null;
          basePath_ = path;
          baseEncoding_ = encoding;
          setBase(null, null, false);
 
          // Nor must a revert still waiting on the old base: it would run
          // against the new path's base, whose chunks can share the old
-         // ones' coordinates. Settled now, it finds nothing to revert.
-         runBaseCallbacks();
+         // ones' coordinates. Settled now, it finds nothing to revert. (On
+         // the first fetch there is no old base, and what waits is for this
+         // one.)
+         if (hadPath)
+            runBaseCallbacks();
       }
 
       // A hidden document waits to be shown -- unless a revert is waiting
@@ -510,6 +573,7 @@ public class TextEditingTargetGitDiffGutter
    private final DocDisplay docDisplay_;
    private final DocUpdateSentinel sentinel_;
    private final Command closeDiffSplit_;
+   private final Command statusChanged_;
 
    private GitDiffGutterNative gutter_;
    private GitDiffGutterNative splitGutter_;
@@ -526,6 +590,7 @@ public class TextEditingTargetGitDiffGutter
    private boolean dismissed_;
    private boolean active_;
    private boolean refreshDeferred_;
+   private Position firstChangeCursor_;
 
    private final ArrayList<JavaScriptObject> baseCallbacks_ = new ArrayList<>();
    private final Invalidation invalidation_ = new Invalidation();

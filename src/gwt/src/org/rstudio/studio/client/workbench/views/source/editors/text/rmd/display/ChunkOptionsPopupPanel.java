@@ -398,7 +398,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    private TextBox makeInputBox(final String option, final boolean enquote)
    {
       final TextBox box = new TextBox();
-      DomUtils.setPlaceholder(box, "Default");
+      DomUtils.setPlaceholder(box, constants_.defaultPlaceholder());
       box.setWidth("40px");
       
       DomUtils.addKeyHandlers(box, new NativeEventHandler()

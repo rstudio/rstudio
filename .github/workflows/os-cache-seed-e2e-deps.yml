@@ -22,7 +22,7 @@ on:
       - ".github/actions/os-e2e-deps/**"
       - ".github/workflows/os-cache-seed-e2e-deps.yml"
   # Also dispatched by os-cache-seed-sentinel.yml when these caches have been
-  # evicted from main's scope (10 GB repo quota, LRU eviction).
+  # evicted from main's scope (repo quota, LRU eviction).
   workflow_dispatch:
 
 # Don't stack seed runs; the latest one wins.
