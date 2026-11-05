@@ -20,14 +20,15 @@ function listFilesPath(request: Request): string {
   }
 }
 
-// Holds every list_files RPC until release() is called, so a dialog can be
+// Holds list_files RPCs until release() is called, so a dialog can be
 // driven before its directory listing arrives. cleanup() releases anything
 // still held and removes the route; call it from a finally block.
+// An optional path filter lets other navigations finish while one is held.
 //
 // The hold covers the whole page, so held() also counts other panes'
 // listings; heldPaths() says which directories the held requests list.
 // Requests made after release() pass through and are not counted.
-export async function holdListFiles(page: Page) {
+export async function holdListFiles(page: Page, pathFilter?: (path: string) => boolean) {
   let holding = true;
   let unblock = () => {};
   const released = new Promise<void>((resolve) => (unblock = resolve));
@@ -39,10 +40,11 @@ export async function holdListFiles(page: Page) {
   const paths: string[] = [];
   const continued: Promise<void>[] = [];
   const handler = async (route: Route) => {
-    if (!holding)
+    const path = listFilesPath(route.request());
+    if (!holding || (pathFilter && !pathFilter(path)))
       return route.fallback();
 
-    paths.push(listFilesPath(route.request()));
+    paths.push(path);
     const request = released.then(() => route.continue());
     continued.push(request);
     await request;

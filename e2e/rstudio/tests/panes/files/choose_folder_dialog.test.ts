@@ -11,7 +11,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { dismissBlockingModals } from '@pages/modals.page';
 import { executeCommand } from '@utils/commands';
 import { TIMEOUTS } from '@utils/constants';
-import { holdListFiles } from '@utils/file-dialogs';
+import { LIST_FILES_RPC, holdListFiles } from '@utils/file-dialogs';
 import { rPathLiteral } from '@utils/r';
 import { useSuiteSandbox } from '@utils/sandbox';
 import type { Locator, Page } from 'playwright';
@@ -198,6 +198,52 @@ test.describe('Choose Directory dialog', () => {
     } finally {
       await listing.cleanup();
       await pathInput?.dispose();
+    }
+  });
+
+  test('reopening the chooser ignores a canceled navigation response', async ({ rstudioPage: page }) => {
+    const chooser = await openChooserAt(page, base);
+    const missing = `missing-${Date.now()}`;
+    const listing = await holdListFiles(page, (path) => path.endsWith(`/${missing}`));
+
+    try {
+      await chooser.getByRole('button', { name: 'Go to directory' }).click();
+      const prompt = page.getByRole('dialog', { name: 'Go To Folder' });
+      await prompt.locator(TEXT_ENTRY).fill(`${base}/${missing}`);
+      await prompt.getByRole('button', { name: 'OK' }).click();
+      await expect.poll(() => listing.held(), { timeout: TIMEOUTS.fileOpen }).toBe(1);
+      await chooser.getByRole('button', { name: 'Cancel' }).click();
+      await expect(chooser).toBeHidden();
+
+      // The same Browse control reuses its context for the new chooser.
+      await page.locator(SEARCH_IN_BROWSE).click();
+      await expect(chooser.locator(CURRENT_LOCATION)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      await chooser.getByRole('button', { name: 'Go to directory' }).click();
+      await prompt.locator(TEXT_ENTRY).fill(`${base}/${SUBFOLDER}`);
+      await prompt.getByRole('button', { name: 'OK' }).click();
+      await expect(chooser.locator(CURRENT_LOCATION)).toHaveText(SUBFOLDER, { timeout: TIMEOUTS.fileOpen });
+
+      const failedListing = page.waitForResponse((response) =>
+        LIST_FILES_RPC.test(response.url()) &&
+        String(response.request().postDataJSON()?.params?.[0]).endsWith(`/${missing}`),
+      );
+      listing.release();
+      await (await failedListing).finished();
+
+      // Observe beyond receipt of the old response: an immediate negative
+      // assertion could pass before its callback and fallback request run.
+      const deadline = Date.now() + 2000;
+      do {
+        await expect(page.getByRole('alertdialog', { name: 'Error', exact: true })).toHaveCount(0);
+        await expect(chooser.locator(CURRENT_LOCATION)).toHaveText(SUBFOLDER);
+        await page.waitForTimeout(50);
+      } while (Date.now() < deadline);
+
+      await chooser.locator(CHOOSE_BTN).click();
+      await expect(chooser).toBeHidden();
+      await expect(page.locator(SEARCH_IN_TEXT)).toHaveValue(new RegExp(`/${BASE_NAME}/${SUBFOLDER}$`));
+    } finally {
+      await listing.cleanup();
     }
   });
 

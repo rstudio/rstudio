@@ -84,12 +84,13 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
     */
    public void cd(String relativeOrAbsolutePath, final String fallbackPath)
    {
-      cd(relativeOrAbsolutePath, fallbackPath, null);
+      cd(relativeOrAbsolutePath, fallbackPath, null, callbacks_);
    }
 
    private void cd(String relativeOrAbsolutePath,
                    final String fallbackPath,
-                   final String navigationError)
+                   final String navigationError,
+                   final Callbacks callbacks)
    {
       final String newPath = combine(workingDir_, relativeOrAbsolutePath);
 
@@ -107,19 +108,28 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
                @Override
                public void onError(ServerError error)
                {
+                  // A context can be reused by a new dialog while an old
+                  // navigation is pending. Ignore the old dialog's result.
+                  if (callbacks_ != callbacks)
+                     return;
+
                   if (fallbackPath != null)
                   {
                      // Preserve the original error so a fallback listing
                      // cannot be mistaken for the requested destination.
-                     cd(fallbackPath, null, error.getUserMessage());
+                     cd(fallbackPath, null, error.getUserMessage(), callbacks);
                   }
-                  else if (callbacks_ != null)
-                     callbacks_.onError(error.getUserMessage());
+                  else if (callbacks != null)
+                     callbacks.onError(error.getUserMessage());
                }
 
                @Override
                public void onResponseReceived(final DirectoryListing response)
-               { 
+               {
+                  // Discard stale listings before changing shared state, too.
+                  if (callbacks_ != callbacks)
+                     return;
+
                   final JsArray<FileSystemItem> files = response.getFiles();
                   for (int i = 0; i < files.length(); i++)
                      fsi.add(files.get(i));
@@ -127,12 +137,12 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
                   workingDir_ = newPath;
                   contents_ = fsi.toArray(new FileSystemItem[0]);
                   
-                  if (callbacks_ != null)
+                  if (callbacks != null)
                   {
                      if (navigationError != null)
-                        callbacks_.onNavigatedToFallback(navigationError);
+                        callbacks.onNavigatedToFallback(navigationError);
                      else
-                        callbacks_.onNavigated();
+                        callbacks.onNavigated();
                   }
                }
             });
