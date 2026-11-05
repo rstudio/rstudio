@@ -136,6 +136,27 @@ function padFreeRow(session, row) {
    return !widgets || !widgets[row] || isPadding(widgets[row]);
 }
 
+// Has a line widget hold padding of its own: rows above its line, as Ace
+// draws a widget's rowsAbove, and rows below its content, all counted in
+// its rowCount as with Ace's own padding. The rows are given back as the
+// padding is taken out (see $removeLineWidgets).
+function lendRows(widget, above, below) {
+   widget.gitDiffLentAbove = (widget.gitDiffLentAbove || 0) + above;
+   widget.gitDiffLentRows = (widget.gitDiffLentRows || 0) + above + below;
+   widget.rowsAbove = (widget.rowsAbove || 0) + above;
+   widget.rowCount += above + below;
+   widget.gitDiffOwnRowCount = widget.rowCount - widget.gitDiffLentRows;
+}
+
+function returnRows(widget) {
+   // (a widget measured again since has a rowCount of its own already)
+   if (widget.rowCount === widget.gitDiffOwnRowCount + widget.gitDiffLentRows)
+      widget.rowCount = widget.gitDiffOwnRowCount;
+   widget.rowsAbove -= widget.gitDiffLentAbove;
+   widget.gitDiffLentAbove = 0;
+   widget.gitDiffLentRows = 0;
+}
+
 // Whether two fold lines hold a pair of mirrored folds (see mirrorFold).
 function foldLinesPaired(a, b) {
    return a.folds.some(function(fold) {
@@ -926,14 +947,32 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
             // one per row. The part of the padding meant below the line
             // goes above the next line instead, right below that widget;
             // the part meant above the line goes below the line before,
-            // the same place. Neither moves onto another widget's row, and
-            // above the first line there is nowhere else to go.
+            // the same place. Neither moves onto another widget's row (nor
+            // above the first line, or below the last) -- but for the
+            // gutter's peek, which takes the rows on as its own until the
+            // next alignment, as it does where padding cannot move off its
+            // row: the action bar of a deletion, between chunk output and
+            // the padding for the removed lines, say (see peekRow in
+            // git_diff_gutter.js). Chunk output, whose height RStudio keeps
+            // track of, is left alone.
             var above = w.rowsAbove || 0;
             var below = w.rowCount - above;
-            if (below > 0 && padFreeRow(session, w.row + 1))
+            var isPeek = this.$isPeek(existing);
+            var lentAbove = 0;
+            var lentBelow = 0;
+            if (below > 0 && this.$canPad(session, w.row + 1, existing))
                this.$addWidget(session, { rowCount: below, rowsAbove: below, row: w.row + 1 });
-            if (above > 0 && padFreeRow(session, w.row - 1))
+            else if (below > 0 && isPeek)
+               lentBelow = below;
+            if (above > 0 && this.$canPad(session, w.row - 1, existing))
                this.$addWidget(session, { rowCount: above, rowsAbove: 0, row: w.row - 1 });
+            else if (above > 0 && isPeek)
+               lentAbove = above;
+
+            if (lentAbove > 0 || lentBelow > 0) {
+               lendRows(existing, lentAbove, lentBelow);
+               session.$resetRowCache(w.row);
+            }
             return;
          }
 
@@ -947,16 +986,45 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       w.gitDiffPadding = true;
       w.session = session;
       session.lineWidgets[w.row] = w;
-      session.$resetRowCache(w.row);
 
+      // Padding within a fold is hidden, or on its last row stands at its
+      // first row instead where that is free, as Ace's fold handling has
+      // it (updateOnFold in line_widgets.js) -- but for the padding alone:
+      // run for the whole fold again, Ace's would hide the widget it has
+      // already stood at the fold's first row (a folded change's action
+      // bar, say), which is then on both of the rows it checks.
       var fold = session.getFoldAt(w.row, 0);
-      if (fold)
-         session.widgetManager.updateOnFold({ data: fold, action: "add" }, session);
+      var firstRow = w.row;
+      if (fold && w.row > fold.start.row && w.row === fold.end.row && !session.lineWidgets[fold.start.row]) {
+         session.lineWidgets[fold.start.row] = w;
+         firstRow = fold.start.row;
+      } else if (fold && (w.row > fold.start.row || w.row === fold.end.row)) {
+         w.hidden = true;
+      }
+      session.$resetRowCache(firstRow);
+   };
+
+   this.$isPeek = function(widget) {
+      return widget != null && this.gutter.peek != null && widget === this.gutter.peek.widget;
+   };
+
+   // Whether padding moved off a widget's row can go on another: one that
+   // takes padding (see padFreeRow), or holds the gutter's peek -- unless
+   // the padding is moving off the peek. Ace has a widget at the end of a
+   // fold stand at the fold's start too, and the padding would go back and
+   // forth between the two.
+   this.$canPad = function(session, row, from) {
+      if (padFreeRow(session, row))
+         return true;
+
+      return !this.$isPeek(from) &&
+         session.lineWidgets != null && this.$isPeek(session.lineWidgets[row]);
    };
 
    // Takes the padding out of a session's line widgets. A widget added on
    // top of a padding chains to it ($oldWidget), and a fold ending on its
    // row aliases it at the fold's start; it is unlinked wherever found.
+   // Padding lent to a widget (see $addWidget) is given back.
    this.$removeLineWidgets = function(session) {
       var widgets = session.lineWidgets;
       if (!widgets)
@@ -968,6 +1036,11 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
          if (isPadding(w)) {
             widgets[i] = w.$oldWidget;
             w = widgets[i];
+            removed = true;
+         }
+
+         if (w && w.gitDiffLentRows) {
+            returnRows(w);
             removed = true;
          }
 
@@ -1161,6 +1234,14 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
    // base pane holds the cursor.
    this.baseCursorRow = function() {
       return this.baseEditor.getCursorPosition().row;
+   };
+
+   // Runs a pending realignment now rather than on the next render, for a
+   // scroll about to be worked out from the aligned rows (see goToChange in
+   // git_diff_gutter.js).
+   this.realignNow = function() {
+      if (this.realignPending && !this.disposed)
+         this.realign();
    };
 
    this.goToBaseRow = function(row) {

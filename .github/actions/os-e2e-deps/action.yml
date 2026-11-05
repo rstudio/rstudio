@@ -269,7 +269,7 @@ runs:
     # the corresponding install. The saves run only from main-scoped runs (the
     # scheduled workflows): a cache saved from a PR run lands in that PR's
     # merge-ref scope, which no other branch can restore -- each copy is pure
-    # pressure on the repo's 10 GB Actions cache quota, and that pressure is
+    # pressure on the repo's Actions cache quota, and that pressure is
     # what evicts main's copies and sends every run cold in the first place.
     - name: Restore R packages (pak download cache)
       id: pak-cache

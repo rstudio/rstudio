@@ -148,7 +148,7 @@ jobs:
       # Downloaded fresh every run rather than cached: dailies.rstudio.com is
       # already S3/CDN-backed, and GH Actions cache scoping means concurrent
       # runs can't share a cache entry with each other anyway, so caching here
-      # would just duplicate the same bytes into the shared 10 GB cache quota
+      # would just duplicate the same bytes into the shared cache quota
       # without saving meaningful time.
       - name: Download RStudio .exe
         env:

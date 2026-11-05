@@ -2594,9 +2594,11 @@ public class RemoteServer implements Server
                              String path,
                              ServerRequestCallback<FormatContext> requestCallback)
    {
+      // An untitled document has a null path, which the backend's string
+      // parameter would reject as a type mismatch; send it as empty. See #19406.
       JSONArray params = new JSONArrayBuilder()
          .add(id)
-         .add(path)
+         .add(StringUtil.notNull(path))
          .get();
 
       sendRequest(RPC_SCOPE, FORMAT_CONTEXT, params, requestCallback);
@@ -2617,9 +2619,10 @@ public class RemoteServer implements Server
                           String code,
                           ServerRequestCallback<String> requestCallback)
    {
+      // As in formatContext(), the path is null for an untitled document.
       JSONArray params = new JSONArrayBuilder()
             .add(id)
-            .add(path)
+            .add(StringUtil.notNull(path))
             .add(code)
             .get();
 

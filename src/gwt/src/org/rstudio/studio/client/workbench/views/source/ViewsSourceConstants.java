@@ -224,6 +224,7 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
     String showOutputOnly();
     String useDocumentDefaultParentheses();
     String defaultChunkOptions();
+    String defaultPlaceholder();
     String checkSpelling();
     String anErrorHasOccurredMessage(String eMessage);
     String spellCheckIsComplete();

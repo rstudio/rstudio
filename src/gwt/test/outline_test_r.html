@@ -1,0 +1,629 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <!--
+    Regression tests for how R section headers build the scope tree behind
+    the document outline (https://github.com/rstudio/rstudio/issues/17182).
+
+    Anonymous braces -- the body of an 'if', a 'for', a bare block -- are
+    transparent to section headers: a header inside them nests exactly as it
+    would outside. Function and test_that() bodies, which have outline
+    entries of their own, contain their sections instead. A header cuts the
+    anonymous braces enclosing it short in the tree, and their closing
+    braces are matched to them rather than to an enclosing function.
+  -->
+  <script type="text/javascript" src="../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace-uncompressed.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/yaml_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/colors.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/utils.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/auto_brace_insert.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/tex_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/token_cursor.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/token_utils.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_matching_brace_outdent.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_code_model.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_scope_tree.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/rainbow_paren_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemixins/token_iterator.js"></script>
+</head>
+<body>
+
+<h2>R document outline tests</h2>
+<p>Passed: <span id="passed"></span>, Failed: <span id="failed"></span></p>
+<ol id="results"></ol>
+
+<script type="text/javascript">
+
+var passed = 0, failed = 0;
+var results = document.getElementById("results");
+
+function check(name, actual, expected) {
+  var ok = actual === expected;
+  var li = document.createElement("li");
+  li.textContent = (ok ? "[PASS] " : "[FAIL] ") + name +
+    (ok ? "" : " -- expected " + JSON.stringify(expected) +
+               ", got " + JSON.stringify(actual));
+  li.style.color = ok ? "green" : "red";
+  results.appendChild(li);
+  if (ok)
+    passed++;
+  else
+    failed++;
+}
+
+// The scope tree is built from the session's token iterator, which the
+// mixin extends with tokenizeUpToRow().
+require("mixins/token_iterator");
+var RMode = require("mode/r").Mode;
+var EditSession = require("ace/edit_session").EditSession;
+
+function makeSession(code) {
+  var session = new EditSession(code);
+  session.setMode(new RMode(false, session));
+  return session;
+}
+
+// What DocumentOutlineWidget.shouldDisplayNode() shows for an R file: the
+// anonymous functions it hides are labelled '<function>'.
+function isDisplayed(node) {
+  if (node.isFunction())
+    return node.label.indexOf("<function>") !== 0;
+  return node.isSection() || node.isTest();
+}
+
+// The outline as DocumentOutlineWidget lays it out: one entry per section,
+// function or test, indented under the displayed nodes that contain it.
+// Anonymous braces have no entry and add no indentation.
+function outlineOf(nodes, indent, out) {
+  for (var i = 0; i < nodes.length; i++) {
+    var childIndent = indent;
+    if (isDisplayed(nodes[i])) {
+      out.push(indent + nodes[i].label);
+      childIndent = indent + "  ";
+    }
+    outlineOf(nodes[i].$children, childIndent, out);
+  }
+  return out;
+}
+
+function outline(session) {
+  var tree = session.getMode().codeModel.getScopeTree();
+  return outlineOf(tree, "", []).join("\n");
+}
+
+// Every node, with the rows it spans; 'open' when nothing has closed it.
+function treeOf(nodes, indent, out) {
+  for (var i = 0; i < nodes.length; i++) {
+    var node = nodes[i];
+    var kind = node.isFunction() ? "function" : node.isBrace() ? "brace" : "section";
+    out.push(indent + kind + " " + (node.label || "{}") +
+             " [" + node.preamble.row + ".." + (node.end ? node.end.row : "open") + "]");
+    treeOf(node.$children, indent + "  ", out);
+  }
+  return out;
+}
+
+function tree(session) {
+  var nodes = session.getMode().codeModel.getScopeTree();
+  return treeOf(nodes, "", []).join("\n");
+}
+
+// The label of the parent of the first node with the given label.
+function parentOf(session, label) {
+  var nodes = session.getMode().codeModel.getScopeTree();
+  var found = null;
+  (function visit(list) {
+    for (var i = 0; i < list.length && !found; i++) {
+      if (list[i].label === label)
+        found = list[i];
+      else
+        visit(list[i].$children);
+    }
+  })(nodes);
+  return found && found.parentScope ? found.parentScope.label : null;
+}
+
+// The innermost labelled scope at the start of each listed row (1-based).
+function scopeAtRows(session, rows) {
+  var model = session.getMode().codeModel;
+  return rows.map(function(row) {
+    var scope = model.getCurrentScope({row: row - 1, column: 0});
+    return row + ":" + (scope ? scope.label : "null");
+  }).join(" ");
+}
+
+// ---------------------------------------------------------------------------
+// The issue: two headers at the same level inside a bare block.
+// ---------------------------------------------------------------------------
+
+var braced = makeSession([
+  "{",
+  "  # section 1 ----",
+  "",
+  "  # section 2 ----",
+  "",
+  "}",
+  ""
+].join("\n"));
+
+check("headers inside a bare block are siblings",
+      outline(braced),
+      ["section 1", "section 2"].join("\n"));
+
+// Each header cuts the block short; the block's closing brace then matches
+// the cut block rather than ending anything else.
+check("a header cuts the block short",
+      tree(braced),
+      ["brace {} [0..1]",
+       "section section 1 [1..3]",
+       "section section 2 [3..open]"].join("\n"));
+
+// ---------------------------------------------------------------------------
+// A function body contains its sections, as it has an outline entry.
+// ---------------------------------------------------------------------------
+
+var fn = makeSession([
+  "# a ----",
+  "f <- function() {",
+  "  # f1 ----",
+  "  # f2 ----",
+  "}",
+  "# b ----",
+  ""
+].join("\n"));
+
+check("a function body contains its sections",
+      outline(fn),
+      ["a", "  f()", "    f1", "    f2", "b"].join("\n"));
+
+// ---------------------------------------------------------------------------
+// The second report: headers in 'if' bodies, with and without an open
+// section of the same level outside the braces.
+// ---------------------------------------------------------------------------
+
+var chapters = makeSession([
+  "# 1 Chapter ####",       // 1
+  "",
+  "## 1.1 Section ####",    // 3
+  "",
+  "# 2 Chapter ####",       // 5
+  "",
+  "if (something) {",       // 7
+  "",
+  "  ## 2.1 Section ####",  // 9
+  "  ",
+  "}",                      // 11
+  "",
+  "# 3 Chapter ####",       // 13
+  "",
+  "## 3.1 Section ####",    // 15
+  "",
+  "if (something_else) {",  // 17
+  "  ",
+  "  ## 3.2 Section ####",  // 19
+  "  ",
+  "}",                      // 21
+  "",
+  "# 4 Chapter ####",       // 23
+  ""
+].join("\n"));
+
+var chaptersOutline = [
+  "1 Chapter",
+  "  1.1 Section",
+  "2 Chapter",
+  "  2.1 Section",
+  "3 Chapter",
+  "  3.1 Section",
+  "  3.2 Section",
+  "4 Chapter"
+].join("\n");
+
+check("'if' bodies don't affect how headers nest",
+      outline(chapters),
+      chaptersOutline);
+
+// A header inside the braces ends the section opened before them, so the
+// line after the closing brace is still in that header's section.
+check("the current section ignores the braces too",
+      scopeAtRows(chapters, [10, 12, 20, 22]),
+      "10:2.1 Section 12:2.1 Section 20:3.2 Section 22:3.2 Section");
+
+// An edit just after a header drops and re-adds the header's section, and
+// the reparse sees the cut block's closing brace again; it must match the
+// block cut by the earlier pass.
+chapters.insert({row: 19, column: 0}, "x\n");
+
+check("the outline survives an edit just after a header",
+      outline(chapters),
+      chaptersOutline);
+
+check("the cut block's closing brace is matched again after that edit",
+      scopeAtRows(chapters, [21, 23]),
+      "21:3.2 Section 23:3.2 Section");
+
+// ---------------------------------------------------------------------------
+// Inside a function, a header after an 'if' block used to leave the block's
+// closing brace to end the function itself.
+// ---------------------------------------------------------------------------
+
+var blockInFn = makeSession([
+  "g <- function() {",
+  "  # a ----",
+  "  if (x) {",
+  "    # b ----",
+  "  }",
+  "  # c ----",
+  "  y",
+  "}",
+  "z",
+  ""
+].join("\n"));
+
+check("a block's closing brace doesn't end the enclosing function",
+      tree(blockInFn).split("\n")[0],
+      "function g() [0..7]");
+
+check("sections in a function stay in it around an 'if' block",
+      outline(blockInFn),
+      ["g()", "  a", "  b", "  c"].join("\n"));
+
+// A header on the same row as a block's closing brace starts at the row's
+// first column, inside the rows the block spans; the block is already closed
+// and must not be cut and continued, or the function's closing brace would
+// end the continuation instead of the function.
+var headerAfterBrace = makeSession([
+  "g <- function() {",
+  "  # a ----",
+  "  if (x) {",
+  "    y",
+  "  } # done ----",
+  "  z",
+  "}",
+  "w",
+  ""
+].join("\n"));
+
+var headerAfterBraceTree = [
+  "function g() [0..6]",
+  "  section a [1..4]",
+  "    brace {} [2..4]",
+  "  section done [4..6]"
+].join("\n");
+
+check("a header after a closing brace on the same row doesn't cut it",
+      tree(headerAfterBrace),
+      headerAfterBraceTree);
+
+// Editing the row after that header reparses from the header's row, so the
+// block's closing brace is seen again; it must end the block, not the
+// function.
+headerAfterBrace.insert({row: 5, column: 0}, "x\n");
+
+check("the block's closing brace is matched again after an edit below it",
+      tree(headerAfterBrace),
+      headerAfterBraceTree.replace("[0..6]", "[0..7]").replace("[4..6]", "[4..7]"));
+
+// A decorated header right after the closing brace starts where the block
+// ends; the block is closed, not cut.
+var bannerAfterBrace = makeSession([
+  "g <- function() {",
+  "  if (x) {",
+  "    y",
+  "  }#### done ####",
+  "  z",
+  "}",
+  "h <- function() {",
+  "}",
+  ""
+].join("\n"));
+
+check("a decorated header right after a closing brace doesn't cut it",
+      tree(bannerAfterBrace),
+      ["function g() [0..5]",
+       "  brace {} [1..3]",
+       "  section done [3..5]",
+       "function h() [6..7]"].join("\n"));
+
+var headerAfterTopBrace = makeSession([
+  "{",
+  "  y",
+  "} # done ----",
+  "# after ----",
+  ""
+].join("\n"));
+
+check("a header after a closing brace at top level is a sibling of the next",
+      tree(headerAfterTopBrace),
+      ["brace {} [0..2]",
+       "section done [2..3]",
+       "section after [3..open]"].join("\n"));
+
+// ---------------------------------------------------------------------------
+// Nested blocks are each cut and continued, so both closing braces match.
+// ---------------------------------------------------------------------------
+
+var nested = makeSession([
+  "for (i in x) {",
+  "  if (y) {",
+  "    # h ----",
+  "    z",
+  "  }",
+  "  w",
+  "}",
+  "f <- function() {",
+  "}",
+  ""
+].join("\n"));
+
+check("nested blocks are each cut and their closing braces matched",
+      tree(nested),
+      ["brace {} [0..2]",
+       "  brace {} [1..2]",
+       "section h [2..open]",
+       "  function f() [7..8]"].join("\n"));
+
+// Nested blocks inside a function: the inner cut block's parent is cut
+// too, which must not count as a closed boundary around it.
+var nestedInFn = makeSession([
+  "g <- function() {",
+  "  for (i in x) {",
+  "    if (y) {",
+  "      # h ----",
+  "      z",
+  "    }",
+  "    w",
+  "  }",
+  "  # c ----",
+  "}",
+  "f <- function() {}",
+  ""
+].join("\n"));
+
+check("nested blocks inside a function are both matched",
+      tree(nestedInFn),
+      ["function g() [0..9]",
+       "  brace {} [1..3]",
+       "    brace {} [2..3]",
+       "  section h [3..8]",
+       "  section c [8..9]",
+       "function f() [10..10]"].join("\n"));
+
+// Deleting the closing braces of a cut block and its function, reparsing,
+// adding rows, and then putting the braces back farther down: the cut
+// block must still be waiting for its brace, although the brace it had
+// matched is gone.
+var rebraced = makeSession([
+  "g <- function() {",
+  "  if (x) {",
+  "    # h ----",
+  "    y",
+  "  }",
+  "  z",
+  "}",
+  "w",
+  ""
+].join("\n"));
+
+tree(rebraced);
+rebraced.remove(new (require("ace/range").Range)(4, 0, 7, 0));
+tree(rebraced);
+rebraced.insert({row: 4, column: 0}, "  q\n  r\n  s\n");
+tree(rebraced);
+rebraced.insert({row: 7, column: 0}, "  }\n  z\n}\n");
+
+check("a cut block waits for a closing brace put back farther down",
+      tree(rebraced),
+      ["function g() [0..9]",
+       "  brace {} [1..2]",
+       "  section h [2..9]"].join("\n"));
+
+// A header inside a braced default argument cuts the block enclosing the
+// function too. The function, created at its body's brace, then takes over
+// from the cut block the default-argument scopes seen before the header,
+// and adopts the header's section; its own closing brace must still end
+// it, and the block's must match the block.
+var defaultArg = makeSession([
+  "if (ok) {",
+  "  f <- function(x = {",
+  "    # defaults ----",
+  "    1",
+  "  }) { x }",
+  "  g <- function() {}",
+  "}",
+  "h <- function() {}",
+  ""
+].join("\n"));
+
+var defaultArgTree = [
+  "brace {} [0..1]",
+  "function f(x) [1..4]",
+  "  brace {} [1..2]",
+  "  section defaults [2..4]",
+  "function g() [5..5]",
+  "function h() [7..7]"
+].join("\n");
+
+check("adopted scopes have the function as their parent",
+      parentOf(defaultArg, "defaults") + " " + parentOf(defaultArg, "f(x)"),
+      "f(x) (Top Level)");
+
+check("the function is the scope throughout its signature",
+      scopeAtRows(defaultArg, [2, 3]),
+      "2:f(x) 3:defaults");
+
+var defaultFn = makeSession([
+  "before <- function() {}",
+  "if (ok) {",
+  "  f <- function(a = function() { b }, b = {",
+  "    # defaults ----",
+  "    1",
+  "  }) { a() }",
+  "}",
+  ""
+].join("\n"));
+
+// The header also ended the section the function's signature was in,
+// which was then shortened to end where the function begins. Deleting the
+// header must give the tree a fresh parse would: the section reopens and
+// contains the function.
+var sectionSplit = makeSession([
+  "# outer ----",
+  "f <- function(x = {",
+  "  # defaults ----",
+  "  1",
+  "}) { x }",
+  "g <- function() {}",
+  ""
+].join("\n"));
+
+tree(sectionSplit);
+sectionSplit.remove(new (require("ace/range").Range)(2, 0, 3, 0));
+
+var sectionSplitFresh = makeSession(sectionSplit.getValue());
+
+check("deleting the header reopens the section the function began in",
+      tree(sectionSplit),
+      tree(sectionSplitFresh));
+
+check("(that fresh parse nests the function in the section)",
+      tree(sectionSplitFresh),
+      ["section outer [0..open]",
+       "  function f(x) [1..3]",
+       "    brace {} [1..3]",
+       "  function g() [4..4]"].join("\n"));
+
+// Two nested blocks around such a function are both cut by the header;
+// the inner one keeps its place in the outer, and each still gets its
+// closing brace, so the enclosing function keeps its own.
+var defaultArgNested = makeSession([
+  "g <- function() {",
+  "  if (a) {",
+  "    if (b) {",
+  "      f <- function(x = {",
+  "        # defaults ----",
+  "        1",
+  "      }) { x }",
+  "    }",
+  "  }",
+  "  h <- function() {}",
+  "}",
+  "k <- function() {}",
+  ""
+].join("\n"));
+
+check("nested blocks around a function keep their nesting and their braces",
+      tree(defaultArgNested),
+      ["function g() [0..10]",
+       "  brace {} [1..3]",
+       "    brace {} [2..3]",
+       "  function f(x) [3..6]",
+       "    brace {} [3..4]",
+       "    section defaults [4..6]",
+       "  function h() [9..9]",
+       "function k() [11..11]"].join("\n"));
+
+check("default arguments seen before the header move to the function",
+      tree(defaultFn),
+      ["function before() [0..0]",
+       "brace {} [1..2]",
+       "function f(a, b) [2..5]",
+       "  function a() [2..2]",
+       "  brace {} [2..3]",
+       "  section defaults [3..5]"].join("\n"));
+
+check("a header in a braced default argument leaves the function intact",
+      tree(defaultArg),
+      defaultArgTree);
+
+// An edit in the default argument drops the function and reparses from its
+// preamble, which precedes the cut blocks kept beside it; they have to be
+// reparsed too, not seen a second time.
+defaultArg.insert({row: 3, column: 4}, " ");
+
+check("the function survives an edit that reparses its signature",
+      tree(defaultArg),
+      defaultArgTree);
+
+// The function's preamble lies inside the cut block beside it, so the two
+// overlap; invalidation has to examine both, not just one of them.
+defaultArg.insert({row: 2, column: 4}, " ");
+
+check("the function survives an edit on the header row of its signature",
+      tree(defaultArg),
+      defaultArgTree);
+
+// ---------------------------------------------------------------------------
+// Header nesting by level is unchanged outside braces.
+// ---------------------------------------------------------------------------
+
+var levels = makeSession([
+  "# Top ----",
+  "## Sub ----",
+  "### Subsub ----",
+  "## Sub two ----",
+  "# Top two ----",
+  ""
+].join("\n"));
+
+check("headers nest by level",
+      outline(levels),
+      ["Top", "  Sub", "    Subsub", "  Sub two", "Top two"].join("\n"));
+
+var afterFn = makeSession([
+  "# a ----",
+  "f <- function() {",
+  "  x",
+  "}",
+  "# b ----",
+  ""
+].join("\n"));
+
+check("a header after a function closes the section containing it",
+      outline(afterFn),
+      ["a", "  f()", "b"].join("\n"));
+
+// A decorated header carries no level: it ends every open section and is
+// ended by the next header, inside braces as elsewhere.
+var banner = makeSession([
+  "# outer ----",
+  "if (x) {",
+  "  #### banner ####",
+  "  # inner ----",
+  "}",
+  "# after ----",
+  ""
+].join("\n"));
+
+check("a decorated header inside a block is top-level",
+      outline(banner),
+      ["outer", "banner", "inner", "after"].join("\n"));
+
+// The scope tree of a Stan document is built by ScopeTreeManager.java in
+// batches of rows, and each batch starts one row before where the last one
+// stopped. A scope that begins and ends on that row is already closed when
+// it is seen again, and must not be added twice.
+var ScopeManager = require("mode/r_scope_tree").ScopeManager;
+var stan = new ScopeManager();
+function stanBlock(label, row) {
+  stan.onSectionStart(label, {row: row, column: 0});
+  stan.onSectionEnd({row: row, column: label.length + 4});
+}
+stanBlock("Data", 199);
+stan.setParsePosition({row: 200, column: -1});
+stanBlock("Data", 199);
+stanBlock("Model", 200);
+
+check("a scope on the row a parsing batch resumes from is added once",
+      treeOf(stan.getScopeList(), "", []).join("\n"),
+      ["section Data [199..199]",
+       "section Model [200..200]"].join("\n"));
+
+document.getElementById("passed").textContent = passed;
+document.getElementById("failed").textContent = failed;
+
+</script>
+</body>
+</html>

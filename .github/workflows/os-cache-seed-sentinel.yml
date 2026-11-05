@@ -1,11 +1,11 @@
 name: "Cache Seed: Sentinel (re-seed evicted E2E build caches)"
 
-# The repo's GitHub Actions cache quota is 10 GB; past it, GitHub evicts
-# entries least-recently-used first -- including the build caches the seed
-# workflows maintain on main. PR runs can only restore caches from their own
-# merge ref or from main, so once main's copy is evicted every PR build goes
-# cold (full dependency download + GWT recompile) until the next nightly
-# seed. This sentinel closes that gap: it periodically checks that each
+# Past the repo's GitHub Actions cache quota (40 GB as of November 2026),
+# GitHub evicts entries least-recently-used first -- including the build
+# caches the seed workflows maintain on main. PR runs can only restore caches
+# from their own merge ref or from main, so once main's copy is evicted every
+# PR build goes cold (full dependency download + GWT recompile) until the
+# next nightly seed. This sentinel closes that gap: it periodically checks that each
 # expected cache-key prefix still resolves on refs/heads/main and dispatches
 # the owning seed workflow when one has gone missing.
 #
