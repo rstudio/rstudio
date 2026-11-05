@@ -111,6 +111,15 @@ protected:
       pContext->setConfig(pContext->config());
    }
 
+   void notifyFileChanged(ProjectContext* pContext,
+                          const FilePath& path,
+                          core::system::FileChangeEvent::Type type)
+   {
+      pContext->fileMonitorFilesChanged({
+         core::system::FileChangeEvent(type, FileInfo(path.getAbsolutePath(), false))
+      });
+   }
+
    void augmentBuildIgnores(ProjectContext* pContext)
    {
       pContext->augmentRbuildignore();
@@ -229,13 +238,19 @@ TEST_F(PackageProjectInfoTests, RefreshesSharedMetadataWhenDescriptionChanges)
    ASSERT_EQ("before", context.packageInfo().name());
 
    writeDescription("Package: after\nVersion: 0.2.0\n");
-   context.updatePackageInfo();
+   notifyFileChanged(
+         &context,
+         projectDir_.completeChildPath("DESCRIPTION"),
+         core::system::FileChangeEvent::FileModified);
    EXPECT_TRUE(context.isPackageProject());
    EXPECT_EQ("after", context.packageInfo().name());
    EXPECT_TRUE(context.packageInfo().imports().empty());
 
    ASSERT_FALSE(projectDir_.completeChildPath("DESCRIPTION").remove());
-   context.updatePackageInfo();
+   notifyFileChanged(
+         &context,
+         projectDir_.completeChildPath("DESCRIPTION"),
+         core::system::FileChangeEvent::FileRemoved);
    EXPECT_FALSE(context.isPackageProject());
    EXPECT_TRUE(context.packageInfo().empty());
 }
@@ -303,6 +318,50 @@ TEST_F(PackageProjectInfoTests, RefreshesNamespaceImportsWhenPackagePathChanges)
 
    config.packagePath = "third";
    context.setConfig(config);
+   EXPECT_TRUE(r_util::RSourceIndex::getImportedPackages().empty());
+   EXPECT_TRUE(r_util::RSourceIndex::getImportFromDirectives().empty());
+}
+
+TEST_F(PackageProjectInfoTests, RefreshesDescriptionEventsWithDotPackagePath)
+{
+   writeDescription("Package: before\nVersion: 0.1.0\n");
+   ProjectContext context;
+   openProject(&context, "Package", ".", true);
+   ASSERT_TRUE(context.hasFileMonitor());
+   ASSERT_EQ("before", context.packageInfo().name());
+
+   FilePath description = projectDir_.completeChildPath("DESCRIPTION");
+   writeDescription("Package: after\nVersion: 0.2.0\n");
+   notifyFileChanged(&context, description, core::system::FileChangeEvent::FileModified);
+   EXPECT_EQ("after", context.packageInfo().name());
+
+   ASSERT_FALSE(description.remove());
+   notifyFileChanged(&context, description, core::system::FileChangeEvent::FileRemoved);
+   EXPECT_FALSE(context.isPackageProject());
+   EXPECT_TRUE(context.packageInfo().empty());
+}
+
+TEST_F(PackageProjectInfoTests, RefreshesNamespaceEventsWithDotPackagePath)
+{
+   writeDescription("Package: rootpkg\nVersion: 0.1.0\n");
+   ProjectContext context;
+   openProject(&context, "Package", ".", true);
+   modules::diagnostics::monitorProjectNamespace(context);
+
+   FilePath namespaceFile = projectDir_.completeChildPath("NAMESPACE");
+   ASSERT_FALSE(writeStringToFile(namespaceFile, "import(compiler)\nimportFrom(utils, head)\n"));
+   notifyFileChanged(&context, namespaceFile, core::system::FileChangeEvent::FileAdded);
+   EXPECT_EQ(std::set<std::string>{"compiler"}, r_util::RSourceIndex::getImportedPackages());
+   EXPECT_EQ(1u, r_util::RSourceIndex::getImportFromDirectives().at("utils").count("head"));
+
+   ASSERT_FALSE(writeStringToFile(namespaceFile, "import(splines)\nimportFrom(stats, median)\n"));
+   notifyFileChanged(&context, namespaceFile, core::system::FileChangeEvent::FileModified);
+   EXPECT_EQ(std::set<std::string>{"splines"}, r_util::RSourceIndex::getImportedPackages());
+   EXPECT_EQ(0u, r_util::RSourceIndex::getImportFromDirectives().count("utils"));
+   EXPECT_EQ(1u, r_util::RSourceIndex::getImportFromDirectives().at("stats").count("median"));
+
+   ASSERT_FALSE(namespaceFile.remove());
+   notifyFileChanged(&context, namespaceFile, core::system::FileChangeEvent::FileRemoved);
    EXPECT_TRUE(r_util::RSourceIndex::getImportedPackages().empty());
    EXPECT_TRUE(r_util::RSourceIndex::getImportFromDirectives().empty());
 }

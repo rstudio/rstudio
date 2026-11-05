@@ -1036,16 +1036,19 @@ void onNAMESPACEchanged(const FilePath& packageDir)
    r_packages::AsyncPackageInformationProcess::update();
 }
 
-void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
+void onFilesChanged(
+      const FilePath& packageDir,
+      const std::vector<core::system::FileChangeEvent>& events)
 {
-   std::string namespacePath =
-      projects::projectContext().packageDirectory().completePath("NAMESPACE").getAbsolutePath();
+   // Normalize the full file paths so PackagePath: . matches monitor events.
+   // This is lexical so removed files still match, without resolving symlinks.
+   std::string namespacePath = packageDir.completePath("NAMESPACE").getLexicallyNormalPath();
 
    for (const core::system::FileChangeEvent& event : events)
    {
-      std::string eventPath = event.fileInfo().absolutePath();
+      std::string eventPath = FilePath(event.fileInfo().absolutePath()).getLexicallyNormalPath();
       if (eventPath == namespacePath)
-         onNAMESPACEchanged(projects::projectContext().packageDirectory());
+         onNAMESPACEchanged(packageDir);
    }
 }
 
@@ -1120,6 +1123,13 @@ SEXP rs_lintDirectory(SEXP directorySEXP)
 
 void monitorProjectNamespace(projects::ProjectContext& context)
 {
+   projects::FileMonitorCallbacks cb;
+   cb.onFilesChanged = [&context](const std::vector<core::system::FileChangeEvent>& events)
+   {
+      onFilesChanged(context.packageDirectory(), events);
+   };
+   context.subscribeToFileMonitor("Diagnostics", cb);
+
    context.onConfigChanged.connect(
          [&context, packageDir = context.packageDirectory()]() mutable
          {
@@ -1140,10 +1150,6 @@ core::Error initialize()
 
    events().afterSessionInitHook.connect(afterSessionInitHook);
    monitorProjectNamespace(projects::projectContext());
-
-   session::projects::FileMonitorCallbacks cb;
-   cb.onFilesChanged = onFilesChanged;
-   projects::projectContext().subscribeToFileMonitor("Diagnostics", cb);
 
    RS_REGISTER_CALL_METHOD(rs_lintRFile, 1);
    RS_REGISTER_CALL_METHOD(rs_lintDirectory, 1);

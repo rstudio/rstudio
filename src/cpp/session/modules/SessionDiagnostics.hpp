@@ -30,7 +30,7 @@ namespace projects {
 namespace modules {
 namespace diagnostics {
 
-// Refresh diagnostic imports when the configured package directory changes.
+// Refresh diagnostic imports when the package directory or NAMESPACE changes.
 void monitorProjectNamespace(projects::ProjectContext& context);
 
 core::Error initialize();

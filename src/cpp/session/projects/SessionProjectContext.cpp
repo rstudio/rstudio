@@ -59,15 +59,18 @@ namespace projects {
 
 namespace {
 
-void onProjectFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
+void onProjectFilesChanged(
+      ProjectContext& context,
+      const std::vector<core::system::FileChangeEvent>& events)
 {
-   FilePath descPath = projectContext().packageDirectory().completeChildPath("DESCRIPTION");
+   std::string descPath = context.packageDirectory()
+         .completeChildPath("DESCRIPTION").getLexicallyNormalPath();
    for (auto& event : events)
    {
       auto& info = event.fileInfo();
-      if (info.absolutePath() == descPath.getAbsolutePath())
+      if (FilePath(info.absolutePath()).getLexicallyNormalPath() == descPath)
       {
-         projectContext().updatePackageInfo();
+         context.updatePackageInfo();
          break;
       }
    }
@@ -904,7 +907,7 @@ void ProjectContext::fileMonitorFilesChanged(
    module_context::enqueFileChangedEvents(directory(), events);
 
    // own handler
-   onProjectFilesChanged(events);
+   onProjectFilesChanged(*this, events);
 
    // if an AI tool-state directory (or, for the nested ".posit/assistant", its
    // parent ".posit") was added, augment .Rbuildignore now -- we don't add
