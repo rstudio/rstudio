@@ -228,8 +228,9 @@ public:
    // The package build target, or the project directory for other build types.
    core::FilePath packageDirectory() const;
 
-   // Package sources outside the project are not covered by its source index.
-   // Return an empty path for those packages (or when no project is open).
+   // Package sources outside the project or below directory symlinks are not
+   // covered by its source index. Return an empty path for those packages (or
+   // when no project is open).
    core::FilePath packageDirectoryInProject() const;
 
    // Metadata and package detection share the DESCRIPTION refreshed by the

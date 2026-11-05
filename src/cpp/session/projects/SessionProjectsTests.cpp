@@ -19,6 +19,10 @@
 
 #include <boost/optional.hpp>
 
+#ifndef _WIN32
+#include <unistd.h>
+#endif
+
 #include <shared_core/FilePath.hpp>
 #include <shared_core/json/Json.hpp>
 
@@ -445,6 +449,81 @@ TEST_F(PackageProjectInfoTests, ExternalPackageKeepsMetadataWithoutPackageDiagno
    EXPECT_TRUE(r_util::RSourceIndex::getImportedPackages().empty());
    EXPECT_TRUE(r_util::RSourceIndex::getImportFromDirectives().empty());
 }
+
+#ifndef _WIN32
+
+TEST_F(PackageProjectInfoTests, LinkedPackageKeepsMetadataWithoutPackageDiagnostics)
+{
+   FilePath externalDir;
+   ASSERT_FALSE(FilePath::tempFilePath(externalDir));
+   ASSERT_FALSE(externalDir.ensureDirectory());
+   RemoveOnExitScope removeScope(externalDir, ERROR_LOCATION);
+   FilePath packageDir = externalDir.completeChildPath("pkg");
+   ASSERT_FALSE(packageDir.ensureDirectory());
+   FilePath description = packageDir.completeChildPath("DESCRIPTION");
+   ASSERT_FALSE(writeStringToFile(
+         packageDir.completeChildPath("NAMESPACE"),
+         "import(splines)\nimportFrom(stats, median)\n"));
+
+   ASSERT_EQ(0, ::symlink(
+         packageDir.getAbsolutePath().c_str(),
+         projectDir_.completeChildPath("pkg-link").getAbsolutePath().c_str()));
+   ASSERT_EQ(0, ::symlink(
+         externalDir.getAbsolutePath().c_str(),
+         projectDir_.completeChildPath("parent-link").getAbsolutePath().c_str()));
+
+   writeDescription("Package: rootpkg\nVersion: 0.1.0\n");
+   ProjectContext context;
+   openProject(&context, "None", "", true);
+   modules::diagnostics::monitorProjectNamespace(context);
+
+   for (const std::string& packagePath : {"pkg-link", "parent-link/pkg"})
+   {
+      SCOPED_TRACE(packagePath);
+      ASSERT_FALSE(writeStringToFile(description, "Package: linkedpkg\nVersion: 0.1.0\n"));
+      r_util::RProjectConfig config = context.config();
+      config.buildType = r_util::kBuildTypePackage;
+      config.packagePath = packagePath;
+      context.setConfig(config);
+      EXPECT_TRUE(context.isPackageProject());
+      EXPECT_EQ("linkedpkg", context.packageInfo().name());
+      EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
+      EXPECT_TRUE(r_util::RSourceIndex::getImportedPackages().empty());
+      EXPECT_TRUE(r_util::RSourceIndex::getImportFromDirectives().empty());
+
+      notifyFileChanged(
+            &context,
+            context.packageDirectory().completeChildPath("NAMESPACE"),
+            core::system::FileChangeEvent::FileModified);
+      EXPECT_TRUE(r_util::RSourceIndex::getImportedPackages().empty());
+      EXPECT_TRUE(r_util::RSourceIndex::getImportFromDirectives().empty());
+
+      // Linked directories have no watch, so metadata must refresh on demand.
+      ASSERT_FALSE(writeStringToFile(description, "Package: updatedpkg\nVersion: 0.2.0\n"));
+      EXPECT_EQ("updatedpkg", context.packageInfo().name());
+   }
+}
+
+TEST_F(PackageProjectInfoTests, AllowsLinkedProjectRoot)
+{
+   writeDescription("Package: rootpkg\nVersion: 0.1.0\n");
+   ProjectContext originalContext;
+   openProject(&originalContext, "None", "", true);
+
+   FilePath linkedRoot = projectDir_.completeChildPath("root-link");
+   ASSERT_EQ(0, ::symlink(projectDir_.getAbsolutePath().c_str(), linkedRoot.getAbsolutePath().c_str()));
+   ProjectContext linkedContext;
+   std::string userError;
+   Error error = linkedContext.startup(linkedRoot.completeChildPath("test.Rproj"), &userError);
+   ASSERT_FALSE(error) << error.asString() << " " << userError;
+   linkedContext.setConfig(linkedContext.config());
+
+   EXPECT_TRUE(linkedContext.isPackageProject());
+   EXPECT_EQ("rootpkg", linkedContext.packageInfo().name());
+   EXPECT_EQ(linkedRoot, linkedContext.packageDirectoryInProject());
+}
+
+#endif
 
 namespace {
 

@@ -1156,12 +1156,20 @@ FilePath ProjectContext::packageDirectoryInProject() const
    FilePath indexedDir = directory().completeChildPath(relativePath);
    if (indexedDir.getFilename() == ".")
       indexedDir = indexedDir.getParent();
+
+   // The project scanner does not recurse into directory symlinks below its
+   // registered root. Those packages need the same fallback as external ones.
+   for (FilePath dir = indexedDir; dir != directory(); dir = dir.getParent())
+   {
+      if (dir.isSymlink())
+         return FilePath();
+   }
    return indexedDir;
 }
 
 const r_util::RPackageInfo& ProjectContext::packageInfo() const
 {
-   if (!packageInfoInitialized_ || !isMonitoringDirectory(packageDirectory()))
+   if (!packageInfoInitialized_ || !hasFileMonitor() || packageDirectoryInProject().isEmpty())
       updatePackageInfo();
 
    return packageInfo_;
