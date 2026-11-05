@@ -17,18 +17,10 @@
 #define CORE_MARKDOWN_CMARK_GFM_HPP
 
 #include <core/markdown/Markdown.hpp>
-#include <utility>
-#include <vector>
 
 namespace rstudio {
 namespace core {
 namespace markdown {
-
-// Source byte ranges of top-level raw HTML blocks, for MathJax preprocessing.
-Error cmarkHtmlBlockRanges(
-   const std::string& input,
-   const Extensions& extensions,
-   std::vector<std::pair<std::size_t, std::size_t>>* pRanges);
 
 // Render after RStudio's metadata, math and html-preserve preprocessing.
 Error renderCmarkGfm(const std::string& input,

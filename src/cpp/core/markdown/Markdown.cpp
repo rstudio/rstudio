@@ -16,7 +16,6 @@
 #include <core/markdown/Markdown.hpp>
 
 #include <iostream>
-#include <algorithm>
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/regex.hpp>
@@ -370,34 +369,7 @@ Error markdownToHTML(const std::string& markdownInput,
    boost::scoped_ptr<MathJaxFilter> pMathFilter;
    if (extensions.ignoreMath && input.find_first_of("$\\") != std::string::npos)
    {
-      std::vector<std::pair<std::size_t, std::size_t>> htmlBlocks;
-      std::vector<std::pair<std::size_t, std::size_t>> mathRanges;
-#ifdef RSTUDIO_USE_CMARK_GFM
-      if (input.find('<') != std::string::npos &&
-          (input.find("```") != std::string::npos || input.find("~~~") != std::string::npos))
-      {
-         Error error = cmarkHtmlBlockRanges(input, extensions, &htmlBlocks);
-         if (error)
-            return error;
-
-         // Equations may themselves contain HTML. Mask math using the initial
-         // ranges, then discover the HTML blocks that survive preprocessing.
-         // Masking keeps byte offsets while replacing newlines like the real
-         // math placeholders, so these ranges still refer to the source input.
-         std::string masked = input;
-         MathJaxFilter mask(&masked, nullptr, false, htmlBlocks, {}, &mathRanges);
-         error = cmarkHtmlBlockRanges(masked, extensions, &htmlBlocks);
-         if (error)
-            return error;
-
-         // Keep spans separate: the final scan discards provisional math
-         // beginning inside real code, while preserving later valid spans.
-         std::sort(mathRanges.begin(), mathRanges.end(), [](const auto& lhs, const auto& rhs) {
-            return lhs.first != rhs.first ? lhs.first < rhs.first : lhs.second > rhs.second;
-         });
-      }
-#endif
-      pMathFilter.reset(new MathJaxFilter(&input, pHTMLOutput, options.escape, htmlBlocks, mathRanges));
+      pMathFilter.reset(new MathJaxFilter(&input, pHTMLOutput, options.escape));
    }
 
    // respect html-preserve

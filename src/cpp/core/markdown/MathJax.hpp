@@ -19,7 +19,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <utility>
 
 #include <boost/utility.hpp>
 #include <boost/regex.hpp>
@@ -44,14 +43,9 @@ struct MathBlock
 class MathJaxFilter : boost::noncopyable
 {
 public:
-   // With pMathRanges, produce equal-length math masks and report their source
-   // ranges; otherwise register placeholders for restoration into pHTMLOutput.
    MathJaxFilter(std::string* pInput,
                  std::string* pHTMLOutput,
-                 bool escapeHtml,
-                 const std::vector<std::pair<std::size_t, std::size_t>>& htmlBlocks,
-                 const std::vector<std::pair<std::size_t, std::size_t>>& mathRanges = {},
-                 std::vector<std::pair<std::size_t, std::size_t>>* pMathRanges = nullptr);
+                 bool escapeHtml);
    ~MathJaxFilter();
 
 private:
@@ -82,9 +76,6 @@ private:
 private:
    std::string* pHTMLOutput_;
    bool escapeHtml_;
-   std::vector<std::pair<std::size_t, std::size_t>>* pMathRanges_;
-   std::size_t mathRangeOffset_ = 0;
-   std::string::const_iterator mathRangeBegin_;
    std::map<std::string,MathBlock> displayMathBlocks_;
    std::map<std::string,MathBlock> inlineMathBlocks_;
 };

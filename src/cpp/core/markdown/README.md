@@ -63,29 +63,21 @@ parsing mutate global tables. The superscript adapter uses the pinned upstream
 inline parser API and parser structure; recheck that interface during upgrades.
 Upstream source remains untouched.
 
-The shared MathJax filter retains its existing pattern-based code exclusions.
-It does not fully implement CommonMark block and inline grammar: math in
-multiline inline-code spans or fences nested in quotes/lists can still be
-converted, and backticks in separate table cells can hide an intervening
-equation. These cases also fail with the original Sundown pipeline. This
-migration fixes matching backtick runs on one line without replacing the legacy
-math processor. Fence openers must remain at column zero because the filter
-cannot determine where an enclosing list ends. Use top-level fenced code blocks
-when literal code contains math delimiters across lines. Metadata is removed
-before math processing, and exclusion searches cache future matches to avoid
-repeatedly scanning the document suffix after every code span. Only the
-earliest fence opener searches for its closer, so overlapping candidates do
-not repeatedly scan to the end of the document. When math, HTML and fences
-occur together, a cmark prepass supplies top-level HTML block ranges so
-fence-like content there cannot hide later equations. The ranges use the HTML
-literal's consumed lines, account for CR/LF line endings, and are recomputed
-with math masked at the same byte offsets so HTML inside equations does not
-hide real code blocks. The final scan accepts a provisional math span only
-when it starts before the next code range, discarding spans that begin inside
-code before they can hide later fence openers. Both masking and restoration placeholders start with `0x`, avoiding
-HTML-tag or ordered-list interpretation that could otherwise depend on UUID
-contents. Exclusions honor the pinned parser's 255-character fence limit and
-80-character inline-backtick limit.
+MathJax continues using RStudio's existing pattern-based processor. It shields
+column-zero backtick fences; math inside tilde fences is not protected. Other
+inherited limits include multiline inline code, fences nested in quotes/lists,
+fence-like backticks in raw HTML, and backticks spanning separate table cells.
+These limits were verified with the unmodified preprocessing sources from the
+starting revision, `dd65ab2091`. Use top-level backtick fences when literal code
+contains math delimiters. A complete CommonMark-aware math processor is outside
+this renderer migration.
+
+The retained improvements cover matching backtick runs on one line, the pinned
+parser's 80-backtick inline limit and 255-character effective fence limit,
+HTML escaping during math restoration, and metadata removal before math
+processing. Exclusion searches cache future matches and select the earliest
+opener before scanning for its closer. Placeholders have a fixed `0x` prefix
+so their HTML-tag and ordered-list classification cannot depend on UUID contents.
 
 ## Reproducing comparisons
 
@@ -137,8 +129,9 @@ Local validation on macOS arm64:
   including the knitted presentations, invalid UTF-8, unsafe links, images
   containing markup, escaped HTML and formatted rejected links in tables,
   math containing HTML, long fences, and deeply nested/unmatched superscripts.
-- Compared the 73 tracked `.md` / `.Rpres` inputs at the starting revision:
-  16 were equivalent after the tool's normalization; 52 were equivalent when
+- Compared the 73 tracked `.md` / `.Rpres` inputs from `dd65ab2091`, using
+  unmodified preprocessing sources from that revision for the baseline:
+  16 were equivalent after the tool's normalization; 50 were equivalent when
   also allowing smart-punctuation differences. Remaining differences included
   emphasis around code spans, nested/loose lists, ordered-list start values,
   HTML comments/blocks, fence info strings, and URL percent-encoding. The corpus
