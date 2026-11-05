@@ -54,12 +54,92 @@ test('experimental strategies keep exact raw character ranges when review is att
    assert(current.characterChanges.some(count => count > 0));
    for (const strategy of STRATEGIES.slice(1)) {
       const ordinary = engine.compute(base, lines, strategy);
-      assert(ordinary.characterChanges.every(count => count === 0));
+      if (strategy !== 'bounded')
+         assert(ordinary.characterChanges.every(count => count === 0));
       const review = engine.compute(base, lines, strategy, { splitView: true });
       assert.deepEqual(review.chunks, current.chunks);
       assert.deepEqual(review.characterChanges, current.characterChanges);
       assert.deepEqual(review.characterRanges, current.characterRanges);
    }
+});
+
+test('bounded refinement restores separate hunks across short unchanged separators', () => {
+   for (const separator of ['}', '', '    ']) {
+      const fixture = syntheticCases().find(item => item.name === `separated-blocks-${JSON.stringify(separator)}`);
+      const raw = engine.compute(fixture.base, fixture.lines, 'current', { budgetMs: 5000, rawOnly: true });
+      const gutter = engine.compute(fixture.base, fixture.lines, 'bounded', { budgetMs: 5000 });
+      const review = engine.compute(fixture.base, fixture.lines, 'bounded', { budgetMs: 5000, splitView: true });
+      assert(!raw.failed && !gutter.failed && !review.failed);
+      assert.deepEqual(gutter.chunks, [[0, 3, 0, 3], [4, 7, 4, 7]]);
+      assert.deepEqual(gutter.chunks, raw.chunks);
+      assert.deepEqual(review.chunks, gutter.chunks);
+      assert.deepEqual(review.characterRanges, raw.characterRanges);
+   }
+});
+
+test('bounded work exhaustion retains valid hunks and review cannot repartition them', () => {
+   const fixture = syntheticCases().find(item => item.name === 'separated-blocks-"}"');
+   const options = { budgetMs: 5000, boundedLimits: { groupReads: 10, totalReads: 15 } };
+   const gutter = engine.compute(fixture.base, fixture.lines, 'bounded', options);
+   const review = engine.compute(fixture.base, fixture.lines, 'bounded', { ...options, splitView: true });
+   assert(!gutter.failed && !review.failed && !timedOut(gutter) && !timedOut(review));
+   assert(gutter.boundedGroups.some(group => group.reason === 'work'));
+   assert(gutter.boundedGroups.reduce((sum, group) => sum + group.reads, 0) <= 15);
+   assert(gutter.boundedGroups.every(group => group.reads <= 10));
+   assert.deepEqual(gutter.chunks, [[0, 7, 0, 7]]);
+   assert.deepEqual(review.chunks, gutter.chunks);
+   assert(review.characterChanges.some(count => count > 0));
+   validateChunks(fixture.base, fixture.lines, gutter.chunks);
+   const toggled = engine.compute(fixture.base, fixture.lines, 'bounded', {
+      ...options, reviewTransitions: [true, false, true]
+   });
+   for (const transition of toggled.transitions) {
+      assert.equal(transition.pending, false);
+      assert.deepEqual(transition.chunks, gutter.chunks);
+      if (transition.visible)
+         assert.deepEqual(transition.delivered.characterRanges, review.characterRanges);
+   }
+});
+
+test('ambiguous groups above the small-group limit get bounded refinement', () => {
+   const base = [...Array.from({ length: 9 }, (_, i) => `old_a${i} <- ${i}`), '}',
+      ...Array.from({ length: 9 }, (_, i) => `old_b${i} <- ${i}`)];
+   const lines = base.map(line => line.replace('old_', 'new_'));
+   const raw = engine.compute(base, lines, 'current', { budgetMs: 5000, rawOnly: true });
+   const bounded = engine.compute(base, lines, 'bounded', { budgetMs: 5000 });
+   assert(!raw.failed && !bounded.failed && !timedOut(raw) && !timedOut(bounded));
+   assert(bounded.boundedGroups.some(group => group.reason === 'ambiguous' && group.refined));
+   assert.deepEqual(bounded.chunks, raw.chunks);
+});
+
+test('refinement budgets are shared across groups and isolated from review decoration', () => {
+   const base = ['a <- 1', 'first_unchanged_statement()', 'b <- 2', 'second_unchanged_statement()', 'c <- 3'];
+   const lines = base.map(line => line.replace('<-', '='));
+   const options = { boundedLimits: { groupReads: 10, totalReads: 15, totalCharacters: 40 } };
+   const gutter = engine.compute(base, lines, 'bounded', options);
+   const review = engine.compute(base, lines, 'bounded', { ...options, splitView: true });
+   assert(gutter.boundedGroups.length > 1);
+   assert(gutter.boundedGroups.reduce((n, group) => n + group.reads, 0) <= 15);
+   assert(gutter.boundedGroups.reduce((n, group) => n + group.characters, 0) <= 40);
+   const canonical = result => result.boundedGroups.map(group => [group.old, group.new, group.reason, group.reads, group.characters]);
+   assert.deepEqual(canonical(review), canonical(gutter));
+   assert.deepEqual(review.chunks, gutter.chunks);
+   const noAllocation = engine.compute(base, lines, 'bounded', { boundedLimits: { totalCharacters: 0 } });
+   assert.equal(noAllocation.characterRefinementCalls, 0);
+   validateChunks(base, lines, noAllocation.chunks);
+});
+
+test('review can decorate an oversized group without changing its bounded hunk', () => {
+   const base = ['x'.repeat(3000) + ' a'];
+   const lines = ['x'.repeat(3000) + ' b'];
+   const raw = engine.compute(base, lines, 'current', { budgetMs: 5000, rawOnly: true });
+   const gutter = engine.compute(base, lines, 'bounded', { budgetMs: 5000 });
+   const review = engine.compute(base, lines, 'bounded', { budgetMs: 5000, splitView: true });
+   assert(gutter.boundedGroups.some(group => group.reason === 'size'));
+   assert(gutter.characterChanges.every(count => count === 0));
+   assert(review.boundedGroups.some(group => group.highlighted));
+   assert.deepEqual(review.chunks, gutter.chunks);
+   assert.deepEqual(review.characterRanges, raw.characterRanges);
 });
 
 test('the provider bypass preserves line alignment heuristics and skips character refinement', () => {

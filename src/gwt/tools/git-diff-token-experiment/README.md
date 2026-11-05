@@ -12,7 +12,7 @@ From the repository root, with Node.js and Git available:
 node --test src/gwt/tools/git-diff-token-experiment/experiment.test.cjs
 node src/gwt/tools/git-diff-token-experiment/run.cjs --samples 5
 # Use a separate output directory to keep an earlier run:
-node src/gwt/tools/git-diff-token-experiment/run.cjs --samples 5 --output .cache/git-diff-provider-experiment
+node src/gwt/tools/git-diff-token-experiment/run.cjs --samples 5 --output .cache/git-diff-bounded-experiment
 ```
 
 No npm packages or network access are needed. The historical commits in
@@ -33,8 +33,10 @@ Exact-match instrumentation sites fail loudly if the source changes.
 The token candidates encode the remaining lines before the first provider call, drop
 character ranges that describe tokens, and retain the existing elapsed-time /
 whole-range failure guard. They measure tokenization as part of the elapsed time.
-With a side-by-side review view attached all candidates use the current raw-text path, so
-character highlights remain available. This branch is exercised without a DOM;
+The token and line-only candidates use the current raw-text path when review is
+attached. The bounded candidate shares its hunk policy across both modes and
+adds separately budgeted review highlights without changing those hunks.
+This branch is exercised without a DOM;
 rendering and mode switching are not validated in the IDE. For the provider
 option, a headless test also exercises the real view-attachment and update-flush
 methods with event and DOM plumbing stubbed.
@@ -48,6 +50,7 @@ methods with event and DOM plumbing stubbed.
 | indent-padded | Padding plus original leading spaces/tabs |
 | structured | Identifiers keyed on trimmed text, with original leading/trailing whitespace and padding |
 | line-only | Original lines with the provider's experimental `skipCharacterRefinement` option |
+| bounded | Original line heuristics with limited refinement for small or ambiguous groups; fixed hunks in review |
 
 The structured variant preserves both exact equality and the provider's initial
 trimmed-line equality, as well as indentation and the short-line threshold for
@@ -56,7 +59,7 @@ character-refinement heuristics. Above 20,992 unique lines identifiers grow to
 multiple characters, so very short lines may also grow. Identity remains exact;
 the tests check uniqueness across this boundary.
 
-The provider option is inserted into `DefaultLinesDiffComputer.refineDiff` in
+The line-only provider option is inserted into `DefaultLinesDiffComputer.refineDiff` in
 memory. It returns the existing full line-range mapping before constructing
 character sequences or running the character diff algorithm. Original line
 hashes, weighted matching, boundary placement, short-line joining, and whitespace
@@ -68,8 +71,9 @@ it through the existing update path. Without this, opening review with no
 pending edit would reuse cached line-only chunks and show no character ranges.
 The transition test checks open, close, and reopen without changing the document,
 including the exact chunks and character ranges delivered to the mock view.
-This prototype retains the existing elapsed-time/whole-range failure guard and
-does not add a public timeout-status API.
+The line-only strategy retains the existing elapsed-time/whole-range failure
+guard. The bounded strategy instead uses the provider's explicit timeout status,
+as described below.
 
 ## Measurement and checks
 
@@ -101,6 +105,10 @@ used to select the history. The engine itself always comes from this checkout.
   and character ranges with raw text. `reviewBoundaryChanges` records cases
   where enabling review changes the final hunks even though the line alignment
   heuristics are unchanged. This is a headless mode comparison, not a UI test.
+- For bounded refinement, each case also exercises open/close/reopen and asserts
+  that all successful transitions retain the gutter hunks. Paired 250 ms gutter
+  and review samples assert the same boundaries, with alternating measurement
+  order. Per-group and aggregate allocation/access budgets are checked too.
 
 Absolute timings depend on machine load and the Node VM; they are not browser
 latency guarantees. No wall-clock threshold is asserted in the tests. No IDE
@@ -188,7 +196,7 @@ heuristics therefore does not guarantee identical final hunks when refinement
 is skipped. The tests explicitly retain this counterexample, and the report
 records the resulting boundary changes between gutter-only and review modes.
 
-## Assessment
+## Line-only assessment
 
 The provider option is the strongest performance candidate so far: it removes
 the expensive character pass rather than shortening its input, preserves the
@@ -205,3 +213,79 @@ exhaust the budget. Public timeout reporting remains follow-up work.
 This remains a headless experiment. Before a production PR, choose the hunk
 contract and validate mode switching, peeks, navigation, and individual reverts
 in the IDE. No shipped source or generated Ace bundle has been modified.
+
+## Bounded refinement
+
+`bounded.cjs` installs the experimental policy around the provider's original
+refinement function. Original line alignment, indentation placement, short-line
+joining, and whitespace scanning are unchanged. A group is eligible when it has
+at most 32 changed lines across both sides, or at most 128 and a trimmed line
+shared by the two sides (an ambiguous alignment). Eligible groups must also fit
+within 4,096 characters across both mapped ranges, including boundary newlines.
+
+| Budget | Hunk selection | Additional review highlights |
+| --- | ---: | ---: |
+| Maximum combined lines per group | 32, or 128 when ambiguous | 128 |
+| Maximum combined characters per group | 4,096 | 8,192 |
+| Character-sequence reads per group | 200,000 | 100,000 |
+| Character-sequence reads per update | 2,000,000 | 300,000 |
+| Characters submitted per update | 65,536 | 16,384 |
+
+Both views use the same hunk-selection policy. An oversized group or exhausted
+budget returns its original coarse line mapping. Review can refine characters
+inside that mapping under its own budget, but the resulting character ranges
+are decorations only: they never participate in final hunk conversion. Groups
+that cannot be decorated retain whole-line highlighting.
+
+The access budget counts `LinesSliceCharSequence.getElement` calls, including
+calls from the provider's refinement heuristics. The size/allocation caps bound
+remaining work that accesses sequence storage directly. These are deterministic
+work limits, not hard wall-clock deadlines. Independent hunk and highlight
+budgets ensure that opening review cannot consume work reserved for a later
+hunk or choose a different partition just because the machine ran more slowly.
+Tests cover both per-group and shared-budget exhaustion, including a zero
+allocation budget, and verify that review still cannot repartition the result.
+
+Line alignment retains its 250 ms timeout. The harness preserves the provider's
+existing `hitTimeout` flag on the returned chunk array. The bounded gutter checks
+that flag instead of inferring failure from elapsed time and a whole-file hunk.
+Character-budget exhaustion yields coarse mappings rather than setting that
+flag. Overall wall time can exceed 250 ms because the character work has a
+separate budget. A production API should expose this status explicitly.
+
+## Bounded results
+
+The same 29 cases and five samples per strategy were used, on the same Apple M4
+Pro / Node v26.13.0 setup. This run also times the bounded review path. Medians:
+
+| Case | Current gutter | Structured tokens | Line-only gutter | Bounded gutter | Bounded review |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 100-line replacement | 25.8 ms | 5.9 ms | 1.7 ms | 1.7 ms | 1.7 ms |
+| 300-line replacement | 291.1 ms | 44.8 ms | 15.2 ms | 15.0 ms | 15.1 ms |
+| 800-line replacement | 499.6 ms (no markers) | 250.0 ms (no markers) | 107.5 ms | 108.1 ms | 108.6 ms |
+| Large historical Java change | 253.1 ms | 268.8 ms | 102.5 ms | 228.0 ms | 242.5 ms |
+
+- Final bounded hunks matched the completed raw reference in **all 29 cases**,
+  including all 13 historical changes and the short-separator cases that the
+  line-only option grouped together. Intermediate line alignments also matched.
+- There were **zero gutter/review boundary differences** in all 145 paired
+  timing checks. All 29 open/close/reopen cases preserved their hunks and
+  delivered the expected character ranges to the mock review view.
+- No bounded gutter or review timing sample failed. Allocation and read-budget
+  checks passed. The largest canonical allocation was 31,304 characters; the
+  large Java change exhausted the 2,000,000-read budget, exercising fallback.
+- Review character ranges exactly matched the raw reference in 25 of 29 cases.
+  The three bulk replacements use whole-line highlighting. The large historical
+  Java change retains fewer character highlights after its budgets are consumed.
+  Hunk boundaries remain identical in those cases.
+
+The bounded policy preserves the current granularity on this corpus while
+keeping the large-replacement speedup and a consistent revert scope across
+views. This is stronger evidence than the previous two strategies. It does not
+establish exact raw-diff parity for arbitrary files: forced exhaustion tests
+intentionally produce coarser hunks, consistently in both views.
+
+This is still a local, headless experiment. A production change would need a
+supported provider option/status API, the review-refresh integration, and IDE
+verification of rendering, navigation, peeks, individual reverts, and mode
+switching. No production source or generated Ace bundle has been modified.

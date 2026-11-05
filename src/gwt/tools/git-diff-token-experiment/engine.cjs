@@ -8,10 +8,11 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { performance } = require('node:perf_hooks');
 const vm = require('node:vm');
+const { BOUNDED_LIMITS, installBoundedRefinement } = require('./bounded.cjs');
 
 const ROOT = path.resolve(__dirname, '../../../..');
 const TOKEN_STRATEGIES = ['bare', 'indent', 'padded', 'indent-padded', 'structured'];
-const STRATEGIES = ['current', ...TOKEN_STRATEGIES, 'line-only'];
+const STRATEGIES = ['current', ...TOKEN_STRATEGIES, 'line-only', 'bounded'];
 
 // Standalone so the same function can run inside Ace's VM. The first four
 // token variants key on complete lines, like the existing fallback. The
@@ -104,12 +105,37 @@ function createEngine() {
    provider = replaceOnce(
       provider,
       'var innerChanges = changes.innerChanges;',
-      'var innerChanges = options.skipCharacterRefinement ? undefined : changes.innerChanges;'
+      `var innerChanges = options.skipCharacterRefinement ? undefined : changes.innerChanges;
+        if (options.boundedRefinement && innerChanges) {
+            innerChanges = innerChanges.flatMap(function(mapping) {
+                return mapping.boundedHighlights === undefined ? [mapping] : mapping.boundedHighlights;
+            });
+        }`
+   );
+   // Preserve the existing timeout status at the provider boundary. Bounded
+   // character work degrades to coarse mappings, so a failure here is a line
+   // alignment failure, independently of time spent on review decorations.
+   provider = replaceOnce(
+      provider,
+      'return result === null || result === void 0 ? void 0 : result.changes.map(function (changes) {',
+      'var chunks = result === null || result === void 0 ? void 0 : result.changes.map(function (changes) {'
+   );
+   provider = replaceOnce(
+      provider,
+      '    });\n}\nexports.computeDiff = computeDiff;',
+      '    });\n    chunks = chunks || [];\n    chunks.hitTimeout = !!(result && result.hitTimeout);\n    return chunks;\n}\nexports.computeDiff = computeDiff;'
+   );
+   provider = replaceOnce(
+      provider,
+      'return chunks.map(function (c) { return new DiffChunk(new AceRange(c.origStart, 0, c.origEnd, 0), new AceRange(c.editStart, 0, c.editEnd, 0), c.charChanges); });',
+      `var mapped = chunks.map(function (c) { return new DiffChunk(new AceRange(c.origStart, 0, c.origEnd, 0), new AceRange(c.editStart, 0, c.editEnd, 0), c.charChanges); });
+        mapped.hitTimeout = chunks.hitTimeout;
+        return mapped;`
    );
    provider = replaceOnce(
       provider,
       'exports.computeDiff = computeDiff;',
-      'exports.computeDiff = computeDiff; exports.experimentComputer = DefaultLinesDiffComputer;'
+      'exports.computeDiff = computeDiff; exports.experimentComputer = DefaultLinesDiffComputer; exports.experimentCharSequence = LinesSliceCharSequence;'
    );
    vm.runInContext(provider, context);
    const Computer = context.require('ace/ext/diff/providers/default').experimentComputer;
@@ -118,11 +144,15 @@ function createEngine() {
       const started = performance.now();
       if (!args[5].skipCharacterRefinement)
          state.characterRefinementCalls++;
-      const result = refine.apply(this, args);
-      state.refinementMs += performance.now() - started;
-      state.refinementTimeouts += result.hitTimeout ? 1 : 0;
-      return result;
+      try {
+         const result = refine.apply(this, args);
+         state.refinementTimeouts += result.hitTimeout ? 1 : 0;
+         return result;
+      } finally {
+         state.refinementMs += performance.now() - started;
+      }
    };
+   vm.runInContext(`(${installBoundedRefinement.toString()})(require("ace/ext/diff/providers/default"), experiment);`, context);
 
    vm.runInContext(`var experimentTokenize = ${tokenize.toString()};`, context);
    let gutter = fs.readFileSync(path.join(ROOT, 'src/gwt/acesupport/git_diff_gutter.js'), 'utf8');
@@ -137,6 +167,18 @@ function createEngine() {
       gutter,
       'var options = { maxComputationTimeMs: MAX_COMPUTATION_MS };',
       `var options = { maxComputationTimeMs: MAX_COMPUTATION_MS };
+         if (experiment.strategy === "bounded") {
+            options.boundedRefinement = experiment.boundedLimits;
+            options.includeBoundedHighlights = !!this.splitView;
+            var boundedStarted = Date.now();
+            var boundedChunks = new DiffProvider().compute(base, lines, options);
+            this.lastDiffMs = Date.now() - boundedStarted;
+            if (boundedChunks.hitTimeout) {
+               this.diffFailed = true;
+               return [];
+            }
+            return offsetChunks(boundedChunks, common.prefix);
+         }
          if (experiment.strategy === "line-only" && !this.splitView) {
             options.skipCharacterRefinement = true;
             var lineStarted = Date.now();
@@ -170,7 +212,7 @@ function createEngine() {
    gutter = replaceOnce(
       gutter,
       'this.splitView = view;',
-      `var refinementModeChanged = experiment.strategy === "line-only" && !!this.splitView !== !!view;
+      `var refinementModeChanged = (experiment.strategy === "line-only" || experiment.strategy === "bounded") && !!this.splitView !== !!view;
       this.splitView = view;
       if (refinementModeChanged) {
          this.updatePending = true;
@@ -185,10 +227,14 @@ function createEngine() {
       assert(STRATEGIES.includes(strategy), `Unknown strategy: ${strategy}`);
       const budgetMs = options.budgetMs ?? 250;
       assert(Number.isInteger(budgetMs) && budgetMs > 0);
+      const boundedLimits = { ...BOUNDED_LIMITS, ...options.boundedLimits };
+      for (const value of Object.values(boundedLimits))
+         assert(Number.isSafeInteger(value) && value >= 0);
       Object.assign(state, {
          strategy, budgetMs, rawOnly: !!options.rawOnly,
          alignmentTimeouts: [], lineAlignments: [], refinementTimeouts: 0,
-         refinementMs: 0, characterRefinementCalls: 0
+         refinementMs: 0, characterRefinementCalls: 0,
+         boundedGroups: [], boundedLimits
       });
       let chunks;
       const model = {
@@ -241,6 +287,7 @@ function createEngine() {
          transitions,
          refinementMs: state.refinementMs,
          characterRefinementCalls: state.characterRefinementCalls,
+         boundedGroups: JSON.parse(JSON.stringify(state.boundedGroups)),
          alignmentTimeouts: state.alignmentTimeouts.slice(),
          lineAlignments: JSON.parse(JSON.stringify(state.lineAlignments)),
          refinementTimeouts: state.refinementTimeouts,
