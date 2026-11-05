@@ -49,7 +49,8 @@ public:
    MathJaxFilter(std::string* pInput,
                  std::string* pHTMLOutput,
                  bool escapeHtml,
-                 const std::vector<std::pair<std::size_t, std::size_t>>& protectedRanges,
+                 const std::vector<std::pair<std::size_t, std::size_t>>& htmlBlocks,
+                 const std::vector<std::pair<std::size_t, std::size_t>>& mathRanges = {},
                  std::vector<std::pair<std::size_t, std::size_t>>* pMathRanges = nullptr);
    ~MathJaxFilter();
 

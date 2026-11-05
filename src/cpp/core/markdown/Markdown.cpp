@@ -371,6 +371,7 @@ Error markdownToHTML(const std::string& markdownInput,
    if (extensions.ignoreMath && input.find_first_of("$\\") != std::string::npos)
    {
       std::vector<std::pair<std::size_t, std::size_t>> htmlBlocks;
+      std::vector<std::pair<std::size_t, std::size_t>> mathRanges;
 #ifdef RSTUDIO_USE_CMARK_GFM
       if (input.find('<') != std::string::npos &&
           (input.find("```") != std::string::npos || input.find("~~~") != std::string::npos))
@@ -384,28 +385,19 @@ Error markdownToHTML(const std::string& markdownInput,
          // Masking keeps byte offsets while replacing newlines like the real
          // math placeholders, so these ranges still refer to the source input.
          std::string masked = input;
-         std::vector<std::pair<std::size_t, std::size_t>> mathRanges;
-         MathJaxFilter mask(&masked, nullptr, false, htmlBlocks, &mathRanges);
+         MathJaxFilter mask(&masked, nullptr, false, htmlBlocks, {}, &mathRanges);
          error = cmarkHtmlBlockRanges(masked, extensions, &htmlBlocks);
          if (error)
             return error;
 
-         // Fence text removed by the math mask must not become an opener
-         // when the final filter scans the original source. Merge overlapping
-         // math/HTML ranges so candidate lookup can still use binary search.
-         mathRanges.insert(mathRanges.end(), htmlBlocks.begin(), htmlBlocks.end());
-         std::sort(mathRanges.begin(), mathRanges.end());
-         htmlBlocks.clear();
-         for (const auto& range : mathRanges)
-         {
-            if (htmlBlocks.empty() || range.first > htmlBlocks.back().second)
-               htmlBlocks.push_back(range);
-            else
-               htmlBlocks.back().second = std::max(htmlBlocks.back().second, range.second);
-         }
+         // Keep spans separate: the final scan discards provisional math
+         // beginning inside real code, while preserving later valid spans.
+         std::sort(mathRanges.begin(), mathRanges.end(), [](const auto& lhs, const auto& rhs) {
+            return lhs.first != rhs.first ? lhs.first < rhs.first : lhs.second > rhs.second;
+         });
       }
 #endif
-      pMathFilter.reset(new MathJaxFilter(&input, pHTMLOutput, options.escape, htmlBlocks));
+      pMathFilter.reset(new MathJaxFilter(&input, pHTMLOutput, options.escape, htmlBlocks, mathRanges));
    }
 
    // respect html-preserve

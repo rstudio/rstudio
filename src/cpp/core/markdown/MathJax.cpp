@@ -59,7 +59,7 @@ bool searchCodePattern(
    const CodePattern& pattern,
    const std::string& input,
    std::string::const_iterator pos,
-   const std::vector<std::pair<std::size_t, std::size_t>>& protectedRanges,
+   const std::vector<std::pair<std::size_t, std::size_t>>& htmlBlocks,
    boost::match_flag_type flags,
    boost::smatch* pMatch)
 {
@@ -69,11 +69,11 @@ bool searchCodePattern(
          return true;
       std::size_t offset = (*pMatch)[0].first - input.begin();
       auto block = std::upper_bound(
-         protectedRanges.begin(), protectedRanges.end(), offset,
+         htmlBlocks.begin(), htmlBlocks.end(), offset,
          [](std::size_t offset, const auto& range) { return offset < range.first; });
-      if (block == protectedRanges.begin() || offset >= std::prev(block)->second)
+      if (block == htmlBlocks.begin() || offset >= std::prev(block)->second)
          return true;
-      // Fence text in raw HTML or recognized math is not a Markdown opener.
+      // Fence text in raw HTML is not a Markdown opener.
       if (flags & boost::match_continuous)
          break;
       pos = input.begin() + std::prev(block)->second;
@@ -88,7 +88,8 @@ bool searchCodePattern(
 MathJaxFilter::MathJaxFilter(std::string* pInput,
                              std::string* pHTMLOutput,
                              bool escapeHtml,
-                             const std::vector<std::pair<std::size_t, std::size_t>>& protectedRanges,
+                             const std::vector<std::pair<std::size_t, std::size_t>>& htmlBlocks,
+                             const std::vector<std::pair<std::size_t, std::size_t>>& mathRanges,
                              std::vector<std::pair<std::size_t, std::size_t>>* pMathRanges)
    : pHTMLOutput_(pHTMLOutput), escapeHtml_(escapeHtml), pMathRanges_(pMathRanges)
 {
@@ -116,12 +117,14 @@ MathJaxFilter::MathJaxFilter(std::string* pInput,
    // we don't need to worry about mathjax ambiguity within code regions)
    std::vector<TextRange> ranges;
    std::string::const_iterator pos = pInput->begin();
+   std::string::const_iterator processBegin = pos;
    std::string::const_iterator inputEnd = pInput->end();
    // Retain future matches (including exhaustion) instead of searching the
    // entire suffix for every pattern after each inline code span.
    std::vector<boost::smatch> nextMatches(patterns.size());
    std::vector<bool> searched(patterns.size(), false);
    bool afterFence = false;
+   std::size_t mathIndex = 0;
    while (pos != inputEnd)
    {
       std::size_t closest = patterns.size();
@@ -133,7 +136,7 @@ MathJaxFilter::MathJaxFilter(std::string* pInput,
          // where a new block can start without a blank line. Inline spans do
          // not create this boundary: following spaces are still paragraph text.
          boost::smatch atBoundary;
-         if (afterFence && searchCodePattern(patterns[i], *pInput, pos, protectedRanges,
+         if (afterFence && searchCodePattern(patterns[i], *pInput, pos, htmlBlocks,
                                              flags | boost::match_continuous, &atBoundary))
          {
             next = atBoundary;
@@ -143,12 +146,28 @@ MathJaxFilter::MathJaxFilter(std::string* pInput,
             next = boost::smatch();
             if (pos != pInput->begin())
                flags |= boost::match_not_bob;
-            searchCodePattern(patterns[i], *pInput, pos, protectedRanges, flags, &next);
+            searchCodePattern(patterns[i], *pInput, pos, htmlBlocks, flags, &next);
          }
          searched[i] = true;
          if (!next.empty() &&
              (closest == patterns.size() || next[0].first < nextMatches[closest][0].first))
             closest = i;
+      }
+
+      // Accept provisional math only when it begins before the next code
+      // range. Advancing over code discards spans that started inside it, so
+      // a false equation spanning two blocks cannot hide the later opener.
+      // Ranges are ordered by start, with outer spans before nested ones.
+      std::size_t offset = pos - pInput->begin();
+      while (mathIndex < mathRanges.size() && mathRanges[mathIndex].first < offset)
+         ++mathIndex;
+      if (mathIndex < mathRanges.size() &&
+          (closest == patterns.size() ||
+           pInput->begin() + mathRanges[mathIndex].first < nextMatches[closest][0].first))
+      {
+         pos = pInput->begin() + mathRanges[mathIndex++].second;
+         afterFence = false;
+         continue;
       }
 
       // if we found at least one matched range then find the closest one,
@@ -177,23 +196,25 @@ MathJaxFilter::MathJaxFilter(std::string* pInput,
          }
 
          // mark everything before the match as requiring processing
-         ranges.push_back(TextRange(true, pos, range.begin));
+         ranges.push_back(TextRange(true, processBegin, range.begin));
 
          // add the range
          ranges.push_back(range);
 
          // update the position
          pos = range.end;
+         processBegin = pos;
          afterFence = patterns[closest].fenced;
       }
 
       // no match -- consume remaining input and tag it for processing
       else
       {
-         ranges.push_back(TextRange(true, pos, pInput->end()));
-         pos = pInput->end();
+         break;
       }
    }
+   if (processBegin != inputEnd)
+      ranges.push_back(TextRange(true, processBegin, inputEnd));
 
    // now iterate through the ranges and substitute a guid for math blocks
    std::string filteredInput;

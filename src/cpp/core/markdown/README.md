@@ -80,8 +80,9 @@ occur together, a cmark prepass supplies top-level HTML block ranges so
 fence-like content there cannot hide later equations. The ranges use the HTML
 literal's consumed lines, account for CR/LF line endings, and are recomputed
 with math masked at the same byte offsets so HTML inside equations does not
-hide real code blocks. Recognized math spans remain protected in the final
-fence scan. Both masking and restoration placeholders start with `0x`, avoiding
+hide real code blocks. The final scan accepts a provisional math span only
+when it starts before the next code range, discarding spans that begin inside
+code before they can hide later fence openers. Both masking and restoration placeholders start with `0x`, avoiding
 HTML-tag or ordered-list interpretation that could otherwise depend on UUID
 contents. Exclusions honor the pinned parser's 255-character fence limit and
 80-character inline-backtick limit.

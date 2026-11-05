@@ -282,6 +282,9 @@ TEST(MarkdownTest, FenceTextInHtmlDoesNotHideFollowingMath)
              render("<$x_1$>\n~~~\n$y_1$\n~~~\n"));
    EXPECT_NE(std::string::npos,
              render("$x_1$.\n<custom>\n~~~\n$y_1$\n~~~\n").find("<code>$y_1$\n</code>"));
+   output = render("$$\n<pre>\n$$\n\n~~~\n$$\n~~~\n\n~~~\n$$\n$x_1$\n~~~\n");
+   EXPECT_NE(std::string::npos, output.find("<pre><code>$$\n$x_1$\n</code></pre>"));
+   EXPECT_EQ(std::string::npos, output.find("\\( x_1 \\)"));
 }
 
 TEST(MarkdownTest, MathExclusionPreservesExistingBlockBehavior)
