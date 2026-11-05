@@ -313,8 +313,10 @@ That source also includes the pending Ace PR #13 tokenizer fixes already present
 in RStudio's bundles. Before adding bounded refinement, that combined source
 rebuilt the existing core and diff bundles byte-for-byte. `build-ace` now accepts
 an `ACE_SOURCE_DIR` environment override for building a dedicated Ace worktree;
-its output paths always refer to this RStudio checkout. The complete build
-changed only the two diff bundles.
+its output paths always refer to this RStudio checkout. Review also corrected
+sparse-array context comparisons and added a plain-data clone fallback for
+Node 16 in the carried tokenizer dependency. The complete build changes the
+core and diff bundles; the other generated outputs remain unchanged.
 
 The five-sample production run used the same 29 cases. All production hunks matched
 the bounded prototype. Production additionally charges Myers frontier advances

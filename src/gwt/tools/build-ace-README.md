@@ -39,11 +39,15 @@ shipped in RStudio but were not yet on the integration branch. Combining them
 with `rstudio/montauk-daisy` reproduced the previous core and diff bundles
 byte-for-byte before the bounded-diff change. Keep those fixes when updating
 the pin rather than reverting the shipped tokenizer behavior.
+Review of that dependency also added a plain-data clone fallback for Node 16
+and corrected sparse-array length comparisons. Those fixes regenerate the core
+bundles alongside the diff bundles.
 
 For the Git diff changes, run:
 
 ```sh
 # From the Ace worktree:
+node src/background_tokenizer_test.js
 node src/ext/diff/diff_test.js
 node src/ext/diff/bounded_refinement_test.js
 
