@@ -97,6 +97,9 @@ public class TerminalInfoDialog extends ModalDialogBase
       textArea_.addStyleName(ThemeFonts.getFixedWidthClass());
       textArea_.setSize("600px", "400px");
       textArea_.setReadOnly(true);
+      // the dialog has no visible text to label the box, so reuse its title
+      Roles.getTextboxRole().setAriaLabelProperty(
+            textArea_.getElement(), constants_.terminalDiagnosticsText());
       textArea_.setText(diagnostics.toString());
 
       addOkButton(new ThemedButton(constants_.closeTitle(), event -> closeDialog()));
