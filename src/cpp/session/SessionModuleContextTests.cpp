@@ -1297,6 +1297,16 @@ TEST_F(IsTextFileTest, UnavailableFileCommandInspectsContents)
    EXPECT_FALSE(isTextFile(binary, core::FilePath()));
 }
 
+TEST_F(IsTextFileTest, ContentInspectionReadsOnlyAPrefix)
+{
+   // the heuristic must not buffer a whole (possibly huge) file: null bytes
+   // past the probe window are not seen, which is the accepted trade-off
+   std::string contents(64 * 1024, 'x');
+   contents += "\n" + binaryContents();
+   core::FilePath lateNulls = makeTempFile(".unmapped19435", contents);
+   EXPECT_TRUE(isTextFile(lateNulls, core::FilePath()));
+}
+
 #ifndef _WIN32
 
 TEST_F(IsTextFileTest, MissingFileCommandInspectsContents)

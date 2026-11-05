@@ -1408,16 +1408,23 @@ bool isJsonFile(const FilePath& filePath)
 }
 
 // The content heuristic used when file(1) is unavailable or gives no answer:
-// text files don't contain consecutive null bytes.
+// text files don't contain consecutive null bytes. Only a prefix is read, as
+// binary formats declare themselves early and the file may be enormous.
 bool hasTextContent(const FilePath& targetPath)
 {
-   std::string contents;
-   Error error = core::readStringFromFile(targetPath, &contents);
+   const std::streamsize kProbeSize = 8192;
+
+   std::shared_ptr<std::istream> pStream;
+   Error error = targetPath.openForRead(pStream);
    if (error)
    {
       LOG_ERROR(error);
       return true;
    }
+
+   std::string contents(kProbeSize, '\0');
+   pStream->read(&contents[0], kProbeSize);
+   contents.resize(static_cast<std::size_t>(pStream->gcount()));
 
    std::string nullBytes;
    nullBytes.push_back('\0');
