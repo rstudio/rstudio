@@ -40,9 +40,7 @@ permissions:
   contents: read
   pull-requests: write  # the engines' e2e-merge job declares this
   # The engines' e2e-merge jobs assume the S3 report-upload role via OIDC; a
-  # reusable workflow's id-token grant is capped by its caller's. (Their build
-  # jobs assume the sccache role the same way, but never run here -- every
-  # engine is called with build_from_source: false.)
+  # reusable workflow's id-token grant is capped by its caller's.
   id-token: write
 
 jobs:
@@ -52,7 +50,6 @@ jobs:
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
-      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
       os: ubuntu-24-x86_64
@@ -69,7 +66,6 @@ jobs:
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
-      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
       project: desktop
@@ -84,7 +80,6 @@ jobs:
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
-      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
       project: desktop

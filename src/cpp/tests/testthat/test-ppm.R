@@ -707,3 +707,58 @@ test_that("getCachedVulnerabilities isolates a failing repo from the others", {
    expect_equal(result$A, structure(list(), names = character()))
    expect_equal(result$B, expected(pkgB = list(list(id = "V2"))))
 })
+
+test_that("computeAuthorizationHeader matches a port-less netrc machine to a URL with a port", {
+   netrc <- withr::local_tempfile(lines = c("machine ppm.example.com", "login __token__", "password secret"))
+   withr::local_options(netrc = netrc)
+   endpoint <- "https://ppm.example.com:4242/__api__/filter/packages"
+   header <- paste("Basic", .rs.rBase64Encode("__token__:secret"))
+   expect_equal(.rs.computeAuthorizationHeader(endpoint), header)
+})
+
+test_that("computeAuthorizationHeader requires an exact host match", {
+   netrc <- withr::local_tempfile(lines = c("machine ppm.example.com", "login __token__", "password secret"))
+   withr::local_options(netrc = netrc)
+   expect_equal(.rs.computeAuthorizationHeader("https://ppm.example.com.other.net/x"), "")
+   expect_equal(.rs.computeAuthorizationHeader("https://ppm.example.community/x"), "")
+})
+
+test_that("computeAuthorizationHeader matches an IPv6 literal netrc machine", {
+   netrc <- withr::local_tempfile(lines = c("machine ::1", "login __token__", "password secret"))
+   withr::local_options(netrc = netrc)
+   header <- paste("Basic", .rs.rBase64Encode("__token__:secret"))
+   expect_equal(.rs.computeAuthorizationHeader("http://[::1]:4242/cran/latest"), header)
+})
+
+test_that("computeAuthorizationHeader uses a netrc default entry for any host", {
+   netrc <- withr::local_tempfile(lines = c("default", "login __token__", "password secret"))
+   withr::local_options(netrc = netrc)
+   header <- paste("Basic", .rs.rBase64Encode("__token__:secret"))
+   expect_equal(.rs.computeAuthorizationHeader("https://ppm.example.com/cran/latest"), header)
+})
+
+test_that("computeAuthorizationHeader prefers a matching machine over an earlier default", {
+   netrc <- withr::local_tempfile(lines = c(
+      "default login anon password none",
+      "machine ppm.example.com login __token__ password secret"
+   ))
+   withr::local_options(netrc = netrc)
+   header <- paste("Basic", .rs.rBase64Encode("__token__:secret"))
+   expect_equal(.rs.computeAuthorizationHeader("https://ppm.example.com/cran/latest"), header)
+})
+
+test_that("computeAuthorizationHeader falls back to default when no machine matches", {
+   netrc <- withr::local_tempfile(lines = c(
+      "machine other.example.com login other password other",
+      "default login __token__ password secret"
+   ))
+   withr::local_options(netrc = netrc)
+   header <- paste("Basic", .rs.rBase64Encode("__token__:secret"))
+   expect_equal(.rs.computeAuthorizationHeader("https://ppm.example.com/cran/latest"), header)
+})
+
+test_that("computeAuthorizationHeader ignores an unpaired IPv6 bracket", {
+   netrc <- withr::local_tempfile(lines = c("machine bad", "login __token__", "password secret"))
+   withr::local_options(netrc = netrc)
+   expect_equal(.rs.computeAuthorizationHeader("http://[bad/path"), "")
+})

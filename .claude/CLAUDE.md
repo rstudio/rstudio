@@ -502,6 +502,23 @@ Exceptions — do NOT add a NEWS.md entry for:
 - When generating a pull request, set the Milestone of the pull request to match contents of @version/RELEASE, if there is a matching milestone already defined. Never create a new milestone.
 
 
+### Open-Source Companion PRs
+
+A change spanning open-source and pro-only code is made in rstudio-pro first: the whole change is
+opened as a PR there, reviewed, and approved, but not merged. An "open-source companion" PR here
+then carries just the open-source portion. It gets a cursory review and is merged, rstudio is
+merged downstream into rstudio-pro, and then the rstudio-pro PR is merged. This only works if the
+companion's changes exactly match the open-source portion of the rstudio-pro PR.
+
+When reviewing a PR that mentions an associated rstudio-pro PR (a link to a pro-repo PR/issue, or
+wording like "open-source companion"), flag it first and ask the author to confirm the rstudio-pro
+PR has already been reviewed and approved, and that this PR matches its open-source portion, before
+any detailed review. If you can read the rstudio-pro PR, compare the diffs yourself and report any
+divergence. Once confirmed, keep the review cursory, and note that any requested change must also
+be made in the rstudio-pro PR, or the two will be out of sync. If it hasn't been reviewed yet,
+recommend that it be reviewed in rstudio-pro first, rather than iterating here.
+
+
 ## Git Conventions
 
 For commit messages:
@@ -521,5 +538,6 @@ For branch naming:
 - When instructed to investigate or fix a GitHub issue, update the Assignee to the current user (`gh api user --jq .login`), and check that the issue has been added to the RStudio IDE project with an "In Progress" status.
 - If the issue describes a bug, add the label `bug`
 - If the issue is for a new feature or enhancements to an existing feature, add the label `enhancement`
+- If the issue reports a product defect or regression and was filed by someone outside Posit, also add the label `support`. Check the reporter with `gh api repos/rstudio/rstudio/issues/<N> --jq .author_association`; `MEMBER` means Posit staff, so skip the label. Staff-filed bugs, accessibility audit items, and CI, build, or tech-debt issues do not get it.
 - These labels apply to issues only, not to pull requests
 

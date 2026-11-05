@@ -1345,7 +1345,7 @@ public class TextEditingTargetAssistantHelper
       commandsRegistration_ = binder_.bind(commands_, this);
 
       target_ = target;
-      display_ = target.getDocDisplay();
+      display_ = target.getPrimaryDisplay();
 
       registrations_ = new HandlerRegistrations();
 

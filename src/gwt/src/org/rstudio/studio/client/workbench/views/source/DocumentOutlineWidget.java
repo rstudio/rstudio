@@ -326,7 +326,7 @@ public class DocumentOutlineWidget extends Composite
 
    private void initHandlers()
    {
-      handlers_.add(target_.getDocDisplay().addScopeTreeReadyHandler(new ScopeTreeReadyEvent.Handler()
+      handlers_.add(target_.getPrimaryDisplay().addScopeTreeReadyHandler(new ScopeTreeReadyEvent.Handler()
       {
          @Override
          public void onScopeTreeReady(ScopeTreeReadyEvent event)
@@ -336,7 +336,7 @@ public class DocumentOutlineWidget extends Composite
          }
       }));
 
-      handlers_.add(target_.getDocDisplay().addActiveScopeChangedHandler(new ActiveScopeChangedEvent.Handler()
+      handlers_.add(target_.getPrimaryDisplay().addActiveScopeChangedHandler(new ActiveScopeChangedEvent.Handler()
       {
          @Override
          public void onActiveScopeChanged(ActiveScopeChangedEvent event)
@@ -347,14 +347,14 @@ public class DocumentOutlineWidget extends Composite
          }
       }));
 
-      handlers_.add(target_.getDocDisplay().addCursorChangedHandler(new CursorChangedEvent.Handler()
+      handlers_.add(target_.getPrimaryDisplay().addCursorChangedHandler(new CursorChangedEvent.Handler()
       {
          @Override
          public void onCursorChanged(CursorChangedEvent event)
          {
-            if (target_.getDocDisplay().isScopeTreeReady(event.getPosition().getRow()))
+            if (target_.getPrimaryDisplay().isScopeTreeReady(event.getPosition().getRow()))
             {
-               currentScope_ = target_.getDocDisplay().getCurrentScope();
+               currentScope_ = target_.getPrimaryDisplay().getCurrentScope();
                currentVisibleScope_ = getCurrentVisibleScope(currentScope_);
                resetTreeStyles();
             }
@@ -456,20 +456,17 @@ public class DocumentOutlineWidget extends Composite
 
    private void buildScopeTreeImpl(Scope node, int depth, Counter counter)
    {
-      if (shouldDisplayNode(node))
+      boolean displayed = shouldDisplayNode(node);
+      if (displayed)
          addOrSetItem(node, depth, counter.increment());
+
+      // Only a displayed node indents the items it contains; an anonymous
+      // brace or a namespace has no entry of its own to indent them under.
+      int childDepth = displayed ? depth + 1 : depth;
 
       JsArray<Scope> children = node.getChildren();
       for (int i = 0; i < children.length(); i++)
-      {
-         int newDepth = depth + 1;
-
-         // Don't add extra indentation for items within namespaces
-         if (node.isNamespace())
-            newDepth--;
-
-         buildScopeTreeImpl(children.get(i), newDepth, counter);
-      }
+         buildScopeTreeImpl(children.get(i), childDepth, counter);
    }
 
    private boolean isUnnamedNode(Scope node)
@@ -497,7 +494,7 @@ public class DocumentOutlineWidget extends Composite
          return false;
 
       // don't show R functions or R sections in .Rmd unless requested
-      TextFileType fileType = target_.getDocDisplay().getFileType();
+      TextFileType fileType = target_.getPrimaryDisplay().getFileType();
       if (shownSectionsPref != UserPrefs.DOC_OUTLINE_SHOW_ALL && fileType.isRmd())
       {
          if (node.isFunction())

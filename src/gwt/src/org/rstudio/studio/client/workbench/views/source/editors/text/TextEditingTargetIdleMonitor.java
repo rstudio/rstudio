@@ -59,7 +59,7 @@ public class TextEditingTargetIdleMonitor
       RStudioGinjector.INSTANCE.injectMembers(this);
       IdleTarget target = new IdleTarget(editingTarget, sentinel);
 
-      display_ = editingTarget.getDocDisplay();
+      display_ = editingTarget.getPrimaryDisplay();
       sentinel_ = sentinel;
       monitors_ = new ArrayList<>();
       commands_ = target.commands;
@@ -73,7 +73,7 @@ public class TextEditingTargetIdleMonitor
          }
       };
 
-      TARGET_MAP.put(editingTarget.getDocDisplay(), target);
+      TARGET_MAP.put(editingTarget.getPrimaryDisplay(), target);
 
       refreshCommands();
       beginMonitoring();
@@ -99,7 +99,7 @@ public class TextEditingTargetIdleMonitor
          DocUpdateSentinel sentinel, int type)
    {
       IdleState state = new IdleState(type, mouseX_, mouseY_, modifiers_);
-      IdleTarget target = TARGET_MAP.get(editingTarget.getDocDisplay());
+      IdleTarget target = TARGET_MAP.get(editingTarget.getPrimaryDisplay());
       if (target == null)
          return;
 

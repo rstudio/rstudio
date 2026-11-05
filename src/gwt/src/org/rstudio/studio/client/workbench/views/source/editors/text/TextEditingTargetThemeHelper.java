@@ -118,7 +118,7 @@ public class TextEditingTargetThemeHelper
       currentContent_ = content;
       
       String bg = ColorUtil.RGBColor.fromCss(currentStyle_.getBackgroundColor()).asHex();
-      editingTarget.getDocDisplay().setBackgroundColor(bg);
+      editingTarget.getPrimaryDisplay().setBackgroundColor(bg);
 
       // call all registered handlers
       handlers_.fireEvent(new EditorThemeStyleChangedEvent(content, currentStyle_));

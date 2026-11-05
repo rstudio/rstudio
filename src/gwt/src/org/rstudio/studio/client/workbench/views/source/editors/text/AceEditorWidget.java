@@ -733,10 +733,9 @@ public class AceEditorWidget extends Composite
       return addHandler(handler, BreakpointMoveEvent.TYPE);
    }
 
-   public void toggleBreakpointAtCursor()
+   public void toggleBreakpointAtRow(int row)
    {
-      Position pos = editor_.getSession().getSelection().getCursor();
-      toggleBreakpointAtPosition(Position.create(pos.getRow(), 0));
+      toggleBreakpointAtPosition(Position.create(row, 0));
    }
 
    public AceEditorNative getEditor()

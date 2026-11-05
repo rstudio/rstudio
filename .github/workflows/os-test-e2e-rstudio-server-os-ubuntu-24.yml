@@ -121,6 +121,10 @@ on:
         description: "Skip this workflow's own merge/publish/comment job; the caller merges every platform's blobs into one report instead."
         type: boolean
         default: false
+      skip_e2e_deps_cache_save:
+        description: "Don't save the os-e2e-deps caches (R library, pak downloads, Playwright browsers). Set by broad-matrix callers whose engines run too rarely for those caches to outlive eviction."
+        type: boolean
+        default: false
     outputs:
       r_version_actual:
         description: >-
@@ -135,9 +139,6 @@ on:
         required: false
       AWS_E2E_REPORTS_ROLE_ARN:
         description: "IAM role assumed via GitHub OIDC to upload the Playwright report to S3"
-        required: false
-      AWS_SCCACHE_ROLE_ARN:
-        description: "IAM role assumed via GitHub OIDC for the S3 sccache backend (paired with the AWS_SCCACHE_BUCKET repo variable)"
         required: false
       OP_SERVICE_ACCOUNT_TOKEN:
         description: "OP service account token; resolves the test-account credentials the Playwright auth setup project signs in with"
@@ -154,6 +155,13 @@ permissions:
   # role (see .github/actions/os-publish-e2e-report).
   id-token: write
 
+# actions/cache passes zstd no compression level, so zstd honors ZSTD_CLEVEL;
+# level 9 makes cache entries ~13% smaller than the default level 3 at about
+# the same save time, and restores are unaffected. Set here rather than per
+# step so every save in every job, composite actions included, picks it up.
+env:
+  ZSTD_CLEVEL: 9
+
 jobs:
   # Builds RStudio Server from this PR's source on the same runner image as
   # the e2e job below, then uploads the .deb as an artifact for the e2e job to
@@ -169,13 +177,10 @@ jobs:
       RSTUDIO_TOOLS_ROOT: ${{ github.workspace }}/opt/rstudio-tools/x86_64
       # Pin R's user library to a workspace-local path so we can cache it.
       R_LIBS_USER: ${{ github.workspace }}/R-libs/%p/%v
+      # The backend is set up by the "Configure sccache" step below. sccache
+      # prefers it over the local SCCACHE_DIR that make-package exports, so
+      # the build script needs no patching.
       SCCACHE_ENABLED: '1'
-      # Backend selection happens in the "Select sccache backend" step below:
-      # S3 when the OIDC role + bucket are configured, GHA cache otherwise.
-      # Either backend's env vars take precedence over any SCCACHE_DIR that
-      # make-package may export internally, so we don't need to patch the
-      # build script.
-      SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
       # Quiet npm during install-common's panmirror build and any other
       # transitive npm step -- avoids dumping the progress bar + audit
       # report into the build log on every PR run.
@@ -233,58 +238,27 @@ jobs:
           restore-keys: |
             rstudio-gwt-linux-x86_64-${{ env.GWT_STYLE }}-v1-
 
-      # Prefer the S3 sccache backend when the infra is configured (the
-      # AWS_SCCACHE_ROLE_ARN secret plus the AWS_SCCACHE_BUCKET repo
-      # variable). The GHA cache backend writes per-object entries into each
-      # PR's merge-ref scope, flooding the repo's 10 GB Actions cache quota
-      # (6000+ of its entries were sccache objects) and LRU-evicting the
-      # main-scoped copies the seed maintains -- PR builds then compile at a
-      # ~0% hit rate. S3 has no quota or ref scoping, so every run reads and
-      # writes one shared cache.
-      - name: Configure AWS credentials for sccache
-        id: sccache-aws
-        if: env.SCCACHE_ROLE_ARN != '' && vars.AWS_SCCACHE_BUCKET != ''
-        # A failed OIDC exchange degrades to the GHA backend below rather
-        # than failing the build.
-        continue-on-error: true
-        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
-        with:
-          role-to-assume: ${{ env.SCCACHE_ROLE_ARN }}
-          aws-region: us-east-1
-          # Cold builds can run past the default 1-hour session; the role
-          # must be created with a max session duration of at least 2 hours.
-          role-duration-seconds: 7200
-
-      # Falls back to the GHA cache backend when the secret/variable are
-      # unset (e.g. fork PRs) or the credential exchange failed, preserving
-      # today's behavior. Must run before the sccache-action below: that
-      # action only exports the Actions cache URL/token the GHA backend
-      # needs when SCCACHE_GHA_ENABLED is already set as it runs.
-      - name: Select sccache backend
+      # sccache keeps one Actions cache entry per object file. Only main
+      # writes them (the nightly seed keeps them current), and every other ref
+      # reads main's. An entry written from a PR would land in that PR's
+      # merge-ref scope, which no other branch can read, and crowd main's
+      # entries out of the repo's cache limit (#18337). The Actions cache
+      # replaced an S3 bucket whose every hit was billed as egress (#19355).
+      # Entries are keyed by object hash alone, so this build and the Ubuntu
+      # 24 desktop build (same toolchain, mostly the same sources) share hits.
+      - name: Configure sccache
         env:
-          SCCACHE_S3_BUCKET: ${{ vars.AWS_SCCACHE_BUCKET }}
-          SCCACHE_AWS_OUTCOME: ${{ steps.sccache-aws.outcome }}
+          SCCACHE_GHA_RW_MODE: ${{ github.ref == 'refs/heads/main' && 'READ_WRITE' || 'READ_ONLY' }}
         run: |
-          if [ "$SCCACHE_AWS_OUTCOME" = "success" ]; then
-            echo "sccache backend: S3 ($SCCACHE_S3_BUCKET)"
-            {
-              echo "SCCACHE_BUCKET=$SCCACHE_S3_BUCKET"
-              echo "SCCACHE_REGION=us-east-1"
-              # Key prefix shared with the Ubuntu 24 desktop build on purpose:
-              # same toolchain, and overwhelmingly the same sources.
-              echo "SCCACHE_S3_KEY_PREFIX=ubuntu24-x86_64"
-            } >> "$GITHUB_ENV"
-          else
-            echo "sccache backend: GitHub Actions cache (S3 role/bucket unavailable)"
-            echo "SCCACHE_GHA_ENABLED=true" >> "$GITHUB_ENV"
-          fi
+          echo "sccache backend: GitHub Actions cache ($SCCACHE_GHA_RW_MODE)"
+          {
+            echo "SCCACHE_GHA_ENABLED=true"
+            echo "SCCACHE_GHA_RW_MODE=$SCCACHE_GHA_RW_MODE"
+          } >> "$GITHUB_ENV"
 
-      # Installs sccache on PATH and starts the sccache server with the
-      # backend chosen by "Select sccache backend" above (S3 when available;
-      # otherwise the GH Actions cache API via SCCACHE_GHA_ENABLED=true +
-      # ACTIONS_CACHE_URL / ACTIONS_RUNTIME_TOKEN which the action injects).
-      # Object-level cache hits, no per-SHA tarball; PRs inherit main's warm
-      # cache either way.
+      # Installs sccache on PATH and exports the Actions cache URL/token
+      # (ACTIONS_RESULTS_URL / ACTIONS_RUNTIME_TOKEN) the GHA backend needs.
+      # Object-level cache hits, no per-SHA tarball.
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696 # v0.0.10
         with:
@@ -306,7 +280,7 @@ jobs:
       # Save the tools / R-libs caches only from main-scoped runs (the seed
       # and scheduled workflows), and only on a key miss. A cache saved from a
       # PR run lands in that PR's merge-ref scope, which no other branch can
-      # restore -- each copy is pure pressure on the repo's 10 GB Actions
+      # restore -- each copy is pure pressure on the repo's Actions
       # cache quota, and that pressure is what evicts main's copies and sends
       # every PR build cold in the first place.
       - name: Save rstudio-tools deps
@@ -357,7 +331,7 @@ jobs:
       # hashFiles key rotates. Same poison-resistance pattern macOS uses.
       # Save only from main-scoped runs, and only on a key miss: a cache saved
       # from a PR run lands in that PR's merge-ref scope, which no other
-      # branch can restore -- each copy is pure pressure on the repo's 10 GB
+      # branch can restore -- each copy is pure pressure on the repo's
       # Actions cache quota, and that pressure is what evicts main's copy and
       # sends every PR build cold in the first place.
       - name: Save GWT output
@@ -608,7 +582,7 @@ jobs:
       # already S3/CDN-backed, and GH Actions cache scoping means concurrent
       # PRs can't share a cache entry with each other anyway (only with their
       # base branch), so caching here would just duplicate the same bytes
-      # into the shared 10 GB cache quota without saving meaningful time.
+      # into the shared cache quota without saving meaningful time.
       - name: Download RStudio Server .deb
         if: inputs.build_from_source == false || inputs.rstudio_installer_url != ''
         env:
@@ -717,6 +691,11 @@ jobs:
         uses: ./.github/actions/os-e2e-deps
         with:
           r-libs-user: ${{ env.R_LIBS_USER }}
+          save-cache: ${{ !inputs.skip_e2e_deps_cache_save }}
+          # Same scope as the Linux Desktop workflow's Ubuntu 24 engine
+          # (.github/e2e-linux/ubuntu-24-x86_64.json): same runner image, R
+          # version, and package set, so the two share one set of caches.
+          cache-scope: noble-amd64
           # Postgres + ODBC drivers for the Connections pane tests (see
           # scripts/db/install-deps/linux.sh). The sandbox's ODBC config is
           # then delivered into rsession via Sys.setenv(ODBCSYSINI = ...) in
