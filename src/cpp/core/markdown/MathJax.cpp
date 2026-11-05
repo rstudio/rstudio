@@ -71,6 +71,9 @@ MathJaxFilter::MathJaxFilter(std::string* pInput,
       // Match the pinned inline parser's MAXBACKTICKS limit. No fallback may
       // split a longer run into shorter delimiters and hide ordinary math.
 #ifdef RSTUDIO_USE_CMARK_GFM
+      // An escaped backtick may immediately precede a real opening run.
+      // Consume an odd backslash run and that literal tick before matching it.
+      CodePattern(R"((?<!\\)(?:\\\\)*\\`(`{1,80})(?!`)[^\r\n]*?(?<!`)\1(?!`))"),
       CodePattern(R"((?<!`)(`{1,80})(?!`)[^\r\n]*?(?<!`)\1(?!`))"),
 #else
       CodePattern(R"((?<!`)(`+)(?!`)[^\r\n]*?(?<!`)\1(?!`))"),

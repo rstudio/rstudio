@@ -245,6 +245,18 @@ TEST(MarkdownTest, MathExclusionRespectsCodeDelimiterLengths)
       EXPECT_EQ(count == 81, isMathJaxRequired(html));
       EXPECT_EQ(count == 80, html.find("<code>") != std::string::npos);
    }
+   EXPECT_EQ("<p>`<code>a $x_1$ b</code></p>\n", render(R"(\``a $x_1$ b`)"));
+   for (std::size_t count : {1, 2, 3, 4})
+   {
+      std::string html = render(std::string(count, '\\') + "``a $x_1$ b`");
+      EXPECT_EQ(count % 2 == 0, isMathJaxRequired(html));
+   }
+   for (std::size_t count : {80, 81})
+   {
+      std::string html = render("\\`" + std::string(count, '`') + " a $x_1$ b " +
+                                std::string(count, '`'));
+      EXPECT_EQ(count == 81, isMathJaxRequired(html));
+   }
 }
 
 TEST(MarkdownTest, MathAroundHtmlAndBacktickFences)
