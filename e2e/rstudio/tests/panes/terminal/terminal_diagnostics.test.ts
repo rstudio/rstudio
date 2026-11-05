@@ -32,4 +32,16 @@ test.describe('Terminal Diagnostics dialog', () => {
     await expect(box).toBeVisible();
     await expect(box).toHaveValue(/Global Terminal Information/);
   });
+
+  test('puts each section heading on its own line', async ({ rstudioPage: page }) => {
+    await executeCommand(page, 'showTerminalInfo');
+    const box = page.locator(DIALOG).getByRole('textbox');
+    await expect(box).toHaveValue(/Global Terminal Information/);
+
+    const text = await box.inputValue();
+    expect(text.match(/Global Terminal Information/g)).toHaveLength(1);
+    for (const heading of ['Current Terminal Session Information', 'System Information']) {
+      expect(text).toMatch(new RegExp(`(^|\\n)${heading}\\n-+\\n`));
+    }
+  });
 });

@@ -59,7 +59,7 @@ public class TerminalInfoDialog extends ModalDialogBase
          if (StringUtil.isNullOrEmpty(cwd))
             cwd = "Default";
 
-         diagnostics.append("\n" + constants_.globalTerminalInformationText());
+         diagnostics.append(constants_.currentTerminalSessionInformationText());
          diagnostics.append(constants_.captionText()).append(cpi.getCaption()).append("'\n");
          diagnostics.append(constants_.titleText()).append(cpi.getTitle()).append("'\n");
          diagnostics.append(constants_.colsText()).append(cpi.getCols()).append(" x ").append(cpi.getRows()).append("'\n");
@@ -97,7 +97,7 @@ public class TerminalInfoDialog extends ModalDialogBase
       textArea_.addStyleName(ThemeFonts.getFixedWidthClass());
       textArea_.setSize("600px", "400px");
       textArea_.setReadOnly(true);
-      // the dialog has no visible text to label the box, so reuse its title
+      // no text sits beside the box to label it, so it takes the dialog title
       Roles.getTextboxRole().setAriaLabelProperty(
             textArea_.getElement(), constants_.terminalDiagnosticsText());
       textArea_.setText(diagnostics.toString());
