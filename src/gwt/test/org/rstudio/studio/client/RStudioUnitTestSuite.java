@@ -40,6 +40,7 @@ import org.rstudio.core.client.widget.ModalDialogTrackerTests;
 import org.rstudio.core.client.widget.RowTableTests;
 import org.rstudio.core.client.widget.WidgetListBoxTests;
 import org.rstudio.studio.client.application.ApplicationUtilsTests;
+import org.rstudio.studio.client.application.ui.WarningBarListTests;
 import org.rstudio.studio.client.application.model.SessionScopeTests;
 import org.rstudio.studio.client.common.debugging.ErrorManagerTests;
 import org.rstudio.studio.client.common.filetypes.FileIconRendererTests;
@@ -133,6 +134,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(SourceMarkerItemCodecTests.class);
       suite.addTestSuite(TestMocks.class);
       suite.addTestSuite(ApplicationUtilsTests.class);
+      suite.addTestSuite(WarningBarListTests.class);
       suite.addTestSuite(ProjectMRUEntryTests.class);
       suite.addTestSuite(YamlTreeTests.class);
       suite.addTestSuite(DataImportPreviewResponseTests.class);

@@ -176,6 +176,13 @@ public abstract class GlobalDisplay extends MessageDisplay
    public abstract void showLicenseWarningBar(boolean severe, String message);
    public abstract void showWarningBar(boolean severe, String message);
    public abstract void showWarningBar(boolean severe, String message, String actionLabel, Command action);
+   /** Update or remove one named warning without affecting other messages. */
+   public abstract void showWarningBar(String id, boolean severe, String message, String actionLabel, Command action);
+   public void showWarningBar(String id, boolean severe, String message)
+   {
+      showWarningBar(id, severe, message, null, null);
+   }
+   public abstract void hideWarningBar(String id);
    public abstract void hideWarningBar();
 
    public abstract ProgressIndicator getProgressIndicator(String errorCaption);

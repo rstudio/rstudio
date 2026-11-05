@@ -23,6 +23,18 @@ public class WarningBarClosedEvent extends GwtEvent<WarningBarClosedEvent.Handle
    {
    }
 
+   public WarningBarClosedEvent(String id)
+   {
+      id_ = id;
+   }
+
+   public String getId()
+   {
+      return id_;
+   }
+
+   private String id_;
+
    public interface Handler extends EventHandler
    {
       void onWarningBarClosed(WarningBarClosedEvent event);

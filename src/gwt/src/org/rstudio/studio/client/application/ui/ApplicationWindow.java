@@ -41,6 +41,10 @@ import org.rstudio.studio.client.application.ui.serializationprogress.Applicatio
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.palette.CommandPaletteLauncher;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.events.PushClientStateEvent;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.ClientState;
+import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 
 @Singleton
 public class ApplicationWindow extends Composite
@@ -54,6 +58,7 @@ public class ApplicationWindow extends Composite
                             Provider<UserPrefs> pPrefs,
                             EventBus events,
                             Provider<WarningBar> pWarningBar,
+                            Session session,
                             AriaLiveService ariaLive,
                             CodeSearchLauncher launcher,
                             CommandPaletteLauncher paletteLauncher)
@@ -61,7 +66,6 @@ public class ApplicationWindow extends Composite
       globalDisplay_ = globalDisplay;
       events_ = events;
       pPrefs_ = pPrefs;
-      pWarningBar_ = pWarningBar;
       ariaLive_ = ariaLive;
 
       // occupy full client area of the window
@@ -86,6 +90,32 @@ public class ApplicationWindow extends Composite
 
       // main view container
       initWidget(applicationPanel_);
+
+      warnings_ = new WarningBarList(
+            pWarningBar,
+            this::updateWarnings,
+            () -> events.fireEvent(new PushClientStateEvent(true)));
+      Roles.getContentinfoRole().set(warnings_.getElement());
+      Roles.getContentinfoRole().setAriaLabelProperty(warnings_.getElement(), constants_.warningBarText());
+      applicationPanel_.add(warnings_);
+      applicationPanel_.setWidgetLeftRight(warnings_, COMPONENT_SPACING, Unit.PX, COMPONENT_SPACING, Unit.PX);
+      warnings_.setVisible(false);
+
+      session.withSessionInfo(info -> new StringStateValue(
+            "applicationWarnings", "dismissed", ClientState.TEMPORARY, info.getClientState())
+      {
+         @Override
+         protected void onInit(String value)
+         {
+            warnings_.restoreDismissedState(value);
+         }
+
+         @Override
+         protected String getValue()
+         {
+            return warnings_.getDismissedState();
+         }
+      });
    }
 
    @Override
@@ -169,8 +199,12 @@ public class ApplicationWindow extends Composite
    @Override
    public void showMemoryLimitWarning(String status, boolean updateOnly, boolean overLimit)
    {
-      if (!updateOnly || warningBar_ != null)
-        showWarning(true, (overLimit ? constants_.overMemoryLimit() : constants_.approachingMemoryLimit()) + " " + status);
+      if (!updateOnly)
+         warnings_.hide(MEMORY_WARNING);
+      if (!updateOnly || warnings_.contains(MEMORY_WARNING))
+         showWarning(MEMORY_WARNING, true,
+               (overLimit ? constants_.overMemoryLimit() : constants_.approachingMemoryLimit()) + " " + status,
+               null, null);
    }
 
    @Override
@@ -207,62 +241,48 @@ public class ApplicationWindow extends Composite
                                            Style.Unit.PX);
    }
 
-   private void showWarning(boolean severe, String message, boolean showLicenseButton)
+   private void updateWarnings()
    {
-      showWarning(severe, message, showLicenseButton, null, null);
-   }
-
-   private void showWarning(boolean severe,
-                            String message,
-                            boolean showLicenseButton,
-                            String actionLabel,
-                            Command action)
-   {
-      if (warningBar_ == null)
-      {
-         warningBar_ = pWarningBar_.get();
-         Roles.getContentinfoRole().set(warningBar_.getElement());
-         Roles.getContentinfoRole().setAriaLabelProperty(warningBar_.getElement(), constants_.warningBarText());
-         warningBar_.addCloseHandler(warningBarCloseEvent -> hideWarning());
-         applicationPanel_.add(warningBar_);
-         applicationPanel_.setWidgetBottomHeight(warningBar_,
-                                                 COMPONENT_SPACING,
-                                                 Unit.PX,
-                                                 warningBar_.getHeight(),
-                                                 Unit.PX);
-         applicationPanel_.setWidgetLeftRight(warningBar_,
-                                              COMPONENT_SPACING, Unit.PX,
-                                              COMPONENT_SPACING, Unit.PX);
-
-         workbenchBottom_ = COMPONENT_SPACING*2 + warningBar_.getHeight();
-         if (workbenchScreen_ != null)
-            updateWorkbenchTopBottom();
-
-         applicationPanel_.animate(250);
-      }
-      warningBar_.setSeverity(severe);
-      warningBar_.setText(message);
-      warningBar_.showLicenseButton(showLicenseButton);
-      warningBar_.setAction(actionLabel, action);
+      int height = warnings_.getPreferredHeight();
+      warnings_.setVisible(height > 0);
+      applicationPanel_.setWidgetBottomHeight(warnings_, COMPONENT_SPACING, Unit.PX, height, Unit.PX);
+      workbenchBottom_ = height == 0 ? COMPONENT_SPACING : COMPONENT_SPACING * 2 + height;
+      if (workbenchScreen_ != null)
+         updateWorkbenchTopBottom();
+      applicationPanel_.forceLayout();
    }
 
    @Override
    public void showLicenseWarning(boolean severe, String message)
    {
-      showWarning(severe, message, true);
-
+      if (message == null || message.isEmpty())
+         warnings_.hide(LICENSE_WARNING);
+      else
+         warnings_.show(LICENSE_WARNING, severe, message, true, null, null);
    }
 
    @Override
    public void showWarning(boolean severe, String message)
    {
-      showWarning(severe, message, false);
+      showWarning(severe, message, null, null);
    }
 
    @Override
    public void showWarning(boolean severe, String message, String actionLabel, Command action)
    {
-      showWarning(severe, message, false, actionLabel, action);
+      showWarning(WarningBarList.messageId(message, actionLabel), severe, message, actionLabel, action);
+   }
+
+   @Override
+   public void showWarning(String id, boolean severe, String message, String actionLabel, Command action)
+   {
+      warnings_.show(id, severe, message, false, actionLabel, action);
+   }
+
+   @Override
+   public void hideWarning(String id)
+   {
+      warnings_.hide(id);
    }
 
    private void updateHeaderTopBottom()
@@ -293,17 +313,7 @@ public class ApplicationWindow extends Composite
    @Override
    public void hideWarning()
    {
-      if (warningBar_ != null)
-      {
-         applicationPanel_.remove(warningBar_);
-         warningBar_ = null;
-
-         workbenchBottom_ = COMPONENT_SPACING;
-         if (workbenchScreen_ != null)
-            updateWorkbenchTopBottom();
-
-         applicationPanel_.animate(250);
-      }
+      warnings_.clear();
    }
 
    @Override
@@ -407,7 +417,9 @@ public class ApplicationWindow extends Composite
 
    private static final int COMPONENT_SPACING = 6;
    private Widget workbenchScreen_;
-   private WarningBar warningBar_;
+   private static final String MEMORY_WARNING = "memory-limit";
+   private static final String LICENSE_WARNING = "license";
+   private final WarningBarList warnings_;
    private final AriaLiveStatusWidget ariaLiveStatusWidget_;
    private int workbenchBottom_ = COMPONENT_SPACING;
    private final GlobalDisplay globalDisplay_;
@@ -416,6 +428,5 @@ public class ApplicationWindow extends Composite
    @SuppressWarnings("unused")
    private final Provider<UserPrefs> pPrefs_;
    private final AriaLiveService ariaLive_;
-   private final Provider<WarningBar> pWarningBar_;
    private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

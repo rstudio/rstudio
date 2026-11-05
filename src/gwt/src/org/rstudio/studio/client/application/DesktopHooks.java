@@ -275,10 +275,7 @@ public class DesktopHooks
 
    void updateLicenseWarningBar(String licenseMessage)
    {
-      if (StringUtil.isNullOrEmpty(licenseMessage))
-         globalDisplay_.hideWarningBar();
-      else
-         globalDisplay_.showLicenseWarningBar(false, licenseMessage);
+      globalDisplay_.showLicenseWarningBar(false, licenseMessage);
    }
 
    void onLauncherServerEvent(String eventType, String details)

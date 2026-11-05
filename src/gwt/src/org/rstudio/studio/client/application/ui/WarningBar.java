@@ -107,6 +107,8 @@ public class WarningBar extends Composite
    public void setText(String value)
    {
       label_.setInnerHTML(value);
+      Roles.getGroupRole().set(getElement());
+      Roles.getGroupRole().setAriaLabelProperty(getElement(), label_.getInnerText());
 
       // Give screen reader time to process page to improve chance it will notice the live region
       Timers.singleShot(AriaLiveService.UI_ANNOUNCEMENT_DELAY, () -> live_.setInnerText(value));
@@ -153,8 +155,16 @@ public class WarningBar extends Composite
 
    public int getHeight()
    {
-      return 28;
+      return HEIGHT;
    }
+
+   public void setWarningId(String id)
+   {
+      id_ = id;
+   }
+
+   public static final int HEIGHT = 28;
+   private String id_;
 
    public HandlerRegistration addCloseHandler(CloseHandler<WarningBar> handler)
    {
@@ -164,7 +174,7 @@ public class WarningBar extends Composite
    @Override
    public void onDetach()
    {
-      events_.fireEvent(new WarningBarClosedEvent());
+      events_.fireEvent(new WarningBarClosedEvent(id_));
       super.onDetach();
    }
 

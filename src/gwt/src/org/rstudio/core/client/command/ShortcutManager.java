@@ -43,7 +43,6 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedFromShortcutEvent;
 import org.rstudio.studio.client.workbench.commands.ReportShortcutBindingEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
-import org.rstudio.studio.client.workbench.events.ShowWarningBarEvent;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
@@ -846,14 +845,15 @@ public class ShortcutManager implements NativePreviewHandler,
    @Handler
    void onShowShortcutCommand()
    {
+      events_.fireEvent(new ReportShortcutBindingEvent(constants_.reportShortCutMessage(), true));
       setReportShortcutBinding(true);
-      events_.fireEvent(new ShowWarningBarEvent(false /*severe*/, constants_.reportShortCutMessage()));
    }
 
    @Override
    public void onWarningBarClosed(WarningBarClosedEvent event)
    {
-      setReportShortcutBinding(false);
+      if (ReportShortcutBindingEvent.WARNING_ID.equals(event.getId()))
+         setReportShortcutBinding(false);
    }
 
    private void clearKeyBuffer()
