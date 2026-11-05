@@ -160,7 +160,7 @@ test.describe('Editor', () => {
 
   // https://github.com/rstudio/rstudio/issues/19249
   test('select all honors regex and literal find modes', async ({ rstudioPage: page }) => {
-    const content = 'a1\na2\nA3\nxa4\na[0-9]\na[0-9]\nfalse\n';
+    const content = 'a1\na2\nA3\nxa4\na[0-9]\na[0-9]\nfalse\nfoo\nbar\nfoobar\n';
     await writeAndOpenFile(page, sandbox.dir, 'editor_select_all_regex.R', content);
 
     const editor = new AceEditor(page, 'a1');
@@ -188,6 +188,11 @@ test.describe('Editor', () => {
       await page.locator(FIND_INPUT).fill('(?<letter>a)[0-9]');
       await page.locator(SELECT_ALL_BUTTON).click();
       await expect.poll(() => editor.getSelectedText()).toBe('a1\na2\nA3\na4');
+      await wholeWord.check();
+      await page.locator(FIND_INPUT).fill('foo|bar');
+      await page.locator(SELECT_ALL_BUTTON).click();
+      await expect.poll(() => editor.getSelectedText()).toBe('foo\nbar');
+      await wholeWord.uncheck();
       await page.locator(FIND_INPUT).fill('a[0-9]');
 
       await matchCase.check();
@@ -250,6 +255,17 @@ test.describe('Editor', () => {
       await page.locator(SELECT_ALL_BUTTON).click();
       await expect.poll(() => editor.getSelectedText()).toBe('a\nb');
       await expect.poll(() => editor.getCursorPosition()).toEqual({ row: 5, column: 1 });
+
+      // The range's trailing newline must not invent an empty line before b.
+      await page.locator(FIND_INPUT).fill('^$');
+      await consoleActions.executeInConsole(
+        '.rs.api.setSelectionRanges(c(1, 1, 2, 1), id = .rs.api.getSourceEditorContext()$id)',
+        { wait: true },
+      );
+      await page.locator(`${SOURCE_PANEL_SELECTOR} .rstudio-find-replace-in-selection-checkbox input`).check();
+      await expect.poll(() => editor.getCursorPosition()).toEqual({ row: 0, column: 0 });
+      await page.locator(SELECT_ALL_BUTTON).click();
+      await expect.poll(() => editor.getCursorPosition()).toEqual({ row: 0, column: 0 });
     } finally {
       await regex.setChecked(originalRegex);
       await page.locator(CLOSE_FIND_BAR).click();

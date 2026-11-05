@@ -495,7 +495,8 @@ public class AceEditorNative extends JavaScriptObject
          boolean caseSensitive,
          boolean regex) /*-{
       var options = {
-         needle: needle,
+         // Ace adds word boundaries without grouping the expression.
+         needle: regex && wholeWord ? "(?:" + needle + ")" : needle,
          range: range,
          wholeWord: wholeWord,
          caseSensitive: caseSensitive,
@@ -519,9 +520,8 @@ public class AceEditorNative extends JavaScriptObject
       var lines = this.session.getDocument().getAllLines();
       var doc = new Document(lines);
       var text = doc.getValue();
-      var offset = range ? doc.positionToIndex(range.start) : 0;
+      re.lastIndex = range ? doc.positionToIndex(range.start) : 0;
       var end = range ? doc.positionToIndex(range.end) : text.length;
-      text = text.substring(offset, end);
 
       // Matches are ordered; walk the lines once instead of scanning from
       // the start of the document for every match's offset conversion.
@@ -538,9 +538,13 @@ public class AceEditorNative extends JavaScriptObject
       var match;
       while ((match = re.exec(text)))
       {
+         // Keep the surrounding text for anchors and lookarounds, but only
+         // select matches wholly contained in the requested range.
+         if (match.index + match[0].length > end)
+            break;
          ranges.push(Range.fromPoints(
-            toPosition(offset + match.index),
-            toPosition(offset + match.index + match[0].length)));
+            toPosition(match.index),
+            toPosition(match.index + match[0].length)));
 
          // Empty matches must advance, including past Unicode code points.
          if (!match[0].length)
