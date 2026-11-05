@@ -37,7 +37,7 @@ public class BuildToolsWebsitePanel extends BuildToolsPanel
       add(pathSelector_);    
        
       websiteOutputFormat_ = new SelectWidget(constants_.websiteOutputFormatLabel(),
-                                              new String[]{constants_.allLabel()});
+                                              new String[]{ALL_FORMATS});
       websiteOutputFormat_.addStyleName(RES.styles().websiteOutputFormat());
       add(websiteOutputFormat_);
       websiteOutputFormat_.setVisible(false);
@@ -80,7 +80,7 @@ public class BuildToolsWebsitePanel extends BuildToolsPanel
         
          // always include "All Formats"
          formatNames.add(constants_.allFormatsLabel());
-         formats.add(constants_.allLabel());
+         formats.add(ALL_FORMATS);
          for (int i = 0; i<formatsJson.length(); i++) 
          {
             formatNames.add(formatsJson.get(i));
@@ -112,5 +112,9 @@ public class BuildToolsWebsitePanel extends BuildToolsPanel
    
    
    private SelectWidget websiteOutputFormat_;
+
+   // The session's default for website_output_format, and the value
+   // SessionBuild.cpp treats as "render every format"; not translatable.
+   private static final String ALL_FORMATS = "all";
    private static final StudioClientProjectConstants constants_ = com.google.gwt.core.client.GWT.create(StudioClientProjectConstants.class);
 }
