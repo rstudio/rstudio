@@ -278,12 +278,25 @@ Error filterNodes(cmark_node* document,
    // Collect before mutating, and visit children before parents so deleting an
    // image also safely discards any inline markup in its alternative text.
    std::vector<cmark_node*> nodes;
+   int linkDepth = 0;
    std::unique_ptr<cmark_iter, decltype(&cmark_iter_free)> iter(
       cmark_iter_new(document), cmark_iter_free);
    while (cmark_iter_next(iter.get()) != CMARK_EVENT_DONE)
    {
+      cmark_node* node = cmark_iter_get_node(iter.get());
       if (cmark_iter_get_event_type(iter.get()) == CMARK_EVENT_ENTER)
-         nodes.push_back(cmark_iter_get_node(iter.get()));
+      {
+         // Superscript contents use a fresh inline parser, which can create
+         // links inside an enclosing label. Keep the outer destination and
+         // render any inner link's children without a nested anchor.
+         if (cmark_node_get_type(node) == CMARK_NODE_LINK && linkDepth++ > 0)
+            cmark_node_set_syntax_extension(node, skippedLink);
+         nodes.push_back(node);
+      }
+      else if (cmark_node_get_type(node) == CMARK_NODE_LINK)
+      {
+         --linkDepth;
+      }
    }
    iter.reset();
 

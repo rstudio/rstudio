@@ -64,11 +64,16 @@ inline parser API and parser structure; recheck that interface during upgrades.
 Upstream source remains untouched.
 
 The shared MathJax filter retains its existing pattern-based code exclusions.
-It does not fully implement CommonMark block and inline grammar: for example,
-math in a multiline inline-code span can still be converted. This also occurs
-with the original Sundown pipeline; this migration fixes matching backtick runs
-on one line without replacing the legacy math processor. Use a fenced code
-block when literal code contains math delimiters across lines.
+It does not fully implement CommonMark block and inline grammar: math in
+multiline inline-code spans or fences nested in quotes/lists can still be
+converted, and backticks in separate table cells can hide an intervening
+equation. These cases also fail with the original Sundown pipeline. This
+migration fixes matching backtick runs on one line without replacing the legacy
+math processor. Fence openers must remain at column zero because the filter
+cannot determine where an enclosing list ends. Use top-level fenced code blocks
+when literal code contains math delimiters across lines. Metadata is removed
+before math processing, and exclusion searches cache future matches to avoid
+repeatedly scanning the document suffix after every code span.
 
 ## Reproducing comparisons
 
@@ -106,10 +111,10 @@ plots, columns, superscripts, MathJax, and authored HTML/video.
 Local validation on macOS arm64:
 
 - All nine upstream test suites passed at the pinned revision.
-- The 20 Markdown integration tests passed with cmark; the 11 shared tests
+- The 22 Markdown integration tests passed with cmark; the 12 shared tests
   also passed with Sundown. They cover the actual help, preview and presentation
   contracts, extension toggles, concurrent parsers, and bounded superscripts.
-- The complete cmark core test run passed 828 tests, with 12 environment/platform
+- The complete cmark core test run passed 830 tests, with 12 environment/platform
   skips and three disabled tests. The first sandboxed run could not register
   filesystem monitors; the successful run used normal OS access.
 - Both changed session translation units passed compilation checks; the actual
@@ -129,14 +134,16 @@ Local validation on macOS arm64:
 - The knitted shipped presentation template was equivalent after normalization.
   The expanded presentation fixture differed only in the apostrophe in `don't`.
 
-A scan of the unmodified upstream sources reported nine findings. Four concern `src/main.c`, the upstream CLI, which is excluded
+An earlier scan, before switching to the external dependency declaration,
+reported nine findings in the unmodified upstream sources. Four concern `src/main.c`, the upstream CLI, which is excluded
 from `CMARK_SOURCES` and is not linked into RStudio. Five flag copies reached from
 `src/blocks.c` (lines 748, 757, 761, 1462 and 1464 at the pinned revision).
 Those paths bound their input slices by the supplied buffer length and copy
 through `cmark_strbuf_put`, which grows the destination before `memmove`;
 the UTF-8 validation path also uses this buffer helper. These appear to be
-static-analysis false positives, but the CI findings remain open for security
-review. No scan exclusions or upstream source changes were added to hide them.
+static-analysis false positives. The current PR code scan passes with the
+external dependency layout; these upstream observations remain documented for
+security review. No scan exclusions or upstream source changes were added.
 
 Before removing the fallback, exercise previews, custom completion help, and
 tutorials in the IDE on Windows, Linux, and macOS. R Presentations are soft

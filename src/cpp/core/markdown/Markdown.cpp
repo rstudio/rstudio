@@ -359,12 +359,13 @@ Error markdownToHTML(const std::string& markdownInput,
    // exclude fenced code blocks
    using namespace rstudio::core::html_utils;
    std::vector<ExcludePattern> excludePatterns;
-   // A closer must use at least as many delimiters as its opener. Match the
-   // complete block so a shorter fence within it cannot end math exclusion.
+   // Preserve the filter's column-zero opener rule: without parsing enclosing
+   // lists, an indented fence can otherwise consume math outside its container.
+   // A closer must use at least as many delimiters as its opener.
    excludePatterns.push_back(ExcludePattern(boost::regex(
-      R"(^ {0,3}(`{3,})(?!`)[^`\r\n]*(?:\r?\n|\z)[\s\S]*?(?:^ {0,3}\1`*[ \t]*\r?$|\z))")));
+      R"(^(`{3,})(?!`)[^`\r\n]*(?:\r?\n|\z)[\s\S]*?(?:^ {0,3}\1`*[ \t]*\r?$|\z))")));
    excludePatterns.push_back(ExcludePattern(boost::regex(
-      R"(^ {0,3}(~{3,})(?!~)[^\r\n]*(?:\r?\n|\z)[\s\S]*?(?:^ {0,3}\1~*[ \t]*\r?$|\z))")));
+      R"(^(~{3,})(?!~)[^\r\n]*(?:\r?\n|\z)[\s\S]*?(?:^ {0,3}\1~*[ \t]*\r?$|\z))")));
 
    // exclude inline verbatim code
    // Prefer complete spans with matching backtick runs. Retain the historical
@@ -378,8 +379,13 @@ Error markdownToHTML(const std::string& markdownInput,
       boost::regex("(\\A|\\A\\s*\\n|\\n\\s*\\n)(( {4}|\\t)[^\\n]*\\n)*(( {4}|\\t)[^\\n]*)")));
 
    std::string input = markdownInput;
+   // Remove metadata before processing math so delimiters in the header
+   // cannot pair with an equation in the document body.
+   if (extensions.stripMetadata)
+      stripMetadata(&input);
+
    boost::scoped_ptr<MathJaxFilter> pMathFilter;
-   if (extensions.ignoreMath)
+   if (extensions.ignoreMath && input.find_first_of("$\\") != std::string::npos)
    {
       pMathFilter.reset(new MathJaxFilter(excludePatterns,
                                           &input,
@@ -391,10 +397,6 @@ Error markdownToHTML(const std::string& markdownInput,
    html_utils::HtmlPreserver htmlPreserver;
    if (extensions.htmlPreserve)
       htmlPreserver.preserve(&input);
-
-   // strip yaml front-matter / pandoc metadata if requested
-   if (extensions.stripMetadata)
-      stripMetadata(&input);
 
    // special case of empty input after stripping metadata
    if (input.empty())

@@ -56,14 +56,31 @@ MathJaxFilter::MathJaxFilter(const std::vector<html_utils::ExcludePattern>& excl
    std::vector<TextRange> ranges;
    std::string::const_iterator pos = pInput->begin();
    std::string::const_iterator inputEnd = pInput->end();
+   // Retain future matches (including exhaustion) instead of searching the
+   // entire suffix for every pattern after each inline code span.
+   std::vector<TextRange> nextMatches(excludePatterns.size(), TextRange(false, inputEnd, inputEnd));
+   std::vector<bool> searched(excludePatterns.size(), false);
    while (pos != inputEnd)
    {
       // try all of the exclude patterns
       std::vector<TextRange> matchedRanges;
-      for (const html_utils::ExcludePattern& pattern : excludePatterns)
+      for (std::size_t i = 0; i < excludePatterns.size(); ++i)
       {
+         TextRange& next = nextMatches[i];
+         if (searched[i] && next.begin >= pos)
+         {
+            if (next.begin != inputEnd)
+               matchedRanges.push_back(next);
+            continue;
+         }
+
+         searched[i] = true;
+         next = TextRange(false, inputEnd, inputEnd);
+         const html_utils::ExcludePattern& pattern = excludePatterns[i];
          boost::smatch m;
-         if (regex_utils::search(pos, inputEnd, m, pattern.begin))
+         auto flags = pos == pInput->begin() ? boost::match_default
+                                            : boost::match_prev_avail | boost::match_not_bob;
+         if (regex_utils::search(pos, inputEnd, m, pattern.begin, flags))
          {
             // set begin and end (may change if there is an end pattern)
             std::string::const_iterator begin = m[0].first;
@@ -87,7 +104,8 @@ MathJaxFilter::MathJaxFilter(const std::vector<html_utils::ExcludePattern>& excl
             }
 
             // add the matched range to our list
-            matchedRanges.push_back(TextRange(false, begin, end));
+            next = TextRange(false, begin, end);
+            matchedRanges.push_back(next);
          }
       }
 

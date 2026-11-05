@@ -168,7 +168,21 @@ TEST(MarkdownTest, MetadataAndMath)
    EXPECT_NE(std::string::npos, render("```r\n$x_1$\n```\n").find("$x_1$"));
    EXPECT_FALSE(isMathJaxRequired(render("```r\n$x_1$\n```\n")));
    EXPECT_FALSE(isMathJaxRequired(render("~~~r\n$x_1$\n~~~\n")));
-   EXPECT_FALSE(isMathJaxRequired(render("  ```r\n$x_1$\n  ```\n")));
+   EXPECT_EQ("<p>\\[ x_1 \\]</p>\n", render("---\ntitle: '$$'\n---\n\n$$x_1$$"));
+   EXPECT_EQ("<p>\\[ x_1 \\]</p>\n", render("% $$\n\n$$x_1$$"));
+}
+
+TEST(MarkdownTest, MathAmongManyCodeSpans)
+{
+   std::string input;
+   for (int i = 0; i < 10000; ++i)
+      input += "`code`\n\n";
+   EXPECT_FALSE(isMathJaxRequired(render(input)));
+   input += "$x_1$\n\n```\n$literal$\n```\n\n$x_2$";
+   std::string html = render(input);
+   EXPECT_NE(std::string::npos, html.find("\\( x_1 \\)"));
+   EXPECT_NE(std::string::npos, html.find("\\( x_2 \\)"));
+   EXPECT_NE(std::string::npos, html.find("<code>$literal$\n</code>"));
 }
 
 TEST(MarkdownTest, HtmlPreserve)
@@ -219,6 +233,18 @@ TEST(MarkdownTest, MathExclusionPreservesExistingBlockBehavior)
       EXPECT_NE(std::string::npos, render(input).find("<code>a $x_1$ b</code>"));
    }
    EXPECT_TRUE(isMathJaxRequired(render("> ```\n> code\n$x_1$")));
+   EXPECT_TRUE(isMathJaxRequired(render("- item\n\n  ```\n  code\n\n$x_1$")));
+   EXPECT_TRUE(isMathJaxRequired(render("- item\n\n  ~~~\n  code\n\n$x_1$")));
+}
+
+TEST(MarkdownTest, SuperscriptsDoNotNestLinks)
+{
+   EXPECT_EQ("<p><a href=\"https://outer.example\">x<sup>https://inner.example</sup></a></p>\n",
+             render("[x^(https://inner.example)](https://outer.example)"));
+   EXPECT_EQ("<p><a href=\"/outer\">x<sup>label</sup></a></p>\n",
+             render("[x^([label][ref])](/outer)\n\n[ref]: /inner"));
+   EXPECT_EQ("<p>x<sup><a href=\"https://inner.example\">https://inner.example</a></sup></p>\n",
+             render("x^(https://inner.example)"));
 }
 
 TEST(MarkdownTest, BareSuperscriptsRespectEnclosingInlineMarkup)
