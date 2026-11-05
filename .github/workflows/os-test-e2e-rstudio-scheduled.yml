@@ -61,12 +61,11 @@ on:
         default: false
 
 concurrency:
-  # The weekday cron and manual dispatch share the "main" group, which caps the
-  # fleet at one full rotation at a time. The three Sunday crons get a group
-  # each: sharing "main" would make each later run queue behind the earlier one,
-  # and since only one run per group can be pending (a further trigger cancels
-  # the pending one rather than queueing behind it), a third would cancel it
-  # outright.
+  # The weekday cron and manual dispatch share the "main" group, so a dispatch
+  # never runs alongside a weekday slate; whichever starts second waits. The
+  # three Sunday crons get a group each: sharing "main", the 12:00 run would
+  # wait behind the 08:00 one, and since a group holds only one waiting run,
+  # the 16:00 trigger would cancel the 12:00 run outright.
   # Four hours is less slack than the original two-way split had, so this is
   # tighter than ideal for a daily-install fleet that overruns -- but each run
   # still gets its own group, so an overrun delays or cancels only that run's
@@ -231,8 +230,7 @@ jobs:
           # Nothing selected means every job below is skipped by its own if:, and
           # the run reports green having tested nothing. The weekday case has its
           # own loud fallback, so this guard is really for the three Sunday
-          # filters -- and for a dispatch, if ENGINES itself ever came back
-          # empty.
+          # filters -- and for a dispatch, if ENGINES itself ever came back empty.
           if [ "$SEL" = "[]" ]; then
             echo "::error::No engines selected for this trigger. Check the platform and arch tags in ENGINES against the filters in this step."
             exit 1
