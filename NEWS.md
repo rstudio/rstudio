@@ -31,6 +31,7 @@
 - ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the list in the dialog for choosing a Posit Connect Cloud account without a label.
 - ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the text box in the Terminal Diagnostics dialog without a label.
 - ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the license text on the ODBC driver install page of the New Connection dialog without its "License:" label.
+- ([#19324](https://github.com/rstudio/rstudio/issues/19324)): [Accessibility] Fixed several issues where the RStudio Server main menu didn't follow the WAI-ARIA menubar pattern. Down Arrow now opens a menu after the mouse has been used. Enter, Space, Right Arrow, and the per-menu shortcuts now open a menu or submenu with focus on its first item. Tab and Shift+Tab from an open menu now move relative to the menubar. Focus now returns to where it was after a command runs, however the menubar was entered. Menus are now named and exposed inside the menubar, which is named "Main menu", and menu items report collapsed submenus and their shortcuts without reading out shortcut symbols. In menus throughout the IDE, disabled items can now be reached with the arrow keys.
 
 ### Dependencies
 - Quarto 1.11.9
