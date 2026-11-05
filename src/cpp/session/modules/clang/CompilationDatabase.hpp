@@ -55,6 +55,10 @@ public:
    std::vector<std::string> compileArgsForTranslationUnit(
            const std::string& filename, bool usePrecompiledHeaders);
 
+   // the args we derive for the file, without the precompiled header or
+   // any compile_flags.txt additions
+   std::vector<std::string> generatedCompileArgs(const std::string& filename);
+
    bool isProjectTranslationUnit(const std::string& filename) const;
 
    std::vector<std::string> projectTranslationUnits() const;
@@ -108,9 +112,13 @@ private:
 #endif
 
    core::system::Options compilationEnvironment() const;
-   std::vector<std::string> precompiledHeaderArgs(const CompilationConfig& config);
+   std::vector<std::string> precompiledHeaderArgs(
+         const CompilationConfig& config,
+         const std::vector<std::string>& userFlags);
 
    bool shouldIndexConfig(const CompilationConfig& config);
+   bool configForTranslationUnit(const core::FilePath& filePath,
+                                 CompilationConfig* pConfig);
 
 private:
 
@@ -136,6 +144,18 @@ private:
 };
 
 core::libclang::CompilationDatabase clangCompilationDatabase();
+
+// Support for a 'compile_flags.txt' (one argument per line, as in clangd)
+// found in a source file's directory or, within a project, a parent directory.
+core::FilePath findCompileFlagsFile(const core::FilePath& dir,
+                                    const core::FilePath& stopDir);
+core::FilePath compileFlagsFileForSource(const core::FilePath& srcFile);
+std::vector<std::string> readCompileFlags(const core::FilePath& flagsFile);
+std::vector<std::string> resolveCompileFlagPaths(const std::vector<std::string>& flags,
+                                                 const core::FilePath& dir);
+std::vector<std::string> compileFlagsForSource(const core::FilePath& srcFile);
+void removeOrphanedUserFlagsPchs(const core::FilePath& platformPath,
+                                 const std::string& pkgName);
 
 
 } // namespace clang

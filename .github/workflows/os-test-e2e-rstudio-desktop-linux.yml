@@ -516,7 +516,7 @@ jobs:
       # and scheduled workflows, or a dispatch on main), and only on a key
       # miss. A cache saved from a PR run lands in that PR's merge-ref scope,
       # which no other branch can restore -- each copy is pure pressure on
-      # the repo's 10 GB Actions cache quota, and that pressure is what
+      # the repo's Actions cache quota, and that pressure is what
       # evicts main's copies and sends every PR build cold in the first place.
       - name: Save rstudio-tools deps
         if: github.ref == 'refs/heads/main' && steps.tools-cache.outputs.cache-hit != 'true'
@@ -822,7 +822,7 @@ jobs:
       # already S3/CDN-backed, and GH Actions cache scoping means concurrent
       # PRs can't share a cache entry with each other anyway (only with their
       # base branch), so caching here would just duplicate the same bytes
-      # into the shared 10 GB cache quota without saving meaningful time.
+      # into the shared cache quota without saving meaningful time.
       - name: Download installer
         if: inputs.build_from_source == false || inputs.rstudio_installer_url != ''
         env:

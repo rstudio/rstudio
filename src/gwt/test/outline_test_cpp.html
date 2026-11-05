@@ -1,0 +1,125 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <!--
+    Regression tests for the scope tree behind the document outline of a
+    C++ file. The C++ scope manager inherits the R one's state and methods,
+    so a build-then-edit cycle exercises what the inherited invalidation
+    expects of it.
+  -->
+  <script type="text/javascript" src="../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace-uncompressed.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/yaml_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/colors.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/utils.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/auto_brace_insert.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/doc_comment_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/tex_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/token_cursor.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/token_utils.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/rainbow_paren_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_matching_brace_outdent.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_scope_tree.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_code_model.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/cpp_scope_tree.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/cpp_code_model.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/c_cpp_fold_mode.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/c_cpp_style_behaviour.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/c_cpp_matching_brace_outdent.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/c_cpp_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/c_cpp.js"></script>
+</head>
+<body>
+
+<h2>C++ document outline tests</h2>
+<p>Passed: <span id="passed"></span>, Failed: <span id="failed"></span></p>
+<ol id="results"></ol>
+
+<script type="text/javascript">
+
+var passed = 0, failed = 0;
+var results = document.getElementById("results");
+
+function check(name, actual, expected) {
+  var ok = actual === expected;
+  var li = document.createElement("li");
+  li.textContent = (ok ? "[PASS] " : "[FAIL] ") + name +
+    (ok ? "" : " -- expected " + JSON.stringify(expected) +
+               ", got " + JSON.stringify(actual));
+  li.style.color = ok ? "green" : "red";
+  results.appendChild(li);
+  if (ok)
+    passed++;
+  else
+    failed++;
+}
+
+var CppMode = require("mode/c_cpp").Mode;
+var EditSession = require("ace/edit_session").EditSession;
+
+function makeSession(code) {
+  var session = new EditSession(code);
+  session.setMode(new CppMode(false, session));
+  return session;
+}
+
+// Every labelled node, with the rows it spans; 'open' when nothing has
+// closed it.
+function treeOf(nodes, indent, out) {
+  for (var i = 0; i < nodes.length; i++) {
+    var node = nodes[i];
+    if (node.label)
+      out.push(indent + node.label +
+               " [" + node.preamble.row + ".." + (node.end ? node.end.row : "open") + "]");
+    treeOf(node.$children, node.label ? indent + "  " : indent, out);
+  }
+  return out;
+}
+
+function tree(session) {
+  var nodes = session.getMode().codeModel.getScopeTree();
+  return treeOf(nodes, "", []).join("\n");
+}
+
+// Editing a document after its scope tree is built invalidates the tree from
+// the edit, through the manager state the C++ manager inherits.
+var edited = makeSession([
+  "namespace ns {",
+  "void f() {",
+  "  int x;",
+  "}",
+  "void g() {",
+  "}",
+  "}",
+  ""
+].join("\n"));
+
+check("the scope tree before the edit",
+      tree(edited),
+      ["namespace ns [0..6]",
+       "  f(): void [1..3]",
+       "  g(): void [4..5]"].join("\n"));
+
+var error = null;
+try {
+  edited.insert({row: 2, column: 0}, "  int y;\n");
+}
+catch (e) {
+  error = String(e);
+}
+
+check("an edit after the scope tree is built does not throw",
+      error, null);
+
+check("the scope tree is rebuilt after the edit",
+      tree(edited),
+      ["namespace ns [0..7]",
+       "  f(): void [1..4]",
+       "  g(): void [5..6]"].join("\n"));
+
+document.getElementById("passed").textContent = passed;
+document.getElementById("failed").textContent = failed;
+
+</script>
+</body>
+</html>
