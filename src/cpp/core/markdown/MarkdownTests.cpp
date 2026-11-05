@@ -248,7 +248,9 @@ TEST(MarkdownTest, FenceTextInHtmlDoesNotHideFollowingMath)
 {
    for (const std::string html : {"<pre>\n~~~\n</pre>", "<div>\n~~~\n</div>",
                                   "<!--\n~~~\n-->", "<custom>\n~~~\n</custom>",
-                                  "<pre>\n```\n</pre>"})
+                                  "<pre>\n```\n</pre>", "<pre>\n~~~</pre>",
+                                  "<pre>\n```</pre>", "<!--\n~~~-->",
+                                  "<script>\n~~~</script>", "<textarea>\n~~~</textarea>"})
    {
       SCOPED_TRACE(html);
       std::string output = render(html + "\n\n$x_1$");
@@ -259,6 +261,13 @@ TEST(MarkdownTest, FenceTextInHtmlDoesNotHideFollowingMath)
    EXPECT_FALSE(isMathJaxRequired(render("```\n<pre>\n~~~\n</pre>\n$x_1$\n```")));
    EXPECT_FALSE(isMathJaxRequired(render("<pre>\n~~~\n</pre>\n```\n$x_1$\n```")));
    EXPECT_FALSE(isMathJaxRequired(render("<div>\n~~~\n\n```\n$x_1$\n```")));
+   EXPECT_NE(std::string::npos,
+             render("$$\n<pre>\n$$\n\n~~~\n$x_1$\n~~~\n").find("<code>$x_1$\n</code>"));
+   EXPECT_NE(std::string::npos,
+             render("<pre>\n~~~</pre>\n\n$$\n<pre>\n$$\n\n~~~\n$x_1$\n~~~\n")
+                .find("<code>$x_1$\n</code>"));
+   EXPECT_NE(std::string::npos,
+             render("<div>\rcontent\r</div>\n\n~~~\n$x_1$\n~~~\n").find("<code>$x_1$\n</code>"));
 }
 
 TEST(MarkdownTest, MathExclusionPreservesExistingBlockBehavior)

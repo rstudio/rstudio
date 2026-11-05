@@ -47,7 +47,8 @@ public:
    MathJaxFilter(std::string* pInput,
                  std::string* pHTMLOutput,
                  bool escapeHtml,
-                 const std::vector<std::pair<std::size_t, std::size_t>>& htmlBlocks);
+                 const std::vector<std::pair<std::size_t, std::size_t>>& htmlBlocks,
+                 bool maskOnly = false);
    ~MathJaxFilter();
 
 private:
@@ -78,6 +79,7 @@ private:
 private:
    std::string* pHTMLOutput_;
    bool escapeHtml_;
+   bool maskOnly_;
    std::map<std::string,MathBlock> displayMathBlocks_;
    std::map<std::string,MathBlock> inlineMathBlocks_;
 };

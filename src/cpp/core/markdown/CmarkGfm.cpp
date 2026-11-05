@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <cstring>
 #include <memory>
 #include <mutex>
 #include <unordered_map>
@@ -369,8 +370,12 @@ Error cmarkHtmlBlockRanges(
 
    std::vector<std::size_t> lines{0};
    for (std::size_t i = 0; i < input.size(); ++i)
-      if (input[i] == '\n')
+   {
+      if (input[i] == '\r' && i + 1 < input.size() && input[i + 1] == '\n')
+         ++i;
+      if (input[i] == '\n' || input[i] == '\r')
          lines.push_back(i + 1);
+   }
 
    pRanges->clear();
    // The filter recognizes column-zero fence openers only. HTML blocks in
@@ -381,11 +386,19 @@ Error cmarkHtmlBlockRanges(
       if (cmark_node_get_type(node) != CMARK_NODE_HTML_BLOCK)
          continue;
       int begin = cmark_node_get_start_line(node);
-      int end = cmark_node_get_end_line(node);
-      if (begin > 0 && end >= begin && static_cast<std::size_t>(begin) <= lines.size())
+      const char* literal = cmark_node_get_literal(node);
+      if (begin > 0 && static_cast<std::size_t>(begin) <= lines.size() && literal && *literal)
       {
+         // For terminated HTML blocks, end_line can precede the closing-tag
+         // line. The literal contains every consumed line, with normalized
+         // newlines, so count those rather than trusting that end position.
+         std::size_t size = std::strlen(literal);
+         std::size_t count = std::count(literal, literal + size, '\n');
+         if (literal[size - 1] != '\n')
+            ++count;
+         std::size_t end = begin - 1 + count;
          pRanges->emplace_back(lines[begin - 1],
-                              static_cast<std::size_t>(end) < lines.size() ? lines[end] : input.size());
+                              end < lines.size() ? lines[end] : input.size());
       }
    }
    return Success();

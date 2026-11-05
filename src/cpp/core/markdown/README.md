@@ -77,7 +77,10 @@ repeatedly scanning the document suffix after every code span. Only the
 earliest fence opener searches for its closer, so overlapping candidates do
 not repeatedly scan to the end of the document. When math, HTML and fences
 occur together, a cmark prepass supplies top-level HTML block ranges so
-fence-like content there cannot hide later equations. Fence exclusions honor
+fence-like content there cannot hide later equations. The ranges use the HTML
+literal's consumed lines, account for CR/LF line endings, and are recomputed
+with math masked at the same byte offsets so HTML inside equations does not
+hide real code blocks. Fence exclusions honor
 the pinned parser's 255-character effective delimiter limit.
 
 ## Reproducing comparisons

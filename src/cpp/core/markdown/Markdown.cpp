@@ -377,6 +377,16 @@ Error markdownToHTML(const std::string& markdownInput,
          Error error = cmarkHtmlBlockRanges(input, extensions, &htmlBlocks);
          if (error)
             return error;
+
+         // Equations may themselves contain HTML. Mask math using the initial
+         // ranges, then discover the HTML blocks that survive preprocessing.
+         // Masking keeps byte offsets while replacing newlines like the real
+         // math placeholders, so these ranges still refer to the source input.
+         std::string masked = input;
+         MathJaxFilter mask(&masked, nullptr, false, htmlBlocks, true);
+         error = cmarkHtmlBlockRanges(masked, extensions, &htmlBlocks);
+         if (error)
+            return error;
       }
 #endif
       pMathFilter.reset(new MathJaxFilter(&input, pHTMLOutput, options.escape, htmlBlocks));

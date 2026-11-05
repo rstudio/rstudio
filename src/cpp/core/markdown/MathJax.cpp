@@ -88,8 +88,9 @@ bool searchCodePattern(
 MathJaxFilter::MathJaxFilter(std::string* pInput,
                              std::string* pHTMLOutput,
                              bool escapeHtml,
-                             const std::vector<std::pair<std::size_t, std::size_t>>& htmlBlocks)
-   : pHTMLOutput_(pHTMLOutput), escapeHtml_(escapeHtml)
+                             const std::vector<std::pair<std::size_t, std::size_t>>& htmlBlocks,
+                             bool maskOnly)
+   : pHTMLOutput_(pHTMLOutput), escapeHtml_(escapeHtml), maskOnly_(maskOnly)
 {
    // Retain column-zero fence openers: the legacy filter cannot determine
    // where an enclosing list ends. Match only the opener until it is selected,
@@ -232,6 +233,8 @@ MathJaxFilter::MathJaxFilter(std::string* pInput,
 
 MathJaxFilter::~MathJaxFilter()
 {
+   if (maskOnly_)
+      return;
    try
    {
       std::for_each(
@@ -280,6 +283,11 @@ std::string MathJaxFilter::substitute(
    }
    else
    {
+      // Match the normal placeholder's plain-text semantics, including
+      // removing embedded newlines, but retain byte offsets for the HTML
+      // block prepass. This mode never registers output restorations.
+      if (maskOnly_)
+         return std::string(match.length(), 'x');
       std::string guid = core::system::generateUuid(false);
       std::string suffix = (match.size() > 2) ? std::string(match[2]) : "";
       pMathBlocks->insert(std::make_pair(guid, MathBlock(equation,suffix)));
