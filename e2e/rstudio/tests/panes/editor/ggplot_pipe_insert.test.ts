@@ -12,6 +12,8 @@ import { SourcePaneActions } from '@actions/source_pane.actions';
 import { AceEditor } from '@pages/ace_editor.page';
 import { executeCommand, setPref, clearPref } from '@utils/commands';
 import { TIMEOUTS } from '@utils/constants';
+import { useSuiteSandbox } from '@utils/sandbox';
+import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
 
 const PLUS = ' + ';
 const PIPE = ' |> ';
@@ -69,6 +71,193 @@ const CASES: PipeCase[] = [
     expected: PIPE,
   },
   {
+    name: 'after a user function sharing the theme_ prefix (#19415)',
+    content: 'theme_tmp <- function() print("foo")\ntheme_tmp()',
+    expected: PIPE,
+  },
+  {
+    name: 'after a theme_ call chained onto a plot object',
+    content: 'p + theme_bw()',
+    expected: PLUS,
+  },
+  {
+    name: 'after a theme_ call on a continuation line',
+    content: 'p +\n  theme_minimal()',
+    expected: PLUS,
+  },
+  {
+    name: 'after a user function sharing the scale_ prefix',
+    content: 'scale_counts(x)',
+    expected: PIPE,
+  },
+  {
+    name: 'after a scale_ call chained onto a plot object',
+    content: 'p + scale_x_log10()',
+    expected: PLUS,
+  },
+  {
+    name: 'after a saved theme added to a theme_ call',
+    content: 'theme_bw() + extra_theme',
+    expected: PLUS,
+  },
+  {
+    // the pipe hides the calls feeding it, and only '+' or '&' next to a
+    // theme_ call joins it
+    name: 'after a saved theme piped through a theme_ call and added to a plot object',
+    content: 'p + saved_theme |> theme_copy()',
+    expected: PIPE,
+  },
+  {
+    name: 'after a theme_ call applied with patchwork & to plots composed with |',
+    content: '(p1 | p2) & theme_bw()',
+    expected: PLUS,
+  },
+  {
+    name: 'after a theme_ call applied with patchwork & to plots composed with /',
+    content: 'p1 / p2 & theme_bw()',
+    expected: PLUS,
+  },
+  {
+    name: 'after arithmetic on a user scale_ function followed by +',
+    content: 'scale_counts(x) * 2 + 1',
+    expected: PIPE,
+  },
+  {
+    name: 'after a user scale_ function multiplied in a sum',
+    content: '1 + 2 * scale_counts(x)',
+    expected: PIPE,
+  },
+  {
+    name: 'after a user theme_ function in an argument following arithmetic',
+    content: 'list(1 + 2, theme_tmp()',
+    expected: PIPE,
+  },
+  {
+    name: 'after an argument following a ggplot argument',
+    content: 'list(ggplot(mtcars), mtcars',
+    expected: PIPE,
+  },
+  {
+    name: 'after a user scale_ function in an else branch following arithmetic',
+    content: 'if (flag) 1 + 2 else scale_counts(x)',
+    expected: PIPE,
+  },
+  {
+    name: 'after a conditional layer added to a ggplot',
+    content: 'ggplot(mtcars) + if (flag) { geom_point() } else { geom_line() }',
+    expected: PLUS,
+  },
+  {
+    name: 'after braced conditional layers added to a plot object',
+    content: 'p + if (flag) { geom_point() } else { geom_line() }',
+    expected: PLUS,
+  },
+  {
+    name: 'after a braced conditional layer with a NULL branch added to a plot object',
+    content: 'p + if (flag) { NULL } else { geom_point() }',
+    expected: PLUS,
+  },
+  {
+    name: 'after a braced conditional layer without an else branch added to a plot object',
+    content: 'p + if (flag) { geom_point() }',
+    expected: PLUS,
+  },
+  {
+    name: 'after a multi-line braced conditional layer added to a plot object',
+    content: 'p + if (flag) {\n  x <- 1\n  geom_point()\n}',
+    expected: PLUS,
+  },
+  {
+    name: 'after a braced conditional assigning a user theme_ function',
+    content: 'x <- if (flag) { theme_tmp() } else { NULL }',
+    expected: PIPE,
+  },
+  {
+    name: 'after a function body ending in a ggplot chain',
+    content: 'f <- function() {\n  ggplot(mtcars) + geom_point()\n}',
+    expected: PIPE,
+  },
+  {
+    name: 'after a layer in the last branch of an else-if chain added to a plot object',
+    content: 'p + if (a) NULL else if (b) NULL else geom_point()',
+    expected: PLUS,
+  },
+  {
+    name: 'after a user scale_ function with a unary plus',
+    content: '+scale_counts(x)',
+    expected: PIPE,
+  },
+  {
+    name: 'after a user scale_ function with a unary plus following an if header',
+    content: 'if (flag) +scale_counts(x)',
+    expected: PIPE,
+  },
+  {
+    name: 'after a user scale_ function in an else branch following a ggplot branch',
+    content: 'if (flag) ggplot(mtcars) else scale_counts(x)',
+    expected: PIPE,
+  },
+  {
+    name: 'after a conditional layer with a NULL branch added to a plot object',
+    content: 'p + if (flag) NULL else geom_point()',
+    expected: PLUS,
+  },
+  {
+    name: 'after a NULL branch following a conditional layer added to a plot object',
+    content: 'p + if (flag) geom_point() else NULL',
+    expected: PLUS,
+  },
+  {
+    name: 'after a NULL branch following a piped conditional layer',
+    content: 'ggplot(mtcars) + if (flag) geom_point() |> identity() else NULL',
+    expected: PLUS,
+  },
+  {
+    name: 'after a numeric branch following a piped ggplot branch',
+    content: '1 + if (flag) ggplot(mtcars) |> length() else 0',
+    expected: PIPE,
+  },
+  {
+    name: 'after a layer following a section heading comment',
+    content: 'p +\n  # Layers ----\n  geom_point()',
+    expected: PLUS,
+  },
+  {
+    name: 'after a user scale_ function with a unary plus following a section heading comment',
+    content: 'if (flag)\n# Heading ----\n+scale_counts(x)',
+    expected: PIPE,
+  },
+  {
+    name: 'after a user scale_ function with a unary plus following a commented if header',
+    content: 'if # Heading ----\n(flag) +scale_counts(x)',
+    expected: PIPE,
+  },
+  {
+    name: 'after a conditional layer with a commented if header added to a plot object',
+    content: 'p + if # Heading ----\n(flag) geom_point()',
+    expected: PLUS,
+  },
+  {
+    name: 'after a nested conditional with a piped inner branch added to a plot object',
+    content: 'p + if (outer) if (inner) geom_point() else NULL |> identity() else NULL',
+    expected: PLUS,
+  },
+  {
+    name: 'after a nested conditional with a piped inner branch following a theme_ call',
+    content: 'p + if (outer) theme_bw() + if (inner) NULL else NULL |> identity() else NULL',
+    expected: PLUS,
+  },
+  {
+    name: 'after a NULL branch on its own line inside a braced body',
+    content: 'function() {\n  ggplot(mtcars) + if (flag) geom_point()\n  else NULL',
+    expected: PLUS,
+  },
+  {
+    name: 'after a conditional layer on a continuation line',
+    content: 'p + if (flag)\n  geom_point()',
+    expected: PLUS,
+  },
+  {
     name: 'after a ggplot chain piped into another call',
     content: 'ggplot(mtcars) + geom_point() |> ggplotly()',
     expected: PIPE,
@@ -111,6 +300,7 @@ async function insertPipeAtEnd(page: Page, editor: AceEditor, content: string): 
 }
 
 test.describe('Insert Pipe Operator in ggplot2 chains', () => {
+  const sandbox = useSuiteSandbox();
   let consoleActions: ConsolePaneActions;
   let sourceActions: SourcePaneActions;
 
@@ -154,6 +344,48 @@ test.describe('Insert Pipe Operator in ggplot2 chains', () => {
     await executeCommand(page, 'insertPipeOperator');
 
     await expect.poll(() => editor.getValue()).toBe(`${PIPE.trimStart()}${content}`);
+  });
+
+  test('inserts a pipe after a unary plus as a first argument with rainbow parentheses', async ({
+    rstudioPage: page,
+  }) => {
+    // rainbow parentheses give '(' a token type without 'keyword' in it, so
+    // the operand check must reject opening brackets by value
+    await setPref(page, 'rainbow_parentheses', true);
+    try {
+      const editor = new AceEditor(page, '');
+      expect(await insertPipeAtEnd(page, editor, 'list(+scale_counts(x)')).toBe(PIPE);
+    } finally {
+      await clearPref(page, 'rainbow_parentheses');
+    }
+  });
+
+  test('inserts a pipe after a user theme_ function in the chunk after an unfinished +', async ({
+    rstudioPage: page,
+  }) => {
+    // the code model keeps Sweave chunk delimiters as comment tokens; the
+    // walk must stop at them rather than reading into the previous chunk
+    const fileName = 'ggplot_pipe_chunks.Rnw';
+    const content = `<<>>=
+p +
+@
+
+<<>>=
+theme_tmp()
+@
+`;
+    await writeAndOpenFile(page, sandbox.dir, fileName, content);
+    try {
+      const editor = new AceEditor(page, '<<>>=');
+      await expect.poll(() => editor.getValue()).toBe(content);
+      await editor.gotoLine(6, 'theme_tmp()'.length);
+
+      await executeCommand(page, 'insertPipeOperator');
+
+      await expect.poll(() => editor.getValue()).toBe(content.replace('theme_tmp()', `theme_tmp()${PIPE}`));
+    } finally {
+      await closeAndDeleteSandboxFiles(page, sandbox.dir, [fileName]);
+    }
   });
 
   test('inserts a pipe in a ggplot chain when the pref is off', async ({ rstudioPage: page }) => {

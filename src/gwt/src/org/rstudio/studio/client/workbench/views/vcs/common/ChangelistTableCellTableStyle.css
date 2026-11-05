@@ -34,7 +34,10 @@ span.status img:first-child {
    margin-bottom: 0;
 }
 
-.rstudio-themes-dark .cellTableSortableHeader {
+/* Every header follows the theme, sortable or not (the go-to-change column's
+   isn't; see GitChangelistTable); the sort arrow's rules stay with the
+   sortable ones. */
+.rstudio-themes-dark .cellTableHeader {
    color: white;
 }
 
@@ -47,26 +50,26 @@ span.status img:first-child {
    padding-left: 13px !important;
 }
 
-.cellTableSortableHeader {
+.cellTableHeader {
    border-top: none;
    border-left: none;
 }
 
-.cellTableSortableHeader:last-child {
+.cellTableHeader:last-child {
    border-right: none;
 }
 
-.rstudio-themes-default .cellTableSortableHeader {
+.rstudio-themes-default .cellTableHeader {
    background: THEME_DEFAULT_BACKGROUND;
    border-color: THEME_DEFAULT_BORDER;
 }
 
-.rstudio-themes-dark-grey .cellTableSortableHeader {
+.rstudio-themes-dark-grey .cellTableHeader {
    background: THEME_DARKGREY_BACKGROUND;
    border-color: THEME_DARKGREY_BORDER;
 }
 
-.rstudio-themes-alternate .cellTableSortableHeader {
+.rstudio-themes-alternate .cellTableHeader {
    background: THEME_ALTERNATE_BACKGROUND;
    border-color: THEME_ALTERNATE_BORDER;
 }

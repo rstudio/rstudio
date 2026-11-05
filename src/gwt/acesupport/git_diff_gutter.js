@@ -66,12 +66,17 @@ var DEFAULT_STRINGS = {
    removedLines: function(n) { return "Removed " + pluralize(n, "line"); },
    addedLines:   function(n) { return "Added " + pluralize(n, "line"); },
    changedLines: function(n) { return "Changed " + pluralize(n, "line") + "; previously:"; },
+   changedLinesShort: function(n) { return "Changed " + pluralize(n, "line"); },
    revert: "Revert",
    close:  "Close"
 };
 
 // Mirrors how the editor loads a document (AceEditor.doSetCode strips
-// escape characters) and how Ace's Document splits lines.
+// escape characters) and how Ace's Document splits lines: a final newline
+// ends an empty last line, and an empty file has no lines at all (see
+// update). Git's diff sees these differently, which the Git pane's
+// go-to-change allows for (GitPresenter.unchangedLeadingLines); a change
+// here needs one there.
 function splitLines(text) {
    text = text.replace(/\u001b/g, "");
    return text === "" ? [] : text.split(/\r\n|\r|\n/);
@@ -207,6 +212,31 @@ function sameChunk(a, b) {
           a.new.end.row === b.new.end.row;
 }
 
+// Puts the cursor at the start of a row, as gotoLine does, without its
+// scroll (see goToChange).
+function moveCursorTo(editor, row) {
+   if (editor.exitMultiSelectMode)
+      editor.exitMultiSelectMode();
+   editor.clearSelection();
+   editor.moveCursorTo(row, 0);
+}
+
+// Brings the start of a row, where the cursor goes (see moveCursorTo), into
+// view: the row to the middle of the editor, as gotoLine does, unless it is
+// in view already -- going by where the rows are now, and where the view is
+// headed (an animated scroll may be under way), rather than by what was
+// last drawn -- and the view back to the left edge.
+function revealRow(editor, row) {
+   var renderer = editor.renderer;
+   var top = renderer.$cursorLayer.getPixelPosition({ row: row, column: 0 }).top;
+   var scrollTop = editor.session.getScrollTop();
+   if (top < scrollTop || top + renderer.lineHeight > scrollTop + renderer.$size.scrollerHeight)
+      renderer.scrollToLine(row, true, true);
+
+   if (editor.session.getScrollLeft() > 0)
+      editor.session.setScrollLeft(0);
+}
+
 var GitDiffGutter = function(editor, strings) {
    this.editor = editor;
    this.strings = strings || DEFAULT_STRINGS;
@@ -218,16 +248,22 @@ var GitDiffGutter = function(editor, strings) {
    this.updateTimer = null;
    this.updatePending = false;
    this.lastDiffMs = 0;
+   this.diffFailed = false;
    this.ignoreWhitespace = false;
    this.peek = null;
    this.baseRefresher = null;
    this.revision = 0;
    this.splitView = null;
+   this.firstChangePending = null;
+   this.statusListener = null;
+   this.statusPending = false;
 
    this.onAfterRender = this.onAfterRender.bind(this);
    this.onChange = this.onChange.bind(this);
+   this.onCursorActivity = this.onCursorActivity.bind(this);
    this.onGutterMouseDown = this.onGutterMouseDown.bind(this);
    this.onGutterClick = this.onGutterClick.bind(this);
+   this.pinPeek = this.pinPeek.bind(this);
 
    // reachable from the editor for automation and debugging
    editor.gitDiffGutter = this;
@@ -236,7 +272,10 @@ var GitDiffGutter = function(editor, strings) {
    dom.addCssClass(gutter.element, GUTTER_CLASS);
    this.resetGutterPadding();
    gutter.on("afterRender", this.onAfterRender);
+   editor.renderer.on("afterRender", this.pinPeek);
    editor.on("change", this.onChange);
+   editor.on("changeSelection", this.onCursorActivity);
+   editor.on("focus", this.onCursorActivity);
 
    // Capture phase, so these run ahead of Ace's own gutter handlers: the
    // breakpoint toggle hangs off mousedown, and the fold toggle off click and
@@ -256,14 +295,7 @@ var GitDiffGutter = function(editor, strings) {
    // support's blurTextInput would take Escape whenever it was added after
    // this one (a file opened with ext-diff already loaded, or the pref turned
    // on later); the explicit position puts this command ahead regardless.
-   var self = this;
-   editor.commands.addCommand({
-      name: "closeGitPeek",
-      bindKey: { win: "Esc", mac: "Esc", position: 1 },
-      readOnly: true,
-      isAvailable: function() { return self.peek != null; },
-      exec: function() { self.closePeek(); }
-   });
+   editor.commands.addCommand(this.closePeekCommand());
 };
 
 (function() {
@@ -288,7 +320,16 @@ var GitDiffGutter = function(editor, strings) {
       this.baseLines = (text == null) ? null : splitLines(text);
       this.strippedBaseLines = null;
       if (this.splitView)
+      {
+         // Replacing the base pane's text takes its cursor to the top, which
+         // a pending go-to-first-change must not take for the user moving
+         // on (see goToFirstChangeWhenFresh).
+         var pending = this.firstChangePending;
+         var unmoved = pending != null && pending.state === this.cursorState();
          this.splitView.setBaseLines(this.baseLines);
+         if (unmoved)
+            pending.state = this.cursorState();
+      }
       this.update();
    };
 
@@ -313,21 +354,93 @@ var GitDiffGutter = function(editor, strings) {
       this.baseRefresher = refresher;
    };
 
+   // Installs what is told when the change at the cursor, or the number of
+   // changes, may have moved (see getChangeIndexAtCursor). Calls are batched
+   // per task, and come after the side-by-side view has noted which pane
+   // took focus.
+   this.setStatusListener = function(listener) {
+      this.statusListener = listener;
+      this.notifyStatus();
+   };
+
+   this.notifyStatus = function() {
+      if (!this.statusListener || this.statusPending)
+         return;
+
+      var self = this;
+      this.statusPending = true;
+      Promise.resolve().then(function() {
+         self.statusPending = false;
+         if (self.statusListener)
+            self.statusListener();
+      });
+   };
+
+   this.onCursorActivity = function() {
+      this.notifyStatus();
+   };
+
+   // Whether the changes can be counted: there is a base to diff against
+   // (none is fetched yet, or the file is untracked) and the diff came
+   // through. One that gave up or failed marks nothing, which is not to say
+   // there are no changes.
+   this.canCountChanges = function() {
+      return this.baseLines != null && !this.diffFailed;
+   };
+
+   this.getChangeCount = function() {
+      return this.chunks.length;
+   };
+
+   // The position of the change at the cursor among the document's changes,
+   // or -1 when the cursor is not on one.
+   this.getChangeIndexAtCursor = function() {
+      return this.chunks.indexOf(this.chunkAtCursor());
+   };
+
    // A side-by-side view (see git_diff_split.js) shows the base beside the
    // document and follows this gutter's diff. While one is attached the peek
-   // stays closed: the view shows what it would, and its alignment padding
-   // sits where the peek would go.
+   // shows the actions alone (see showPeek), so an open one goes as the view
+   // comes or goes. The base pane's cursor counts as the cursor while it
+   // holds focus, so its moves are reported as the document's are.
    this.setSplitView = function(view) {
+      this.closePeek();
+      if (this.splitView)
+      {
+         this.splitView.baseEditor.off("changeSelection", this.onCursorActivity);
+         this.splitView.baseEditor.off("focus", this.onCursorActivity);
+         this.splitView.baseEditor.commands.removeCommand("closeGitPeek");
+      }
+
       this.splitView = view;
+      this.notifyStatus();
       if (!view)
          return;
 
-      this.closePeek();
+      // (the base pane can hold focus with the action bar open, which
+      // Escape closes from there too)
+      view.baseEditor.on("changeSelection", this.onCursorActivity);
+      view.baseEditor.on("focus", this.onCursorActivity);
+      view.baseEditor.commands.addCommand(this.closePeekCommand());
+
       // (an update waiting out a slow diff's typing pause would otherwise
       // hand the view the previous chunks, and its first folds with them)
       this.flushUpdate();
       view.setBaseLines(this.baseLines);
       view.setChunks(this.chunks, this.ignoreWhitespace);
+   };
+
+   // The Escape command that closes the peek (see the constructor), for an
+   // editor's command set.
+   this.closePeekCommand = function() {
+      var self = this;
+      return {
+         name: "closeGitPeek",
+         bindKey: { win: "Esc", mac: "Esc", position: 1 },
+         readOnly: true,
+         isAvailable: function() { return self.peek != null; },
+         exec: function() { self.closePeek(); }
+      };
    };
 
    // Runs the callback once the base is current. The base is also re-fetched
@@ -340,6 +453,44 @@ var GitDiffGutter = function(editor, strings) {
          this.baseRefresher(callback);
       else
          callback();
+   };
+
+   // Goes to the document's first change, as these markers show it, once
+   // the base is current: for the Git pane's go-to-change, which opens the
+   // file at the line Git reports first, and that can be off from the
+   // markers (an unsaved edit above it, a newline at the end of the file,
+   // whitespace ignored). The cursor stays where it is without a change to
+   // go to, or if the user has moved on meanwhile (see cursorState). A
+   // later request supersedes this one.
+   this.goToFirstChangeWhenFresh = function() {
+      var self = this;
+      var pending = { state: this.cursorState() };
+      this.firstChangePending = pending;
+      this.withFreshBase(function() {
+         if (self.firstChangePending !== pending)
+            return;
+
+         self.firstChangePending = null;
+         if (self.cursorState() !== pending.state)
+            return;
+
+         self.flushUpdate();
+         if (self.chunks.length > 0)
+            self.goToChange(self.chunks[0]);
+      });
+   };
+
+   // Where the cursors are, and which pane of a side-by-side view holds
+   // focus: what moving on from a position changes.
+   this.cursorState = function() {
+      var cursor = this.editor.getCursorPosition();
+      var state = [cursor.row, cursor.column];
+      if (this.splitView)
+      {
+         var baseCursor = this.splitView.baseEditor.getCursorPosition();
+         state.push(baseCursor.row, baseCursor.column, this.baseFocused());
+      }
+      return state.join(",");
    };
 
    // Runs a revert once the base is current, unless the document was edited
@@ -408,6 +559,7 @@ var GitDiffGutter = function(editor, strings) {
 
    this.update = function() {
       var chunks = [];
+      this.diffFailed = false;
       if (this.baseLines != null)
       {
          var base = this.baseLines;
@@ -472,7 +624,10 @@ var GitDiffGutter = function(editor, strings) {
             started = Date.now();
             chunks = dropCharChanges(new DiffProvider().compute(tokens.base, tokens.lines, options));
             if (Date.now() - started >= MAX_COMPUTATION_MS && isWholeDocument(chunks, base, lines))
+            {
+               this.diffFailed = true;
                return [];
+            }
          }
 
          return offsetChunks(chunks, common.prefix);
@@ -481,6 +636,7 @@ var GitDiffGutter = function(editor, strings) {
       {
          // better no markers than an error surfacing on every keystroke
          console.warn("git diff gutter: diff failed", error);
+         this.diffFailed = true;
          return [];
       }
    };
@@ -539,6 +695,7 @@ var GitDiffGutter = function(editor, strings) {
 
       var renderer = this.editor.renderer;
       renderer.$loop.schedule(renderer.CHANGE_GUTTER);
+      this.notifyStatus();
    };
 
    // The gutter recycles its cell elements, so classes are reassigned from
@@ -645,7 +802,8 @@ var GitDiffGutter = function(editor, strings) {
       return null;
    };
 
-   // Navigation wraps around, like Find.
+   // Navigation wraps around, like Find. An open peek comes along to the
+   // change navigated to, so that changes can be reviewed one after another.
    this.goToNextChange = function() {
       this.flushUpdate();
       if (this.chunks.length === 0)
@@ -662,7 +820,7 @@ var GitDiffGutter = function(editor, strings) {
          }
       }
 
-      this.goToChunk(target);
+      this.goToChange(target);
       return true;
    };
 
@@ -682,8 +840,33 @@ var GitDiffGutter = function(editor, strings) {
          }
       }
 
-      this.goToChunk(target);
+      this.goToChange(target);
       return true;
+   };
+
+   // Rows come and go around the change on the way to it: a fold over it
+   // opens, the peeks are swapped (the new one opening above a deletion),
+   // and a side-by-side view realigns for both, its padding included. All
+   // of that is done first, and whether to scroll is then decided from
+   // where the rows have ended up; Ace's gotoLine would go by where they
+   // were when last drawn.
+   this.goToChange = function(chunk) {
+      var baseFocused = this.baseFocused();
+      var editor = baseFocused ? this.splitView.baseEditor : this.editor;
+      var row = baseFocused ? this.baseDisplayRow(chunk) : this.displayRow(chunk);
+
+      editor.session.unfold({ row: row, column: 0 });
+      if (this.peek != null && this.peek.chunk !== chunk)
+         this.showPeek(chunk);
+      if (this.splitView)
+         this.splitView.realignNow();
+
+      // with the base pane holding the cursor, the document's follows (see
+      // goToChunk)
+      if (baseFocused)
+         moveCursorTo(this.editor, this.displayRow(chunk));
+      moveCursorTo(editor, row);
+      revealRow(editor, row);
    };
 
    this.goToChunk = function(chunk) {
@@ -785,15 +968,19 @@ var GitDiffGutter = function(editor, strings) {
       return true;
    };
 
-   // With the base on screen already (a side-by-side view), there is nothing
-   // to peek at: a marker click or Show Change at Cursor just goes there.
+   // With the base on screen already (a side-by-side view), a marker click or
+   // Show Change at Cursor also goes to the change, so that the two panes'
+   // cursors agree on it.
    this.togglePeek = function(chunk) {
+      if (this.peek && this.peek.chunk === chunk)
+      {
+         this.closePeek();
+         return;
+      }
+
       if (this.splitView)
          this.goToChunk(chunk);
-      else if (this.peek && this.peek.chunk === chunk)
-         this.closePeek();
-      else
-         this.showPeek(chunk);
+      this.showPeek(chunk);
    };
 
    this.lineWidgetManager = function() {
@@ -804,6 +991,14 @@ var GitDiffGutter = function(editor, strings) {
          session.widgetManager = new LineWidgets(session);
          session.widgetManager.attach(this.editor);
       }
+
+      // pinPeek reads the widgets' styles, so it listens for afterRender
+      // behind the manager's renderWidgets, which writes them: the manager
+      // may have come after the gutter (made here, or for chunk output),
+      // and so listen ahead of it.
+      var renderer = this.editor.renderer;
+      renderer.off("afterRender", this.pinPeek);
+      renderer.on("afterRender", this.pinPeek);
       return session.widgetManager;
    };
 
@@ -811,37 +1006,53 @@ var GitDiffGutter = function(editor, strings) {
    // RStudio enumerates them to persist notebook chunk output, so a peek must
    // not displace an existing widget: it goes below the last changed line (or
    // where removed lines were), else on the other side of the change, else
-   // nowhere.
+   // nowhere. Side by side, the action bar of a deletion goes below the line
+   // the marker is on instead, past the padding that stands in for the
+   // removed lines in the document, so that it is in view with the marker
+   // however many lines were removed (see pinPeek); before that line, at the
+   // end of the document or below a widget on it. A side-by-side view's
+   // alignment padding is no obstacle: the view moves it off the peek's row
+   // as it realigns, or where it cannot, onto the peek (see $addWidget in
+   // git_diff_split.js).
    this.peekRow = function(chunk) {
       var session = this.editor.session;
-      var candidates = isDeletion(chunk)
-         ? [chunk.new.start.row - 1, chunk.new.start.row]
-         : [chunk.new.end.row - 1, chunk.new.start.row - 1];
+      var candidates;
+      if (isDeletion(chunk) && this.splitView)
+         candidates = [chunk.new.start.row, chunk.new.start.row - 1];
+      else if (isDeletion(chunk))
+         candidates = [chunk.new.start.row - 1, chunk.new.start.row];
+      else
+         candidates = [chunk.new.end.row - 1, chunk.new.start.row - 1];
 
       for (var i = 0; i < candidates.length; i++)
       {
          var row = candidates[i];
          if (row < 0 || row >= session.getLength())
             continue;
-         if (session.lineWidgets && session.lineWidgets[row])
+
+         var widget = session.lineWidgets && session.lineWidgets[row];
+         if (widget && !widget.gitDiffPadding)
             continue;
+
          return row;
       }
       return null;
    };
 
    // Shows the base version of a change in a line widget below it, with a
-   // button to revert the change. Returns false if there is no room for it.
+   // button to revert the change. With a side-by-side view attached, whose
+   // base pane shows the previous lines already, the widget is a compact bar
+   // with the buttons alone; the view pads the base pane to match it. Returns
+   // false if there is no room for it.
    this.showPeek = function(chunk) {
       this.closePeek();
-      if (this.splitView)
-         return false;
 
       var row = this.peekRow(chunk);
       if (row == null)
          return false;
 
       var self = this;
+      var compact = this.splitView != null;
       var oldLines = this.baseLines.slice(chunk.old.start.row, chunk.old.end.row);
       var newCount = chunk.new.end.row - chunk.new.start.row;
 
@@ -850,6 +1061,8 @@ var GitDiffGutter = function(editor, strings) {
          label = this.strings.removedLines(oldLines.length);
       else if (isAddition(chunk))
          label = this.strings.addedLines(newCount);
+      else if (compact)
+         label = this.strings.changedLinesShort(newCount);
       else
          label = this.strings.changedLines(newCount);
 
@@ -862,10 +1075,21 @@ var GitDiffGutter = function(editor, strings) {
       header.className = PEEK_CLASS + "-header";
       el.appendChild(header);
 
-      var labelEl = document.createElement("span");
-      labelEl.className = PEEK_CLASS + "-label";
-      labelEl.textContent = label;
-      header.appendChild(labelEl);
+      // The compact bar's label is for assistive technology only; on screen
+      // the bar sits against the change it is about.
+      if (compact)
+      {
+         el.className += " " + PEEK_CLASS + "-compact";
+         el.setAttribute("role", "group");
+         el.setAttribute("aria-label", label);
+      }
+      else
+      {
+         var labelEl = document.createElement("span");
+         labelEl.className = PEEK_CLASS + "-label";
+         labelEl.textContent = label;
+         header.appendChild(labelEl);
+      }
 
       var revertButton = document.createElement("button");
       revertButton.type = "button";
@@ -913,7 +1137,7 @@ var GitDiffGutter = function(editor, strings) {
          self.closePeek();
       });
 
-      if (oldLines.length > 0)
+      if (oldLines.length > 0 && !compact)
       {
          var lines = document.createElement("div");
          lines.className = PEEK_CLASS + "-lines";
@@ -928,7 +1152,7 @@ var GitDiffGutter = function(editor, strings) {
 
       var widget = { row: row, el: el, fixedWidth: true, coverGutter: false };
       this.lineWidgetManager().addLineWidget(widget);
-      this.peek = { chunk: chunk, widget: widget };
+      this.peek = { chunk: chunk, widget: widget, compact: compact };
       return true;
    };
 
@@ -964,6 +1188,112 @@ var GitDiffGutter = function(editor, strings) {
             above = above.$oldWidget;
          }
       }
+   };
+
+   // A peek below a change taller than the editor would open out of view.
+   // Like a sticky footer, its header is drawn at the bottom of the editor
+   // instead, while the change's first line is still on screen above it; as
+   // that line leaves through the bottom, it takes the header with it.
+   //
+   // The widget keeps its place (and the space reserved for it); only where
+   // it is drawn moves. This runs in the render pass that positions it, and
+   // the pinned and natural positions meet where pinning starts, so the
+   // header never jumps as the editor scrolls between the two.
+   this.pinPeek = function() {
+      var peek = this.peek;
+      if (!peek)
+         return;
+
+      // A peek above its change (where a notebook's output took the row
+      // below) or at removed lines has no changed lines to cover -- but for
+      // the side-by-side action bar of a deletion below the line after it
+      // (see peekRow), which covers the padding standing in for the removed
+      // lines above that line (and the line), from the padding's top: the
+      // bottom of the line before, or where the bar took the padding on
+      // above its line (above the first line, or below chunk output on the
+      // line before), its rowsAbove. Where chunk output holds that line's
+      // row, the bar goes on the line
+      // before and takes the padding on below it (see $addWidget in
+      // git_diff_split.js); it is drawn after the padding, against the
+      // marked line, and held up to the padding's top the same way.
+      var widget = peek.widget;
+      var chunk = peek.chunk;
+      var el = widget.el;
+      var lineHeight = this.editor.renderer.layerConfig.lineHeight;
+      var lentBelow = (widget.gitDiffLentRows || 0) - (widget.gitDiffLentAbove || 0);
+      var floor = null;
+      var drop = 0;
+      if (!widget.hidden && !isDeletion(chunk) && widget.row >= chunk.new.start.row)
+      {
+         floor = this.rowScreenTop(chunk.new.start.row) + lineHeight;
+      }
+      else if (!widget.hidden && peek.compact && widget.row === chunk.new.start.row)
+      {
+         var paddingTop = (widget.row > 0 && !widget.rowsAbove)
+            ? this.rowScreenBottom(widget.row - 1)
+            : this.rowScreenTop(widget.row) - (widget.rowsAbove || 0) * lineHeight;
+         floor = paddingTop + lineHeight;
+      }
+      else if (!widget.hidden && peek.compact && isDeletion(chunk) &&
+               widget.row === chunk.new.start.row - 1 &&
+               widget.row < this.displayRow(chunk) && lentBelow > 0)
+      {
+         drop = lentBelow * lineHeight;
+         floor = this.rowScreenBottom(widget.row) + lineHeight;
+      }
+
+      // (the floor is the bottom of the first screen line covered, not of
+      // its row, so that a line wrapped taller than the editor brings the
+      // header up too)
+      var lift = 0;
+      var height = 0;
+      if (floor != null)
+      {
+         // This runs on every render, just after Ace has written the
+         // widgets' styles, where measuring would force a layout each
+         // frame; the header's height holds while the width it has (the
+         // scroller's, short of the gutter: its label may wrap in a narrow
+         // one) and the line height (its font) do, so it is measured once
+         // per pair.
+         var width = this.editor.renderer.$size.scrollerWidth;
+         if (peek.headerHeight == null ||
+             peek.headerWidth !== width ||
+             peek.headerLineHeight !== lineHeight)
+         {
+            var header = el.firstChild;
+            peek.headerHeight = el.clientTop + header.offsetTop + header.offsetHeight;
+            peek.headerWidth = width;
+            peek.headerLineHeight = lineHeight;
+         }
+         height = peek.headerHeight;
+
+         var top = this.rowScreenBottom(widget.row) + drop;
+         var bottom = this.editor.renderer.$size.scrollerHeight;
+         lift = top - Math.max(Math.min(top, bottom - height), floor);
+      }
+
+      var pinned = lift > 0;
+      var shift = drop - lift;
+      dom.setCssClass(el, PEEK_CLASS + "-pinned", pinned);
+      el.style.transform = (shift !== 0) ? "translateY(" + shift + "px)" : "";
+
+      // (the clip leaves room above for the pinned header's shadow)
+      el.style.clipPath = pinned ? "inset(-8px 0 calc(100% - " + height + "px) 0)" : "";
+   };
+
+   // The top of a document row on screen, in the editor container's
+   // coordinates.
+   this.rowScreenTop = function(row) {
+      var config = this.editor.renderer.layerConfig;
+      var screenRow = this.editor.session.documentToScreenRow(row, 0);
+      return (screenRow - config.firstRowScreen) * config.lineHeight - config.offset;
+   };
+
+   // The bottom of a document row on screen: where Ace's
+   // LineWidgets.renderWidgets puts a widget below the row.
+   this.rowScreenBottom = function(row) {
+      var lineHeight = this.editor.renderer.layerConfig.lineHeight;
+      return this.rowScreenTop(row) + lineHeight * this.editor.session.getRowLineCount(row);
    };
 
    this.rowForCell = function(element) {
@@ -1025,6 +1355,7 @@ var GitDiffGutter = function(editor, strings) {
 
    this.dispose = function() {
       this.updatePending = false;
+      this.statusListener = null;
       if (this.updateTimer)
       {
          clearTimeout(this.updateTimer);
@@ -1035,7 +1366,10 @@ var GitDiffGutter = function(editor, strings) {
          this.splitView.dispose();
       this.closePeek();
       this.editor.commands.removeCommand("closeGitPeek");
+      this.editor.renderer.off("afterRender", this.pinPeek);
       this.editor.off("change", this.onChange);
+      this.editor.off("changeSelection", this.onCursorActivity);
+      this.editor.off("focus", this.onCursorActivity);
 
       var gutterEl = this.editor.renderer.$gutter;
       gutterEl.removeEventListener("mousedown", this.onGutterMouseDown, true);

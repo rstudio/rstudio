@@ -238,7 +238,25 @@
 .rs.addJsonRpcHandler("get_rsconnect_app_list", function(account, server) {
    if (rsconnect:::isPositConnectCloudServer(server))
       return(list())
-   .rs.scalarListFromFrame(rsconnect::applications(account = account, server = server))
+   apps <- rsconnect::applications(account = account, server = server)
+   if (rsconnect:::isConnectServer(server))
+      apps <- .rs.rsconnect.withDashboardUrls(apps, rsconnect::serverInfo(server)$url)
+   .rs.scalarListFromFrame(apps)
+})
+
+# rsconnect::applications() builds each Connect row's config_url from the
+# integer content id, which Connect 2026.01.0 and later reject in dashboard
+# URLs (rstudio/rsconnect#1417), so rebuild it from the content GUID
+.rs.addFunction("rsconnect.withDashboardUrls", function(apps, serverUrl) {
+   if (NROW(apps) == 0L)
+      return(apps)
+   apps$config_url <- .rs.rsconnect.connectDashboardUrl(serverUrl, apps$guid)
+   apps
+})
+
+.rs.addFunction("rsconnect.connectDashboardUrl", function(serverUrl, guid) {
+   prefix <- sub("/__api__", "", serverUrl)
+   paste(prefix, "connect/#/apps", guid, sep = "/")
 })
 
 .rs.addJsonRpcHandler("get_rsconnect_app", function(id, account, server, hostUrl) {
@@ -279,8 +297,7 @@
         !is.na(dashboardUrl) && nzchar(dashboardUrl)) {
       dashboardUrl
     } else {
-      prefix <- sub("/__api__", "", hostUrl)
-      paste(prefix, "connect/#/apps", app$guid, sep = "/")
+      .rs.rsconnect.connectDashboardUrl(hostUrl, app$guid)
     }
   } else {
     prefix <- "https://www.shinyapps.io/admin/#/applications"

@@ -87,12 +87,37 @@ public abstract class FileDialog extends FileSystemDialog
       // the browser filename.
       String filename = browser_.getFilename().trim();
       if (StringUtil.isNullOrEmpty(filename))
+      {
+         // a selected folder row is a request to navigate into it; the `..`
+         // row resolves to the parent, which the name validation below would
+         // otherwise reject as an illegal name (#19427)
+         FileSystemItem selected = browser_.getSelectedTarget();
+         if (selected != null && selected.isDirectory())
+         {
+            cd(selected.getPath());
+            return false;
+         }
+
          filename = browser_.getSelectedValue().trim();
-      
+      }
+
       if (filename.length() == 0)
+      {
+         // an accept deferred (#18922) behind a navigation that an earlier
+         // accept turned into (a selected folder row, `~`, `..`, a typed
+         // `dir/`) arrives to find the name that navigation consumed; any
+         // other accept asked to save with an empty name
+         if (!(inDeferredAccept_ && arrivedFromAccept_))
+         {
+            browser_.selectFilename();
+            showError(constants_.nameEmptyMessage());
+         }
          return false;
-      
-      if (filename == "~")
+      }
+
+      // a typed `..` names the parent, like the `..` row; the name validation
+      // below would reject it
+      if (filename == "~" || filename == "..")
       {
          browser_.setFilename("");
          cd(filename);
@@ -210,9 +235,15 @@ public abstract class FileDialog extends FileSystemDialog
       return false;
    }
 
+   /**
+    * Navigates on behalf of an accept (see shouldAccept()); the dialog's
+    * initial listing and the browser's own navigations do not come through
+    * here.
+    */
    protected void cd(String path)
    {
       browser_.setFilenameEnabled(false);
+      navigatingFromAccept_ = true;
       browser_.cd(path);
    }
 
@@ -223,6 +254,11 @@ public abstract class FileDialog extends FileSystemDialog
 
       // re-enable before the deferred accept, which may cd() and disable again
       browser_.setFilenameEnabled(true);
+
+      // for the deferred accept that may follow: whether the listing it
+      // waited for was one of ours
+      arrivedFromAccept_ = navigatingFromAccept_;
+      navigatingFromAccept_ = false;
    }
 
    @Override
@@ -230,6 +266,7 @@ public abstract class FileDialog extends FileSystemDialog
    {
       // a failed cd() does not reach onNavigated()
       browser_.setFilenameEnabled(true);
+      navigatingFromAccept_ = false;
       super.onError(errorMessage);
    }
 
@@ -252,5 +289,9 @@ public abstract class FileDialog extends FileSystemDialog
 
    protected boolean promptOnOverwrite_;
    protected boolean allowNonexistentFile_;
+
+   // a cd() of ours is in flight / the last listing came from one
+   private boolean navigatingFromAccept_ = false;
+   private boolean arrivedFromAccept_ = false;
    private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

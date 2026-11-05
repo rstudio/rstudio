@@ -102,10 +102,8 @@ concurrency:
 permissions:
   contents: read
   pull-requests: write  # the engines' e2e-merge job declares this
-  # The engines' e2e-merge jobs assume the S3 report-upload role via OIDC,
-  # and the build jobs of the engines that keep sccache on S3 (the rotation-
-  # only ones) assume the S3 sccache role via OIDC; a reusable workflow's
-  # id-token grant is capped by its caller's.
+  # The engines' e2e-merge jobs assume the S3 report-upload role via OIDC;
+  # a reusable workflow's id-token grant is capped by its caller's.
   id-token: write
 
 jobs:
