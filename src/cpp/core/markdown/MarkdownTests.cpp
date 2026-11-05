@@ -120,6 +120,42 @@ TEST(MarkdownTest, HelpRetainsStrictLinkAllowlist)
    }
 }
 
+TEST(MarkdownTest, HelpEscapesRestoredMath)
+{
+   HTMLOptions options;
+   options.escape = options.safelink = options.skipImages = true;
+   std::string html = render(R"($<img src=x onerror=alert(1)>$)", Extensions(), options);
+   EXPECT_EQ(std::string::npos, html.find("<img"));
+   EXPECT_NE(std::string::npos, html.find("&lt;img"));
+   EXPECT_TRUE(isMathJaxRequired(html));
+
+   html = render(R"(\[<script>alert(1)</script>\])", Extensions(), options);
+   EXPECT_EQ(std::string::npos, html.find("<script"));
+   EXPECT_NE(std::string::npos, html.find("&lt;script&gt;"));
+}
+
+TEST(MarkdownTest, HelpPreservesEscapedTagsAndFormattedLinkLabelsInTables)
+{
+   HTMLOptions options;
+   options.escape = options.safelink = options.skipImages = true;
+   std::string html = render(
+      "| column |\n| --- |\n| [<b>x</b>](relative.html) <i>y</i> |\n",
+      Extensions(), options);
+   EXPECT_EQ(std::string::npos, html.find("<a "));
+   EXPECT_EQ(std::string::npos, html.find("<b>"));
+   EXPECT_NE(std::string::npos, string_utils::htmlUnescape(html).find("<b>x</b>"));
+   EXPECT_NE(std::string::npos, string_utils::htmlUnescape(html).find("<i>y</i>"));
+
+   html = render("| column |\n| --- |\n| [x^(2)](relative.html) |\n", Extensions(), options);
+   EXPECT_EQ(std::string::npos, html.find("<a "));
+   EXPECT_NE(std::string::npos, html.find("<sup>2</sup>"));
+
+   options.skipLinks = true;
+   html = render("| column |\n| --- |\n| [x^(2)](https://example.com) |\n", Extensions(), options);
+   EXPECT_EQ(std::string::npos, html.find("<a "));
+   EXPECT_NE(std::string::npos, html.find("<sup>2</sup>"));
+}
+
 TEST(MarkdownTest, MetadataAndMath)
 {
    EXPECT_EQ("<p>body</p>\n", render("---\ntitle: example\n---\n\nbody\n"));
@@ -161,6 +197,25 @@ TEST(MarkdownTest, CommonMarkFencesAndInfoStrings)
              render("~~~r\nx < 2\n~~~\n"));
    EXPECT_EQ("<p>a<em>b</em>c</p>\n", render("a*b*c"));
    EXPECT_EQ("<p>~literal~</p>\n", render("~literal~"));
+}
+
+TEST(MarkdownTest, MathExclusionRespectsCodeDelimiterLengths)
+{
+   EXPECT_EQ("<pre><code>```\n$x_1$\n</code></pre>\n", render("````\n```\n$x_1$\n````\n"));
+   EXPECT_EQ("<pre><code>~~~\n$x_1$\n</code></pre>\n", render("~~~~\n~~~\n$x_1$\n~~~~\n"));
+   EXPECT_EQ("<pre><code>$x_1$\n</code></pre>\n", render("````\n$x_1$\n"));
+   EXPECT_EQ("<p><code>a ` $x_1$</code></p>\n", render("``a ` $x_1$``"));
+}
+
+TEST(MarkdownTest, BareSuperscriptsRespectEnclosingInlineMarkup)
+{
+   EXPECT_EQ("<p><strong>x<sup>2</sup></strong></p>\n", render("**x^2**"));
+   EXPECT_EQ("<p><em>x<sup>2</sup></em></p>\n", render("*x^2*"));
+   EXPECT_EQ("<p><del>x<sup>2</sup></del></p>\n", render("~~x^2~~"));
+   EXPECT_EQ("<p><a href=\"/help\">x<sup>2</sup></a></p>\n", render("[x^2](/help)"));
+   EXPECT_EQ("<p>x<sup><em>n</em></sup></p>\n", render("x^*n*"));
+   EXPECT_EQ("<p><em>done</em> x<sup>2*</sup></p>\n", render("*done* x^2*"));
+   EXPECT_EQ("<p>x^ next</p>\n", render("x^ next"));
 }
 
 TEST(MarkdownTest, UnsupportedLegacyOptionsAreExplicit)

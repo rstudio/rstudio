@@ -37,13 +37,13 @@ of `COPYING`, including its component attributions.
 | --- | --- |
 | Tables, strikethrough, bare autolinks | Upstream GFM extensions, individually configurable. Require double tildes for strikethrough, matching Sundown. |
 | Fenced/indented code, emphasis, lists, HTML blocks | CommonMark parsing rules. These are intentional grammar changes. |
-| `x^2`, `x^(a + b)` | RStudio inline extension, including inline formatting and reference links. Code and escaped carets stay literal. Nesting is bounded at 16; unmatched parenthesized superscripts do not repeatedly scan the remaining input. |
+| `x^2`, `x^(a + b)` | RStudio inline extension, including inline formatting and reference links. Bare superscripts resolve after enclosing emphasis and links. Code and escaped carets stay literal. Nesting is bounded at 16; unmatched or depth-limited superscripts do not repeatedly scan the remaining input. |
 | Smart punctuation, hard wrapping | `CMARK_OPT_SMART`, `CMARK_OPT_HARDBREAKS`. Smart punctuation now also curls apostrophes in contractions. |
-| MathJax, YAML/Pandoc metadata, `htmlPreserve` | Existing RStudio preprocessing/restoration remains shared. Code exclusion also covers tilde fences and up to three leading spaces. |
+| MathJax, YAML/Pandoc metadata, `htmlPreserve` | Existing RStudio preprocessing/restoration remains shared. Code exclusion covers tilde fences, up to three leading spaces, and closing fences at least as long as the opener. Math restoration respects HTML escaping. |
 | Authored HTML in previews, tutorials, presentations | Retained with `CMARK_OPT_UNSAFE`, preserving the existing caller contract. This migration does **not** make those surfaces HTML sanitizers. |
 | Help descriptions requesting escaping | Escape raw HTML nodes, remove Markdown images, and preserve generated Markdown formatting. Keep the existing strict URL allowlist. Rejected links keep the formatted label, rather than the original Markdown source. |
-| Code highlighting | cmark emits `language-r` / `language-cpp`; the preview detector accepts those as well as the old classes. |
-| Presentation image sizing | The media classifier accepts the space before `/>` emitted by cmark. |
+| Code highlighting | cmark emits `language-r` / `language-cpp`; the preview detector and bundled stylesheets accept those as well as the old classes. |
+| Presentation image sizing and columns | Media classification and column splitting accept the space before `/>` emitted by cmark. |
 | Unused legacy options | `toc`, `skipStyle`, `useXHTML=false`, or disabling `noIntraEmphasis`, `fencedCode`, `laxSpacing`, or `spaceHeaders` returns `not_supported`. There are no such settings in the audited RStudio or local Workbench callers. |
 
 `noIntraEmphasis=true` no longer promises Sundown's rules for asterisks: for
@@ -94,7 +94,7 @@ For presentation comparisons, first knit the shipped template and
 `fixtures/presentation.Rpres` to temporary Markdown files with `knitr::knit()`.
 Keep generated plots in the temporary directory and compare those Markdown
 files. The added fixture covers formatted text, links, lists, tables, code,
-plots, superscripts, MathJax, and authored HTML/video.
+plots, columns, superscripts, MathJax, and authored HTML/video.
 
 ## Investigation results
 
@@ -102,19 +102,20 @@ Local validation on macOS arm64:
 
 - All nine upstream test suites passed at the pinned revision.
 - All 74 vendored files reproduce the upstream bytes exactly.
-- The 13 Markdown integration tests passed with cmark; the nine shared tests
+- The 17 Markdown integration tests passed with cmark; the 11 shared tests
   also passed with Sundown. They cover the actual help, preview and presentation
   contracts, extension toggles, concurrent parsers, and bounded superscripts.
-- The complete cmark core test run passed 821 tests, with 12 environment/platform
+- The complete cmark core test run passed 825 tests, with 12 environment/platform
   skips and three disabled tests. The first sandboxed run could not register
   filesystem monitors; the successful run used normal OS access.
 - Both changed session translation units passed compilation checks; the actual
-  preview/highlighting and presentation media classifiers accepted the old and
-  new HTML in a focused harness.
+  preview/highlighting, presentation media classification and column splitting
+  accepted the old and new HTML in a focused harness.
 - AddressSanitizer and UndefinedBehaviorSanitizer checks passed with the
   adapter, preprocessing and 34 vendored C translation units instrumented,
   including the knitted presentations, invalid UTF-8, unsafe links, images
-  containing markup, and deeply nested/unmatched superscripts.
+  containing markup, escaped HTML and formatted rejected links in tables,
+  math containing HTML, long fences, and deeply nested/unmatched superscripts.
 - Compared the 73 tracked `.md` / `.Rpres` inputs at the starting revision:
   16 were equivalent after the tool's normalization; 52 were equivalent when
   also allowing smart-punctuation differences. Remaining differences included

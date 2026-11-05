@@ -21,10 +21,10 @@ class Normalizer(HTMLParser):
         if tag == "pre":
             self.pre += 1
         attrs = [
-            (key, value.removeprefix("language-") if tag == "code" and key == "class" else value)
+            (key, value.removeprefix("language-") if tag == "code" and key == "class" and value else value)
             for key, value in attrs
         ]
-        self.tokens.append(repr((tag, sorted(attrs))))
+        self.tokens.append(repr((tag, sorted(attrs, key=lambda attr: attr[0]))))
 
     def handle_endtag(self, tag):
         self.tokens.append(f"</{tag}>")

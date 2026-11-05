@@ -359,10 +359,12 @@ Error markdownToHTML(const std::string& markdownInput,
    // exclude fenced code blocks
    using namespace rstudio::core::html_utils;
    std::vector<ExcludePattern> excludePatterns;
-   excludePatterns.push_back(ExcludePattern(boost::regex("^ {0,3}`{3,}[^\\n]*?$"),
-                                            boost::regex("^ {0,3}`{3,}\\s*$")));
-   excludePatterns.push_back(ExcludePattern(boost::regex("^ {0,3}~{3,}[^\\n]*?$"),
-                                            boost::regex("^ {0,3}~{3,}\\s*$")));
+   // A closer must use at least as many delimiters as its opener. Match the
+   // complete block so a shorter fence within it cannot end math exclusion.
+   excludePatterns.push_back(ExcludePattern(boost::regex(
+      R"(^ {0,3}(`{3,})(?!`)[^`\r\n]*(?:\r?\n|\z)[\s\S]*?(?:^ {0,3}\1`*[ \t]*\r?$|\z))")));
+   excludePatterns.push_back(ExcludePattern(boost::regex(
+      R"(^ {0,3}(~{3,})(?!~)[^\r\n]*(?:\r?\n|\z)[\s\S]*?(?:^ {0,3}\1~*[ \t]*\r?$|\z))")));
 
    // exclude inline verbatim code
    excludePatterns.push_back(ExcludePattern(boost::regex("`[^\\n]+?`")));
@@ -377,7 +379,8 @@ Error markdownToHTML(const std::string& markdownInput,
    {
       pMathFilter.reset(new MathJaxFilter(excludePatterns,
                                           &input,
-                                          pHTMLOutput));
+                                          pHTMLOutput,
+                                          options.escape));
    }
 
    // respect html-preserve

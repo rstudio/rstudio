@@ -22,6 +22,7 @@
 #include <boost/algorithm/string.hpp>
 
 #include <core/RegexUtils.hpp>
+#include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
 
 using namespace boost::placeholders;
@@ -45,8 +46,9 @@ bool hasLessThanThreeNewlines(const std::string& str)
 
 MathJaxFilter::MathJaxFilter(const std::vector<html_utils::ExcludePattern>& excludePatterns,
                              std::string* pInput,
-                             std::string* pHTMLOutput)
-   : pHTMLOutput_(pHTMLOutput)
+                             std::string* pHTMLOutput,
+                             bool escapeHtml)
+   : pHTMLOutput_(pHTMLOutput), escapeHtml_(escapeHtml)
 {
    // divide the document into ranges (some of which will be processed
    // and some of which will not -- we don't process some regions so that
@@ -218,10 +220,13 @@ void MathJaxFilter::restore(
                const std::string& beginDelim,
                const std::string& endDelim)
 {
+   // Restoration happens after the Markdown renderer's escaping pass.
+   std::string equation = escapeHtml_ ? string_utils::htmlEscape(block.second.equation)
+                                     : block.second.equation;
    boost::algorithm::replace_first(
      *pHTMLOutput_,
      block.first,
-     beginDelim + " " + block.second.equation + " " + endDelim +
+     beginDelim + " " + equation + " " + endDelim +
        block.second.suffix);
 }
 

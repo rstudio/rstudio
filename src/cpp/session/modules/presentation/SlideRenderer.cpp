@@ -272,16 +272,14 @@ Error slideToHtml(const Slide& slide,
    if (!slide.cssClass().empty())
       slideClasses += " " + slide.cssClass();
 
-   // look for an <hr/> splitting the html into columns
-   const std::string kHRTag = "<hr/>";
-   std::size_t hrLoc = pHTML->find(kHRTag);
-   if (hrLoc != std::string::npos)
+   // Both Sundown and cmark horizontal rules split the HTML into columns.
+   boost::regex hrRegex("<hr\\s*/>");
+   boost::smatch hrMatch;
+   if (regex_utils::search(*pHTML, hrMatch, hrRegex))
    {
       // get the columns
-      std::string column1 = pHTML->substr(0, hrLoc);
-      std::string column2;
-      if (pHTML->length() > (column1.length() + kHRTag.length()))
-         column2 = pHTML->substr(hrLoc + kHRTag.length());
+      std::string column1(pHTML->cbegin(), hrMatch[0].first);
+      std::string column2(hrMatch[0].second, pHTML->cend());
 
       // compute the column widths
       std::string leftWidth;

@@ -30,6 +30,16 @@ Left | Right
 one | two
 three | four
 
+Columns
+========================================================
+left: 40%
+
+Left column with **text**.
+
+***
+
+Right column with x^2.
+
 Code
 ========================================================
 

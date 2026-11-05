@@ -15,9 +15,11 @@
 
 #include "CmarkGfm.hpp"
 
+#include <algorithm>
 #include <cstdlib>
 #include <memory>
 #include <mutex>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -69,29 +71,27 @@ cmark_node* matchSuperscript(cmark_syntax_extension* extension,
       return nullptr;
 
    bool parenthesized = chunk->data[begin] == '(';
-   if (parenthesized)
-      ++begin;
-   int end = begin;
-   if (parenthesized)
+   if (!parenthesized)
    {
-      if (state->unmatchedParenthesis)
-         return nullptr;
-      while (end < chunk->len && chunk->data[end] != ')')
-         ++end;
-      if (end == chunk->len)
-      {
-         // Avoid repeatedly scanning a long suffix containing unmatched ^(.
-         state->unmatchedParenthesis = true;
-         return nullptr;
-      }
+      // Defer bare superscripts until emphasis and links have been parsed.
+      // Scanning to whitespace here would consume their closing delimiters.
+      cmark_node* marker = cmark_node_new(CMARK_NODE_CUSTOM_INLINE);
+      cmark_node_set_on_enter(marker, "^");
+      cmark_node_set_syntax_extension(marker, extension);
+      cmark_inline_parser_advance_offset(inlineParser);
+      return marker;
    }
-   else
+   ++begin;
+   int end = begin;
+   if (state->unmatchedParenthesis)
+      return nullptr;
+   while (end < chunk->len && chunk->data[end] != ')')
+      ++end;
+   if (end == chunk->len)
    {
-      while (end < chunk->len && chunk->data[end] != ' ' &&
-             chunk->data[end] != '\t' && chunk->data[end] != '\r' && chunk->data[end] != '\n')
-         ++end;
-      if (end == begin)
-         return nullptr;
+      // Avoid repeatedly scanning a long suffix containing unmatched ^(.
+      state->unmatchedParenthesis = true;
+      return nullptr;
    }
 
    cmark_node* node = cmark_node_new(CMARK_NODE_CUSTOM_INLINE);
@@ -107,8 +107,102 @@ cmark_node* matchSuperscript(cmark_syntax_extension* extension,
    ++state->depth;
    cmark_parse_inlines(parser, node, parser->refmap, parser->options);
    *state = previous;
-   cmark_inline_parser_set_offset(inlineParser, end + (parenthesized ? 1 : 0));
+   cmark_inline_parser_set_offset(inlineParser, end + 1);
    return node;
+}
+
+bool isSuperscript(cmark_node* node)
+{
+   return cmark_node_get_type(node) == CMARK_NODE_CUSTOM_INLINE &&
+          std::string(cmark_node_get_on_enter(node)) == "<sup>";
+}
+
+Error resolveSuperscripts(cmark_node* document, cmark_syntax_extension* extension)
+{
+   std::vector<cmark_node*> nodes;
+   std::unique_ptr<cmark_iter, decltype(&cmark_iter_free)> iter(
+      cmark_iter_new(document), cmark_iter_free);
+   while (cmark_iter_next(iter.get()) != CMARK_EVENT_DONE)
+   {
+      if (cmark_iter_get_event_type(iter.get()) == CMARK_EVENT_ENTER)
+         nodes.push_back(cmark_iter_get_node(iter.get()));
+   }
+   iter.reset();
+
+   // Process later siblings and descendants first, so nested exponents have a
+   // known depth. Reuse the marker in place; table cells reject new custom
+   // inline children, but the parser has already placed this marker there.
+   std::unordered_map<cmark_node*, int> depths;
+   std::unordered_map<cmark_node*, int> suffixDepths;
+   for (auto it = nodes.rbegin(); it != nodes.rend(); ++it)
+   {
+      cmark_node* node = *it;
+      if (cmark_node_get_syntax_extension(node) == extension)
+      {
+         std::vector<cmark_node*> contents;
+         cmark_node* partial = nullptr;
+         std::size_t prefixLength = 0;
+         int depth = suffixDepths[cmark_node_next(node)];
+         for (cmark_node* parent = cmark_node_parent(node); parent; parent = cmark_node_parent(parent))
+         {
+            if (isSuperscript(parent))
+               ++depth;
+         }
+         // Once a suffix reaches the depth limit, earlier markers must not
+         // repeatedly walk it. The cached suffix depth keeps this linear.
+         for (cmark_node* next = cmark_node_next(node); depth < 16 && next; next = cmark_node_next(next))
+         {
+            cmark_node_type type = cmark_node_get_type(next);
+            if (type == CMARK_NODE_SOFTBREAK || type == CMARK_NODE_LINEBREAK)
+               break;
+            if (type == CMARK_NODE_TEXT)
+            {
+               std::string text = cmark_node_get_literal(next);
+               std::size_t space = text.find_first_of(" \t\r\n");
+               if (space != std::string::npos)
+               {
+                  partial = next;
+                  prefixLength = space;
+                  break;
+               }
+            }
+            contents.push_back(next);
+         }
+         if ((!contents.empty() || prefixLength) && depth < 16)
+         {
+            for (cmark_node* child : contents)
+            {
+               if (!cmark_node_append_child(node, child))
+                  return systemError(boost::system::errc::invalid_argument,
+                                     "Could not attach superscript content", ERROR_LOCATION);
+            }
+            if (prefixLength)
+            {
+               std::string text = cmark_node_get_literal(partial);
+               std::unique_ptr<cmark_node, decltype(&cmark_node_free)> prefix(
+                  cmark_node_new(CMARK_NODE_TEXT), cmark_node_free);
+               cmark_node_set_literal(prefix.get(), text.substr(0, prefixLength).c_str());
+               if (!cmark_node_append_child(node, prefix.get()))
+                  return systemError(boost::system::errc::invalid_argument,
+                                     "Could not attach superscript text", ERROR_LOCATION);
+               prefix.release();
+               cmark_node_set_literal(partial, text.substr(prefixLength).c_str());
+            }
+            cmark_node_set_on_enter(node, "<sup>");
+            cmark_node_set_on_exit(node, "</sup>");
+         }
+      }
+      int depth = 0;
+      for (cmark_node* child = cmark_node_first_child(node); child; child = cmark_node_next(child))
+         depth = std::max(depth, depths[child]);
+      depths[node] = depth + (isSuperscript(node) ? 1 : 0);
+      cmark_node_type type = cmark_node_get_type(node);
+      bool boundary = type == CMARK_NODE_SOFTBREAK || type == CMARK_NODE_LINEBREAK ||
+         (type == CMARK_NODE_TEXT &&
+          std::string(cmark_node_get_literal(node)).find_first_of(" \t\r\n") != std::string::npos);
+      suffixDepths[node] = boundary ? 0 : std::max(depths[node], suffixDepths[cmark_node_next(node)]);
+   }
+   return Success();
 }
 
 void freeExtension(cmark_syntax_extension* extension)
@@ -133,7 +227,18 @@ bool isSafeLink(const std::string& url)
    return false;
 }
 
-void filterNodes(cmark_node* document, const HTMLOptions& options)
+void renderSkippedLink(cmark_syntax_extension*,
+                       cmark_html_renderer*,
+                       cmark_node*,
+                       cmark_event_type,
+                       int)
+{
+   // Render the children normally, without emitting an anchor around them.
+}
+
+Error filterNodes(cmark_node* document,
+                  const HTMLOptions& options,
+                  cmark_syntax_extension* skippedLink)
 {
    // Collect before mutating, and visit children before parents so deleting an
    // image also safely discards any inline markup in its alternative text.
@@ -159,10 +264,10 @@ void filterNodes(cmark_node* document, const HTMLOptions& options)
                (options.skipLinks ||
                 (options.safelink && !isSafeLink(cmark_node_get_url(node)))))
       {
-         // Keep the formatted label, but make a rejected target non-clickable.
-         while (cmark_node* child = cmark_node_first_child(node))
-            cmark_node_insert_before(node, child);
-         cmark_node_free(node);
+         // Keep this container: table cells reject custom inline children, so
+         // moving a superscript out of a link can fail. A transparent renderer
+         // preserves all formatted label content without emitting an anchor.
+         cmark_node_set_syntax_extension(node, skippedLink);
       }
       else if (type == CMARK_NODE_HTML_INLINE || type == CMARK_NODE_HTML_BLOCK)
       {
@@ -170,11 +275,20 @@ void filterNodes(cmark_node* document, const HTMLOptions& options)
          {
             // Safe mode omits HTML. Help popups instead need to display the
             // literal tags, while retaining Markdown-generated formatting.
-            std::string escaped = string_utils::htmlEscape(cmark_node_get_literal(node));
-            cmark_node* replacement = cmark_node_new(
-               type == CMARK_NODE_HTML_INLINE ? CMARK_NODE_CUSTOM_INLINE : CMARK_NODE_CUSTOM_BLOCK);
-            cmark_node_set_on_enter(replacement, escaped.c_str());
-            cmark_node_replace(node, replacement);
+            std::unique_ptr<cmark_node, decltype(&cmark_node_free)> replacement(
+               cmark_node_new(type == CMARK_NODE_HTML_INLINE ? CMARK_NODE_TEXT : CMARK_NODE_CUSTOM_BLOCK),
+               cmark_node_free);
+            if (type == CMARK_NODE_HTML_INLINE)
+               cmark_node_set_literal(replacement.get(), cmark_node_get_literal(node));
+            else
+            {
+               std::string escaped = string_utils::htmlEscape(cmark_node_get_literal(node));
+               cmark_node_set_on_enter(replacement.get(), escaped.c_str());
+            }
+            if (!cmark_node_replace(node, replacement.get()))
+               return systemError(boost::system::errc::invalid_argument,
+                                  "Could not replace raw HTML node", ERROR_LOCATION);
+            replacement.release();
             cmark_node_free(node);
          }
          else if (options.skipHTML)
@@ -183,6 +297,7 @@ void filterNodes(cmark_node* document, const HTMLOptions& options)
          }
       }
    }
+   return Success();
 }
 
 } // anonymous namespace
@@ -222,6 +337,9 @@ Error renderCmarkGfm(const std::string& input,
    SuperscriptState superscriptState;
    std::unique_ptr<cmark_syntax_extension, decltype(&freeExtension)> superscript(
       nullptr, freeExtension);
+   std::unique_ptr<cmark_syntax_extension, decltype(&freeExtension)> skippedLink(
+      cmark_syntax_extension_new("rstudio-skipped-link"), freeExtension);
+   cmark_syntax_extension_set_html_render_func(skippedLink.get(), renderSkippedLink);
    std::unique_ptr<cmark_parser, decltype(&cmark_parser_free)> parser(
       cmark_parser_new(flags), cmark_parser_free);
    if (!parser)
@@ -254,7 +372,16 @@ Error renderCmarkGfm(const std::string& input,
    if (!document)
       return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
 
-   filterNodes(document.get(), options);
+   if (extensions.superscript)
+   {
+      Error error = resolveSuperscripts(document.get(), superscript.get());
+      if (error)
+         return error;
+   }
+
+   Error error = filterNodes(document.get(), options, skippedLink.get());
+   if (error)
+      return error;
    std::unique_ptr<char, decltype(&std::free)> html(
       cmark_render_html(document.get(), flags, cmark_parser_get_syntax_extensions(parser.get())),
       std::free);
