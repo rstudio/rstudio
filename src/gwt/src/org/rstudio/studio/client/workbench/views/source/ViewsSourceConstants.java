@@ -134,7 +134,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
     String name();
     String type();
     String value();
-    String viewCode(String code);
     String noSelectionParentheses();
     String showAttributes();
     String searchObjects();
@@ -287,7 +286,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
     String cantEnterVisualModeInUntrustedProject();
     String visualModeChunkSummary(String enging, int lines);
     String visualModeChunkSummaryPlural(String engine, int lines);
-    String images();
     String xaringanPresentationsVisualMode();
     String versionControlConflict();
     String switchToVisualMode();

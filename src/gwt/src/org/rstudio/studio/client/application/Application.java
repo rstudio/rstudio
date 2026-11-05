@@ -592,19 +592,19 @@ public class Application implements ApplicationEventHandlers
       if (customDocsURL.length() > 0)
          globalDisplay_.openWindow(customDocsURL);
       else
-         globalDisplay_.openRStudioLink(constants_.helpUsingRStudioLinkName());
+         globalDisplay_.openRStudioLink("docs");
    }
 
    @Handler
    public void onRstudioCommunityForum()
    {
-      globalDisplay_.openRStudioLink(constants_.communityForumLinkName());
+      globalDisplay_.openRStudioLink("community-forum");
    }
 
    @Handler
    public void onRstudioSupport()
    {
-      globalDisplay_.openRStudioLink(constants_.rStudioSupportLinkName());
+      globalDisplay_.openRStudioLink("support");
    }
 
    @Handler

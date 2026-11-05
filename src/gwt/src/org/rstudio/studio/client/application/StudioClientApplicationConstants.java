@@ -23,9 +23,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     String cannotConnectRCaption();
     String cannotConnectRMessage(String userMessage, int errorCode);
     String rStudioInitializationErrorCaption();
-    String helpUsingRStudioLinkName();
-    String communityForumLinkName();
-    String rStudioSupportLinkName();
     String focusedElementLabel();
     String loadingWorkspaceMessage();
     String savingWorkspaceImageMessage();
