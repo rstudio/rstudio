@@ -41,7 +41,7 @@ public class ServerErrorCauseTests extends GWTTestCase
 
    public void testCode32InAnotherCategoryDoesNotMatch()
    {
-      // EPIPE in the generic (errno) category
+      // only "system" codes are Win32 codes on Windows
       ServerErrorCause cause = new ServerErrorCause(32, "generic", "Broken pipe");
       assertFalse(cause.isWindowsSharingViolation());
    }
