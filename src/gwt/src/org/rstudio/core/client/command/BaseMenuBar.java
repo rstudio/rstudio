@@ -67,21 +67,8 @@ public class BaseMenuBar extends MenuBar
     * shortcut, Tab or click, and restores it when a command runs or Escape is
     * pressed on the bar, so focus isn't left on the body afterwards.
     */
-   private class FocusTracker implements CommandHandler
+   private class FocusTracker
    {
-      public FocusTracker()
-      {
-         commandHandler_.add(eventBus_.addHandler(CommandEvent.TYPE, this));
-      }
-
-      @Override
-      public void onCommand(AppCommand command)
-      {
-         // Restore focus when a command is fired so any resulting modal dialog can pick up
-         // the correct focused element when it does its own focus push/pop.
-         restore();
-      }
-
       /**
        * Store the given element and start monitoring focus changes.
        *
@@ -459,14 +446,22 @@ public class BaseMenuBar extends MenuBar
       if (focusTracker().save(active))
          active.blur();
 
+      // Open the menu explicitly: another menu may already be open, e.g. when
+      // the shortcut was dispatched from a satellite window.
       getElement().focus();
-      selectItem(item);
+      doItemAction(item, false, true);
       moveSelectionDown();
    }
 
    @Override
    public void onCommand(AppCommand command)
    {
+      // Restore focus when a command is fired so any resulting modal dialog can pick up
+      // the correct focused element when it does its own focus push/pop. The menubar's
+      // own registration is used, since onUnload() removes all of them.
+      if (focusTracker_ != null)
+         focusTracker_.restore();
+
       if (command.getExecutedFromShortcut())
       {
          closeAllChildren(false);
