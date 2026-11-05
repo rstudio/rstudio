@@ -220,6 +220,7 @@ public class FindReplace
 
       boolean wholeWord = display_.getWholeWord().getValue();
       boolean caseSensitive = display_.getCaseSensitive().getValue();
+      boolean regex = display_.getRegex().getValue();
 
       String searchString = display_.getFindValue().getValue();
       if (searchString.length() != 0)
@@ -229,7 +230,7 @@ public class FindReplace
          // is that first match the selection handler would keep the marker
          clearMatchHighlight();
 
-         editor_.selectAll(searchString, range, wholeWord, caseSensitive);
+         editor_.selectAll(searchString, range, wholeWord, caseSensitive, regex);
          editor_.focus();
       }
    }

@@ -488,8 +488,18 @@ public class AceEditorNative extends JavaScriptObject
       return this.findAll(needle);
    }-*/;
    
-   public final native int findAll(String needle, Range range, boolean wholeWord, boolean caseSensitive) /*-{
-      return this.findAll(needle, {range: range, wholeWord: wholeWord, caseSensitive: caseSensitive});
+   public final native int findAll(
+         String needle,
+         Range range,
+         boolean wholeWord,
+         boolean caseSensitive,
+         boolean regex) /*-{
+      return this.findAll(needle, {
+         range: range,
+         wholeWord: wholeWord,
+         caseSensitive: caseSensitive,
+         regExp: regex
+      });
    }-*/;
    
    public final native void insert(String text) /*-{

@@ -21,6 +21,8 @@ const SOURCE_PANEL_SELECTOR = "[class*='rstudio_source_panel']";
 const FIND_INPUT = `${SOURCE_PANEL_SELECTOR} .rstudio-find-replace-find-input input`;
 const REPLACE_INPUT = `${SOURCE_PANEL_SELECTOR} .rstudio-find-replace-replace-input input`;
 const REPLACE_BUTTON = `${SOURCE_PANEL_SELECTOR} .rstudio-find-replace-replace-button`;
+const REGEX_CHECKBOX = `${SOURCE_PANEL_SELECTOR} .rstudio-find-replace-regex-checkbox input`;
+const MATCH_CASE_CHECKBOX = `${SOURCE_PANEL_SELECTOR} .rstudio-find-replace-match-case-checkbox input`;
 const WHOLE_WORD_CHECKBOX = `${SOURCE_PANEL_SELECTOR} .rstudio-find-replace-whole-word-checkbox input`;
 const CLOSE_FIND_BAR = `${SOURCE_PANEL_SELECTOR} button[aria-label='Close find and replace']`;
 const FIND_NEXT_BUTTON = `${SOURCE_PANEL_SELECTOR} .rstudio-find-replace-find-next-button`;
@@ -44,6 +46,7 @@ test.describe('Editor', () => {
     await closeAndDeleteSandboxFiles(page, sandbox.dir, [
       'editor_whitespace.R',
       'editor_whole_word.R',
+      'editor_select_all_regex.R',
       'editor_shortcuts.R',
       'editor_find_from_selection.R',
       'editor_comment_indent.R',
@@ -150,6 +153,66 @@ test.describe('Editor', () => {
     await expect(page.locator(FIND_INPUT)).toHaveCount(0, { timeout: 5000 });
 
     await expect.poll(() => editor.getValue()).toBe('.goodbye\n.goodbye\n.hello');
+  });
+
+  // https://github.com/rstudio/rstudio/issues/19249
+  test('select all honors regex and literal find modes', async ({ rstudioPage: page }) => {
+    const content = 'a1\na2\nA3\nxa4\na[0-9]\na[0-9]\n';
+    await writeAndOpenFile(page, sandbox.dir, 'editor_select_all_regex.R', content);
+
+    const editor = new AceEditor(page, 'a1');
+    await waitForActiveDocument(page, `${sandbox.dir}/editor_select_all_regex.R`, TIMEOUTS.fileOpen);
+    await executeCommand(page, 'findReplace');
+    await expect(page.locator(FIND_INPUT)).toBeVisible({ timeout: TIMEOUTS.consoleReady });
+
+    const regex = page.locator(REGEX_CHECKBOX);
+    const matchCase = page.locator(MATCH_CASE_CHECKBOX);
+    const wholeWord = page.locator(WHOLE_WORD_CHECKBOX);
+    const originalRegex = await regex.isChecked();
+    const originalMatchCase = await matchCase.isChecked();
+    const originalWholeWord = await wholeWord.isChecked();
+    try {
+      await regex.check();
+      await matchCase.uncheck();
+      await wholeWord.uncheck();
+      await page.locator(FIND_INPUT).fill('a[0-9]');
+      await page.locator(FIND_NEXT_BUTTON).click();
+      await expect.poll(() => editor.getSelectedText()).toMatch(/^[aA][0-9]$/);
+
+      await page.locator(SELECT_ALL_BUTTON).click();
+      await expect.poll(() => editor.getSelectedText()).toBe('a1\na2\nA3\na4');
+
+      await matchCase.check();
+      await page.locator(SELECT_ALL_BUTTON).click();
+      await expect.poll(() => editor.getSelectedText()).toBe('a1\na2\na4');
+
+      await wholeWord.check();
+      await page.locator(SELECT_ALL_BUTTON).click();
+      await expect.poll(() => editor.getSelectedText()).toBe('a1\na2');
+
+      // Switching back must explicitly clear Ace's previous regex setting.
+      await regex.uncheck();
+      await wholeWord.uncheck();
+      await page.locator(SELECT_ALL_BUTTON).click();
+      await expect.poll(() => editor.getSelectedText()).toBe('a[0-9]\na[0-9]');
+
+      // In Selection must still limit the regex matches to the chosen range.
+      await regex.check();
+      await matchCase.uncheck();
+      await consoleActions.executeInConsole(
+        '.rs.api.setSelectionRanges(c(1, 1, 3, 1), id = .rs.api.getSourceEditorContext()$id)',
+        { wait: true },
+      );
+      await expect.poll(() => editor.getSelectedText()).toBe('a1\na2\n');
+      await page.locator(`${SOURCE_PANEL_SELECTOR} .rstudio-find-replace-in-selection-checkbox input`).check();
+      await page.locator(SELECT_ALL_BUTTON).click();
+      await expect.poll(() => editor.getSelectedText()).toBe('a1\na2');
+    } finally {
+      await regex.setChecked(originalRegex);
+      await matchCase.setChecked(originalMatchCase);
+      await wholeWord.setChecked(originalWholeWord);
+      await page.locator(CLOSE_FIND_BAR).click();
+    }
   });
 
   // https://github.com/rstudio/rstudio/issues/16973
