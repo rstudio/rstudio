@@ -1,0 +1,259 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >-
+  Signed-in access to the e2e Playwright reports: a CloudFront distribution in
+  front of the (private) reports bucket, with a Lambda@Edge viewer-request
+  function that requires a Cognito session backed by Google Workspace sign-in.
+  See README.md next to this file.
+
+Parameters:
+  ReportsBucket:
+    Type: String
+    Default: rstudio-playwright-reports
+    Description: Existing bucket the e2e workflows publish reports into (os-publish-e2e-report).
+  CognitoDomainPrefix:
+    Type: String
+    Default: rstudio-e2e-reports
+    Description: >-
+      Hosted-UI domain prefix. The Google OAuth client's authorized redirect URI
+      is derived from it (see the GoogleRedirectUri output), so changing it means
+      updating the Google client too.
+  GoogleClientId:
+    Type: String
+    NoEcho: true
+    Description: OAuth client ID from the rstudio-e2e-reports Google Cloud project. deploy.sh supplies it.
+  GoogleClientSecret:
+    Type: String
+    NoEcho: true
+    Description: OAuth client secret for GoogleClientId. deploy.sh supplies it.
+  AllowedEmailDomain:
+    Type: String
+    Default: posit.co
+    Description: >-
+      Only Google accounts in this domain may sign in. Google already enforces
+      this when the OAuth consent screen's audience is "Internal"; the pre-sign-up
+      trigger enforces it again on the Cognito side.
+  SessionDays:
+    Type: Number
+    Default: 30
+    MinValue: 1
+    MaxValue: 365
+    Description: Days a browser stays signed in before Google sign-in is required again.
+
+Resources:
+  # ---------------------------------------------------------------- Cognito
+
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Ref AWS::StackName
+      # No password sign-up: every user arrives through the Google identity
+      # provider, which creates the user on first sign-in regardless of this.
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: true
+      DeletionProtection: INACTIVE
+
+  # Rejects any federated sign-in whose email is outside AllowedEmailDomain.
+  # SAM wires it into the pool's PreSignUp trigger and grants Cognito invoke.
+  # A code directory rather than InlineCode: `cloudformation package` gives an
+  # inline function a CodeUri of the template's directory, which here would
+  # upload lambda/node_modules on every deploy.
+  PreSignUpFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: presignup
+      Runtime: nodejs22.x
+      Handler: index.handler
+      Timeout: 5
+      MemorySize: 128
+      Environment:
+        Variables:
+          ALLOWED_EMAIL_DOMAIN: !Ref AllowedEmailDomain
+      Events:
+        PreSignUp:
+          Type: Cognito
+          Properties:
+            UserPool: !Ref UserPool
+            Trigger: PreSignUp
+
+  GoogleIdentityProvider:
+    Type: AWS::Cognito::UserPoolIdentityProvider
+    Properties:
+      UserPoolId: !Ref UserPool
+      ProviderName: Google
+      ProviderType: Google
+      ProviderDetails:
+        client_id: !Ref GoogleClientId
+        client_secret: !Ref GoogleClientSecret
+        authorize_scopes: openid email profile
+      AttributeMapping:
+        email: email
+        username: sub
+
+  UserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      UserPoolId: !Ref UserPool
+      Domain: !Ref CognitoDomainPrefix
+
+  # Public client (no secret): the edge function is the only party that
+  # exchanges codes, and it does so over TLS with PKCE-free code flow against
+  # the hosted UI. Only Google is offered, so the hosted UI sends users
+  # straight to Google rather than showing a provider chooser.
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    DependsOn: GoogleIdentityProvider
+    Properties:
+      UserPoolId: !Ref UserPool
+      ClientName: viewer
+      GenerateSecret: false
+      SupportedIdentityProviders:
+        - Google
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthFlows:
+        - code
+      AllowedOAuthScopes:
+        - openid
+        - email
+        - profile
+      CallbackURLs:
+        - !Sub https://${Distribution.DomainName}/parseauth
+      LogoutURLs:
+        - !Sub https://${Distribution.DomainName}/
+      RefreshTokenValidity: !Ref SessionDays
+      TokenValidityUnits:
+        RefreshToken: days
+      EnableTokenRevocation: true
+      PreventUserExistenceErrors: ENABLED
+
+  # ------------------------------------------------------------ Edge function
+
+  # Lambda@Edge functions cannot have environment variables, so the pool and
+  # client details the function needs are published here and read once per
+  # container. The name is fixed; lambda/index.js reads the same one.
+  ViewerConfig:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /rstudio-e2e-reports/viewer
+      Type: String
+      Description: Cognito settings for the e2e reports viewer edge function (managed by CloudFormation).
+      Value: !Sub |
+        {
+          "userPoolId": "${UserPool}",
+          "userPoolAppId": "${UserPoolClient}",
+          "userPoolDomain": "${CognitoDomainPrefix}.auth.${AWS::Region}.amazoncognito.com",
+          "baseUrl": "https://${Distribution.DomainName}",
+          "sessionDays": ${SessionDays}
+        }
+
+  # Lambda@Edge replicas run as the function's role, so it has to trust the
+  # edgelambda service as well as lambda; SAM's generated role would not.
+  EdgeAuthFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+                - edgelambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: read-viewer-config
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: ssm:GetParameter
+                Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/rstudio-e2e-reports/viewer
+
+  # Viewer-request functions are limited to 1 MB zipped and 5 seconds, so the
+  # code is an esbuild bundle (lambda/dist, built by deploy.sh). AutoPublishAlias
+  # gives CloudFront the versioned ARN it requires and republishes on change.
+  EdgeAuthFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/dist
+      Handler: index.handler
+      Runtime: nodejs22.x
+      MemorySize: 128
+      Timeout: 5
+      Role: !GetAtt EdgeAuthFunctionRole.Arn
+      AutoPublishAlias: live
+
+  # -------------------------------------------------------------- CloudFront
+
+  OriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Ref AWS::StackName
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  Distribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: e2e Playwright reports (Google sign-in required)
+        HttpVersion: http2and3
+        PriceClass: PriceClass_100
+        Origins:
+          - Id: reports
+            DomainName: !Sub ${ReportsBucket}.s3.${AWS::Region}.amazonaws.com
+            OriginAccessControlId: !GetAtt OriginAccessControl.Id
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+        DefaultCacheBehavior:
+          TargetOriginId: reports
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: [GET, HEAD]
+          Compress: true
+          # CachingOptimized: nothing from the viewer (cookies, query string) is
+          # forwarded to S3 or keyed into the cache. The edge function has
+          # already handled both by the time a request reaches the cache, and a
+          # cached object is only ever served to a request it has let through.
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+          LambdaFunctionAssociations:
+            - EventType: viewer-request
+              LambdaFunctionARN: !Ref EdgeAuthFunction.Version
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+
+  # Lets this distribution, and nothing else, read the reports. The bucket
+  # keeps Block Public Access on; a service-principal grant scoped by
+  # SourceArn is not a public policy.
+  ReportsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ReportsBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowCloudFrontRead
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub arn:aws:s3:::${ReportsBucket}/*
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub arn:aws:cloudfront::${AWS::AccountId}:distribution/${Distribution}
+
+Outputs:
+  ReportsBaseUrl:
+    Description: Base URL for published reports; the publish action prefixes report paths with it.
+    Value: !Sub https://${Distribution.DomainName}
+  GoogleRedirectUri:
+    Description: Authorized redirect URI the Google OAuth client must list.
+    Value: !Sub https://${CognitoDomainPrefix}.auth.${AWS::Region}.amazoncognito.com/oauth2/idpresponse
+  UserPoolId:
+    Value: !Ref UserPool
+  DistributionId:
+    Value: !Ref Distribution

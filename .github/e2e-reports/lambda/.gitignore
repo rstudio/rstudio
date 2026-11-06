@@ -1,0 +1,2 @@
+# esbuild output; deploy.sh rebuilds it (node_modules is ignored repo-wide).
+dist/
