@@ -391,9 +391,12 @@ void NotebookQueueUnit::replaceCode(const std::string& code)
    // replace the entire body of the code
    code_ = code;
 
-   // replace the pending queue with one that executes exactly the code given
+   // replace the pending queue with one that executes exactly the code given;
+   // empty code gets no range, so the unit is skipped before an execution
+   // context connects (an empty range would leave that context connected)
    pending_.clear();
-   pending_.push_back(ExecRange(0, gsl::narrow_cast<int>(code_.length())));
+   if (!code_.empty())
+      pending_.push_back(ExecRange(0, gsl::narrow_cast<int>(code_.length())));
 }
 
 } // namespace notebook

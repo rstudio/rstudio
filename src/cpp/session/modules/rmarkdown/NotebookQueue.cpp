@@ -472,15 +472,21 @@ private:
          chunkDirectory(workingDir, docQueue->docPath()),
          &codeFilePath);
 
-      // if the file can't be read, fail with an R error as knitr does rather
+      // if the file can't be read, fail with an error as knitr does rather
       // than run the chunk's own code; output written before the chunk's input
       // reaches R never shows in the chunk, so the error is raised as input
-      if (codeFileError && engine == "r")
+      // (other engines still fall back to the chunk's own code)
+      if (codeFileError)
       {
-         std::string message = "cannot open file '" + codeFilePath.getAbsolutePath() +
-                               "': " + codeFileError.getMessage();
-         unit->replaceCode("stop('" + string_utils::singleQuotedStrEscape(message) + "', call. = FALSE)\n");
+         std::string message = string_utils::singleQuotedStrEscape(
+            "cannot open file '" + codeFilePath.getAbsolutePath() + "': " + codeFileError.getMessage());
+
+         if (engine == "r")
+            unit->replaceCode("stop('" + message + "', call. = FALSE)\n");
+         else if (engine == "python")
+            unit->replaceCode("raise FileNotFoundError('" + message + "')\n");
       }
+      bool codeFromFile = !codeFilePath.isEmpty() && !codeFileError;
 
       // skip unit if it has no code to execute
       if (!unit->hasPendingRanges())
@@ -512,9 +518,11 @@ private:
       }
       else
       {
-         // execute with alternate engine
-         std::string innerCode;
-         error = unit->innerCode(&innerCode);
+         // execute with alternate engine; code read from a file has no chunk
+         // fences, so extracting the chunk body would drop its first and last
+         // lines
+         std::string innerCode = unit->code();
+         error = codeFromFile ? Success() : unit->innerCode(&innerCode);
          if (error)
          {
             LOG_ERROR(error);
