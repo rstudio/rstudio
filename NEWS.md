@@ -38,6 +38,7 @@
 - ([#19466](https://github.com/rstudio/rstudio/issues/19466)): Fixed an issue where the Keyboard Shortcut Quick Reference could be scrolled into pages of blank space below the shortcuts in Safari on macOS.
 
 ### Dependencies
+- ([#19095](https://github.com/rstudio/rstudio/issues/19095)): macOS builds now require C++20; Linux retains its C++17 minimum.
 - Quarto 1.11.9
 - Electron 44.10.2
 
