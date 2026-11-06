@@ -528,6 +528,27 @@ describe('updater', () => {
     assert.equal(host.installs, 1);
   });
 
+  it('lets an install request drop its record without failing a newer one still in its checks', async () => {
+    const { host, updater } = setup('darwin');
+    await offer(updater, host, A);
+    await download(updater, host, A);
+
+    // the first request records its install before the second reaches the
+    // main process; the first's refused quit then drops its record while
+    // the second's checks run
+    assert.equal(await updater.installUpdate(A, project, 'first'), '');
+    host.othersGate = deferred();
+    const second = updater.installUpdate(A, project, 'second');
+    await flush();
+    updater.cancelPendingInstall('first');
+    host.othersGate.resolve(true);
+
+    assert.equal(await second, '');
+    assert.isTrue(updater.hasPendingInstall());
+    assert.isTrue(await updater.applyPendingUpdate());
+    assert.equal(host.installs, 1);
+  });
+
   it('gives up at the quit handoff when another window opened meanwhile, and says so', async () => {
     const { host, updater } = setup('darwin');
     await offer(updater, host, A);

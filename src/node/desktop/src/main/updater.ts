@@ -452,13 +452,17 @@ export class Updater {
    * the next check offers the restart again, and on macOS Squirrel applies
    * it at the next start regardless (see the class comment). With
    * `request`, only the record that installUpdate() request made is
-   * dropped, never one made since (for the same version, too).
+   * dropped, never one made since (for the same version, too), and a
+   * request still in its checks is not told of it: it may be the one that
+   * replaced this request.
    */
   cancelPendingInstall(request?: string): void {
     if (request !== undefined && (this.pendingInstall === null || this.pendingRequest !== request)) {
       return;
     }
-    this.cancellations++;
+    if (request === undefined) {
+      this.cancellations++;
+    }
     if (this.pendingInstall === null) {
       return;
     }
