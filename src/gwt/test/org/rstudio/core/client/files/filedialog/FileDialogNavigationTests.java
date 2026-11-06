@@ -46,7 +46,9 @@ public class FileDialogNavigationTests extends GWTTestCase
    protected void gwtSetUp()
    {
       // the breadcrumb reads the active project from the injected session
-      RStudioGinjector.INSTANCE.getSession().setSessionInfo(sessionInfo());
+      Session appSession = RStudioGinjector.INSTANCE.getSession();
+      appSessionInfo_ = appSession.getSessionInfo();
+      appSession.setSessionInfo(sessionInfo());
 
       Session session = new Session(null);
       session.setSessionInfo(sessionInfo());
@@ -54,6 +56,13 @@ public class FileDialogNavigationTests extends GWTTestCase
       server_ = new StubFilesServerOperations();
       context_ = new RemoteFileSystemContext(server_, null, new DummyGlobalDisplay(), session);
       accepted_ = new ArrayList<>();
+   }
+
+   @Override
+   protected void gwtTearDown()
+   {
+      // the injected session outlives this suite
+      RStudioGinjector.INSTANCE.getSession().setSessionInfo(appSessionInfo_);
    }
 
    // #18960: crumb A, crumb B, then Choose before either listing arrives
@@ -165,6 +174,7 @@ public class FileDialogNavigationTests extends GWTTestCase
       return {default_working_dir: "/default"};
    }-*/;
 
+   private SessionInfo appSessionInfo_;
    private StubFilesServerOperations server_;
    private RemoteFileSystemContext context_;
    private ArrayList<FileSystemItem> accepted_;
