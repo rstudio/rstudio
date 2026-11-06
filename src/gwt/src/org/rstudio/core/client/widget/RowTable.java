@@ -111,7 +111,11 @@ public abstract class RowTable<T> extends ScrollPanel
          @Override
          public void run()
          {
-            redraw();
+            // rebuilding the rows changes nothing while the rendered window
+            // stays put, as it always does in a list short enough to render
+            // whole
+            if (getScrolledOffset() != offset_)
+               redraw();
          }
       };
       
@@ -388,7 +392,7 @@ public abstract class RowTable<T> extends ScrollPanel
    {
       double scrollPos = getScrollTop();
 
-      updateOffset();
+      offset_ = getScrolledOffset();
       updatePaddingRow(topPaddingRowEl_, getTopPaddingHeight());
       updatePaddingRow(bottomPaddingRowEl_, getBottomPaddingHeight());
       
@@ -557,7 +561,8 @@ public abstract class RowTable<T> extends ScrollPanel
       return Math.min(data_.size(), MAX_VISIBLE_ROWS);
    }
    
-   private void updateOffset()
+   // The first row to render for the current scroll position.
+   private int getScrolledOffset()
    {
       double rowHeight = getRowHeight();
       
@@ -575,7 +580,7 @@ public abstract class RowTable<T> extends ScrollPanel
       int offset = numRowsScrolled - (n / 2);
       
       // clamp to boundaries of view
-      offset_ = MathUtil.clamp(offset, 0, data_.size() - n);
+      return MathUtil.clamp(offset, 0, data_.size() - n);
    }
    
    public void clear()

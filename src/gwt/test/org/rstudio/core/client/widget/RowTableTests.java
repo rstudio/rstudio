@@ -26,6 +26,7 @@ import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.RootPanel;
 
 public class RowTableTests extends GWTTestCase
@@ -52,6 +53,7 @@ public class RowTableTests extends GWTTestCase
       @Override
       public void drawRowImpl(String object, TableRowElement rowEl)
       {
+         rowsDrawn++;
          rowEl.appendChild(Document.get().createTDElement()).setInnerText(object);
       }
 
@@ -72,6 +74,8 @@ public class RowTableTests extends GWTTestCase
       {
          return object;
       }
+
+      int rowsDrawn = 0;
    }
 
    private StringTable createTable(String... items)
@@ -411,6 +415,53 @@ public class RowTableTests extends GWTTestCase
       assertEquals(1, selected.size());
       assertEquals("120", selected.get(0).getAttribute("__row"));
       assertActiveDescendantRendered(table, 120);
+   }
+
+   // Scrolls as a user does: RowTable redraws on a timer after scroll events,
+   // which setting the position alone does not fire in HtmlUnit.
+   private static void scrollByUser(StringTable table, int row)
+   {
+      table.setVerticalScrollPosition((int) (row * table.getRowHeight()));
+      table.getElement().dispatchEvent(Document.get().createScrollEvent());
+   }
+
+   // Runs the check once RowTable's 100ms scroll timer has fired.
+   private void afterScrollTimer(Runnable check)
+   {
+      delayTestFinish(5000);
+      new Timer()
+      {
+         @Override
+         public void run()
+         {
+            check.run();
+            finishTest();
+         }
+      }.schedule(500);
+   }
+
+   public void testScrollPastRenderedWindowRedraws()
+   {
+      StringTable table = createLongTable();
+
+      scrollByUser(table, 400);
+
+      afterScrollTimer(() ->
+         assertFalse("0".equals(getOptions(table).get(0).getAttribute("__row"))));
+   }
+
+   public void testScrollWithinRenderedWindowRedrawsNothing()
+   {
+      // a list short enough to render whole never moves its window
+      String[] items = new String[50];
+      for (int i = 0; i < items.length; i++)
+         items[i] = "item" + i;
+      StringTable table = createTable(items);
+      int rowsDrawn = table.rowsDrawn;
+
+      scrollByUser(table, 20);
+
+      afterScrollTimer(() -> assertEquals(rowsDrawn, table.rowsDrawn));
    }
 
    public void testRedrawTitlesReusedRowsByTheirOwnItem()
