@@ -78,8 +78,10 @@ public class ChooseFolderDialog2 extends FileSystemDialog
       if (item != null)
       {
          // use the same target as double-clicking the row: the parent for
-         // `..`, or the target of a macOS Finder alias / Windows shortcut
-         browser_.setFilename(browser_.getSelectedTarget().getPath());
+         // `..`, or the target of a macOS Finder alias / Windows shortcut.
+         // Resolve the event's own item: RowTable doesn't promise that its
+         // stored selection matches the event while firing (clear() doesn't).
+         browser_.setFilename(browser_.resolveItem(item).getPath());
       }
       else if (!browser_.isNavigating())
       {
