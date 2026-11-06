@@ -64,6 +64,18 @@ public class QuitGate
       }
 
       /**
+       * This attempt told the desktop frame a quit is coming, which a quit
+       * that then does not happen must undo. Until some attempt does, the
+       * frame's pending quit is not the gate's: a console q() records one
+       * without passing through it.
+       */
+      public void armed()
+      {
+         if (round_ == rounds_)
+            armed_ = true;
+      }
+
+      /**
        * This attempt's quit_session request is on its way: until it is
        * answered, the session may yet quit for it.
        */
@@ -90,12 +102,12 @@ public class QuitGate
 
       /**
        * This attempt's quit did not happen: refused, failed, or given up
-       * before it was sent. True when the caller must now undo what was
-       * armed for quitting, and the gate is open again: the latest attempt
-       * has failed, no request the session may still act on is unanswered,
-       * and the session accepted none. Otherwise false, and the undo falls
-       * to whichever outstanding request fails last, or to the session's
-       * exit or abort.
+       * before it was sent. The gate reopens once the latest attempt has
+       * failed, no request the session may still act on is unanswered, and
+       * the session accepted none; until then the undo falls to whichever
+       * outstanding request fails last, or to the session's exit or abort.
+       * True when the gate reopened and an attempt had armed the desktop
+       * frame, which the caller must then undo.
        */
       public boolean fail()
       {
@@ -106,8 +118,9 @@ public class QuitGate
             latestFailed_ = true;
          if (!latestFailed_ || outstanding_ > 0)
             return false;
+         boolean undo = armed_;
          reopen();
-         return true;
+         return undo;
       }
 
       private void settle()
@@ -185,6 +198,7 @@ public class QuitGate
       acknowledged_ = false;
       latestFailed_ = false;
       outstanding_ = 0;
+      armed_ = false;
       rounds_++;
    }
 
@@ -229,6 +243,8 @@ public class QuitGate
    private boolean latestFailed_ = false;
    /** quit_session requests sent this round and not yet answered */
    private int outstanding_ = 0;
+   /** an attempt this round told the desktop frame a quit is coming */
+   private boolean armed_ = false;
    /** bumped by every reopen(), so an acceptance can tell it came too late */
    private int rounds_ = 0;
 }

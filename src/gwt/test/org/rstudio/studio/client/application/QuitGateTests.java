@@ -110,6 +110,7 @@ public class QuitGateTests extends GWTTestCase
       QuitGate gate = new QuitGate();
       QuitGate.Attempt stalled = gate.start(0);
       QuitGate.Attempt latest = gate.start(QuitGate.kStaleQuitMs);
+      latest.armed();
       assertFalse(stalled.isCurrent());
       assertTrue(latest.isCurrent());
 
@@ -153,6 +154,7 @@ public class QuitGateTests extends GWTTestCase
       // until the session reports that quit aborted
       gate.reopen();
       QuitGate.Attempt next = gate.start(QuitGate.kStaleQuitMs + 1);
+      next.armed();
       assertTrue(next.fail());
    }
 
@@ -179,8 +181,10 @@ public class QuitGateTests extends GWTTestCase
    {
       QuitGate gate = new QuitGate();
       QuitGate.Attempt stalled = gate.start(0);
+      stalled.armed();
       stalled.sent();
       QuitGate.Attempt latest = gate.start(QuitGate.kStaleQuitMs);
+      latest.armed();
       latest.sent();
 
       assertFalse(latest.fail());
@@ -212,12 +216,37 @@ public class QuitGateTests extends GWTTestCase
    {
       QuitGate gate = new QuitGate();
       QuitGate.Attempt stalled = gate.start(0);
+      stalled.armed();
       stalled.sent();
       QuitGate.Claim claim = gate.claim(QuitGate.kStaleQuitMs);
 
       assertFalse(claim.release());
       assertTrue(gate.isClosed());
       assertTrue(stalled.fail());
+      assertFalse(gate.isClosed());
+   }
+
+   public void testAReleasedClaimThatReplacedNothingLeavesTheFrameAlone()
+   {
+      // a console q() records its pending quit in the desktop frame without
+      // the gate, so an R switch can claim the quit meanwhile; when its R
+      // cannot be prepared, the release must not clear that pending quit
+      QuitGate gate = new QuitGate();
+      QuitGate.Claim claim = gate.claim();
+      assertFalse(claim.release());
+      assertFalse(gate.isClosed());
+   }
+
+   public void testAFailureUndoesOnlyWhatAnAttemptArmed()
+   {
+      QuitGate gate = new QuitGate();
+      QuitGate.Attempt unarmed = gate.start(0);
+      assertFalse(unarmed.fail()); // failed before it reached the frame
+      assertFalse(gate.isClosed());
+
+      QuitGate.Attempt armed = gate.start(1);
+      armed.armed();
+      assertTrue(armed.fail());
       assertFalse(gate.isClosed());
    }
 
@@ -229,6 +258,7 @@ public class QuitGateTests extends GWTTestCase
       aborted.acknowledged();
 
       QuitGate.Attempt next = gate.start(1);
+      next.armed();
       assertTrue(next.fail());
       assertFalse(gate.isClosed());
    }

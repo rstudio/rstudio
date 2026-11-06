@@ -479,7 +479,9 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
 
       public void release()
       {
-         // the claim may have replaced a stalled quit that armed the frame
+         // the claim may have replaced a stalled quit that armed the frame;
+         // otherwise the frame's pending quit is not ours to clear (a
+         // console q() records one without the gate)
          if (claim_.release())
             undoQuit();
       }
@@ -834,6 +836,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                   : DesktopFrame.PENDING_QUIT_RESTART_AND_RELOAD;
 
             isQuitting_ = true;
+            attempt_.armed();
             DesktopFrameHelper.setPendingQuit(quitType, rExecutablePath_, (String frameError) ->
             {
                if (!StringUtil.isNullOrEmpty(frameError))
