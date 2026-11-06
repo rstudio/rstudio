@@ -642,12 +642,22 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
                                              recursive,
                                              pContext->filter,
                                              &(pContext->fileTree),
-                                             pContext->callbacks.onFilesChanged);
+                                             pContext->callbacks.onFilesChanged,
+                                             pContext->recursive);
          if (error &&
             !isNotFoundError(error))
          {
             LOG_ERROR(error);
          }
+      }
+      else
+      {
+         // Keep a failed node so removing an ignore rule triggers a complete
+         // recovery scan even when the directory entry itself is unchanged.
+         impl::invalidateDirectory(
+               fileInfo,
+               &(pContext->fileTree),
+               pContext->callbacks.onFilesChanged);
       }
    }
 }

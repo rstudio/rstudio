@@ -17,6 +17,7 @@
 #include <core/system/FileMonitor.hpp>
 
 #include <list>
+#include <set>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/bind/bind.hpp>
@@ -150,20 +151,34 @@ Error processFileAdded(
    tree<FileInfo>::sibling_iterator it = impl::findFile(pTree->begin(parentIt),
                                                         pTree->end(parentIt),
                                                         fileChange.fileInfo());
+   // A filtered placeholder was removed from subscribers' view. Treat its
+   // reappearance in a parent scan as a new subtree, including a fresh scan.
+   if (it != pTree->end(parentIt) && it->scanFiltered())
+   {
+      pTree->erase(it);
+      it = pTree->end(parentIt);
+   }
    if (it != pTree->end(parentIt))
    {
-      if (fileChange.fileInfo() != *it)
+      // Directory notifications contain no scan result. A queued addition
+      // must preserve a failure recorded by the initial scan until a retry
+      // actually scans the directory and registers its watch successfully.
+      FileInfo updatedInfo = fileChange.fileInfo();
+      if (updatedInfo.isDirectory() && it->isDirectory())
+         updatedInfo.setScanFailed(it->scanFailed());
+      if (updatedInfo != *it)
       {
-         pTree->replace(it, fileChange.fileInfo());
+         pTree->replace(it, updatedInfo);
 
          // add it to the fileChanges
          pFileChanges->push_back(FileChangeEvent(FileChangeEvent::FileModified,
-                                                 fileChange.fileInfo()));
+                                                 updatedInfo));
       }
       return Success();
 
    }
 
+   Error scanError;
    if (recursive && shouldTraverse(fileChange.fileInfo()))
    {
       tree<FileInfo> subTree;
@@ -172,9 +187,12 @@ Error processFileAdded(
       options.yield = true;
       options.filter = filter;
       options.onBeforeScanDir = onBeforeScanDir;
-      Error error = scanFiles(fileChange.fileInfo(), options, &subTree);
-      if (error)
-         return error;
+      scanError = scanFiles(fileChange.fileInfo(), options, &subTree);
+      if (isNotFoundError(scanError))
+         return scanError;
+
+      // Retain failed scans so consumers see lost coverage and a later event
+      // for this directory can find the node and retry the scan.
 
       // merge in the sub-tree
       tree<FileInfo>::sibling_iterator addedIter =
@@ -202,7 +220,7 @@ Error processFileAdded(
                fileInfoPathLessThan,
                false);
 
-   return Success();
+   return scanError;
 }
 
 void processFileModified(tree<FileInfo>::iterator parentIt,
@@ -270,6 +288,31 @@ void processFileRemoved(tree<FileInfo>::iterator parentIt,
    }
 }
 
+void invalidateDirectory(
+   const FileInfo& fileInfo,
+   tree<FileInfo>* pTree,
+   const boost::function<void(const std::vector<FileChangeEvent>&)>& onFilesChanged)
+{
+   auto it = impl::findFile(pTree->begin(), pTree->end(), fileInfo);
+   if (it == pTree->end() || !it->isDirectory() || it->scanFiltered() ||
+       (it->isSymlink() && it != pTree->begin()))
+   {
+      return;
+   }
+
+   // Filtering removes the subtree from subscribers' view; it is not a
+   // filesystem scan failure. Keep an incomplete node only in the monitor's
+   // own tree so a later accepted event can rebuild the entire subtree.
+   std::vector<FileChangeEvent> fileChanges;
+   tree<FileInfo> subtree(it);
+   for (const FileInfo& info : subtree)
+      fileChanges.emplace_back(FileChangeEvent::FileRemoved, info);
+   it->setScanFailed(false);
+   it->setScanFiltered(true);
+   pTree->erase_children(it);
+   onFilesChanged(fileChanges);
+}
+
 Error discoverAndProcessFileChanges(
    const FileInfo& fileInfo,
    bool recursive,
@@ -277,16 +320,24 @@ Error discoverAndProcessFileChanges(
    const boost::function<Error(const FileInfo&)>& onBeforeScanDir,
    tree<FileInfo>* pTree,
    const  boost::function<void(const std::vector<FileChangeEvent>&)>&
-                                                               onFilesChanged)
+                                                               onFilesChanged,
+   bool recursiveMonitor)
 {
    // find this path in our fileTree
-   tree<FileInfo>::iterator it = std::find(pTree->begin(),
-                                           pTree->end(),
-                                           fileInfo);
+   tree<FileInfo>::iterator it = impl::findFile(pTree->begin(), pTree->end(), fileInfo);
 
    // if we don't find it then it may have been excluded by a filter, just bail
    if (it == pTree->end())
       return Success();
+
+   // A queued directory event may outlive replacement by a file or symlink.
+   // Only registered monitor roots are allowed to traverse a symlink.
+   if (!it->isDirectory() || (it->isSymlink() && it != pTree->begin()))
+      return Success();
+
+   // macOS ordinarily rescans only one directory even for recursive monitors.
+   // Recovery must rebuild the failed subtree before advertising coverage.
+   recursive = recursive || (recursiveMonitor && (it->scanFailed() || it->scanFiltered()));
 
    // scan this directory into a new tree which we can compare to the old tree
    tree<FileInfo> subdirTree;
@@ -296,11 +347,17 @@ Error discoverAndProcessFileChanges(
    options.filter = filter;
    options.onBeforeScanDir = onBeforeScanDir;
    Error error = scanFiles(fileInfo, options, &subdirTree);
-   if (error)
+   if (it->scanFiltered() && isNotFoundError(error))
+   {
+      // A queued event can outlive an unpublished directory. It was already
+      // removed for subscribers, so discard its retry node without adding it.
+      pTree->erase(it);
       return error;
-
-   // handle recursive vs. non-recursive scan differently
-   if (recursive)
+   }
+   // Publish failed scans as well so consumers cannot mistake an incomplete
+   // directory for a covered subtree. Replacing its old contents also ensures
+   // a successful retry announces the recovered descendants.
+   if (recursive || error)
    {
       // check for changes on full subtree
       std::vector<FileChangeEvent> fileChanges;
@@ -320,6 +377,17 @@ Error discoverAndProcessFileChanges(
    }
    else
    {
+      // A shallow scan cannot establish whether existing child directories
+      // have recovered; retain their status until they are actually scanned.
+      std::set<std::string> failedChildren;
+      for (auto child = pTree->begin(it); child != pTree->end(it); ++child)
+         if (child->isDirectory() && child->scanFailed())
+            failedChildren.insert(child->absolutePath());
+      auto scannedRoot = subdirTree.begin();
+      for (auto child = subdirTree.begin(scannedRoot); child != subdirTree.end(scannedRoot); ++child)
+         if (child->isDirectory())
+            child->setScanFailed(failedChildren.count(child->absolutePath()) != 0);
+
       // scan for changes on just the children
       std::vector<FileChangeEvent> childrenFileChanges;
       collectFileChangeEvents(pTree->begin(it),
@@ -330,6 +398,11 @@ Error discoverAndProcessFileChanges(
 
       // build up actual file changes and mutate the tree as appropriate
       std::vector<FileChangeEvent> fileChanges;
+      if (it->scanFailed() != scannedRoot->scanFailed())
+      {
+         it->setScanFailed(scannedRoot->scanFailed());
+         fileChanges.emplace_back(FileChangeEvent::FileModified, *it);
+      }
       for (const FileChangeEvent& fileChange : childrenFileChanges)
       {
          switch(fileChange.type())
@@ -338,8 +411,9 @@ Error discoverAndProcessFileChanges(
          {
             Error error = processFileAdded(it,
                                            fileChange,
-                                           recursive,
+                                           recursive || recursiveMonitor,
                                            filter,
+                                           onBeforeScanDir,
                                            pTree,
                                            &fileChanges);
             if (error)
@@ -355,7 +429,7 @@ Error discoverAndProcessFileChanges(
          {
             processFileRemoved(it,
                                fileChange,
-                               recursive,
+                               recursive || recursiveMonitor,
                                pTree,
                                &fileChanges);
             break;
@@ -370,7 +444,7 @@ Error discoverAndProcessFileChanges(
       onFilesChanged(fileChanges);
    }
 
-   return Success();
+   return error;
 }
 
 std::list<void*> activeEventContexts()
