@@ -642,8 +642,14 @@ public class Files
    @Handler
    void onDeleteFiles()
    {
-      // get currently selected files
-      final ArrayList<FileSystemItem> selectedFiles = view_.getSelectedFiles();
+      // get currently selected files, never including the directory being
+      // browsed or anything above it (#19493)
+      final ArrayList<FileSystemItem> selectedFiles = new ArrayList<>();
+      for (FileSystemItem file : view_.getSelectedFiles())
+      {
+         if (!containsCurrentPath(file))
+            selectedFiles.add(file);
+      }
 
       // validation: some selection exists
       if (selectedFiles.size() == 0)
@@ -708,6 +714,23 @@ public class Files
                            }
                         },
                        true);
+   }
+
+   // true when deleting 'file' would remove the directory the pane is showing,
+   // i.e. 'file' is that directory or one of its ancestors
+   private boolean containsCurrentPath(FileSystemItem file)
+   {
+      if (currentPath_ == null)
+         return false;
+
+      if (currentPath_.equalTo(file))
+         return true;
+
+      String prefix = file.getPath();
+      if (!prefix.endsWith("/"))
+         prefix += "/";
+
+      return currentPath_.getPath().startsWith(prefix);
    }
 
    private boolean validateNotRestrictedFolder(ArrayList<FileSystemItem> files,

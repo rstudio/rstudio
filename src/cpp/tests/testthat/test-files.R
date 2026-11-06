@@ -208,3 +208,44 @@ test_that("our list.files, list.dirs hooks function as expected", {
    unlink("~/RStudioTestDirectory", recursive = TRUE)
    
 })
+
+test_that("delete_files refuses the working directory and its ancestors", {
+
+   # https://github.com/rstudio/rstudio/issues/19493
+   root <- tempfile("delete-guard-")
+   cwd <- file.path(root, "project", "child")
+   dir.create(cwd, recursive = TRUE)
+   on.exit(unlink(root, recursive = TRUE), add = TRUE)
+
+   owd <- setwd(cwd)
+   on.exit(setwd(owd), add = TRUE)
+
+   # the working directory itself, and every directory above it
+   expect_error(.rs.invokeRpc("delete_files", list(getwd())))
+   expect_error(.rs.invokeRpc("delete_files", list(dirname(getwd()))))
+   expect_error(.rs.invokeRpc("delete_files", list(root)))
+   expect_true(dir.exists(cwd))
+
+   # the home directory and its ancestors
+   expect_error(.rs.invokeRpc("delete_files", list(path.expand("~"))))
+   expect_error(.rs.invokeRpc("delete_files", list(dirname(path.expand("~")))))
+
+   # the directory shown in the Files pane (the one being monitored)
+   browsed <- file.path(root, "browsed")
+   dir.create(browsed)
+   .rs.invokeRpc("list_files", browsed, TRUE, FALSE)
+   expect_error(.rs.invokeRpc("delete_files", list(browsed)))
+   expect_true(dir.exists(browsed))
+
+   # a refused path refuses the whole request, so nothing beside it is deleted
+   sibling <- file.path(root, "project", "sibling")
+   dir.create(sibling)
+   writeLines("x", file.path(sibling, "data.txt"))
+   expect_error(.rs.invokeRpc("delete_files", list(sibling, getwd())))
+   expect_true(dir.exists(sibling))
+
+   # a sibling of the working directory is still deletable on its own
+   .rs.invokeRpc("delete_files", list(sibling))
+   expect_false(dir.exists(sibling))
+
+})

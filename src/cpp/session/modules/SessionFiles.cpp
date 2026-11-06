@@ -102,6 +102,11 @@ namespace {
 // monitor for file listings
 FilesListingMonitor s_filesListingMonitor;
 
+// the directory the Files pane last asked to list (and monitor); tracked
+// separately from the monitor because a directory under the project is
+// watched by the project monitor instead
+FilePath s_browsedPath;
+
 // make sure that monitoring persists across suspended sessions
 const char * const kFilesMonitoredPath = "files.monitored-path";
 
@@ -277,6 +282,8 @@ Error listFiles(const json::JsonRpcRequest& request, json::JsonRpcResponse* pRes
    core::json::Array jsonFiles;
    if (monitor)
    {
+      s_browsedPath = targetPath;
+
       // always stop existing if we have one
       s_filesListingMonitor.stop();
 
@@ -389,6 +396,51 @@ core::Error deleteFile(const FilePath& filePath)
    }
 }
 
+// Deleting a directory removes everything below it, so refuse to delete any
+// directory that is (or contains) one the session depends on. The client only
+// offers the entries of the directory it is browsing, so a request for one of
+// these means the request itself is wrong (#19493: the Files pane's ".." row
+// could be selected from the keyboard and then deleted).
+core::Error validateDeletion(const FilePath& filePath)
+{
+   struct Protected
+   {
+      FilePath path;
+      const char* description;
+   };
+
+   std::vector<Protected> roots = {
+      { module_context::userHomePath(), "the home directory" },
+      { module_context::safeCurrentPath(), "the current working directory" },
+      { s_browsedPath, "the directory shown in the Files pane" }
+   };
+
+   if (projects::projectContext().hasProject())
+      roots.push_back({ projects::projectContext().directory(), "the project directory" });
+
+   // compare resolved paths: the client and R may refer to the same directory
+   // through a symlink (e.g. /var vs. /private/var on macOS)
+   FilePath target(filePath.getWeaklyCanonicalPath());
+
+   for (const Protected& root : roots)
+   {
+      if (root.path.isEmpty())
+         continue;
+
+      FilePath protectedPath(root.path.getWeaklyCanonicalPath());
+      if (protectedPath.isWithin(target))
+      {
+         std::string description = "Cannot delete '" + filePath.getAbsolutePath() +
+               "' because it is or contains " + root.description + ".";
+         return systemError(boost::system::errc::operation_not_permitted,
+                            description,
+                            ERROR_LOCATION);
+      }
+   }
+
+   return Success();
+}
+
 // IN: Array<String> paths
 core::Error deleteFiles(const core::json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
@@ -397,12 +449,20 @@ core::Error deleteFiles(const core::json::JsonRpcRequest& request,
    Error error = json::readParam(request.params, 0, &files);
    if (error)
       return error;
-   
+
    // extract vector of FilePath
    std::vector<FilePath> filePaths;
    Error extractError = extractFilePaths(files, &filePaths);
    if (extractError)
       return extractError;
+
+   // refuse the whole request before deleting anything
+   for (const FilePath& filePath : filePaths)
+   {
+      Error validateError = validateDeletion(filePath);
+      if (validateError)
+         return validateError;
+   }
 
    // delete each file
    Error deleteError;
