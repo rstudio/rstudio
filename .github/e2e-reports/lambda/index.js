@@ -52,7 +52,9 @@ function createAuthenticator(config) {
       logoutUri: SIGN_OUT_PATH,
       logoutRedirectUri: cognitoLogout,
     },
-    logLevel: 'warn',
+    // The library logs request bodies on failures, refresh token included;
+    // nothing it would say is worth that in CloudWatch.
+    logLevel: 'silent',
   });
 }
 
@@ -107,6 +109,12 @@ function createHandler(getAuthenticator) {
       return signedOutResponse();
 
     const { authenticator } = await getAuthenticator();
+
+    // Signing out with no cookies at all (a second visit to /signout) makes
+    // the library's cookie clearing dereference the absent header; give it
+    // an empty one.
+    if (request.uri === SIGN_OUT_PATH && !request.headers.cookie)
+      request.headers.cookie = [];
 
     // handle() consults the cookies before the path, so a callback that
     // arrives after another tab already completed sign-in would be passed to

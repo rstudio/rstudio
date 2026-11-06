@@ -113,3 +113,41 @@ test('/signed-out is served without consulting the authenticator', async () => {
   assert.match(result.body, /signed out/i);
   assert.equal(calls.handle, 0);
 });
+
+test('/signout with no Cookie header reaches the library with an empty one', async () => {
+  // The library's cookie clearing calls request.headers.cookie.flatMap(),
+  // which throws on an absent header, i.e. on a repeat visit to /signout.
+  let seen;
+  const authenticator = {
+    async handle(event) {
+      seen = event.Records[0].cf.request.headers.cookie;
+      return redirectTo('https://pool.auth.us-east-1.amazoncognito.com/logout');
+    },
+    async handleParseAuth() {
+      throw new Error('not expected');
+    },
+  };
+  const handler = createHandler(async () => ({ authenticator }));
+
+  const result = await handler(event('/signout'));
+
+  assert.deepEqual(seen, []);
+  assert.equal(result.status, '302');
+});
+
+test('a request that carries cookies keeps them as they are', async () => {
+  let seen;
+  const authenticator = {
+    async handle(event) {
+      seen = event.Records[0].cf.request.headers.cookie;
+      return event.Records[0].cf.request;
+    },
+  };
+  const handler = createHandler(async () => ({ authenticator }));
+  const withCookie = event('/signout');
+  withCookie.Records[0].cf.request.headers.cookie = [{ key: 'Cookie', value: 'a=1' }];
+
+  await handler(withCookie);
+
+  assert.deepEqual(seen, [{ key: 'Cookie', value: 'a=1' }]);
+});
