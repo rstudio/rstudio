@@ -1,10 +1,7 @@
-// Scrolling and keyboard focus in the web file dialogs' file list (RowTable).
-//
-// Scrolling redraws the list, and the redraw used to re-fire the selection,
-// so the dialog copied the selected file's name over one the user had typed
-// (#19316). Keyboard focus returning to the list now scrolls the selected
-// row wholly into view, rendering it first if virtualization (lists over 500
-// rows) had dropped it, so aria-activedescendant can name it (#19325).
+// Scrolling and keyboard focus in the web file dialogs' file list (RowTable):
+// scrolling keeps a typed file name (#19316), and keyboard focus scrolls the
+// selected row wholly into view, rendering it first in a list too long to
+// render at once, so aria-activedescendant names it (#19325).
 
 import { Locator, Page } from '@playwright/test';
 import { test, expect } from '@fixtures/rstudio.fixture';
@@ -34,31 +31,28 @@ function fileOption(dialog: Locator, name: string): Locator {
   return dialog.locator(`${FILE_LIST} tr[role="option"]`, { hasText: name });
 }
 
-// Sets the list's scroll position; the list scrolls in an element a couple
-// of levels above the table, whose class name is obfuscated in release builds.
+// RowTable is a ScrollPanel: the scrolling div holds a container div that
+// holds the table. Its class names are obfuscated in release builds.
+function scrollPanel(dialog: Locator): Locator {
+  return dialog.locator(FILE_LIST).locator('xpath=../..');
+}
+
 async function scrollList(dialog: Locator, where: 'bottom' | number): Promise<void> {
-  await dialog.locator(FILE_LIST).evaluate((table, where) => {
-    let panel = table.parentElement!;
-    while (getComputedStyle(panel).overflowY !== 'auto')
-      panel = panel.parentElement!;
+  await scrollPanel(dialog).evaluate((panel, where) => {
     panel.scrollTop = where === 'bottom' ? panel.scrollHeight : where;
   }, where);
 }
 
 // The option aria-activedescendant names, and whether all of it shows.
 async function activeOption(dialog: Locator) {
-  return dialog.locator(FILE_LIST).evaluate((table) => {
-    const id = table.getAttribute('aria-activedescendant');
+  return scrollPanel(dialog).evaluate((panel) => {
+    const id = panel.querySelector('table')!.getAttribute('aria-activedescendant');
     const row = id ? document.getElementById(id) : null;
     if (!row)
       return { text: null, whollyVisible: false };
 
-    let panel = table.parentElement!;
-    while (getComputedStyle(panel).overflowY !== 'auto')
-      panel = panel.parentElement!;
     const r = row.getBoundingClientRect();
-    const p = panel.getBoundingClientRect();
-    const top = p.top + panel.clientTop;
+    const top = panel.getBoundingClientRect().top + panel.clientTop;
     return {
       text: row.textContent,
       whollyVisible: r.top >= top && r.bottom <= top + panel.clientHeight,
