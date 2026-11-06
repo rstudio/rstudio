@@ -87,6 +87,10 @@ public:
                                             bool fromBottom = true,
                                             int maxChars = 8000);
 
+   // whether the retained output contains text, ignoring ANSI escapes
+   // (including the markers added by condition highlighting)
+   bool containsOutput(const std::string& text);
+
 private:
 
    // NOTE: helper methods assume mutex is already locked
