@@ -71,8 +71,12 @@ All of this is done once, by someone with the `ide-build` AWS profile
   picks up the new function version automatically (`AutoPublishAlias`).
 - **Rotate the Google secret** by creating a new one in the Google console,
   updating the SSM parameter (`put-parameter --overwrite`), and redeploying.
-- **Sign out** at `<ReportsBaseUrl>/signout`. There is no sign-in page; any
-  report URL signs you in.
+- **Sign out** at `<ReportsBaseUrl>/signout`: tokens are revoked, the
+  cookies cleared, and Cognito's own session ended, finishing on a static
+  "signed out" page. There is no sign-in page; any report URL signs you in.
+- **Tests** for the edge function's own logic (query-string restoration,
+  callback routing, the signed-out page) run with `npm test` in `lambda/`;
+  the library it wraps is replaced by a fake there.
 - **Who signed in** is visible in the Cognito user pool (one user per Google
   account, created on first sign-in). Nothing else is stored.
 - **Remove it all** with `aws cloudformation delete-stack --stack-name

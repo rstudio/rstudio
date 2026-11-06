@@ -38,6 +38,12 @@ concurrency:
 permissions:
   contents: read
   pull-requests: write
+  # This workflow is a caller: the platform jobs below `uses:` the reusable
+  # workflows, whose e2e-merge jobs request id-token: write for the S3 report
+  # upload, and a called workflow's permissions are capped by its caller's.
+  # GitHub validates that at call time, so without this grant the whole run
+  # is rejected before any job starts. e2e-merge-all requests it per-job.
+  id-token: write
 
 jobs:
   # Single change-detection job shared by all e2e platforms (Windows Desktop,

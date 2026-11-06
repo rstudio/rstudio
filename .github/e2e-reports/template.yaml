@@ -118,8 +118,11 @@ Resources:
         - profile
       CallbackURLs:
         - !Sub https://${Distribution.DomainName}/parseauth
+      # Where Cognito's /logout sends the browser after ending the hosted-UI
+      # session: a static page the edge function serves without a session
+      # check (lambda/index.js), so signing out does not start signing in.
       LogoutURLs:
-        - !Sub https://${Distribution.DomainName}/
+        - !Sub https://${Distribution.DomainName}/signed-out
       RefreshTokenValidity: !Ref SessionDays
       TokenValidityUnits:
         RefreshToken: days
