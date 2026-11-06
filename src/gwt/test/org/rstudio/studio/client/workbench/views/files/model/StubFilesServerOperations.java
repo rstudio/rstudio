@@ -28,7 +28,8 @@ import org.rstudio.studio.client.server.VoidResponse;
 
 /**
  * Records each listFiles() request so a test can answer them in any order.
- * A successful listing holds one file, `<directory>/marker.txt`.
+ * A successful listing holds one file, `<directory>/marker.txt`. A
+ * createFolder() request succeeds at once.
  */
 public class StubFilesServerOperations implements FilesServerOperations
 {
@@ -91,7 +92,10 @@ public class StubFilesServerOperations implements FilesServerOperations
    public void createFile(FileSystemItem file, String contents, ServerRequestCallback<VoidResponse> requestCallback) {}
 
    @Override
-   public void createFolder(FileSystemItem folder, ServerRequestCallback<VoidResponse> requestCallback) {}
+   public void createFolder(FileSystemItem folder, ServerRequestCallback<VoidResponse> requestCallback)
+   {
+      requestCallback.onResponseReceived(null);
+   }
 
    @Override
    public void deleteFiles(ArrayList<FileSystemItem> files, ServerRequestCallback<VoidResponse> requestCallback) {}

@@ -16,12 +16,20 @@ package org.rstudio.core.client.files.filedialog;
 
 import java.util.ArrayList;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.DomEvent;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.ui.HasWidgets;
+import com.google.gwt.user.client.ui.Widget;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.NullProgressIndicator;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.DummyGlobalDisplay;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
@@ -54,7 +62,7 @@ public class FileDialogNavigationTests extends GWTTestCase
       session.setSessionInfo(sessionInfo());
 
       server_ = new StubFilesServerOperations();
-      context_ = new RemoteFileSystemContext(server_, null, new DummyGlobalDisplay(), session);
+      context_ = new RemoteFileSystemContext(server_, null, new NewFolderDisplay(), session);
       accepted_ = new ArrayList<>();
    }
 
@@ -124,6 +132,25 @@ public class FileDialogNavigationTests extends GWTTestCase
       assertEquals("/b", context_.pwd());
    }
 
+   // New Folder enters the folder it creates, which supersedes a deferred
+   // save just as choosing a crumb does
+   public void testNewFolderAfterDeferredSaveAbandonsIt()
+   {
+      SaveFileDialog dialog = saveFileDialog();
+      dialog.setFilename("file.R");
+      commitDirectory(dialog, "/a");
+      dialog.maybeAccept();
+
+      // created in /home, since the listing of /a has not arrived
+      clickNewFolder(dialog);
+      assertEquals("/home/new", server_.path(2));
+
+      server_.succeed(2);
+      server_.succeed(1);
+      assertEquals(0, accepted_.size());
+      assertEquals("/home/new", context_.pwd());
+   }
+
    private ChooseFolderDialog2 chooseFolderDialog()
    {
       ChooseFolderDialog2 dialog = new ChooseFolderDialog2("Choose Folder", "Choose", context_, false, recordAccepted());
@@ -152,6 +179,33 @@ public class FileDialogNavigationTests extends GWTTestCase
       dialog.onSelectionCommit(new SelectionCommitEvent<FileSystemItem>(FileSystemItem.createDir(path)) {});
    }
 
+   private static void clickNewFolder(FileSystemDialog dialog)
+   {
+      ThemedButton button = findButton(dialog, ElementIds.getElementId(ElementIds.FILE_NEW_FOLDER_BUTTON));
+      assertNotNull(button);
+
+      NativeEvent click = Document.get().createClickEvent(0, 0, 0, 0, 0, false, false, false, false);
+      DomEvent.fireNativeEvent(click, button);
+   }
+
+   private static ThemedButton findButton(Widget widget, String elementId)
+   {
+      if (widget instanceof ThemedButton && elementId.equals(widget.getElement().getId()))
+         return (ThemedButton) widget;
+
+      if (widget instanceof HasWidgets)
+      {
+         for (Widget child : (HasWidgets) widget)
+         {
+            ThemedButton button = findButton(child, elementId);
+            if (button != null)
+               return button;
+         }
+      }
+
+      return null;
+   }
+
    private ProgressOperationWithInput<FileSystemItem> recordAccepted()
    {
       return new ProgressOperationWithInput<FileSystemItem>()
@@ -173,6 +227,19 @@ public class FileDialogNavigationTests extends GWTTestCase
    private static native SessionInfo sessionInfo() /*-{
       return {default_working_dir: "/default"};
    }-*/;
+
+   // answers the New Folder prompt with 'new'
+   private static class NewFolderDisplay extends DummyGlobalDisplay
+   {
+      @Override
+      public void promptForText(String title,
+                                String label,
+                                String initialValue,
+                                ProgressOperationWithInput<String> operation)
+      {
+         operation.execute("new", new NullProgressIndicator());
+      }
+   }
 
    private SessionInfo appSessionInfo_;
    private StubFilesServerOperations server_;
