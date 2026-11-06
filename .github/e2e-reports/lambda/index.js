@@ -231,5 +231,6 @@ function getAuthenticator() {
 
 exports.handler = createHandler(getAuthenticator);
 exports.createHandler = createHandler;
+exports.createAuthenticator = createAuthenticator;
 exports.restoreQueryString = restoreQueryString;
 exports.expireStaleCognitoCookies = expireStaleCognitoCookies;
