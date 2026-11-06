@@ -29,7 +29,7 @@ RStudio Server relies on your web browser's zooming features. Consult web browse
 
 ## Look and feel
 
-You can change the look and feel of the RStudio user interface by choosing from three RStudio themes, and many editor themes. Use the Tools / Global Options / Appearance settings pane to experiment and find the look that works best for you.
+You can change the look and feel of the RStudio user interface by choosing from two RStudio themes (Modern and Sky), and many editor themes. Use the Tools / Global Options / Appearance settings pane to experiment and find the look that works best for you.
 
 Pebble-Safe is a colorblind-friendly theme created by Desi Quintans. It can be downloaded and installed from the [Pebble-Safe GitHub page](https://github.com/DesiQuintans/Pebble-safe).
 
@@ -85,17 +85,17 @@ The keyboard shortcut for zooming a pane is often the same as for moving to the 
 
 For mouse users, there are also widgets in the upper-right corner of each quadrant which can be used to maximize and minimize that particular quadrant.
 
-Another strategy to employ is zooming a single column of the user interface. For example, in the default layout the Source Editor is in the top-left (assuming you have some files open) and the Console is below it. If you then use View / Panes / Zoom Left Column, those two panes will expand to fill the entire main window.
+Another strategy to employ is zooming a single column of the user interface. For example, in the default layout the Source Editor is in the top-left (assuming you have some files open) and the Console is below it. If you then use View / Panes / Zoom Left / Center Column, those two panes will expand to fill the entire main window.
 
 ### Customizing pane layout
 
 Another tool you can experiment with is customizing which quadrants contain certain tabs, as well as where each quadrant is displayed relative to the others. This is configured via View / Panes / Pane Layout dialog (also available within the Global Options dialog under Pane Layout).
 
-The Source and Console quadrants are currently fixed in terms of what tab-types may appear in them. You can, however, configure the other two quadrants to hold specific tabs. The only limitation is that a quadrant must contain at least one tab, so it is not possible to completely eliminate one quadrant. Still, you can move the tabs you don't routinely use into one quadrant then minimize that quadrant, giving what is essentially a 3 panel layout.
+The Source and Console quadrants are currently fixed in terms of what tab-types may appear in them. You can, however, configure the other two quadrants to hold specific tabs. Tabs you don't routinely use can be hidden entirely by unchecking them in every quadrant.
 
 ## Accessibility options
 
-The Global Options dialog contains a section dedicated to accessibility options. Options for reducing motion in the user interface, and for toggling the Tab key to always move focus, were mentioned earlier in this article. The rest of the options are specific to screen reader usage, and are discussed in the [section on RStudio Screen Reader support](screen-reader.html).
+The Global Options dialog contains a section dedicated to accessibility options. The option for reducing motion in the user interface was mentioned earlier in this article. The Tab Key Always Moves Focus option makes the Tab key move focus to the next element, even in a text editing control, instead of inserting a tab. The rest of the options are specific to screen reader usage, and are discussed in the [section on RStudio Screen Reader support](screen-reader.html).
 
 ## Resources
 
@@ -104,5 +104,3 @@ Here are some additional resources related to RStudio accessibility, and accessi
 -   [RStudio Blog: 1.3 Preview Accessibility](https://posit.co/blog/rstudio-1-3-preview-accessibility/)
 
 -   [BlindRUG - Blind R Users Group](http://nfbnet.org/mailman/listinfo/blindrug_nfbnet.org)
-
--   [Statistical Software and Blind Users](https://r-resources.massey.ac.nz/StatSoftware/)
