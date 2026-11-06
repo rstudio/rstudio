@@ -291,7 +291,10 @@ public abstract class RowTable<T> extends ScrollPanel
          return;
       
       addStyleName(RES.styles().focusVisible());
-      activateFirstRowIfUnselected(true);
+      if (selectedRow_ == -1)
+         activateFirstRowIfUnselected(true);
+      else
+         revealRow(selectedRow_);
    }
    
    private boolean isFocusRingShown()
@@ -310,7 +313,17 @@ public abstract class RowTable<T> extends ScrollPanel
       setActiveRow(0);
       updateActiveDescendant();
       if (scrollIntoView)
-         scrollIntoViewIfNeeded(0);
+         revealRow(0);
+   }
+
+   // The ring must be visible where focus lands. Redraws at once, rather
+   // than on the scroll timer, if virtualization had dropped the row, so that
+   // aria-activedescendant names it as focus arrives.
+   private void revealRow(int row)
+   {
+      scrollIntoViewIfNeeded(row);
+      if (getRenderedRowElement(row) == null)
+         redraw();
    }
    
    private void setActiveRow(int row)

@@ -430,6 +430,39 @@ public class RowTableTests extends GWTTestCase
       assertActiveDescendantRendered(table, 120);
    }
 
+   public void testKeyboardFocusRevealsVirtualizedSelectedOption()
+   {
+      // the user scrolled the selection out of the rendered window, then
+      // tabbed back to the list
+      StringTable table = createLongTable();
+      table.selectRow(0);
+      scrollToRow(table, 400);
+      assertFalse(getTableElement(table).hasAttribute("aria-activedescendant"));
+      int[] selectionEvents = { 0 };
+      table.addSelectionHandler(event -> selectionEvents[0]++);
+
+      focusByKeyboard(table);
+
+      assertActiveDescendantRendered(table, 0);
+      assertTrue(table.getVerticalScrollPosition() < 400 * table.getRowHeight());
+      assertEquals("item0", table.getSelectedItem());
+      assertEquals(0, selectionEvents[0]);
+   }
+
+   public void testKeyboardFocusScrollsSelectedOptionIntoView()
+   {
+      String[] items = new String[50];
+      for (int i = 0; i < items.length; i++)
+         items[i] = "item" + i;
+      StringTable table = createTable(items);
+      table.selectRow(0);
+      table.setVerticalScrollPosition(400);
+
+      focusByKeyboard(table);
+
+      assertEquals(0, table.getVerticalScrollPosition());
+   }
+
    public void testSelectingRowPastRenderedWindowMarksNoElement()
    {
       // row 500 is the first row outside the initial window of 0..499
