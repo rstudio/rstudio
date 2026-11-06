@@ -16,12 +16,14 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 import { saveAndClear, restore } from '../unit-utils';
-import { app } from 'electron';
+import { app, BrowserWindow, dialog } from 'electron';
+import sinon from 'sinon';
 
 import { FilePath } from '../../../src/core/file-path';
 import { getenv, setenv, unsetenv } from '../../../src/core/environment';
 import { clearCoreSingleton } from '../../../src/core/core-state';
 import { NullLogger, setLogger } from '../../../src/core/logger';
+import { clearApplicationSingleton } from '../../../src/main/app-state';
 
 import * as Utils from '../../../src/main/utils';
 import { userHomePath } from '../../../src/core/user';
@@ -198,5 +200,22 @@ describe('Utils', () => {
       const result = Utils.removeTrailingSlashes(testCase.input);
       assert.equal(result, testCase.expected);
     });
+  });
+  // Startup failures can happen before the Application singleton exists
+  // (e.g. a corrupt config.json, #19496); the dialog must still appear.
+  it('createStandaloneErrorDialog shows a dialog before the application is set', async () => {
+    clearApplicationSingleton();
+    const showMessageBox = sinon.stub(dialog, 'showMessageBox').resolves({ response: 0, checkboxChecked: false });
+    const consoleError = sinon.stub(console, 'error');
+    const window = new BrowserWindow({ show: false });
+    try {
+      await Utils.createStandaloneErrorDialog('title', 'message', { window, shouldCloseWindow: false });
+      assert.isTrue(showMessageBox.calledOnce);
+      assert.isTrue(consoleError.notCalled);
+    } finally {
+      showMessageBox.restore();
+      consoleError.restore();
+      window.destroy();
+    }
   });
 });
