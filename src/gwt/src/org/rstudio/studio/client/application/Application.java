@@ -326,8 +326,8 @@ public class Application implements ApplicationEventHandlers
                                               constants_.quitRunningSessionsMessage(error.getUserMessage()),
                                               buttonLabels, elementIds, buttonOperations, 0);
             }
-            else if (StringUtil.equals(error.getUserMessage(), constants_.unableToConnectMessage()) ||
-                     StringUtil.equals(error.getUserMessage(), constants_.errorTransmissionMessage()))
+            else if (StringUtil.equals(error.getUserMessage(), RPC_CONNECTION_ERROR_MESSAGE) ||
+                     StringUtil.equals(error.getUserMessage(), RPC_TRANSMISSION_ERROR_MESSAGE))
             {
                ArrayList<String> buttonLabels = new ArrayList<>();
                ArrayList<String> elementIds = new ArrayList<>();
@@ -592,19 +592,19 @@ public class Application implements ApplicationEventHandlers
       if (customDocsURL.length() > 0)
          globalDisplay_.openWindow(customDocsURL);
       else
-         globalDisplay_.openRStudioLink(constants_.helpUsingRStudioLinkName());
+         globalDisplay_.openRStudioLink("docs");
    }
 
    @Handler
    public void onRstudioCommunityForum()
    {
-      globalDisplay_.openRStudioLink(constants_.communityForumLinkName());
+      globalDisplay_.openRStudioLink("community-forum");
    }
 
    @Handler
    public void onRstudioSupport()
    {
-      globalDisplay_.openRStudioLink(constants_.rStudioSupportLinkName());
+      globalDisplay_.openRStudioLink("support");
    }
 
    @Handler
@@ -1535,6 +1535,10 @@ public class Application implements ApplicationEventHandlers
 
    private ClientStateUpdater clientStateUpdaterInstance_;
    private RootLayoutPanel rootPanel_;
+   // The server's JSON-RPC error messages (src/cpp/core/json/JsonRpc.cpp), which
+   // are always English; compare against these, not translated strings.
+   private static final String RPC_CONNECTION_ERROR_MESSAGE = "Unable to connect to service";
+   private static final String RPC_TRANSMISSION_ERROR_MESSAGE = "Error occurred during transmission";
    private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
    private boolean memoryUsageWarned_ = false;
    private boolean memoryUsageErrorShown_ = false;

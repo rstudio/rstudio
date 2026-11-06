@@ -44,6 +44,48 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_browse_url', url);
     },
 
+    checkForUpdates: async (manual: boolean, callback: VoidCallback<string>) => {
+      try {
+        callback(await ipcRenderer.invoke('desktop_check_for_updates', manual));
+      } catch (error: unknown) {
+        reportIpcError('checkForUpdates', error as Error);
+        callback(JSON.stringify({ status: 'error', error: (error as Error).message }));
+      }
+    },
+
+    downloadUpdate: (version: string) => {
+      ipcRenderer.send('desktop_download_update', version);
+    },
+
+    canInstallUpdate: async (version: string, callback: VoidCallback<string>) => {
+      try {
+        callback(await ipcRenderer.invoke('desktop_can_install_update', version));
+      } catch (error: unknown) {
+        // not knowing must block: the installer would give up silently after the quit
+        reportIpcError('canInstallUpdate', error as Error);
+        callback('unknown');
+      }
+    },
+
+    cancelUpdateInstall: (requestId: string) => {
+      ipcRenderer.send('desktop_cancel_update_install', requestId);
+    },
+
+    installUpdate: async (
+      version: string,
+      projectFilePath: string,
+      requestId: string,
+      callback: VoidCallback<string>,
+    ) => {
+      try {
+        callback(await ipcRenderer.invoke('desktop_install_update', version, projectFilePath, requestId));
+      } catch (error: unknown) {
+        // not knowing must block: quitting would then install nothing
+        reportIpcError('installUpdate', error as Error);
+        callback('unknown');
+      }
+    },
+
     getOpenFileName: async (
       caption: string,
       label: string,
@@ -432,11 +474,17 @@ export function getDesktopBridge() {
         });
     },
 
-    setPendingQuit: (pendingQuit: number, callback: VoidCallback<unknown>) => {
+    // answers '' once the quit is recorded, or why it could not be: the quit
+    // sequence waits on this, and must not go on without the record (the
+    // session's exit would be taken for a crash) nor stall without an answer
+    setPendingQuit: (pendingQuit: number, rExecutablePath: string, callback: VoidCallback<string>) => {
       ipcRenderer
-        .invoke('desktop_set_pending_quit', pendingQuit)
-        .then((response) => callback(response))
-        .catch((error) => reportIpcError('setPendingQuit', error));
+        .invoke('desktop_set_pending_quit', pendingQuit, rExecutablePath)
+        .then((error: unknown) => callback(typeof error === 'string' ? error : ''))
+        .catch((error) => {
+          reportIpcError('setPendingQuit', error);
+          callback(String(error) || 'setPendingQuit failed');
+        });
     },
 
     openFile: (path: string) => {

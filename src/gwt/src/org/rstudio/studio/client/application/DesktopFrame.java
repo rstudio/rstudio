@@ -38,7 +38,32 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void writeStderr(String text);
    
    void browseUrl(String url);
-   
+
+   // in-app updates (see src/node/desktop/src/main/updater.ts); the callback
+   // receives a JSON object with the same keys as the check_for_updates RPC
+   // plus "status" and "can-install"
+   void checkForUpdates(boolean manual, CommandWithArg<String> callback);
+   // the version the user accepted, as the check reported it
+   void downloadUpdate(String version);
+   // "" when `version`, the update a ready dialog named, can be applied now;
+   // otherwise why not: "missing" (it is not the downloaded update -- its
+   // installer is gone, or a later download replaced it -- so download it
+   // again), "other-instances" (other RStudio windows -- separate processes
+   // -- are open) or "unknown" (that check itself failed)
+   void canInstallUpdate(String version, CommandWithArg<String> callback);
+   // record that the quit about to happen installs `version` and that the
+   // relaunched RStudio should open the project file (or Projects.NONE);
+   // `requestId` names this request for cancelUpdateInstall(). Answers like
+   // canInstallUpdate(), or "superseded" when a later request took its
+   // place; the quit must follow only on ""
+   void installUpdate(String version,
+                      String projectFilePath,
+                      String requestId,
+                      CommandWithArg<String> callback);
+   // the quit installUpdate() recorded for `requestId` is not going to
+   // happen after all (a record a later request made is kept)
+   void cancelUpdateInstall(String requestId);
+
    void getOpenFileName(String caption,
                         String label,
                         String dir,
@@ -158,12 +183,15 @@ public interface DesktopFrame extends JavaScriptPassthrough
    public static final int PENDING_QUIT_AND_RESTART = 2;
    public static final int PENDING_QUIT_RESTART_AND_RELOAD = 3;
    
-   void setPendingQuit(int pendingQuit, CommandWithArg<Void> callback);
+   // callback receives "" once the frame has recorded the quit (and the R,
+   // prepared by setPendingRVersion(), it should restart with, if any), or
+   // why it could not; the quit must not go on without the record
+   void setPendingQuit(int pendingQuit, String rExecutablePath, CommandWithArg<String> callback);
    void setPendingProject(String projectFilePath);
 
    // the R executable the next session (a pending restart) should use; the
    // callback receives an error message when that R can't be used, and ""
-   // once it is ready for the restart
+   // once it is ready for the restart a quit then names in setPendingQuit()
    void setPendingRVersion(String rExecutablePath, CommandWithArg<String> callback);
 
    // make the macOS framework version of R with the given home run as itself

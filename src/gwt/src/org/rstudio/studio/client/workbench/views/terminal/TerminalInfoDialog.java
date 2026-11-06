@@ -59,14 +59,14 @@ public class TerminalInfoDialog extends ModalDialogBase
          if (StringUtil.isNullOrEmpty(cwd))
             cwd = "Default";
 
-         diagnostics.append("\n" + constants_.globalTerminalInformationText());
+         diagnostics.append(constants_.currentTerminalSessionInformationText());
          diagnostics.append(constants_.captionText()).append(cpi.getCaption()).append("'\n");
          diagnostics.append(constants_.titleText()).append(cpi.getTitle()).append("'\n");
          diagnostics.append(constants_.colsText()).append(cpi.getCols()).append(" x ").append(cpi.getRows()).append("'\n");
          diagnostics.append(constants_.shellText()).append(TerminalShellInfo.getShellName(cpi.getShellType())).append("'\n");
          diagnostics.append(constants_.handleText()).append(cpi.getHandle()).append("'\n");
          diagnostics.append(constants_.sequenceText()).append(cpi.getTerminalSequence()).append("'\n");
-         diagnostics.append(constants_.restartedText()).append(cpi.getRestarted()).append("\n");
+         diagnostics.append(constants_.restartedText()).append(cpi.getRestarted()).append("'\n");
          if (!BrowseCap.isWindowsDesktop())
             diagnostics.append(constants_.busyText()).append(cpi.getHasChildProcs()).append("'\n");
          diagnostics.append(constants_.exitCodeText()).append(cpi.getExitCode()).append("'\n");
@@ -97,6 +97,9 @@ public class TerminalInfoDialog extends ModalDialogBase
       textArea_.addStyleName(ThemeFonts.getFixedWidthClass());
       textArea_.setSize("600px", "400px");
       textArea_.setReadOnly(true);
+      // no text sits beside the box to label it, so it takes the dialog title
+      Roles.getTextboxRole().setAriaLabelProperty(
+            textArea_.getElement(), constants_.terminalDiagnosticsText());
       textArea_.setText(diagnostics.toString());
 
       addOkButton(new ThemedButton(constants_.closeTitle(), event -> closeDialog()));
