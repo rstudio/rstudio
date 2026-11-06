@@ -220,22 +220,31 @@ test_that("delete_files refuses the working directory and its ancestors", {
    owd <- setwd(cwd)
    on.exit(setwd(owd), add = TRUE)
 
+   # every request below is built from 'cwd', never from getwd(): if a regressed
+   # guard deleted the directory, the session would fall back to the home
+   # directory and later requests would aim at real user data. stopifnot()
+   # aborts the test as soon as the disposable directory goes missing.
+
    # the working directory itself, and every directory above it
-   expect_error(.rs.invokeRpc("delete_files", list(getwd())))
-   expect_error(.rs.invokeRpc("delete_files", list(dirname(getwd()))))
+   expect_error(.rs.invokeRpc("delete_files", list(cwd)))
+   stopifnot(dir.exists(cwd))
+   expect_error(.rs.invokeRpc("delete_files", list(dirname(cwd))))
+   stopifnot(dir.exists(cwd))
    expect_error(.rs.invokeRpc("delete_files", list(root)))
-   expect_true(dir.exists(cwd))
+   stopifnot(dir.exists(cwd))
 
    # a trailing '.' or '..' names the same protected directories; the
    # <cwd>/subdir/.. form is the one that slipped past a parent-only resolve
-   subdir <- file.path(getwd(), "subdir")
+   subdir <- file.path(cwd, "subdir")
    dir.create(subdir)
    writeLines("x", file.path(subdir, "keep.txt"))
-   expect_error(.rs.invokeRpc("delete_files", list(file.path(getwd(), "."))))
-   expect_error(.rs.invokeRpc("delete_files", list(file.path(getwd(), ".."))))
+   expect_error(.rs.invokeRpc("delete_files", list(file.path(cwd, "."))))
+   stopifnot(dir.exists(cwd))
+   expect_error(.rs.invokeRpc("delete_files", list(file.path(cwd, ".."))))
+   stopifnot(dir.exists(cwd))
    expect_error(.rs.invokeRpc("delete_files", list(file.path(subdir, ".."))),
                 "current working directory")
-   expect_true(dir.exists(cwd))
+   stopifnot(dir.exists(cwd))
    expect_true(file.exists(file.path(subdir, "keep.txt")))
 
    # (the home directory is guarded by the same loop; it is deliberately not
@@ -252,7 +261,8 @@ test_that("delete_files refuses the working directory and its ancestors", {
    sibling <- file.path(root, "project", "sibling")
    dir.create(sibling)
    writeLines("x", file.path(sibling, "data.txt"))
-   expect_error(.rs.invokeRpc("delete_files", list(sibling, getwd())))
+   expect_error(.rs.invokeRpc("delete_files", list(sibling, cwd)))
+   stopifnot(dir.exists(cwd))
    expect_true(file.exists(file.path(sibling, "data.txt")))
    expect_error(.rs.invokeRpc("delete_files", list(sibling, file.path(subdir, ".."))),
                 "current working directory")
