@@ -38,9 +38,6 @@ concurrency:
 permissions:
   contents: read
   pull-requests: write
-  # Lets the e2e-merge jobs mint an OIDC token to assume the S3 report-upload
-  # role (see .github/actions/os-publish-e2e-report).
-  id-token: write
 
 jobs:
   # Single change-detection job shared by all e2e platforms (Windows Desktop,
@@ -339,7 +336,7 @@ jobs:
             <details>
             <summary>View / download the full report</summary>
             ${{ steps.publish-report.outputs.url != '' && format('
-            **[View report online]({0})** -- opens in the browser, no download needed. Available for 14 days.
+            **[View report online]({0})** -- opens in the browser after a Posit Google sign-in. Available for 14 days.
             ', steps.publish-report.outputs.url) || '' }}
             ${{ steps.upload-report.outputs.artifact-url != '' && format('**[Download playwright-report.zip]({0})** -- extract and open `index.html`', steps.upload-report.outputs.artifact-url) || '_No report artifact was produced._' }}
 
