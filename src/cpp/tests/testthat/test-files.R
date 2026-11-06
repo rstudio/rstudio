@@ -226,15 +226,13 @@ test_that("delete_files refuses the working directory and its ancestors", {
    expect_error(.rs.invokeRpc("delete_files", list(root)))
    expect_true(dir.exists(cwd))
 
+   # a trailing '.' or '..' names the same protected directories
+   expect_error(.rs.invokeRpc("delete_files", list(file.path(getwd(), "."))))
+   expect_error(.rs.invokeRpc("delete_files", list(file.path(getwd(), ".."))))
+   expect_true(dir.exists(cwd))
+
    # (the home directory is guarded by the same loop; it is deliberately not
    # exercised here, since a regressed guard would act on real user data)
-
-   # a symlink to a protected directory can be deleted: only the link goes
-   link <- file.path(root, "project", "cwd-link")
-   file.symlink(cwd, link)
-   .rs.invokeRpc("delete_files", list(link))
-   expect_false(file.exists(link))
-   expect_true(dir.exists(cwd))
 
    # the directory shown in the Files pane (the one being monitored)
    browsed <- file.path(root, "browsed")
@@ -253,5 +251,27 @@ test_that("delete_files refuses the working directory and its ancestors", {
    # a sibling of the working directory is still deletable on its own
    .rs.invokeRpc("delete_files", list(sibling))
    expect_false(dir.exists(sibling))
+
+})
+
+test_that("delete_files allows deleting a symlink to a protected directory", {
+
+   # https://github.com/rstudio/rstudio/issues/19493
+   root <- tempfile("delete-guard-link-")
+   cwd <- file.path(root, "project", "child")
+   dir.create(cwd, recursive = TRUE)
+   on.exit(unlink(root, recursive = TRUE), add = TRUE)
+
+   owd <- setwd(cwd)
+   on.exit(setwd(owd), add = TRUE)
+
+   # only the link goes, not the directory it points at
+   link <- file.path(root, "project", "cwd-link")
+   skip_if_not(isTRUE(file.symlink(cwd, link)), "symlinks are not supported here")
+   expect_true(file.exists(link))
+
+   .rs.invokeRpc("delete_files", list(link))
+   expect_false(file.exists(link))
+   expect_true(dir.exists(cwd))
 
 })

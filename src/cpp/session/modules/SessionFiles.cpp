@@ -40,6 +40,7 @@
 #include <core/FileUtils.hpp>
 #include <core/Settings.hpp>
 #include <core/Exec.hpp>
+#include <core/Thread.hpp>
 #include <core/DateTime.hpp>
 
 #include <core/http/Util.hpp>
@@ -104,8 +105,31 @@ FilesListingMonitor s_filesListingMonitor;
 
 // the directory the Files pane last asked to list (and monitor); tracked
 // separately from the monitor because a directory under the project is
-// watched by the project monitor instead
+// watched by the project monitor instead. list_files is an offlineable RPC,
+// so it can run on the offline service thread while delete_files runs on the
+// main thread; guard the shared path.
+boost::mutex s_browsedPathMutex;
 FilePath s_browsedPath;
+
+void setBrowsedPath(const FilePath& path)
+{
+   LOCK_MUTEX(s_browsedPathMutex)
+   {
+      s_browsedPath = path;
+   }
+   END_LOCK_MUTEX
+}
+
+FilePath browsedPath()
+{
+   LOCK_MUTEX(s_browsedPathMutex)
+   {
+      return s_browsedPath;
+   }
+   END_LOCK_MUTEX
+
+   return FilePath();
+}
 
 // make sure that monitoring persists across suspended sessions
 const char * const kFilesMonitoredPath = "files.monitored-path";
@@ -282,7 +306,7 @@ Error listFiles(const json::JsonRpcRequest& request, json::JsonRpcResponse* pRes
    core::json::Array jsonFiles;
    if (monitor)
    {
-      s_browsedPath = targetPath;
+      setBrowsedPath(targetPath);
 
       // always stop existing if we have one
       s_filesListingMonitor.stop();
@@ -412,18 +436,20 @@ core::Error validateDeletion(const FilePath& filePath)
    std::vector<Protected> roots = {
       { module_context::userHomePath(), "the home directory" },
       { module_context::safeCurrentPath(), "the current working directory" },
-      { s_browsedPath, "the directory shown in the Files pane" }
+      { browsedPath(), "the directory shown in the Files pane" }
    };
 
    if (projects::projectContext().hasProject())
       roots.push_back({ projects::projectContext().directory(), "the project directory" });
 
    // compare resolved paths: the client and R may refer to the same directory
-   // through a symlink (e.g. /var vs. /private/var on macOS). Only the parent
-   // is resolved: deleting a symlink removes the link, not its target, so a
-   // link to a protected directory is still fair game.
-   FilePath target = FilePath(filePath.getParent().getWeaklyCanonicalPath())
-         .completeChildPath(filePath.getFilename());
+   // through a symlink (e.g. /var vs. /private/var on macOS), and a trailing
+   // '.' or '..' must resolve to the directory it names. A symlink entry keeps
+   // its final component: deleting a link removes the link, not its target, so
+   // a link to a protected directory is still fair game.
+   FilePath target = filePath.isSymlink()
+         ? FilePath(filePath.getParent().getWeaklyCanonicalPath()).completeChildPath(filePath.getFilename())
+         : FilePath(filePath.getWeaklyCanonicalPath());
 
    for (const Protected& root : roots)
    {
