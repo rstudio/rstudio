@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { executeInConsole } from '../pages/console_pane.page';
 import { TIMEOUTS } from './constants';
-import { rPathLiteral, rStringLiteral } from './r';
+import { rLongStringLiteral, rPathLiteral } from './r';
 import { resetSourcePaneState } from './commands';
 import { assertAbsolutePath } from './paths';
 
@@ -58,7 +58,7 @@ export async function writeAndOpenFile(
     // fs.writeFileSync. Default sep="\n" would append an extra trailing
     // newline that the original Node write doesn't, breaking content-equality
     // assertions (toBe / toContain) in tests that round-trip the file.
-    await executeInConsole(page, `writeLines(${rStringLiteral(content)}, ${rPathLiteral(fullPath)}, sep="", useBytes=TRUE)`);
+    await executeInConsole(page, `writeLines(${rLongStringLiteral(content)}, ${rPathLiteral(fullPath)}, sep="", useBytes=TRUE)`);
   }
   await openFile(page, fullPath);
 }
@@ -92,7 +92,7 @@ export async function seedSandboxFile(
     );
     // sep="" + useBytes=TRUE for byte-identical output -- see writeAndOpenFile
     // above for the full rationale.
-    await executeInConsole(page, `writeLines(${rStringLiteral(content)}, ${rPathLiteral(fullPath)}, sep="", useBytes=TRUE)`);
+    await executeInConsole(page, `writeLines(${rLongStringLiteral(content)}, ${rPathLiteral(fullPath)}, sep="", useBytes=TRUE)`);
   }
   return fullPath;
 }
