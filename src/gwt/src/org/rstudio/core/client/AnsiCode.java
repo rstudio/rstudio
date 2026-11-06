@@ -728,7 +728,16 @@ public class AnsiCode
             .replace("\u0007", "");
    }
 
-   // Like strip(), but preserves colors and font styling
+   /**
+    * Like strip(), but for static text (e.g. markers and lint), which drops
+    * the control characters that would let a message rewrite itself.
+    */
+   public static String stripStatic(String input)
+   {
+      return strip(input).replaceAll(STATIC_CONTROL_REGEX, "");
+   }
+
+   // Like stripStatic(), but preserves colors and font styling
    public static String stripNonSgr(String input)
    {
       return input
@@ -737,7 +746,7 @@ public class AnsiCode
             .replaceAll(STRING_SEQUENCE, "")
             .replaceAll("(?!" + SGR_SEQUENCE + ")" + CSI_SEQUENCE, "")
             .replaceAll("(?!" + SGR_SEQUENCE + ")" + ESCAPE_SEQUENCE, "")
-            .replaceAll("[\\007\\b\\f]", "");
+            .replaceAll(STATIC_CONTROL_REGEX, "");
    }
 
    public static String prettyPrint(String input)
@@ -777,6 +786,9 @@ public class AnsiCode
 
    // Match control characters and start of ANSI sequences
    public static final Pattern CONTROL_PATTERN = Pattern.create(CONTROL_REGEX);
+
+   // Console control characters that static text drops (see stripStatic)
+   private static final String STATIC_CONTROL_REGEX = "[\\007\\b\\f]";
 
    // The patterns below are anchored, and follow the ECMA-48 structure of
    // escape sequences. The 8-bit CSI (0x9b) is equivalent to ESC '['.
