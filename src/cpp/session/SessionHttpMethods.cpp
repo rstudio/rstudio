@@ -673,6 +673,108 @@ module_context::WaitForMethodFunction registerWaitForMethod(
 
 namespace http_methods {
 
+namespace {
+
+// set while r::session::quit() runs for a quit_session; an error in .Last()
+// long-jumps past that call to R's top-level prompt, so the prompt path
+// reports the abort as well (see notifyQuitAborted)
+bool s_quitInProgress = false;
+
+// what a quit_session that switches projects (or R versions) wrote down for
+// the next session before r::session::quit() ran, to put back if the quit
+// aborts: left as written, a later ordinary quit would still switch
+struct SwitchRollback
+{
+   std::string project;
+   std::string workingDir;
+   std::string projectId;
+   std::string nextSessionUrl;
+   std::string switchToProjectPath;
+   std::string switchToProjectWritten;
+   bool rVersionChanged = false;
+   std::string rVersion;
+   std::string rVersionHome;
+   std::string rVersionLabel;
+   bool projectRVersionChanged = false;
+   std::string projectDir;
+   std::string projectRVersion;
+   std::string projectRVersionHome;
+   std::string projectRVersionLabel;
+};
+boost::optional<SwitchRollback> s_switchRollback;
+
+SwitchRollback captureSwitchRollback(const std::string& switchToProject)
+{
+   r_util::ActiveSession& session = module_context::activeSession();
+   SwitchRollback rollback;
+   rollback.project = session.project();
+   rollback.workingDir = session.workingDir();
+   rollback.projectId = session.projectId();
+   rollback.nextSessionUrl = s_nextSessionUrl;
+   rollback.switchToProjectPath =
+         projects::ProjectsSettings(options().userScratchPath()).switchToProjectPath();
+   rollback.switchToProjectWritten = switchToProject;
+   return rollback;
+}
+
+RVersionSettings projectRVersionSettings()
+{
+   return RVersionSettings(
+         options().userScratchPath(),
+         FilePath(options().getOverlayOption(kSessionSharedStoragePath)));
+}
+
+void restoreSwitchRollback(const SwitchRollback& rollback)
+{
+   r_util::ActiveSession& session = module_context::activeSession();
+   session.setProject(rollback.project);
+   session.setWorkingDir(rollback.workingDir);
+   if (options().switchProjectsWithUrl())
+   {
+      session.setProjectId(rollback.projectId);
+      s_nextSessionUrl = rollback.nextSessionUrl;
+   }
+   else
+   {
+      // the setting is shared by every window of a desktop installation;
+      // only this session's own entry is taken back, never one another
+      // window wrote meanwhile for its own switch
+      projects::ProjectsSettings settings(options().userScratchPath());
+      if (settings.switchToProjectPath() == rollback.switchToProjectWritten)
+         settings.setSwitchToProjectPath(rollback.switchToProjectPath);
+   }
+   if (rollback.rVersionChanged)
+      session.setRVersion(rollback.rVersion, rollback.rVersionHome, rollback.rVersionLabel);
+   if (rollback.projectRVersionChanged)
+   {
+      projectRVersionSettings().setProjectLastRVersion(
+            rollback.projectDir,
+            module_context::sharedProjectScratchPath(),
+            rollback.projectRVersion,
+            rollback.projectRVersionHome,
+            rollback.projectRVersionLabel);
+   }
+}
+
+} // anonymous namespace
+
+void notifyQuitAborted()
+{
+   if (!s_quitInProgress)
+      return;
+   s_quitInProgress = false;
+
+   if (s_switchRollback)
+   {
+      restoreSwitchRollback(*s_switchRollback);
+      s_switchRollback = boost::none;
+   }
+
+   module_context::activeSession().setActivityState(r_util::kActivityStateRunning, true);
+   ClientEvent event(client_events::kQuitAborted, json::Value());
+   module_context::enqueClientEvent(event);
+}
+
 bool verifyRequestSignature(const core::http::Request& request)
 {
 #ifndef RSTUDIO_SERVER
@@ -1125,8 +1227,11 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                LOG_ERROR(error);
             
             // note switch to project
+            s_switchRollback = boost::none;
             if (!switchToProject.empty())
             {
+               SwitchRollback rollback = captureSwitchRollback(switchToProject);
+
                // if we don't have a project file then create it (can
                // occur when e.g. opening a project from a directory for
                // which we don't yet have a .Rproj file)
@@ -1206,6 +1311,10 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                   if (!error)
                   {
                      // set version for active session
+                     rollback.rVersionChanged = true;
+                     rollback.rVersion = activeSession().rVersion();
+                     rollback.rVersionHome = activeSession().rVersionHome();
+                     rollback.rVersionLabel = activeSession().rVersionLabel();
                      activeSession().setRVersion(version, rHome, label);
 
                      // if we had a project directory as well then
@@ -1215,10 +1324,14 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                      {
                         FilePath projFile = resolveAliasedPath(switchToProject);
                         std::string projDir = createAliasedPath(projFile.getParent());
-                        RVersionSettings verSettings(
-                                            options().userScratchPath(),
-                                            FilePath(options().getOverlayOption(
-                                                  kSessionSharedStoragePath)));
+                        RVersionSettings verSettings = projectRVersionSettings();
+                        rollback.projectRVersionChanged = true;
+                        rollback.projectDir = projDir;
+                        verSettings.readProjectLastRVersion(projDir,
+                                                            module_context::sharedProjectScratchPath(),
+                                                            &rollback.projectRVersion,
+                                                            &rollback.projectRVersionHome,
+                                                            &rollback.projectRVersionLabel);
                         verSettings.setProjectLastRVersion(projDir,
                                                            module_context::sharedProjectScratchPath(),
                                                            version,
@@ -1229,6 +1342,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                  else
                     LOG_ERROR(error);
                }
+               s_switchRollback = rollback;
                LOG_DEBUG_MESSAGE("Switching projects: setting activityState to shutting_down");
             }
             else
@@ -1250,11 +1364,14 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                status = EXIT_SUCCESS;
             }
 
-            // acknowledge request & quit session
+            // acknowledge request & quit session; quit() returns only when R
+            // refused to quit (and may not return even then: see s_quitInProgress)
             json::JsonRpcResponse response;
             response.setResult(true);
             ptrConnection->sendJsonRpcResponse(response);
-            rstudio::r::session::quit(saveWorkspace, status); // does not return
+            s_quitInProgress = true;
+            rstudio::r::session::quit(saveWorkspace, status);
+            notifyQuitAborted();
          }
          else if (jsonRpcRequest.method == kSuspendSession)
          {
