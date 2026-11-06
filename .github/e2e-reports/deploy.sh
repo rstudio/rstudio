@@ -1,19 +1,32 @@
 #!/usr/bin/env bash
 #
 # Deploys (or updates) the e2e reports viewer stack. See README.md for the
-# one-time Google and SSM setup this expects. Extra arguments are passed to
-# `aws cloudformation deploy`, e.g. --parameter-overrides SessionDays=14.
+# one-time Google and SSM setup this expects. Arguments are extra stack
+# parameter overrides, e.g. SessionDays=14; they are merged with the Google
+# credentials below into the one --parameter-overrides the CLI honors.
 #
-# Usage: AWS_PROFILE=ide-build ./deploy.sh [deploy args]
+# Usage: AWS_PROFILE=ide-build ./deploy.sh [KEY=VALUE ...]
 
 set -euo pipefail
 cd "$(dirname "$0")"
+
+for arg in "$@"; do
+  case "$arg" in
+    *=*) ;;
+    *)
+      echo "usage: $0 [KEY=VALUE ...]   (extra stack parameter overrides)" >&2
+      exit 2
+      ;;
+  esac
+done
 
 STACK_NAME=${STACK_NAME:-rstudio-e2e-reports-viewer}
 GOOGLE_OAUTH_PARAMETER=${GOOGLE_OAUTH_PARAMETER:-/rstudio-e2e-reports/google-oauth}
 
 # Lambda@Edge functions must be created in us-east-1, whatever the viewer's
-# region; the reports bucket is there too.
+# region; the reports bucket is there too. Both variables: CLI v2 reads
+# AWS_REGION first, older tooling AWS_DEFAULT_REGION.
+export AWS_REGION=us-east-1
 export AWS_DEFAULT_REGION=us-east-1
 
 ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
@@ -55,7 +68,9 @@ aws cloudformation deploy \
   --parameter-overrides \
     "GoogleClientId=$GOOGLE_CLIENT_ID" \
     "GoogleClientSecret=$GOOGLE_CLIENT_SECRET" \
-  "$@"
+    "$@"
+# (The caller's KEY=VALUE arguments extend that one list; a second
+# --parameter-overrides would replace it, credentials included.)
 
 aws cloudformation describe-stacks \
   --stack-name "$STACK_NAME" \

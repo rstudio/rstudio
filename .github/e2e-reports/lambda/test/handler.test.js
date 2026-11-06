@@ -95,13 +95,29 @@ test('/parseauth with a code is exchanged even when a session already exists', a
   assert.equal(result.status, '302');
 });
 
-test('/parseauth without a code goes through the normal flow', async () => {
+test('/parseauth with an OAuth error and no code reports it without redirecting', async () => {
+  // Left to handle(), the error callback would become the return address of
+  // a fresh sign-in, and a successful retry would then land on S3.
   const { handler, calls } = fakeAuthenticator(redirectTo('https://pool.auth.us-east-1.amazoncognito.com/authorize'));
 
-  await handler(event('/parseauth'));
+  const result = await handler(event('/parseauth', 'error=invalid_request&error_description=Timeout+%3Cx%3E'));
 
+  assert.equal(calls.handle, 0);
   assert.equal(calls.handleParseAuth, 0);
-  assert.equal(calls.handle, 1);
+  assert.equal(result.status, '400');
+  assert.match(result.body, /Sign-in did not complete \(invalid_request: Timeout &lt;x&gt;\)/);
+  assert.match(result.body, /href="\/"/);
+  assert.equal(result.headers['cache-control'][0].value, 'no-store');
+});
+
+test('/parseauth with neither code nor error gets the same page', async () => {
+  const { handler, calls } = fakeAuthenticator(redirectTo('https://pool.auth.us-east-1.amazoncognito.com/authorize'));
+
+  const result = await handler(event('/parseauth'));
+
+  assert.equal(calls.handle, 0);
+  assert.equal(result.status, '400');
+  assert.match(result.body, /Sign-in did not complete\. /);
 });
 
 test('/signed-out is served without consulting the authenticator', async () => {

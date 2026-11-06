@@ -71,8 +71,27 @@ function signedOutResponse() {
   };
 }
 
-function hasAuthCode(querystring) {
-  return new URLSearchParams(querystring || '').has('code');
+function escapeHtml(text) {
+  return text.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+}
+
+// The callback path reached without an authorization code: an OAuth error
+// callback (error=..., e.g. after a timeout at Google), or a stray visit.
+// Say so and offer a fresh start; "/" is protected, so following the link
+// begins a new sign-in with a sane return address.
+function signInFailedResponse(params) {
+  const detail = [params.get('error'), params.get('error_description')].filter(Boolean).join(': ');
+  return {
+    status: '400',
+    statusDescription: 'Bad Request',
+    headers: {
+      'content-type': [{ key: 'Content-Type', value: 'text/html; charset=utf-8' }],
+      'cache-control': [{ key: 'Cache-Control', value: 'no-store' }],
+    },
+    body: '<!doctype html><title>Sign-in did not complete</title>' +
+      '<p>Sign-in did not complete' + (detail ? ' (' + escapeHtml(detail) + ')' : '') + '. ' +
+      '<a href="/">Try again</a>.</p>',
+  };
 }
 
 // Lambda@Edge handlers return either the (possibly modified) request, to let
@@ -118,9 +137,15 @@ function createHandler(getAuthenticator) {
 
     // handle() consults the cookies before the path, so a callback that
     // arrives after another tab already completed sign-in would be passed to
-    // S3 as a request for /parseauth. Exchange the code regardless.
-    if (request.uri === PARSE_AUTH_PATH && hasAuthCode(request.querystring))
-      return authenticator.handleParseAuth(event);
+    // S3 as a request for /parseauth. Exchange the code regardless. Without a
+    // code, handle() would start a sign-in that returns here, to no code
+    // again; answer directly instead.
+    if (request.uri === PARSE_AUTH_PATH) {
+      const params = new URLSearchParams(request.querystring || '');
+      if (params.has('code'))
+        return authenticator.handleParseAuth(event);
+      return signInFailedResponse(params);
+    }
 
     return restoreQueryString(request, await authenticator.handle(event));
   };
