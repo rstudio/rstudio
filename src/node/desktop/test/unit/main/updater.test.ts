@@ -423,11 +423,11 @@ describe('updater', () => {
     assert.isFalse(await updater.applyPendingUpdate());
     assert.equal(host.installs, 0);
 
-    // a cancellation naming another version is not this request's
+    // a cancellation naming another request is not this one's
     host.othersGate = deferred();
-    const again = updater.installUpdate(A, project);
+    const again = updater.installUpdate(A, project, 'this');
     await flush();
-    updater.cancelPendingInstall(B);
+    updater.cancelPendingInstall('other');
     host.othersGate.resolve(true);
     assert.equal(await again, '');
     assert.isTrue(updater.hasPendingInstall());
@@ -478,12 +478,12 @@ describe('updater', () => {
     const { host, updater } = setup('darwin');
     await offer(updater, host, A);
     await download(updater, host, A);
-    assert.equal(await updater.installUpdate(A, project), '');
+    assert.equal(await updater.installUpdate(A, project, 'accepted'), '');
 
     host.othersGate = deferred();
     const applying = updater.applyPendingUpdate();
     await flush();
-    updater.cancelPendingInstall(A);
+    updater.cancelPendingInstall('accepted');
     host.othersGate.resolve(true);
 
     assert.isFalse(await applying);
@@ -496,9 +496,33 @@ describe('updater', () => {
     const { host, updater } = setup('darwin');
     await offer(updater, host, A);
     await download(updater, host, A);
-    assert.equal(await updater.installUpdate(A, project), '');
+    assert.equal(await updater.installUpdate(A, project, 'kept'), '');
 
-    updater.cancelPendingInstall(B); // a request for another build, not this one
+    updater.cancelPendingInstall('earlier'); // another request's, not this one's
+    assert.isTrue(updater.hasPendingInstall());
+    assert.isTrue(await updater.applyPendingUpdate());
+    assert.equal(host.installs, 1);
+  });
+
+  it('lets an install request finishing late neither replace nor cancel a newer one', async () => {
+    const { host, updater } = setup('darwin');
+    await offer(updater, host, A);
+    await download(updater, host, A);
+
+    // the first request's checks outlast GWT's hold on the quit, and a
+    // second restart into the same version completes first
+    const gate = deferred<boolean>();
+    host.othersGate = gate;
+    const first = updater.installUpdate(A, project, 'first');
+    await flush();
+    host.othersGate = null;
+    assert.equal(await updater.installUpdate(A, project, 'second'), '');
+
+    gate.resolve(true);
+    assert.equal(await first, 'superseded');
+
+    // the first request's quit is refused, and it drops its own record
+    updater.cancelPendingInstall('first');
     assert.isTrue(updater.hasPendingInstall());
     assert.isTrue(await updater.applyPendingUpdate());
     assert.equal(host.installs, 1);

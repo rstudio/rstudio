@@ -150,6 +150,9 @@ const kRequestTimeoutMs = 15000;
  */
 export type InstallBlocker = '' | 'other-instances' | 'missing' | 'unknown';
 
+/** What installUpdate() answers: a blocker, or that a later request took its place. */
+export type InstallAnswer = InstallBlocker | 'superseded';
+
 /** Why an accepted update was not installed at the quit: a blocker, or the installer would not start. */
 export type InstallFailure = Exclude<InstallBlocker, ''> | 'launch-failed';
 
@@ -226,6 +229,10 @@ export class Updater {
   private pendingInstall: string | null = null;
   /** the project the relaunch after that install reopens */
   private pendingProject = '';
+  /** the installUpdate() request that recorded it */
+  private pendingRequest = '';
+  /** bumped by every installUpdate() call, so one finishing late cannot replace a newer one's record */
+  private installRequests = 0;
   /** applyPendingUpdate() is deciding; the window must stay open until it has */
   private handingOff = false;
   /** bumped by every cancellation, so an install request still in its checks learns of one */
@@ -390,12 +397,21 @@ export class Updater {
    * sequence then applies it. `project` is the active project file (or
    * kProjectNone), which the relaunched RStudio reopens; it is written down
    * for that relaunch only at the handoff to the installer, so the marker's
-   * lifetime does not run out during a slow session shutdown. Answers like
-   * canInstallUpdate(); GWT quits only on ''.
+   * lifetime does not run out during a slow session shutdown. `request`
+   * names this request, so that cancelPendingInstall() drops only its
+   * record. Answers like canInstallUpdate(), or 'superseded' when another
+   * request started during the checks (one whose checks outlasted GWT's
+   * hold on the quit), which then records the install instead; GWT quits
+   * only on ''.
    */
-  async installUpdate(version: string, project: string): Promise<InstallBlocker> {
+  async installUpdate(version: string, project: string, request = ''): Promise<InstallAnswer> {
     const cancellations = this.cancellations;
+    const sequence = ++this.installRequests;
     const blocker = await this.preflight(version);
+    if (sequence !== this.installRequests) {
+      logger().logInfo(`not recording RStudio ${version} for install: a later request replaced this one`);
+      return 'superseded';
+    }
     if (blocker) {
       logger().logInfo(`not installing RStudio ${version}: ${blocker}`);
       return blocker;
@@ -411,6 +427,7 @@ export class Updater {
     // this, so what it checked is what gets installed
     this.pendingInstall = version;
     this.pendingProject = project;
+    this.pendingRequest = request;
     return '';
   }
 
@@ -434,10 +451,11 @@ export class Updater {
    * ordinary quit must not run the installer. The download stays staged:
    * the next check offers the restart again, and on macOS Squirrel applies
    * it at the next start regardless (see the class comment). With
-   * `version`, only that request's record is dropped, never one made since.
+   * `request`, only the record that installUpdate() request made is
+   * dropped, never one made since (for the same version, too).
    */
-  cancelPendingInstall(version?: string): void {
-    if (version !== undefined && this.pendingInstall !== version) {
+  cancelPendingInstall(request?: string): void {
+    if (request !== undefined && (this.pendingInstall === null || this.pendingRequest !== request)) {
       return;
     }
     this.cancellations++;

@@ -67,13 +67,18 @@ export function getDesktopBridge() {
       }
     },
 
-    cancelUpdateInstall: (version: string) => {
-      ipcRenderer.send('desktop_cancel_update_install', version);
+    cancelUpdateInstall: (requestId: string) => {
+      ipcRenderer.send('desktop_cancel_update_install', requestId);
     },
 
-    installUpdate: async (version: string, projectFilePath: string, callback: VoidCallback<string>) => {
+    installUpdate: async (
+      version: string,
+      projectFilePath: string,
+      requestId: string,
+      callback: VoidCallback<string>,
+    ) => {
       try {
-        callback(await ipcRenderer.invoke('desktop_install_update', version, projectFilePath));
+        callback(await ipcRenderer.invoke('desktop_install_update', version, projectFilePath, requestId));
       } catch (error: unknown) {
         // not knowing must block: quitting would then install nothing
         reportIpcError('installUpdate', error as Error);

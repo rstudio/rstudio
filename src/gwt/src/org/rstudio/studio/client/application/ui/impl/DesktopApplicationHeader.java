@@ -747,8 +747,17 @@ public class DesktopApplicationHeader implements ApplicationHeader,
                      // quit only once the desktop frame has recorded the
                      // install: a quit it refused would leave the user with
                      // neither RStudio nor the update
-                     Desktop.getFrame().installUpdate(version, project, (String installBlocker) ->
+                     final String requestId = StringUtil.makeRandomId(16);
+                     Desktop.getFrame().installUpdate(version, project, requestId, (String installBlocker) ->
                      {
+                        // the checks outlasted the claim, and a later restart
+                        // took its place; that one records and installs
+                        if ("superseded".equals(installBlocker))
+                        {
+                           claim.release();
+                           return;
+                        }
+
                         if (installBlocker.length() > 0)
                         {
                            claim.release();
@@ -756,10 +765,11 @@ public class DesktopApplicationHeader implements ApplicationHeader,
                            return;
                         }
 
-                        // the claim is held, so only a released claim can
-                        // refuse; then the record is this request's to drop
+                        // only a released or replaced claim can refuse; then
+                        // the record is this request's to drop (by its id, so
+                        // a later request's record is kept)
                         if (!claim.performQuit(null, saveChanges, null, null, null))
-                           Desktop.getFrame().cancelUpdateInstall(version);
+                           Desktop.getFrame().cancelUpdateInstall(requestId);
                      });
                   }
                });

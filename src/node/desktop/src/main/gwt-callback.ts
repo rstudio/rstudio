@@ -225,14 +225,17 @@ export class GwtCallback extends EventEmitter {
       return this.updater.canInstallUpdate(version);
     });
 
-    ipcMain.handle('desktop_install_update', async (_event, version: string, projectFilePath: string) => {
-      // the session reports the project with the home directory aliased (~/...)
-      const project = projectFilePath === kProjectNone ? kProjectNone : resolveAliasedPath(projectFilePath);
-      return this.updater.installUpdate(version, project);
-    });
+    ipcMain.handle(
+      'desktop_install_update',
+      async (_event, version: string, projectFilePath: string, requestId: string) => {
+        // the session reports the project with the home directory aliased (~/...)
+        const project = projectFilePath === kProjectNone ? kProjectNone : resolveAliasedPath(projectFilePath);
+        return this.updater.installUpdate(version, project, requestId);
+      },
+    );
 
-    ipcMain.on('desktop_cancel_update_install', (_event, version: string) => {
-      this.updater.cancelPendingInstall(version);
+    ipcMain.on('desktop_cancel_update_install', (_event, requestId: string) => {
+      this.updater.cancelPendingInstall(requestId);
     });
 
     ipcMain.on('desktop_browse_url', (event, url: string) => {
@@ -1224,8 +1227,7 @@ export class GwtCallback extends EventEmitter {
       }
 
       // Try to query the R version from the R installation
-      const rBinPath =
-        process.platform === 'win32' ? path.join(rHome, 'bin', 'R.exe') : path.join(rHome, 'bin', 'R');
+      const rBinPath = process.platform === 'win32' ? path.join(rHome, 'bin', 'R.exe') : path.join(rHome, 'bin', 'R');
 
       let rVersionStr: string;
       try {
@@ -1317,7 +1319,9 @@ export class GwtCallback extends EventEmitter {
     const rPath = rExecutablePath ? preparedRExecutablePath(rExecutablePath) : '';
     if (rPath && !this.preparedRVersions.has(rPath)) {
       const interpolation = { escapeValue: false };
-      return i18next.t('gwtCallbackTs.rExecutableNotPrepared', { path: rExecutablePath, interpolation }) || rExecutablePath;
+      return (
+        i18next.t('gwtCallbackTs.rExecutableNotPrepared', { path: rExecutablePath, interpolation }) || rExecutablePath
+      );
     }
 
     this.pendingQuit = pendingQuit;
