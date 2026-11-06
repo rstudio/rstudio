@@ -15,6 +15,8 @@
 
 #include "SessionRig.hpp"
 
+#include <algorithm>
+
 #include <boost/bind/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/regex.hpp>
@@ -167,8 +169,15 @@ private:
    {
       jobs::setJobStatus(pJob_, "Installing R " + version_);
 
+      // rig 0.11.0 on Windows stops with "invalid R link file" when RIG_R_INSTALL_DIR
+      // has forward slashes and its R links (e.g. R-release.exe) exist (#19468)
+      std::string rigDirectory = directory_;
+#ifdef _WIN32
+      std::replace(rigDirectory.begin(), rigDirectory.end(), '/', '\\');
+#endif
+
       std::vector<std::string> args = { "add", version_, "--user" };
-      log("Installing into " + directory_ + "\n");
+      log("Installing into " + rigDirectory + "\n");
       log("$ " + rigPath + " " + core::algorithm::join(args, " ") + "\n");
 
       boost::shared_ptr<RInstallJob> self = shared_from_this();
@@ -231,7 +240,7 @@ private:
       // override), which the snapshot above was taken for as well
       core::system::Options environment;
       core::system::environment(&environment);
-      core::system::setenv(&environment, "RIG_R_INSTALL_DIR", directory_);
+      core::system::setenv(&environment, "RIG_R_INSTALL_DIR", rigDirectory);
 
 #ifndef _WIN32
       // rig also appends to the shell startup files unless its user-mode

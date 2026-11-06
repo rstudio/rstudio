@@ -673,6 +673,11 @@
 {
    if (nzchar(directory))
    {
+      # backslashes on Windows, the same form RInstallJob (SessionRig.cpp)
+      # gives 'rig add' (#19468)
+      if (.rs.platform.isWindows)
+         directory <- chartr("/", "\\", directory)
+
       override <- Sys.getenv("RIG_R_INSTALL_DIR", unset = NA)
       Sys.setenv(RIG_R_INSTALL_DIR = directory)
       on.exit({
