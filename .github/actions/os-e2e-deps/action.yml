@@ -495,13 +495,18 @@ runs:
           ask = FALSE,
           upgrade = FALSE
         )
-        # On R 4.1, PPM's newest httpuv binary is 1.6.10, which aborts rsession when a Shiny or
-        # plumber server shuts down, so build the current release from source instead.
+        # R < 4.2 gets an old httpuv binary from PPM whose libuv crashes rsession,
+        # so build the current release from source instead.
         if (getRversion() < "4.2.0") {
           src <- available.packages(type = "source")
+          target <- src["httpuv", "Version"]
           have <- tryCatch(packageVersion("httpuv"), error = function(e) package_version("0"))
-          if (have < src["httpuv", "Version"])
+          if (have < target) {
+            cat("[os-e2e-deps] httpuv", format(have), "is older than", target, "-- building from source\n")
             install.packages("httpuv", type = "source")
+            if (packageVersion("httpuv") < target)
+              stop("[os-e2e-deps] httpuv source build failed; still ", format(packageVersion("httpuv")))
+          }
         }
         # When requested, also install the harness's REQUIRED_PACKAGES set now
         # so it lands in the cached library rather than being installed by the
@@ -529,15 +534,14 @@ runs:
             installType <- if (identical(.Platform$pkgType, "source")) "source" else "binary"
             install.packages(missing, lib = lib, type = installType)
             still <- setdiff(missing, rownames(installed.packages(lib.loc = lib)))
-            # PPM's binary coverage thins out on older R, where some packages have no
-            # binary at all, and type="binary" never falls back on its own, so retry from source.
-            # Unreached where binaries exist, so those cells compile nothing.
+            # Older R lacks PPM binaries for some packages, and type="binary" never
+            # falls back on its own, so retry from source; cells with binaries skip this.
             if (length(still) && !identical(installType, "source")) {
               cat("[os-e2e-deps] no binary for:", paste(still, collapse = ", "), "-- retrying from source\n")
               install.packages(still, lib = lib, type = "source")
               still <- setdiff(still, rownames(installed.packages(lib.loc = lib)))
             }
-            # odbc 1.7.2 needs R 4.2; 1.7.1 is the newest release that still installs on R 4.1.
+            # odbc 1.7.2 needs R 4.2, so R < 4.2 gets 1.7.1, the release before it.
             if ("odbc" %in% still && getRversion() < "4.2.0") {
               remotes::install_version("odbc", version = "1.7.1", lib = lib, upgrade = "never")
               still <- setdiff(still, rownames(installed.packages(lib.loc = lib)))
