@@ -250,6 +250,26 @@ public class QuitGateTests extends GWTTestCase
       assertFalse(gate.isClosed());
    }
 
+   public void testAnArmedClaimReplacedBeforeItsQuitArmedIsUndone()
+   {
+      QuitGate gate = new QuitGate();
+
+      // the update install is recorded, then its quit's saves stall
+      QuitGate.Claim update = gate.claim(0);
+      update.armed();
+      QuitGate.Attempt stalled = update.start();
+
+      // an R switch claims the next quit, and its R cannot be prepared:
+      // the install record must not outlive the gate
+      QuitGate.Claim rSwitch = gate.claim(QuitGate.kStaleQuitMs);
+      assertTrue(rSwitch.release());
+      assertFalse(gate.isClosed());
+
+      // the stalled quit's late failure changes nothing more
+      assertFalse(stalled.fail());
+      assertFalse(gate.isClosed());
+   }
+
    public void testAnAcceptanceAfterTheAbortIsIgnored()
    {
       QuitGate gate = new QuitGate();

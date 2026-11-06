@@ -157,6 +157,16 @@ public class QuitGate
       }
 
       /**
+       * The holder armed the desktop frame for this quit before starting it
+       * (an update install recorded), so this quit, if it does not happen,
+       * is undone even if it never reached the frame itself.
+       */
+      public void armed()
+      {
+         attempt_.armed();
+      }
+
+      /**
        * Arming failed: give the quit up. Answers as {@link Attempt#fail}
        * does, so a claim that replaced a stalled quit the session has
        * accepted (or may still accept) leaves the gate closed for it.

@@ -765,6 +765,11 @@ public class DesktopApplicationHeader implements ApplicationHeader,
                            return;
                         }
 
+                        // the install is recorded, and any exit would now
+                        // apply it: should this quit not happen (replaced
+                        // while its saves stall, say), it must be cancelled
+                        claim.armed();
+
                         // only a released or replaced claim can refuse; then
                         // the record is this request's to drop (by its id, so
                         // a later request's record is kept)

@@ -477,6 +477,17 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
          return true;
       }
 
+      /**
+       * The caller has armed the desktop frame for this quit already (an
+       * update install recorded, which any later exit would apply), so a
+       * quit that then does not happen undoes it, even one replaced before
+       * it reached the frame itself.
+       */
+      public void armed()
+      {
+         claim_.armed();
+      }
+
       public void release()
       {
          // the claim may have replaced a stalled quit that armed the frame;
