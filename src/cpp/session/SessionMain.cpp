@@ -246,7 +246,6 @@
 #include "modules/SessionSVN.hpp"
 
 #include <session/SessionConsoleProcess.hpp>
-#include <session/SessionStartupWarning.hpp>
 #include <session/SessionSuspend.hpp>
 
 #include <session/projects/ProjectsSettings.hpp>
@@ -946,30 +945,35 @@ void rInitComplete()
 // so the warning is held here and reported once the session is initialized -- the
 // failures it causes otherwise look entirely unrelated to their cause.
 std::string s_workingDirWarning;
-StartupWarning s_workingDirWarningState("startup-warning-working-directory-too-long");
-
-void notifyIfWorkingDirectoryTooLong()
-{
-   if (!s_workingDirWarningState.shouldShow(s_workingDirWarning))
-      return;
-
-   console_output::writeLine(
-      console_output::OutputStreamStderr,
-      s_workingDirWarning,
-      console_output::OutputTypeWarning);
-}
 
 // Set during startup when the user data directory can't be written and a
 // temporary directory is used in its place. Like the warning above, it's held
 // until the console is available.
 std::string s_temporaryDataDirWarning;
-StartupWarning s_temporaryDataDirWarningState("startup-warning-temporary-data-directory");
 
 // Set during startup when the working directory the session was to start in
 // couldn't be entered and another was used in its place. Held until the
 // console is available, like the warnings above.
 std::string s_workingDirectoryWarning;
-StartupWarning s_workingDirectoryWarningState("startup-warning-working-directory-replaced");
+
+// Report one of the held startup warnings above. A resumed session (including
+// Restart R) replays its saved console output, which may already show the same
+// warning; printing it again would only add a duplicate (#19246). The check is
+// against this session's own output, so a warning that was cleared or scrolled
+// out of the console is printed again while its condition persists.
+void notifyStartupWarning(const std::string& warning)
+{
+   if (warning.empty())
+      return;
+
+   if (rstudio::r::session::consoleActions().containsOutput(warning))
+      return;
+
+   console_output::writeLine(
+      console_output::OutputStreamStderr,
+      warning,
+      console_output::OutputTypeWarning);
+}
 
 // Whether the session was given a scope on the command line, as rserver does
 // for the sessions it manages (e.g. with multiple sessions or the Launcher).
@@ -1039,28 +1043,6 @@ void reportUnwritableUserDataDir(const FilePath& dataDir,
       temporaryDir.getAbsolutePath());
 }
 
-void notifyIfUserDataDirTemporary()
-{
-   if (!s_temporaryDataDirWarningState.shouldShow(s_temporaryDataDirWarning))
-      return;
-
-   console_output::writeLine(
-      console_output::OutputStreamStderr,
-      s_temporaryDataDirWarning,
-      console_output::OutputTypeWarning);
-}
-
-void notifyIfWorkingDirectoryReplaced()
-{
-   if (!s_workingDirectoryWarningState.shouldShow(s_workingDirectoryWarning))
-      return;
-
-   console_output::writeLine(
-      console_output::OutputStreamStderr,
-      s_workingDirectoryWarning,
-      console_output::OutputTypeWarning);
-}
-
 void notifyIfRVersionChanged()
 {
    using namespace rstudio::r::session::state;
@@ -1098,13 +1080,13 @@ void rSessionInitHook(bool newSession)
    notifyIfRVersionChanged();
 
    // notify the user if the working directory is too long to launch children from
-   notifyIfWorkingDirectoryTooLong();
+   notifyStartupWarning(s_workingDirWarning);
 
    // notify the user if session state is being kept in a temporary directory
-   notifyIfUserDataDirTemporary();
+   notifyStartupWarning(s_temporaryDataDirWarning);
 
    // notify the user if the session started somewhere other than its working directory
-   notifyIfWorkingDirectoryReplaced();
+   notifyStartupWarning(s_workingDirectoryWarning);
 
    // synchronize session info
    json::Object dataJson;
@@ -1518,27 +1500,15 @@ void rSuspended(const rstudio::r::session::RSuspendOptions& options)
       data = safe_convert::numberToString(rsession::options().timeoutMinutes());
    logExitEvent(Event(kSessionScope, kSessionSuspendEvent, data));
 
-   // Carry the warnings alongside the console output that will be replayed.
-   Settings& settings = persistentState().settings();
-   settings.beginUpdate();
-   s_workingDirWarningState.onSuspend(&settings);
-   s_temporaryDataDirWarningState.onSuspend(&settings);
-   s_workingDirectoryWarningState.onSuspend(&settings);
-   settings.endUpdate();
-
    // fire event
-   module_context::onSuspended(options, &settings);
+   module_context::onSuspended(options, &(persistentState().settings()));
 
    module_context::activeSession().setActivityState(core::r_util::kActivityStateSaved, true);
 }
 
 void rResumed()
 {
-   const Settings& settings = persistentState().settings();
-   s_workingDirWarningState.onResume(settings);
-   s_temporaryDataDirWarningState.onResume(settings);
-   s_workingDirectoryWarningState.onResume(settings);
-   module_context::onResumed(settings);
+   module_context::onResumed(persistentState().settings());
 }
 
 bool rHandleUnsavedChanges()
