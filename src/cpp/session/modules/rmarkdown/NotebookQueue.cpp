@@ -442,12 +442,20 @@ private:
       if (label == "setup")
          prepareSetupContext();
 
+      // compute engine
+      std::string engine = options.getOverlayOption("engine", std::string("r"));
+
+      // normalize engine case - if the chunk doesn't have an engine specified
+      // it will receive the knitr default of "R"
+      if (engine == "R")
+         engine = "r";
+
       // look up the working directory of the document as long as we
-      // aren't in the setup chunk, which always computes paths relative
-      // to the document so that relative paths in the setup chunk, such
-      // as those used in root.dir, have a reliable origin
+      // aren't in an R or Python setup chunk, which always computes paths
+      // relative to the document so that relative paths in the setup chunk,
+      // such as those used in root.dir, have a reliable origin
       core::FilePath workingDir;
-      if (label != "setup")
+      if (label != "setup" || (engine != "r" && engine != "python"))
          workingDir = docQueue->workingDir();
 
       // is there external code for this chunk? if so, replace the chunk's
@@ -459,14 +467,6 @@ private:
          if (!external.empty())
             unit->replaceCode(external);
       }
-
-      // compute engine
-      std::string engine = options.getOverlayOption("engine", std::string("r"));
-
-      // normalize engine case - if the chunk doesn't have an engine specified
-      // it will receive the knitr default of "R"
-      if (engine == "R")
-         engine = "r";
 
       // read code from the 'file' chunk option; relative paths resolve
       // against the directory the chunk runs in, as knitr's do
@@ -540,7 +540,7 @@ private:
             // actually execute the chunk with the alternate engine; store the error separately
             // and log if necessary
             Error execError = executeAlternateEngineChunk(
-               unit->docId(), unit->chunkId(), label, ctx, docQueue->workingDir(),
+               unit->docId(), unit->chunkId(), label, ctx, workingDir,
                engine, innerCode, options, execUnit_->execScope(),
                docQueue->pixelWidth(), docQueue->charWidth());
             if (execError)
