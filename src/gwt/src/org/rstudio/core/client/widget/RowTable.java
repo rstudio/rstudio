@@ -483,6 +483,10 @@ public abstract class RowTable<T> extends ScrollPanel
       else
          rowEl.removeClassName(RES.styles().focused());
 
+      // a reused element still has its earlier row's title, which would
+      // otherwise count as one set during draw
+      rowEl.setTitle("");
+
       // call back to implementing subclass to draw the row
       drawRowImpl(object, rowEl);
 

@@ -413,6 +413,17 @@ public class RowTableTests extends GWTTestCase
       assertActiveDescendantRendered(table, 120);
    }
 
+   public void testRedrawTitlesReusedRowsByTheirOwnItem()
+   {
+      // scrolling redraws each row element with another item
+      StringTable table = createLongTable();
+
+      scrollToRow(table, 400);
+
+      for (Element option : getOptions(table))
+         assertEquals("item" + option.getAttribute("__row"), option.getTitle());
+   }
+
    public void testRedrawFiresNoSelectionEvent()
    {
       // a file dialog copies each selection into its File name box, which
