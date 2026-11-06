@@ -673,7 +673,8 @@
 {
    if (nzchar(directory))
    {
-      # backslashes on Windows, as the install job passes it (see RInstallJob)
+      # backslashes on Windows, the same form RInstallJob (SessionRig.cpp)
+      # gives 'rig add' (#19468)
       if (.rs.platform.isWindows)
          directory <- chartr("/", "\\", directory)
 
