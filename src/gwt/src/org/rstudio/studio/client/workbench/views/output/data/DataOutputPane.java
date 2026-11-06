@@ -83,25 +83,32 @@ public class DataOutputPane extends WorkbenchPane
    {
       setDataFile(response.getTitle());
 
-      new Timer() {
-         @Override
-         public void run()
-         {
-            if (!gridViewer_.isReady())
-            {
-               this.schedule(200);
-            }
-            else
-            {
-               gridViewer_.setOption("nullsAsNAs", "true");
-               gridViewer_.setOption("ordering", "false");
-               gridViewer_.setOption("rowNumbers", "false");
-               gridViewer_.setData(response.getData());
-            }
-         }
-      }.schedule(100);
+      // Rescheduling cancels an older preview still waiting for the grid
+      // viewer to load, so it can't overwrite this one when it does.
+      pendingOutput_ = response;
+      outputTimer_.schedule(100);
    }
-   
+
+   private final Timer outputTimer_ = new Timer()
+   {
+      @Override
+      public void run()
+      {
+         if (!gridViewer_.isReady())
+         {
+            this.schedule(200);
+         }
+         else
+         {
+            gridViewer_.setOption("nullsAsNAs", "true");
+            gridViewer_.setOption("ordering", "false");
+            gridViewer_.setOption("rowNumbers", "false");
+            gridViewer_.setData(pendingOutput_.getData());
+         }
+      }
+   };
+
+   private DataOutputCompletedEvent pendingOutput_;
    GridViewerFrame gridViewer_;
    Label dataOutputFile_;
    private static final OutputConstants constants_ = GWT.create(OutputConstants.class);
