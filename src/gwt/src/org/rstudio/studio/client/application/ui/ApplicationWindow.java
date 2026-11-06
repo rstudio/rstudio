@@ -105,7 +105,9 @@ public class ApplicationWindow extends Composite
       Roles.getContentinfoRole().setAriaLabelProperty(warnings_.getElement(), constants_.warningBarText());
       applicationPanel_.add(warnings_);
       applicationPanel_.setWidgetLeftRight(warnings_, COMPONENT_SPACING, Unit.PX, COMPONENT_SPACING, Unit.PX);
-      warnings_.setVisible(false);
+      // Hide the layer, not just the list: until a warning sizes it, the empty
+      // layer fills the panel and, following the workbench, would cover it.
+      applicationPanel_.setWidgetVisible(warnings_, false);
 
       session.withSessionInfo(info -> new StringStateValue(
             "applicationWarnings", "dismissed", ClientState.TEMPORARY, info.getClientState())
@@ -251,7 +253,7 @@ public class ApplicationWindow extends Composite
    private void updateWarnings()
    {
       int height = warnings_.getPreferredHeight();
-      warnings_.setVisible(height > 0);
+      applicationPanel_.setWidgetVisible(warnings_, height > 0);
       applicationPanel_.setWidgetBottomHeight(warnings_, COMPONENT_SPACING, Unit.PX, height, Unit.PX);
       workbenchBottom_ = height == 0 ? COMPONENT_SPACING : COMPONENT_SPACING * 2 + height;
       if (workbenchScreen_ != null)

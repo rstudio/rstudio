@@ -15,6 +15,8 @@
 package org.rstudio.studio.client.application.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.inject.Provider;
@@ -85,6 +87,58 @@ public class ApplicationWindowTests extends GWTTestCase
       // A changed warning is still eligible for display.
       window.showMemoryLimitWarning("110 of 100 MB", false, true);
       assertEquals(2, created[0]);
+   }
+
+   public void testEmptyWarningLayerDoesNotCoverWorkbench()
+   {
+      EventBus events = new EventBus(null, null);
+      AriaLiveService aria = new AriaLiveService(events, null)
+      {
+         @Override
+         public boolean isDisabled(String id)
+         {
+            return true;
+         }
+      };
+      ApplicationWindow window = new ApplicationWindow(
+            new TestHeader(),
+            null,
+            null,
+            events,
+            () -> new WarningBar(events, null),
+            new Session(events),
+            aria,
+            null,
+            null);
+      window.showWorkbenchView(new SimplePanel());
+
+      // The warnings layer follows the workbench in the DOM, so it paints over
+      // the workbench wherever it is displayed.
+      Element found = null;
+      for (Element candidate = window.getElement().getFirstChildElement();
+           candidate != null;
+           candidate = candidate.getNextSiblingElement())
+      {
+         Element child = candidate.getFirstChildElement();
+         if (child != null && "contentinfo".equals(child.getAttribute("role")))
+            found = candidate;
+      }
+      assertNotNull(found);
+      Element layer = found;
+
+      // LayoutPanel applies layer styles in a scheduled layout pass.
+      delayTestFinish(5000);
+      Scheduler.get().scheduleDeferred(() ->
+      {
+         assertEquals("none", layer.getStyle().getDisplay());
+
+         window.showWarning(false, "Example warning");
+         assertEquals("", layer.getStyle().getDisplay());
+
+         window.hideWarning();
+         assertEquals("none", layer.getStyle().getDisplay());
+         finishTest();
+      });
    }
 
    private static native SessionInfo sessionInfo(String dismissed) /*-{
