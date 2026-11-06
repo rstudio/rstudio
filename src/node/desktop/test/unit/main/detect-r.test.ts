@@ -19,6 +19,8 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { dirname, join } from 'path';
 import { restore, saveAndClear } from '../unit-utils';
+import i18next from 'i18next';
+import { initI18n } from '../../../src/main/i18n-manager';
 import {
   detectREnvironment,
   detectREnvironmentAsync,
@@ -27,6 +29,8 @@ import {
   promptUserForR,
   rDetectionReady,
   rFromRStudioWhichR,
+  RLaunchError,
+  rLaunchFailureMessage,
   rQueryCommand,
   resolveRHome,
   startRDetection,
@@ -37,6 +41,18 @@ describe('DetectR', () => {
   const vars: Record<string, string> = {
     RSTUDIO_WHICH_R: '',
   };
+
+  // the launch failure messages are localized, so the strings must be loaded
+  before(async () => {
+    initI18n();
+    await new Promise<void>((resolve) => {
+      if (i18next.isInitialized) {
+        resolve();
+      } else {
+        i18next.on('initialized', () => resolve());
+      }
+    });
+  });
 
   beforeEach(() => {
     saveAndClear(vars);
@@ -130,6 +146,70 @@ describe('DetectR', () => {
 
     const [, noOutputError] = parseRQueryResult('/opt/R/bin/R', { stdout: '', stderr: '', status: 127 });
     assert.isNotNull(noOutputError);
+  });
+
+  it('reports a failed query as R failing to start, with what R said', () => {
+    // the generic "unknown error" told users nothing, and the caller then
+    // claimed no R could be located even though this one was found
+    const stderr = "Fatal error: cannot create 'R_TempDir'\n";
+    const [, error] = parseRQueryResult('C:\\R\\R-4.6.2\\bin\\x64\\Rterm.exe', { stdout: '', stderr, status: 2 });
+    assert.instanceOf(error, RLaunchError);
+    assert.include(error.message, 'C:\\R\\R-4.6.2\\bin\\x64\\Rterm.exe');
+    assert.include(error.message, '2');
+    assert.include(error.message, "Fatal error: cannot create 'R_TempDir'");
+    assert.notInclude(error.message, 'unknown error');
+
+    // output without our marker is the same failure: R ran, but not our script
+    const [, markerError] = parseRQueryResult('/opt/R/bin/R', { stdout: 'not R', stderr: 'oops', status: 1 });
+    assert.instanceOf(markerError, RLaunchError);
+    assert.include(markerError.message, 'oops');
+  });
+
+  it('keeps only the tail of a long stderr in the launch failure message', () => {
+    const lines = Array.from({ length: 40 }, (_, i) => `line ${i + 1}`);
+    const message = rLaunchFailureMessage('/opt/R/bin/R', { stdout: '', stderr: lines.join('\n'), status: 1 });
+    assert.notInclude(message, 'line 1\n');
+    assert.notInclude(message, 'line 29');
+    assert.include(message, 'line 31');
+    assert.include(message, 'line 40');
+  });
+
+  it('describes an executable that cannot be launched at all', function () {
+    if (process.platform === 'win32') {
+      this.skip();
+    }
+
+    const dir = mkdtempSync(join(tmpdir(), 'detect-r-missing-'));
+    try {
+      const missing = join(dir, 'R');
+      const [, error] = detectREnvironment(missing);
+      assert.instanceOf(error, RLaunchError);
+      assert.include(error.message, missing);
+      assert.include(error.message, 'ENOENT');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('surfaces the exit status and stderr of an R that fails to start', function () {
+    if (process.platform === 'win32') {
+      this.skip();
+    }
+
+    // a stand-in R that dies the way R does when its temp dir is unusable
+    const dir = mkdtempSync(join(tmpdir(), 'detect-r-fatal-'));
+    const fakeR = join(dir, 'R');
+    writeFileSync(fakeR, "#!/bin/sh\necho \"Fatal error: cannot create 'R_TempDir'\" >&2\nexit 2\n", { mode: 0o755 });
+
+    try {
+      const [, error] = detectREnvironment(fakeR);
+      assert.instanceOf(error, RLaunchError);
+      assert.include(error.message, fakeR);
+      assert.include(error.message, '2');
+      assert.include(error.message, "Fatal error: cannot create 'R_TempDir'");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   it('resolves an R home directory in RSTUDIO_WHICH_R to its executable', () => {

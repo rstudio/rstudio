@@ -106,7 +106,13 @@
   },
   "detectRTs": {
     "rNotFound": "R not found",
-    "couldNotLocateAnRInstallationOnTheSystem": "Could not locate an R installation on the system."
+    "couldNotLocateAnRInstallationOnTheSystem": "Could not locate an R installation on the system.",
+    "rFailedToStart": "R failed to start",
+    "rFoundButFailedToStart": "R was found at {{- rPath}} but failed to start.",
+    "launchError": "Launch error: {{- error}}",
+    "exitStatus": "Exit status: {{status}}",
+    "rReported": "R reported:\n{{- output}}",
+    "rProducedNoErrorOutput": "R produced no error output."
   },
   "gwtCallbackTs": {
     "unimplemented": "Unimplemented",

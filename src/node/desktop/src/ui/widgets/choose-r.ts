@@ -52,6 +52,7 @@ function checkValid(data: CallbackData) {
         type: 'error',
         title: t('chooseRDialog.rLaunchFailedTitle'),
         message: t('chooseRDialog.rLaunchFailedMessage'),
+        detail: err.message,
         buttons: [t('common.buttonOk')],
       }),
     );

@@ -106,7 +106,13 @@
   },
   "detectRTs": {
     "rNotFound": "R non trouvé",
-    "couldNotLocateAnRInstallationOnTheSystem": "Impossible de localiser une installation R sur le système."
+    "couldNotLocateAnRInstallationOnTheSystem": "Impossible de localiser une installation R sur le système.",
+    "rFailedToStart": "R n'a pas pu démarrer",
+    "rFoundButFailedToStart": "R a été trouvé à l'emplacement {{- rPath}} mais n'a pas pu démarrer.",
+    "launchError": "Erreur de lancement : {{- error}}",
+    "exitStatus": "Code de sortie : {{status}}",
+    "rReported": "R a signalé :\n{{- output}}",
+    "rProducedNoErrorOutput": "R n'a produit aucune sortie d'erreur."
   },
   "gwtCallbackTs": {
     "unimplemented": "Non implémenté",

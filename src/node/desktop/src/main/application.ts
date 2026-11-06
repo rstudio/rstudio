@@ -465,7 +465,7 @@ export class Application implements AppState {
     const prepareError = prepareEnvironment(rPath);
     if (prepareError) {
       logger().logError(prepareError);
-      await showRNotFoundError();
+      await showRNotFoundError(prepareError);
       return exitFailure();
     }
     startupCheckpoint('r-environment-prepared');
