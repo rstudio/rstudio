@@ -3,6 +3,7 @@ import { workerRLibsUser } from '@fixtures/r-libs-setup';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { rStringLiteral } from '@utils/r';
+import { isCredentialEnvVar } from '@utils/env';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -210,5 +211,23 @@ test.describe('sandbox layout', { tag: ['@server_only'] }, () => {
       rLibsMatches,
       'expected the rsession R_LIBS_USER to match workerRLibsUser() (pre-populated packages would be invisible)',
     ).toBe(true);
+  });
+});
+
+test.describe('IDE environment', () => {
+  test('carries none of the runner credentials', async ({ rstudioPage: page }) => {
+    // Non-vacuous on CI, where the runner holds the Posit AI login, the Test
+    // Insights key, and the job's OIDC request token; a plain local shell
+    // usually holds none of them.
+    const names = Object.keys(process.env).filter((name) => isCredentialEnvVar(name) && process.env[name]);
+    test.skip(names.length === 0, 'No credential-shaped variables are set in the runner environment');
+
+    // Ask only whether each is empty: printing a value would put the secret
+    // this guards into the console, and from there into the report.
+    const consoleActions = new ConsolePaneActions(page);
+    for (const name of names) {
+      const visible = await consoleActions.evalRLogical(`nzchar(Sys.getenv(${rStringLiteral(name)}))`);
+      expect.soft(visible, `${name} reached the IDE's R session (see withoutCredentials in utils/env.ts)`).toBe(false);
+    }
   });
 });

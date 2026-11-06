@@ -28,3 +28,28 @@ export function envChoice<T extends string>(name: string, allowed: readonly T[],
     throw new Error(`${name}="${value}" -- expected one of: ${allowed.join(', ')}`);
   return value as T;
 }
+
+// Matched as a substring, case-insensitively, so a secret added to a workflow
+// later is covered without anyone remembering this list: POSIT_PASSWORD,
+// COPILOT_TOTP_SECRET, CONNECT_API_KEY, ACTIONS_ID_TOKEN_REQUEST_TOKEN, ...
+const CREDENTIAL_NAME = /PASSWORD|PASSWD|SECRET|TOKEN|API_?KEY|ACCESS_KEY|PRIVATE_KEY|(^|_)PAT$/i;
+
+// Account names that pair with one of the above but don't look like secrets.
+const CREDENTIAL_ACCOUNT_NAMES = new Set(['POSIT_EMAIL', 'COPILOT_USER', 'PW_RSTUDIO_SERVER_USER']);
+
+/** Whether an environment variable name looks like it carries a credential. */
+export function isCredentialEnvVar(name: string): boolean {
+  return CREDENTIAL_NAME.test(name) || CREDENTIAL_ACCOUNT_NAMES.has(name.toUpperCase());
+}
+
+/**
+ * Copy `env` without its credential-shaped variables, as the base environment
+ * for the IDE under test. The runner needs these (sign-in flows, the Test
+ * Insights reporter), but the IDE never does, and anything it can read can end
+ * up in a screenshot or trace of the published report -- GitHub masks secrets
+ * in logs only. If the IDE ever does need one, add it explicitly to the launch
+ * environment after this copy.
+ */
+export function withoutCredentials(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  return Object.fromEntries(Object.entries(env).filter(([name]) => !isCredentialEnvVar(name)));
+}
