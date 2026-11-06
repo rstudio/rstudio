@@ -66,12 +66,16 @@ enum ChunkExecState
    ChunkExecCancelled = 2
 };
 
-// the directory a chunk runs in; mirrors DirCapture::connectDir
-FilePath chunkDirectory(const FilePath& workingDir, const std::string& docPath)
+// the directory a chunk runs in; mirrors DirCapture::connectDir, including
+// looking up the document's current path (it may have been saved elsewhere
+// since the queue was created)
+FilePath chunkDirectory(const FilePath& workingDir, const std::string& docId)
 {
    if (workingDir.exists())
       return workingDir;
 
+   std::string docPath;
+   source_database::getPath(docId, &docPath);
    if (!docPath.empty())
       return module_context::resolveAliasedPath(docPath).getParent();
 
@@ -469,7 +473,7 @@ private:
       core::FilePath codeFilePath;
       Error codeFileError = unit->replaceCodeFromFileOption(
          chunkOptions,
-         chunkDirectory(workingDir, docQueue->docPath()),
+         chunkDirectory(workingDir, unit->docId()),
          &codeFilePath);
 
       // if the file can't be read, fail with an error as knitr does rather

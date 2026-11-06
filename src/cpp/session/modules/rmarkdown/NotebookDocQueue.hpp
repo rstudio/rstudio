@@ -69,7 +69,6 @@ public:
 
    // accessors
    std::string docId() const;
-   std::string docPath() const;
    int pixelWidth() const;
    int charWidth() const;
    bool complete() const;
