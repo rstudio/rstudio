@@ -39,6 +39,7 @@
 #include <r/session/RSession.hpp>
 
 #include <core/Exec.hpp>
+#include <core/StringUtils.hpp>
 #include <core/Thread.hpp>
 
 #include <session/SessionModuleContext.hpp>
@@ -64,6 +65,22 @@ enum ChunkExecState
    ChunkExecFinished  = 1,
    ChunkExecCancelled = 2
 };
+
+// the directory a chunk runs in; mirrors DirCapture::connectDir, including
+// looking up the document's current path (it may have been saved elsewhere
+// since the queue was created)
+FilePath chunkDirectory(const FilePath& workingDir, const std::string& docId)
+{
+   if (workingDir.exists())
+      return workingDir;
+
+   std::string docPath;
+   source_database::getPath(docId, &docPath);
+   if (!docPath.empty())
+      return module_context::resolveAliasedPath(docPath).getParent();
+
+   return FilePath::safeCurrentPath(module_context::userHomePath());
+}
 
 // represents the global queue of work 
 class NotebookQueue : boost::noncopyable
@@ -425,6 +442,22 @@ private:
       if (label == "setup")
          prepareSetupContext();
 
+      // compute engine
+      std::string engine = options.getOverlayOption("engine", std::string("r"));
+
+      // normalize engine case - if the chunk doesn't have an engine specified
+      // it will receive the knitr default of "R"
+      if (engine == "R")
+         engine = "r";
+
+      // look up the working directory of the document as long as we
+      // aren't in an R or Python setup chunk, which always computes paths
+      // relative to the document so that relative paths in the setup chunk,
+      // such as those used in root.dir, have a reliable origin
+      core::FilePath workingDir;
+      if (label != "setup" || (engine != "r" && engine != "python"))
+         workingDir = docQueue->workingDir();
+
       // is there external code for this chunk? if so, replace the chunk's
       // code with the code from the external file; see:
       // http://yihui.name/knitr/demo/externalization/
@@ -435,33 +468,41 @@ private:
             unit->replaceCode(external);
       }
 
+      // read code from the 'file' chunk option; relative paths resolve
+      // against the directory the chunk runs in, as knitr's do
+      core::FilePath codeFilePath;
+      Error codeFileError = unit->replaceCodeFromFileOption(
+         chunkOptions,
+         chunkDirectory(workingDir, unit->docId()),
+         &codeFilePath);
+
+      // if the file can't be read, fail with an error as knitr does rather
+      // than run the chunk's own code; output written before the chunk's input
+      // reaches R never shows in the chunk, so the error is raised as input
+      // (other engines still fall back to the chunk's own code)
+      if (codeFileError)
+      {
+         std::string message = string_utils::singleQuotedStrEscape(
+            "cannot open file '" + codeFilePath.getAbsolutePath() + "': " + codeFileError.getMessage());
+
+         if (engine == "r")
+            unit->replaceCode("stop('" + message + "', call. = FALSE)\n");
+         else if (engine == "python")
+            unit->replaceCode("raise FileNotFoundError('" + message + "')\n");
+      }
+      bool codeFromFile = !codeFilePath.isEmpty() && !codeFileError;
+
       // skip unit if it has no code to execute
       if (!unit->hasPendingRanges())
       {
          return skipUnit();
       }
 
-      // compute engine
-      std::string engine = options.getOverlayOption("engine", std::string("r"));
-
-      // normalize engine case - if the chunk doesn't have an engine specified
-      // it will receive the knitr default of "R"
-      if (engine == "R")
-         engine = "r";
-
       if (engine == "r" || engine == "python")
       {
          // establish execution context unless we're an inline chunk
          if (unit->execScope() != ExecScopeInline)
          {
-            // look up the working directory of the document as long as we
-            // aren't in the setup chunk, which always computes paths relative
-            // to the document so that relative paths in the setup chunk, such
-            // as those used in root.dir, have a reliable origin
-            core::FilePath workingDir;
-            if (label != "setup")
-               workingDir = docQueue->workingDir();
-
             execContext_ = boost::make_shared<ChunkExecContext>(
                unit->docId(), unit->chunkId(), unit->code(), label, ctx, engine,
                unit->execScope(), workingDir, options,
@@ -481,9 +522,11 @@ private:
       }
       else
       {
-         // execute with alternate engine
-         std::string innerCode;
-         error = unit->innerCode(&innerCode);
+         // execute with alternate engine; code read from a file has no chunk
+         // fences, so extracting the chunk body would drop its first and last
+         // lines
+         std::string innerCode = unit->code();
+         error = codeFromFile ? Success() : unit->innerCode(&innerCode);
          if (error)
          {
             LOG_ERROR(error);
@@ -497,7 +540,7 @@ private:
             // actually execute the chunk with the alternate engine; store the error separately
             // and log if necessary
             Error execError = executeAlternateEngineChunk(
-               unit->docId(), unit->chunkId(), label, ctx, docQueue->workingDir(),
+               unit->docId(), unit->chunkId(), label, ctx, workingDir,
                engine, innerCode, options, execUnit_->execScope(),
                docQueue->pixelWidth(), docQueue->charWidth());
             if (execError)
