@@ -636,26 +636,13 @@ public abstract class RowTable<T> extends ScrollPanel
          DomUtils.setFocus(selectedRowElement_, true);
       updateActiveDescendant();
       
-      if (scrollType != ScrollType.NONE)
-      {
-         if (selectedRowElement_ != null)
-         {
-            if (scrollType == ScrollType.DEFAULT)
-            {
-               selectedRowElement_.scrollIntoView();
-            }
-            else
-            {
-               String behaviour = scrollType.toString().toLowerCase();
-               scrollIntoView(selectedRowElement_, behaviour);
-            }
-            
-         }
-         else
-         {
-            revealRow(selectedRow_);
-         }
-      }
+      if (scrollType == ScrollType.NONE)
+         return;
+
+      if (scrollType == ScrollType.DEFAULT || selectedRowElement_ == null)
+         revealRow(selectedRow_);
+      else
+         scrollIntoView(selectedRowElement_, scrollType.toString().toLowerCase());
    }
    
    private void selectRow(Element rowEl)
