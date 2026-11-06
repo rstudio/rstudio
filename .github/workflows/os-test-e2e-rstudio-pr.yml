@@ -38,8 +38,11 @@ concurrency:
 permissions:
   contents: read
   pull-requests: write
-  # Lets the e2e-merge jobs mint an OIDC token to assume the S3 report-upload
-  # role (see .github/actions/os-publish-e2e-report).
+  # This workflow is a caller: the platform jobs below `uses:` the reusable
+  # workflows, whose e2e-merge jobs request id-token: write for the S3 report
+  # upload, and a called workflow's permissions are capped by its caller's.
+  # GitHub validates that at call time, so without this grant the whole run
+  # is rejected before any job starts. e2e-merge-all requests it per-job.
   id-token: write
 
 jobs:
@@ -339,7 +342,7 @@ jobs:
             <details>
             <summary>View / download the full report</summary>
             ${{ steps.publish-report.outputs.url != '' && format('
-            **[View report online]({0})** -- opens in the browser, no download needed. Available for 14 days.
+            **[View report online]({0})** -- opens in the browser after a Posit Google sign-in. Available for 14 days.
             ', steps.publish-report.outputs.url) || '' }}
             ${{ steps.upload-report.outputs.artifact-url != '' && format('**[Download playwright-report.zip]({0})** -- extract and open `index.html`', steps.upload-report.outputs.artifact-url) || '_No report artifact was produced._' }}
 

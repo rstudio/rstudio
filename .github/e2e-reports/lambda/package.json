@@ -1,0 +1,16 @@
+{
+  "name": "rstudio-e2e-reports-edge-auth",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Lambda@Edge viewer-request function requiring Google sign-in for the e2e Playwright reports",
+  "scripts": {
+    "build": "esbuild index.js --bundle --platform=node --target=node22 --minify --external:@aws-sdk/* --outfile=dist/index.js",
+    "test": "node --test test/"
+  },
+  "dependencies": {
+    "cognito-at-edge": "1.5.5"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.5"
+  }
+}
