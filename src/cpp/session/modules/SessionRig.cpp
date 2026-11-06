@@ -15,6 +15,8 @@
 
 #include "SessionRig.hpp"
 
+#include <algorithm>
+
 #include <boost/bind/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/regex.hpp>
@@ -231,7 +233,14 @@ private:
       // override), which the snapshot above was taken for as well
       core::system::Options environment;
       core::system::environment(&environment);
-      core::system::setenv(&environment, "RIG_R_INSTALL_DIR", directory_);
+
+      // rig on Windows can't match its existing R links (e.g. R-release.exe)
+      // against a folder written with forward slashes, and stops
+      std::string rigDirectory = directory_;
+#ifdef _WIN32
+      std::replace(rigDirectory.begin(), rigDirectory.end(), '/', '\\');
+#endif
+      core::system::setenv(&environment, "RIG_R_INSTALL_DIR", rigDirectory);
 
 #ifndef _WIN32
       // rig also appends to the shell startup files unless its user-mode
