@@ -614,7 +614,12 @@ public abstract class RowTable<T> extends ScrollPanel
 
       row = MathUtil.clamp(row, 0, data_.size() - 1);
       if (row == selectedRow_)
+      {
+         // e.g. End again after the last row was scrolled away
+         if (scrollType != ScrollType.NONE)
+            revealRow(row);
          return;
+      }
       
       setActiveRow(-1);
       

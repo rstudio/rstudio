@@ -476,6 +476,23 @@ public class RowTableTests extends GWTTestCase
       assertEquals(1, getAriaSelectedRows(table).size());
    }
 
+   public void testEndAgainRevealsLastOptionScrolledAway()
+   {
+      // End reselects the selected row, which must still come back into view
+      StringTable table = createLongTable();
+      focusByKeyboard(table);
+      pressKey(table, "End", KeyCodes.KEY_END);
+      int[] selectionEvents = { 0 };
+      table.addSelectionHandler(event -> selectionEvents[0]++);
+      scrollToRow(table, 0);
+      assertFalse(getTableElement(table).hasAttribute("aria-activedescendant"));
+
+      pressKey(table, "End", KeyCodes.KEY_END);
+
+      assertActiveDescendantRendered(table, LONG_TABLE_ROWS - 1);
+      assertEquals(0, selectionEvents[0]);
+   }
+
    public void testSelectingRowPastRenderedWindowMarksNoElement()
    {
       // row 500 is the first row outside the initial window of 0..499
