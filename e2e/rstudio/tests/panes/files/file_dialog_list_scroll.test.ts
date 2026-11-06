@@ -10,15 +10,13 @@ import { Locator, Page } from '@playwright/test';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { TIMEOUTS } from '@utils/constants';
-import { openFileDialogAtHome } from '@utils/file-dialogs';
+import { FILE_LIST, FILE_NAME, openFileDialogAtHome } from '@utils/file-dialogs';
 
 const uniq = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 const dirName = `pw-list-scroll-${uniq}`;
 // more than RowTable renders at once (MAX_VISIBLE_ROWS = 500)
 const FILE_COUNT = 600;
 
-const FILE_LIST = '#rstudio_directory_contents';
-const FILE_NAME = '#file_dialog_name_prompt';
 const OPEN_BUTTON = '#rstudio_file_accept_open';
 
 // row 0 is the '..' entry
