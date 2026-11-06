@@ -68,7 +68,8 @@ protected:
          recursiveMonitor);
    }
 
-   void expectScanStatus(bool failed)
+   void expectScanStatus(bool failed,
+                         FileChangeEvent::Type type = FileChangeEvent::FileModified)
    {
       auto dir = monitor::findFile(files_.begin(), files_.end(), blocked_.getAbsolutePath());
       ASSERT_NE(files_.end(), dir);
@@ -78,7 +79,7 @@ protected:
          return event.fileInfo().absolutePath() == blocked_.getAbsolutePath();
       });
       ASSERT_NE(events_.end(), event);
-      EXPECT_EQ(FileChangeEvent::FileModified, event->type());
+      EXPECT_EQ(type, event->type());
       EXPECT_EQ(failed, event->fileInfo().scanFailed());
    }
 
@@ -229,7 +230,8 @@ TEST_F(FileMonitorReconciliationTests, FilteredDirectoryRecoversCompleteSubtree)
    invalidate();
    auto dir = monitor::findFile(files_.begin(), files_.end(), blocked_.getAbsolutePath());
    ASSERT_NE(files_.end(), dir);
-   EXPECT_TRUE(dir->scanFailed());
+   EXPECT_FALSE(dir->scanFailed());
+   EXPECT_TRUE(dir->scanFiltered());
    ASSERT_FALSE(events_.empty());
    EXPECT_EQ(FileChangeEvent::FileRemoved, events_.front().type());
    EXPECT_EQ(blocked_.getAbsolutePath(), events_.front().fileInfo().absolutePath());
@@ -240,19 +242,61 @@ TEST_F(FileMonitorReconciliationTests, FilteredDirectoryRecoversCompleteSubtree)
              event.fileInfo().absolutePath() == nested.getAbsolutePath();
    }));
    invalidate();
-   ASSERT_EQ(1, events_.size());
-   EXPECT_EQ(FileChangeEvent::FileRemoved, events_.front().type());
+   EXPECT_TRUE(events_.empty());
 
    // No file timestamps changed: the failed directory must still trigger a
    // recursive recovery and republish every discarded descendant.
    ASSERT_FALSE(reconcile(blocked_, false, true));
-   expectScanStatus(false);
+   expectScanStatus(false, FileChangeEvent::FileAdded);
    EXPECT_NE(files_.end(), monitor::findFile(files_.begin(), files_.end(), nested.getAbsolutePath()));
    EXPECT_NE(events_.end(), std::find_if(events_.begin(), events_.end(), [nested](const FileChangeEvent& event)
    {
       return event.type() == FileChangeEvent::FileAdded &&
              event.fileInfo().absolutePath() == nested.getAbsolutePath();
    }));
+}
+
+TEST_F(FileMonitorReconciliationTests, FilteredDirectoryPublishesFailedRecovery)
+{
+   ASSERT_FALSE(system::scanFiles(FileInfo(root_), options_, &files_));
+   monitor::invalidateDirectory(
+         FileInfo(blocked_),
+         &files_,
+         [this](const std::vector<FileChangeEvent>& events) { events_ = events; });
+   failScan_ = true;
+   EXPECT_TRUE(reconcile(blocked_, false, true));
+   expectScanStatus(true, FileChangeEvent::FileAdded);
+}
+
+TEST_F(FileMonitorReconciliationTests, DeletedFilteredDirectoryIsNotRepublished)
+{
+   ASSERT_FALSE(system::scanFiles(FileInfo(root_), options_, &files_));
+   monitor::invalidateDirectory(
+         FileInfo(blocked_),
+         &files_,
+         [this](const std::vector<FileChangeEvent>& events) { events_ = events; });
+   ASSERT_FALSE(blocked_.remove());
+   EXPECT_TRUE(reconcile(blocked_, false, true));
+   EXPECT_TRUE(events_.empty());
+   EXPECT_EQ(files_.end(), monitor::findFile(files_.begin(), files_.end(), blocked_.getAbsolutePath()));
+}
+
+TEST_F(FileMonitorReconciliationTests, ParentScanRepublishesFilteredDirectory)
+{
+   ASSERT_FALSE(writeStringToFile(source_, "x <- 1\n"));
+   for (bool recursive : {false, true})
+   {
+      SCOPED_TRACE(recursive);
+      files_.clear();
+      ASSERT_FALSE(system::scanFiles(FileInfo(root_), options_, &files_));
+      monitor::invalidateDirectory(
+            FileInfo(blocked_),
+            &files_,
+            [this](const std::vector<FileChangeEvent>& events) { events_ = events; });
+      ASSERT_FALSE(reconcile(root_, recursive, true));
+      expectScanStatus(false, FileChangeEvent::FileAdded);
+      EXPECT_NE(files_.end(), monitor::findFile(files_.begin(), files_.end(), source_.getAbsolutePath()));
+   }
 }
 
 TEST_F(FileMonitorReconciliationTests, DuplicateDirectoryAdditionPreservesScanFailure)

@@ -100,6 +100,7 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
    // Keep failed directory entries distinguishable from successfully scanned
    // empty directories, and clear the flag when a later scan succeeds.
    fromNode->setScanFailed(false);
+   fromNode->setScanFiltered(false);
    pTree->erase_children(fromNode);
 
    // create FilePath for root

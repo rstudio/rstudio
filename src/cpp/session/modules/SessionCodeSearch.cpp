@@ -130,17 +130,22 @@ static const char* s_ignoredDirNames[] = {
    "revdep"
 };
 
-bool isWithinIgnoredDirectory(const FilePath& filePath, const std::vector<FilePath>& ignoreDirs)
+bool isWithinIgnoredDirectory(
+      const FilePath& filePath,
+      const std::vector<FilePath>& ignoreDirs,
+      projects::ProjectContext& context = projects::projectContext())
 {
    using namespace projects;
    
    // we only index (and ignore) directories within the current project
-   if (!projectContext().hasProject())
+   if (!context.hasProject())
       return false;
    
-   FilePath projDir = projectContext().directory();
+   FilePath projDir = context.directory();
+   if (filePath == projDir || !filePath.isWithin(projDir))
+      return false;
    FilePath parentPath = filePath.getParent();
-   bool isPackageProject = projectContext().isPackageProject();
+   bool isPackageProject = context.isPackageProject();
    
    // allow plain files living within the 'revdep' folder
    if (isPackageProject &&
@@ -162,7 +167,7 @@ bool isWithinIgnoredDirectory(const FilePath& filePath, const std::vector<FilePa
    // TODO: it would be better to encode this as a filter that
    // disables traversing of sub-directories we don't want to index
    for (;
-        !parentPath.isEmpty() && parentPath != projDir;
+        parentPath != projDir && parentPath.isWithin(projDir);
         parentPath = parentPath.getParent())
    {
       std::string parentStr = parentPath.getAbsolutePath();
@@ -173,7 +178,7 @@ bool isWithinIgnoredDirectory(const FilePath& filePath, const std::vector<FilePa
       {
          if (cacheIt->second)
          {
-            projectContext().noteSourceIndexExcludedDirectory(parentPath);
+            context.noteSourceIndexExcludedDirectory(parentPath);
             return true;
          }
          continue;
@@ -184,7 +189,7 @@ bool isWithinIgnoredDirectory(const FilePath& filePath, const std::vector<FilePa
 
       if (ignored)
       {
-         projectContext().noteSourceIndexExcludedDirectory(parentPath);
+         context.noteSourceIndexExcludedDirectory(parentPath);
          return true;
       }
    }
@@ -556,8 +561,8 @@ private:
 class SourceFileIndex : boost::noncopyable
 {
 public:
-   SourceFileIndex()
-      : pEntries_(new EntryTree()), indexing_(false)
+   explicit SourceFileIndex(projects::ProjectContext& context = projects::projectContext())
+      : context_(context), pEntries_(new EntryTree()), indexing_(false)
    {
    }
 
@@ -974,7 +979,7 @@ private:
       FilePath filePath(fileInfo.absolutePath());
 
       // filter certain directories (e.g. those that exist in build directories)
-      if (isWithinIgnoredDirectory(filePath, ignoreDirs))
+      if (isWithinIgnoredDirectory(filePath, ignoreDirs, context_))
          return;
 
       if (isIndexableSourceFile(fileInfo))
@@ -982,7 +987,7 @@ private:
          std::string code;
          Error error = module_context::readAndDecodeFile(
                                  filePath,
-                                 projects::projectContext().defaultEncoding(),
+                                 context_.defaultEncoding(),
                                  true,
                                  &code);
          if (error)
@@ -1107,6 +1112,8 @@ private:
    }
    
 private:
+   projects::ProjectContext& context_;
+
    // index entries
    boost::shared_ptr<EntryTree> pEntries_;
 
@@ -2956,6 +2963,43 @@ BuildType: None
          expected.insert({"before", "outside"});
       EXPECT_EQ(expected, symbols);
    }
+}
+
+TEST_P(SourceFileIndexTests, RootRecoveryIgnoresMarkersOutsideProject)
+{
+   FilePath tempDir;
+   ASSERT_FALSE(FilePath::tempFilePath(tempDir));
+   ASSERT_FALSE(tempDir.ensureDirectory());
+   RemoveOnExitScope removeScope(tempDir, ERROR_LOCATION);
+   ASSERT_FALSE(writeStringToFile(tempDir.completeChildPath("CMakeCache.txt"), "cache"));
+   FilePath projectDir = tempDir.completeChildPath(GetParam());
+   ASSERT_FALSE(projectDir.completeChildPath("R").ensureDirectory());
+   ASSERT_FALSE(writeStringToFile(projectDir.completeChildPath("DESCRIPTION"), R"(Package: localpkg
+Version: 0.1.0
+)"));
+   FilePath projectFile = projectDir.completeChildPath("test.Rproj");
+   ASSERT_FALSE(writeStringToFile(projectFile, R"(Version: 1.0
+EnableCodeIndexing: Yes
+BuildType: None
+)"));
+   projects::ProjectContext context;
+   std::string userError;
+   Error error = context.startup(projectFile, &userError);
+   ASSERT_FALSE(error) << error.asString();
+   context.setConfig(context.config());
+   ASSERT_EQ(projectDir, context.packageDirectoryInProject());
+
+   SourceFileIndex index(context);
+   for (bool failed : {true, false})
+   {
+      // Root failure and recovery notifications take the same indexing path
+      // as additions, but their parent is outside the project boundary.
+      FileInfo root(projectDir);
+      root.setScanFailed(failed);
+      std::vector<FileInfo> files{root};
+      index.enqueFiles(files.begin(), files.end());
+   }
+   EXPECT_EQ(projectDir, context.packageDirectoryInProject());
 }
 
 INSTANTIATE_TEST_SUITE_P(

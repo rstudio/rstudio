@@ -151,6 +151,13 @@ Error processFileAdded(
    tree<FileInfo>::sibling_iterator it = impl::findFile(pTree->begin(parentIt),
                                                         pTree->end(parentIt),
                                                         fileChange.fileInfo());
+   // A filtered placeholder was removed from subscribers' view. Treat its
+   // reappearance in a parent scan as a new subtree, including a fresh scan.
+   if (it != pTree->end(parentIt) && it->scanFiltered())
+   {
+      pTree->erase(it);
+      it = pTree->end(parentIt);
+   }
    if (it != pTree->end(parentIt))
    {
       // Directory notifications contain no scan result. A queued addition
@@ -287,7 +294,7 @@ void invalidateDirectory(
    const boost::function<void(const std::vector<FileChangeEvent>&)>& onFilesChanged)
 {
    auto it = impl::findFile(pTree->begin(), pTree->end(), fileInfo);
-   if (it == pTree->end() || !it->isDirectory() ||
+   if (it == pTree->end() || !it->isDirectory() || it->scanFiltered() ||
        (it->isSymlink() && it != pTree->begin()))
    {
       return;
@@ -300,7 +307,8 @@ void invalidateDirectory(
    tree<FileInfo> subtree(it);
    for (const FileInfo& info : subtree)
       fileChanges.emplace_back(FileChangeEvent::FileRemoved, info);
-   it->setScanFailed(true);
+   it->setScanFailed(false);
+   it->setScanFiltered(true);
    pTree->erase_children(it);
    onFilesChanged(fileChanges);
 }
@@ -329,7 +337,7 @@ Error discoverAndProcessFileChanges(
 
    // macOS ordinarily rescans only one directory even for recursive monitors.
    // Recovery must rebuild the failed subtree before advertising coverage.
-   recursive = recursive || (recursiveMonitor && it->scanFailed());
+   recursive = recursive || (recursiveMonitor && (it->scanFailed() || it->scanFiltered()));
 
    // scan this directory into a new tree which we can compare to the old tree
    tree<FileInfo> subdirTree;
@@ -339,6 +347,13 @@ Error discoverAndProcessFileChanges(
    options.filter = filter;
    options.onBeforeScanDir = onBeforeScanDir;
    Error error = scanFiles(fileInfo, options, &subdirTree);
+   if (it->scanFiltered() && isNotFoundError(error))
+   {
+      // A queued event can outlive an unpublished directory. It was already
+      // removed for subscribers, so discard its retry node without adding it.
+      pTree->erase(it);
+      return error;
+   }
    // Publish failed scans as well so consumers cannot mistake an incomplete
    // directory for a covered subtree. Replacing its old contents also ensures
    // a successful retry announces the recovered descendants.

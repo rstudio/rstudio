@@ -97,12 +97,14 @@ void collectFileChangeEvents(PreviousIterator prevBegin,
                              const boost::function<bool(const FileInfo&)>& filter,
                              std::vector<FileChangeEvent>* pEvents)
 {
-   // sort the ranges
+   // Filtered retry nodes are absent from subscribers' view. Omitting them
+   // makes both successful and failed recovery publish an actual addition.
+   auto published = [](const FileInfo& info) { return !info.scanFiltered(); };
    std::vector<FileInfo> prev;
-   std::copy(prevBegin, prevEnd, std::back_inserter(prev));
+   std::copy_if(prevBegin, prevEnd, std::back_inserter(prev), published);
    std::sort(prev.begin(), prev.end(), fileInfoPathLessThan);
    std::vector<FileInfo> curr;
-   std::copy(currBegin, currEnd, std::back_inserter(curr));
+   std::copy_if(currBegin, currEnd, std::back_inserter(curr), published);
    std::sort(curr.begin(), curr.end(), fileInfoPathLessThan);
 
    // initialize the iterators

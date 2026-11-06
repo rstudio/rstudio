@@ -82,7 +82,8 @@ public:
              isDirectory_ == other.isDirectory_ &&
              size_ == other.size_ &&
              lastWriteTime_ == other.lastWriteTime_ &&
-             scanFailed_ == other.scanFailed_;
+             scanFailed_ == other.scanFailed_ &&
+             scanFiltered_ == other.scanFiltered_;
    }
    
    bool operator!=(const FileInfo& other) const
@@ -101,6 +102,11 @@ public:
    // watch registration) fails, but do not represent covered subtrees.
    bool scanFailed() const { return scanFailed_; }
    void setScanFailed(bool failed) { scanFailed_ = failed; }
+
+   // Internal retry nodes for filtered directories are not published to
+   // subscribers. A later accepted scan must announce them as additions.
+   bool scanFiltered() const { return scanFiltered_; }
+   void setScanFiltered(bool filtered) { scanFiltered_ = filtered; }
    
 private:
    std::string absolutePath_;
@@ -109,6 +115,7 @@ private:
    std::time_t lastWriteTime_;
    bool isSymlink_;
    bool scanFailed_ = false;
+   bool scanFiltered_ = false;
 };
    
 inline int fileInfoPathCompare(const FileInfo& a, const FileInfo& b)
