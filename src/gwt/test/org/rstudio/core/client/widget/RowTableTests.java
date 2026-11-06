@@ -413,6 +413,23 @@ public class RowTableTests extends GWTTestCase
       assertActiveDescendantRendered(table, 120);
    }
 
+   public void testRedrawFiresNoSelectionEvent()
+   {
+      // a file dialog copies each selection into its File name box, which
+      // would overwrite a name typed after selecting
+      StringTable table = createLongTable();
+      table.selectRow(120, RowTable.ScrollType.NONE);
+      int[] selectionEvents = { 0 };
+      table.addSelectionHandler(event -> selectionEvents[0]++);
+
+      scrollToRow(table, 400);
+      scrollToRow(table, 100);
+
+      assertEquals(0, selectionEvents[0]);
+      assertEquals("item120", table.getSelectedItem());
+      assertActiveDescendantRendered(table, 120);
+   }
+
    public void testSelectingRowPastRenderedWindowMarksNoElement()
    {
       // row 500 is the first row outside the initial window of 0..499

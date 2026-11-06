@@ -367,14 +367,7 @@ public abstract class RowTable<T> extends ScrollPanel
    public void redraw()
    {
       double scrollPos = getScrollTop();
-      
-      if (selectedRowElement_ != null)
-      {
-         selectedRowElement_.removeClassName(RES.styles().selected());
-         selectedRowElement_.removeAttribute("aria-selected");
-         selectedRowElement_ = null;
-      }
-     
+
       updateOffset();
       updatePaddingRow(topPaddingRowEl_, getTopPaddingHeight());
       updatePaddingRow(bottomPaddingRowEl_, getBottomPaddingHeight());
@@ -389,15 +382,29 @@ public abstract class RowTable<T> extends ScrollPanel
       }
       
       setScrollTop(scrollPos);
-      
-      int row = selectedRow_;
-      if (row != -1)
-      {
-         selectedRow_ = -1;
-         selectRow(row, ScrollType.NONE);
-      }
-      
+
+      // the selection itself is unchanged, so no SelectionEvent: a file
+      // dialog would copy the selected name over one typed since
+      markSelectedRowElement();
       updateActiveDescendant();
+   }
+
+   // Moves the selection styling to the element now rendering the selected
+   // row, if virtualization renders it; redraws reuse row elements.
+   private void markSelectedRowElement()
+   {
+      if (selectedRowElement_ != null)
+      {
+         selectedRowElement_.removeClassName(RES.styles().selected());
+         selectedRowElement_.removeAttribute("aria-selected");
+      }
+
+      selectedRowElement_ = getRenderedRowElement(selectedRow_);
+      if (selectedRowElement_ != null)
+      {
+         selectedRowElement_.addClassName(RES.styles().selected());
+         selectedRowElement_.setAttribute("aria-selected", "true");
+      }
    }
 
    public void draw(List<T> data)
@@ -590,27 +597,14 @@ public abstract class RowTable<T> extends ScrollPanel
       // callers may append to the list passed to draw() and then select the
       // new row without redrawing (DirectoryContentsWidget.addDirectory)
       syncEmptyState();
-      
-      if (selectedRowElement_ != null)
-      {
-         selectedRowElement_.removeClassName(RES.styles().selected());
-         selectedRowElement_.removeAttribute("aria-selected");
-         selectedRowElement_ = null;
-      }
-      
-      selectedRow_ = MathUtil.clamp(row, 0, data_.size() - 1);
+
+      selectedRow_ = row;
       selectedItem_ = data_.get(selectedRow_);
       SelectionEvent.fire(this, getSelectedItem());
-      
-      // if the requested row is part of the current view,
-      // apply selection styling to it
-      selectedRowElement_ = getRenderedRowElement(row);
+
+      markSelectedRowElement();
       if (selectedRowElement_ != null)
-      {
-         selectedRowElement_.addClassName(RES.styles().selected());
-         selectedRowElement_.setAttribute("aria-selected", "true");
          DomUtils.setFocus(selectedRowElement_, true);
-      }
       updateActiveDescendant();
       
       if (scrollType != ScrollType.NONE)
