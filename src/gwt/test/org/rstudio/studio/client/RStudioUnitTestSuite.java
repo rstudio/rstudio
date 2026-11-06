@@ -23,6 +23,7 @@ import org.rstudio.core.client.StringUtilTests;
 import org.rstudio.core.client.TextCursorTests;
 import org.rstudio.core.client.URIUtilsTests;
 import org.rstudio.core.client.VirtualConsoleTests;
+import org.rstudio.core.client.cellview.ImageButtonColumnTests;
 import org.rstudio.core.client.cellview.TriStateCheckboxCellTests;
 import org.rstudio.core.client.command.AppCommandMenuImageTests;
 import org.rstudio.core.client.command.EmbeddedKeyRoutingTests;
@@ -143,6 +144,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(VimrcLoaderTests.class);
       suite.addTestSuite(VcsStateTests.class);
       suite.addTestSuite(AppCommandMenuImageTests.class);
+      suite.addTestSuite(ImageButtonColumnTests.class);
       suite.addTestSuite(TriStateCheckboxCellTests.class);
       suite.addTestSuite(ServerErrorCauseTests.class);
 
