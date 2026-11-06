@@ -52,18 +52,24 @@ async function expectWarningPaths(page: Page, paths: string[]): Promise<void> {
   }).toEqual(paths.map(directory => expect.stringContaining(`${WARNING}${directory} (`)));
 }
 
-// Suspend/resume is Server-only, and the fixture needs POSIX directory search
-// permissions (Server runs on Linux). All filesystem changes go through R so
-// this also works when the test runner and session are on different hosts.
-test.describe('Startup warnings across session resume', { tag: ['@server_only'] }, () => {
+// Suspend/resume is Server-only; Restart R runs in both modes. The fixture
+// needs POSIX directory search permissions, so the Desktop case is skipped on
+// Windows (Server runs on Linux). All filesystem changes go through R so this
+// also works when the test runner and session are on different hosts.
+const OPERATIONS = [
+  { operation: 'Restart R', prefix: 'restart', tag: [] },
+  { operation: 'suspend/resume', prefix: 'resume', tag: ['@server_only'] },
+] as const;
+
+test.describe('Startup warnings across session resume', () => {
   const sandbox = useSuiteSandbox();
 
-  for (const operation of ['Restart R', 'suspend/resume'] as const) {
-    test(`keeps unchanged warnings once and announces changed paths after ${operation} (#19246)`, async ({ rstudioPage: page }) => {
-      test.setTimeout(180000);
+  for (const { operation, prefix, tag } of OPERATIONS) {
+    test(`keeps unchanged warnings once and announces changed paths after ${operation} (#19246)`, { tag: [...tag] }, async ({ rstudioPage: page, mode }) => {
+      test.skip(mode === 'desktop' && process.platform === 'win32', 'needs POSIX directory search permissions');
+      test.setTimeout(240000);
       await closeProjectIfOpen(page);
       const previousDefault = await getPref(page, 'initial_working_directory');
-      const prefix = operation === 'Restart R' ? 'restart' : 'resume';
       const directories = ['first', 'second'].map(name => `${sandbox.dir}/${prefix}-${name}`);
       const dirs = `c(${directories.map(rPathLiteral).join(', ')})`;
       try {
@@ -92,9 +98,18 @@ test.describe('Startup warnings across session resume', { tag: ['@server_only'] 
 
         await cycle(directories[1]);
         await expectWarningPaths(page, directories);
+
+        // Once cleared from the console, a warning whose condition persists
+        // is printed again rather than lost.
+        await clearConsole(page);
+        await cycle(directories[1]);
+        await expectWarningPaths(page, [directories[1]]);
       } finally {
-        await runCheckedR(page, `Sys.chmod(${dirs}, "0700"); setwd(${rPathLiteral(sandbox.dir)})`);
+        // Restore the pref first: the R cleanup can fail (e.g. while a failed
+        // cycle is still restarting), and must not hide the test's own error.
         await setPref(page, 'initial_working_directory', previousDefault ?? '~');
+        await runCheckedR(page, `Sys.chmod(${dirs}, "0700"); setwd(${rPathLiteral(sandbox.dir)})`)
+          .catch((err: unknown) => console.warn(`[startup-warnings] cleanup failed: ${String(err)}`));
       }
     });
   }
