@@ -29,17 +29,25 @@ export function envChoice<T extends string>(name: string, allowed: readonly T[],
   return value as T;
 }
 
-// Matched as a substring, case-insensitively, so a secret added to a workflow
-// later is covered without anyone remembering this list: POSIT_PASSWORD,
-// COPILOT_TOTP_SECRET, CONNECT_API_KEY, ACTIONS_ID_TOKEN_REQUEST_TOKEN, ...
-const CREDENTIAL_NAME = /PASSWORD|PASSWD|SECRET|TOKEN|API_?KEY|ACCESS_KEY|PRIVATE_KEY|(^|_)PAT$/i;
+// The common credential shapes, case-insensitively. The long alternatives
+// match anywhere in the name (POSIT_PASSWORD, COPILOT_TOTP_SECRET,
+// CONNECT_API_KEY, ACTIONS_ID_TOKEN_REQUEST_TOKEN,
+// GOOGLE_APPLICATION_CREDENTIALS); the short ones are anchored to a `_`
+// boundary so DB_PASS, SNOWFLAKE_PWD, OPENAI_KEY, NPM_AUTH and
+// GITHUB_PAT_READONLY are caught while PATH, PWD, OLDPWD and SSH_AUTH_SOCK
+// survive. A secret added to a workflow later is covered when its name has
+// one of these shapes; one that doesn't (a DATABASE_URL with an embedded
+// password, say) has to be listed in CREDENTIAL_NAMES below.
+const CREDENTIAL_NAME =
+  /PASSW(OR)?D|(^|_)PASS|_PWD(_|$)|SECRET|TOKEN|CREDENTIAL|API_?KEY|ACCESS_KEY|PRIVATE_KEY|_KEY$|_AUTH$|(^|_)PAT(_|$)/i;
 
-// Account names that pair with one of the above but don't look like secrets.
-const CREDENTIAL_ACCOUNT_NAMES = new Set(['POSIT_EMAIL', 'COPILOT_USER', 'PW_RSTUDIO_SERVER_USER']);
+// Names the pattern misses: the account names that pair with a secret above,
+// plus any credential whose name doesn't look like one.
+const CREDENTIAL_NAMES = new Set(['POSIT_EMAIL', 'COPILOT_USER', 'PW_RSTUDIO_SERVER_USER']);
 
 /** Whether an environment variable name looks like it carries a credential. */
 export function isCredentialEnvVar(name: string): boolean {
-  return CREDENTIAL_NAME.test(name) || CREDENTIAL_ACCOUNT_NAMES.has(name.toUpperCase());
+  return CREDENTIAL_NAME.test(name) || CREDENTIAL_NAMES.has(name.toUpperCase());
 }
 
 /**

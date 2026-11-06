@@ -23,9 +23,19 @@ test.describe('isCredentialEnvVar', () => {
   test('matches common credential shapes in any case', () => {
     for (const name of [
       'ANTHROPIC_API_KEY', 'OPENAI_APIKEY', 'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY',
-      'AWS_SESSION_TOKEN', 'GITHUB_PAT', 'GH_TOKEN', 'Some_Password', 'db_passwd',
+      'AWS_SESSION_TOKEN', 'GITHUB_PAT', 'GITHUB_PAT_READONLY', 'GH_TOKEN', 'Some_Password', 'db_passwd',
+      'DB_PASS', 'SNOWFLAKE_PWD', 'GPG_PASSPHRASE', 'GOOGLE_APPLICATION_CREDENTIALS', 'OPENAI_KEY',
+      'SSH_PRIVATE_KEY', 'NPM_AUTH', 'PAT',
     ]) {
       expect(isCredentialEnvVar(name), name).toBe(true);
+    }
+  });
+
+  test('does not recognize a credential hidden in an unrelated name', () => {
+    // The limit of matching by name: these have to be listed in
+    // CREDENTIAL_NAMES (utils/env.ts) if a workflow ever sets them.
+    for (const name of ['DATABASE_URL', 'CONNECTION_STRING']) {
+      expect(isCredentialEnvVar(name), name).toBe(false);
     }
   });
 
@@ -34,6 +44,7 @@ test.describe('isCredentialEnvVar', () => {
       'PATH', 'HOME', 'USERPROFILE', 'LANG', 'R_LIBS_USER', 'RSTUDIO_CONFIG_HOME',
       'SSH_AUTH_SOCK', 'SECURITYSESSIONID', 'PW_RSTUDIO_SERVER_URL', 'GITHUB_ACTIONS',
       'GITHUB_WORKSPACE', 'PATHEXT', 'RETICULATE_PYTHON', 'PW_ODBC_DRIVER_PATHS',
+      'PWD', 'OLDPWD', 'BYPASS_PROXY', 'XDG_DATA_DIRS', 'TURNKEY_DIR', 'PATTERN',
     ]) {
       expect(isCredentialEnvVar(name), name).toBe(false);
     }
