@@ -166,6 +166,7 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     String usingNewestVersionMessage();
     String rStudioServerHomeTitle();
     String rStudioLogoAltText();
+    String mainMenuLabel();
     String browserNotAllowAccessLabel();
     String computerClipBoardLabel();
     String useKeyboardShortcutsLabel();
