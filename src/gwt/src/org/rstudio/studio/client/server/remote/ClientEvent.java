@@ -218,6 +218,7 @@ class ClientEvent extends JavaScriptObject
    public static final String ProjectRVersionMismatch = "project_r_version_mismatch";
    public static final String RInstallCompleted = "r_install_completed";
    public static final String RenvRestorePrompt = "renv_restore_prompt";
+   public static final String QuitAborted = "quit_aborted";
 
    protected ClientEvent()
    {
