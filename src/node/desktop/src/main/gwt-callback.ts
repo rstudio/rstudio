@@ -55,6 +55,8 @@ import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
 import { AuthorizationCancelledError, frameworkVersion, isOrthogonal, makeOrthogonal } from './r-framework';
 import { openMinimalWindow } from './minimal-window';
+import { electronUpdaterHost, Updater } from './updater';
+import { kProjectNone } from '../core/r-user-data';
 import {
   defaultFonts,
   ElectronDesktopOptions,
@@ -74,6 +76,17 @@ import { userHomePathString } from '../core/user';
 import { buildInfo } from './build-info';
 import { showPersistentSplashScreen } from './splash-screen';
 import { harvestRendererTiming, startupCheckpoint } from './startup-timing';
+
+/**
+ * The executable a session is launched from for the R the client names:
+ * sessions launched from bin\R.exe fail to load on Windows, so the
+ * architecture-specific executable is used, as the Choose R dialog does.
+ * Applied wherever the client's path is taken, so that the R prepared by
+ * setPendingRVersion() is the one setPendingQuit() then finds.
+ */
+export function preparedRExecutablePath(rExecutablePath: string): string {
+  return process.platform === 'win32' ? fixWindowsRExecutablePath(rExecutablePath) : rExecutablePath;
+}
 
 export enum PendingQuit {
   PendingQuitNone,
@@ -97,6 +110,9 @@ function formatSelectedVersionForUi(rBinDir: string) {
   }
 }
 
+/** How long setPendingRVersion() lets the chosen R take to describe itself. */
+const kPendingRVersionTimeoutMs = 30000;
+
 /**
  * This is the main-process side of the GwtCallbacks; dispatched from renderer processes
  * via the ContextBridge.
@@ -111,6 +127,8 @@ export class GwtCallback extends EventEmitter {
   // the R executable to launch the next session with (set alongside a
   // pending restart when the user switches R versions)
   pendingRVersion = '';
+  /** the R executables setPendingRVersion() found usable, which a quit may then name */
+  preparedRVersions = new Set<string>();
 
   private hasFontConfig = false;
   private owners = new Set<GwtWindow>();
@@ -120,6 +138,8 @@ export class GwtCallback extends EventEmitter {
 
   monospaceFonts: string[] = [];
   proportionalFonts: string[] = [];
+  // in-app updates; GWT drives it through the desktop_*_update ipc below
+  updater: Updater;
 
   /**
    * Opens a file in the main window and activates it.
@@ -152,6 +172,7 @@ export class GwtCallback extends EventEmitter {
   constructor(public mainWindow: MainWindow) {
     super();
     this.owners.add(mainWindow);
+    this.updater = new Updater(electronUpdaterHost(mainWindow));
 
     if (process.platform === 'linux') {
       try {
@@ -190,6 +211,31 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on('desktop_write_stderr', (event, output) => {
       console.log(output);
+    });
+
+    ipcMain.handle('desktop_check_for_updates', async (_event, manual: boolean) => {
+      return JSON.stringify(await this.updater.checkForUpdates(manual));
+    });
+
+    ipcMain.on('desktop_download_update', (_event, version: string) => {
+      void this.updater.downloadUpdate(version);
+    });
+
+    ipcMain.handle('desktop_can_install_update', async (_event, version: string) => {
+      return this.updater.canInstallUpdate(version);
+    });
+
+    ipcMain.handle(
+      'desktop_install_update',
+      async (_event, version: string, projectFilePath: string, requestId: string) => {
+        // the session reports the project with the home directory aliased (~/...)
+        const project = projectFilePath === kProjectNone ? kProjectNone : resolveAliasedPath(projectFilePath);
+        return this.updater.installUpdate(version, project, requestId);
+      },
+    );
+
+    ipcMain.on('desktop_cancel_update_install', (_event, requestId: string) => {
+      this.updater.cancelPendingInstall(requestId);
     });
 
     ipcMain.on('desktop_browse_url', (event, url: string) => {
@@ -814,8 +860,8 @@ export class GwtCallback extends EventEmitter {
       queueClipboardWrite(() => desktop.cleanClipboard(stripHtml));
     });
 
-    ipcMain.handle('desktop_set_pending_quit', (event, pendingQuit: number) => {
-      this.setPendingQuit(pendingQuit);
+    ipcMain.handle('desktop_set_pending_quit', (event, pendingQuit: number, rExecutablePath: string) => {
+      return this.setPendingQuit(pendingQuit, rExecutablePath);
     });
 
     ipcMain.handle('desktop_set_pending_r_version', async (event, rExecutablePath: string) => {
@@ -1181,8 +1227,7 @@ export class GwtCallback extends EventEmitter {
       }
 
       // Try to query the R version from the R installation
-      const rBinPath =
-        process.platform === 'win32' ? path.join(rHome, 'bin', 'R.exe') : path.join(rHome, 'bin', 'R');
+      const rBinPath = process.platform === 'win32' ? path.join(rHome, 'bin', 'R.exe') : path.join(rHome, 'bin', 'R');
 
       let rVersionStr: string;
       try {
@@ -1261,26 +1306,44 @@ export class GwtCallback extends EventEmitter {
     }
   }
 
-  setPendingQuit(pendingQuit: number): void {
+  /**
+   * Record what the coming session exit is for, and the R it should restart
+   * with (one setPendingRVersion() prepared), if any. The R is published
+   * only here, with the quit it was prepared for: a quit prepared but never
+   * recorded (its claim superseded, its save prompts cancelled) then leaves
+   * nothing for a later, unrelated quit to pick up. Answers '' once
+   * recorded, or why not.
+   */
+  setPendingQuit(pendingQuit: number, rExecutablePath = ''): string {
+    // the client names the R as it was given to setPendingRVersion()
+    const rPath = rExecutablePath ? preparedRExecutablePath(rExecutablePath) : '';
+    if (rPath && !this.preparedRVersions.has(rPath)) {
+      const interpolation = { escapeValue: false };
+      return (
+        i18next.t('gwtCallbackTs.rExecutableNotPrepared', { path: rExecutablePath, interpolation }) || rExecutablePath
+      );
+    }
+
     this.pendingQuit = pendingQuit;
+    this.pendingRVersion = rPath;
 
     // a quit that was abandoned (e.g. the session refused it) leaves no R
-    // switch behind for some later, unrelated restart
+    // switch or update install behind for some later, unrelated quit
     if (pendingQuit === PendingQuit.PendingQuitNone) {
-      this.pendingRVersion = '';
+      this.updater.cancelPendingInstall();
     }
+    return '';
   }
 
   /**
-   * Hold on to the R executable the next session should use, after checking
-   * that it runs as itself. Resolves to an error message when it doesn't,
-   * and '' otherwise; '' tells the client the R is ready, so a failure
-   * always says something.
+   * Prepare an R executable for the restart a quit is about to ask for, by
+   * checking that it runs as itself. Resolves to an error message when it
+   * doesn't, and '' otherwise; '' tells the client the R is ready, so a
+   * failure always says something. The R is used only by a quit that names
+   * it (see setPendingQuit).
    */
   async setPendingRVersion(rExecutablePath: string): Promise<string> {
-    // sessions launched from bin\R.exe fail to load on Windows; use the
-    // architecture-specific executable as the Choose R dialog does
-    const rPath = process.platform === 'win32' ? fixWindowsRExecutablePath(rExecutablePath) : rExecutablePath;
+    const rPath = preparedRExecutablePath(rExecutablePath);
 
     // the client escapes the message for display itself
     const interpolation = { escapeValue: false };
@@ -1297,8 +1360,11 @@ export class GwtCallback extends EventEmitter {
         return i18next.t('gwtCallbackTs.rExecutableNotOrthogonal', { path: rPath, interpolation }) || rPath;
       }
 
-      // queried in the background: R can take seconds to start
-      const [, error] = await detectREnvironmentAsync(rPath);
+      // queried in the background: R can take seconds to start. Bounded,
+      // because the client holds the quit for this answer (see
+      // ApplicationQuit.claimQuit) and an R that hangs must not hold it
+      // forever; a late answer prepares an R that no quit will name
+      const [, error] = await detectREnvironmentAsync(rPath, kPendingRVersionTimeoutMs);
       if (error) {
         logger().logError(error);
         return (
@@ -1310,7 +1376,7 @@ export class GwtCallback extends EventEmitter {
       return safeError(error).message || rPath;
     }
 
-    this.pendingRVersion = rPath;
+    this.preparedRVersions.add(rPath);
     return '';
   }
 
@@ -1351,14 +1417,20 @@ export class GwtCallback extends EventEmitter {
     return pending;
   }
 
+  /**
+   * What the session's exit is for, asked once when it exits. An accepted
+   * update is installed only by the quit-and-exit it was recorded for: an
+   * exit that restarts the session instead (Terminate R, a project switch
+   * accepted during a slow shutdown) or that nothing asked for (a crash)
+   * forgets it, or a later, unrelated quit would run the installer.
+   */
   collectPendingQuitRequest(): PendingQuit {
-    if (this.pendingQuit != PendingQuit.PendingQuitNone) {
-      const currentPendingQuit = this.pendingQuit;
-      this.pendingQuit = PendingQuit.PendingQuitNone;
-      return currentPendingQuit;
-    } else {
-      return PendingQuit.PendingQuitNone;
+    const pendingQuit = this.pendingQuit;
+    this.pendingQuit = PendingQuit.PendingQuitNone;
+    if (pendingQuit !== PendingQuit.PendingQuitAndExit) {
+      this.updater.cancelPendingInstall();
     }
+    return pendingQuit;
   }
 
   convertMessageBoxType(type: number): 'info' | 'warning' | 'error' | 'question' {
