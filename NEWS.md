@@ -1,6 +1,7 @@
 ## RStudio 2026.12.0 "Parrot Balsam" Release Notes
 
 ### New
+- ([#19403](https://github.com/rstudio/rstudio/issues/19403)): On macOS, RStudio now offers to become the default application for R files, since Xcode otherwise claims `.R` files; the Global Options > General > Advanced pane also has a button for this.
 - ([#17173](https://github.com/rstudio/rstudio/issues/17173)): Open-source RStudio Desktop on macOS and Windows can now download an available update in the background and install it on restart ("Install and Restart"), instead of sending you to the download page. Administrators can keep the notification but turn off in-app installation with the `RSTUDIO_DISABLE_IN_APP_UPDATES` environment variable.
 - ([#12622](https://github.com/rstudio/rstudio/issues/12622)): RStudio Desktop now warns in the Console when a project asks for a different version of R than the one running (as recorded in its renv lockfile, or in the project file), and offers to switch to it. A version that is not installed can be installed first, via [rig](https://github.com/r-lib/rig), in a background job, using the copy of rig bundled with RStudio, into a folder confirmed (or changed) before the installation starts; a nearby installed version is offered as an alternative. When the renv library of a project is empty, RStudio offers to run `renv::restore()`. The check can be disabled in Global Options > Packages.
 - ([#19166](https://github.com/rstudio/rstudio/issues/19166)): Web hyperlink previews now show an Open in Browser icon alongside the URL.
