@@ -131,6 +131,12 @@
   "mainWindowTs": {
     "rSessionFailedToStart": "La session R n'a pas réussi à démarrer."
   },
+  "defaultFileHandlerTs": {
+    "confirmMessage": "Utiliser RStudio pour ouvrir les fichiers R ?",
+    "confirmDetail": "Les fichiers R (.R) s'ouvrent actuellement dans une autre application, comme Xcode. Vous pourrez modifier ce choix plus tard dans Outils > Options globales > Général > Avancé.",
+    "useRStudio": "Utiliser RStudio",
+    "keepCurrent": "Conserver l'application actuelle"
+  },
   "i18nManager": {
     "errorLocalizingDocument": "Erreur de localisation du document :"
   },

@@ -14,13 +14,16 @@
  */
 
 import { assert } from 'chai';
-import { app } from 'electron';
+import { app, dialog } from 'electron';
 import { describe } from 'mocha';
 import sinon from 'sinon';
 import { properties } from '../../../../../cpp/session/resources/schema/user-state-schema.json';
 import { FilePath } from '../../../src/core/file-path';
+import { clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
+import { Application } from '../../../src/main/application';
 import {
   kRFileExtensions,
+  macOSConfirmsDefaultApplicationChanges,
   promptForDefaultRFileHandlerOnce,
   setDefaultApplicationForRFiles,
   setMacOSDefaultApplicationForFileExtensions,
@@ -63,6 +66,7 @@ class DesktopOptionsStub extends DesktopOptions {
 
 describe('DefaultFileHandler', () => {
   let set: sinon.SinonStub;
+  let showMessageBox: sinon.SinonStub;
   let elsewhere: Set<string>;
 
   // the extensions some other application currently owns; accepting a
@@ -93,13 +97,35 @@ describe('DefaultFileHandler', () => {
     sinon.stub(process, 'platform').value('darwin');
     sinon.stub(app, 'isPackaged').value(true);
     sinon.stub(app.commandLine, 'hasSwitch').returns(false);
+
+    // a macOS that confirms the change itself, unless a test says otherwise
+    sinon.stub(process, 'getSystemVersion').returns('26.4.0');
+    showMessageBox = sinon.stub(dialog, 'showMessageBox');
+    setApplication(new Application());
+
     ElectronDesktopOptions(kTestingConfigDirectory, new DesktopOptionsStub());
   });
 
   afterEach(() => {
     sinon.restore();
+    clearApplicationSingleton();
     clearOptionsSingleton();
     new FilePath(kTestingConfigDirectory).removeIfExistsSync();
+  });
+
+  describe('macOSConfirmsDefaultApplicationChanges', () => {
+    it('is true from macOS 26.4 on', () => {
+      const confirms = (version: string) => {
+        (process.getSystemVersion as sinon.SinonStub).returns(version);
+        return macOSConfirmsDefaultApplicationChanges();
+      };
+
+      assert.isFalse(confirms('15.7.1'));
+      assert.isFalse(confirms('26.3.1'));
+      assert.isTrue(confirms('26.4'));
+      assert.isTrue(confirms('26.4.0'));
+      assert.isTrue(confirms('27.0'));
+    });
   });
 
   describe('setMacOSDefaultApplicationForFileExtensions', () => {
@@ -164,6 +190,26 @@ describe('DefaultFileHandler', () => {
       assert.match(result.error, /installed copy/);
     });
 
+    it('answers the startup offer when it asks about .R', async () => {
+      ownedElsewhere('R');
+      declines('R');
+
+      await setDefaultApplicationForRFiles();
+      set.resetHistory();
+      await promptForDefaultRFileHandlerOnce();
+
+      assert.isTrue(set.notCalled);
+      assert.isTrue(ElectronDesktopOptions().macOSDefaultFileHandlerPrompted());
+    });
+
+    it("leaves the startup offer alone when .R was already RStudio's", async () => {
+      ownedElsewhere('Rmd');
+
+      await setDefaultApplicationForRFiles();
+
+      assert.isFalse(ElectronDesktopOptions().macOSDefaultFileHandlerPrompted());
+    });
+
     it('refuses off macOS', async () => {
       sinon.stub(process, 'platform').value('linux');
 
@@ -182,6 +228,39 @@ describe('DefaultFileHandler', () => {
       await promptForDefaultRFileHandlerOnce();
 
       assert.isTrue(set.calledOnceWithExactly('R'));
+      assert.isTrue(ElectronDesktopOptions().macOSDefaultFileHandlerPrompted());
+    });
+
+    it('leaves the question to macOS from 26.4 on', async () => {
+      ownedElsewhere('R');
+
+      await promptForDefaultRFileHandlerOnce();
+
+      assert.isTrue(showMessageBox.notCalled);
+      assert.isTrue(set.calledOnceWithExactly('R'));
+    });
+
+    it('asks first before macOS 26.4, which would switch .R silently', async () => {
+      ownedElsewhere('R');
+      (process.getSystemVersion as sinon.SinonStub).returns('15.7.1');
+      showMessageBox.resolves({ response: 0, checkboxChecked: false });
+
+      await promptForDefaultRFileHandlerOnce();
+
+      assert.isTrue(showMessageBox.calledOnce);
+      assert.isTrue(set.calledOnceWithExactly('R'));
+    });
+
+    it('leaves .R alone, and does not ask again, when declined before macOS 26.4', async () => {
+      ownedElsewhere('R');
+      (process.getSystemVersion as sinon.SinonStub).returns('15.7.1');
+      showMessageBox.resolves({ response: 1, checkboxChecked: false });
+
+      await promptForDefaultRFileHandlerOnce();
+      await promptForDefaultRFileHandlerOnce();
+
+      assert.isTrue(showMessageBox.calledOnce);
+      assert.isTrue(set.notCalled);
       assert.isTrue(ElectronDesktopOptions().macOSDefaultFileHandlerPrompted());
     });
 

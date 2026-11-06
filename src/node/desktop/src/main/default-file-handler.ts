@@ -13,10 +13,12 @@
  *
  */
 
-import { app } from 'electron';
+import { app, BrowserWindow, dialog, MessageBoxOptions } from 'electron';
+import i18next from 'i18next';
 import { safeError } from '../core/err';
 import { logger } from '../core/logger';
 import desktop from '../native/desktop.node';
+import { appState } from './app-state';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { isAutomated } from './utils';
 
@@ -43,9 +45,38 @@ export function isMacOSDefaultApplicationForFileExtension(extension: string): bo
 }
 
 /**
+ * Whether macOS asks the user to confirm a change of the default application
+ * for a file type. Before macOS 26.4 the change is made without asking.
+ */
+export function macOSConfirmsDefaultApplicationChanges(): boolean {
+  const [major, minor] = process.getSystemVersion().split('.').map(Number);
+  return major > 26 || (major === 26 && minor >= 4);
+}
+
+/**
+ * Ask the user whether RStudio should open R files, for macOS versions that
+ * would otherwise switch them without asking. Resolves to true for RStudio.
+ */
+export async function confirmDefaultRFileHandler(window?: BrowserWindow): Promise<boolean> {
+  const options: MessageBoxOptions = {
+    type: 'question',
+    message: i18next.t('defaultFileHandlerTs.confirmMessage'),
+    detail: i18next.t('defaultFileHandlerTs.confirmDetail'),
+    buttons: [i18next.t('defaultFileHandlerTs.useRStudio'), i18next.t('defaultFileHandlerTs.keepCurrent')],
+    defaultId: 0,
+    cancelId: 1,
+  };
+
+  const result = await appState().modalTracker.trackElectronModalAsync(async () =>
+    window ? dialog.showMessageBox(window, options) : dialog.showMessageBox(options),
+  );
+  return result.response === 0;
+}
+
+/**
  * Make RStudio the default application for the given extensions, skipping any
- * it already owns: macOS asks the user to confirm each change away from another
- * application, so skipping avoids needless prompts. Each extension is asked
+ * it already owns: macOS 26.4 and later ask the user to confirm each change away
+ * from another application, so skipping avoids needless prompts. Each extension is asked
  * about on its own, so declining or failing one still offers the rest.
  *
  * @returns One message per extension macOS failed to change; a declined
@@ -90,6 +121,11 @@ export async function setDefaultApplicationForRFiles(): Promise<DefaultApplicati
     return { elsewhere: [], error: 'Only an installed copy of RStudio can become the default application for R files' };
   }
 
+  // asking about .R here answers the startup offer too, so it is not repeated
+  if (!isMacOSDefaultApplicationForFileExtension('R')) {
+    ElectronDesktopOptions().setMacOSDefaultFileHandlerPrompted(true);
+  }
+
   const errors = await setMacOSDefaultApplicationForFileExtensions(kRFileExtensions);
   const elsewhere = kRFileExtensions.filter((extension) => !isMacOSDefaultApplicationForFileExtension(extension));
   return { elsewhere, error: errors.join('\n') };
@@ -98,12 +134,13 @@ export async function setDefaultApplicationForRFiles(): Promise<DefaultApplicati
 /**
  * macOS binds .R to its own legacy Rez source type, and Xcode wins that type
  * whenever it is installed, so no Info.plist declaration can make RStudio the
- * default. Ask macOS to switch it once per user: the OS shows the confirmation,
- * and a declined request is never repeated. The offer is only used up once
- * macOS is actually asked, so installing Xcode after RStudio still gets one.
- * Only installed builds ask; development and automated runs stay quiet.
+ * default. Offer to switch it once per user, and never repeat a declined offer.
+ * macOS 26.4 and later confirm the change themselves; earlier versions make it
+ * silently, so RStudio asks first. The offer is only used up once the user is
+ * actually asked, so installing Xcode after RStudio still gets one. Only
+ * installed builds ask; development and automated runs stay quiet.
  */
-export async function promptForDefaultRFileHandlerOnce(): Promise<void> {
+export async function promptForDefaultRFileHandlerOnce(window?: BrowserWindow): Promise<void> {
   if (process.platform !== 'darwin' || !app.isPackaged || isAutomated()) {
     return;
   }
@@ -114,6 +151,10 @@ export async function promptForDefaultRFileHandlerOnce(): Promise<void> {
   }
 
   options.setMacOSDefaultFileHandlerPrompted(true);
+  if (!macOSConfirmsDefaultApplicationChanges() && !(await confirmDefaultRFileHandler(window))) {
+    return;
+  }
+
   try {
     await desktop.macOSSetDefaultApplicationForFileExtension('R');
   } catch (error: unknown) {

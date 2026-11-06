@@ -136,7 +136,7 @@ export class MainWindow extends GwtWindow {
       appState().argsManager.handleAfterSessionLaunchCommands();
     });
     appState().gwtCallback?.once(GwtCallback.WORKBENCH_INITIALIZED, () => {
-      promptForDefaultRFileHandlerOnce().catch((error) => logger().logError(error));
+      promptForDefaultRFileHandlerOnce(this.window).catch((error) => logger().logError(error));
     });
     appState().gwtCallback?.on(GwtCallback.SESSION_QUIT, () => {
       this.onSessionQuit();
