@@ -1056,20 +1056,18 @@ void afterSessionInitHook(bool)
    // suspended session resumes, so it is only printed when this project
    // session has not printed it yet (#19240). the flag is dropped while the
    // reduction is off, so turning it on again later announces it again.
+   //
+   // the show_reduced_file_operations_notice preference turns the notice off
+   // for users (or, set by an administrator, for everyone) who already know
+   // about the reduction and find the message noise (#19241). it hides only
+   // the message; the reduction itself is unaffected.
    if (!module_context::reduceRemoteFilesystemOperations())
    {
       s_reducedFileOpsNoticeShown = false;
    }
-   else if (!s_reducedFileOpsNoticeShown)
+   else if (!s_reducedFileOpsNoticeShown &&
+            prefs::userPrefs().showReducedFileOperationsNotice())
    {
-      // Skip the notice when an administrator has explicitly enabled the
-      // reduction in system preferences.
-      auto systemPref = prefs::userPrefs().readValue(
-            kUserPrefsSystemLayer,
-            kReduceRemoteFilesystemOperations);
-      if (systemPref && systemPref->isBool() && systemPref->getBool())
-         return;
-
       std::string msg =
             "RStudio has reduced background file operations (such as file "
             "monitoring and code indexing) for this project to improve "
