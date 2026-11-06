@@ -183,7 +183,8 @@ public abstract class GlobalDisplay extends MessageDisplay
       showWarningBar(id, severe, message, null, null);
    }
    public abstract void hideWarningBar(String id);
-   public abstract void hideWarningBar();
+   /** Let an explicit request show a warning again, even after its dismissal. */
+   public abstract void undismissWarningBar(String id);
 
    public abstract ProgressIndicator getProgressIndicator(String errorCaption);
 }

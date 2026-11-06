@@ -61,6 +61,6 @@ public interface ApplicationView extends AriaLiveStatusReporter
    void showWarning(boolean severe, String message, String actionLabel, Command action);
    void showWarning(String id, boolean severe, String message, String actionLabel, Command action);
    void hideWarning(String id);
-   void hideWarning();
+   void undismissWarning(String id);
 }
 

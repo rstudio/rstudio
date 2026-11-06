@@ -845,8 +845,8 @@ public class ShortcutManager implements NativePreviewHandler,
    @Handler
    void onShowShortcutCommand()
    {
-      events_.fireEvent(new ReportShortcutBindingEvent(constants_.reportShortCutMessage(), true));
       setReportShortcutBinding(true);
+      events_.fireEvent(new ReportShortcutBindingEvent(constants_.reportShortCutMessage(), true));
    }
 
    @Override

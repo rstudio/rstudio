@@ -34,7 +34,7 @@ public class WorkbenchWarningTests extends GWTTestCase
       return "org.rstudio.studio.RStudioTests";
    }
 
-   public void testOverToNearQuotaDoesNotLeaveStaleWarning()
+   public void testOverToNearQuotaReplacesOverQuotaWarning()
    {
       RecordingDisplay display = new RecordingDisplay();
       Workbench workbench = createWorkbench(display);
@@ -46,10 +46,15 @@ public class WorkbenchWarningTests extends GWTTestCase
       assertEquals(nearMessage, display.messages_.get("quota"));
       workbench.onQuotaStatus(new QuotaStatusEvent(quota(105)));
       assertFalse(nearMessage.equals(display.messages_.get("quota")));
+
+      // Still near quota, so the near-quota warning returns, as it would if
+      // it had never been shown.
       workbench.onQuotaStatus(new QuotaStatusEvent(quota(95)));
-      assertFalse(display.messages_.containsKey("quota"));
+      assertEquals(nearMessage, display.messages_.get("quota"));
       assertEquals("Other warning", display.messages_.get("other"));
       workbench.onQuotaStatus(new QuotaStatusEvent(quota(96)));
+      assertEquals(nearMessage, display.messages_.get("quota"));
+      workbench.onQuotaStatus(new QuotaStatusEvent(quota(80)));
       assertFalse(display.messages_.containsKey("quota"));
    }
 

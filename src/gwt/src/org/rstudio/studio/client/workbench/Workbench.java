@@ -331,8 +331,9 @@ public class Workbench implements BusyEvent.Handler,
       }
 
       // show a warning if the user is near their quota (but no more
-      // than one time per instantiation of the application)
-      else if (quotaStatus.isNearQuota() && !nearQuotaWarningShown_)
+      // than one time per instantiation of the application, unless it
+      // replaces an over-quota warning)
+      else if (quotaStatus.isNearQuota() && (!nearQuotaWarningShown_ || wasOverQuota_))
       {
          StringBuilder msg = new StringBuilder();
          msg.append(constants_.quotaStatusMessage(StringUtil.formatFileSize(quotaStatus.getQuota())));
@@ -340,7 +341,7 @@ public class Workbench implements BusyEvent.Handler,
 
          nearQuotaWarningShown_ = true;
       }
-      else if (wasOverQuota_ || !quotaStatus.isNearQuota())
+      else if (!quotaStatus.isNearQuota())
       {
          globalDisplay_.hideWarningBar("quota");
       }
@@ -766,7 +767,7 @@ public class Workbench implements BusyEvent.Handler,
    public void onReportShortcutBinding(ReportShortcutBindingEvent event)
    {
       if (event.getReset())
-         globalDisplay_.hideWarningBar(ReportShortcutBindingEvent.WARNING_ID);
+         globalDisplay_.undismissWarningBar(ReportShortcutBindingEvent.WARNING_ID);
       AppCommand command = commands_.getCommandById(event.getCommand());
       globalDisplay_.showWarningBar(ReportShortcutBindingEvent.WARNING_ID, false,
             command == null ? event.getCommand() : event.getCommand() + " : " + command.summarize());

@@ -17,7 +17,10 @@ package org.rstudio.studio.client.application.ui;
 import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NodeList;
 import com.google.inject.Inject;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
 import com.google.gwt.core.client.GWT;
@@ -36,12 +39,14 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.widget.CanFocus;
+import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.ImageButton;
+import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.studio.client.application.StudioClientApplicationConstants;
-import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.WarningBarClosedEvent;
@@ -85,7 +90,7 @@ public class WarningBar extends Composite
    static final Binder binder = GWT.create(Binder.class);
 
    @Inject
-   public WarningBar(EventBus events, GlobalDisplay globalDisplay)
+   public WarningBar(EventBus events)
    {
       events_ = events;
       initWidget(binder.createAndBindUi(this));
@@ -105,17 +110,20 @@ public class WarningBar extends Composite
       label_.setId(Document.get().createUniqueId());
       Roles.getButtonRole().setAriaDescribedbyProperty(dismiss_.getElement(), Id.of(label_.getId()));
       details_.setText(constants_.warningDetailsText());
-      details_.addClickHandler(event -> globalDisplay.showMessage(
-            GlobalDisplay.MSG_WARNING,
-            constants_.warningDetailsCaption(),
-            getText(),
-            detailsReturnFocus_));
+      details_.addClickHandler(event -> showDetails());
    }
 
    public void setText(String value)
    {
+      html_ = value;
       label_.setInnerHTML(value);
       label_.setTitle(getText());
+
+      // Tabbing to a link would scroll the clipped message cell, and leave it
+      // scrolled. Details shows the same links, in full.
+      NodeList<Element> links = label_.getElementsByTagName("a");
+      for (int i = 0; i < links.getLength(); i++)
+         links.getItem(i).setTabIndex(-1);
    }
 
    public String getText()
@@ -129,6 +137,29 @@ public class WarningBar extends Composite
       Roles.getGroupRole().setAriaLabelProperty(getElement(), constants_.warningNumberLabel(number));
       dismiss_.setDescription(constants_.dismissWarningLabel(number));
       Roles.getButtonRole().setAriaLabelProperty(details_.getElement(), constants_.warningDetailsLabel(number));
+   }
+
+   private void showDetails()
+   {
+      MessageDialog dialog = new MessageDialog(
+            MessageDialog.WARNING,
+            constants_.warningDetailsCaption(),
+            createDetailsMessage());
+      dialog.addButton(
+            constants_.okBtn(),
+            ElementIds.DIALOG_OK_BUTTON,
+            () -> FocusHelper.setFocusDeferred(detailsReturnFocus_),
+            true,
+            true);
+      dialog.showModal();
+   }
+
+   /** The message's own markup, so links in it remain usable. */
+   Widget createDetailsMessage()
+   {
+      HTML message = new HTML(html_);
+      message.setStylePrimaryName(ThemeResources.INSTANCE.themeStyles().dialogMessage());
+      return message;
    }
 
    public void setDetailsReturnFocus(CanFocus returnFocus)
@@ -222,6 +253,7 @@ public class WarningBar extends Composite
    ImageButton dismiss_;
 
    private Command action_;
+   private String html_ = "";
    private CanFocus detailsReturnFocus_ = this::focusDetailsButton;
 
    private static final Styles styles_ =

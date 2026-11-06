@@ -34,7 +34,7 @@ public class ApplicationWindowTests extends GWTTestCase
       return "org.rstudio.studio.RStudioTests";
    }
 
-   public void testFirstMemoryUpdatePreservesRestoredDismissal()
+   public void testMemoryDismissalSurvivesReloadDespiteNewFigures()
    {
       EventBus events = new EventBus(null, null);
       AriaLiveService aria = new AriaLiveService(events, null)
@@ -49,15 +49,15 @@ public class ApplicationWindowTests extends GWTTestCase
       Provider<WarningBar> provider = () ->
       {
          created[0]++;
-         return new WarningBar(events, null);
+         return new WarningBar(events);
       };
       StudioClientApplicationConstants constants = GWT.create(StudioClientApplicationConstants.class);
-      String status = "90 of 100 MB";
       WarningBarList previous = new WarningBarList(provider, aria, () -> {}, () -> {}, () -> {});
       previous.show(
             "memory-limit",
+            "approaching",
             true,
-            constants.approachingMemoryLimit() + " " + status,
+            constants.approachingMemoryLimit() + " 90 of 100 MB",
             false,
             null,
             null);
@@ -77,14 +77,14 @@ public class ApplicationWindowTests extends GWTTestCase
             null,
             null);
 
-      // A reconnect starts with updateOnly=false, even for an identical warning.
-      window.showMemoryLimitWarning(status, false, false);
+      // A reload starts with updateOnly=false, and the figures have moved on.
+      window.showMemoryLimitWarning("95 of 100 MB", false, false);
       assertEquals(0, created[0]);
       window.showWarning(false, "Unrelated warning");
-      window.showMemoryLimitWarning(status, true, false);
+      window.showMemoryLimitWarning("96 of 100 MB", true, false);
       assertEquals(1, created[0]);
 
-      // A changed warning is still eligible for display.
+      // Going over the limit is a new warning.
       window.showMemoryLimitWarning("110 of 100 MB", false, true);
       assertEquals(2, created[0]);
    }
@@ -105,7 +105,7 @@ public class ApplicationWindowTests extends GWTTestCase
             null,
             null,
             events,
-            () -> new WarningBar(events, null),
+            () -> new WarningBar(events),
             new Session(events),
             aria,
             null,
@@ -132,10 +132,10 @@ public class ApplicationWindowTests extends GWTTestCase
       {
          assertEquals("none", layer.getStyle().getDisplay());
 
-         window.showWarning(false, "Example warning");
+         window.showWarning("example", false, "Example warning", null, null);
          assertEquals("", layer.getStyle().getDisplay());
 
-         window.hideWarning();
+         window.hideWarning("example");
          assertEquals("none", layer.getStyle().getDisplay());
          finishTest();
       });

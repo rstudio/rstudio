@@ -207,10 +207,16 @@ public class ApplicationWindow extends Composite
    @Override
    public void showMemoryLimitWarning(String status, boolean updateOnly, boolean overLimit)
    {
+      // The status has live figures. Key dismissal and announcement on the
+      // limit state instead, so a dismissal survives a reload and polls are quiet.
       if (!updateOnly || warnings_.contains(MEMORY_WARNING))
-         showWarning(MEMORY_WARNING, true,
+         warnings_.show(MEMORY_WARNING,
+               overLimit ? "over" : "approaching",
+               true,
                (overLimit ? constants_.overMemoryLimit() : constants_.approachingMemoryLimit()) + " " + status,
-               null, null);
+               false,
+               null,
+               null);
    }
 
    @Override
@@ -294,6 +300,12 @@ public class ApplicationWindow extends Composite
       warnings_.hide(id);
    }
 
+   @Override
+   public void undismissWarning(String id)
+   {
+      warnings_.undismiss(id);
+   }
+
    private void updateHeaderTopBottom()
    {
       int headerHeight = applicationHeader_.getPreferredHeight();
@@ -317,12 +329,6 @@ public class ApplicationWindow extends Composite
             Unit.PX,
             workbenchBottom_,
             Unit.PX);
-   }
-
-   @Override
-   public void hideWarning()
-   {
-      warnings_.clear();
    }
 
    @Override

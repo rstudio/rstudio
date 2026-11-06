@@ -232,11 +232,56 @@ test('clipped warning details are keyboard accessible and return focus', { tag: 
         await expect.poll(() => page.evaluate(() => !!document.activeElement?.closest('[role="main"]'))).toBe(true);
       }
     }
+
+    // Tabbing to a link in the clipped message would scroll it, so the link
+    // leaves the tab order there, and Details keeps it usable.
+    await showLicenseWarning('See <a href="https://example.com/">the license guide</a>.');
+    const linkedRow = warningRow(page, 'See the license guide.');
+    await expect(linkedRow.getByRole('link', { name: 'the license guide' })).toHaveAttribute('tabindex', '-1');
+    await linkedRow.getByRole('button', { name: /^Details for warning / }).focus();
+    await page.keyboard.press('Enter');
+    const dialogLink = dialog.getByRole('link', { name: 'the license guide' });
+    await expect(dialogLink).toHaveAttribute('href', 'https://example.com/');
+    await expect(dialogLink).not.toHaveAttribute('tabindex', '-1');
+    await page.keyboard.press('Escape');
+    await expect(dialog).toHaveCount(0);
   } finally {
     await page.keyboard.press('Escape');
     await showLicenseWarning('');
     await largeText.evaluate(el => el.parentNode?.removeChild(el));
     await page.setViewportSize(originalSize);
+  }
+});
+
+
+test('a new warning scrolls into view unless a row has focus', async ({ rstudioPage: page }) => {
+  const warnings = page.getByRole('contentinfo', { name: 'Warning bar' });
+  const example = warningRow(page, 'This is a warning!');
+  const shortcut = warningRow(page, shortcutMessage);
+  // Fit one row, so a second one starts out of view.
+  const oneRow = await page.addStyleTag({ content: '[role="contentinfo"][aria-label="Warning bar"] { height: 28px !important; }' });
+  while (await warnings.getByRole('button', { name: dismissName }).count())
+    await warnings.getByRole('button', { name: dismissName }).last().click();
+  try {
+    await executeCommand(page, 'showWarningBar');
+    await executeCommand(page, 'showShortcutCommand');
+    await expect(shortcut).toBeInViewport();
+    await expect(example).not.toBeInViewport();
+
+    // Revealing the new row must not scroll a focused row out of view.
+    await shortcut.getByRole('button', { name: dismissName }).click();
+    await expect(shortcut).toHaveCount(0);
+    const close = example.getByRole('button', { name: dismissName });
+    await close.focus();
+    await executeCommand(page, 'showShortcutCommand');
+    await expect(shortcut).toHaveCount(1);
+    await expect(close).toBeFocused();
+    await expect(example).toBeInViewport();
+    await expect(shortcut).not.toBeInViewport();
+  } finally {
+    while (await warnings.getByRole('button', { name: dismissName }).count())
+      await warnings.getByRole('button', { name: dismissName }).last().click();
+    await oneRow.evaluate(el => el.parentNode?.removeChild(el));
   }
 });
 

@@ -24,8 +24,6 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.Timer;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.widget.CanFocus;
-import org.rstudio.studio.client.common.DummyGlobalDisplay;
 import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.WarningBarClosedEvent;
@@ -43,6 +41,7 @@ public class WarningBarListTests extends GWTTestCase
    {
       bars_ = new ArrayList<>();
       closed_ = new ArrayList<>();
+      changes_ = 0;
       dismissals_ = 0;
       focusReturns_ = 0;
       announcementsDisabled_ = true;
@@ -70,17 +69,31 @@ public class WarningBarListTests extends GWTTestCase
       };
       return new WarningBarList(() ->
       {
-         WarningBar bar = new WarningBar(events_, new DummyGlobalDisplay()
-         {
-            @Override
-            public void showMessage(int type, String caption, String message, CanFocus focusAfter)
-            {
-               detailsMessage_ = message;
-            }
-         });
+         WarningBar bar = new WarningBar(events_);
          bars_.add(bar);
          return bar;
-      }, aria, () -> {}, () -> dismissals_++, () -> focusReturns_++);
+      }, aria, () -> changes_++, () -> dismissals_++, () -> focusReturns_++);
+   }
+
+   private void reload()
+   {
+      String state = list_.getDismissedState();
+      list_.removeFromParent();
+      list_ = createList();
+      RootPanel.get().add(list_);
+      list_.restoreDismissedState(state);
+   }
+
+   private String announced(String role)
+   {
+      Element container = list_.getAnnouncementWidget().getElement();
+      for (Element child = container.getFirstChildElement(); child != null; child = child.getNextSiblingElement())
+      {
+         if (role.equals(child.getAttribute("role")))
+            return child.getInnerText();
+      }
+      fail("No " + role + " region");
+      return null;
    }
 
    private void show(String id, String message)
@@ -130,16 +143,25 @@ public class WarningBarListTests extends GWTTestCase
       assertFalse(bars_.get(0).actionLink_.isVisible());
    }
 
+   public void testRefreshingARowDoesNotRelayout()
+   {
+      show("first", "First");
+      show("first", "First, updated");
+      list_.show("first", false, "First, updated", false, "Action", () -> {});
+      assertEquals(1, changes_);
+      show("second", "Second");
+      assertEquals(2, changes_);
+      list_.hide("second");
+      list_.hide("second");
+      assertEquals(3, changes_);
+   }
+
    public void testDismissalSurvivesReconnectButChangedWarningAppears()
    {
       show("first", "First warning");
       show("second", "Second warning");
       list_.dismiss("first");
-      String state = list_.getDismissedState();
-      list_.removeFromParent();
-      list_ = createList();
-      RootPanel.get().add(list_);
-      list_.restoreDismissedState(state);
+      reload();
       show("first", "First warning");
       show("second", "Second warning");
       assertFalse(list_.contains("first"));
@@ -151,12 +173,43 @@ public class WarningBarListTests extends GWTTestCase
       assertTrue(list_.contains("first"));
    }
 
+   public void testStateKeyedDismissalIgnoresLiveFigures()
+   {
+      list_.show("memory", "approaching", true, "Approaching: 90 MB", false, null, null);
+      list_.show("memory", "approaching", true, "Approaching: 91 MB", false, null, null);
+      assertEquals(1, bars_.size());
+      assertEquals("Approaching: 91 MB", bars_.get(0).getText());
+      list_.dismiss("memory");
+      reload();
+      list_.show("memory", "approaching", true, "Approaching: 95 MB", false, null, null);
+      assertFalse(list_.contains("memory"));
+      list_.show("memory", "over", true, "Over: 110 MB", false, null, null);
+      assertTrue(list_.contains("memory"));
+   }
+
+   public void testUndismissAllowsAnExplicitRequestOnly()
+   {
+      show("first", "First warning");
+      list_.dismiss("first");
+      show("first", "First warning");
+      assertFalse(list_.contains("first"));
+      list_.undismiss("first");
+      show("first", "First warning");
+      assertTrue(list_.contains("first"));
+
+      // Undismissing a showing row leaves it in place.
+      list_.undismiss("first");
+      show("first", "First warning");
+      assertEquals(2, bars_.size());
+      assertEquals(1, closed_.size());
+   }
+
    public void testLateStateRestoreRemovesOnlyMatchingMessage()
    {
       show("first", "First warning");
       list_.dismiss("first");
       String state = list_.getDismissedState();
-      list_.clear();
+      list_.hide("first");
       show("first", "First warning");
       show("second", "Second warning");
       list_.restoreDismissedState(state);
@@ -186,7 +239,8 @@ public class WarningBarListTests extends GWTTestCase
       assertEquals(84, list_.getPreferredHeight());
       for (int i = 0; i < 10; i++)
          assertTrue(list_.contains("warning-" + i));
-      list_.clear();
+      for (int i = 0; i < 10; i++)
+         list_.hide("warning-" + i);
       assertEquals(0, list_.getPreferredHeight());
    }
 
@@ -232,7 +286,7 @@ public class WarningBarListTests extends GWTTestCase
       }
    }
 
-   public void testLabelsAreDistinctAndDetailsUseFullPlainText()
+   public void testLabelsFollowRowPosition()
    {
       show("first", "First <b>warning</b>");
       show("second", "Second warning");
@@ -244,11 +298,27 @@ public class WarningBarListTests extends GWTTestCase
       assertEquals("Dismiss warning 2", second.dismiss_.getElement().getInnerText());
       assertEquals(first.label_.getId(), first.dismiss_.getElement().getAttribute("aria-describedby"));
       assertFalse(first.label_.hasAttribute("aria-hidden"));
-      click(first.details_.getElement());
-      assertEquals("First warning", detailsMessage_);
+
+      list_.dismiss("first");
+      assertEquals("Warning 1", second.getElement().getAttribute("aria-label"));
+      assertEquals("Dismiss warning 1", second.dismiss_.getElement().getInnerText());
+      show("third", "Third warning");
+      assertEquals("Warning 2", bars_.get(2).getElement().getAttribute("aria-label"));
+   }
+
+   public void testDetailsKeepLinksThatTheRowTakesOutOfTabOrder()
+   {
+      show("first", "See <a href=\"https://example.com/\">the guide</a>");
+      WarningBar bar = bars_.get(0);
+      assertEquals("See the guide", bar.label_.getTitle());
+      assertEquals(-1, bar.label_.getElementsByTagName("a").getItem(0).getTabIndex());
+
+      Element link = bar.createDetailsMessage().getElement().getElementsByTagName("a").getItem(0);
+      assertEquals("https://example.com/", link.getAttribute("href"));
+      assertFalse(link.hasAttribute("tabindex"));
+
       show("first", "Updated <b>warning</b>");
-      click(first.details_.getElement());
-      assertEquals("Updated warning", detailsMessage_);
+      assertEquals("Updated warning", bar.createDetailsMessage().getElement().getInnerText());
    }
 
    public void testAnnouncementsBatchLatestMessagesAndExcludeRemovedRows()
@@ -257,6 +327,7 @@ public class WarningBarListTests extends GWTTestCase
       show("first", "Old message");
       show("first", "Updated <b>message</b>");
       show("second", "Second message");
+      list_.show("severe", true, "Severe message", false, null, null);
       show("dismissed", "Dismissed message");
       list_.dismiss("dismissed");
       show("resolved", "Resolved message");
@@ -268,12 +339,42 @@ public class WarningBarListTests extends GWTTestCase
          public void run()
          {
             String expected = "Updated message\nSecond message";
-            assertEquals("status", list_.getAnnouncementWidget().getElement().getAttribute("role"));
-            assertEquals(expected, list_.getAnnouncementWidget().getElement().getInnerText());
+            assertEquals(expected, announced("status"));
+            assertEquals("Severe message", announced("alert"));
             show("first", "Updated <b>message</b>");
             // An exact duplicate neither clears nor schedules a new announcement.
-            assertEquals(expected, list_.getAnnouncementWidget().getElement().getInnerText());
+            assertEquals(expected, announced("status"));
             finishTest();
+         }
+      }.schedule(1500);
+   }
+
+   public void testStateKeyedUpdatesAreNotReannounced()
+   {
+      announcementsDisabled_ = false;
+      list_.show("memory", "approaching", true, "Approaching: 90 MB", false, null, null);
+      delayTestFinish(6000);
+      new Timer()
+      {
+         @Override
+         public void run()
+         {
+            assertEquals("Approaching: 90 MB", announced("alert"));
+            list_.show("memory", "approaching", true, "Approaching: 91 MB", false, null, null);
+            assertEquals("Approaching: 91 MB", bars_.get(0).getText());
+            assertEquals("Approaching: 90 MB", announced("alert"));
+
+            list_.show("memory", "over", true, "Over: 110 MB", false, null, null);
+            assertEquals("", announced("alert"));
+            new Timer()
+            {
+               @Override
+               public void run()
+               {
+                  assertEquals("Over: 110 MB", announced("alert"));
+                  finishTest();
+               }
+            }.schedule(1500);
          }
       }.schedule(1500);
    }
@@ -296,7 +397,7 @@ public class WarningBarListTests extends GWTTestCase
 
    private boolean announcementsDisabled_;
    private int focusReturns_;
-   private String detailsMessage_;
+   private int changes_;
    private WarningBarList list_;
    private EventBus events_;
    private List<WarningBar> bars_;
