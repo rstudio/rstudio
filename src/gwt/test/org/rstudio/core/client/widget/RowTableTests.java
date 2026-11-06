@@ -433,7 +433,9 @@ public class RowTableTests extends GWTTestCase
    public void testKeyboardFocusRevealsVirtualizedSelectedOption()
    {
       // the user scrolled the selection out of the rendered window, then
-      // tabbed back to the list
+      // tabbed back to the list. HtmlUnit's scrollIntoView does nothing, so
+      // revealing a rendered row is covered by the e2e spec
+      // file_dialog_list_scroll.test.ts instead.
       StringTable table = createLongTable();
       table.selectRow(0);
       scrollToRow(table, 400);
@@ -447,20 +449,6 @@ public class RowTableTests extends GWTTestCase
       assertTrue(table.getVerticalScrollPosition() < 400 * table.getRowHeight());
       assertEquals("item0", table.getSelectedItem());
       assertEquals(0, selectionEvents[0]);
-   }
-
-   public void testKeyboardFocusScrollsSelectedOptionIntoView()
-   {
-      String[] items = new String[50];
-      for (int i = 0; i < items.length; i++)
-         items[i] = "item" + i;
-      StringTable table = createTable(items);
-      table.selectRow(0);
-      table.setVerticalScrollPosition(400);
-
-      focusByKeyboard(table);
-
-      assertEquals(0, table.getVerticalScrollPosition());
    }
 
    public void testSelectingRowPastRenderedWindowMarksNoElement()
