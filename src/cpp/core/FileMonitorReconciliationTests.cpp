@@ -227,7 +227,12 @@ TEST_F(FileMonitorReconciliationTests, FilteredDirectoryRecoversCompleteSubtree)
             [this](const std::vector<FileChangeEvent>& events) { events_ = events; });
    };
    invalidate();
-   expectScanStatus(true);
+   auto dir = monitor::findFile(files_.begin(), files_.end(), blocked_.getAbsolutePath());
+   ASSERT_NE(files_.end(), dir);
+   EXPECT_TRUE(dir->scanFailed());
+   ASSERT_FALSE(events_.empty());
+   EXPECT_EQ(FileChangeEvent::FileRemoved, events_.front().type());
+   EXPECT_EQ(blocked_.getAbsolutePath(), events_.front().fileInfo().absolutePath());
    EXPECT_EQ(files_.end(), monitor::findFile(files_.begin(), files_.end(), nested.getAbsolutePath()));
    EXPECT_NE(events_.end(), std::find_if(events_.begin(), events_.end(), [nested](const FileChangeEvent& event)
    {
@@ -235,7 +240,8 @@ TEST_F(FileMonitorReconciliationTests, FilteredDirectoryRecoversCompleteSubtree)
              event.fileInfo().absolutePath() == nested.getAbsolutePath();
    }));
    invalidate();
-   EXPECT_TRUE(events_.empty());
+   ASSERT_EQ(1, events_.size());
+   EXPECT_EQ(FileChangeEvent::FileRemoved, events_.front().type());
 
    // No file timestamps changed: the failed directory must still trigger a
    // recursive recovery and republish every discarded descendant.

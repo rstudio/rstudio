@@ -293,18 +293,16 @@ void invalidateDirectory(
       return;
    }
 
+   // Filtering removes the subtree from subscribers' view; it is not a
+   // filesystem scan failure. Keep an incomplete node only in the monitor's
+   // own tree so a later accepted event can rebuild the entire subtree.
    std::vector<FileChangeEvent> fileChanges;
-   if (!it->scanFailed())
-   {
-      it->setScanFailed(true);
-      fileChanges.emplace_back(FileChangeEvent::FileModified, *it);
-   }
    tree<FileInfo> subtree(it);
-   for (auto child = ++subtree.begin(); child != subtree.end(); ++child)
-      fileChanges.emplace_back(FileChangeEvent::FileRemoved, *child);
+   for (const FileInfo& info : subtree)
+      fileChanges.emplace_back(FileChangeEvent::FileRemoved, info);
+   it->setScanFailed(true);
    pTree->erase_children(it);
-   if (!fileChanges.empty())
-      onFilesChanged(fileChanges);
+   onFilesChanged(fileChanges);
 }
 
 Error discoverAndProcessFileChanges(

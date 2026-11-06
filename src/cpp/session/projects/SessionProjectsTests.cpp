@@ -16,6 +16,7 @@
 #include <session/projects/SessionProjects.hpp>
 
 #include "../modules/SessionDiagnostics.hpp"
+#include "../../core/system/file_monitor/FileMonitorImpl.hpp"
 
 #include <session/prefs/UserPrefs.hpp>
 
@@ -148,6 +149,20 @@ protected:
       pContext->fileMonitorFilesChanged({
          core::system::FileChangeEvent(core::system::FileChangeEvent::FileModified, info)
       });
+   }
+
+   void invalidateFilteredDirectory(ProjectContext* pContext,
+                                    const FilePath& path,
+                                    tree<FileInfo>* pFiles)
+   {
+      ASSERT_FALSE(filterMonitorEntry(pContext, path));
+      core::system::file_monitor::impl::invalidateDirectory(
+            FileInfo(path),
+            pFiles,
+            [pContext](const std::vector<core::system::FileChangeEvent>& events)
+            {
+               pContext->fileMonitorFilesChanged(events);
+            });
    }
 
    void reconcileScanStatus(ProjectContext* pContext, bool failed)
@@ -643,6 +658,32 @@ TEST_F(PackageProjectInfoTests, FilteredWorktreeChildDoesNotDisablePackageCovera
 
    // Windows can deliver child events even inside an excluded directory.
    ASSERT_FALSE(filterMonitorEntry(&context, child));
+   EXPECT_EQ(projectDir_, context.packageDirectoryInProject());
+   EXPECT_EQ(std::set<std::string>{"compiler"}, r_util::RSourceIndex::getImportedPackages());
+}
+
+TEST_F(PackageProjectInfoTests, FilteringObservedNonSourceDirectoryKeepsPackageCoverage)
+{
+   initializeGit();
+   writeDescription("Package: localpkg\nVersion: 0.1.0\n");
+   ASSERT_FALSE(projectDir_.completeChildPath("R").ensureDirectory());
+   FilePath scripts = projectDir_.completeChildPath("scripts");
+   ASSERT_FALSE(scripts.ensureDirectory());
+   ASSERT_FALSE(writeStringToFile(scripts.completeChildPath("helper.R"), "helper <- function() TRUE\n"));
+   FilePath namespaceFile = projectDir_.completeChildPath("NAMESPACE");
+   ASSERT_FALSE(writeStringToFile(namespaceFile, "import(compiler)\n"));
+   ProjectContext context;
+   openProject(&context, "None", "", true);
+   modules::diagnostics::monitorProjectNamespace(context);
+   notifyFileChanged(&context, namespaceFile, core::system::FileChangeEvent::FileModified);
+   ASSERT_EQ(projectDir_, context.packageDirectoryInProject());
+
+   tree<FileInfo> files;
+   core::system::FileScannerOptions options;
+   options.recursive = true;
+   ASSERT_FALSE(core::system::scanFiles(FileInfo(projectDir_), options, &files));
+   ASSERT_FALSE(writeStringToFile(projectDir_.completeChildPath(".git/info/exclude"), "/scripts/\n"));
+   invalidateFilteredDirectory(&context, scripts, &files);
    EXPECT_EQ(projectDir_, context.packageDirectoryInProject());
    EXPECT_EQ(std::set<std::string>{"compiler"}, r_util::RSourceIndex::getImportedPackages());
 }
