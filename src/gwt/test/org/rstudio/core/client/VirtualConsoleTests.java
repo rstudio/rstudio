@@ -80,6 +80,18 @@ public class VirtualConsoleTests extends GWTTestCase
       return new VirtualConsole(ele, new FakePrefs());
    }
 
+   private static final String[] ANSI_MODES = {
+         UserPrefs.ANSI_CONSOLE_MODE_ON,
+         UserPrefs.ANSI_CONSOLE_MODE_STRIP,
+         UserPrefs.ANSI_CONSOLE_MODE_OFF};
+
+   private VirtualConsole createConsole(Element ele, String ansiMode)
+   {
+      FakePrefs prefs = new FakePrefs();
+      prefs.ansiMode_ = ansiMode;
+      return new VirtualConsole(ele, prefs);
+   }
+
    private static String setCsiCode(int code)
    {
       return setCsiCode(String.valueOf(code));
@@ -305,6 +317,68 @@ public class VirtualConsoleTests extends GWTTestCase
 
       vcCrlf.submit("one\r\ntwo");
       Assert.assertEquals("one\ntwo", crlf.getInnerText());
+   }
+
+   public void testSgrOnlyBackspace()
+   {
+      assertSgrOnlyText("expected foo\bbar", "expected foobar");
+   }
+
+   public void testSgrOnlyFormFeed()
+   {
+      assertSgrOnlyText("line 1 is fine\fline 2 is not", "line 1 is fineline 2 is not");
+   }
+
+   public void testSgrOnlyNewlinesAndEscapes()
+   {
+      assertSgrOnlyText("one\r\ntwo\rthree\n\033[31mred\033[0m\007", "one\ntwo\nthree\nred");
+   }
+
+   public void testSgrOnlyIgnoreModeAppliesNoColor()
+   {
+      // stripping a control character can join a stray 8-bit CSI to the
+      // text after it, forming an SGR the console must not act on
+      for (String control : new String[] {"\b", "\f", "\007"})
+      {
+         PreElement ele = Document.get().createPreElement();
+         VirtualConsole vc = createConsole(ele, UserPrefs.ANSI_CONSOLE_MODE_OFF);
+         vc.setSgrOnly(true);
+         vc.submit("\u009b" + control + "31mred");
+         Assert.assertFalse(ele.getInnerHTML(), ele.getInnerHTML().contains("xtermColor"));
+      }
+   }
+
+   private void assertSgrOnlyText(String input, String expected)
+   {
+      for (String mode : ANSI_MODES)
+      {
+         PreElement ele = Document.get().createPreElement();
+         VirtualConsole vc = createConsole(ele, mode);
+         vc.setSgrOnly(true);
+         vc.submit(input);
+         Assert.assertEquals(mode, expected, ele.getInnerText());
+         Assert.assertEquals(mode, expected, vc.toString());
+      }
+   }
+
+   public void testDynamicControlsInAllAnsiModes()
+   {
+      for (String mode : ANSI_MODES)
+      {
+         PreElement ele = Document.get().createPreElement();
+         VirtualConsole vc = createConsole(ele, mode);
+         vc.submit("foo\bbar");
+         Assert.assertEquals(mode, "fobar", ele.getInnerText());
+         Assert.assertEquals(mode, "fobar", vc.toString());
+
+         vc.submit("\rreplace");
+         Assert.assertEquals(mode, "replace", ele.getInnerText());
+         Assert.assertEquals(mode, "replace", vc.toString());
+
+         vc.submit("\fnext");
+         Assert.assertEquals(mode, "next", ele.getInnerText());
+         Assert.assertEquals(mode, "next", vc.toString());
+      }
    }
 
    public void testAnsiColorStyleHelper()

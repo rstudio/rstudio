@@ -45,8 +45,10 @@ export async function killAllTerminals(page: Page): Promise<void> {
  */
 export async function focusTerminal(page: Page): Promise<void> {
   await page.locator(TERMINAL_TAB).click();
-  await expect(page.locator(XTERM_SELECTOR)).toBeVisible({ timeout: TIMEOUTS.consoleReady });
-  await page.locator(XTERM_SELECTOR).click();
+  // Other terminal sessions remain mounted in the hidden deck panels.
+  const terminal = page.locator(`${XTERM_SELECTOR}:visible`);
+  await expect(terminal).toBeVisible({ timeout: TIMEOUTS.consoleReady });
+  await terminal.click();
 }
 
 /** Create a terminal and return once its shell is echoing a prompt and focused for typing. */

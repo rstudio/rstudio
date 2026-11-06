@@ -188,7 +188,7 @@ public class NewDirectoryNavigationPage
          
          Label mainLabel = new Label(page.getTitle());
          mainLabel.addStyleName(styles.wizardPageSelectorItemLabel());
-         mainLabel.getElement().setAttribute(constants_.titleName(), page.getSubTitle());
+         mainLabel.setTitle(page.getSubTitle());
          panel.add(mainLabel);
 
          clickManager_ = new ButtonClickManager(panel, handler);

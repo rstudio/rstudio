@@ -72,7 +72,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String newDirectoryTitle();
     String newDirectorySubTitle();
     String newDirectoryPageCaption();
-    String titleName();
     String newProjectTitle();
     String newProjectSubTitle();
     String createNewProjectPageCaption();
@@ -117,9 +116,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String txtVenvPackagesNone();
     String txtVenvPackagesLabel();
     String loadingCapabilitiesLabel();
-    String quartoProjectTypeOption();
-    String quartoProjectEngineOption();
-    String quartoProjectKernelOption();
     String quartoBlogTitle();
     String quartoBlogSubTitle();
     String quartoBlogPageCaption();
@@ -240,7 +236,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String roxygenOptionsCaption();
     String pathSelectorSiteDir();
     String websiteOutputFormatLabel();
-    String allLabel();
     String chkPreviewAfterBuildingCaption();
     String chkLivePreviewSiteCaption();
     String infoLabel();
