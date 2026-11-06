@@ -1539,11 +1539,11 @@ bool isTextFileImpl(const FilePath& targetPath, const FilePath* pFileCommand)
    if (result.exitStatus != 0 || fileType.empty())
    {
       // a broken file(1) (a missing magic database, say) fails this way for
-      // every file, so report it once rather than on every open
-      static bool s_warned = false;
-      if (!s_warned)
+      // every file, so report it once rather than on every open. atomic, as
+      // open_document can also run on the offline service thread
+      static std::atomic<bool> s_warned(false);
+      if (!s_warned.exchange(true))
       {
-         s_warned = true;
          WLOGF("'{}' could not determine the type of '{}' (exit status {}): {}",
                fileCommand.getAbsolutePath(),
                targetPath.getAbsolutePath(),
