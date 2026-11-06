@@ -156,6 +156,71 @@ public class QuitGateTests extends GWTTestCase
       assertTrue(next.fail());
    }
 
+   public void testAnUnansweredOlderRequestMayStillBeAccepted()
+   {
+      QuitGate gate = new QuitGate();
+      QuitGate.Attempt stalled = gate.start(0);
+      stalled.sent();
+      QuitGate.Attempt latest = gate.start(QuitGate.kStaleQuitMs);
+
+      // the replacement fails first (its desktop call, say): the session
+      // may still quit for the older request, so nothing is undone
+      assertFalse(latest.fail());
+      assertTrue(gate.isClosed());
+
+      // and it does; no later failure undoes that either
+      stalled.acknowledged();
+      QuitGate.Attempt again = gate.start(2 * QuitGate.kStaleQuitMs);
+      assertFalse(again.fail());
+      assertTrue(gate.isClosed());
+   }
+
+   public void testTheLastUnansweredRequestToFailUndoesTheQuit()
+   {
+      QuitGate gate = new QuitGate();
+      QuitGate.Attempt stalled = gate.start(0);
+      stalled.sent();
+      QuitGate.Attempt latest = gate.start(QuitGate.kStaleQuitMs);
+      latest.sent();
+
+      assertFalse(latest.fail());
+      assertTrue(gate.isClosed());
+      assertTrue(stalled.fail());
+      assertFalse(gate.isClosed());
+   }
+
+   public void testAReleasedClaimKeepsAnAcceptedQuit()
+   {
+      QuitGate gate = new QuitGate();
+      QuitGate.Attempt accepted = gate.start(0);
+      accepted.sent();
+      accepted.acknowledged();
+
+      // .Last() outlasted the stale limit, and an R switch claimed the next
+      // quit, then failed to prepare its R
+      QuitGate.Claim claim = gate.claim(QuitGate.kStaleQuitMs);
+      assertNotNull(claim);
+      assertFalse(claim.release());
+      assertTrue(gate.isClosed()); // so no restart can replace the quit
+
+      // until the session reports that quit aborted
+      gate.reopen();
+      assertFalse(gate.isClosed());
+   }
+
+   public void testAReleasedClaimWaitsForAnUnansweredRequest()
+   {
+      QuitGate gate = new QuitGate();
+      QuitGate.Attempt stalled = gate.start(0);
+      stalled.sent();
+      QuitGate.Claim claim = gate.claim(QuitGate.kStaleQuitMs);
+
+      assertFalse(claim.release());
+      assertTrue(gate.isClosed());
+      assertTrue(stalled.fail());
+      assertFalse(gate.isClosed());
+   }
+
    public void testAnAcceptanceAfterTheAbortIsIgnored()
    {
       QuitGate gate = new QuitGate();

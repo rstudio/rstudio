@@ -479,7 +479,9 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
 
       public void release()
       {
-         claim_.release();
+         // the claim may have replaced a stalled quit that armed the frame
+         if (claim_.release())
+            undoQuit();
       }
 
       private final QuitGate.Claim claim_;
@@ -847,6 +849,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                   return;
                }
 
+               attempt_.sent();
                server_.quitSession(
                      saveChanges_,
                      switchToProject_,
@@ -918,10 +921,11 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
        * The quit did not start: admit the next one, fail a tutorial caller,
        * and leave nothing armed in the desktop frame (an update install
        * recorded for this quit, the R it named) for a later, unrelated quit.
-       * Only while this attempt is still the one in charge, though (see
+       * Only once nothing else can still make the session quit, though (see
        * {@link QuitGate.Attempt#fail}): a replaced attempt's late failure
-       * would otherwise cancel the quit that replaced it, and a quit the
-       * session accepted goes ahead whichever request then fails.
+       * would otherwise cancel the quit that replaced it, an older request
+       * still unanswered may yet be accepted, and a quit the session accepted
+       * goes ahead whichever request then fails.
        */
       private void quitNotStarted(String message, GlobalProgressDelayer progress)
       {
@@ -930,10 +934,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
             quitProgress_ = null;
 
          if (attempt_.fail())
-         {
-            isQuitting_ = false;
-            DesktopFrameHelper.setPendingQuit(DesktopFrame.PENDING_QUIT_NONE, () -> {});
-         }
+            undoQuit();
 
          if (callContext_ != null)
          {
@@ -954,6 +955,16 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
       private final Command onQuitAcknowledged_;
    }
    
+   /**
+    * No quit is going to happen: leave nothing armed in the desktop frame (an
+    * update install, an R to restart with) for a later, unrelated quit.
+    */
+   private void undoQuit()
+   {
+      isQuitting_ = false;
+      DesktopFrameHelper.setPendingQuit(DesktopFrame.PENDING_QUIT_NONE, () -> {});
+   }
+
    public boolean isQuitting()
    {
       return isQuitting_;

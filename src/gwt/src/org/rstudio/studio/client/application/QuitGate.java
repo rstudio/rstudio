@@ -33,10 +33,10 @@ import com.google.gwt.core.client.Duration;
  * The stalled quit's callbacks still run once it is replaced, and either
  * quit can be the one the session answers: it takes the first quit_session
  * it reads and exits, and the other request then fails. So each quit is an
- * {@link Attempt}, and only the latest attempt's failure, and only while
- * the session has accepted none, reopens the gate and undoes what was armed
- * for the quit; an accepted quit ends with the page or with the session's
- * abort event.
+ * {@link Attempt}, and the gate reopens (and what was armed for quitting is
+ * undone) only once the latest attempt has failed, no attempt's request is
+ * still unanswered, and the session has accepted none; an accepted quit
+ * ends with the page or with the session's abort event.
  *
  * A caller that must arm something for its quit first (the desktop frame
  * keeps an R version, or an update, for the relaunch) takes a {@link Claim}
@@ -64,31 +64,63 @@ public class QuitGate
       }
 
       /**
+       * This attempt's quit_session request is on its way: until it is
+       * answered, the session may yet quit for it.
+       */
+      public void sent()
+      {
+         if (round_ == rounds_ && !inFlight_)
+         {
+            inFlight_ = true;
+            outstanding_++;
+         }
+      }
+
+      /**
        * The session accepted this quit: it is exiting, or will report the
        * quit aborted (which reopens the gate). An acceptance that arrives
        * after that abort is ignored.
        */
       public void acknowledged()
       {
+         settle();
          if (round_ == rounds_)
             acknowledged_ = true;
       }
 
       /**
-       * This attempt's quit did not start. True when the caller must undo
-       * what it armed for the quit, and the gate is open again; false when
-       * that is not this attempt's to undo: a later quit replaced it, or the
-       * session accepted a quit (whichever attempt sent it) and is exiting.
+       * This attempt's quit did not happen: refused, failed, or given up
+       * before it was sent. True when the caller must now undo what was
+       * armed for quitting, and the gate is open again: the latest attempt
+       * has failed, no request the session may still act on is unanswered,
+       * and the session accepted none. Otherwise false, and the undo falls
+       * to whichever outstanding request fails last, or to the session's
+       * exit or abort.
        */
       public boolean fail()
       {
-         if (!isCurrent() || acknowledged_)
+         settle();
+         if (round_ != rounds_ || acknowledged_)
+            return false;
+         if (isCurrent())
+            latestFailed_ = true;
+         if (!latestFailed_ || outstanding_ > 0)
             return false;
          reopen();
          return true;
       }
 
+      private void settle()
+      {
+         if (!inFlight_)
+            return;
+         inFlight_ = false;
+         if (round_ == rounds_)
+            outstanding_--;
+      }
+
       private final int round_;
+      private boolean inFlight_ = false;
    }
 
    public class Claim
@@ -111,11 +143,17 @@ public class QuitGate
          return attempt_;
       }
 
-      /** Arming failed: give the quit up and reopen the gate. */
-      public void release()
+      /**
+       * Arming failed: give the quit up. Answers as {@link Attempt#fail}
+       * does, so a claim that replaced a stalled quit the session has
+       * accepted (or may still accept) leaves the gate closed for it.
+       */
+      public boolean release()
       {
-         if (claim_ == this)
-            reopen();
+         if (claim_ != this)
+            return false;
+         claim_ = null;
+         return attempt_.fail();
       }
 
       private final Attempt attempt_;
@@ -145,6 +183,8 @@ public class QuitGate
       claim_ = null;
       current_ = null;
       acknowledged_ = false;
+      latestFailed_ = false;
+      outstanding_ = 0;
       rounds_++;
    }
 
@@ -173,6 +213,7 @@ public class QuitGate
       closed_ = true;
       closedAt_ = now;
       claim_ = null;
+      latestFailed_ = false;
       current_ = new Attempt();
       return current_;
    }
@@ -184,6 +225,10 @@ public class QuitGate
    private Attempt current_ = null;
    /** the session accepted a quit since the gate last reopened */
    private boolean acknowledged_ = false;
+   /** the latest attempt failed, but an older request was still unanswered */
+   private boolean latestFailed_ = false;
+   /** quit_session requests sent this round and not yet answered */
+   private int outstanding_ = 0;
    /** bumped by every reopen(), so an acceptance can tell it came too late */
    private int rounds_ = 0;
 }
