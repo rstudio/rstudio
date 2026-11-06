@@ -16,7 +16,6 @@ dependency(STAN_ACE
 dependency(RSAJS
    DEPNAME      "RSA.js"
    REPOSITORY   "http://www-cs-students.stanford.edu/~tjw/jsbn/"
-   LICENSE_PATH "http://www-cs-students.stanford.edu/~tjw/jsbn/LICENSE"
    ATTRIBUTION  "Copyright (c) 2005 Tom Wu"
 )
 
