@@ -316,10 +316,10 @@ public abstract class RowTable<T> extends ScrollPanel
          revealRow(0);
    }
 
-   // The ring must be wholly visible where focus lands, also when an outer
-   // panel does the scrolling (the repository picker's). A row virtualization
-   // dropped is rendered at once, not on the scroll timer, so that
-   // aria-activedescendant names it as focus arrives.
+   // Shows all of the row, also when an outer panel does the scrolling (the
+   // repository picker's). A row virtualization dropped is rendered at once,
+   // not on the scroll timer, so that aria-activedescendant names it as focus
+   // or the selection lands on it.
    private void revealRow(int row)
    {
       if (getRenderedRowElement(row) == null)
@@ -648,7 +648,7 @@ public abstract class RowTable<T> extends ScrollPanel
          }
          else
          {
-            scrollIntoViewIfNeeded(selectedRow_);
+            revealRow(selectedRow_);
          }
       }
    }

@@ -462,6 +462,20 @@ public class RowTableTests extends GWTTestCase
       assertEquals(0, selectionEvents[0]);
    }
 
+   public void testEndKeyNamesLastOptionAtOnce()
+   {
+      // the last row is outside the initial rendered window, and the scroll
+      // timer's redraw would leave no active option until it ran. The ring
+      // is already showing, so End's own handling must render the row.
+      StringTable table = createLongTable();
+      focusByKeyboard(table);
+
+      pressKey(table, "End", KeyCodes.KEY_END);
+
+      assertActiveDescendantRendered(table, LONG_TABLE_ROWS - 1);
+      assertEquals(1, getAriaSelectedRows(table).size());
+   }
+
    public void testSelectingRowPastRenderedWindowMarksNoElement()
    {
       // row 500 is the first row outside the initial window of 0..499
