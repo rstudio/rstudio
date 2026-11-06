@@ -75,12 +75,27 @@ function escapeHtml(text) {
   return text.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 }
 
+// The return path the library put in the OAuth state (the originally
+// requested path and query, since no CSRF layer wraps it), if it is one this
+// origin can serve: an absolute path, not protocol-relative, not the callback
+// itself, no control characters.
+function safeReturnPath(state) {
+  if (typeof state !== 'string' || !state.startsWith('/') || state.startsWith('//'))
+    return null;
+  if (state.startsWith(PARSE_AUTH_PATH) || /[\x00-\x1f\x7f\\]/.test(state))
+    return null;
+  return state;
+}
+
 // The callback path reached without an authorization code: an OAuth error
 // callback (error=..., e.g. after a timeout at Google), or a stray visit.
-// Say so and offer a fresh start; "/" is protected, so following the link
-// begins a new sign-in with a sane return address.
+// Say so and offer a retry at the report that was being opened, which is
+// protected, so following the link begins a new sign-in that returns there.
+// The root serves nothing (reports live under per-run prefixes), so without
+// a usable state there is no link to offer.
 function signInFailedResponse(params) {
   const detail = [params.get('error'), params.get('error_description')].filter(Boolean).join(': ');
+  const retry = safeReturnPath(params.get('state'));
   return {
     status: '400',
     statusDescription: 'Bad Request',
@@ -90,7 +105,10 @@ function signInFailedResponse(params) {
     },
     body: '<!doctype html><title>Sign-in did not complete</title>' +
       '<p>Sign-in did not complete' + (detail ? ' (' + escapeHtml(detail) + ')' : '') + '. ' +
-      '<a href="/">Try again</a>.</p>',
+      (retry
+        ? '<a href="' + escapeHtml(retry) + '">Try again</a>.'
+        : 'Reopen the report link to try again.') +
+      '</p>',
   };
 }
 
@@ -131,8 +149,8 @@ function createHandler(getAuthenticator) {
 
     // Signing out with no cookies at all (a second visit to /signout) makes
     // the library's cookie clearing dereference the absent header; give it
-    // an empty one.
-    if (request.uri === SIGN_OUT_PATH && !request.headers.cookie)
+    // an empty one. Same prefix match as the library's own sign-out check.
+    if (request.uri.startsWith(SIGN_OUT_PATH) && !request.headers.cookie)
       request.headers.cookie = [];
 
     // handle() consults the cookies before the path, so a callback that

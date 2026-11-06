@@ -100,14 +100,33 @@ test('/parseauth with an OAuth error and no code reports it without redirecting'
   // a fresh sign-in, and a successful retry would then land on S3.
   const { handler, calls } = fakeAuthenticator(redirectTo('https://pool.auth.us-east-1.amazoncognito.com/authorize'));
 
-  const result = await handler(event('/parseauth', 'error=invalid_request&error_description=Timeout+%3Cx%3E'));
+  const result = await handler(event('/parseauth',
+    'error=invalid_request&error_description=Timeout+%3Cx%3E&state=%2Fpr-1%2Ftrace%2Findex.html%3Ftrace%3Da%26b%3D1'));
 
   assert.equal(calls.handle, 0);
   assert.equal(calls.handleParseAuth, 0);
   assert.equal(result.status, '400');
   assert.match(result.body, /Sign-in did not complete \(invalid_request: Timeout &lt;x&gt;\)/);
-  assert.match(result.body, /href="\/"/);
+  // Retry at the report that was being opened (the OAuth state), escaped.
+  assert.match(result.body, /href="\/pr-1\/trace\/index\.html\?trace=a&amp;b=1">Try again<\/a>/);
   assert.equal(result.headers['cache-control'][0].value, 'no-store');
+});
+
+test('the retry link is omitted when the state is not a path on this origin', async () => {
+  for (const state of [
+    'https://evil.example/x',
+    '//evil.example/x',
+    '/parseauth?error=x',
+    'pr-1/index.html',
+    '/pr-1/\r\ninjected',
+    '/pr-1\\..\\x',
+  ]) {
+    const { handler } = fakeAuthenticator(redirectTo('https://pool.auth.us-east-1.amazoncognito.com/authorize'));
+    const result = await handler(event('/parseauth', 'error=access_denied&state=' + encodeURIComponent(state)));
+    assert.equal(result.status, '400', state);
+    assert.doesNotMatch(result.body, /href=/, state);
+    assert.match(result.body, /Reopen the report link/, state);
+  }
 });
 
 test('/parseauth with neither code nor error gets the same page', async () => {
@@ -117,7 +136,7 @@ test('/parseauth with neither code nor error gets the same page', async () => {
 
   assert.equal(calls.handle, 0);
   assert.equal(result.status, '400');
-  assert.match(result.body, /Sign-in did not complete\. /);
+  assert.match(result.body, /Sign-in did not complete\. Reopen the report link/);
 });
 
 test('/signed-out is served without consulting the authenticator', async () => {
@@ -149,6 +168,24 @@ test('/signout with no Cookie header reaches the library with an empty one', asy
 
   assert.deepEqual(seen, []);
   assert.equal(result.status, '302');
+});
+
+test('/signout/ and other sign-out prefixes are normalized the same way', async () => {
+  // The library recognizes sign-out by prefix, so the guard has to as well.
+  for (const uri of ['/signout/', '/signout?x=1']) {
+    let seen;
+    const authenticator = {
+      async handle(event) {
+        seen = event.Records[0].cf.request.headers.cookie;
+        return redirectTo('https://pool.auth.us-east-1.amazoncognito.com/logout');
+      },
+    };
+    const handler = createHandler(async () => ({ authenticator }));
+
+    await handler(event(uri));
+
+    assert.deepEqual(seen, [], uri);
+  }
 });
 
 test('a request that carries cookies keeps them as they are', async () => {
