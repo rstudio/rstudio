@@ -86,8 +86,13 @@ public class GridViewerFrame extends RStudioThemedFrame
       return canSetOptions(gridViewerFrameWindow);
    }
 
+   // The frame has a contentWindow (about:blank) before gridviewer.html loads,
+   // so wait for its API; setData also needs the document to be parsed.
    private native boolean canSetOptions(WindowEx frameContentWindow) /*-{
-      return typeof(frameContentWindow) !== " undefined";
+      return !!frameContentWindow &&
+             typeof frameContentWindow.setOption === "function" &&
+             typeof frameContentWindow.setData === "function" &&
+             frameContentWindow.document.readyState !== "loading";
    }-*/;
    
    private final native void setDataNative(
