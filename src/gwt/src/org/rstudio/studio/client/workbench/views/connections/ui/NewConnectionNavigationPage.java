@@ -222,7 +222,7 @@ public class NewConnectionNavigationPage
          
          Label mainLabel = new Label(page.getTitle());
          mainLabel.addStyleName(WizardResources.INSTANCE.styles().wizardPageSelectorItemLabel());
-         mainLabel.getElement().setAttribute(constants_.titleText(), page.getSubTitle());
+         mainLabel.setTitle(page.getSubTitle());
          panel.add(mainLabel);
 
          clickManager_ = new ButtonClickManager(panel, handler);

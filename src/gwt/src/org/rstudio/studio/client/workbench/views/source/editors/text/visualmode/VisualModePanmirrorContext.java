@@ -46,13 +46,11 @@ import org.rstudio.studio.client.workbench.model.BlogdownConfig;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
-import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ImagePreviewer;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.events.XRefNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
@@ -277,7 +275,7 @@ public class VisualModePanmirrorContext
             if (unresolvedUris.length() > 0)
             {
                FileSystemItem resourceDir = FileSystemItem.createDir(uiContext.getDefaultResourceDir.get());
-               String imagesDir = resourceDir.completePath(constants_.images());
+               String imagesDir = resourceDir.completePath("images");
                server_.rmdImportImages(unresolvedUris, imagesDir, new SimpleRequestCallback<JsArrayString>() {
                   @Override
                   public void onResponseReceived(JsArrayString importedUris)
@@ -493,5 +491,4 @@ public class VisualModePanmirrorContext
    private EventBus events_;
    private RMarkdownServerOperations server_;
    private HandlerRegistration fileChangeReg_;
-   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }
