@@ -2,8 +2,9 @@
 // request must carry a valid Cognito session (cookies set after Google
 // sign-in); anything else is redirected to the hosted UI, which sends the
 // browser to Google and back. cognito-at-edge does all of that; this file
-// configures it and papers over three gaps in its handle() (see createHandler).
+// configures it and papers over the gaps in its handle() (see createHandler).
 const { Authenticator } = require('cognito-at-edge');
+const { parseCookies, serializeCookie, getCookieDomain } = require('cognito-at-edge/dist/util/cookie');
 
 // Lambda@Edge functions cannot carry environment variables, so the stack
 // publishes the pool details under this name (ViewerConfig in template.yaml).
@@ -19,6 +20,11 @@ const SIGN_OUT_PATH = '/signout';
 // check, so it does not start the next sign-in. Must be an app client logout
 // URL (template.yaml).
 const SIGNED_OUT_PATH = '/signed-out';
+
+// Cookie attributes must match the library's for a browser to expire its
+// cookies; these are the values it is configured with below.
+const COOKIE_PATH = '/';
+const COOKIE_SAME_SITE = 'Lax';
 
 async function loadConfig() {
   // The Lambda runtime provides the SDK (esbuild leaves it external); the
@@ -45,9 +51,9 @@ function createAuthenticator(config) {
     userPoolDomain: config.userPoolDomain,
     cookieExpirationDays: config.sessionDays,
     httpOnly: true,
-    sameSite: 'Lax',
+    sameSite: COOKIE_SAME_SITE,
     parseAuthPath: PARSE_AUTH_PATH,
-    cookiePath: '/',
+    cookiePath: COOKIE_PATH,
     logoutConfiguration: {
       logoutUri: SIGN_OUT_PATH,
       logoutRedirectUri: cognitoLogout,
@@ -135,9 +141,45 @@ function restoreQueryString(request, result) {
   return result;
 }
 
+// The library keeps one set of token cookies per signed-in user, named
+// CognitoIdentityServiceProvider.<app>.<user>.<kind>, and on sign-out clears
+// only the last user's, so after two users completed sign-in in one browser
+// the other's cookies would keep authorizing requests. Likewise a new
+// sign-in leaves the previous user's cookies in place. This expires every
+// cookie of this app client that the request carried and the response does
+// not already set, with the same attributes the library clears cookies with.
+function expireStaleCognitoCookies(request, result, appId) {
+  if (!isRedirect(result))
+    return result;
+
+  const prefix = `CognitoIdentityServiceProvider.${appId}.`;
+  const setCookies = (result.headers && result.headers['set-cookie']) || [];
+  const alreadySet = new Set(setCookies.map((h) => h.value.split('=')[0]));
+  const carried = (request.headers.cookie || []).flatMap((h) => parseCookies(h.value));
+  const stale = [...new Set(carried.map((c) => c.name))]
+    .filter((name) => name.startsWith(prefix) && !alreadySet.has(name));
+  if (stale.length === 0)
+    return result;
+
+  const host = request.headers.host[0].value;
+  const attributes = {
+    domain: getCookieDomain(host, false, undefined),
+    path: COOKIE_PATH,
+    expires: new Date(0),
+    secure: true,
+    httpOnly: true,
+    sameSite: COOKIE_SAME_SITE,
+  };
+  result.headers = result.headers || {};
+  result.headers['set-cookie'] = setCookies.concat(
+    stale.map((name) => ({ key: 'Set-Cookie', value: serializeCookie(name, '', attributes) })));
+
+  return result;
+}
+
 /**
- * Build the handler around an authenticator supplier (a function returning a
- * Promise of { authenticator }), so tests can substitute a fake.
+ * Build the handler around a supplier of { authenticator, config } (a
+ * function returning a Promise), so tests can substitute a fake.
  */
 function createHandler(getAuthenticator) {
   return async (event) => {
@@ -145,13 +187,7 @@ function createHandler(getAuthenticator) {
     if (request.uri === SIGNED_OUT_PATH)
       return signedOutResponse();
 
-    const { authenticator } = await getAuthenticator();
-
-    // Signing out with no cookies at all (a second visit to /signout) makes
-    // the library's cookie clearing dereference the absent header; give it
-    // an empty one. Same prefix match as the library's own sign-out check.
-    if (request.uri.startsWith(SIGN_OUT_PATH) && !request.headers.cookie)
-      request.headers.cookie = [];
+    const { authenticator, config } = await getAuthenticator();
 
     // handle() consults the cookies before the path, so a callback that
     // arrives after another tab already completed sign-in would be passed to
@@ -161,11 +197,19 @@ function createHandler(getAuthenticator) {
     if (request.uri === PARSE_AUTH_PATH) {
       const params = new URLSearchParams(request.querystring || '');
       if (params.has('code'))
-        return authenticator.handleParseAuth(event);
+        return expireStaleCognitoCookies(request, await authenticator.handleParseAuth(event), config.userPoolAppId);
       return signInFailedResponse(params);
     }
 
-    return restoreQueryString(request, await authenticator.handle(event));
+    // Signing out with no cookies at all (a second visit to /signout) makes
+    // the library's cookie clearing dereference the absent header; give it
+    // an empty one. Same prefix match as the library's own sign-out check.
+    const signingOut = request.uri.startsWith(SIGN_OUT_PATH);
+    if (signingOut && !request.headers.cookie)
+      request.headers.cookie = [];
+
+    const result = restoreQueryString(request, await authenticator.handle(event));
+    return signingOut ? expireStaleCognitoCookies(request, result, config.userPoolAppId) : result;
   };
 }
 
@@ -175,7 +219,7 @@ let loaded;
 function getAuthenticator() {
   if (!loaded) {
     loaded = loadConfig()
-      .then((config) => ({ authenticator: createAuthenticator(config) }))
+      .then((config) => ({ authenticator: createAuthenticator(config), config }))
       .catch((err) => {
         loaded = undefined;
         throw err;
@@ -188,3 +232,4 @@ function getAuthenticator() {
 exports.handler = createHandler(getAuthenticator);
 exports.createHandler = createHandler;
 exports.restoreQueryString = restoreQueryString;
+exports.expireStaleCognitoCookies = expireStaleCognitoCookies;

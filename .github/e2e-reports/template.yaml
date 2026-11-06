@@ -190,6 +190,21 @@ Resources:
 
   # -------------------------------------------------------------- CloudFront
 
+  # Keeps report pages and assets out of browser caches: S3 sends no
+  # Cache-Control, and a browser may otherwise reopen a cached report after
+  # sign-out without asking the edge function. Viewer-facing only; CloudFront's
+  # own cache is driven by the origin's headers and keeps working.
+  ViewerResponseHeaders:
+    Type: AWS::CloudFront::ResponseHeadersPolicy
+    Properties:
+      ResponseHeadersPolicyConfig:
+        Name: !Sub ${AWS::StackName}-no-store
+        CustomHeadersConfig:
+          Items:
+            - Header: Cache-Control
+              Value: private, no-store
+              Override: true
+
   OriginAccessControl:
     Type: AWS::CloudFront::OriginAccessControl
     Properties:
@@ -223,6 +238,7 @@ Resources:
           # already handled both by the time a request reaches the cache, and a
           # cached object is only ever served to a request it has let through.
           CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+          ResponseHeadersPolicyId: !Ref ViewerResponseHeaders
           LambdaFunctionAssociations:
             - EventType: viewer-request
               LambdaFunctionARN: !Ref EdgeAuthFunction.Version

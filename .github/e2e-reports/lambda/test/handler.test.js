@@ -7,6 +7,9 @@ const assert = require('node:assert/strict');
 const { createHandler } = require('../index.js');
 
 const HOST = 'd2pwmi0fbc7uxp.cloudfront.net';
+const APP = 'app1';
+const CONFIG = { userPoolAppId: APP };
+const COOKIE = (name) => `CognitoIdentityServiceProvider.${APP}.${name}`;
 
 function event(uri, querystring = '') {
   return {
@@ -41,7 +44,7 @@ function fakeAuthenticator(handleResult) {
       return redirectTo(`https://${HOST}/pr-1/index.html`);
     },
   };
-  return { authenticator, calls, handler: createHandler(async () => ({ authenticator })) };
+  return { authenticator, calls, handler: createHandler(async () => ({ authenticator, config: CONFIG })) };
 }
 
 test('refresh redirect to the request path keeps the query string', async () => {
@@ -162,7 +165,7 @@ test('/signout with no Cookie header reaches the library with an empty one', asy
       throw new Error('not expected');
     },
   };
-  const handler = createHandler(async () => ({ authenticator }));
+  const handler = createHandler(async () => ({ authenticator, config: CONFIG }));
 
   const result = await handler(event('/signout'));
 
@@ -180,7 +183,7 @@ test('/signout/ and other sign-out prefixes are normalized the same way', async 
         return redirectTo('https://pool.auth.us-east-1.amazoncognito.com/logout');
       },
     };
-    const handler = createHandler(async () => ({ authenticator }));
+    const handler = createHandler(async () => ({ authenticator, config: CONFIG }));
 
     await handler(event(uri));
 
@@ -196,11 +199,105 @@ test('a request that carries cookies keeps them as they are', async () => {
       return event.Records[0].cf.request;
     },
   };
-  const handler = createHandler(async () => ({ authenticator }));
+  const handler = createHandler(async () => ({ authenticator, config: CONFIG }));
   const withCookie = event('/signout');
   withCookie.Records[0].cf.request.headers.cookie = [{ key: 'Cookie', value: 'a=1' }];
 
   await handler(withCookie);
 
   assert.deepEqual(seen, [{ key: 'Cookie', value: 'a=1' }]);
+});
+
+// A Cookie header carrying the given name=value pairs, one header value.
+function cookieHeader(pairs) {
+  return [{ key: 'Cookie', value: pairs.map(([n, v]) => `${n}=${v}`).join('; ') }];
+}
+
+function setCookieNames(result) {
+  return result.headers['set-cookie'].map((h) => h.value.split('=')[0]);
+}
+
+function expiring(result, name) {
+  return result.headers['set-cookie'].find((h) => h.value.startsWith(name + '='));
+}
+
+test('sign-out also expires another signed-in user\'s cookies', async () => {
+  // The library clears the last user's (alice) tokens; bob's would remain.
+  const cleared = [COOKIE('alice.idToken'), COOKIE('alice.accessToken'), COOKIE('alice.refreshToken'), COOKIE('LastAuthUser')];
+  const authenticator = {
+    async handle() {
+      return {
+        status: '302',
+        headers: {
+          location: [{ key: 'Location', value: 'https://pool.auth.us-east-1.amazoncognito.com/logout' }],
+          'set-cookie': cleared.map((n) => ({ key: 'Set-Cookie', value: `${n}=; Domain=${HOST}; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure; HttpOnly; SameSite=Lax` })),
+        },
+      };
+    },
+  };
+  const handler = createHandler(async () => ({ authenticator, config: CONFIG }));
+  const request = event('/signout');
+  request.Records[0].cf.request.headers.cookie = cookieHeader([
+    [COOKIE('LastAuthUser'), 'alice'],
+    [COOKIE('alice.idToken'), 'a1'], [COOKIE('alice.accessToken'), 'a2'], [COOKIE('alice.refreshToken'), 'a3'],
+    [COOKIE('bob.idToken'), 'b1'], [COOKIE('bob.accessToken'), 'b2'], [COOKIE('bob.refreshToken'), 'b3'],
+    ['unrelated', 'x'],
+  ]);
+
+  const result = await handler(request);
+
+  const names = setCookieNames(result);
+  for (const n of ['bob.idToken', 'bob.accessToken', 'bob.refreshToken'])
+    assert.ok(names.includes(COOKIE(n)), n);
+  assert.ok(!names.includes('unrelated'));
+  // Same attributes as the library's own clearing, so the browser honors it.
+  assert.equal(expiring(result, COOKIE('bob.idToken')).value,
+    `${COOKIE('bob.idToken')}=; Domain=${HOST}; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure; HttpOnly; SameSite=Lax`);
+  // The library's own entries are kept once, not duplicated.
+  assert.equal(names.filter((n) => n === COOKIE('alice.idToken')).length, 1);
+});
+
+test('a new sign-in expires the previous user\'s cookies', async () => {
+  const authenticator = {
+    async handleParseAuth() {
+      const set = [COOKIE('bob.idToken'), COOKIE('bob.accessToken'), COOKIE('bob.refreshToken'), COOKIE('LastAuthUser')];
+      return {
+        status: '302',
+        headers: {
+          location: [{ key: 'Location', value: `https://${HOST}/pr-1/index.html` }],
+          'set-cookie': set.map((n) => ({ key: 'Set-Cookie', value: `${n}=new; Domain=${HOST}; Path=/; Secure; HttpOnly; SameSite=Lax` })),
+        },
+      };
+    },
+    async handle() {
+      throw new Error('not expected');
+    },
+  };
+  const handler = createHandler(async () => ({ authenticator, config: CONFIG }));
+  const request = event('/parseauth', 'code=abc&state=%2Fpr-1%2Findex.html');
+  request.Records[0].cf.request.headers.cookie = cookieHeader([
+    [COOKIE('LastAuthUser'), 'alice'],
+    [COOKIE('alice.idToken'), 'a1'], [COOKIE('alice.accessToken'), 'a2'], [COOKIE('alice.refreshToken'), 'a3'],
+  ]);
+
+  const result = await handler(request);
+
+  const names = setCookieNames(result);
+  for (const n of ['alice.idToken', 'alice.accessToken', 'alice.refreshToken'])
+    assert.ok(expiring(result, COOKIE(n)).value.includes('Expires=Thu, 01 Jan 1970'), n);
+  // The new user's cookies and LastAuthUser come from the library, untouched.
+  assert.equal(expiring(result, COOKIE('LastAuthUser')).value.startsWith(`${COOKIE('LastAuthUser')}=new`), true);
+  assert.equal(names.filter((n) => n === COOKIE('LastAuthUser')).length, 1);
+});
+
+test('a pass-through or a redirect without stale cookies is left alone', async () => {
+  const passThrough = event('/pr-1/index.html').Records[0].cf.request;
+  passThrough.headers.cookie = cookieHeader([[COOKIE('alice.idToken'), 'a1']]);
+  const { handler } = fakeAuthenticator(passThrough);
+  const request = event('/signout');
+  request.Records[0].cf.request.headers.cookie = cookieHeader([[COOKIE('alice.idToken'), 'a1']]);
+
+  const result = await handler(request);
+
+  assert.equal(result, passThrough);
 });

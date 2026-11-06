@@ -74,8 +74,11 @@ All of this is done once, by someone with the `ide-build` AWS profile
 - **Rotate the Google secret** by creating a new one in the Google console,
   updating the SSM parameter (`put-parameter --overwrite`), and redeploying.
 - **Sign out** at `<ReportsBaseUrl>/signout`: tokens are revoked, the
-  cookies cleared, and Cognito's own session ended, finishing on a static
+  cookies cleared (every user's, should more than one have signed in from
+  that browser), and Cognito's own session ended, finishing on a static
   "signed out" page. There is no sign-in page; any report URL signs you in.
+  Report responses are sent with `Cache-Control: private, no-store`, so a
+  signed-out browser cannot reopen a report from its cache.
 - **Tests** for the edge function's own logic (query-string restoration,
   callback routing, the signed-out and sign-in-failed pages) and for the
   pre-sign-up trigger's domain rule run with `npm test` in `lambda/`; the
