@@ -15,9 +15,9 @@
  *
  */
 
-import { BrowserWindow } from 'electron';
+import { app, BrowserWindow } from 'electron';
 import ElectronStore from 'electron-store';
-import { statSync } from 'fs';
+import { existsSync, renameSync, statSync } from 'fs';
 import { basename, dirname, join } from 'path';
 import { properties } from '../../../../../cpp/session/resources/schema/user-state-schema.json';
 import { normalizeSeparatorsNative } from '../../ui/utils';
@@ -88,6 +88,50 @@ export function clearOptionsSingleton(): void {
   options = null;
 }
 
+const kConfigFileName = 'config.json';
+
+// electron-store (conf) reads and validates config.json inside its constructor
+// and rethrows a JSON SyntaxError or schema violation. The first read happens
+// during startup, before the main window or even the Application singleton
+// exist, so a file truncated by a crash or power loss used to abort the launch
+// with no dialog (#19496). Move the damaged file aside, where it can still be
+// inspected, and start from defaults instead.
+function createConfigStore(cwd: string): ElectronStoreInterface<RStudioUserState> {
+  const create = (clearInvalidConfig: boolean) =>
+    new ElectronStore<RStudioUserState>({
+      cwd,
+      schema: userStateSchema,
+      clearInvalidConfig,
+    }) as unknown as ElectronStoreInterface<RStudioUserState>;
+
+  try {
+    return create(false);
+  } catch (error: unknown) {
+    const configPath = join(cwd, kConfigFileName);
+    if (!existsSync(configPath)) {
+      throw error;
+    }
+
+    const reason = error instanceof Error ? error.message : String(error);
+    const backupPath = `${configPath}.corrupt-${new Date().toISOString().replace(/[:.]/g, '-')}`;
+    let warning: string;
+    try {
+      renameSync(configPath, backupPath);
+      warning = `Could not read ${configPath} (${reason}); moved it to ${backupPath} and reset desktop options to their defaults.`;
+    } catch {
+      warning = `Could not read ${configPath} (${reason}) and could not move it aside; resetting desktop options to their defaults.`;
+    }
+
+    // the file logger is configured later in startup, so also say this on the console
+    console.warn(warning);
+    logger().logWarning(warning);
+
+    // with the bad file gone this is a fresh store; if it could not be moved,
+    // clearInvalidConfig makes conf ignore its contents instead of throwing
+    return create(true);
+  }
+}
+
 /**
  * Desktop Options class for storing/restoring user desktop options.
  * It will read from the new option location first. If the option is
@@ -97,19 +141,12 @@ export function clearOptionsSingleton(): void {
  * for creating/getting a DesktopOptionsImpl instance
  */
 export class DesktopOptionsImpl implements DesktopOptions {
-  private config = new ElectronStore<RStudioUserState>({
-    schema: userStateSchema,
-  }) as unknown as ElectronStoreInterface<RStudioUserState>;
+  private config: ElectronStoreInterface<RStudioUserState>;
   private legacyOptions = legacyPreferenceManager;
 
   // unit testing constructor to expose directory and DesktopOptions mock
   constructor(directory = '', legacyOptions?: DesktopOptions) {
-    if (directory.length != 0) {
-      this.config = new ElectronStore<RStudioUserState>({
-        cwd: directory,
-        schema: userStateSchema,
-      }) as unknown as ElectronStoreInterface<RStudioUserState>;
-    }
+    this.config = createConfigStore(directory.length != 0 ? directory : app.getPath('userData'));
     if (legacyOptions) {
       this.legacyOptions = legacyOptions;
     }

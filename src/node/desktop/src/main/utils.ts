@@ -30,6 +30,7 @@ import { spawnSync } from 'child_process';
 import { changeLanguage } from './i18n-manager';
 import { randomUUID } from 'crypto';
 import { appState } from './app-state';
+import { ModalDialogTracker } from './modal-dialog-tracker';
 import { isOzonePlatformChromiumArgument } from './electron-flags';
 
 // work around Electron resolving the application path to 'app.asar'
@@ -512,9 +513,23 @@ export async function createStandaloneErrorDialog(
     dialogContent[process.platform === 'win32' ? 'title' : 'message'] = title;
     dialogContent[process.platform === 'win32' ? 'message' : 'detail'] = message;
 
-    await appState().modalTracker.trackElectronModalAsync(async () =>
-      dialog.showMessageBox(options.window, dialogContent),
-    );
+    const showDialog = async () => dialog.showMessageBox(options.window, dialogContent);
+
+    // startup can fail before the Application singleton (which owns the modal
+    // tracker) exists, e.g. when desktop options cannot be read (#19496); the
+    // dialog is the only feedback the user gets, so show it untracked then
+    let modalTracker: ModalDialogTracker | undefined;
+    try {
+      modalTracker = appState().modalTracker;
+    } catch {
+      modalTracker = undefined;
+    }
+
+    if (modalTracker) {
+      await modalTracker.trackElectronModalAsync(showDialog);
+    } else {
+      await showDialog();
+    }
 
     if (options.shouldCloseWindow) window.close();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
