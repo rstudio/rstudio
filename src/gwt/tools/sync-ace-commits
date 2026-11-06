@@ -1,26 +1,36 @@
 #!/usr/bin/env bash
 set -ex
 
-BRANCH=rstudio/montauk-daisy
+# Pin both the fork and source revision used to generate the shipped bundles.
+# Based on rstudio/montauk-daisy, including the already-shipped tokenizer
+# fixes from rstudio/rstudio-ace#13 and bounded diff refinement for #19218.
+REPOSITORY=https://github.com/rstudio/rstudio-ace.git
+REVISION=438daddf239cd989210ef48e088179b3e9e9176c
+
+TOOLS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "${TOOLS_DIR}"
 
 PROGRAMS=("git" "npm")
 for PROGRAM in "${PROGRAMS[@]}"; do
     if ! command -v "${PROGRAM}" &> /dev/null; then
         echo "program '${PROGRAM}' not found; exiting"
+        exit 1
     fi
 done
 
 # check out our copy of ace
 if [ ! -d rstudio-ace ]; then
-    git clone git@github.com:rstudio/rstudio-ace.git
+    git clone "${REPOSITORY}" rstudio-ace
     cd rstudio-ace
     git remote add upstream git@github.com:ajaxorg/ace.git
     cd ..
 fi
 
 cd rstudio-ace
-git fetch
-git reset --hard "origin/${BRANCH}"
+# Fetch from the pinned repository even if this checkout's origin was changed
+# for development. Never let a moving branch silently change a rebuild.
+git fetch --recurse-submodules=no "${REPOSITORY}" "${REVISION}"
+git reset --hard "${REVISION}"
 git submodule update --init --recursive --force
 npm install
 cd ..

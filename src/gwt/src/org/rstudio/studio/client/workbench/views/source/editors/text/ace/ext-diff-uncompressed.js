@@ -745,7 +745,7 @@ var BaseDiffView = /** @class */ (function () {
             if (chunk[from].end.row <= pos.row) {
                 result.row -= chunk[from].end.row - chunk[to].end.row;
             }
-            else if (chunk.charChanges) {
+            else if (chunk.charChanges && !chunk.isCoarse) {
                 for (var i = 0; i < chunk.charChanges.length; i++) {
                     var change = chunk.charChanges[i];
                     var fromRange = change[from];
@@ -788,6 +788,7 @@ var BaseDiffView = /** @class */ (function () {
                 if (result.row >= chunk[to].end.row) {
                     result.row = chunk[to].end.row - 1;
                     result.column = (isOriginal ? this.sessionB : this.sessionA).getLine(result.row).length;
+                    ignoreIndent = true;
                 }
             }
         }
@@ -915,6 +916,7 @@ var DiffChunk = /** @class */ (function () {
     function DiffChunk(originalRange, modifiedRange, charChanges) {
         this.old = originalRange;
         this.new = modifiedRange;
+        this.isCoarse = false;
         this.charChanges = charChanges && charChanges.map(function (m) { return new DiffChunk(new Range(m.originalStartLineNumber, m.originalStartColumn, m.originalEndLineNumber, m.originalEndColumn), new Range(m.modifiedStartLineNumber, m.modifiedStartColumn, m.modifiedEndLineNumber, m.modifiedEndColumn)); });
     }
     return DiffChunk;
@@ -1582,7 +1584,134 @@ exports.SplitDiffView = SplitDiffView;
 
 });
 
-define("ace/ext/diff/providers/default",["require","exports","module","ace/range","ace/ext/diff/base_diff_view"], function(require, exports, module){'use strict';
+define("ace/ext/diff/providers/bounded_refinement",["require","exports","module"], function(require, exports, module){"use strict";
+var __values = (this && this.__values) || function(o) {
+    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
+    if (m) return m.call(o);
+    if (o && typeof o.length === "number") return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
+    };
+    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
+};
+var defaults = Object.freeze({
+    smallLines: 32,
+    ambiguousLines: 128,
+    characters: 4096,
+    groupReads: 200000,
+    totalReads: 2000000,
+    totalCharacters: 65536,
+    highlightLines: 128,
+    highlightCharacters: 8192,
+    highlightGroupReads: 100000,
+    highlightTotalReads: 300000,
+    highlightTotalCharacters: 16384
+});
+var exhausted = {};
+var ReadBudget = /** @class */ (function () {
+    function ReadBudget(shared, remaining) {
+        this.shared = shared;
+        this.remaining = remaining;
+    }
+    ReadBudget.prototype.consume = function () {
+        if (this.remaining === 0 || this.shared.remaining === 0)
+            throw exhausted;
+        this.remaining--;
+        this.shared.remaining--;
+    };
+    return ReadBudget;
+}());
+function characterCount(lines, range, cap) {
+    var count = range.endLineNumber - range.startLineNumber;
+    for (var row = range.startLineNumber; row <= range.endLineNumber; row++) {
+        var start = row === range.startLineNumber ? range.startColumn - 1 : 0;
+        var end = row === range.endLineNumber ? range.endColumn - 1 : lines[row - 1].length;
+        count += end - start;
+        if (count > cap)
+            break;
+    }
+    return count;
+}
+function hasSharedLine(original, modified, diff) {
+    var seen = new Set();
+    for (var row = diff.seq1Range.start; row < diff.seq1Range.endExclusive; row++)
+        seen.add(original[row].trim());
+    for (var row = diff.seq2Range.start; row < diff.seq2Range.endExclusive; row++) {
+        if (seen.has(modified[row].trim()))
+            return true;
+    }
+    return false;
+}
+var BoundedRefinement = /** @class */ (function () {
+    function BoundedRefinement(options) {
+        var e_1, _a;
+        this.limits = Object.assign({}, defaults);
+        if (options !== true && (!options || typeof options !== "object"))
+            throw new TypeError("boundedRefinement must be true or a limits object");
+        try {
+            for (var _b = __values(Object.keys(defaults)), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var key = _c.value;
+                if (options[key] !== undefined)
+                    this.limits[key] = options[key];
+                if (!Number.isSafeInteger(this.limits[key]) || this.limits[key] < 0)
+                    throw new RangeError("Invalid boundedRefinement limit: " + key);
+            }
+        }
+        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_1) throw e_1.error; }
+        }
+        this.canonical = { remaining: this.limits.totalReads, characters: this.limits.totalCharacters };
+        this.highlight = { remaining: this.limits.highlightTotalReads, characters: this.limits.highlightTotalCharacters };
+    }
+    BoundedRefinement.prototype.run = function (refine, shared, allowance, characters) {
+        if (shared.remaining === 0 || allowance === 0 || characters > shared.characters)
+            return null;
+        shared.characters -= characters;
+        try {
+            return refine(new ReadBudget(shared, allowance));
+        }
+        catch (error) {
+            if (error !== exhausted)
+                throw error;
+            return null;
+        }
+    };
+    BoundedRefinement.prototype.refine = function (original, modified, diff, mapping, refine, includeHighlights) {
+        var limits = this.limits;
+        var lineCount = diff.seq1Range.length + diff.seq2Range.length;
+        var size = function (cap) { return characterCount(original, mapping.originalRange, cap)
+            + characterCount(modified, mapping.modifiedRange, cap); };
+        var small = lineCount <= limits.smallLines;
+        var characters = small || lineCount <= limits.ambiguousLines ? size(limits.characters) : Infinity;
+        if (characters <= limits.characters && (small || hasSharedLine(original, modified, diff))) {
+            var result = this.run(refine, this.canonical, limits.groupReads, characters);
+            if (result)
+                return result;
+        }
+        mapping.boundedHighlights = [];
+        if (includeHighlights && lineCount <= limits.highlightLines) {
+            var characters_1 = size(limits.highlightCharacters);
+            if (characters_1 <= limits.highlightCharacters) {
+                var result = this.run(refine, this.highlight, limits.highlightGroupReads, characters_1);
+                if (result)
+                    mapping.boundedHighlights = result.mappings;
+            }
+        }
+        return { mappings: [mapping], hitTimeout: false };
+    };
+    return BoundedRefinement;
+}());
+exports.BoundedRefinement = BoundedRefinement;
+
+});
+
+define("ace/ext/diff/providers/default",["require","exports","module","ace/ext/diff/providers/bounded_refinement","ace/range","ace/ext/diff/base_diff_view"], function(require, exports, module){'use strict';
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
@@ -1638,6 +1767,7 @@ var __values = (this && this.__values) || function(o) {
 };
 var _a;
 var _b, _c, _d, _e, _f;
+var BoundedRefinement = require("./bounded_refinement").BoundedRefinement;
 function equals(one, other, itemEquals) {
     if (itemEquals === void 0) { itemEquals = function (a, b) { return a === b; }; }
     if (one === other) {
@@ -2893,7 +3023,7 @@ var DynamicProgrammingDiffing = /** @class */ (function () {
 var MyersDiffAlgorithm = /** @class */ (function () {
     function MyersDiffAlgorithm() {
     }
-    MyersDiffAlgorithm.prototype.compute = function (seq1, seq2, timeout) {
+    MyersDiffAlgorithm.prototype.compute = function (seq1, seq2, timeout, workBudget) {
         if (timeout === void 0) { timeout = InfiniteTimeout.instance; }
         if (seq1.length === 0 || seq2.length === 0) {
             return DiffAlgorithmResult.trivial(seq1, seq2);
@@ -2921,6 +3051,8 @@ var MyersDiffAlgorithm = /** @class */ (function () {
             var lowerBound = -Math.min(d, seqY.length + d % 2);
             var upperBound = Math.min(d, seqX.length + d % 2);
             for (k = lowerBound; k <= upperBound; k += 2) {
+                if (workBudget)
+                    workBudget.consume();
                 var maxXofDLineTop = k === upperBound ? -1 : V.get(k + 1);
                 var maxXofDLineLeft = k === lowerBound ? -1 : V.get(k - 1) + 1;
                 var x = Math.min(Math.max(maxXofDLineTop, maxXofDLineLeft), seqX.length);
@@ -3057,7 +3189,8 @@ var SetMap = /** @class */ (function () {
     return SetMap;
 }());
 var LinesSliceCharSequence = /** @class */ (function () {
-    function LinesSliceCharSequence(lines, range, considerWhitespaceChanges) {
+    function LinesSliceCharSequence(lines, range, considerWhitespaceChanges, readBudget) {
+        this.readBudget = readBudget;
         this.lines = lines;
         this.range = range;
         this.considerWhitespaceChanges = considerWhitespaceChanges;
@@ -3105,6 +3238,8 @@ var LinesSliceCharSequence = /** @class */ (function () {
         return this.elements.slice(range.start, range.endExclusive).map(function (e) { return String.fromCharCode(e); }).join("");
     };
     LinesSliceCharSequence.prototype.getElement = function (offset) {
+        if (this.readBudget)
+            this.readBudget.consume();
         return this.elements[offset];
     };
     Object.defineProperty(LinesSliceCharSequence.prototype, "length", {
@@ -3951,6 +4086,7 @@ var DefaultLinesDiffComputer = /** @class */ (function () {
     DefaultLinesDiffComputer.prototype.computeDiff = function (originalLines, modifiedLines, options) {
         var e_16, _a;
         var _this = this;
+        this.boundedRefinement = options.boundedRefinement ? new BoundedRefinement(options.boundedRefinement) : null;
         if (originalLines.length <= 1 && equals(originalLines, modifiedLines, function (a, b) { return a === b; })) {
             return new LinesDiff([], [], false);
         }
@@ -4133,11 +4269,18 @@ var DefaultLinesDiffComputer = /** @class */ (function () {
         return movesWithDiffs;
     };
     DefaultLinesDiffComputer.prototype.refineDiff = function (originalLines, modifiedLines, diff, timeout, considerWhitespaceChanges, options) {
+        var _this = this;
         var lineRangeMapping = toLineRangeMapping(diff);
         var rangeMapping = lineRangeMapping.toRangeMapping2(originalLines, modifiedLines);
-        var slice1 = new LinesSliceCharSequence(originalLines, rangeMapping.originalRange, considerWhitespaceChanges);
-        var slice2 = new LinesSliceCharSequence(modifiedLines, rangeMapping.modifiedRange, considerWhitespaceChanges);
-        var diffResult = slice1.length + slice2.length < 500 ? this.dynamicProgrammingDiffing.compute(slice1, slice2, timeout) : this.myersDiffingAlgorithm.compute(slice1, slice2, timeout);
+        if (this.boundedRefinement) {
+            return this.boundedRefinement.refine(originalLines, modifiedLines, diff, rangeMapping, function (budget) { return _this.refineCharacters(originalLines, modifiedLines, rangeMapping, InfiniteTimeout.instance, considerWhitespaceChanges, options, budget); }, !!options.includeBoundedHighlights);
+        }
+        return this.refineCharacters(originalLines, modifiedLines, rangeMapping, timeout, considerWhitespaceChanges, options);
+    };
+    DefaultLinesDiffComputer.prototype.refineCharacters = function (originalLines, modifiedLines, rangeMapping, timeout, considerWhitespaceChanges, options, readBudget) {
+        var slice1 = new LinesSliceCharSequence(originalLines, rangeMapping.originalRange, considerWhitespaceChanges, readBudget);
+        var slice2 = new LinesSliceCharSequence(modifiedLines, rangeMapping.modifiedRange, considerWhitespaceChanges, readBudget);
+        var diffResult = slice1.length + slice2.length < 500 ? this.dynamicProgrammingDiffing.compute(slice1, slice2, timeout) : this.myersDiffingAlgorithm.compute(slice1, slice2, timeout, readBudget);
         var diffs = diffResult.diffs;
         diffs = optimizeSequenceDiffs(slice1, slice2, diffs);
         diffs = extendDiffsToEntireWordIfAppropriate(slice1, slice2, diffs, function (seq, idx) { return seq.findWordContaining(idx); });
@@ -4160,12 +4303,18 @@ function toLineRangeMapping(sequenceDiff) {
 function computeDiff(originalLines, modifiedLines, options) {
     var diffComputer = new DefaultLinesDiffComputer();
     var result = diffComputer.computeDiff(originalLines, modifiedLines, options);
-    return result === null || result === void 0 ? void 0 : result.changes.map(function (changes) {
+    var chunks = result === null || result === void 0 ? void 0 : result.changes.map(function (changes) {
         var originalStartLineNumber;
         var originalEndLineNumber;
         var modifiedStartLineNumber;
         var modifiedEndLineNumber;
         var innerChanges = changes.innerChanges;
+        var isCoarse = !!(options.boundedRefinement && (innerChanges === null || innerChanges === void 0 ? void 0 : innerChanges.some(function (m) { return m.boundedHighlights !== undefined; })));
+        if (isCoarse) {
+            innerChanges = innerChanges.flatMap(function (m) { return m.boundedHighlights === undefined ? [m] : m.boundedHighlights; });
+            if (!innerChanges.length)
+                innerChanges = undefined;
+        }
         originalStartLineNumber = changes.original.startLineNumber - 1;
         originalEndLineNumber = changes.original.endLineNumberExclusive - 1;
         modifiedStartLineNumber = changes.modified.startLineNumber - 1;
@@ -4175,6 +4324,7 @@ function computeDiff(originalLines, modifiedLines, options) {
             origEnd: originalEndLineNumber,
             editStart: modifiedStartLineNumber,
             editEnd: modifiedEndLineNumber,
+            isCoarse: isCoarse,
             charChanges: innerChanges === null || innerChanges === void 0 ? void 0 : innerChanges.map(function (m) { return ({
                 originalStartLineNumber: m.originalRange.startLineNumber - 1,
                 originalStartColumn: m.originalRange.startColumn - 1,
@@ -4187,6 +4337,8 @@ function computeDiff(originalLines, modifiedLines, options) {
             }); })
         };
     });
+    chunks.hitTimeout = !!result.hitTimeout;
+    return chunks;
 }
 exports.computeDiff = computeDiff;
 var AceRange = require("../../../range").Range;
@@ -4200,7 +4352,13 @@ var DiffProvider = /** @class */ (function () {
         if (!opts.maxComputationTimeMs)
             opts.maxComputationTimeMs = 500;
         var chunks = computeDiff(originalLines, modifiedLines, opts) || [];
-        return chunks.map(function (c) { return new DiffChunk(new AceRange(c.origStart, 0, c.origEnd, 0), new AceRange(c.editStart, 0, c.editEnd, 0), c.charChanges); });
+        var mapped = chunks.map(function (c) {
+            var chunk = new DiffChunk(new AceRange(c.origStart, 0, c.origEnd, 0), new AceRange(c.editStart, 0, c.editEnd, 0), c.charChanges);
+            chunk.isCoarse = c.isCoarse;
+            return chunk;
+        });
+        mapped.hitTimeout = chunks.hitTimeout;
+        return mapped;
     };
     return DiffProvider;
 }());

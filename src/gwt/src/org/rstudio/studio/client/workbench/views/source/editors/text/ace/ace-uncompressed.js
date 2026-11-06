@@ -42984,24 +42984,48 @@ var MAX_CONTEXT_DEPTH = 16;
 function cloneContext(context) {
     if (context == null)
         return {};
-    for (var key in context)
-        return structuredClone(context);
+    for (var key in context) {
+        return typeof structuredClone === "function"
+            ? structuredClone(context)
+            : clonePlainContext(context, new Map());
+    }
     return {};
 }
 function isPlainObject(value) {
     var proto = Object.getPrototypeOf(value);
     return proto === Object.prototype || proto === null;
 }
+function clonePlainContext(value, copies) {
+    if (typeof value === "function" || typeof value === "symbol")
+        throw new TypeError("Tokenizer contexts must contain plain data");
+    if (value == null || typeof value !== "object")
+        return value;
+    if (copies.has(value))
+        return copies.get(value);
+    if (!Array.isArray(value) && !isPlainObject(value))
+        throw new TypeError("Tokenizer contexts must contain plain data");
+    var clone = Array.isArray(value) ? new Array(value.length) : {};
+    copies.set(value, clone);
+    Object.keys(value).forEach(function (key) {
+        Object.defineProperty(clone, key, {
+            value: clonePlainContext(value[key], copies),
+            enumerable: true, configurable: true, writable: true
+        });
+    });
+    return clone;
+}
 function equalContextValues(lhs, rhs, depth) {
     if (lhs === rhs)
         return true;
     if (typeof lhs === "number" && typeof rhs === "number")
-        return lhs !== lhs && rhs !== rhs; // both NaN
+        return Number.isNaN(lhs) && Number.isNaN(rhs);
     if (depth <= 0 || lhs == null || rhs == null)
         return false;
     if (typeof lhs !== "object" || typeof rhs !== "object")
         return false;
     if (Array.isArray(lhs) !== Array.isArray(rhs))
+        return false;
+    if (Array.isArray(lhs) && lhs.length !== rhs.length)
         return false;
     if (!Array.isArray(lhs) && (!isPlainObject(lhs) || !isPlainObject(rhs)))
         return false;

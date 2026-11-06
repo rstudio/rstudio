@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Bounded Git diff integration</title>
+  <script src="../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace-uncompressed.js"></script>
+  <script src="../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ext-diff-uncompressed.js"></script>
+  <script src="../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/acesupport.js"></script>
+  <style>
+    #editors { display: flex; width: 1000px; }
+    #live, #review { position: relative; width: 500px; height: 280px; }
+    .ace_git-diff-base { position: absolute; inset: 0; }
+  </style>
+</head>
+<body>
+<h2>Bounded Git diff integration (#19218)</h2>
+<p>Passed: <span id="passed"></span>, Failed: <span id="failed"></span></p>
+<div id="editors"><div id="review"></div><div id="live"></div></div>
+<ol id="results"></ol>
+<script>
+(async function() {
+   var passed = 0, failed = 0;
+   function check(name, actual, expected) {
+      var ok = JSON.stringify(actual) === JSON.stringify(expected);
+      var item = document.createElement("li");
+      item.textContent = (ok ? "[PASS] " : "[FAIL] ") + name +
+         (ok ? "" : ": " + JSON.stringify(actual) + " != " + JSON.stringify(expected));
+      document.getElementById("results").appendChild(item);
+      if (ok) passed++; else failed++;
+   }
+   function geometry(chunks) {
+      return chunks.map(c => [c.old.start.row, c.old.end.row, c.new.start.row, c.new.end.row]);
+   }
+   function rendered() {
+      return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+   }
+   var editor, gutter, review;
+   try {
+      var Gutter = require("rstudio/git_diff_gutter").GitDiffGutter;
+      var SplitView = require("rstudio/git_diff_split").GitDiffSplitView;
+      editor = require("rstudio/loader").loadEditor(document.getElementById("live"));
+      gutter = new Gutter(editor);
+      var original = ["header()", "old_a <- 1", "old_b <- 2", "old_c <- 3", "}",
+         "old_d <- 4", "old_e <- 5", "old_f <- 6", "tail()"];
+      var modified = original.map(line => line.replace("old_", "new_"));
+      editor.setValue(modified.join("\n"), -1);
+      gutter.setBase(original.join("\n"));
+      var expected = [[1, 4, 1, 4], [5, 8, 5, 8]];
+      check("separate hunks around a short unchanged line", geometry(gutter.chunks), expected);
+      for (var i = 0; i < 2; i++) {
+         review = new SplitView(gutter, document.getElementById("review"));
+         review.resize();
+         await rendered();
+         check("opening review preserves hunks", geometry(review.chunks), expected);
+         check("review renders character highlights", !!document.querySelector("#live .ace_diff.insert.inline"), true);
+         review.dispose();
+         review = null;
+         check("closing review preserves hunks", geometry(gutter.chunks), expected);
+      }
+      review = new SplitView(gutter, document.getElementById("review"));
+      review.resize();
+      editor.focus();
+      gutter.goToChunk(gutter.chunks[0]);
+      check("next change navigates to the second hunk", gutter.goToNextChange(), true);
+      check("navigation uses the same hunk start", editor.getCursorPosition().row, 5);
+      check("peek opens at the selected hunk", gutter.showChangeAtCursor(), true);
+      await rendered();
+      check("peek renders", !!document.querySelector(".ace_git-peek"), true);
+      check("individual revert succeeds", gutter.revertChunk(gutter.chunks[1]), true);
+      check("revert preserves the first edit", editor.getValue(), modified.slice(0, 5).concat(original.slice(5)).join("\n"));
+      check("review and gutter agree after revert", geometry(review.chunks), [[1, 4, 1, 4]]);
+
+      original = Array.from({length: 800}, (_, i) => "original_long_statement_" + i + " <- 100");
+      modified = Array.from({length: 800}, (_, i) => "replacement_long_statement_" + i + " <- 200");
+      editor.setValue(modified.join("\n"), -1);
+      gutter.setBase(original.join("\n"));
+      await rendered();
+      check("large replacement retains markers", gutter.diffFailed, false);
+      check("large replacement has one valid hunk", geometry(gutter.chunks), [[0, 800, 0, 800]]);
+      check("large review uses the same hunk", geometry(review.chunks), geometry(gutter.chunks));
+      check("large review renders whole-line highlights", !!document.querySelector("#live .ace_diff.insert:not(.inline)"), true);
+
+      original = ["header()", "keep_this_meaningful_statement()", "  keep_indented()", "x".repeat(5000) + "old", "tail()"];
+      modified = ["header()", "inserted()", "keep_this_meaningful_statement()", "    keep_indented()", "y".repeat(5000) + "new", "tail()"];
+      editor.setValue(modified.join("\n"), -1);
+      gutter.setBase(original.join("\n"));
+      check("mixed hunk keeps its available highlights", gutter.chunks[1].charChanges.length > 0, true);
+      check("coarse mapping survives the common-prefix offset", gutter.chunks[1].isCoarse, true);
+      check("mixed hunk maps original selections", review.transformPosition({row: 3, column: 0}, true), {row: 4, column: 0});
+      check("mixed hunk maps modified selections", review.transformPosition({row: 4, column: 0}, false), {row: 3, column: 0});
+
+      original = ["    " + "a".repeat(2500), "    " + "b".repeat(2500)];
+      editor.setValue("  ccc", -1);
+      gutter.setBase(original.join("\n"));
+      check("unequal line counts retain coarse metadata", gutter.chunks[0].isCoarse, true);
+      check("clamped selection keeps the destination line end", review.transformPosition({row: 1, column: 2504}, true), {row: 0, column: 5});
+   } catch (error) {
+      check("integration completes", String(error.stack || error), "no exception");
+   } finally {
+      if (review) review.dispose();
+      if (gutter) gutter.dispose();
+      if (editor) editor.destroy();
+      document.getElementById("passed").textContent = passed;
+      document.getElementById("failed").textContent = failed;
+   }
+})();
+</script>
+</body>
+</html>
