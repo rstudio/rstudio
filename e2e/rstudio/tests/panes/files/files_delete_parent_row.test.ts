@@ -30,6 +30,7 @@ test.describe('Files pane parent row', () => {
     await consoleActions.executeInConsole(
       `{ dir.create(file.path(${rPathLiteral(base)}, "child"), recursive = TRUE); ` +
         `writeLines("x", file.path(${rPathLiteral(base)}, "child", "victim.txt")); ` +
+        `writeLines("x", file.path(${rPathLiteral(base)}, "child", "present.txt")); ` +
         `writeLines("x", file.path(${rPathLiteral(base)}, "marker.txt")) }`,
       { wait: true },
     );
@@ -41,6 +42,11 @@ test.describe('Files pane parent row', () => {
       { wait: true },
     );
     await executeCommand(page, 'activateFiles');
+
+    // filesPaneNavigate is asynchronous: wait for a row that only the child
+    // listing has, so a late-arriving listing cannot clear the selection
+    // made below and mask the bug
+    await expect(await rowNamed(page, 'present.txt')).toBeVisible({ timeout: TIMEOUTS.fileOpen });
     await expect(await rowNamed(page, '..')).toBeVisible({ timeout: TIMEOUTS.fileOpen });
   });
 
