@@ -66,6 +66,22 @@ async function openChooserAt(page: Page, dir: string): Promise<Locator> {
   return chooser;
 }
 
+// Single-clicks the row named `row`, then clicks Choose. A navigation that
+// lands would return the same path as choosing the selected row, so list_files
+// is held instead: Choose waits on any navigation still in flight, so a click
+// that started one would leave the chooser up.
+async function chooseRow(page: Page, chooser: Locator, row: string): Promise<void> {
+  const listing = await holdListFiles(page);
+
+  try {
+    await chooser.getByText(row, { exact: true }).click();
+    await chooser.locator(CHOOSE_BTN).click();
+    await expect(chooser).toBeHidden();
+  } finally {
+    await listing.cleanup();
+  }
+}
+
 test.describe('Choose Directory dialog', () => {
   const sandbox = useSuiteSandbox();
   let base = '';
@@ -106,11 +122,8 @@ test.describe('Choose Directory dialog', () => {
     await chooser.getByText(SUBFOLDER, { exact: true }).dblclick();
     await expect(chooser.locator(CURRENT_LOCATION)).toHaveText(SUBFOLDER, { timeout: TIMEOUTS.fileOpen });
 
-    // A single click selects the synthetic .. row without navigating (#18958).
-    await chooser.getByText('..', { exact: true }).click();
-    await expect(chooser.locator(CURRENT_LOCATION)).toHaveText(SUBFOLDER);
-    await chooser.locator(CHOOSE_BTN).click();
-    await expect(chooser).toBeHidden();
+    // choosing the selected synthetic .. row returned `..` (#18958)
+    await chooseRow(page, chooser, '..');
     await expect(page.locator(SEARCH_IN_TEXT)).toHaveValue(new RegExp(`/${BASE_NAME}$`));
   });
 
@@ -129,11 +142,7 @@ test.describe('Choose Directory dialog', () => {
 
   test('choosing a selected child row returns the child folder', async ({ rstudioPage: page }) => {
     const chooser = await openChooserAt(page, base);
-    await chooser.getByText(SUBFOLDER, { exact: true }).click();
-    await expect(chooser.locator(CURRENT_LOCATION)).toHaveText(BASE_NAME);
-
-    await chooser.locator(CHOOSE_BTN).click();
-    await expect(chooser).toBeHidden();
+    await chooseRow(page, chooser, SUBFOLDER);
     await expect(page.locator(SEARCH_IN_TEXT)).toHaveValue(new RegExp(`/${BASE_NAME}/${SUBFOLDER}$`));
   });
 
