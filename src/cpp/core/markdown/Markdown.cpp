@@ -32,8 +32,12 @@
 
 #include "MathJax.hpp"
 
-#include "sundown/markdown.h"
-#include "sundown/html.h"
+#ifdef RSTUDIO_USE_CMARK_GFM
+# include "CmarkGfm.hpp"
+#else
+# include "sundown/markdown.h"
+# include "sundown/html.h"
+#endif
 
 namespace rstudio {
 namespace core {
@@ -41,6 +45,7 @@ namespace markdown {
 
 namespace {
 
+#ifndef RSTUDIO_USE_CMARK_GFM
 class SundownBuffer : boost::noncopyable
 {
 public:
@@ -204,7 +209,7 @@ Error renderMarkdown(const SundownBuffer& inputBuffer,
 
    return Success();
 }
-
+#endif
 
 void stripMetadata(std::string* pInput)
 {
@@ -233,6 +238,10 @@ void stripMetadata(std::string* pInput)
          hasPandocTitleBlock = true;
          break;
       }
+      else
+      {
+         break;
+      }
    }
 
    std::size_t firstDocumentLine = 0;
@@ -245,7 +254,7 @@ void stripMetadata(std::string* pInput)
       for(std::size_t i=0; i<lines.size(); i++)
       {
          const std::string& line = lines[i];
-         if (boost::algorithm::trim_copy(line).empty() && !inFrontMatter)
+         if (boost::algorithm::trim_copy(line).empty())
          {
             continue;
          }
@@ -351,36 +360,22 @@ Error markdownToHTML(const std::string& markdownInput,
                      std::string* pHTMLOutput)
 
 {
-   // exclude fenced code blocks
-   using namespace rstudio::core::html_utils;
-   std::vector<ExcludePattern> excludePatterns;
-   excludePatterns.push_back(ExcludePattern(boost::regex("^`{3,}[^\\n]*?$"),
-                                            boost::regex("^`{3,}\\s*$")));
-
-   // exclude inline verbatim code
-   excludePatterns.push_back(ExcludePattern(boost::regex("`[^\\n]+?`")));
-
-   // exclude indented code blocks
-   excludePatterns.push_back(ExcludePattern(
-      boost::regex("(\\A|\\A\\s*\\n|\\n\\s*\\n)(( {4}|\\t)[^\\n]*\\n)*(( {4}|\\t)[^\\n]*)")));
-
    std::string input = markdownInput;
+   // Remove metadata before processing math so delimiters in the header
+   // cannot pair with an equation in the document body.
+   if (extensions.stripMetadata)
+      stripMetadata(&input);
+
    boost::scoped_ptr<MathJaxFilter> pMathFilter;
-   if (extensions.ignoreMath)
+   if (extensions.ignoreMath && input.find_first_of("$\\") != std::string::npos)
    {
-      pMathFilter.reset(new MathJaxFilter(excludePatterns,
-                                          &input,
-                                          pHTMLOutput));
+      pMathFilter.reset(new MathJaxFilter(&input, pHTMLOutput, options.escape));
    }
 
    // respect html-preserve
    html_utils::HtmlPreserver htmlPreserver;
    if (extensions.htmlPreserve)
       htmlPreserver.preserve(&input);
-
-   // strip yaml front-matter / pandoc metadata if requested
-   if (extensions.stripMetadata)
-      stripMetadata(&input);
 
    // special case of empty input after stripping metadata
    if (input.empty())
@@ -389,6 +384,12 @@ Error markdownToHTML(const std::string& markdownInput,
       return Success();
    }
 
+#ifdef RSTUDIO_USE_CMARK_GFM
+   std::string output;
+   Error error = renderCmarkGfm(input, extensions, options, &output);
+   if (error)
+      return error;
+#else
    // setup input buffer
    SundownBuffer inputBuffer(input);
    if (!inputBuffer.allocated())
@@ -451,6 +452,7 @@ Error markdownToHTML(const std::string& markdownInput,
    if (error)
       return error;
 
+#endif
    // append output
    pHTMLOutput->append(output);
 

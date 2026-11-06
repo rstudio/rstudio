@@ -38,6 +38,7 @@
 - ([#19466](https://github.com/rstudio/rstudio/issues/19466)): Fixed an issue where the Keyboard Shortcut Quick Reference could be scrolled into pages of blank space below the shortcuts in Safari on macOS.
 
 ### Dependencies
+- ([#18904](https://github.com/rstudio/rstudio/issues/18904)): Replaced the built-in Sundown Markdown renderer with cmark-gfm for Markdown previews, help descriptions, tutorials, and R Presentations. Rendering now follows CommonMark rules, with GFM tables, strikethrough, and autolinks; RStudio superscripts and MathJax support are retained.
 - Quarto 1.11.9
 - Electron 44.10.2
 
