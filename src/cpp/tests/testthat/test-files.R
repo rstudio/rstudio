@@ -226,9 +226,15 @@ test_that("delete_files refuses the working directory and its ancestors", {
    expect_error(.rs.invokeRpc("delete_files", list(root)))
    expect_true(dir.exists(cwd))
 
-   # the home directory and its ancestors
-   expect_error(.rs.invokeRpc("delete_files", list(path.expand("~"))))
-   expect_error(.rs.invokeRpc("delete_files", list(dirname(path.expand("~")))))
+   # (the home directory is guarded by the same loop; it is deliberately not
+   # exercised here, since a regressed guard would act on real user data)
+
+   # a symlink to a protected directory can be deleted: only the link goes
+   link <- file.path(root, "project", "cwd-link")
+   file.symlink(cwd, link)
+   .rs.invokeRpc("delete_files", list(link))
+   expect_false(file.exists(link))
+   expect_true(dir.exists(cwd))
 
    # the directory shown in the Files pane (the one being monitored)
    browsed <- file.path(root, "browsed")

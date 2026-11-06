@@ -419,8 +419,11 @@ core::Error validateDeletion(const FilePath& filePath)
       roots.push_back({ projects::projectContext().directory(), "the project directory" });
 
    // compare resolved paths: the client and R may refer to the same directory
-   // through a symlink (e.g. /var vs. /private/var on macOS)
-   FilePath target(filePath.getWeaklyCanonicalPath());
+   // through a symlink (e.g. /var vs. /private/var on macOS). Only the parent
+   // is resolved: deleting a symlink removes the link, not its target, so a
+   // link to a protected directory is still fair game.
+   FilePath target = FilePath(filePath.getParent().getWeaklyCanonicalPath())
+         .completeChildPath(filePath.getFilename());
 
    for (const Protected& root : roots)
    {
