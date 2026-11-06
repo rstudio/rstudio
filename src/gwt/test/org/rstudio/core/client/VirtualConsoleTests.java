@@ -80,6 +80,18 @@ public class VirtualConsoleTests extends GWTTestCase
       return new VirtualConsole(ele, new FakePrefs());
    }
 
+   private static final String[] ANSI_MODES = {
+         UserPrefs.ANSI_CONSOLE_MODE_ON,
+         UserPrefs.ANSI_CONSOLE_MODE_STRIP,
+         UserPrefs.ANSI_CONSOLE_MODE_OFF};
+
+   private VirtualConsole createConsole(Element ele, String ansiMode)
+   {
+      FakePrefs prefs = new FakePrefs();
+      prefs.ansiMode_ = ansiMode;
+      return new VirtualConsole(ele, prefs);
+   }
+
    private static String setCsiCode(int code)
    {
       return setCsiCode(String.valueOf(code));
@@ -322,17 +334,26 @@ public class VirtualConsoleTests extends GWTTestCase
       assertSgrOnlyText("one\r\ntwo\rthree\n\033[31mred\033[0m\007", "one\ntwo\nthree\nred");
    }
 
-   private void assertSgrOnlyText(String input, String expected)
+   public void testSgrOnlyIgnoreModeAppliesNoColor()
    {
-      for (String mode : new String[] {
-            UserPrefs.ANSI_CONSOLE_MODE_ON,
-            UserPrefs.ANSI_CONSOLE_MODE_STRIP,
-            UserPrefs.ANSI_CONSOLE_MODE_OFF})
+      // stripping a control character can join a stray 8-bit CSI to the
+      // text after it, forming an SGR the console must not act on
+      for (String control : new String[] {"\b", "\f", "\007"})
       {
          PreElement ele = Document.get().createPreElement();
-         FakePrefs prefs = new FakePrefs();
-         prefs.ansiMode_ = mode;
-         VirtualConsole vc = new VirtualConsole(ele, prefs);
+         VirtualConsole vc = createConsole(ele, UserPrefs.ANSI_CONSOLE_MODE_OFF);
+         vc.setSgrOnly(true);
+         vc.submit("\u009b" + control + "31mred");
+         Assert.assertFalse(ele.getInnerHTML(), ele.getInnerHTML().contains("xtermColor"));
+      }
+   }
+
+   private void assertSgrOnlyText(String input, String expected)
+   {
+      for (String mode : ANSI_MODES)
+      {
+         PreElement ele = Document.get().createPreElement();
+         VirtualConsole vc = createConsole(ele, mode);
          vc.setSgrOnly(true);
          vc.submit(input);
          Assert.assertEquals(mode, expected, ele.getInnerText());
@@ -342,15 +363,10 @@ public class VirtualConsoleTests extends GWTTestCase
 
    public void testDynamicControlsInAllAnsiModes()
    {
-      for (String mode : new String[] {
-            UserPrefs.ANSI_CONSOLE_MODE_ON,
-            UserPrefs.ANSI_CONSOLE_MODE_STRIP,
-            UserPrefs.ANSI_CONSOLE_MODE_OFF})
+      for (String mode : ANSI_MODES)
       {
          PreElement ele = Document.get().createPreElement();
-         FakePrefs prefs = new FakePrefs();
-         prefs.ansiMode_ = mode;
-         VirtualConsole vc = new VirtualConsole(ele, prefs);
+         VirtualConsole vc = createConsole(ele, mode);
          vc.submit("foo\bbar");
          Assert.assertEquals(mode, "fobar", ele.getInnerText());
          Assert.assertEquals(mode, "fobar", vc.toString());

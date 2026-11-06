@@ -1122,7 +1122,7 @@ public class VirtualConsole
       {
          data = StringUtil.normalizeNewLines(data);
          if (ansiColorMode_ == UserPrefs.ANSI_CONSOLE_MODE_OFF)
-            data = AnsiCode.strip(data).replaceAll("[\\b\\f]", "");
+            data = AnsiCode.stripStatic(data);
          else
             data = AnsiCode.stripNonSgr(data);
       }
@@ -1483,7 +1483,14 @@ public class VirtualConsole
    private Match nextMatch(String data, int offset)
    {
       if (sgrOnly_)
-         return AnsiCode.SGR_ONLY_PATTERN.match(data, offset);
+      {
+         // when ignoring escapes, stripping has removed them all, but it can
+         // join a stray 8-bit CSI to the text after it to form a new SGR, so
+         // only newlines are acted on
+         return ansiColorMode_ == UserPrefs.ANSI_CONSOLE_MODE_OFF
+            ? NEWLINE.match(data, offset)
+            : AnsiCode.SGR_ONLY_PATTERN.match(data, offset);
+      }
       return (ansiColorMode_ == UserPrefs.ANSI_CONSOLE_MODE_OFF)
          ? CONTROL.match(data, offset)
          : AnsiCode.CONTROL_PATTERN.match(data, offset);
@@ -2080,6 +2087,9 @@ public class VirtualConsole
    // Control characters handled by the console when ANSI escapes are ignored
    private static final Pattern CONTROL =
          Pattern.create("[" + AnsiCode.CONSOLE_CONTROL_CHARS + "]");
+
+   // Static text when ANSI escapes are ignored acts only on newlines
+   private static final Pattern NEWLINE = Pattern.create("\n");
 
    // RStudio's own escapes, which open and close output groups and highlights
    private static final Pattern GROUP_START_PATTERN = Pattern.create("^\033G(\\d+);", "");
