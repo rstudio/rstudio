@@ -87,8 +87,6 @@ public class DialogTabLayoutPanel extends TabLayoutPanel
    {
       super.add(child, text);
       setTabId(child, ElementIds.getElementId(VerticalTabPanel.getTabId(tabId)));
-      if (!showTabs_)
-         return;
       Roles.getTabpanelRole().set(child.getElement());
       Roles.getTabpanelRole().setAriaLabelledbyProperty(child.getElement(),
             Id.of(ElementIds.getElementId(VerticalTabPanel.getTabId(tabId))));
