@@ -149,11 +149,12 @@ test.describe('Global Options keyboard accessibility', () => {
 
   // Console builds its own tab-less panel; Spelling goes through
   // PreferencesDialogPaneBase.wrapWithPanel(). Both must leave the hidden tab
-  // strip out of the Tab order and the accessibility tree, and the content must
-  // not claim to be a tabpanel when there is no tab to label it (#19509).
-  for (const [name, tab, panel] of [
-    ['Console', CONSOLE_TAB, CONSOLE_PANEL],
-    ['Spelling', SPELLING_TAB, SPELLING_PANEL],
+  // strip out of the Tab order and the accessibility tree. With no tab to label
+  // it, the content (a VerticalTabPanel layout table) must be role="presentation"
+  // rather than a tabpanel (#19509).
+  for (const [name, tab, panel, content] of [
+    ['Console', CONSOLE_TAB, CONSOLE_PANEL, '#rstudio_console_prefs_panel'],
+    ['Spelling', SPELLING_TAB, SPELLING_PANEL, '#rstudio_spelling_prefs_panel'],
   ] as const) {
     test(`${name} section has no hidden tab`, async ({ rstudioPage: page }) => {
       await openGlobalOptions(page);
@@ -162,6 +163,7 @@ test.describe('Global Options keyboard accessibility', () => {
 
       await expect(page.locator(panel).getByRole('tab')).toHaveCount(0);
       await expect(page.locator(panel).getByRole('tabpanel')).toHaveCount(0);
+      await expect(page.locator(content)).toHaveAttribute('role', 'presentation');
 
       await page.locator(tab).press('Tab');
       const focused = await page.evaluate((panelSelector) => ({

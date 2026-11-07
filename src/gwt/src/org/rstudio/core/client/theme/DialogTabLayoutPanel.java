@@ -69,10 +69,11 @@ public class DialogTabLayoutPanel extends TabLayoutPanel
       setTabId(child, ElementIds.getElementId(VerticalTabPanel.getTabId(tabId)));
 
       // Without a visible tab, the content isn't a tabpanel of anything.
+      // Restore the presentation role CellPanel gives its layout table.
       if (!showTabs_)
       {
-         Roles.getTabpanelRole().remove(child.getElement());
          Roles.getTabpanelRole().removeAriaLabelledbyProperty(child.getElement());
+         Roles.getPresentationRole().set(child.getElement());
       }
    }
 
