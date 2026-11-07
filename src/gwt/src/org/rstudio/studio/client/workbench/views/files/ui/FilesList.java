@@ -108,6 +108,15 @@ public class FilesList extends Composite
       filesDataGrid_.setSelectionModel(
          selectionModel_,
          DefaultSelectionEventManager.createCheckboxManager());
+
+      // The ".." row has no checkbox, but the grid's keyboard handling still
+      // toggles the keyboard-selected row on Space, and a selected parent row
+      // would be offered to commands such as Delete (#19493). Undo it.
+      selectionModel_.addSelectionChangeHandler(event ->
+      {
+         if (parentPath_ != null && selectionModel_.isSelected(parentPath_))
+            selectionModel_.setSelected(parentPath_, false);
+      });
       filesDataGrid_.setWidth("100%");
 
       filesDataGrid_.getElement().getStyle().setWhiteSpace(WhiteSpace.NOWRAP);
@@ -507,6 +516,10 @@ public class FilesList extends Composite
       // first make sure there are no leftover items in the selected set
       Set<FileSystemItem> selectedSet = selectionModel_.getSelectedSet();
       selectedSet.retainAll(dataProvider_.getList());
+
+      // the parent directory is a navigation row, never a selectable file
+      if (parentPath_ != null)
+         selectedSet.remove(parentPath_);
 
       return new ArrayList<>(selectedSet);
    }
