@@ -2074,12 +2074,23 @@ public class TextEditingTargetAssistantHelper
 
       target_.withSavedDoc(() ->
       {
-         requestNextEditSuggestionsImpl(fromCompletionFallback);
+         requestNextEditSuggestionsImpl(fromCompletionFallback, false);
       });
    }
 
-   private void requestNextEditSuggestionsImpl(boolean fromCompletionFallback)
+   private void requestNextEditSuggestionsImpl(boolean fromCompletionFallback,
+                                               boolean isRetry)
    {
+      // Edits made while the save was in flight leave the backend with an older
+      // document than the cursor position and version captured below, so save
+      // again. Retry only once: a new empty document never matches its saved form.
+      if (!target_.isSavedDocCurrent())
+      {
+         if (!isRetry)
+            target_.withSavedDoc(() -> requestNextEditSuggestionsImpl(fromCompletionFallback, true));
+         return;
+      }
+
       // Invalidate any prior requests.
       nesId_ += 1;
 
