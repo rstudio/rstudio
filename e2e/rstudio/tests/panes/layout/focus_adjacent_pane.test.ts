@@ -1,5 +1,6 @@
-// Focus Previous Pane (Shift+F6) into the Console pane (#19183), and Focus
-// Next/Previous Pane (F6/Shift+F6) around the sidebar (#19191).
+// Focus Previous Pane (Shift+F6) into the Console pane (#19183), Focus
+// Next/Previous Pane (F6/Shift+F6) around the sidebar (#19191), and from
+// outside every pane (#19312).
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { TIMEOUTS } from '@utils/constants';
@@ -58,6 +59,13 @@ async function visibleTerminalCount(page: Page): Promise<number> {
     sel => [...document.querySelectorAll<HTMLElement>(sel)].filter(el => el.offsetWidth > 0).length,
     XTERM_SELECTOR,
   );
+}
+
+/** Move focus out of every pane, onto the page body. */
+async function blurAllPanes(page: Page): Promise<void> {
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+  await expect.poll(() => page.evaluate(() => document.activeElement === document.body))
+    .toBe(true);
 }
 
 /** Move focus out of the Console pane, into the Environment pane. */
@@ -270,5 +278,33 @@ test.describe.serial('Focus adjacent pane', () => {
     const forward = await cyclePanes(page, 'F6');
 
     expect(forward).toEqual(['rstudio_TabSet2_pane', 'rstudio_Source_pane', CONSOLE_PANE_ID]);
+  });
+
+  test('F6 from outside every pane focuses the first pane', async ({ rstudioPage: page }) => {
+    await blurAllPanes(page);
+
+    await page.keyboard.press('F6');
+
+    await expect.poll(() => focusedPane(page)).toBe(QUADRANT_PANE_IDS[0]);
+  });
+
+  test('Shift+F6 from outside every pane focuses the sidebar', async ({ rstudioPage: page }) => {
+    await setSidebarVisible(page, true);
+    await blurAllPanes(page);
+
+    await page.keyboard.press('Shift+F6');
+
+    await expect.poll(() => focusedPane(page)).toBe(SIDEBAR_PANE_ID);
+  });
+
+  test('Shift+F6 from outside every pane skips a hidden sidebar', async ({
+    rstudioPage: page,
+  }) => {
+    await setSidebarVisible(page, false);
+    await blurAllPanes(page);
+
+    await page.keyboard.press('Shift+F6');
+
+    await expect.poll(() => focusedPane(page)).toBe('rstudio_TabSet2_pane');
   });
 });

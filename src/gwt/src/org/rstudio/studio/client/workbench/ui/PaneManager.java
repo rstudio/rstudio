@@ -899,21 +899,13 @@ public class PaneManager
    @Handler
    public void onFocusNextPane()
    {
-      LogicalWindow currentFocus = getActiveLogicalWindow();
-      if (currentFocus == null)
-         return;
-
-      focusAdjacentWindow(currentFocus, false /* before */);
+      focusAdjacentWindow(false /* before */);
    }
 
    @Handler
    public void onFocusPreviousPane()
    {
-      LogicalWindow currentFocus = getActiveLogicalWindow();
-      if (currentFocus == null)
-         return;
-
-      focusAdjacentWindow(currentFocus, true /* before */);
+      focusAdjacentWindow(true /* before */);
    }
 
    @Handler
@@ -1134,9 +1126,27 @@ public class PaneManager
       }
    }
 
-   private void focusAdjacentWindow(LogicalWindow window, boolean before)
+   /**
+    * The pane Focus Next (or, before, Previous) Pane moves to when no pane has
+    * focus: the first (or last) pane in the cycle.
+    */
+   private String getFocusCycleEnd(boolean before)
    {
-      String adjacent = getAdjacentWindow(window, before);
+      ArrayList<LogicalWindow> panes = getFocusCycle();
+      if (before)
+         return panes.get(panes.size() - 1).getNormal().getName();
+      return additionalSourceCount_ > 0 ? sourceColumnManager_.getLeftColumnName() :
+         panes.get(0).getNormal().getName();
+   }
+
+   private void focusAdjacentWindow(boolean before)
+   {
+      // Focus can be outside every pane, such as on the page body or in the
+      // main toolbar. Enter the cycle at an end.
+      LogicalWindow currentFocus = getActiveLogicalWindow();
+      String adjacent = currentFocus == null ?
+         getFocusCycleEnd(before) :
+         getAdjacentWindow(currentFocus, before);
 
       // TabSet1 and TabSet2 could be empty, if so skip to the next pane
       while ((StringUtil.equals(UserPrefsAccessor.Panes.QUADRANTS_TABSET1, adjacent) && tabSet1TabPanel_.isEmpty()) ||
