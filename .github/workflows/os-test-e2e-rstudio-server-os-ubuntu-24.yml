@@ -1093,16 +1093,7 @@ jobs:
             | :---: | :---: | :---: | :---: |
             | **${{ steps.summary.outputs.passed }}** | **${{ steps.summary.outputs.failed }}** | **${{ steps.summary.outputs.skipped }}** | **${{ steps.summary.outputs.flaky }}** |
 
-            <details>
-            <summary>📥 Download Playwright report</summary>
-            ${{ steps.publish-report.outputs.url != '' && format('
-            **[🌐 View report online]({0})** — opens in the browser, no download needed. Available for 14 days.
-            ', steps.publish-report.outputs.url) || '' }}
-            **[⬇️ playwright-report.zip](${{ steps.upload-report.outputs.artifact-url }})** — extract and open `index.html`
-
-            > Includes screenshots, traces, and step-by-step details for every test. Expires in 15 days.
-
-            </details>
+            ${{ steps.publish-report.outputs.url != '' && format('**[View Report Online]({0})** | ', steps.publish-report.outputs.url) || '' }}**[Download Report](${{ steps.upload-report.outputs.artifact-url }})**
 
             ---
             <sub>${{ inputs.a11y && '1 shard' || format('{0} shards', needs.shards.outputs.count) }} · ubuntu-24.04 · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>

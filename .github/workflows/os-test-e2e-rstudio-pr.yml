@@ -336,16 +336,7 @@ jobs:
 
             ${{ steps.summary.outputs.platform_table }}
 
-            <details>
-            <summary>View / download the full report</summary>
-            ${{ steps.publish-report.outputs.url != '' && format('
-            **[View report online]({0})** -- opens in the browser, no download needed. Available for 14 days.
-            ', steps.publish-report.outputs.url) || '' }}
-            ${{ steps.upload-report.outputs.artifact-url != '' && format('**[Download playwright-report.zip]({0})** -- extract and open `index.html`', steps.upload-report.outputs.artifact-url) || '_No report artifact was produced._' }}
-
-            > Includes screenshots, traces, and step-by-step details for every test. Expires in 15 days.
-
-            </details>
+            ${{ steps.publish-report.outputs.url != '' && format('**[View Report Online]({0})** | ', steps.publish-report.outputs.url) || '' }}${{ steps.upload-report.outputs.artifact-url != '' && format('**[Download Report]({0})**', steps.upload-report.outputs.artifact-url) || '_No report artifact was produced._' }}
 
             ---
             <sub>All platforms - commit <code>${{ github.event.pull_request.head.sha }}</code> - <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
