@@ -1016,13 +1016,13 @@ public class PaneManager
       // if we're the last (!before or first (before) window in the display, wrap around to the
       // front
       if (!before && window == panes.get(lastIndex))
-         return getFocusCycleEnd(false /* before */);
+         return getFocusCycleEnd(panes, false /* before */);
       else if (before)
       {
          if ((additionalSourceCount_ > 0 &&
             StringUtil.equals(name, sourceColumnManager_.getLeftColumnName())) ||
             (additionalSourceCount_ == 0 && window == panes.get(0)))
-            return getFocusCycleEnd(true /* before */);
+            return getFocusCycleEnd(panes, true /* before */);
          else if (window == panes.get(0))
             return sourceColumnManager_.get(1).getName();
       }
@@ -1131,9 +1131,8 @@ public class PaneManager
     * when extra columns are open, since those sit before the first pane.
     * Backward (before), it's the last pane in the cycle.
     */
-   private String getFocusCycleEnd(boolean before)
+   private String getFocusCycleEnd(ArrayList<LogicalWindow> panes, boolean before)
    {
-      ArrayList<LogicalWindow> panes = getFocusCycle();
       if (before)
          return panes.get(panes.size() - 1).getNormal().getName();
       return additionalSourceCount_ > 0 ? sourceColumnManager_.getLeftColumnName() :
@@ -1146,7 +1145,7 @@ public class PaneManager
       // main toolbar. Enter the cycle at an end.
       LogicalWindow currentFocus = getActiveLogicalWindow();
       String adjacent = currentFocus == null ?
-         getFocusCycleEnd(before) :
+         getFocusCycleEnd(getFocusCycle(), before) :
          getAdjacentWindow(currentFocus, before);
 
       // TabSet1 and TabSet2 could be empty, if so skip to the next pane
