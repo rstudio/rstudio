@@ -12,6 +12,7 @@ import { closeAndDeleteSandboxFiles, seedSandboxFile, writeAndOpenFile } from '@
 import { heredoc } from '@utils/heredoc';
 import { closeProjectIfOpen, createAndOpenProject } from '@utils/project';
 import { rPathLiteral } from '@utils/r';
+import { waitForRpcResponse } from '@utils/rpc';
 import { useSuiteSandbox } from '@utils/sandbox';
 import * as path from 'path';
 
@@ -191,12 +192,11 @@ test.describe.serial('Quarto with no preview', () => {
           if (action === 'close tab')
             await setPref(page, 'rmd_viewer_type', 'pane');
 
-          const closed = page.waitForResponse(response =>
-            response.url().endsWith('/rpc/close_document') &&
-            response.request().postDataJSON()?.params?.[0] === docId,
-          );
+          const closed = waitForRpcResponse(page, 'close_document', {
+            request: (request) => request.postDataJSON()?.params?.[0] === docId,
+          });
           await executeCommand(page, action === 'close tab' ? 'closeSourceDoc' : 'closeAllSourceDocs');
-          expect((await (await closed).json()).error).toBeUndefined();
+          await closed;
         }
 
         // Check that the job remains present before releasing it, then

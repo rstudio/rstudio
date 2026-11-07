@@ -44,6 +44,7 @@
 - ([#19332](https://github.com/rstudio/rstudio/issues/19332)): [Accessibility] Fixed an issue where screen readers announced the Help and Browse buttons on every row of the Packages pane with the first row's link instead of their own.
 - ([#19466](https://github.com/rstudio/rstudio/issues/19466)): Fixed an issue where the Keyboard Shortcut Quick Reference could be scrolled into pages of blank space below the shortcuts in Safari on macOS.
 - ([#19509](https://github.com/rstudio/rstudio/issues/19509)): [Accessibility] Fixed an issue where Global Options and Project Options panes without sub-tabs, such as Console and Spelling, contained an invisible tab that took keyboard focus and was announced by screen readers.
+- ([#19312](https://github.com/rstudio/rstudio/issues/19312)): [Accessibility] Fixed an issue where Focus Next Pane (F6) and Focus Previous Pane (Shift+F6) did nothing when focus wasn't in a pane, such as when focus was in the main toolbar. F6 now moves focus to the first pane, and Shift+F6 to the last.
 
 ### Dependencies
 - Quarto 1.11.9
