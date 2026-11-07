@@ -43,6 +43,7 @@
 - ([#19324](https://github.com/rstudio/rstudio/issues/19324)): [Accessibility] Fixed several issues where the RStudio Server main menu didn't follow the WAI-ARIA menubar pattern. Down Arrow now opens a menu after the mouse has been used. Enter, Space, Right Arrow, and the per-menu shortcuts now open a menu or submenu with focus on its first item. Tab and Shift+Tab from an open menu now move relative to the menubar. Focus now returns to where it was after a command runs, however the menubar was entered. Menus are now named and exposed inside the menubar, which is named "Main menu", menu items report collapsed submenus, and item names no longer start with stray whitespace. In menus throughout the IDE, disabled items can now be reached with the arrow keys.
 - ([#19332](https://github.com/rstudio/rstudio/issues/19332)): [Accessibility] Fixed an issue where screen readers announced the Help and Browse buttons on every row of the Packages pane with the first row's link instead of their own.
 - ([#19466](https://github.com/rstudio/rstudio/issues/19466)): Fixed an issue where the Keyboard Shortcut Quick Reference could be scrolled into pages of blank space below the shortcuts in Safari on macOS.
+- ([#19509](https://github.com/rstudio/rstudio/issues/19509)): [Accessibility] Fixed an issue where Global Options and Project Options panes without sub-tabs, such as Console and Spelling, contained an invisible tab that took keyboard focus and was announced by screen readers.
 
 ### Dependencies
 - Quarto 1.11.9

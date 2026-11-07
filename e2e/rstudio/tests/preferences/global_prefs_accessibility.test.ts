@@ -7,6 +7,11 @@ import {
   GENERAL_PANEL,
   CODE_TAB,
   CODE_PANEL,
+  CODE_EDITING_TAB,
+  CONSOLE_TAB,
+  CONSOLE_PANEL,
+  SPELLING_TAB,
+  SPELLING_PANEL,
   OPTIONS_APPLY,
   openGlobalOptions,
   closeGlobalOptions,
@@ -140,5 +145,40 @@ test.describe('Global Options keyboard accessibility', () => {
     } finally {
       await page.evaluate((id) => document.getElementById(id)?.remove(), STRAY_POPUP);
     }
+  });
+
+  // Console builds its own tab-less panel; Spelling goes through
+  // PreferencesDialogPaneBase.wrapWithPanel(). Both must leave the hidden tab
+  // strip out of the Tab order and the accessibility tree, and the content must
+  // not claim to be a tabpanel when there is no tab to label it (#19509).
+  for (const [name, tab, panel] of [
+    ['Console', CONSOLE_TAB, CONSOLE_PANEL],
+    ['Spelling', SPELLING_TAB, SPELLING_PANEL],
+  ] as const) {
+    test(`${name} section has no hidden tab`, async ({ rstudioPage: page }) => {
+      await openGlobalOptions(page);
+      await page.locator(tab).click();
+      await expect(page.locator(panel)).toBeVisible();
+
+      await expect(page.locator(panel).getByRole('tab')).toHaveCount(0);
+      await expect(page.locator(panel).getByRole('tabpanel')).toHaveCount(0);
+
+      await page.locator(tab).press('Tab');
+      const focused = await page.evaluate((panelSelector) => ({
+        role: document.activeElement?.getAttribute('role') ?? null,
+        inPanel: document.activeElement?.closest(panelSelector) !== null,
+      }), panel);
+      expect(focused).toEqual({ role: null, inPanel: true });
+
+      await closeGlobalOptions(page);
+    });
+  }
+
+  test('a section with sub-tabs still exposes them', async ({ rstudioPage: page }) => {
+    await openGlobalOptions(page);
+    await page.locator(CODE_TAB).click();
+    await expect(page.locator(CODE_EDITING_TAB)).toBeVisible();
+    await expect(page.locator(CODE_EDITING_TAB)).toHaveAttribute('role', 'tab');
+    await closeGlobalOptions(page);
   });
 });
