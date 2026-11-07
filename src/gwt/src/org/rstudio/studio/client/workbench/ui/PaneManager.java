@@ -1148,12 +1148,27 @@ public class PaneManager
          getFocusCycleEnd(getFocusCycle(), before) :
          getAdjacentWindow(currentFocus, before);
 
-      // TabSet1 and TabSet2 could be empty, if so skip to the next pane
-      while ((StringUtil.equals(UserPrefsAccessor.Panes.QUADRANTS_TABSET1, adjacent) && tabSet1TabPanel_.isEmpty()) ||
-             (StringUtil.equals(UserPrefsAccessor.Panes.QUADRANTS_TABSET2, adjacent) && tabSet2TabPanel_.isEmpty()))
+      while (isEmptyPane(adjacent))
          adjacent = getAdjacentWindow(panesByName_.get(adjacent), before);
 
       focusWindow(adjacent);
+   }
+
+   /**
+    * Whether the focus cycle passes over a pane with nothing to focus. Focusing
+    * an empty main Source pane would open a document (#19193). Extra columns
+    * are empty only while loading, and stepping past one goes by the active
+    * column, which could return that same column forever.
+    */
+   private boolean isEmptyPane(String name)
+   {
+      if (StringUtil.equals(UserPrefsAccessor.Panes.QUADRANTS_TABSET1, name))
+         return tabSet1TabPanel_.isEmpty();
+      if (StringUtil.equals(UserPrefsAccessor.Panes.QUADRANTS_TABSET2, name))
+         return tabSet2TabPanel_.isEmpty();
+      if (StringUtil.equals(SourceColumnManager.MAIN_SOURCE_NAME, name))
+         return sourceColumnManager_.isEmpty(name);
+      return false;
    }
 
    private void swapConsolePane(PaneConfig paneConfig, int consoleTargetIndex)
