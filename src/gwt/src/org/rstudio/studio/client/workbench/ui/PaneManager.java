@@ -1016,14 +1016,13 @@ public class PaneManager
       // if we're the last (!before or first (before) window in the display, wrap around to the
       // front
       if (!before && window == panes.get(lastIndex))
-         return additionalSourceCount_ > 0 ? sourceColumnManager_.getLeftColumnName() :
-            panes.get(0).getNormal().getName();
+         return getFocusCycleEnd(false /* before */);
       else if (before)
       {
          if ((additionalSourceCount_ > 0 &&
             StringUtil.equals(name, sourceColumnManager_.getLeftColumnName())) ||
             (additionalSourceCount_ == 0 && window == panes.get(0)))
-            return panes.get(lastIndex).getNormal().getName();
+            return getFocusCycleEnd(true /* before */);
          else if (window == panes.get(0))
             return sourceColumnManager_.get(1).getName();
       }
@@ -1127,8 +1126,10 @@ public class PaneManager
    }
 
    /**
-    * The pane Focus Next (or, before, Previous) Pane moves to when no pane has
-    * focus: the first (or last) pane in the cycle.
+    * Where the focus cycle wraps to, and where it starts when no pane has focus.
+    * Forward, that's the first pane in the cycle, or the leftmost source column
+    * when extra columns are open, since those sit before the first pane.
+    * Backward (before), it's the last pane in the cycle.
     */
    private String getFocusCycleEnd(boolean before)
    {

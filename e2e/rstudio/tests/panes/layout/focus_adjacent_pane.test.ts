@@ -22,6 +22,7 @@ const BACKGROUND_JOBS_TAB = '#rstudio_workbench_tab_background_jobs';
 const BACKGROUND_JOBS_PANEL = '#rstudio_workbench_panel_background_jobs';
 const ENVIRONMENT_TAB = '#rstudio_workbench_tab_environment';
 const LOAD_WORKSPACE_BUTTON = '#rstudio_tb_loadworkspace';
+const MAIN_TOOLBAR_NEW_FILE = '#rstudio_new_file_menubutton';
 const PANES = '[id^="rstudio_"][id$="_pane"]';
 const SIDEBAR_PANE_ID = 'rstudio_Sidebar_pane';
 const SIDEBAR_PANE = `#${SIDEBAR_PANE_ID}`;
@@ -282,6 +283,15 @@ test.describe.serial('Focus adjacent pane', () => {
 
   test('F6 from outside every pane focuses the first pane', async ({ rstudioPage: page }) => {
     await blurAllPanes(page);
+
+    await page.keyboard.press('F6');
+
+    await expect.poll(() => focusedPane(page)).toBe(QUADRANT_PANE_IDS[0]);
+  });
+
+  test('F6 from the main toolbar focuses the first pane', async ({ rstudioPage: page }) => {
+    await page.locator(MAIN_TOOLBAR_NEW_FILE).focus();
+    await expect.poll(() => focusedPane(page)).toBe('');
 
     await page.keyboard.press('F6');
 
