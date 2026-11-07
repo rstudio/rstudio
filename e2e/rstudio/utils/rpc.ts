@@ -70,7 +70,8 @@ export function waitForRpcResponse(
   const settle = async (): Promise<RpcResponseBody> => {
     const ack = await page.waitForResponse(rpc, { timeout });
     const body = (await ack.json().catch((err: unknown) => {
-      throw new Error(`${method} answered HTTP ${ack.status()} with a body that is not JSON: ${err}`);
+      throw new Error(
+        `${method} answered HTTP ${ack.status()} with a body that is not JSON: ${err}`);
     })) as RpcResponseBody & { asyncHandle?: unknown };
     const handle = body.asyncHandle;
     if (typeof handle !== 'string')

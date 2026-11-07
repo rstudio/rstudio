@@ -21,7 +21,8 @@ test.beforeEach(async ({ page }) => {
   answers = {};
   held = new Map();
   eventBatches = [];
-  await page.route(`${ORIGIN}/`, (route) => route.fulfill({ contentType: 'text/html', body: '<div></div>' }));
+  await page.route(`${ORIGIN}/`, (route) =>
+    route.fulfill({ contentType: 'text/html', body: '<div></div>' }));
   await page.route(`${ORIGIN}/rpc/*`, (route) => {
     const method = new URL(route.request().url()).pathname.split('/').pop() ?? '';
     if (method in answers)
@@ -54,23 +55,27 @@ const pollEvents = (page: Page, ...events: unknown[]) => {
 };
 
 test('returns an inline answer from the named RPC only', async ({ page }) => {
-  answers = { get_recent_history_extra: { result: 'other' }, get_recent_history: { result: 'mine' } };
+  answers = {
+    get_recent_history_extra: { result: 'other' },
+    get_recent_history: { result: 'mine' },
+  };
   const response = waitForRpcResponse(page, 'get_recent_history');
   await send(page, '/rpc/get_recent_history_extra');
   await send(page, '/rpc/get_recent_history');
   expect(await response).toEqual({ result: 'mine' });
 });
 
-test('returns the body an async completion delivers after the acknowledgement', async ({ page }) => {
+test('returns the body an async completion delivers after the ack', async ({ page }) => {
   answers = { console_input: { asyncHandle: 'h1', ep: 'false' } };
   const response = waitForRpcResponse(page, 'console_input');
   await send(page, '/rpc/console_input');
   await pollEvents(page, completion('other', { result: 'not mine' }));
-  await pollEvents(page, { type: 'busy', data: { value: true } }, completion('h1', { result: 'served' }));
+  const busy = { type: 'busy', data: { value: true } };
+  await pollEvents(page, busy, completion('h1', { result: 'served' }));
   expect(await response).toEqual({ result: 'served' });
 });
 
-test('returns the body of a completion that arrived before the acknowledgement', async ({ page }) => {
+test('returns the body of a completion that arrived before the ack', async ({ page }) => {
   const response = waitForRpcResponse(page, 'console_input');
   await send(page, '/rpc/console_input');
   await expect.poll(() => held.has('console_input')).toBe(true);
@@ -84,14 +89,16 @@ test('rejects a completion that carries no response', async ({ page }) => {
   const response = waitForRpcResponse(page, 'close_document');
   await send(page, '/rpc/close_document');
   await pollEvents(page, completion('h3', undefined));
-  await expect(response).rejects.toThrow('async_completion of close_document (handle h3) carried no response');
+  await expect(response).rejects.toThrow(
+    'async_completion of close_document (handle h3) carried no response');
 });
 
 test('rejects when the completion does not arrive in time', async ({ page }) => {
   answers = { set_user_prefs: { asyncHandle: 'h4', ep: 'false' } };
   const response = waitForRpcResponse(page, 'set_user_prefs', { timeout: 500 });
   await send(page, '/rpc/set_user_prefs');
-  await expect(response).rejects.toThrow('async completion of set_user_prefs (handle h4) did not complete');
+  await expect(response).rejects.toThrow(
+    'async completion of set_user_prefs (handle h4) did not complete');
 });
 
 test('rejects an acknowledgement that is not JSON', async ({ page }) => {
