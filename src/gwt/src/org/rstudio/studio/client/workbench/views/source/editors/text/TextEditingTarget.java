@@ -4865,14 +4865,6 @@ public class TextEditingTarget implements
       docUpdateSentinel_.withSavedDocNoRetry(onsaved);
    }
 
-   // True when the session's copy of the document matches the editor. Within a
-   // withSavedDoc() callback this can be false: the callback still runs when the
-   // user edits while the save is in flight.
-   public boolean isSavedDocCurrent()
-   {
-      return primaryDisplay_.getCode().equals(docUpdateSentinel_.getContents());
-   }
-
    // Whether the editor holds edits not yet backed up to the server's copy of
    // the document
    public boolean hasPendingChanges()
