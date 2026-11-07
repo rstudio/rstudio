@@ -531,7 +531,7 @@ export async function createStandaloneErrorDialog(
       await showDialog();
     }
 
-    if (options.shouldCloseWindow) window.close();
+    if (options.shouldCloseWindow) options.window.close();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('[utils.ts] [createStandaloneErrorDialog] Error when creating Standalone Error Dialog: ', error);

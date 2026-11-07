@@ -218,4 +218,20 @@ describe('Utils', () => {
       window.destroy();
     }
   });
+
+  it('createStandaloneErrorDialog closes the window it was given when asked to', async () => {
+    const showMessageBox = sinon.stub(dialog, 'showMessageBox').resolves({ response: 0, checkboxChecked: false });
+    const consoleError = sinon.stub(console, 'error');
+    const window = new BrowserWindow({ show: false });
+    const close = sinon.stub(window, 'close');
+    try {
+      await Utils.createStandaloneErrorDialog('title', 'message', { window, shouldCloseWindow: true });
+      assert.isTrue(close.calledOnce);
+      assert.isTrue(consoleError.notCalled);
+    } finally {
+      showMessageBox.restore();
+      consoleError.restore();
+      window.destroy();
+    }
+  });
 });
