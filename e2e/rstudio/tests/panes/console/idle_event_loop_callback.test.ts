@@ -191,10 +191,8 @@ test.describe('Idle event loop callbacks', () => {
     await executeInConsole(page,
       `later::later(function() { cat("callback", "started\\n"); while (!file.exists(${JSON.stringify(flag)})) Sys.sleep(0.05); cat("callback", "done\\n") }, 0.1)`);
     await expect(consoleActions.consolePane.consoleOutput).toContainText('callback started');
-    await Promise.all([
-      waitForRpcResponse(page, 'set_user_prefs'),
-      setPref(page, 'blinking_cursor', false),
-    ]);
+    // Resolves once the session has served the write.
+    await setPref(page, 'blinking_cursor', false);
     fs.writeFileSync(flag, '');
 
     // Only the call itself and the command below complete: two prompts. The
