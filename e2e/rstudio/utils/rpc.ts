@@ -42,13 +42,10 @@ export async function asyncCompletions(response: Response): Promise<AsyncComplet
 }
 
 /**
- * The response body of the next `method` RPC the page sends, once the
- * session's main thread has handled it. Call it before sending the RPC: while
- * that thread is busy, the session acknowledges the RPC with only an
- * asyncHandle and delivers the body later in an async_completion event, which
- * can arrive before the acknowledgement is read. `timeout` bounds the whole
- * wait, reading the acknowledgement's body included. A response carrying an
- * error rejects: a failed RPC still answers HTTP 200.
+ * The body of the first `method` response (that `request` accepts) to arrive,
+ * once the main thread has handled it: a busy session answers with only an
+ * asyncHandle and sends the body later. Call before sending the RPC. Rejects on
+ * an RPC error, or when `timeout` passes.
  */
 export function waitForRpcResponse(
   page: Page,

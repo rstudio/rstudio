@@ -2,10 +2,8 @@ import { test, expect, type Page, type Route } from '@playwright/test';
 import { waitForRpcResponse } from '@utils/rpc';
 
 /**
- * Harness self-test for utils/rpc.ts. waitForRpcResponse() stands for "the
- * session has handled this RPC", so it must not settle on a bare asyncHandle
- * acknowledgement; the page's RPC and event traffic is replayed here against
- * routed fakes.
+ * Harness self-test for utils/rpc.ts: waitForRpcResponse() must not settle on a
+ * bare asyncHandle acknowledgement. RPC and event traffic is routed to fakes.
  */
 
 const ORIGIN = 'http://rstudio.test';
