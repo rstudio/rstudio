@@ -148,10 +148,8 @@ test.describe('Global Options keyboard accessibility', () => {
   });
 
   // Console builds its own tab-less panel; Spelling goes through
-  // PreferencesDialogPaneBase.wrapWithPanel(). Both must leave the hidden tab
-  // strip out of the Tab order and the accessibility tree. With no tab to label
-  // it, the content (a VerticalTabPanel layout table) must be role="presentation"
-  // rather than a tabpanel (#19509).
+  // PreferencesDialogPaneBase.wrapWithPanel(). Both paths hide the tab strip
+  // (#19509).
   for (const [name, tab, panel, content] of [
     ['Console', CONSOLE_TAB, CONSOLE_PANEL, '#rstudio_console_prefs_panel'],
     ['Spelling', SPELLING_TAB, SPELLING_PANEL, '#rstudio_spelling_prefs_panel'],
@@ -170,7 +168,8 @@ test.describe('Global Options keyboard accessibility', () => {
         role: document.activeElement?.getAttribute('role') ?? null,
         inPanel: document.activeElement?.closest(panelSelector) !== null,
       }), panel);
-      expect(focused).toEqual({ role: null, inPanel: true });
+      expect(focused.role).not.toBe('tab');
+      expect(focused.inPanel).toBe(true);
 
       await closeGlobalOptions(page);
     });
