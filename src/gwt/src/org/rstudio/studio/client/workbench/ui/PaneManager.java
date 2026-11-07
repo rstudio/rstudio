@@ -1156,8 +1156,10 @@ public class PaneManager
 
    /**
     * Whether the focus cycle should pass over a pane because it has nothing to
-    * focus. An empty TabSet is minimized; the Source pane is hidden when it has
-    * no documents, and focusing it would open a new one (#19193).
+    * focus. An empty TabSet is minimized; the main Source pane is hidden when it
+    * has no documents, and focusing it would open a new one (#19193). Extra
+    * columns are empty only while their first document loads, and stepping past
+    * one uses the active column, which could return that same column forever.
     */
    private boolean isEmptyPane(String name)
    {
@@ -1165,8 +1167,9 @@ public class PaneManager
          return tabSet1TabPanel_.isEmpty();
       if (StringUtil.equals(UserPrefsAccessor.Panes.QUADRANTS_TABSET2, name))
          return tabSet2TabPanel_.isEmpty();
-      SourceColumn column = sourceColumnManager_.getByName(name);
-      return column != null && column.getTabCount() == 0;
+      if (StringUtil.equals(SourceColumnManager.MAIN_SOURCE_NAME, name))
+         return sourceColumnManager_.isEmpty(name);
+      return false;
    }
 
    private void swapConsolePane(PaneConfig paneConfig, int consoleTargetIndex)
