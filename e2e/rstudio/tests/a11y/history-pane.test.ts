@@ -24,55 +24,51 @@ interface AsyncCompletionEvent {
 }
 
 /**
- * Run `trigger`, which sends the RPC matched by `rpc`, and return the RPC's
- * response body. The POST carries it only if the session's main thread serves
- * the RPC within asyncRpcTimeoutMs (200ms by default); otherwise the POST
- * answers with an asyncHandle and the body arrives later in an
- * async_completion event on the get_events long-poll. The events listener
- * goes in before `trigger`, as the completion can land before the
- * acknowledgement is read.
+ * The response body of the next RPC matched by `rpc`. Call before sending it:
+ * a busy session answers with just an asyncHandle and delivers the body later
+ * in an async_completion event, which can land before the handle is read.
  */
-async function rpcResponseBody(page: Page, rpc: RegExp, trigger: () => Promise<unknown>): Promise<RpcBody> {
-  const completions = new Map<string, RpcBody>();
+function watchRpcResponse(page: Page, rpc: RegExp): Promise<RpcBody> {
+  const completions = new Map<string, AsyncCompletionEvent['data']>();
   let onCompletion: (() => void) | undefined;
   const onResponse = async (response: Response): Promise<void> => {
     if (!GET_EVENTS.test(response.url()))
       return;
+    // Long-polls are routinely cut off; a body that can't be read is skipped.
     const body = (await response.json().catch(() => null)) as { result?: unknown } | null;
     if (!Array.isArray(body?.result))
       return;
     for (const event of body.result as AsyncCompletionEvent[]) {
       const handle = event?.data?.handle;
       if (event?.type === 'async_completion' && typeof handle === 'string')
-        completions.set(handle, event.data?.response ?? {});
+        completions.set(handle, event.data);
     }
     onCompletion?.();
   };
   page.on('response', onResponse);
-  try {
-    const [ack] = await Promise.all([
-      page.waitForResponse(rpc, { timeout: TIMEOUTS.consoleReady }),
-      trigger(),
-    ]);
+
+  const settle = async (): Promise<RpcBody> => {
+    const ack = await page.waitForResponse(rpc, { timeout: TIMEOUTS.consoleReady });
     const body = (await ack.json()) as RpcBody;
     const handle = body.asyncHandle;
     if (typeof handle !== 'string')
       return body;
-    return await withDeadline(
-      new Promise<RpcBody>((resolve) => {
-        onCompletion = () => {
-          const completed = completions.get(handle);
-          if (completed !== undefined)
-            resolve(completed);
-        };
-        onCompletion();
-      }),
-      TIMEOUTS.consoleReady,
-      `async completion of ${rpc.source} (handle ${handle})`,
-    );
-  } finally {
-    page.off('response', onResponse);
-  }
+    const completion = new Promise<RpcBody>((resolve, reject) => {
+      onCompletion = () => {
+        if (!completions.has(handle))
+          return;
+        const data = completions.get(handle);
+        if (data?.response === undefined)
+          reject(new Error(`async_completion without a response: ${JSON.stringify(data)}`));
+        else
+          resolve(data.response);
+      };
+      onCompletion();
+    });
+    return withDeadline(completion, TIMEOUTS.consoleReady,
+      `async completion of ${rpc.source} (handle ${handle})`);
+  };
+  return settle().finally(() => page.off('response', onResponse));
 }
 
 /**
@@ -83,19 +79,26 @@ async function rpcResponseBody(page: Page, rpc: RegExp, trigger: () => Promise<u
  */
 test('history pane has no accessibility violations', { tag: ['@a11y', '@server_only'] },
   async ({ a11yPage: page }, testInfo) => {
-    let history: RpcBody | undefined;
+    let history: Promise<RpcBody> | undefined;
     const results = await withEnvironmentTabsetTab(page, HISTORY_TAB,
       async () => {
-        history = await rpcResponseBody(page, RECENT_HISTORY_RPC,
-          () => executeCommand(page, 'activateHistory'));
+        history = watchRpcResponse(page, RECENT_HISTORY_RPC);
+        // Awaited below; this keeps a failure before then from also
+        // surfacing as an unhandled rejection.
+        history.catch(() => {});
+        await executeCommand(page, 'activateHistory');
       },
       async () => {
-        const commands = history?.result?.command;
-        expect(Array.isArray(commands), `get_recent_history result: ${JSON.stringify(history)}`).toBe(true);
+        const body = await history!;
+        const commands = body.result?.command;
+        if (!Array.isArray(commands))
+          throw new Error(`get_recent_history result: ${JSON.stringify(body)}`);
         // Matching the count also covers an empty history, whose list has no
         // height and so is never visible.
-        await expect(page.locator(HISTORY_PANEL).getByRole('listbox', { name: 'Console History', exact: true })
-          .getByRole('option')).toHaveCount((commands as unknown[]).length, { timeout: TIMEOUTS.consoleReady });
+        const historyList = page.locator(HISTORY_PANEL)
+          .getByRole('listbox', { name: 'Console History', exact: true });
+        await expect(historyList.getByRole('option'))
+          .toHaveCount(commands.length, { timeout: TIMEOUTS.consoleReady });
         return scanA11y(page, testInfo);
       });
     expect(violationSummary(results)).toEqual([]);
