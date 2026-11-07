@@ -86,25 +86,26 @@ test('returns the body of a completion that arrived before the ack', async ({ pa
 
 test('rejects a completion that carries no response', async ({ page }) => {
   answers = { close_document: { asyncHandle: 'h3', ep: 'false' } };
-  const response = waitForRpcResponse(page, 'close_document');
+  const rejected = expect(waitForRpcResponse(page, 'close_document')).rejects.toThrow(
+    'async_completion of close_document (handle h3) carried no response');
   await send(page, '/rpc/close_document');
   await pollEvents(page, completion('h3', undefined));
-  await expect(response).rejects.toThrow(
-    'async_completion of close_document (handle h3) carried no response');
+  await rejected;
 });
 
 test('rejects when the completion does not arrive in time', async ({ page }) => {
   answers = { set_user_prefs: { asyncHandle: 'h4', ep: 'false' } };
-  const response = waitForRpcResponse(page, 'set_user_prefs', { timeout: 500 });
+  const rejected = expect(waitForRpcResponse(page, 'set_user_prefs', { timeout: 500 }))
+    .rejects.toThrow('response of set_user_prefs did not complete within 500ms');
   await send(page, '/rpc/set_user_prefs');
-  await expect(response).rejects.toThrow(
-    'async completion of set_user_prefs (handle h4) did not complete');
+  await rejected;
 });
 
 test('rejects an acknowledgement that is not JSON', async ({ page }) => {
-  const response = waitForRpcResponse(page, 'ping');
+  const rejected = expect(waitForRpcResponse(page, 'ping')).rejects.toThrow(
+    'ping answered HTTP 401 with a body that is not JSON');
   await send(page, '/rpc/ping');
   await expect.poll(() => held.has('ping')).toBe(true);
   await held.get('ping')!.fulfill({ status: 401, body: '<html>sign in</html>' });
-  await expect(response).rejects.toThrow('ping answered HTTP 401 with a body that is not JSON');
+  await rejected;
 });

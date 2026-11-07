@@ -46,7 +46,8 @@ export async function asyncCompletions(response: Response): Promise<AsyncComplet
  * session's main thread has handled it. Call it before sending the RPC: while
  * that thread is busy, the session acknowledges the RPC with only an
  * asyncHandle and delivers the body later in an async_completion event, which
- * can arrive before the acknowledgement is read. `timeout` covers both.
+ * can arrive before the acknowledgement is read. `timeout` bounds the whole
+ * wait, reading the acknowledgement's body included.
  */
 export function waitForRpcResponse(
   page: Page,
@@ -54,7 +55,6 @@ export function waitForRpcResponse(
   options: { timeout?: number } = {},
 ): Promise<RpcResponseBody> {
   const timeout = options.timeout ?? TIMEOUTS.consoleReady;
-  const deadline = Date.now() + timeout;
   const rpc = new RegExp(`/rpc/${method}(?:\\?|$)`);
   const completions = new Map<string, unknown>();
   let onCompletion: (() => void) | undefined;
@@ -76,7 +76,7 @@ export function waitForRpcResponse(
     const handle = body.asyncHandle;
     if (typeof handle !== 'string')
       return body;
-    const completion = new Promise<RpcResponseBody>((resolve, reject) => {
+    return new Promise<RpcResponseBody>((resolve, reject) => {
       onCompletion = () => {
         if (!completions.has(handle))
           return;
@@ -88,8 +88,7 @@ export function waitForRpcResponse(
       };
       onCompletion();
     });
-    return withDeadline(completion, Math.max(0, deadline - Date.now()),
-      `async completion of ${method} (handle ${handle})`);
   };
-  return settle().finally(() => page.off('response', onResponse));
+  return withDeadline(settle(), timeout, `response of ${method}`)
+    .finally(() => page.off('response', onResponse));
 }
