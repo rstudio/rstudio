@@ -30,6 +30,7 @@ import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
 import org.rstudio.studio.client.application.events.DeploymentRecordsUpdatedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.HandleUnsavedChangesEvent;
+import org.rstudio.studio.client.application.events.QuitAbortedEvent;
 import org.rstudio.studio.client.application.events.QuitEvent;
 import org.rstudio.studio.client.application.events.RVersionsChangedEvent;
 import org.rstudio.studio.client.application.events.ReloadWithLastChanceSaveEvent;
@@ -664,6 +665,10 @@ public class ClientEventDispatcher
          {
             QuitEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new QuitEvent(data));
+         }
+         else if (type == ClientEvent.QuitAborted)
+         {
+            eventBus_.dispatchEvent(new QuitAbortedEvent());
          }
          else if (type == ClientEvent.Suicide)
          {

@@ -138,7 +138,7 @@ public class LintItem extends JavaScriptObject
    {
       String text = getText();
       if (text != null)
-         text = AnsiCode.strip(StringUtil.normalizeNewLines(text));
+         text = AnsiCode.stripStatic(StringUtil.normalizeNewLines(text));
 
       return AceAnnotation.create(
             getStartRow(),

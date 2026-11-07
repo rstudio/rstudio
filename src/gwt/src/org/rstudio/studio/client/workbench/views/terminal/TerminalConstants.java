@@ -18,6 +18,7 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
     String terminalBusyMessage(String question);
     String terminalDiagnosticsText();
     String globalTerminalInformationText();
+    String currentTerminalSessionInformationText();
     String captionText();
     String titleText();
     String colsText();
@@ -87,6 +88,7 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
     String websockedClosedMessage();
     String websocketConnectedMessage();
     String websocketConnectError();
+    String keepAliveExpiredMessage();
     String channelTypeNotImplementedError();
     String switchedToRPCMessage();
     String failedToSwitchRPCMessage();

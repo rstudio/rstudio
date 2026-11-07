@@ -11,7 +11,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { dismissBlockingModals } from '@pages/modals.page';
 import { executeCommand } from '@utils/commands';
 import { TIMEOUTS } from '@utils/constants';
-import { holdListFiles } from '@utils/file-dialogs';
+import { FILE_LIST, holdListFiles } from '@utils/file-dialogs';
 import { rPathLiteral } from '@utils/r';
 import { useSuiteSandbox } from '@utils/sandbox';
 import type { Locator, Page } from 'playwright';
@@ -25,7 +25,6 @@ const CHOOSE_BTN = '#rstudio_file_accept_choose';
 const NEW_FOLDER_BTN = '#rstudio_file_new_folder';
 const TEXT_ENTRY = '#rstudio_text_entry';
 const CURRENT_LOCATION = '[aria-current="location"]';
-const FOLDER_LIST = '#rstudio_directory_contents';
 
 const BASE_NAME = `pw-choose-folder-${Date.now()}`;
 const SUBFOLDER = 'target';
@@ -181,8 +180,8 @@ test.describe('Choose Directory dialog', () => {
     // a selection would change the folder Choose returns (#19315)
     const chooser = await openChooser(page);
 
-    await expect(chooser.locator(FOLDER_LIST)).toBeFocused({ timeout: TIMEOUTS.fileOpen });
-    await expect(chooser.locator(`${FOLDER_LIST} tr[aria-selected]`)).toHaveCount(0);
+    await expect(chooser.locator(FILE_LIST)).toBeFocused({ timeout: TIMEOUTS.fileOpen });
+    await expect(chooser.locator(`${FILE_LIST} tr[aria-selected]`)).toHaveCount(0);
   });
 
   test('a listing that arrives after the chooser is shown still focuses the folder list', async ({ rstudioPage: page }) => {
@@ -198,7 +197,7 @@ test.describe('Choose Directory dialog', () => {
       await page.waitForTimeout(1000);
 
       listing.release();
-      await expect(chooser.locator(FOLDER_LIST)).toBeFocused({ timeout: TIMEOUTS.fileOpen });
+      await expect(chooser.locator(FILE_LIST)).toBeFocused({ timeout: TIMEOUTS.fileOpen });
     } finally {
       await listing.cleanup();
     }
