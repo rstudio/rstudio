@@ -1369,10 +1369,16 @@ public class TextEditingTargetAssistantHelper
             if (target_.isVisualEditorActive())
                return;
 
+            // Claim the request ID before saving: when saves are slow, requests
+            // queue behind them, and only the newest should reach the assistant.
+            requestId_ += 1;
+            final int requestId = requestId_;
+
             target_.withSavedDoc(() ->
             {
-               requestId_ += 1;
-               final int requestId = requestId_;
+               if (requestId_ != requestId)
+                  return;
+
                final Position savedCursorPosition = display_.getCursorPosition();
 
                events_.fireEvent(
@@ -2080,19 +2086,21 @@ public class TextEditingTargetAssistantHelper
       if (target_.isVisualEditorActive())
          return;
 
+      // Claim the request ID before saving, invalidating any prior requests:
+      // when saves are slow, requests queue behind them, and only the newest
+      // should reach the assistant.
+      nesId_ += 1;
+      final int id = nesId_;
+
       target_.withSavedDoc(() ->
       {
-         requestNextEditSuggestionsImpl(fromCompletionFallback);
+         if (id == nesId_)
+            requestNextEditSuggestionsImpl(id, fromCompletionFallback);
       });
    }
 
-   private void requestNextEditSuggestionsImpl(boolean fromCompletionFallback)
+   private void requestNextEditSuggestionsImpl(int id, boolean fromCompletionFallback)
    {
-      // Invalidate any prior requests.
-      nesId_ += 1;
-
-      // Save current request ID and document version.
-      final int id = nesId_;
       final int documentVersion = documentVersion_;
 
       // Notify the listeners.
