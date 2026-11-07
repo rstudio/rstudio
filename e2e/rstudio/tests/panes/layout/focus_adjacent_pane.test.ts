@@ -1,10 +1,16 @@
 // Focus Previous Pane (Shift+F6) into the Console pane (#19183), Focus
-// Next/Previous Pane (F6/Shift+F6) around the sidebar (#19191), and from
-// outside every pane (#19312).
+// Next/Previous Pane (F6/Shift+F6) around the sidebar (#19191), from
+// outside every pane (#19312), and past a Source pane hidden because no
+// documents are open (#19193).
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { TIMEOUTS } from '@utils/constants';
-import { executeCommand, isCommandChecked, resetLayoutZoom } from '@utils/commands';
+import {
+  documentCloseAllNoSave,
+  executeCommand,
+  isCommandChecked,
+  resetLayoutZoom,
+} from '@utils/commands';
 import { CONSOLE_INPUT, CONSOLE_TAB } from '@pages/console_pane.page';
 import {
   TERMINAL_TAB,
@@ -25,6 +31,7 @@ const LOAD_WORKSPACE_BUTTON = '#rstudio_tb_loadworkspace';
 const MAIN_TOOLBAR_NEW_FILE = '#rstudio_new_file_menubutton';
 const PANES = '[id^="rstudio_"][id$="_pane"]';
 const SIDEBAR_PANE_ID = 'rstudio_Sidebar_pane';
+const SOURCE_PANE = '#rstudio_Source_pane';
 const SIDEBAR_PANE = `#${SIDEBAR_PANE_ID}`;
 // The sidebar's first tab, or its Configure Panes button when it has none --
 // the Workbench default, where Posit Assistant is off.
@@ -279,6 +286,36 @@ test.describe.serial('Focus adjacent pane', () => {
     const forward = await cyclePanes(page, 'F6');
 
     expect(forward).toEqual(['rstudio_TabSet2_pane', 'rstudio_Source_pane', CONSOLE_PANE_ID]);
+  });
+
+  test('skips a Source pane hidden because no documents are open', async ({
+    rstudioPage: page,
+  }) => {
+    await setSidebarVisible(page, false);
+    await documentCloseAllNoSave(page);
+    await expect(page.locator(SOURCE_PANE)).toBeHidden();
+    await focusEnvironmentPane(page);
+
+    const forward = await cyclePanes(page, 'F6');
+    const backward = await cyclePanes(page, 'Shift+F6');
+
+    expect(forward).toEqual(['rstudio_TabSet2_pane', CONSOLE_PANE_ID]);
+    expect(backward).toEqual([CONSOLE_PANE_ID, 'rstudio_TabSet2_pane']);
+    await expect(page.locator(SOURCE_PANE)).toBeHidden();
+    expect(await page.evaluate(() => window.rstudio?.documents.active() ?? null)).toBeNull();
+  });
+
+  test('F6 from outside every pane skips a hidden Source pane', async ({
+    rstudioPage: page,
+  }) => {
+    await documentCloseAllNoSave(page);
+    await expect(page.locator(SOURCE_PANE)).toBeHidden();
+    await blurAllPanes(page);
+
+    await page.keyboard.press('F6');
+
+    await expect.poll(() => focusedPane(page)).toBe(CONSOLE_PANE_ID);
+    await expect(page.locator(SOURCE_PANE)).toBeHidden();
   });
 
   test('F6 from outside every pane focuses the first pane', async ({ rstudioPage: page }) => {

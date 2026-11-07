@@ -1148,12 +1148,25 @@ public class PaneManager
          getFocusCycleEnd(getFocusCycle(), before) :
          getAdjacentWindow(currentFocus, before);
 
-      // TabSet1 and TabSet2 could be empty, if so skip to the next pane
-      while ((StringUtil.equals(UserPrefsAccessor.Panes.QUADRANTS_TABSET1, adjacent) && tabSet1TabPanel_.isEmpty()) ||
-             (StringUtil.equals(UserPrefsAccessor.Panes.QUADRANTS_TABSET2, adjacent) && tabSet2TabPanel_.isEmpty()))
+      while (isEmptyPane(adjacent))
          adjacent = getAdjacentWindow(panesByName_.get(adjacent), before);
 
       focusWindow(adjacent);
+   }
+
+   /**
+    * Whether the focus cycle should pass over a pane because it has nothing to
+    * focus. An empty TabSet is minimized; the Source pane is hidden when it has
+    * no documents, and focusing it would open a new one (#19193).
+    */
+   private boolean isEmptyPane(String name)
+   {
+      if (StringUtil.equals(UserPrefsAccessor.Panes.QUADRANTS_TABSET1, name))
+         return tabSet1TabPanel_.isEmpty();
+      if (StringUtil.equals(UserPrefsAccessor.Panes.QUADRANTS_TABSET2, name))
+         return tabSet2TabPanel_.isEmpty();
+      SourceColumn column = sourceColumnManager_.getByName(name);
+      return column != null && column.getTabCount() == 0;
    }
 
    private void swapConsolePane(PaneConfig paneConfig, int consoleTargetIndex)
