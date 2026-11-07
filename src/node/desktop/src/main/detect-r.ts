@@ -61,9 +61,15 @@ interface REnvironment {
   ldLibraryPath: string;
 }
 
+/**
+ * Tells the user why there is no R to start a session with. Without an error,
+ * no installation was found at all; with one, an R was found but could not
+ * be used, and the error says which R and what it reported.
+ */
 export async function showRNotFoundError(error?: Error) {
+  const title = error ? t('detectRTs.rFailedToStart') : t('detectRTs.rNotFound');
   const message = error?.message ?? t('detectRTs.couldNotLocateAnRInstallationOnTheSystem');
-  await createStandaloneErrorDialog(t('detectRTs.rNotFound'), message);
+  await createStandaloneErrorDialog(title, message);
 }
 
 function executeCommand(command: string): Expected<string> {
@@ -378,8 +384,8 @@ export function detectREnvironment(rPath: string): Expected<REnvironment> {
     });
   });
   if (spawnError) {
-    logger().logDebug(`Error querying information about R: ${spawnError}`);
-    return err(spawnError);
+    logger().logWarning(`Error querying information about R: ${spawnError}`);
+    return err(new RLaunchError(rPath, { stdout: '', stderr: '', status: null, error: spawnError }));
   }
 
   const query: RQueryResult = {
@@ -594,6 +600,56 @@ export interface RQueryResult {
   error?: Error;
 }
 
+/**
+ * An R that was found but did not answer the query: it could not be launched,
+ * or it started and exited without running the query script. The message is
+ * for the user and names the R, its exit status, and what it printed, so that
+ * a broken R is not mistaken for a missing one.
+ */
+export class RLaunchError extends Error {
+  constructor(
+    public readonly rPath: string,
+    public readonly result: RQueryResult,
+  ) {
+    super(rLaunchFailureMessage(rPath, result));
+    this.name = 'RLaunchError';
+  }
+}
+
+// how much of R's stderr the user is shown: enough for R's own
+// "Fatal error:" lines and a short traceback, not a whole startup log
+const kStderrTailLines = 10;
+const kStderrTailLineLength = 200;
+
+/**
+ * The user-facing description of a failed R query.
+ */
+export function rLaunchFailureMessage(rPath: string, result: RQueryResult): string {
+  const parts = [t('detectRTs.rFoundButFailedToStart', { rPath })];
+
+  if (result.error) {
+    parts.push(t('detectRTs.launchError', { error: result.error.message || String(result.error) }));
+  }
+  if (result.status !== null) {
+    parts.push(t('detectRTs.exitStatus', { status: result.status }));
+  }
+
+  const tail = stderrTail(result.stderr);
+  parts.push(tail ? t('detectRTs.rReported', { output: tail }) : t('detectRTs.rProducedNoErrorOutput'));
+
+  return parts.join('\n\n');
+}
+
+function stderrTail(stderr: string | null): string {
+  return (stderr || '')
+    .split(/\r?\n/)
+    .map((line) => line.trimEnd())
+    .filter((line) => line.length > 0)
+    .slice(-kStderrTailLines)
+    .map((line) => (line.length > kStderrTailLineLength ? line.substring(0, kStderrTailLineLength) + '...' : line))
+    .join('\n');
+}
+
 /** The query's R was killed for not answering within detectREnvironmentAsync()'s timeout. */
 class RQueryTimeout extends Error {
   constructor(timeoutMs: number) {
@@ -607,11 +663,16 @@ class RQueryTimeout extends Error {
  */
 export function parseRQueryResult(rPath: string, result: RQueryResult): Expected<REnvironment> {
   let stdout = result.stdout || '';
-  logger().logDebug(`stdout: ${stdout.replaceAll('\x1E', EOL).replaceAll('\x1F', ';') || '[no stdout produced]'}`);
-  logger().logDebug(`stderr: ${result.stderr || '[no stderr produced]'}`);
-  logger().logDebug(`status: ${result.status} [${result.status === 0 ? 'success' : 'failure'}]`);
+
+  // a query that produced nothing usable is logged at warning level, so the
+  // default log says why a found R was rejected; a successful one stays quiet
+  const index = stdout.indexOf('\x1E');
+  const log = (message: string) => (index === -1 ? logger().logWarning(message) : logger().logDebug(message));
+  log(`stdout: ${stdout.replaceAll('\x1E', EOL).replaceAll('\x1F', ';') || '[no stdout produced]'}`);
+  log(`stderr: ${result.stderr || '[no stderr produced]'}`);
+  log(`status: ${result.status} [${result.status === 0 ? 'success' : 'failure'}]`);
   if (result.error) {
-    logger().logDebug(`error:  ${result.error}`);
+    log(`error:  ${result.error}`);
   }
 
   // NOTE: It's possible for spawnSync to fail to launch a process,
@@ -627,15 +688,14 @@ export function parseRQueryResult(rPath: string, result: RQueryResult): Expected
   // Also, contrary to the declared type signatures, the values in 'result' can
   // be null, so check those in a 'null'-y way.
   if (!stdout) {
-    logger().logDebug('Error querying information about R: no output available');
-    return err(new Error(t('common.unknownErrorOccurred')));
+    logger().logWarning(`R at ${rPath} produced no output`);
+    return err(new RLaunchError(rPath, result));
   }
 
-  // find marker character for our output
-  const index = stdout.indexOf('\x1E');
+  // without the marker, R started but never ran the query script
   if (index === -1) {
-    logger().logError('internal error: missing output marker in R output');
-    return err(new Error(t('common.unknownErrorOccurred')));
+    logger().logWarning(`R at ${rPath} did not run the query script (no output marker)`);
+    return err(new RLaunchError(rPath, result));
   }
 
   // trim off marker
@@ -721,8 +781,15 @@ function rOnPathLinux(): string | null {
   return null;
 }
 
-function scanForRPosix(): Expected<string> {
-  if (process.platform !== 'darwin') {
+/**
+ * Looks for a usable R in the well-known POSIX locations. When none of them
+ * works but one of them exists, the error is that R's launch failure, so the
+ * caller can tell "no R installed" from "R installed but broken".
+ *
+ * `locations` and `platform` are parameters for testing.
+ */
+export function scanForRPosix(locations = defaultRLocationsPosix(), platform = process.platform): Expected<string> {
+  if (platform !== 'darwin') {
     const rLocation = rOnPathLinux();
     if (rLocation) {
       logger().logDebug(`Using ${rLocation} (found by /usr/bin/which/R)`);
@@ -730,14 +797,24 @@ function scanForRPosix(): Expected<string> {
     }
   }
 
-  for (const location of defaultRLocationsPosix()) {
-    if (isValidBinary(location)) {
+  let launchError: Error | undefined;
+  for (const location of locations) {
+    if (!existsSync(location)) {
+      continue;
+    }
+
+    logger().logDebug(`Validating R installation at path: ${location}`);
+    const [, error] = detectREnvironment(location);
+    if (!error) {
       logger().logDebug(`Using ${location} (found by searching known locations)`);
       return ok(location);
     }
+
+    // remember the first R that was found but could not be started
+    launchError ??= error;
   }
-  // nothing found
-  return err();
+
+  return err(launchError);
 }
 
 // --- early detection --------------------------------------------------------

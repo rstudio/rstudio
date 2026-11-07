@@ -30,6 +30,7 @@ import {
   promptUserForR,
   rChooserLikely,
   rDetectionReady,
+  RLaunchError,
   scanForR,
   showRNotFoundError,
 } from './detect-r';
@@ -450,7 +451,10 @@ export class Application implements AppState {
       const [scannedPath, error] = scanForR();
       if (error) {
         logger().logDebug(`Error scanning for R: ${error}`);
-        await showRNotFoundError();
+
+        // an R that was found but would not start is a different problem
+        // from no R at all; say which one it was
+        await showRNotFoundError(error instanceof RLaunchError ? error : undefined);
         return exitFailure();
       }
 
@@ -465,7 +469,7 @@ export class Application implements AppState {
     const prepareError = prepareEnvironment(rPath);
     if (prepareError) {
       logger().logError(prepareError);
-      await showRNotFoundError();
+      await showRNotFoundError(prepareError);
       return exitFailure();
     }
     startupCheckpoint('r-environment-prepared');
