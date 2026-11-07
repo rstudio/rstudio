@@ -1,4 +1,4 @@
-import { errors, type Page, type Response } from '@playwright/test';
+import { errors, type Page, type Request, type Response } from '@playwright/test';
 import { TIMEOUTS } from '@utils/constants';
 import { DeadlineError, withDeadline } from '@utils/deadline';
 
@@ -53,7 +53,7 @@ export async function asyncCompletions(response: Response): Promise<AsyncComplet
 export function waitForRpcResponse(
   page: Page,
   method: string,
-  options: { timeout?: number } = {},
+  options: { timeout?: number; request?: (request: Request) => boolean } = {},
 ): Promise<RpcResponseBody> {
   const timeout = options.timeout ?? TIMEOUTS.consoleReady;
   const label = `response of ${method}`;
@@ -71,7 +71,9 @@ export function waitForRpcResponse(
 
   const settle = async (): Promise<RpcResponseBody> => {
     // Playwright's own timeout fires with the deadline; report it the same way.
-    const ack = await page.waitForResponse(rpc, { timeout }).catch((err: unknown) => {
+    const matches = (response: Response): boolean =>
+      rpc.test(response.url()) && (options.request?.(response.request()) ?? true);
+    const ack = await page.waitForResponse(matches, { timeout }).catch((err: unknown) => {
       throw err instanceof errors.TimeoutError ? new DeadlineError(label, timeout) : err;
     });
     const body = (await ack.json().catch((err: unknown) => {

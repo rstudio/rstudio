@@ -47,6 +47,12 @@ const send = (page: Page, path: string) =>
     void fetch(url, { method: 'POST' }).catch(() => {});
   }, path);
 
+// Send with a JSON body and wait for the answer.
+const sendJson = (page: Page, path: string, body: unknown) =>
+  page.evaluate(async ({ url, data }) => {
+    await fetch(url, { method: 'POST', body: JSON.stringify(data) });
+  }, { url: path, data: body });
+
 const pollEvents = (page: Page, ...events: unknown[]) => {
   eventBatches.push(events);
   return page.evaluate(async () => {
@@ -63,6 +69,17 @@ test('returns an inline answer from the named RPC only', async ({ page }) => {
   await send(page, '/rpc/get_recent_history_extra');
   await send(page, '/rpc/get_recent_history');
   expect(await response).toEqual({ result: 'mine' });
+});
+
+test('returns the answer to the request the filter selects', async ({ page }) => {
+  answers = { close_document: { result: 'any' } };
+  const response = waitForRpcResponse(page, 'close_document', {
+    request: (request) => request.postDataJSON()?.params?.[0] === 'doc2',
+  });
+  await sendJson(page, '/rpc/close_document', { params: ['doc1'] });
+  answers = { close_document: { result: 'doc2 closed' } };
+  await sendJson(page, '/rpc/close_document', { params: ['doc2'] });
+  expect(await response).toEqual({ result: 'doc2 closed' });
 });
 
 test('returns the body an async completion delivers after the ack', async ({ page }) => {
