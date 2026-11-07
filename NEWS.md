@@ -11,6 +11,7 @@
 - ([#19241](https://github.com/rstudio/rstudio/issues/19241)): The Console notice shown at startup when RStudio reduces background file operations for a project can now be turned off with the `show_reduced_file_operations_notice` preference (e.g. from the Command Palette), or for all users by an administrator with `"show_reduced_file_operations_notice": false` in `rstudio-prefs.json`.
 
 ### Fixed
+- ([#19512](https://github.com/rstudio/rstudio/issues/19512)): Fixed an issue on Windows where an R installation recorded in the registry under a path containing non-ASCII characters was not found at startup or listed in the R version chooser.
 - ([#18958](https://github.com/rstudio/rstudio/issues/18958)): Fixed an issue where selecting the `..` row and clicking Choose in the web directory chooser returned `..` instead of the parent directory's path.
 - ([#18960](https://github.com/rstudio/rstudio/issues/18960)): Fixed an issue where quickly navigating between folders in web file dialogs could open, save, or choose an item in the wrong folder when directory listings arrived out of order.
 - ([#19035](https://github.com/rstudio/rstudio/issues/19035)): Fixed an issue where backspace and form feed characters could erase parts of marker and lint messages when ANSI Escape Codes was set to Ignore.
