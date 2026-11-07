@@ -38,7 +38,7 @@ test.beforeEach(async ({ page }) => {
 
 const completion = (handle: string, response: unknown) => ({
   type: 'async_completion',
-  data: { handle, ...(response === undefined ? {} : { response }) },
+  data: { handle, response },
 });
 
 // Send without waiting for the answer, as the IDE does.
@@ -84,12 +84,27 @@ test('returns the body of a completion that arrived before the ack', async ({ pa
   expect(await response).toEqual({ result: 'early' });
 });
 
-test('rejects a completion that carries no response', async ({ page }) => {
+test('rejects an inline answer that carries an error', async ({ page }) => {
+  answers = { close_document: { error: { code: 1, message: 'no such document' } } };
+  const rejected = expect(waitForRpcResponse(page, 'close_document')).rejects.toThrow(
+    'close_document failed: {"code":1,"message":"no such document"}');
+  await send(page, '/rpc/close_document');
+  await rejected;
+});
+
+test('rejects a completion that carries an error', async ({ page }) => {
   answers = { close_document: { asyncHandle: 'h3', ep: 'false' } };
   const rejected = expect(waitForRpcResponse(page, 'close_document')).rejects.toThrow(
-    'async_completion of close_document (handle h3) carried no response');
+    'close_document failed: {"code":2}');
   await send(page, '/rpc/close_document');
-  await pollEvents(page, completion('h3', undefined));
+  await pollEvents(page, completion('h3', { error: { code: 2 }, ep: 'false' }));
+  await rejected;
+});
+
+test('rejects, naming the RPC, when it is never answered', async ({ page }) => {
+  const rejected = expect(waitForRpcResponse(page, 'ping', { timeout: 500 }))
+    .rejects.toThrow('response of ping did not complete within 500ms');
+  await send(page, '/rpc/ping');
   await rejected;
 });
 

@@ -1,6 +1,6 @@
-import type { Page, Response } from '@playwright/test';
+import { errors, type Page, type Response } from '@playwright/test';
 import { TIMEOUTS } from '@utils/constants';
-import { withDeadline } from '@utils/deadline';
+import { DeadlineError, withDeadline } from '@utils/deadline';
 
 /** A JSON-RPC response body as the session sends it. */
 export interface RpcResponseBody {
@@ -47,7 +47,8 @@ export async function asyncCompletions(response: Response): Promise<AsyncComplet
  * that thread is busy, the session acknowledges the RPC with only an
  * asyncHandle and delivers the body later in an async_completion event, which
  * can arrive before the acknowledgement is read. `timeout` bounds the whole
- * wait, reading the acknowledgement's body included.
+ * wait, reading the acknowledgement's body included. A response carrying an
+ * error rejects: a failed RPC still answers HTTP 200.
  */
 export function waitForRpcResponse(
   page: Page,
@@ -55,20 +56,24 @@ export function waitForRpcResponse(
   options: { timeout?: number } = {},
 ): Promise<RpcResponseBody> {
   const timeout = options.timeout ?? TIMEOUTS.consoleReady;
+  const label = `response of ${method}`;
   const rpc = new RegExp(`/rpc/${method}(?:\\?|$)`);
-  const completions = new Map<string, unknown>();
+  const completions = new Map<string, RpcResponseBody>();
   let onCompletion: (() => void) | undefined;
   const onResponse = async (response: Response): Promise<void> => {
     const received = await asyncCompletions(response);
     for (const { handle, response: body } of received)
-      completions.set(handle, body);
+      completions.set(handle, body as RpcResponseBody);
     if (received.length > 0)
       onCompletion?.();
   };
   page.on('response', onResponse);
 
   const settle = async (): Promise<RpcResponseBody> => {
-    const ack = await page.waitForResponse(rpc, { timeout });
+    // Playwright's own timeout fires with the deadline; report it the same way.
+    const ack = await page.waitForResponse(rpc, { timeout }).catch((err: unknown) => {
+      throw err instanceof errors.TimeoutError ? new DeadlineError(label, timeout) : err;
+    });
     const body = (await ack.json().catch((err: unknown) => {
       throw new Error(
         `${method} answered HTTP ${ack.status()} with a body that is not JSON: ${err}`);
@@ -76,19 +81,20 @@ export function waitForRpcResponse(
     const handle = body.asyncHandle;
     if (typeof handle !== 'string')
       return body;
-    return new Promise<RpcResponseBody>((resolve, reject) => {
+    return new Promise<RpcResponseBody>((resolve) => {
       onCompletion = () => {
-        if (!completions.has(handle))
-          return;
-        const response = completions.get(handle) as RpcResponseBody | undefined;
-        if (response === undefined)
-          reject(new Error(`async_completion of ${method} (handle ${handle}) carried no response`));
-        else
+        const response = completions.get(handle);
+        if (response !== undefined)
           resolve(response);
       };
       onCompletion();
     });
   };
-  return withDeadline(settle(), timeout, `response of ${method}`)
+  return withDeadline(settle(), timeout, label)
+    .then((body) => {
+      if (body.error !== undefined)
+        throw new Error(`${method} failed: ${JSON.stringify(body.error)}`);
+      return body;
+    })
     .finally(() => page.off('response', onResponse));
 }
