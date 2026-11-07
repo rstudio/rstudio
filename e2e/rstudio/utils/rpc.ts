@@ -67,9 +67,9 @@ export function waitForRpcResponse(
   page.on('response', onResponse);
 
   const settle = async (): Promise<RpcResponseBody> => {
-    // Playwright's own timeout fires with the deadline; report it the same way.
     const matches = (response: Response): boolean =>
       rpc.test(response.url()) && (options.request?.(response.request()) ?? true);
+    // Playwright's own timeout fires with the deadline; report it the same way.
     const ack = await page.waitForResponse(matches, { timeout }).catch((err: unknown) => {
       throw err instanceof errors.TimeoutError ? new DeadlineError(label, timeout) : err;
     });
