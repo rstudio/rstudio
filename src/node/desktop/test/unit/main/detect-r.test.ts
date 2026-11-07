@@ -33,6 +33,7 @@ import {
   rLaunchFailureMessage,
   rQueryCommand,
   resolveRHome,
+  scanForRPosix,
   startRDetection,
   windowsSessionPath,
 } from '../../../src/main/detect-r';
@@ -155,7 +156,8 @@ describe('DetectR', () => {
     const [, error] = parseRQueryResult('C:\\R\\R-4.6.2\\bin\\x64\\Rterm.exe', { stdout: '', stderr, status: 2 });
     assert.instanceOf(error, RLaunchError);
     assert.include(error.message, 'C:\\R\\R-4.6.2\\bin\\x64\\Rterm.exe');
-    assert.include(error.message, '2');
+    // the whole line, since the path above also contains a "2"
+    assert.include(error.message, 'Exit status: 2');
     assert.include(error.message, "Fatal error: cannot create 'R_TempDir'");
     assert.notInclude(error.message, 'unknown error');
 
@@ -205,8 +207,36 @@ describe('DetectR', () => {
       const [, error] = detectREnvironment(fakeR);
       assert.instanceOf(error, RLaunchError);
       assert.include(error.message, fakeR);
-      assert.include(error.message, '2');
+      assert.include(error.message, 'Exit status: 2');
       assert.include(error.message, "Fatal error: cannot create 'R_TempDir'");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('reports a found-but-broken R from discovery instead of "no R found"', function () {
+    if (process.platform === 'win32') {
+      this.skip();
+    }
+
+    // discovery used to drop the launch error on the floor, so the dialog
+    // claimed no R could be located even though one was installed
+    const dir = mkdtempSync(join(tmpdir(), 'detect-r-scan-'));
+    const brokenR = join(dir, 'R');
+    writeFileSync(brokenR, "#!/bin/sh\necho \"Fatal error: cannot create 'R_TempDir'\" >&2\nexit 2\n", { mode: 0o755 });
+    const missingR = join(dir, 'missing', 'R');
+
+    try {
+      // a missing candidate is skipped; a broken one is reported
+      const [, error] = scanForRPosix([missingR, brokenR], 'darwin');
+      assert.instanceOf(error, RLaunchError);
+      assert.include(error.message, brokenR);
+      assert.include(error.message, 'Exit status: 2');
+
+      // with no candidate present at all, the error is the generic one
+      const [, notFound] = scanForRPosix([missingR], 'darwin');
+      assert.isNotNull(notFound);
+      assert.notInstanceOf(notFound, RLaunchError);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

@@ -781,8 +781,15 @@ function rOnPathLinux(): string | null {
   return null;
 }
 
-function scanForRPosix(): Expected<string> {
-  if (process.platform !== 'darwin') {
+/**
+ * Looks for a usable R in the well-known POSIX locations. When none of them
+ * works but one of them exists, the error is that R's launch failure, so the
+ * caller can tell "no R installed" from "R installed but broken".
+ *
+ * `locations` and `platform` are parameters for testing.
+ */
+export function scanForRPosix(locations = defaultRLocationsPosix(), platform = process.platform): Expected<string> {
+  if (platform !== 'darwin') {
     const rLocation = rOnPathLinux();
     if (rLocation) {
       logger().logDebug(`Using ${rLocation} (found by /usr/bin/which/R)`);
@@ -790,14 +797,24 @@ function scanForRPosix(): Expected<string> {
     }
   }
 
-  for (const location of defaultRLocationsPosix()) {
-    if (isValidBinary(location)) {
+  let launchError: Error | undefined;
+  for (const location of locations) {
+    if (!existsSync(location)) {
+      continue;
+    }
+
+    logger().logDebug(`Validating R installation at path: ${location}`);
+    const [, error] = detectREnvironment(location);
+    if (!error) {
       logger().logDebug(`Using ${location} (found by searching known locations)`);
       return ok(location);
     }
+
+    // remember the first R that was found but could not be started
+    launchError ??= error;
   }
-  // nothing found
-  return err();
+
+  return err(launchError);
 }
 
 // --- early detection --------------------------------------------------------
