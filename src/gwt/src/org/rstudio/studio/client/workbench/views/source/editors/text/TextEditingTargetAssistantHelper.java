@@ -2107,10 +2107,12 @@ public class TextEditingTargetAssistantHelper
                   return;
 
                // The reply's edit ranges are in the coordinates of the document as
-               // it was when requested; discard it if the document has changed since.
+               // it was when requested, so ask again against the edited document.
+               // Most edits have already rescheduled the request; newlines don't.
                if (documentVersion != documentVersion_)
                {
-                  events_.fireEvent(new AssistantEvent(AssistantEventType.COMPLETION_RECEIVED_NONE));
+                  if (!nesTimer_.isRunning())
+                     nesTimer_.schedule(20);
                   return;
                }
 
