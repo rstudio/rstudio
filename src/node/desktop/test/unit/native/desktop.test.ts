@@ -18,6 +18,7 @@ import { clipboard, ClipboardItem } from 'electron';
 import { describe } from 'mocha';
 
 import os from 'os';
+import { spawnSync } from 'child_process';
 
 import desktop from '../../../src/native/desktop.node';
 
@@ -120,6 +121,57 @@ describe('Desktop Native Code', () => {
   // The dialog watcher's observable behavior (raising rsession dialogs above
   // the RStudio window) needs a live rsession showing a Win32 dialog, so these
   // tests only exercise the exported API surface across its lifecycle.
+  // The registry readers must hand an InstallPath to JavaScript intact
+  // (#19512): BMP and supplementary characters, a REG_EXPAND_SZ value, and a
+  // value longer than the first 256-unit buffer. Fixtures are written under
+  // HKCU\SOFTWARE\R-core so the real readers run against them, and removed
+  // afterwards.
+  describe('win32 registry readers', () => {
+    const tag = `RStudioTest-${process.pid}`;
+    const rCore = 'HKCU\\SOFTWARE\\R-core';
+    const unicodePath = 'C:\\Users\\Jürgen\\张伟\\R-4.6.2 😀';
+    const longPath = `C:\\${'x'.repeat(300)}\\R`;
+    const expandValue = '%SystemDrive%\\R-expand\\é😀';
+    const expandedPath = `${process.env.SystemDrive}\\R-expand\\é😀`;
+
+    function reg(...args: string[]) {
+      const result = spawnSync('reg.exe', args, { encoding: 'utf8' });
+      assert.equal(result.status, 0, `reg ${args.join(' ')}: ${result.stderr}`);
+    }
+
+    before(function () {
+      if (process.platform !== 'win32') {
+        this.skip();
+      }
+      reg('add', `${rCore}\\R\\${tag}`, '/v', 'InstallPath', '/t', 'REG_SZ', '/d', unicodePath, '/f');
+      reg('add', `${rCore}\\R\\${tag}-long`, '/v', 'InstallPath', '/t', 'REG_SZ', '/d', longPath, '/f');
+      reg('add', `${rCore}\\${tag}`, '/v', 'InstallPath', '/t', 'REG_EXPAND_SZ', '/d', expandValue, '/f');
+    });
+
+    after(function () {
+      if (process.platform !== 'win32') {
+        return;
+      }
+      spawnSync('reg.exe', ['delete', `${rCore}\\R\\${tag}`, '/f']);
+      spawnSync('reg.exe', ['delete', `${rCore}\\R\\${tag}-long`, '/f']);
+      spawnSync('reg.exe', ['delete', `${rCore}\\${tag}`, '/f']);
+    });
+
+    it('enumerates non-ASCII and long InstallPath values intact', () => {
+      const installations = desktop.searchRegistryForInstallationsOfR();
+      assert.include(installations, unicodePath);
+      assert.include(installations, longPath);
+    });
+
+    it('reads a non-ASCII REG_EXPAND_SZ default InstallPath, expanded', () => {
+      assert.equal(desktop.searchRegistryForDefaultInstallationOfR(tag), expandedPath);
+    });
+
+    it('returns an empty string for a version key that does not exist', () => {
+      assert.equal(desktop.searchRegistryForDefaultInstallationOfR(`${tag}-missing`), '');
+    });
+  });
+
   describe('win32 session dialog watcher', () => {
     it('watch followed by stop does not throw', () => {
       desktop.win32WatchSessionDialogs(process.pid);
