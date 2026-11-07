@@ -1873,44 +1873,7 @@ public class TextEditingTargetAssistantHelper
                         return;
                   }
 
-                  // The rest of this handler auto-triggers new suggestions.
-                  // Only proceed if assistant is available.
-                  if (!isAssistantAvailable())
-                     return;
-
-                  // Check if we've been toggled off
-                  if (!automaticCodeSuggestionsEnabled_)
-                     return;
-
-                  // Check preference value
-                  String trigger = prefs_.assistantCompletionsTrigger().getGlobalValue();
-                  if (trigger != UserPrefsAccessor.ASSISTANT_COMPLETIONS_TRIGGER_AUTO)
-                     return;
-
-                  // Respect suppression flag
-                  if (completionRequestsSuspended_)
-                     return;
-
-                  // Don't do anything if we have a selection.
-                  if (display_.hasSelection())
-                  {
-                     suggestionTimer_.cancel();
-                     completionTriggeredByCommand_ = false;
-                     return;
-                  }
-
-                  // Request completions on cursor navigation.
-                  int delayMs = MathUtil.clamp(prefs_.assistantCompletionsDelay().getValue(), 10, 5000);
-
-                  // For Posit AI with NES enabled, request NES directly instead of regular completions
-                  if (shouldRequestNesDirectly())
-                  {
-                     nesTimer_.schedule(delayMs);
-                  }
-                  else
-                  {
-                     suggestionTimer_.schedule(delayMs);
-                  }
+                  scheduleAutomaticSuggestionRequest();
                }),
 
                display_.addUndoRedoHandler((event) ->
@@ -2047,6 +2010,51 @@ public class TextEditingTargetAssistantHelper
          );
    }
 
+   /**
+    * Schedules a suggestion request as an edit does when suggestions are
+    * triggered automatically. Returns false if no request was scheduled.
+    */
+   private boolean scheduleAutomaticSuggestionRequest()
+   {
+      if (!isAssistantAvailable())
+         return false;
+
+      // Check if we've been toggled off
+      if (!automaticCodeSuggestionsEnabled_)
+         return false;
+
+      // Check preference value
+      String trigger = prefs_.assistantCompletionsTrigger().getGlobalValue();
+      if (trigger != UserPrefsAccessor.ASSISTANT_COMPLETIONS_TRIGGER_AUTO)
+         return false;
+
+      // Respect suppression flag
+      if (completionRequestsSuspended_)
+         return false;
+
+      // Don't do anything if we have a selection.
+      if (display_.hasSelection())
+      {
+         suggestionTimer_.cancel();
+         completionTriggeredByCommand_ = false;
+         return false;
+      }
+
+      // Request completions on cursor navigation.
+      int delayMs = MathUtil.clamp(prefs_.assistantCompletionsDelay().getValue(), 10, 5000);
+
+      // For Posit AI with NES enabled, request NES directly instead of regular completions
+      if (shouldRequestNesDirectly())
+      {
+         nesTimer_.schedule(delayMs);
+      }
+      else
+      {
+         suggestionTimer_.schedule(delayMs);
+      }
+      return true;
+   }
+
    private void requestNextEditSuggestions()
    {
       // Capture and clear the completion-fallback flag up-front, so that an
@@ -2107,12 +2115,16 @@ public class TextEditingTargetAssistantHelper
                   return;
 
                // The reply's edit ranges are in the coordinates of the document as
-               // it was when requested, so ask again against the edited document.
-               // Most edits have already rescheduled the request; newlines don't.
+               // it was when requested, so ask again against the edited document,
+               // as the edit would have. Most edits already have; newlines don't.
                if (documentVersion != documentVersion_)
                {
-                  if (!nesTimer_.isRunning())
-                     nesTimer_.schedule(20);
+                  boolean requestPending = nesTimer_.isRunning() || suggestionTimer_.isRunning();
+                  if (!requestPending && !scheduleAutomaticSuggestionRequest())
+                  {
+                     events_.fireEvent(
+                        new AssistantEvent(AssistantEventType.COMPLETION_RECEIVED_NONE));
+                  }
                   return;
                }
 
