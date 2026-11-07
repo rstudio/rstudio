@@ -279,9 +279,10 @@ test('a new warning scrolls into view unless a row has focus', async ({ rstudioP
     await expect(example).toBeInViewport();
     await expect(shortcut).not.toBeInViewport();
   } finally {
+    // Restore the height first: a row clipped out of view cannot be clicked.
+    await oneRow.evaluate(el => el.parentNode?.removeChild(el));
     while (await warnings.getByRole('button', { name: dismissName }).count())
       await warnings.getByRole('button', { name: dismissName }).last().click();
-    await oneRow.evaluate(el => el.parentNode?.removeChild(el));
   }
 });
 
