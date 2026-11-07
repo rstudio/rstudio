@@ -1155,11 +1155,10 @@ public class PaneManager
    }
 
    /**
-    * Whether the focus cycle should pass over a pane because it has nothing to
-    * focus. An empty TabSet is minimized; the main Source pane is hidden when it
-    * has no documents, and focusing it would open a new one (#19193). Extra
-    * columns are empty only while their first document loads, and stepping past
-    * one uses the active column, which could return that same column forever.
+    * Whether the focus cycle passes over a pane with nothing to focus. Focusing
+    * an empty main Source pane would open a document (#19193). Extra columns
+    * are empty only while loading, and stepping past one goes by the active
+    * column, which could return that same column forever.
     */
    private boolean isEmptyPane(String name)
    {

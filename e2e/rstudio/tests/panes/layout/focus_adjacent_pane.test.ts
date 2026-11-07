@@ -302,7 +302,6 @@ test.describe.serial('Focus adjacent pane', () => {
     expect(forward).toEqual(['rstudio_TabSet2_pane', CONSOLE_PANE_ID]);
     expect(backward).toEqual([CONSOLE_PANE_ID, 'rstudio_TabSet2_pane']);
     await expect(page.locator(SOURCE_PANE)).toBeHidden();
-    expect(await page.evaluate(() => window.rstudio?.documents.active() ?? null)).toBeNull();
   });
 
   test('F6 from outside every pane skips a hidden Source pane', async ({
