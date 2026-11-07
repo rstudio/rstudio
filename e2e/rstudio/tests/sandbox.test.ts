@@ -243,9 +243,11 @@ test.describe('IDE environment', () => {
 
     // One round trip for all of them, asking only which are non-empty: the
     // names aren't secret, the values are, and printing one would put it into
-    // the console and from there into the report.
+    // the console and from there into the report. names = TRUE matters: by
+    // default Sys.getenv() names its result only when asked for more than one
+    // variable, and a single leaked name would otherwise come back as "".
     const consoleActions = new ConsolePaneActions(page);
-    const probe = `Filter(nzchar, Sys.getenv(c(${names.map(rStringLiteral).join(', ')})))`;
+    const probe = `Filter(nzchar, Sys.getenv(c(${names.map(rStringLiteral).join(', ')}), names = TRUE))`;
     const leaked = await consoleActions.evalRString(`paste(names(${probe}), collapse = ",")`);
     if (leaked === null) {
       throw new Error(
