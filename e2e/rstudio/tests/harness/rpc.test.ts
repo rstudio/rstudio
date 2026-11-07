@@ -12,8 +12,9 @@ const ORIGIN = 'http://rstudio.test';
 // the test fulfills it through `held`.
 let answers: Record<string, unknown>;
 let held: Map<string, Route>;
-// Each get_events poll answers with the next batch of events queued here.
-let eventBatches: unknown[][];
+// Each get_events poll answers with the next batch of events queued here, or
+// with a raw string body.
+let eventBatches: (unknown[] | string)[];
 
 test.beforeEach(async ({ page }) => {
   answers = {};
@@ -28,9 +29,12 @@ test.beforeEach(async ({ page }) => {
     held.set(method, route);
     return Promise.resolve();
   });
-  await page.route(`${ORIGIN}/events/get_events`, (route) =>
-    route.fulfill({ json: { result: eventBatches.shift() ?? [] } }),
-  );
+  await page.route(`${ORIGIN}/events/get_events`, (route) => {
+    const batch = eventBatches.shift() ?? [];
+    return typeof batch === 'string'
+      ? route.fulfill({ body: batch })
+      : route.fulfill({ json: { result: batch } });
+  });
   await page.goto(`${ORIGIN}/`);
 });
 
@@ -51,8 +55,10 @@ const sendJson = (page: Page, path: string, body: unknown) =>
     await fetch(url, { method: 'POST', body: JSON.stringify(data) });
   }, { url: path, data: body });
 
-const pollEvents = (page: Page, ...events: unknown[]) => {
-  eventBatches.push(events);
+const pollEvents = (page: Page, ...events: unknown[]) => pollRaw(page, events);
+
+const pollRaw = (page: Page, batch: unknown[] | string) => {
+  eventBatches.push(batch);
   return page.evaluate(async () => {
     await fetch('/events/get_events', { method: 'POST' });
   });
@@ -88,6 +94,15 @@ test('returns the body an async completion delivers after the ack', async ({ pag
   const busy = { type: 'busy', data: { value: true } };
   await pollEvents(page, busy, completion('h1', { result: 'served' }));
   expect(await response).toEqual({ result: 'served' });
+});
+
+test('skips an events poll whose body cannot be read', async ({ page }) => {
+  answers = { console_input: { asyncHandle: 'h6', ep: 'false' } };
+  const response = waitForRpcResponse(page, 'console_input');
+  await send(page, '/rpc/console_input');
+  await pollRaw(page, '{"result": [');
+  await pollEvents(page, completion('h6', { result: 'after the cut' }));
+  expect(await response).toEqual({ result: 'after the cut' });
 });
 
 test('returns the body of a completion that arrived before the ack', async ({ page }) => {
