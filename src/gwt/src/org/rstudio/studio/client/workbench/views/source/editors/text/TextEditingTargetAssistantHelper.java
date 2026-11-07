@@ -1380,6 +1380,9 @@ public class TextEditingTargetAssistantHelper
                if (requestId_ != requestId)
                   return;
 
+               // Edits during the save advance the document this request covers.
+               requestedDocumentVersion_ = documentVersion_;
+
                final Position savedCursorPosition = display_.getCursorPosition();
 
                events_.fireEvent(
@@ -2103,7 +2106,9 @@ public class TextEditingTargetAssistantHelper
 
    private void requestNextEditSuggestionsImpl(int id, boolean fromCompletionFallback)
    {
+      // Edits during the save advance the document this request covers.
       final int documentVersion = documentVersion_;
+      requestedDocumentVersion_ = documentVersion;
 
       // Notify the listeners.
       events_.fireEvent(new AssistantEvent(AssistantEventType.COMPLETION_REQUESTED));
