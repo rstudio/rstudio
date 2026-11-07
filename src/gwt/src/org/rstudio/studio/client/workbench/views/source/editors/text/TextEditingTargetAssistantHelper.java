@@ -1842,6 +1842,10 @@ public class TextEditingTargetAssistantHelper
 
                display_.addDocumentChangedHandler((event) ->
                {
+                  // Count every edit, including our own, so in-flight next edit
+                  // suggestion replies can tell their ranges are stale.
+                  documentVersion_ += 1;
+
                   // Eagerly reset Tab acceptance flag
                   canAcceptSuggestionWithTab_ = false;
 
@@ -2079,8 +2083,9 @@ public class TextEditingTargetAssistantHelper
       // Invalidate any prior requests.
       nesId_ += 1;
 
-      // Save current request ID.
+      // Save current request ID and document version.
       final int id = nesId_;
+      final int documentVersion = documentVersion_;
 
       // Notify the listeners.
       events_.fireEvent(new AssistantEvent(AssistantEventType.COMPLETION_REQUESTED));
@@ -2100,6 +2105,14 @@ public class TextEditingTargetAssistantHelper
                // Check for invalidated request.
                if (id != nesId_)
                   return;
+
+               // The reply's edit ranges are in the coordinates of the document as
+               // it was when requested; discard it if the document has changed since.
+               if (documentVersion != documentVersion_)
+               {
+                  events_.fireEvent(new AssistantEvent(AssistantEventType.COMPLETION_RECEIVED_NONE));
+                  return;
+               }
 
                // Check for edits
                boolean hasEdits =
@@ -2829,6 +2842,7 @@ public class TextEditingTargetAssistantHelper
    private final Timer nesTimer_;
    private final Timer pendingHideTimer_;
    private int nesId_ = 0;
+   private int documentVersion_ = 0;
    private boolean dismissed_ = false;
    private boolean completionTriggeredByCommand_ = false;
 
