@@ -27,6 +27,7 @@ import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.widget.AriaLiveStatusWidget;
 import org.rstudio.core.client.widget.Operation;
@@ -86,6 +87,7 @@ public class ApplicationWindow extends Composite
 
       // aria-live status announcements
       ariaLiveStatusWidget_ = new AriaLiveStatusWidget();
+      ElementIds.assignElementId(ariaLiveStatusWidget_, ElementIds.APP_ARIA_LIVE_STATUS);
       applicationPanel_.add(ariaLiveStatusWidget_);
       A11y.setVisuallyHidden(applicationPanel_.getWidgetContainerElement(ariaLiveStatusWidget_));
 
