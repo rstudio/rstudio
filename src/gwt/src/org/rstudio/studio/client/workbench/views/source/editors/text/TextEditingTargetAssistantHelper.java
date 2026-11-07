@@ -1373,6 +1373,7 @@ public class TextEditingTargetAssistantHelper
             // queue behind them, and only the newest should reach the assistant.
             requestId_ += 1;
             final int requestId = requestId_;
+            requestedDocumentVersion_ = documentVersion_;
 
             target_.withSavedDoc(() ->
             {
@@ -2091,6 +2092,7 @@ public class TextEditingTargetAssistantHelper
       // should reach the assistant.
       nesId_ += 1;
       final int id = nesId_;
+      requestedDocumentVersion_ = documentVersion_;
 
       target_.withSavedDoc(() ->
       {
@@ -2127,7 +2129,10 @@ public class TextEditingTargetAssistantHelper
                // as the edit would have. Most edits already have; newlines don't.
                if (documentVersion != documentVersion_)
                {
-                  boolean requestPending = nesTimer_.isRunning() || suggestionTimer_.isRunning();
+                  boolean requestPending =
+                     nesTimer_.isRunning() ||
+                     suggestionTimer_.isRunning() ||
+                     requestedDocumentVersion_ == documentVersion_;
                   if (!requestPending && !scheduleAutomaticSuggestionRequest())
                   {
                      events_.fireEvent(
@@ -2865,6 +2870,9 @@ public class TextEditingTargetAssistantHelper
    private final Timer pendingHideTimer_;
    private int nesId_ = 0;
    private int documentVersion_ = 0;
+
+   // documentVersion_ when the newest completion or NES request was made
+   private int requestedDocumentVersion_ = 0;
    private boolean dismissed_ = false;
    private boolean completionTriggeredByCommand_ = false;
 
