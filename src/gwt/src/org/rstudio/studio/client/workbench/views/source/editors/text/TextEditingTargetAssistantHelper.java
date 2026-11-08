@@ -1373,16 +1373,14 @@ public class TextEditingTargetAssistantHelper
             // queue behind them, and only the newest should reach the assistant.
             requestId_ += 1;
             final int requestId = requestId_;
-            requestedDocumentVersion_ = documentVersion_;
+            markDocumentRequested();
 
             target_.withSavedDoc(() ->
             {
                if (requestId_ != requestId)
                   return;
 
-               // Edits during the save advance the document this request covers.
-               requestedDocumentVersion_ = documentVersion_;
-
+               final int documentVersion = markDocumentRequested();
                final Position savedCursorPosition = display_.getCursorPosition();
 
                events_.fireEvent(
@@ -1412,6 +1410,12 @@ public class TextEditingTargetAssistantHelper
                            // Check for invalidated request.
                            if (requestId_ != requestId)
                               return;
+
+                           if (documentVersion != documentVersion_)
+                           {
+                              onStaleReply();
+                              return;
+                           }
 
                            // Check for alternate cursor position.
                            Position currentCursorPosition = display_.getCursorPosition();
@@ -1852,8 +1856,8 @@ public class TextEditingTargetAssistantHelper
 
                display_.addDocumentChangedHandler((event) ->
                {
-                  // Count every edit, including our own, so in-flight next edit
-                  // suggestion replies can tell their ranges are stale.
+                  // Count every edit, including our own, so in-flight completion and
+                  // next edit suggestion replies can tell their ranges are stale.
                   documentVersion_ += 1;
 
                   // Eagerly reset Tab acceptance flag
@@ -2065,6 +2069,33 @@ public class TextEditingTargetAssistantHelper
       return true;
    }
 
+   /**
+    * Records that a request for the current document is being made, and returns
+    * its version. Requests call this when claimed and again when sent after their
+    * save, since edits made during the save are included in what is sent.
+    */
+   private int markDocumentRequested()
+   {
+      requestedDocumentVersion_ = documentVersion_;
+      return requestedDocumentVersion_;
+   }
+
+   /**
+    * Handles a reply computed for an older version of the document, whose ranges
+    * are in pre-edit coordinates: ask again as the edit would have (most edits
+    * already have; newlines don't), unless a pending or newer request covers it.
+    */
+   private void onStaleReply()
+   {
+      boolean requestPending =
+         nesTimer_.isRunning() ||
+         suggestionTimer_.isRunning() ||
+         requestedDocumentVersion_ == documentVersion_;
+
+      if (!requestPending && !scheduleAutomaticSuggestionRequest())
+         events_.fireEvent(new AssistantEvent(AssistantEventType.COMPLETION_RECEIVED_NONE));
+   }
+
    private void requestNextEditSuggestions()
    {
       // Capture and clear the completion-fallback flag up-front, so that an
@@ -2095,7 +2126,7 @@ public class TextEditingTargetAssistantHelper
       // should reach the assistant.
       nesId_ += 1;
       final int id = nesId_;
-      requestedDocumentVersion_ = documentVersion_;
+      markDocumentRequested();
 
       target_.withSavedDoc(() ->
       {
@@ -2106,9 +2137,7 @@ public class TextEditingTargetAssistantHelper
 
    private void requestNextEditSuggestionsImpl(int id, boolean fromCompletionFallback)
    {
-      // Edits during the save advance the document this request covers.
-      final int documentVersion = documentVersion_;
-      requestedDocumentVersion_ = documentVersion;
+      final int documentVersion = markDocumentRequested();
 
       // Notify the listeners.
       events_.fireEvent(new AssistantEvent(AssistantEventType.COMPLETION_REQUESTED));
@@ -2129,20 +2158,9 @@ public class TextEditingTargetAssistantHelper
                if (id != nesId_)
                   return;
 
-               // The reply's edit ranges are in the coordinates of the document as
-               // it was when requested, so ask again against the edited document,
-               // as the edit would have. Most edits already have; newlines don't.
                if (documentVersion != documentVersion_)
                {
-                  boolean requestPending =
-                     nesTimer_.isRunning() ||
-                     suggestionTimer_.isRunning() ||
-                     requestedDocumentVersion_ == documentVersion_;
-                  if (!requestPending && !scheduleAutomaticSuggestionRequest())
-                  {
-                     events_.fireEvent(
-                        new AssistantEvent(AssistantEventType.COMPLETION_RECEIVED_NONE));
-                  }
+                  onStaleReply();
                   return;
                }
 
