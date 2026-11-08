@@ -48,6 +48,7 @@
 - ([#19509](https://github.com/rstudio/rstudio/issues/19509)): [Accessibility] Fixed an issue where Global Options and Project Options panes without sub-tabs, such as Console and Spelling, contained an invisible tab that took keyboard focus and was announced by screen readers.
 - ([#19312](https://github.com/rstudio/rstudio/issues/19312)): [Accessibility] Fixed an issue where Focus Next Pane (F6) and Focus Previous Pane (Shift+F6) did nothing when focus wasn't in a pane, such as when focus was in the main toolbar. F6 now moves focus to the first pane, and Shift+F6 to the last.
 - ([#19193](https://github.com/rstudio/rstudio/issues/19193)): [Accessibility] Fixed an issue where Focus Next Pane (F6) and Focus Previous Pane (Shift+F6) opened a new untitled document when no documents were open. The hidden Source pane is now skipped.
+- ([#19470](https://github.com/rstudio/rstudio/issues/19470)): [Accessibility] Fixed an issue where the Packages pane showed an unlabeled Browse button for packages with no browse URL, such as those installed from a local path. Screen readers now announce the Browse and Remove buttons with the package's name (e.g. "Browse dplyr on CRAN", "Remove dplyr") instead of the website's URL or a generic "Remove package".
 
 ### Dependencies
 - Quarto 1.11.9

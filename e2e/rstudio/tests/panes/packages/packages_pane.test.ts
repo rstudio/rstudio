@@ -7,6 +7,8 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { TIMEOUTS } from '@utils/constants';
+import { executeCommand } from '@utils/commands';
+import { rStringLiteral } from '@utils/r';
 import type { Page } from 'playwright';
 
 const PACKAGES_TAB = '#rstudio_workbench_tab_packages';
@@ -114,6 +116,73 @@ test.describe('Packages pane', () => {
 
     // The URL stays available to sighted users as the tooltip.
     await expect(helpButton.locator('xpath=..')).toHaveAttribute('title', /^https?:\/\//);
+  });
+
+  // https://github.com/rstudio/rstudio/issues/19470: the Remove button didn't
+  // name its package, and the Browse button's name included its URL.
+  test('names the Browse and Remove buttons by action and package', async ({ rstudioPage: page }) => {
+    const installed = await consoleActions.ensurePackage('DBI');
+    test.skip(!installed, 'DBI is not installed');
+
+    await selectPackagesTab(page);
+    const panel = page.locator(PACKAGES_PANEL);
+
+    // DBI can have a row in more than one library; any one row will do.
+    const browseButton = panel.getByRole('img', { name: /^Browse DBI on / }).first();
+    await expect(browseButton).toBeAttached({ timeout: TIMEOUTS.consoleReady });
+    await expect(browseButton).not.toHaveAttribute('alt', /https?:/);
+    await expect(browseButton.locator('xpath=..')).toHaveAttribute('title', /^https?:\/\//);
+
+    await expect(
+      panel.getByRole('img', { name: 'Remove DBI', exact: true }).first(),
+    ).toBeAttached();
+  });
+
+  // https://github.com/rstudio/rstudio/issues/19470: a package installed from a
+  // local path has no browse URL, but its row showed an unlabeled Browse button.
+  test('shows no Browse button for a package installed from a local path', async ({ rstudioPage: page }) => {
+    const pkg = 'pwLocalPkg19470';
+    const setup = [
+      'local({',
+      `pkg <- ${rStringLiteral(pkg)};`,
+      'src <- file.path(tempfile("pwsrc"), pkg); dir.create(src, recursive = TRUE);',
+      'writeLines(c(paste("Package:", pkg), "Version: 0.0.1", "Title: Local Test Package",',
+      '"Description: Installed from a local path.", "License: GPL-2"),',
+      'file.path(src, "DESCRIPTION"));',
+      'file.create(file.path(src, "NAMESPACE"));',
+      'lib <- tempfile("pwlib"); dir.create(lib);',
+      'install.packages(src, repos = NULL, type = "source", lib = lib, quiet = TRUE);',
+      'options(pw.savedLibPaths = .libPaths()); .libPaths(c(lib, .libPaths()))',
+      '})',
+    ].join(' ');
+
+    try {
+      await consoleActions.executeInConsole(setup, { wait: true });
+      const ok = await consoleActions.evalRLogical(
+        `${rStringLiteral(pkg)} %in% rownames(installed.packages(.libPaths()[1]))`,
+      );
+      expect(ok, `setup failed to install ${pkg} into a temporary library`).toBe(true);
+
+      await selectPackagesTab(page);
+      await executeCommand(page, 'refreshPackages');
+
+      const row = page
+        .locator(`${PACKAGES_PANEL} tr`)
+        .filter({ has: page.locator(`input[type='checkbox'][aria-label='${pkg}']`) });
+      await expect(row).toHaveCount(1, { timeout: TIMEOUTS.consoleReady });
+
+      // The package has no URL field, so Remove is the row's only button. The
+      // broken build also rendered the Browse image, with an empty alt.
+      await expect(row.locator('img')).toHaveCount(1);
+      await expect(row.locator('img')).toHaveAttribute('alt', `Remove ${pkg}`);
+    } finally {
+      await consoleActions.executeInConsole(
+        'if (!is.null(getOption("pw.savedLibPaths"))) ' +
+          '{ .libPaths(getOption("pw.savedLibPaths")); options(pw.savedLibPaths = NULL) }',
+        { wait: true },
+      );
+      await executeCommand(page, 'refreshPackages');
+    }
   });
 
   test('shows correct initial checkbox state for an always-attached base package', async ({ rstudioPage: page }) => {

@@ -725,38 +725,23 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                @Override
                public String get(PackageInfo object)
                {
-                  String source = object.getPackageSource();
-                  String url = object.getBrowseUrl();
-
-                  if (Js.isTruthy(source))
-                  {
-                     if (Js.isTruthy(url))
-                     {
-                        return constants_.browsePackageOn(source, url);
-                     }
-                     else
-                     {
-                        return "";
-                     }
-                  }
-                  else
-                  {
-                     if (Js.isTruthy(url))
-                     {
-                        return constants_.browsePackageLabel(url);
-                     }
-                     else
-                     {
-                        return constants_.browsePackageCRANLabel();
-                     }
-                  }
+                  return constants_.browsePackageLabel(object.getName(), object.getPackageSource());
+               }
+            },
+            new TitleProvider<PackageInfo>()
+            {
+               @Override
+               public String get(PackageInfo object)
+               {
+                  return object.getBrowseUrl();
                }
             })
       {
          @Override
          public boolean showButton(PackageInfo object)
          {
-            return showButtonImpl(object);
+            // Packages installed from e.g. a local path have no browse URL.
+            return showButtonImpl(object) && Js.isTruthy(object.getBrowseUrl());
          }
       };
       
@@ -769,7 +754,14 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                   observer_.removePackage(packageInfo);
                }
             },
-            constants_.removePackageTitle())
+            new TitleProvider<PackageInfo>()
+            {
+               @Override
+               public String get(PackageInfo object)
+               {
+                  return constants_.removePackageLabel(object.getName());
+               }
+            })
       {
          @Override
          public boolean showButton(PackageInfo object)
