@@ -49,6 +49,7 @@ public class ImageButtonColumnTests extends GWTTestCase
       String second = render(column, "ggplot2");
 
       assertTrue(first, first.contains("alt=\"Help for dplyr\""));
+      assertTrue(first, first.contains("title=\"Help for dplyr\""));
       assertTrue(second, second.contains("alt=\"Help for ggplot2\""));
       assertFalse(second, second.contains("dplyr"));
    }

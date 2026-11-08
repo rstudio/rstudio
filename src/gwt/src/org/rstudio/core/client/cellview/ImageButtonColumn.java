@@ -123,6 +123,8 @@ public class ImageButtonColumn<T> extends Column<T, T>
       });
    }
 
+   // The title is both the alt text and the tooltip, so it must name the
+   // action; use the four-argument constructor to show extra detail on hover.
    public ImageButtonColumn(final ImageResource2x image,
                             final OperationWithInput<T> onClick,
                             final TitleProvider<T> titleProvider)

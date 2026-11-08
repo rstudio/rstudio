@@ -105,10 +105,12 @@ test.describe('Packages pane', () => {
 
     await selectPackagesTab(page);
 
+    // DBI can have a row in more than one library; any one row will do.
     const helpButton = page
       .locator(PACKAGES_PANEL)
-      .getByRole('img', { name: 'Open DBI website', exact: true });
-    await expect(helpButton).toHaveCount(1, { timeout: TIMEOUTS.consoleReady });
+      .getByRole('img', { name: 'Open DBI website', exact: true })
+      .first();
+    await expect(helpButton).toBeAttached({ timeout: TIMEOUTS.consoleReady });
 
     // The URL stays available to sighted users as the tooltip.
     await expect(helpButton.locator('xpath=..')).toHaveAttribute('title', /^https?:\/\//);
