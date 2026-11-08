@@ -85,7 +85,9 @@ public class ImageButtonColumn<T> extends Column<T, T>
             if (!Element.is(eventTarget))
                return;
 
-            if (parent.getFirstChildElement().isOrHasChild(Element.as(eventTarget))) {
+            // A hidden button leaves the cell empty, with no element to click.
+            Element button = parent.getFirstChildElement();
+            if (button != null && button.isOrHasChild(Element.as(eventTarget))) {
                // Ignore clicks that occur outside of the main element.
                onEnterKeyDown(context, parent, value, event, valueUpdater);
             }

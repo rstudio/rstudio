@@ -18,6 +18,10 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
 import com.google.gwt.cell.client.Cell;
+import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
@@ -67,5 +71,52 @@ public class ImageButtonColumnTests extends GWTTestCase
       assertTrue(html, html.contains("alt=\"Open dplyr website\""));
       assertTrue(html, html.contains("title=\"https://dplyr.org\""));
       assertFalse(html, html.contains("alt=\"https://"));
+   }
+
+   // Dispatching sets the event's target, which the cell reads.
+   private static NativeEvent clickOn(Element target)
+   {
+      NativeEvent click = Document.get().createClickEvent(
+            0, 0, 0, 0, 0, false, false, false, false);
+      target.dispatchEvent(click);
+      return click;
+   }
+
+   private static ImageButtonColumn<String> helpColumn()
+   {
+      return new ImageButtonColumn<>(
+            new ImageResource2x(ThemeResources.INSTANCE.helpSmall2x()),
+            value -> {},
+            value -> "Help for " + value);
+   }
+
+   // A row whose button is hidden renders an empty cell; clicking it must
+   // not throw or act on the row.
+   public void testClickOnEmptyCellIsIgnored()
+   {
+      ImageButtonColumn<String> column = helpColumn();
+      DivElement parent = Document.get().createDivElement();
+      String[] updated = { null };
+
+      column.getCell().onBrowserEvent(new Cell.Context(0, 0, null), parent, null,
+            clickOn(parent), value -> updated[0] = "updated");
+
+      assertNull(updated[0]);
+   }
+
+   public void testClickOnButtonUpdatesValue()
+   {
+      ImageButtonColumn<String> column = helpColumn();
+      DivElement parent = Document.get().createDivElement();
+      parent.setInnerHTML(render(column, "dplyr"));
+
+      // Click the image inside the rendered span, as a user would.
+      String[] updated = { null };
+
+      column.getCell().onBrowserEvent(new Cell.Context(0, 0, "dplyr"), parent, "dplyr",
+            clickOn(parent.getFirstChildElement().getFirstChildElement()),
+            value -> updated[0] = value);
+
+      assertEquals("dplyr", updated[0]);
    }
 }
