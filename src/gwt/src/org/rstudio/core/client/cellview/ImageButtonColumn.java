@@ -77,6 +77,10 @@ public class ImageButtonColumn<T> extends Column<T, T>
                                  NativeEvent event,
                                  ValueUpdater<U> valueUpdater)
       {
+         // A null value means the button is hidden and the cell is empty.
+         if (value == null)
+            return;
+
          super.onBrowserEvent(context, parent, value, event, valueUpdater);
 
          if (CLICK.equals(event.getType()))
@@ -85,9 +89,7 @@ public class ImageButtonColumn<T> extends Column<T, T>
             if (!Element.is(eventTarget))
                return;
 
-            // A hidden button leaves the cell empty, with no element to click.
-            Element button = parent.getFirstChildElement();
-            if (button != null && button.isOrHasChild(Element.as(eventTarget))) {
+            if (parent.getFirstChildElement().isOrHasChild(Element.as(eventTarget))) {
                // Ignore clicks that occur outside of the main element.
                onEnterKeyDown(context, parent, value, event, valueUpdater);
             }
