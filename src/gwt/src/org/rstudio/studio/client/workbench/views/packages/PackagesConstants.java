@@ -42,6 +42,7 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
     String packagesTabLabel();
     String filterByPackageNameLabel();
     String browsePackageLabel(String packageName, String source);
+    String browsePackageNoSourceLabel(String packageName);
     String removePackageLabel(String packageName);
     String openPackageWebsiteLabel(String packageName);
     String nameText();
