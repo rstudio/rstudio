@@ -721,15 +721,9 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                @Override
                public String get(PackageInfo object)
                {
-                  // Name the source only when it's where Browse goes. A local
-                  // install's browse URL comes from its DESCRIPTION (e.g. CRAN),
-                  // and "[Unknown]" means .rs.inferPackageSource failed.
-                  String source = object.getPackageSource();
-                  if (!Js.isTruthy(source) ||
-                      source.equals("[Unknown]") ||
-                      source.startsWith("Local ["))
-                     return constants_.browsePackageNoSourceLabel(object.getName());
-                  return constants_.browsePackageLabel(object.getName(), source);
+                  // The Source column's text often isn't the site Browse opens
+                  // (a repository URL, "Local [<path>]"), so leave it out.
+                  return constants_.browsePackageLabel(object.getName());
                }
             },
             new TitleProvider<PackageInfo>()

@@ -42,52 +42,39 @@ function packageRow(page: Page, packageName: string) {
     .filter({ has: page.locator(`input[type='checkbox'][aria-label='${packageName}']`) });
 }
 
-// Installs minimal packages, keyed by name with extra DESCRIPTION lines, into a
-// temporary library placed first on .libPaths(), then shows them in the pane.
-// Undo with restoreLibPaths.
-async function installLocalPackages(
+// Installs a minimal package from a local source directory into a temporary
+// library placed first on .libPaths(), then shows it in the pane. Undo with
+// restoreLibPaths.
+async function installLocalPackage(
   page: Page,
   consoleActions: ConsolePaneActions,
-  packages: Record<string, string[]>,
+  packageName: string,
 ): Promise<void> {
-  const descriptions = Object.entries(packages).map(([name, extra]) => {
-    const lines = [
-      `Package: ${name}`,
-      'Version: 0.0.1',
-      'Title: Local Test Package',
-      'Description: Installed from a local path.',
-      'License: GPL-2',
-      ...extra,
-    ];
-    return `c(${lines.map(rStringLiteral).join(', ')})`;
-  });
-
+  const pkg = rStringLiteral(packageName);
   await consoleActions.executeInConsole(
     [
       'local({',
-      'lib <- tempfile("pwlib"); dir.create(lib);',
-      `for (desc in list(${descriptions.join(', ')})) {`,
-      'src <- file.path(tempfile("pwsrc"), sub("^Package: ", "", desc[[1L]]));',
-      'dir.create(src, recursive = TRUE);',
-      'writeLines(desc, file.path(src, "DESCRIPTION"));',
+      `src <- file.path(tempfile("pwsrc"), ${pkg}); dir.create(src, recursive = TRUE);`,
+      `writeLines(c(paste("Package:", ${pkg}), "Version: 0.0.1", "Title: Local Test Package",`,
+      '"Description: Installed from a local path.", "License: GPL-2"),',
+      'file.path(src, "DESCRIPTION"));',
       'file.create(file.path(src, "NAMESPACE"));',
-      'install.packages(src, repos = NULL, type = "source", lib = lib, quiet = TRUE) };',
+      'lib <- tempfile("pwlib"); dir.create(lib);',
+      'install.packages(src, repos = NULL, type = "source", lib = lib, quiet = TRUE);',
       'options(pw.savedLibPaths = .libPaths()); .libPaths(c(lib, .libPaths()))',
       '})',
     ].join(' '),
     { wait: true },
   );
 
-  const names = `c(${Object.keys(packages).map(rStringLiteral).join(', ')})`;
   const ok = await consoleActions.evalRLogical(
-    `all(${names} %in% rownames(installed.packages(.libPaths()[1])))`,
+    `${pkg} %in% rownames(installed.packages(.libPaths()[1]))`,
   );
-  expect(ok, `setup failed to install ${names} into a temporary library`).toBe(true);
+  expect(ok, `setup failed to install ${packageName} into a temporary library`).toBe(true);
 
   await selectPackagesTab(page);
   await executeCommand(page, 'refreshPackages');
-  for (const name of Object.keys(packages))
-    await expect(packageRow(page, name)).toHaveCount(1, { timeout: TIMEOUTS.consoleReady });
+  await expect(packageRow(page, packageName)).toHaveCount(1, { timeout: TIMEOUTS.consoleReady });
 }
 
 async function restoreLibPaths(page: Page, consoleActions: ConsolePaneActions): Promise<void> {
@@ -181,8 +168,8 @@ test.describe('Packages pane', () => {
     await expect(helpButton.locator('xpath=..')).toHaveAttribute('title', /^https?:\/\//);
   });
 
-  // https://github.com/rstudio/rstudio/issues/19470: the Remove button didn't
-  // name its package, and the Browse button's name included its URL.
+  // https://github.com/rstudio/rstudio/issues/19470: the Browse and Remove
+  // buttons didn't name their package, and Browse's name included its URL.
   test('names the Browse and Remove buttons by action and package', async ({ rstudioPage: page }) => {
     const installed = await consoleActions.ensurePackage('DBI');
     test.skip(!installed, 'DBI is not installed');
@@ -190,10 +177,10 @@ test.describe('Packages pane', () => {
     await selectPackagesTab(page);
     const panel = page.locator(PACKAGES_PANEL);
 
-    // DBI can have a row in more than one library; any one row will do.
-    const browseButton = panel.getByRole('img', { name: /^Browse DBI on / }).first();
+    // DBI can have a row in more than one library; any one row will do. The
+    // name leaves out the source, which can be a repository URL.
+    const browseButton = panel.getByRole('img', { name: 'Browse DBI', exact: true }).first();
     await expect(browseButton).toBeAttached({ timeout: TIMEOUTS.consoleReady });
-    await expect(browseButton).not.toHaveAttribute('alt', /https?:/);
     await expect(browseButton.locator('xpath=..')).toHaveAttribute('title', /^https?:\/\//);
 
     await expect(
@@ -206,62 +193,13 @@ test.describe('Packages pane', () => {
   test('shows no Browse button for a package installed from a local path', async ({ rstudioPage: page }) => {
     const pkg = 'pwLocalPkg19470';
     try {
-      await installLocalPackages(page, consoleActions, { [pkg]: [] });
+      await installLocalPackage(page, consoleActions, pkg);
 
       // The package has no URL field, so Remove is the row's only button. The
       // broken build also rendered the Browse image, with an empty alt.
       const row = packageRow(page, pkg);
       await expect(row.locator('img')).toHaveCount(1);
       await expect(row.locator('img')).toHaveAttribute('alt', `Remove ${pkg}`);
-    } finally {
-      await restoreLibPaths(page, consoleActions);
-    }
-  });
-
-  // https://github.com/rstudio/rstudio/issues/19470: the Browse button's name
-  // includes the package's source only when that's the site Browse opens.
-  test('names the Browse button by where it goes', async ({ rstudioPage: page }) => {
-    const githubPkg = 'pwGitHubPkg19470';
-    const localPkg = 'pwLocalBiocPkg19470';
-    const unknownPkg = 'pwUnknownBiocPkg19470';
-    try {
-      // biocViews gives each Bioconductor package a bioconductor.org browse URL.
-      await installLocalPackages(page, consoleActions, {
-        [githubPkg]: [
-          'RemoteType: github',
-          'RemoteHost: api.github.com',
-          'RemoteUsername: example',
-          `RemoteRepo: ${githubPkg}`,
-        ],
-        // RStudio's install hook records this one's source as "Local [<path>]".
-        [localPkg]: ['biocViews: Software'],
-        // Having a Remote field makes the hook skip this one, as if installed
-        // outside RStudio; with no Repository its source is "[Unknown]".
-        [unknownPkg]: ['biocViews: Software', 'RemoteType: standard'],
-      });
-
-      const githubBrowse = packageRow(page, githubPkg).getByRole('img', {
-        name: `Browse ${githubPkg} on GitHub [example/${githubPkg}]`,
-        exact: true,
-      });
-      await expect(githubBrowse).toBeAttached();
-      await expect(githubBrowse.locator('xpath=..')).toHaveAttribute(
-        'title',
-        `https://github.com/example/${githubPkg}`,
-      );
-
-      // Confirm each row's source is the one the fallback is meant for.
-      await expect(packageRow(page, localPkg)).toContainText('Local [');
-      await expect(packageRow(page, unknownPkg)).toContainText('[Unknown]');
-
-      for (const pkg of [localPkg, unknownPkg]) {
-        const browse = packageRow(page, pkg).getByRole('img', {
-          name: `Browse ${pkg}`,
-          exact: true,
-        });
-        await expect(browse).toBeAttached();
-        await expect(browse.locator('xpath=..')).toHaveAttribute('title', /bioconductor/);
-      }
     } finally {
       await restoreLibPaths(page, consoleActions);
     }
