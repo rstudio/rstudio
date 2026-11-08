@@ -692,7 +692,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                @Override
                public String get(PackageInfo object)
                {
-                  return object.getPackageUrl();
+                  return constants_.openPackageWebsiteLabel(object.getName());
                }
             })
       {

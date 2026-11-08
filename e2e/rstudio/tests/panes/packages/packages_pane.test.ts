@@ -96,6 +96,21 @@ test.describe('Packages pane', () => {
     );
   });
 
+  // https://github.com/rstudio/rstudio/issues/19471: the Help button's
+  // accessible name was the package's website URL.
+  test('names the Help button by its action, not its URL', async ({ rstudioPage: page }) => {
+    // DBI's DESCRIPTION has a URL field, so its row shows a Help button.
+    const installed = await consoleActions.ensurePackage('DBI');
+    test.skip(!installed, 'DBI is not installed');
+
+    await selectPackagesTab(page);
+
+    const helpButton = page
+      .locator(PACKAGES_PANEL)
+      .getByRole('img', { name: 'Open DBI website', exact: true });
+    await expect(helpButton).toHaveCount(1, { timeout: TIMEOUTS.consoleReady });
+  });
+
   test('shows correct initial checkbox state for an always-attached base package', async ({ rstudioPage: page }) => {
     // `stats` is always on the search path -- if its checkbox isn't checked,
     // the initial-state plumbing is broken.
