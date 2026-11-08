@@ -285,7 +285,7 @@ public class DocUpdateSentinel
             @Override
             public void onCompleted()
             {
-               onSaved.execute();
+               runWhenSavedDocCurrent(retryWrite, onSaved, onError);
             }
 
             @Override
@@ -303,8 +303,7 @@ public class DocUpdateSentinel
             @Override
             public void onCompleted()
             {
-               if (onSaved != null)
-                  onSaved.execute();
+               runWhenSavedDocCurrent(retryWrite, onSaved, onError);
             }
 
             @Override
@@ -329,6 +328,26 @@ public class DocUpdateSentinel
          onSaved.execute();
       }
    }
+
+   // A save completes even if the user edited while it was in flight, leaving the
+   // session's copy behind the editor; callers of withSavedDoc() rely on the
+   // session having what the editor shows. Defer the next save until the
+   // finishing one clears isSaving_, or it would just queue behind it.
+   private void runWhenSavedDocCurrent(final boolean retryWrite,
+                                       final Command onSaved,
+                                       final CommandWithArg<String> onError)
+   {
+      if (!docDisplay_.getCode().equals(sourceDoc_.getContents()))
+      {
+         Scheduler.get().scheduleDeferred(() ->
+            withSavedDocImpl(retryWrite, onSaved, onError));
+      }
+      else if (onSaved != null)
+      {
+         onSaved.execute();
+      }
+   }
+
    private boolean maybeAutoSave()
    {
       if (quit_.isQuitting() || quit_.isSuspendingAndRestarting())
