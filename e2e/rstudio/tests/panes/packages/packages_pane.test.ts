@@ -276,4 +276,13 @@ test.describe('Packages pane', () => {
     await expect(checkbox).toBeVisible({ timeout: TIMEOUTS.consoleReady });
     await expect(checkbox).toBeChecked();
   });
+
+  test('shows no Browse or Remove button for a base package', async ({ rstudioPage: page }) => {
+    await selectPackagesTab(page);
+
+    // The row's buttons render with the row, so once it exists they would too.
+    const row = packageRow(page, 'stats');
+    await expect(row).toHaveCount(1, { timeout: TIMEOUTS.consoleReady });
+    await expect(row.getByRole('img', { name: /^(Browse|Remove) / })).toHaveCount(0);
+  });
 });

@@ -600,11 +600,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    
    private boolean showButtonImpl(PackageInfo object)
    {
-      if (object.getPackageSource() == null)
-         return false;
-      
-      String source = object.getPackageSource();
-      return source != "Base";
+      return !"Base".equals(object.getPackageSource());
    }
    
    private void initPackagesTable()
