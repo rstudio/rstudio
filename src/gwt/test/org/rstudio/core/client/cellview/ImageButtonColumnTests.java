@@ -49,7 +49,23 @@ public class ImageButtonColumnTests extends GWTTestCase
       String second = render(column, "ggplot2");
 
       assertTrue(first, first.contains("alt=\"Help for dplyr\""));
+      assertTrue(first, first.contains("title=\"Help for dplyr\""));
       assertTrue(second, second.contains("alt=\"Help for ggplot2\""));
       assertFalse(second, second.contains("dplyr"));
+   }
+
+   public void testTooltipCanDifferFromAltText()
+   {
+      ImageButtonColumn<String> column = new ImageButtonColumn<>(
+            new ImageResource2x(ThemeResources.INSTANCE.helpSmall2x()),
+            value -> {},
+            value -> "Open " + value + " website",
+            value -> "https://" + value + ".org");
+
+      String html = render(column, "dplyr");
+
+      assertTrue(html, html.contains("alt=\"Open dplyr website\""));
+      assertTrue(html, html.contains("title=\"https://dplyr.org\""));
+      assertFalse(html, html.contains("alt=\"https://"));
    }
 }

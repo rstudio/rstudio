@@ -47,12 +47,14 @@ public class ImageButtonColumn<T> extends Column<T, T>
    private static class ImageButtonCell<U> extends AbstractCell<U>
    {
       public ImageButtonCell(final ImageResource2x image,
-                             final TitleProvider<U> titleProvider)
+                             final TitleProvider<U> altProvider,
+                             final TitleProvider<U> tooltipProvider)
       {
          super(CLICK, KEYDOWN);
 
          image_ = image;
-         titleProvider_ = titleProvider;
+         altProvider_ = altProvider;
+         tooltipProvider_ = tooltipProvider;
       }
 
       @Override
@@ -62,8 +64,9 @@ public class ImageButtonColumn<T> extends Column<T, T>
       {
          if (value != null)
          {
-            String title = titleProvider_.get(value);
-            sb.append(TEMPLATES.render(image_.getSafeHtml(title), title));
+            String alt = altProvider_.get(value);
+            String tooltip = tooltipProvider_ == altProvider_ ? alt : tooltipProvider_.get(value);
+            sb.append(TEMPLATES.render(image_.getSafeHtml(alt), tooltip));
          }
       }
 
@@ -101,19 +104,32 @@ public class ImageButtonColumn<T> extends Column<T, T>
       }
 
       private final ImageResource2x image_;
-      private final TitleProvider<U> titleProvider_;
+      private final TitleProvider<U> altProvider_;
+      private final TitleProvider<U> tooltipProvider_;
    }
 
+   // The alt text is what screen readers announce, so it should name the
+   // action; the tooltip can carry extra detail, such as the target URL.
    public ImageButtonColumn(final ImageResource2x image,
                             final OperationWithInput<T> onClick,
-                            final TitleProvider<T> titleProvider)
+                            final TitleProvider<T> altProvider,
+                            final TitleProvider<T> tooltipProvider)
    {
-      super(new ImageButtonCell<>(image, titleProvider));
+      super(new ImageButtonCell<>(image, altProvider, tooltipProvider));
 
       setFieldUpdater((index, object, value) -> {
          if (value != null)
             onClick.execute(object);
       });
+   }
+
+   // The title is both the alt text and the tooltip, so it must name the
+   // action; use the four-argument constructor to show extra detail on hover.
+   public ImageButtonColumn(final ImageResource2x image,
+                            final OperationWithInput<T> onClick,
+                            final TitleProvider<T> titleProvider)
+   {
+      this(image, onClick, titleProvider, titleProvider);
    }
 
    public ImageButtonColumn(final ImageResource2x image,
