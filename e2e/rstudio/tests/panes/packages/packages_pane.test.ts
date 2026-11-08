@@ -109,6 +109,9 @@ test.describe('Packages pane', () => {
       .locator(PACKAGES_PANEL)
       .getByRole('img', { name: 'Open DBI website', exact: true });
     await expect(helpButton).toHaveCount(1, { timeout: TIMEOUTS.consoleReady });
+
+    // The URL stays available to sighted users as the tooltip.
+    await expect(helpButton.locator('xpath=..')).toHaveAttribute('title', /^https?:\/\//);
   });
 
   test('shows correct initial checkbox state for an always-attached base package', async ({ rstudioPage: page }) => {
