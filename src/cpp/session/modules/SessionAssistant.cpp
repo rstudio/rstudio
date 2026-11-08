@@ -26,6 +26,9 @@
 # include <signal.h>
 #endif
 
+#include <algorithm>
+#include <cctype>
+
 #include <boost/current_function.hpp>
 #include <boost/scope_exit.hpp>
 
@@ -264,6 +267,9 @@ ServicedClock s_servicedClock(std::chrono::seconds(1));
 
 // A queue of pending responses, sent via the agent's stdout.
 std::queue<std::string> s_pendingResponses;
+
+// The agent's stdout, split into responses across reads.
+AgentStdoutReader s_agentStdout;
 
 // Whether we're about to shut down.
 bool s_isSessionShuttingDown = false;
@@ -1148,74 +1154,18 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut, uint64_t
       return;
    }
 
-   // Discard empty lines.
-   static const boost::regex reWhitespace("^\\s*$");
-   if (regex_utils::match(stdOut, reWhitespace))
-      return;
-
-   // Responses will have the format
+   // Responses have the format
    //
    //    Content-Length: xyz
    //
    //    <body>
    //
-   // Importantly, there is no character separating the body from the
-   // next response, so we're forced to parse headers here.
-   std::size_t startIndex = 0;
-
-   while (startIndex < stdOut.length())
+   // with nothing separating the body from the next response. A read can end
+   // anywhere in that, so the reader keeps a partial response until the rest
+   // arrives.
+   std::vector<std::string> errors;
+   for (const std::string& bodyText : s_agentStdout.append(stdOut, &errors))
    {
-      // Find the split.
-      const char* splitText = "\r\n\r\n";
-      const int splitSize = 4;
-
-      auto splitIndex = stdOut.find(splitText, startIndex);
-      if (splitIndex == std::string::npos)
-      {
-         ELOG("Internal error: parsing response failed.");
-         break;
-      }
-
-      // Extract the header text.
-      std::string headerText = string_utils::substring(stdOut, startIndex, splitIndex + splitSize);
-
-      // Parse the headers.
-      core::http::Headers headers;
-      std::istringstream iss(headerText);
-      core::http::parseHeaders(iss, &headers);
-
-      // Check for content length.
-      std::string contentLength = core::http::headerValue(headers, "Content-Length");
-      if (contentLength.empty())
-      {
-         ELOG("Internal error: response contains no Content-Length header.");
-         
-         if (assistantLogLevel() >= 2)
-         {
-            std::cerr << std::endl;
-            std::cerr << "RESPONSE" << std::endl;
-            std::cerr << "------------------" << std::endl;
-            std::cerr << stdOut << std::endl;
-            std::cerr << "------------------" << std::endl;
-            std::cerr << std::endl << std::endl;
-         }
-
-         break;
-      }
-
-      // A negative length would wrap bodyEnd to before bodyStart and move
-      // startIndex backwards, which can repeat the same response forever.
-      int bodyLength = safe_convert::stringTo<int>(contentLength, 0);
-      if (bodyLength < 0)
-      {
-         ELOG("Internal error: response has a negative Content-Length header ({}).", contentLength);
-         break;
-      }
-
-      // Consume that text.
-      auto bodyStart = splitIndex + splitSize;
-      auto bodyEnd = bodyStart + static_cast<std::size_t>(bodyLength);
-      std::string bodyText = string_utils::substring(stdOut, bodyStart, bodyEnd);
       s_pendingResponses.push(bodyText);
 
       if (assistantLogLevel() >= 2)
@@ -1227,11 +1177,26 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut, uint64_t
          std::cerr << "------------------" << std::endl;
          std::cerr << std::endl << std::endl;
       }
-
-      // Update the start index.
-      startIndex = bodyEnd;
    }
-   
+
+   for (const std::string& error : errors)
+      ELOG("Internal error: {}.", error);
+
+   if (!errors.empty() && assistantLogLevel() >= 2)
+   {
+      std::cerr << std::endl;
+      std::cerr << "RESPONSE" << std::endl;
+      std::cerr << "------------------" << std::endl;
+      std::cerr << stdOut << std::endl;
+      std::cerr << "------------------" << std::endl;
+      std::cerr << std::endl << std::endl;
+   }
+
+   // Blank output does not show the agent is ready. It is still appended
+   // above, since it can be part of a response.
+   if (stdOut.find_first_not_of(" \t\r\n") == std::string::npos)
+      return;
+
    // Note that the agent is now ready.
    setAgentRuntimeStatus(AgentRuntimeStatus::Running);
 }
@@ -1370,6 +1335,9 @@ void resetForNewAgent()
       entry.second.cancel();
 
    s_pendingRequests.clear();
+
+   // A partial response from the previous process can never be completed.
+   s_agentStdout.clear();
 }
 
 Error startAgent(const std::string& assistantType = "")
@@ -3046,6 +3014,91 @@ std::string agentStderrTail(const std::string& text, std::size_t maxLength)
    AgentStderrTail tail(maxLength);
    tail.append(text);
    return tail.text();
+}
+
+namespace {
+
+// The value of a Content-Length line in a header block, matched without
+// regard to case; empty when there is none.
+std::string contentLengthValue(const std::string& headerBlock)
+{
+   static const std::string name = "content-length:";
+   std::size_t lineStart = 0;
+   while (lineStart <= headerBlock.length())
+   {
+      std::size_t lineEnd = headerBlock.find("\r\n", lineStart);
+      if (lineEnd == std::string::npos)
+         lineEnd = headerBlock.length();
+
+      std::string line = headerBlock.substr(lineStart, lineEnd - lineStart);
+      if (line.length() >= name.length() &&
+          std::equal(name.begin(), name.end(), line.begin(),
+                     [](char a, char b) { return a == std::tolower(static_cast<unsigned char>(b)); }))
+      {
+         std::string value = line.substr(name.length());
+         std::size_t first = value.find_first_not_of(" \t");
+         std::size_t last = value.find_last_not_of(" \t");
+         return first == std::string::npos ? std::string() : value.substr(first, last - first + 1);
+      }
+
+      lineStart = lineEnd + 2;
+   }
+   return std::string();
+}
+
+} // anonymous namespace
+
+std::vector<std::string> AgentStdoutReader::append(const std::string& chunk,
+                                                   std::vector<std::string>* pErrors)
+{
+   buffer_ += chunk;
+
+   std::vector<std::string> bodies;
+   while (true)
+   {
+      // Blank lines between messages carry nothing.
+      std::size_t start = buffer_.find_first_not_of(" \t\r\n");
+      if (start == std::string::npos)
+      {
+         buffer_.clear();
+         break;
+      }
+      buffer_.erase(0, start);
+
+      std::size_t headerEnd = buffer_.find("\r\n\r\n");
+      if (headerEnd == std::string::npos)
+         break; // the rest of the header has not arrived yet
+
+      std::string value = contentLengthValue(buffer_.substr(0, headerEnd));
+      bool valid = !value.empty() &&
+                   value.find_first_not_of("0123456789") == std::string::npos &&
+                   value.length() <= 9;
+      if (!valid)
+      {
+         if (pErrors)
+         {
+            pErrors->push_back(value.empty()
+                                  ? "response contains no Content-Length header"
+                                  : "response has an invalid Content-Length header (" + value + ")");
+         }
+         buffer_.erase(0, headerEnd + 4);
+         continue;
+      }
+
+      std::size_t bodyStart = headerEnd + 4;
+      std::size_t bodyLength = static_cast<std::size_t>(std::stoul(value));
+      if (buffer_.length() < bodyStart + bodyLength)
+         break; // the rest of the body has not arrived yet
+
+      bodies.push_back(buffer_.substr(bodyStart, bodyLength));
+      buffer_.erase(0, bodyStart + bodyLength);
+   }
+   return bodies;
+}
+
+void AgentStdoutReader::clear()
+{
+   buffer_.clear();
 }
 
 FilePath nesLanguageServerPath(const FilePath& installPath)
