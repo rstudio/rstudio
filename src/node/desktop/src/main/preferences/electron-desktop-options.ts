@@ -17,7 +17,7 @@
 
 import { app, BrowserWindow } from 'electron';
 import ElectronStore from 'electron-store';
-import { existsSync, renameSync, statSync } from 'fs';
+import { renameSync, statSync } from 'fs';
 import { basename, dirname, join } from 'path';
 import { properties } from '../../../../../cpp/session/resources/schema/user-state-schema.json';
 import { normalizeSeparatorsNative } from '../../ui/utils';
@@ -90,45 +90,69 @@ export function clearOptionsSingleton(): void {
 
 const kConfigFileName = 'config.json';
 
+/**
+ * Describes a config.json that could not be read and was moved aside so
+ * that startup could continue with default desktop options.
+ */
+export interface ConfigRecovery {
+  configPath: string;
+  backupPath: string;
+  reason: string;
+}
+
+// conf rethrows a JSON SyntaxError or its own schema violation for a file it
+// cannot use; anything else (EACCES, ENOSPC, ...) is not a damaged file and
+// must not be "recovered" from by discarding the user's settings
+function isCorruptConfigError(error: unknown): error is Error {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+  return error.name === 'SyntaxError' || error.message.startsWith('Config schema violation:');
+}
+
 // electron-store (conf) reads and validates config.json inside its constructor
 // and rethrows a JSON SyntaxError or schema violation. The first read happens
 // during startup, before the main window or even the Application singleton
 // exist, so a file truncated by a crash or power loss used to abort the launch
 // with no dialog (#19496). Move the damaged file aside, where it can still be
 // inspected, and start from defaults instead.
-function createConfigStore(cwd: string): ElectronStoreInterface<RStudioUserState> {
-  const create = (clearInvalidConfig: boolean) =>
+function createConfigStore(cwd: string): {
+  store: ElectronStoreInterface<RStudioUserState>;
+  recovery?: ConfigRecovery;
+} {
+  const create = () =>
     new ElectronStore<RStudioUserState>({
       cwd,
       schema: userStateSchema,
-      clearInvalidConfig,
     }) as unknown as ElectronStoreInterface<RStudioUserState>;
 
   try {
-    return create(false);
+    return { store: create() };
   } catch (error: unknown) {
-    const configPath = join(cwd, kConfigFileName);
-    if (!existsSync(configPath)) {
+    if (!isCorruptConfigError(error)) {
       throw error;
     }
 
-    const reason = error instanceof Error ? error.message : String(error);
+    const configPath = join(cwd, kConfigFileName);
+    const reason = error.message;
     const backupPath = `${configPath}.corrupt-${new Date().toISOString().replace(/[:.]/g, '-')}`;
-    let warning: string;
     try {
       renameSync(configPath, backupPath);
-      warning = `Could not read ${configPath} (${reason}); moved it to ${backupPath} and reset desktop options to their defaults.`;
-    } catch {
-      warning = `Could not read ${configPath} (${reason}) and could not move it aside; resetting desktop options to their defaults.`;
+    } catch (renameError: unknown) {
+      // a fresh store could not be written here either, so let the startup
+      // error dialog say what needs fixing rather than failing twice
+      const renameReason = renameError instanceof Error ? renameError.message : String(renameError);
+      // tsconfig's es2021 lib has no Error `cause` option; the message carries it instead
+      // eslint-disable-next-line preserve-caught-error
+      throw new Error(`Could not read ${configPath} (${reason}), and could not move it aside (${renameReason}).`);
     }
 
-    // the file logger is configured later in startup, so also say this on the console
-    console.warn(warning);
-    logger().logWarning(warning);
+    // the file logger and the Application do not exist yet; the caller reports
+    // the recovery through those once they do, so only the console hears now
+    console.warn(`Could not read ${configPath} (${reason}); moved it to ${backupPath}.`);
 
-    // with the bad file gone this is a fresh store; if it could not be moved,
-    // clearInvalidConfig makes conf ignore its contents instead of throwing
-    return create(true);
+    // with the damaged file gone this is a fresh store
+    return { store: create(), recovery: { configPath, backupPath, reason } };
   }
 }
 
@@ -142,14 +166,25 @@ function createConfigStore(cwd: string): ElectronStoreInterface<RStudioUserState
  */
 export class DesktopOptionsImpl implements DesktopOptions {
   private config: ElectronStoreInterface<RStudioUserState>;
+  private recovery?: ConfigRecovery;
   private legacyOptions = legacyPreferenceManager;
 
   // unit testing constructor to expose directory and DesktopOptions mock
   constructor(directory = '', legacyOptions?: DesktopOptions) {
-    this.config = createConfigStore(directory.length != 0 ? directory : app.getPath('userData'));
+    const { store, recovery } = createConfigStore(directory.length != 0 ? directory : app.getPath('userData'));
+    this.config = store;
+    this.recovery = recovery;
     if (legacyOptions) {
       this.legacyOptions = legacyOptions;
     }
+  }
+
+  /**
+   * How a damaged config.json was handled when these options were loaded,
+   * or undefined if the file was read normally.
+   */
+  public configRecovery(): ConfigRecovery | undefined {
+    return this.recovery;
   }
 
   // electron-store persists via write-temp + renameSync. That rename can race
