@@ -599,6 +599,38 @@ public class TerminalSessionSocketTests extends GWTTestCase
       assertEquals(Arrays.asList(ShellInput.FLUSH_SEQUENCE, 0, 1), process.sequences);
    }
 
+   // The first write of a connection resets the server's counter; input typed
+   // before it is acknowledged must not be numbered and sent alongside it.
+   public void testFirstRpcWriteIsABarrierForLaterInput()
+   {
+      Harness h = new Harness();
+      Process process = h.connect(new Callback());
+      process.mode = ConsoleProcessInfo.CHANNEL_RPC;
+      process.answerWrites = false;
+      Ack a = new Ack();
+      Ack b = new Ack();
+      Ack c = new Ack();
+      h.socket.dispatchInput("e", false, a);
+      h.socket.dispatchInput("c", false, b);
+      h.socket.dispatchInput("h", false, c);
+      assertEquals(Arrays.asList("e"), process.inputs);
+      assertEquals(Arrays.asList(ShellInput.FLUSH_SEQUENCE), process.sequences);
+
+      process.pendingWrites.remove(0).onResponseReceived(null);
+      assertEquals(1, a.count);
+      assertEquals(Arrays.asList("e", "ch"), process.inputs);
+      assertEquals(Arrays.asList(ShellInput.FLUSH_SEQUENCE, 0), process.sequences);
+
+      process.pendingWrites.remove(0).onResponseReceived(null);
+      assertEquals(1, b.count);
+      assertEquals(1, c.count);
+
+      // the barrier is down: later input is numbered and written at once
+      h.socket.dispatchInput("o", false, new Ack());
+      assertEquals(Arrays.asList("e", "ch", "o"), process.inputs);
+      assertEquals(Arrays.asList(ShellInput.FLUSH_SEQUENCE, 0, 1), process.sequences);
+   }
+
    // GWT.create() is only legal once the test runs in the GWT module, not in a
    // static initializer, which the JUnit runner evaluates in the JVM.
    private static TerminalConstants constants()

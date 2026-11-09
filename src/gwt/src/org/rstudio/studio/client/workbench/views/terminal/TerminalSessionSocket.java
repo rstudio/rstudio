@@ -241,9 +241,9 @@ public class TerminalSessionSocket
 
    private void switchToRPC()
    {
-      if (switchingToRpc_)
+      if (holdingInput_)
          return;
-      switchingToRpc_ = true;
+      holdingInput_ = true;
       closeWebSocket();
       localEcho_.clear();
       final int connection = connection_;
@@ -266,7 +266,7 @@ public class TerminalSessionSocket
          {
             if (connection != connection_)
                return;
-            switchingToRpc_ = false;
+            holdingInput_ = false;
             diagnostic_.log(constants_.failedToSwitchRPCMessage() + error.getMessage());
             List<PendingInput> pending = new ArrayList<>(pendingInput_);
             pendingInput_.clear();
@@ -297,7 +297,7 @@ public class TerminalSessionSocket
          localEcho_.clear();
 
       PendingInput pending = new PendingInput(input, requestCallback);
-      if (switchingToRpc_)
+      if (holdingInput_)
       {
          pendingInput_.add(pending);
          return;
@@ -306,7 +306,20 @@ public class TerminalSessionSocket
       switch (consoleProcess_.getChannelMode())
       {
       case ConsoleProcessInfo.CHANNEL_RPC:
-         writeRpcInput(pending);
+         if (nextWriteFlushesServer())
+         {
+            // A write carrying FLUSH_SEQUENCE resets the server's counter.
+            // Numbered writes sent alongside it can overtake it and be
+            // consumed against the old counter, so hold input until the
+            // flush has been acknowledged.
+            pendingInput_.add(pending);
+            holdingInput_ = true;
+            flushPendingInput(connection_);
+         }
+         else
+         {
+            writeRpcInput(pending);
+         }
          break;
       case ConsoleProcessInfo.CHANNEL_WEBSOCKET:
          if (socket_ != null && socket_.send(TerminalSocketPacket.textPacket(input)))
@@ -389,7 +402,7 @@ public class TerminalSessionSocket
       List<PendingInput> pending = new ArrayList<>(pendingInput_);
       pendingInput_.clear();
       connection_++;
-      switchingToRpc_ = false;
+      holdingInput_ = false;
       connectCallback_ = null;
       inputSequence_ = ShellInput.IGNORE_SEQUENCE;
       closeWebSocket();
@@ -453,9 +466,10 @@ public class TerminalSessionSocket
          callback.onConnected();
    }
 
-   // Input queued while the switch to RPC was in flight is written as one
-   // request, so the switch completes once nothing is left to write. Input
-   // typed while the burst is in flight stays queued behind it.
+   // Held input (typed while the switch to RPC was in flight, or behind a
+   // write that flushes the server's queue) is written as one request, and
+   // input typed while that request is in flight stays queued behind it. The
+   // hold ends once nothing is left to write.
    private void flushPendingInput(final int connection)
    {
       if (pendingInput_.isEmpty())
@@ -463,7 +477,7 @@ public class TerminalSessionSocket
          // A fallback after opening must not start the process and reload
          // its output a second time; connectionCompleted() only completes
          // an initial connection.
-         switchingToRpc_ = false;
+         holdingInput_ = false;
          connectionCompleted();
          return;
       }
@@ -509,24 +523,25 @@ public class TerminalSessionSocket
             ShellInput.create(nextInputSequence(), input.text, true /*echo input*/), input.callback);
    }
 
+   // The first write of a connection flushes the server-side queue, resetting
+   // the server's "last sequence" to its default; so does a write after a very
+   // diligent typist wraps the counter.
+   private boolean nextWriteFlushesServer()
+   {
+      return inputSequence_ == ShellInput.IGNORE_SEQUENCE ||
+             inputSequence_ >= Integer.MAX_VALUE - 100;
+   }
+
    private int nextInputSequence()
    {
-      if (inputSequence_ == ShellInput.IGNORE_SEQUENCE)
+      if (nextWriteFlushesServer())
       {
-         // First message sent for this connection: flush the server-side
-         // queue to reset the server's "last sequence" back to default.
          inputSequence_ = ShellInput.FLUSH_SEQUENCE;
       }
       else if (inputSequence_ == ShellInput.FLUSH_SEQUENCE)
       {
          // Last message has flushed the server, start tracking sequences again.
          inputSequence_ = 0;
-      }
-      else if (inputSequence_ >= Integer.MAX_VALUE - 100)
-      {
-         // Very diligent typist! Tell the server to flush its input
-         // queue, temporarily ignoring sequences.
-         inputSequence_ = ShellInput.FLUSH_SEQUENCE;
       }
       else
       {
@@ -604,7 +619,7 @@ public class TerminalSessionSocket
    private HandlerRegistration terminalInputHandler_;
    private TerminalWebSocket socket_;
    private int connection_;
-   private boolean switchingToRpc_;
+   private boolean holdingInput_;
    private int inputSequence_ = ShellInput.IGNORE_SEQUENCE;
    private final List<PendingInput> pendingInput_ = new ArrayList<>();
    private final TerminalLocalEcho localEcho_;
