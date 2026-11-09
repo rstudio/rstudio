@@ -282,23 +282,26 @@ public abstract class FileSystemDialog extends ModalDialogBase
    /**
     * Called when a directory listing arrives, after the browser shows it and
     * before any deferred accept runs. A navigation that fails outright skips
-    * it (see onError()), but one the context recovers from by listing a
-    * fallback directory instead (RemoteFileSystemContext.cd() falls back to
-    * the project or default working directory) arrives here as usual.
+    * it (see onError()); only the opening navigation can recover by listing
+    * a fallback directory instead (RemoteFileSystemContext.cd()), and that
+    * listing arrives here as usual.
     */
    protected void onBrowserNavigated()
    {
    }
 
    /**
-    * Closing the dialog (Cancel, Escape) does not detach it from the context,
-    * so a listing that arrives afterwards still reaches onNavigated(). Drop
-    * any deferred accept so it cannot run the operation from a closed dialog.
+    * Closing the dialog (Cancel, Escape, or a completed operation) detaches
+    * it from the context, so a navigation still in flight cannot report a
+    * listing or an error to a dialog that is gone; the deferred accept it
+    * may have been carrying goes with it. A newer dialog that has taken the
+    * context meanwhile stays attached.
     */
    @Override
    protected void onUnload()
    {
       acceptOnNavigated_ = false;
+      context_.releaseCallbacks(this);
       super.onUnload();
    }
 

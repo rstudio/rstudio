@@ -17,6 +17,7 @@ import { captureOutputTail, describeLaunchState } from './launch-diagnostics';
 import { keepRequestInterceptionOn } from './request-interception';
 import { isDebugMode } from '../utils/debug';
 import { userHomeForAuthState } from '../utils/auth';
+import { withoutCredentials } from '../utils/env';
 
 const BASE_PREFS_PATH = path.join(__dirname, 'base-prefs.jsonc');
 const OVERRIDE_PREFS_ENV = 'PW_RSTUDIO_PREFS_OVERRIDE';
@@ -581,7 +582,7 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
   const launchHome = userHomeForAuthState(workerUserHome());
   const spawnOptions: SpawnOptions = {
     env: {
-      ...process.env,
+      ...withoutCredentials(process.env),
       HOME: launchHome,
       // R expands %p / %v at startup; the resolved path is the same one
       // globalSetup pre-creates and pre-populates in r-libs-setup.ts. Setting

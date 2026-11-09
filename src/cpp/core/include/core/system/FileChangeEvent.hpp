@@ -97,12 +97,14 @@ void collectFileChangeEvents(PreviousIterator prevBegin,
                              const boost::function<bool(const FileInfo&)>& filter,
                              std::vector<FileChangeEvent>* pEvents)
 {
-   // sort the ranges
+   // Filtered retry nodes are absent from subscribers' view. Omitting them
+   // makes both successful and failed recovery publish an actual addition.
+   auto published = [](const FileInfo& info) { return !info.scanFiltered(); };
    std::vector<FileInfo> prev;
-   std::copy(prevBegin, prevEnd, std::back_inserter(prev));
+   std::copy_if(prevBegin, prevEnd, std::back_inserter(prev), published);
    std::sort(prev.begin(), prev.end(), fileInfoPathLessThan);
    std::vector<FileInfo> curr;
-   std::copy(currBegin, currEnd, std::back_inserter(curr));
+   std::copy_if(currBegin, currEnd, std::back_inserter(curr), published);
    std::sort(curr.begin(), curr.end(), fileInfoPathLessThan);
 
    // initialize the iterators
@@ -121,11 +123,22 @@ void collectFileChangeEvents(PreviousIterator prevBegin,
       else if (currFile.empty())
          comp = -1;
       else
-         comp = fileInfoPathCompare(prevFile, currFile);
+         comp = prevFile.absolutePath().compare(currFile.absolutePath());
 
       if (comp == 0)
       {
-         if (currFile.lastWriteTime() != prevFile.lastWriteTime())
+         if (prevFile.isDirectory() != currFile.isDirectory())
+         {
+            // Replace an entry only after removing its old type. Sorting
+            // directories first would otherwise announce a new directory
+            // before the old file's removal, which then deletes the new node.
+            if (!filter || filter(prevFile))
+               pEvents->emplace_back(FileChangeEvent::FileRemoved, prevFile);
+            if (!filter || filter(currFile))
+               pEvents->emplace_back(FileChangeEvent::FileAdded, currFile);
+         }
+         else if (currFile.lastWriteTime() != prevFile.lastWriteTime() ||
+                  currFile.scanFailed() != prevFile.scanFailed())
          {
             if (!filter || filter(currFile))
             {

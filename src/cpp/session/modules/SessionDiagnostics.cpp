@@ -387,7 +387,8 @@ Error getAvailableSymbolsForProject(const FilePath& filePath,
 
 void addTestPackageSymbols(std::set<std::string>* pSymbols)
 {
-   if (!projects::projectContext().isPackageProject())
+   if (projects::projectContext().packageDirectoryInProject().isEmpty() ||
+       !projects::projectContext().isPackageProject())
       return;
 
    PackageSymbolRegistry& registry = packageSymbolRegistry();
@@ -421,10 +422,12 @@ Error getAllAvailableRSymbols(const FilePath& filePath,
    //
    // For R package development, when linting a 'test' file, we can
    // safely assume that the package itself will be loaded.
-   FilePath projDir = projects::projectContext().directory();
+   projects::ProjectContext& context = projects::projectContext();
+   FilePath packageDir = context.packageDirectoryInProject();
+   FilePath projDir = packageDir.isEmpty() ? context.directory() : packageDir;
    Error error;
 
-   if (projects::projectContext().isPackageProject() && filePath.isWithin(projDir))
+   if (!packageDir.isEmpty() && context.isPackageProject() && filePath.isWithin(packageDir))
    {
       DEBUG("- Package file: '" << filePath.getAbsolutePath() << "'");
       error = getAvailableSymbolsForPackage(filePath, documentId, pSymbols);
@@ -446,7 +449,7 @@ Error getAllAvailableRSymbols(const FilePath& filePath,
       addTestPackageSymbols(pSymbols);
    }
 
-   if (filePath.isWithin(projects::projectContext().directory().completeChildPath("tests/testthat")))
+   if (filePath.isWithin(projDir.completeChildPath("tests/testthat")))
    {
       PackageSymbolRegistry& registry = packageSymbolRegistry();
       registry.fillNamespaceSymbols("testthat", pSymbols, false);
@@ -984,15 +987,20 @@ SEXP rs_lintRFile(SEXP filePathSEXP)
    return r::sexp::create(builder, &protect);
 }
 
-void onNAMESPACEchanged()
+void onNAMESPACEchanged(const FilePath& packageDir)
 {
    using namespace r::exec;
    using namespace r::sexp;
 
-   if (!projects::projectContext().hasProject())
+   // A new package directory or a removed/invalid NAMESPACE must not retain
+   // imports from the previous file.
+   RSourceIndex::setImportedPackages({});
+   RSourceIndex::setImportFromDirectives({});
+
+   if (packageDir.isEmpty())
       return;
 
-   FilePath NAMESPACE(projects::projectContext().directory().completePath("NAMESPACE"));
+   FilePath NAMESPACE(packageDir.completePath("NAMESPACE"));
    if (!NAMESPACE.exists())
       return;
 
@@ -1031,33 +1039,51 @@ void onNAMESPACEchanged()
    r_packages::AsyncPackageInformationProcess::update();
 }
 
-void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
+// The project's own package is treated as loaded for diagnostics.
+void inferProjectPackage(projects::ProjectContext& context)
 {
-   std::string namespacePath =
-      projects::projectContext().directory().completePath("NAMESPACE").getAbsolutePath();
+   if (!context.isPackageProject())
+      return;
+
+   RSourceIndex::addGloballyInferredPackage(context.packageInfo().name());
+   r_packages::AsyncPackageInformationProcess::update();
+}
+
+// NAMESPACE imports and the inferred package describe the build target
+// itself and do not depend on the source index covering it; package-scope
+// symbol resolution consults packageDirectoryInProject() separately.
+void onPackageChanged(projects::ProjectContext& context)
+{
+   onNAMESPACEchanged(context.packageDirectory());
+   inferProjectPackage(context);
+}
+
+void onFilesChanged(
+      projects::ProjectContext& context,
+      const std::vector<core::system::FileChangeEvent>& events)
+{
+   FilePath packageDir = context.packageDirectory();
+   if (packageDir.isEmpty())
+      return;
+
+   // Normalize the full file paths so PackagePath: . matches monitor events.
+   // This is lexical so removed files still match, without resolving symlinks.
+   std::string namespacePath = packageDir.completePath("NAMESPACE").getLexicallyNormalPath();
+   std::string descriptionPath = packageDir.completePath("DESCRIPTION").getLexicallyNormalPath();
 
    for (const core::system::FileChangeEvent& event : events)
    {
-      std::string eventPath = event.fileInfo().absolutePath();
+      std::string eventPath = FilePath(event.fileInfo().absolutePath()).getLexicallyNormalPath();
       if (eventPath == namespacePath)
-         onNAMESPACEchanged();
+         onNAMESPACEchanged(packageDir);
+      else if (eventPath == descriptionPath)
+         inferProjectPackage(context);
    }
 }
 
 void afterSessionInitHook(bool newSession)
 {
-   if (projects::projectContext().hasProject() &&
-      projects::projectContext().directory().completePath("NAMESPACE").exists())
-   {
-      onNAMESPACEchanged();
-   }
-
-   if (projects::projectContext().isPackageProject())
-   {
-      std::string packageName = projects::projectContext().packageInfo().name();
-      RSourceIndex::addGloballyInferredPackage(packageName);
-      r_packages::AsyncPackageInformationProcess::update();
-   }
+   onPackageChanged(projects::projectContext());
 }
 
 bool collectLint(int depth,
@@ -1113,6 +1139,24 @@ SEXP rs_lintDirectory(SEXP directorySEXP)
 
 } // anonymous namespace
 
+void monitorProjectNamespace(projects::ProjectContext& context)
+{
+   context.onConfigChanged.connect([&context]() { onPackageChanged(context); });
+
+   projects::FileMonitorCallbacks cb;
+   cb.onMonitoringEnabled = [&context](const tree<FileInfo>&)
+   {
+      // NAMESPACE and DESCRIPTION may have changed between session
+      // initialization and the initial monitor snapshot.
+      onPackageChanged(context);
+   };
+   cb.onFilesChanged = [&context](const std::vector<core::system::FileChangeEvent>& events)
+   {
+      onFilesChanged(context, events);
+   };
+   context.subscribeToFileMonitor("Diagnostics", cb);
+}
+
 core::Error initialize()
 {
    using namespace rstudio::core;
@@ -1120,10 +1164,7 @@ core::Error initialize()
    using namespace module_context;
 
    events().afterSessionInitHook.connect(afterSessionInitHook);
-
-   session::projects::FileMonitorCallbacks cb;
-   cb.onFilesChanged = onFilesChanged;
-   projects::projectContext().subscribeToFileMonitor("Diagnostics", cb);
+   monitorProjectNamespace(projects::projectContext());
 
    RS_REGISTER_CALL_METHOD(rs_lintRFile, 1);
    RS_REGISTER_CALL_METHOD(rs_lintDirectory, 1);

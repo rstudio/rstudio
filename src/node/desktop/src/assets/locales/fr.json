@@ -132,6 +132,12 @@
   "mainWindowTs": {
     "rSessionFailedToStart": "La session R n'a pas réussi à démarrer."
   },
+  "defaultFileHandlerTs": {
+    "confirmMessage": "Utiliser RStudio pour ouvrir les fichiers R ?",
+    "confirmDetail": "Les fichiers R (.R) s'ouvrent actuellement dans une autre application, comme Xcode. Vous pourrez modifier ce choix plus tard dans Outils > Options globales > Général > Avancé.",
+    "useRStudio": "Utiliser RStudio",
+    "keepCurrent": "Conserver l'application actuelle"
+  },
   "updaterTs": {
     "updateNotInstalled": "RStudio {{version}} n'a pas été installé.",
     "otherWindowsWereOpen": "D'autres fenêtres RStudio étaient encore ouvertes lorsque RStudio a quitté. Fermez-les, puis choisissez Aide > Vérifier les mises à jour au prochain démarrage de RStudio pour réessayer.",
