@@ -3265,6 +3265,7 @@ public class PaneManager
       tabPanel.addSelectionHandler(integerSelectionEvent ->
       {
          int index = integerSelectionEvent.getSelectedItem();
+         minimized.setSelectedIndex(index);
          WorkbenchTab selected = tabPanel.getTab(index);
          lastSelectedTab_ = workbenchTabToTab(selected);
          session_.persistClientState();
@@ -3343,6 +3344,7 @@ public class PaneManager
             labels.add(getTabLabel(tab));
       }
       minimized.setTabs(labels.toArray(new String[labels.size()]));
+      minimized.setSelectedIndex(tabPanel.getSelectedIndex());
    }
 
    private String getTabLabel(Tab tab)

@@ -183,9 +183,38 @@ test.describe('Workbench tabs', () => {
 
   test('a minimized pane names its tab strip after the pane', async ({ rstudioPage: page }) => {
     // The minimized strip's tablist once read "accessibleName_ minimized".
+    // The region around it carries "minimized"; the tablist is named after
+    // the pane alone, as the expanded one is, so the name isn't read twice.
     await executeCommand(page, 'maximizeTabSet2');
-    const minimizedTablist = page.locator('table[role="tablist"]').filter({ visible: true });
-    await expect(minimizedTablist).toHaveCount(1);
-    await expect(minimizedTablist).toHaveAttribute('aria-label', 'TabSet1 minimized');
+    const region = page.getByRole('region', { name: 'TabSet1 minimized', exact: true });
+    await expect(region).toBeVisible();
+    await expect(region.getByRole('tablist', { name: 'TabSet1', exact: true })).toBeVisible();
+  });
+
+  test('a minimized pane restores from its tab strip by keyboard', async ({ rstudioPage: page }) => {
+    await executeCommand(page, 'activateHistory');
+    await executeCommand(page, 'maximizeTabSet2');
+    const tablist = page.getByRole('region', { name: 'TabSet1 minimized', exact: true })
+      .getByRole('tablist');
+    const historyTab = tablist.getByRole('tab', { name: 'History', exact: true });
+    const envTab = tablist.getByRole('tab', { name: 'Environment', exact: true });
+
+    // The pane's selected tab is the strip's one tab stop.
+    await expect(historyTab).toHaveAttribute('aria-selected', 'true');
+    await expect(historyTab).toHaveAttribute('tabindex', '0');
+    await expect(envTab).toHaveAttribute('aria-selected', 'false');
+    await expect(envTab).toHaveAttribute('tabindex', '-1');
+
+    // Arrows move focus without restoring the pane; Enter restores it on the
+    // focused tab.
+    await historyTab.focus();
+    await page.keyboard.press('ArrowLeft');
+    await expect(envTab).toBeFocused();
+    await expect(tablist).toBeVisible();
+    await page.keyboard.press('Enter');
+
+    await expect(page.locator(ENV_PANEL)).toBeVisible();
+    await expect(page.locator(TAB_ENVIRONMENT)).toHaveAttribute('aria-selected', 'true');
+    await expect(tablist).toBeHidden();
   });
 });
