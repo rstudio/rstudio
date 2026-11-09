@@ -294,13 +294,14 @@ public abstract class FileSystemDialog extends ModalDialogBase
     * Closing the dialog (Cancel, Escape, or a completed operation) detaches
     * it from the context, so a navigation still in flight cannot report a
     * listing or an error to a dialog that is gone; the deferred accept it
-    * may have been carrying goes with it.
+    * may have been carrying goes with it. A newer dialog that has taken the
+    * context meanwhile stays attached.
     */
    @Override
    protected void onUnload()
    {
       acceptOnNavigated_ = false;
-      context_.setCallbacks(null);
+      context_.releaseCallbacks(this);
       super.onUnload();
    }
 

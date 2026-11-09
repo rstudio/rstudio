@@ -31,6 +31,12 @@ public interface FileSystemContext
 
    void setCallbacks(Callbacks callbacks);
 
+   /**
+    * Detaches the given callbacks, if they are still the current ones. A
+    * later owner's callbacks are left in place.
+    */
+   void releaseCallbacks(Callbacks callbacks);
+
    String combine(String root, String name);
    FileSystemItem[] parseDir(String dirPath);
    boolean isAbsolute(String path);

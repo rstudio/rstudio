@@ -151,6 +151,22 @@ public class FileDialogNavigationTests extends GWTTestCase
       assertEquals("/home/new", context_.pwd());
    }
 
+   // a context shared across dialogs (e.g. Projects') is taken by the next
+   // dialog to open; the earlier dialog closing must not detach it
+   public void testClosingDialogLeavesNewerDialogAttached()
+   {
+      SaveFileDialog first = saveFileDialog();
+      ChooseFolderDialog2 second = chooseFolderDialog();
+      first.onUnload();
+
+      commitDirectory(second, "/a");
+      server_.succeed(2);
+      assertEquals("/a", context_.pwd());
+
+      second.maybeAccept();
+      assertAccepted("/a");
+   }
+
    private ChooseFolderDialog2 chooseFolderDialog()
    {
       ChooseFolderDialog2 dialog = new ChooseFolderDialog2("Choose Folder", "Choose", context_, false, recordAccepted());
