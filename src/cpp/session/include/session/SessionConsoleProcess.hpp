@@ -45,6 +45,7 @@ namespace console_process {
 const int kFlushSequence = -2; // see ShellInput.FLUSH_SEQUENCE
 const int kIgnoreSequence = -1; // see ShellInput.IGNORE_SEQUENCE
 const size_t kAutoFlushLength = 20;
+const std::chrono::milliseconds kAutoFlushDelay(500);
 
 class ConsoleProcess;
 typedef boost::shared_ptr<ConsoleProcess> ConsoleProcessPtr;
@@ -161,6 +162,10 @@ public:
    void enqueInput(const Input& input);
    void enqueInputInternalLock(const Input& input);
    Input dequeInput();
+
+   // How long dequeInput() waits on a missing sequence number before giving
+   // up on it; tests shorten this.
+   void setInputGapTimeout(std::chrono::milliseconds timeout) { inputGapTimeout_ = timeout; }
    void enquePrompt(const std::string& prompt);
    void interrupt();
    void terminate();
@@ -290,6 +295,8 @@ private:
    // Pending input (writes or ptyInterrupts)
    std::deque<Input> inputQueue_;
    int lastInputSequence_ = kIgnoreSequence;
+   std::chrono::steady_clock::time_point inputGapSince_;
+   std::chrono::milliseconds inputGapTimeout_ = kAutoFlushDelay;
    boost::mutex inputOutputQueueMutex_;
 
    boost::function<bool(const std::string&, Input*)> onPrompt_;

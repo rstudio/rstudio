@@ -450,12 +450,14 @@ ConsoleProcess::Input ConsoleProcess::dequeInput()
    Input input = inputQueue_.front();
    if (input.sequence == kIgnoreSequence || input.sequence == kFlushSequence)
    {
+      inputGapSince_ = std::chrono::steady_clock::time_point();
       inputQueue_.pop_front();
       return input;
    }
 
    if (input.sequence == lastInputSequence_ + 1)
    {
+      inputGapSince_ = std::chrono::steady_clock::time_point();
       lastInputSequence_++;
       inputQueue_.pop_front();
       return input;
@@ -466,14 +468,23 @@ ConsoleProcess::Input ConsoleProcess::dequeInput()
    // for; deliver it now rather than block everything behind it.
    if (input.sequence <= lastInputSequence_)
    {
+      inputGapSince_ = std::chrono::steady_clock::time_point();
       inputQueue_.pop_front();
       return input;
    }
 
    // Getting here means input is out of sequence. We want to prevent
-   // getting permanently stuck if a message gets lost and the
-   // gap(s) never get filled in. So we'll flush it if input piles up.
-   if (inputQueue_.size() >= kAutoFlushLength)
+   // getting permanently stuck if a message gets lost and the gap(s) never
+   // get filled in, so we flush if input piles up. Reordering a request's
+   // successors overtook resolves within milliseconds, so a gap still open
+   // after kAutoFlushDelay is a lost request, or a stale flush from a
+   // previous connection that reset the count: give up on it then, too,
+   // rather than hold the terminal until enough further typing arrives.
+   auto now = std::chrono::steady_clock::now();
+   if (inputGapSince_ == std::chrono::steady_clock::time_point())
+      inputGapSince_ = now;
+
+   if (inputQueue_.size() >= kAutoFlushLength || now - inputGapSince_ >= inputGapTimeout_)
    {
       // set everything in queue to "ignore" so it will be pulled from
       // queue as-is, even with gaps
@@ -483,6 +494,7 @@ ConsoleProcess::Input ConsoleProcess::dequeInput()
          it.sequence = kIgnoreSequence;
       }
 
+      inputGapSince_ = std::chrono::steady_clock::time_point();
       input.sequence = kIgnoreSequence;
       inputQueue_.pop_front();
       return input;

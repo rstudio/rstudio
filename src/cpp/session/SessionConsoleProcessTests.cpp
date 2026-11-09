@@ -247,6 +247,39 @@ TEST_F(ConsoleProcessTest, LateOrRepeatedSequenceIsDeliveredWithoutBlocking) {
    EXPECT_EQ("onetwo", result);
 }
 
+// A gap that stays open is given up on after a delay as well as after
+// kAutoFlushLength requests. One such gap: a flush from a previous connection
+// arriving after the replacement's first numbered input, resetting the count
+// so the replacement's next number no longer follows it.
+TEST_F(ConsoleProcessTest, GapOpenPastTimeoutIsFlushed) {
+   // with the default timeout, a fresh gap waits
+   pCP->enqueInput(ConsoleProcess::Input(0, std::string("a")));
+   EXPECT_EQ("a", pCP->dequeInput().text);
+   pCP->enqueInput(ConsoleProcess::Input(2, std::string("c")));
+   EXPECT_TRUE(pCP->dequeInput().empty());
+
+   // once the timeout has passed, the blocked input is delivered
+   pCP->setInputGapTimeout(std::chrono::milliseconds(0));
+   EXPECT_EQ("c", pCP->dequeInput().text);
+   EXPECT_TRUE(pCP->dequeInput().empty());
+
+   // the late predecessor is delivered when it arrives, and numbering resumes
+   pCP->enqueInput(ConsoleProcess::Input(1, std::string("b")));
+   EXPECT_EQ("b", pCP->dequeInput().text);
+   pCP->enqueInput(ConsoleProcess::Input(3, std::string("d")));
+   EXPECT_EQ("d", pCP->dequeInput().text);
+
+   // a stale flush resets the count; the next number is given up on after
+   // the timeout instead of waiting for a predecessor that never comes
+   pCP->enqueInput(ConsoleProcess::Input(kFlushSequence, std::string("")));
+   EXPECT_EQ("", pCP->dequeInput().text);
+   pCP->enqueInput(ConsoleProcess::Input(4, std::string("e")));
+   EXPECT_EQ("e", pCP->dequeInput().text);
+   pCP->enqueInput(ConsoleProcess::Input(5, std::string("f")));
+   EXPECT_EQ("f", pCP->dequeInput().text);
+   EXPECT_TRUE(pCP->dequeInput().empty());
+}
+
 TEST_F(ConsoleProcessTest, ExplicitFlushReturnsInputWithGapsAndResetsSequence) {
    std::vector<ConsoleProcess::Input> input;
    std::string expected;
