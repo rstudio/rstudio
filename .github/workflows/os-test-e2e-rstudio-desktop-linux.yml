@@ -207,6 +207,7 @@ permissions:
   # Lets the e2e-merge job mint an OIDC token to assume the S3 report-upload
   # role (see .github/actions/os-publish-e2e-report).
   id-token: write
+  actions: write  # the e2e-merge job deletes the shard blob artifacts once merged
 
 defaults:
   run:
@@ -1154,6 +1155,8 @@ jobs:
       pull-requests: write
       # OIDC token for the S3 report upload (os-publish-e2e-report).
       id-token: write
+      # Deleting the shard blob artifacts once merged (os-e2e-report).
+      actions: write
 
     steps:
       # This engine's outcome, for a caller that runs several engines as one matrix

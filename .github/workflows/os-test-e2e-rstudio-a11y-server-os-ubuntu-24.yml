@@ -1,8 +1,8 @@
 name: "Test: E2E Playwright RStudio Accessibility (Server, Ubuntu 24, Open Source)"
 
 # Manually dispatched axe-core scan of RStudio Server (e2e/rstudio/tests/a11y).
-# Results: the merged playwright-report-linux-server artifact and a violation
-# block on the run's Summary page.
+# Results: a violation block on the run's Summary page, and the merged
+# Playwright report linked from there (browsable from the Posit tailnet).
 on:
   workflow_dispatch:
     inputs:
@@ -39,6 +39,7 @@ permissions:
   contents: read
   pull-requests: write
   id-token: write
+  actions: write  # the engines' e2e-merge job deletes the shard blob artifacts once merged
 
 jobs:
   a11y-server-ubuntu24:

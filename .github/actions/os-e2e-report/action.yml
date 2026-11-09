@@ -1,23 +1,26 @@
 name: "Merge and report E2E results"
 description: >
   The body of an engine workflow's e2e-merge job: merge the per-shard Playwright
-  blob reports into one HTML report, parse the aggregated counts, upload the
-  report as an artifact, publish a browsable copy to S3 on failure, post a
-  sticky PR comment with the totals, and optionally fail the job when the run
-  executed no tests. Every engine runs this behind a checkout, so the comment
-  format, the artifact naming, and the release gate live in one place.
+  blob reports into one HTML report, parse the aggregated counts, publish the
+  report to S3 (its only copy: a GitHub artifact can be downloaded by anyone
+  signed in to GitHub, so none is uploaded and the shard blobs are deleted once
+  merged), post a sticky PR comment with the totals, and optionally fail the
+  job when the run executed no tests. Every engine runs this behind a
+  checkout, so the comment format, the artifact naming, and the release gate
+  live in one place.
 
   The calling job must have checked out the repository (a local action cannot
-  be resolved before that) and must grant pull-requests: write for the comment
-  and id-token: write for the S3 upload.
+  be resolved before that) and must grant pull-requests: write for the
+  comment, id-token: write for the S3 upload, and actions: write to delete
+  the blob artifacts.
 
 inputs:
   label:
     description: >-
       The engine label its shards used for their artifacts. Blob reports are
       downloaded from playwright-blob-report-<label>-*, the merged report is
-      uploaded as playwright-report-<label>, the S3 copy is published under
-      <label>, and the sticky comment is keyed e2e-<label>-results.
+      published to S3 under <label>, and the sticky comment is keyed
+      e2e-<label>-results.
     required: true
   title:
     description: "Heading of the PR comment, e.g. 'macOS Desktop E2E - ARM64'."
@@ -39,19 +42,12 @@ inputs:
     description: "Fail when zero tests passed ('true' / 'false'); see the gate step for why a zero-passed run must not report green."
     required: false
     default: "false"
-  publish-report:
-    description: >-
-      Allow publishing the report to S3 on failure ('true' / 'false').
-      Accessibility runs pass 'false' so their results stay off the public
-      bucket however the run was started.
-    required: false
-    default: "true"
   role-arn:
     description: "IAM role assumed via OIDC for the S3 upload (secrets.AWS_E2E_REPORTS_ROLE_ARN). Empty, as on fork PRs, makes publishing a no-op."
     required: false
     default: ""
   github-token:
-    description: "Token used to post the sticky PR comment (github.token)."
+    description: "Token used to post the sticky PR comment and delete the blob artifacts (github.token)."
     required: true
 
 outputs:
@@ -98,6 +94,7 @@ runs:
         merge-multiple: true
 
     - name: Merge shard reports
+      id: merge
       shell: bash
       working-directory: e2e/rstudio
       run: |
@@ -116,22 +113,12 @@ runs:
       working-directory: e2e/rstudio
       run: node scripts/summarize-merged-report.mjs
 
-    - name: Upload merged Playwright report
-      id: upload-report
-      if: always()
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-        name: playwright-report-${{ inputs.label }}
-        path: e2e/rstudio/playwright-report/
-        retention-days: 15
-        if-no-files-found: ignore
-
-    # Publish a browsable copy of the report to S3 on failure only, so
-    # reviewers can inspect it without downloading the zip. Best-effort: a
-    # no-op on fork PRs (no secret) and never fails the job.
+    # The report's only copy, browsable from the Posit tailnet (see
+    # .github/e2e-reports). Best-effort: a no-op on fork PRs (no secret) and
+    # never fails the job. The bucket's 14-day lifecycle rule reaps it.
     - name: Publish report to S3
       id: publish-report
-      if: always() && inputs.publish-report == 'true' && steps.summary.outputs.failed != '0' && steps.summary.outputs.failed != ''
+      if: always()
       uses: ./.github/actions/os-publish-e2e-report
       with:
         role-arn: ${{ inputs.role-arn }}
@@ -158,10 +145,29 @@ runs:
           | :---: | :---: | :---: | :---: |
           | **${{ steps.summary.outputs.passed }}** | **${{ steps.summary.outputs.failed }}** | **${{ steps.summary.outputs.skipped }}** | **${{ steps.summary.outputs.flaky }}** |
 
-          ${{ steps.publish-report.outputs.url != '' && format('**[View Report Online]({0})** | ', steps.publish-report.outputs.url) || '' }}**[Download Report](${{ steps.upload-report.outputs.artifact-url }})**
+          ${{ steps.publish-report.outputs.url != '' && format('**[View report online]({0})**', steps.publish-report.outputs.url) || '_No report was published; see the run log._' }}
 
           ---
           <sub>${{ inputs.shard-count == '1' && '1 shard' || format('{0} shards', inputs.shard-count) }} · ${{ inputs.runner-note }} · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
+
+    # The shard blobs hold every trace and screenshot the report does, and a
+    # GitHub artifact can be downloaded by anyone signed in to GitHub. They
+    # exist only to be merged, so they go once the merge has succeeded; their
+    # one-day retention is the fallback when this job never gets this far.
+    # Not when the merge failed: a re-run of this job needs them.
+    - name: Delete shard blob artifacts
+      if: always() && steps.merge.outcome == 'success'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        PREFIX: playwright-blob-report-${{ inputs.label }}-
+      run: |
+        gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" \
+          --jq ".artifacts[] | select(.name | startswith(\"$PREFIX\")) | .id" |
+        while read -r id; do
+          gh api -X DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$id" > /dev/null \
+            || echo "::warning::Could not delete artifact $id; it expires on its own within a day."
+        done
 
     # Release-gate floor, last so the reporting above still runs. A run that
     # executed nothing must not report green: Playwright suppresses its own
