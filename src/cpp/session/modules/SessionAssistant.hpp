@@ -75,15 +75,10 @@ private:
 std::string agentStderrTail(const std::string& text, std::size_t maxLength);
 
 // Splits the stdout of the agent, or of the chat backend, into the bodies of
-// its Content-Length framed messages. A pipe read can end anywhere, including
-// between a message's header and its body, so a partial message is kept until
-// the rest arrives. A header block without a valid Content-Length is skipped
-// up to the next Content-Length header, with a description added to errors. A
-// Content-Length that does not match its body cannot be detected. One too
-// short yields a truncated body, and reading resumes at the next header. One
-// too long is filled out with the messages after it, as many as fit in the
-// excess, which can be up to 64 MiB of output. Exposed for SessionChat and
-// for testing.
+// its Content-Length framed messages, keeping a message split across reads
+// until the rest arrives. A header block without a valid Content-Length is
+// skipped to the next Content-Length header, and described in errors. A
+// Content-Length that doesn't match its body can't be detected.
 class AgentStdoutReader
 {
 public:

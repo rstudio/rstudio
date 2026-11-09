@@ -149,6 +149,16 @@ TEST(SessionAssistant, StdoutReaderRecoversFromAContentLengthThatIsTooShort)
    EXPECT_EQ(responses.back(), "{\"id\":1}");
 }
 
+TEST(SessionAssistant, StdoutReaderFillsAContentLengthThatIsTooLongWithTheNextMessage)
+{
+   // The excess can't be told apart from a body, so the next message is lost.
+   AgentStdoutReader reader;
+   std::string next = frame("{\"id\":1}");
+   std::string body = "{}" + next;
+   EXPECT_EQ(reader.append("Content-Length: " + std::to_string(body.length()) + "\r\n\r\n{}" + next),
+             std::vector<std::string>{body});
+}
+
 TEST(SessionAssistant, StdoutReaderSkipsStrayOutputBeforeAHeader)
 {
    AgentStdoutReader reader;
