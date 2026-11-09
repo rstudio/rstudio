@@ -4372,9 +4372,14 @@ public class AceEditor implements DocDisplay
       widget_.getEditor().findAll(needle);
    }
 
-   public void selectAll(String needle, Range range, boolean wholeWord, boolean caseSensitive)
+   public void selectAll(
+         String needle,
+         Range range,
+         boolean wholeWord,
+         boolean caseSensitive,
+         boolean regex)
    {
-      widget_.getEditor().findAll(needle, range, wholeWord, caseSensitive);
+      widget_.getEditor().findAll(needle, range, wholeWord, caseSensitive, regex);
    }
 
    public void moveCursorLeft()

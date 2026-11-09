@@ -13,6 +13,7 @@
 - ([#19241](https://github.com/rstudio/rstudio/issues/19241)): The Console notice shown at startup when RStudio reduces background file operations for a project can now be turned off with the `show_reduced_file_operations_notice` preference (e.g. from the Command Palette), or for all users by an administrator with `"show_reduced_file_operations_notice": false` in `rstudio-prefs.json`.
 
 ### Fixed
+- ([#19249](https://github.com/rstudio/rstudio/issues/19249)): Fixed an issue where All in the editor's Find/Replace bar ignored the Regex option and selected literal matches instead. With Whole word, a regex with alternatives such as `foo|bar` now bounds every alternative in Find Next, All, and Replace All.
 - ([#18962](https://github.com/rstudio/rstudio/issues/18962)): Fixed a rare RStudio Server startup race where simultaneous launches of the same session could replace each other's socket and leave the session unreachable.
 - ([#18958](https://github.com/rstudio/rstudio/issues/18958)): Fixed an issue where selecting the `..` row and clicking Choose in the web directory chooser returned `..` instead of the parent directory's path.
 - ([#18960](https://github.com/rstudio/rstudio/issues/18960)): Fixed an issue where quickly navigating between folders in web file dialogs could open, save, or choose an item in the wrong folder when directory listings arrived out of order.
