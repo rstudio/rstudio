@@ -517,10 +517,30 @@ public class TerminalSessionSocket
    // here, when input is actually written over RPC, rather than when it was
    // typed, so input queued after a rejected WebSocket send is numbered in
    // order with the input that follows it.
-   private void writeRpcInput(PendingInput input)
+   private void writeRpcInput(final PendingInput input)
    {
+      final int connection = connection_;
       consoleProcess_.writeStandardInput(
-            ShellInput.create(nextInputSequence(), input.text, true /*echo input*/), input.callback);
+            ShellInput.create(nextInputSequence(), input.text, true /*echo input*/),
+            new VoidServerRequestCallback()
+            {
+               @Override
+               public void onResponseReceived(VoidResponse response)
+               {
+                  input.callback.onResponseReceived(response);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  // The server never saw this write, so it would hold every
+                  // later number until its auto-flush. Resynchronize instead:
+                  // the next write flushes the server's queue again.
+                  if (connection == connection_)
+                     inputSequence_ = ShellInput.IGNORE_SEQUENCE;
+                  input.callback.onError(error);
+               }
+            });
    }
 
    // The first write of a connection flushes the server-side queue, resetting

@@ -631,6 +631,49 @@ public class TerminalSessionSocketTests extends GWTTestCase
       assertEquals(Arrays.asList(ShellInput.FLUSH_SEQUENCE, 0, 1), process.sequences);
    }
 
+   // A write the server never received leaves a gap it would wait on until
+   // its auto-flush; the next write flushes the server's queue instead.
+   public void testFailedNumberedWriteResynchronizesWithAFlush()
+   {
+      Harness h = new Harness();
+      Process process = h.connect(new Callback());
+      process.mode = ConsoleProcessInfo.CHANNEL_RPC;
+      process.answerWrites = false;
+      h.socket.dispatchInput("a", false, new Ack());
+      process.pendingWrites.remove(0).onResponseReceived(null);
+      Ack b = new Ack();
+      h.socket.dispatchInput("b", false, b);
+      h.socket.dispatchInput("c", false, new Ack());
+      assertEquals(Arrays.asList(ShellInput.FLUSH_SEQUENCE, 0, 1), process.sequences);
+
+      process.pendingWrites.remove(0).onError(rpcError());
+      assertEquals(1, b.errors);
+      h.socket.dispatchInput("d", false, new Ack());
+      h.socket.dispatchInput("e", false, new Ack());
+      assertEquals("input behind the flush is held", Arrays.asList("a", "b", "c", "d"), process.inputs);
+      assertEquals(Arrays.asList(ShellInput.FLUSH_SEQUENCE, 0, 1, ShellInput.FLUSH_SEQUENCE), process.sequences);
+
+      process.pendingWrites.remove(0).onResponseReceived(null);
+      process.pendingWrites.remove(0).onResponseReceived(null);
+      assertEquals(Arrays.asList("a", "b", "c", "d", "e"), process.inputs);
+      assertEquals(Integer.valueOf(0), process.sequences.get(4));
+   }
+
+   public void testFailedFlushWriteIsRetriedAsAFlush()
+   {
+      Harness h = new Harness();
+      Process process = h.connect(new Callback());
+      process.mode = ConsoleProcessInfo.CHANNEL_RPC;
+      process.answerWrites = false;
+      Ack a = new Ack();
+      h.socket.dispatchInput("a", false, a);
+      h.socket.dispatchInput("b", false, new Ack());
+      process.pendingWrites.remove(0).onError(rpcError());
+      assertEquals(1, a.errors);
+      assertEquals(Arrays.asList("a", "b"), process.inputs);
+      assertEquals(Arrays.asList(ShellInput.FLUSH_SEQUENCE, ShellInput.FLUSH_SEQUENCE), process.sequences);
+   }
+
    // GWT.create() is only legal once the test runs in the GWT module, not in a
    // static initializer, which the JUnit runner evaluates in the JVM.
    private static TerminalConstants constants()

@@ -87,6 +87,17 @@ void ConsoleProcess::setenv(const std::string& name,
             value);
 }
 
+std::string bashPromptCommand()
+{
+   // Abbreviate $HOME to '~' the way `dirs +0` does, but with builtins only:
+   // a subshell or command substitution here forks two processes at every
+   // prompt, and bash has been seen stuck waiting on that child with the
+   // prompt never drawn and typed input echoed but not run (#19542). A
+   // `${string//pattern/~}` replacement is avoided because bash treats the
+   // tilde in the replacement inconsistently.
+   return R"(_RS_PWD=${PWD}; if [ -n "${HOME}" ]; then case "${_RS_PWD}/" in "${HOME}/"*) _RS_PWD="~${_RS_PWD#"${HOME}"}";; esac; fi; printf '\033]0;%s\007' "${_RS_PWD}"; unset _RS_PWD)";
+}
+
 // create process options for a terminal
 core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
       const ConsoleProcessInfo& procInfo,
@@ -194,14 +205,7 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
    
    case TerminalShell::ShellType::PosixBash:
    {
-      // Abbreviate $HOME to '~' the way `dirs +0` does, but with builtins only:
-      // a subshell or command substitution here forks two processes at every
-      // prompt, and bash has been seen stuck waiting on that child with the
-      // prompt never drawn and typed input echoed but not run (#19542). A
-      // `${string//pattern/~}` replacement is avoided because bash treats the
-      // tilde in the replacement inconsistently.
-      const char* kPromptCommand = R"(_RS_PWD=${PWD}; if [ -n "${HOME}" ]; then case "${_RS_PWD}/" in "${HOME}/"*) _RS_PWD="~${_RS_PWD#"${HOME}"}";; esac; fi; printf '\033]0;%s\007' "${_RS_PWD}"; unset _RS_PWD)";
-      core::system::setenv(&shellEnv, "PROMPT_COMMAND", kPromptCommand);
+      core::system::setenv(&shellEnv, "PROMPT_COMMAND", bashPromptCommand());
       break;
    }
       
