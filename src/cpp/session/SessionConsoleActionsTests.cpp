@@ -21,6 +21,7 @@
 #include <shared_core/FilePath.hpp>
 #include <shared_core/json/Json.hpp>
 
+#include <core/AnsiEscapes.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/StringUtils.hpp>
 
@@ -264,6 +265,73 @@ TEST_F(ConsoleActionsTest, MalformedEntriesAreSkippedOnLoad)
    actions.asJson(&actionsJson);
    EXPECT_EQ(2u, actionsJson["data"].getArray().getSize());
    EXPECT_EQ("ac", consoleData(actionsJson));
+}
+
+TEST_F(ConsoleActionsTest, ContainsOutputMatchesRestoredMultilineText)
+{
+   ConsoleActions& actions = consoleActions();
+
+   // stored as one action per line, and the long line in several chunks
+   const std::string warning =
+      "WARNING: first line\n"
+      "\n"
+      "    Path: /" + std::string(1200, 'x') + "\n"
+      "last line";
+
+   actions.add(kConsoleActionOutput, "earlier output\n");
+   actions.add(kConsoleActionOutputError, warning + "\n");
+   actions.add(kConsoleActionPrompt, "> ");
+
+   ASSERT_FALSE(actions.saveToFile(tempFile_));
+   actions.reset();
+   EXPECT_FALSE(actions.containsOutput(warning));
+
+   ASSERT_FALSE(actions.loadFromFile(tempFile_));
+   EXPECT_TRUE(actions.containsOutput(warning));
+   EXPECT_FALSE(actions.containsOutput("WARNING: another warning"));
+}
+
+TEST_F(ConsoleActionsTest, ContainsOutputIgnoresConditionHighlighting)
+{
+   ConsoleActions& actions = consoleActions();
+
+   // condition highlighting marks up a "Warning:" prefix (matched without
+   // regard to case) inside the text, as well as grouping the whole of it
+   actions.add(
+      kConsoleActionOutputError,
+      kAnsiEscapeGroupStartWarning kAnsiEscapeHighlightStartWarning "WARNING:"
+      kAnsiEscapeHighlightEnd " RStudio could not start this session in /a"
+      kAnsiEscapeGroupEnd "\n");
+
+   EXPECT_TRUE(actions.containsOutput(
+      "WARNING: RStudio could not start this session in /a"));
+}
+
+TEST_F(ConsoleActionsTest, ContainsOutputIgnoresInput)
+{
+   ConsoleActions& actions = consoleActions();
+
+   actions.add(kConsoleActionPrompt, "> ");
+   actions.add(kConsoleActionInput, "message('WARNING: /a')");
+
+   EXPECT_FALSE(actions.containsOutput("WARNING: /a"));
+}
+
+TEST_F(ConsoleActionsTest, ContainsOutputMissesTextTrimmedFromScrollback)
+{
+   ConsoleActions& actions = consoleActions();
+   int originalCapacity = actions.capacity();
+   actions.setCapacity(4);
+
+   actions.add(kConsoleActionOutputError, "WARNING: first line\nsecond line\n");
+   for (int i = 0; i < 3; i++)
+      actions.add(kConsoleActionOutput, "line " + std::to_string(i) + "\n");
+
+   // the warning's first line has been dropped, so it is no longer shown
+   EXPECT_FALSE(actions.containsOutput("WARNING: first line\nsecond line"));
+   EXPECT_TRUE(actions.containsOutput("second line"));
+
+   actions.setCapacity(originalCapacity);
 }
 
 } // namespace tests

@@ -31,6 +31,7 @@ import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.console.model.ProcessBufferChunk;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalSessionSocket;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 import com.google.gwt.core.client.JsArray;
@@ -42,7 +43,8 @@ import com.google.inject.Singleton;
 
 public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                                        ConsolePromptEvent.HasHandlers,
-                                       ProcessExitEvent.HasHandlers
+                                       ProcessExitEvent.HasHandlers,
+                                       TerminalSessionSocket.Process
 {
    @Singleton
    public static class ConsoleProcessFactory

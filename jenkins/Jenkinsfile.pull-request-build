@@ -12,7 +12,6 @@ pipeline {
   }
 
   environment {
-    GITHUB_LOGIN = credentials('posit-jenkins-rstudio')
     JENKINS_CREDENTIALS = credentials('jenkins-api-creds')
     OS = 'jammy'
     ARCH = 'x86_64'
@@ -114,7 +113,6 @@ pipeline {
                 dockerfile: "docker/jenkins/Dockerfile.${OS}",
                 build_arg_jenkins_uid: 'JENKINS_UID',
                 build_arg_jenkins_gid: 'JENKINS_GID',
-                builds_args: "--build-arg GITHUB_LOGIN=${GITHUB_LOGIN}",
                 push: false)
             }
           }

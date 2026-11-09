@@ -1962,6 +1962,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String reduceRemoteFilesystemOperationsDescription();
 
    /**
+    * Whether to print a notice in the Console at startup when RStudio has reduced background file operations for the current project.
+    */
+   @DefaultStringValue("Show a notice in the Console when background file operations are reduced")
+   String showReducedFileOperationsNoticeTitle();
+   @DefaultStringValue("Whether to print a notice in the Console at startup when RStudio has reduced background file operations for the current project.")
+   String showReducedFileOperationsNoticeDescription();
+
+   /**
     * Initial directory for new terminals.
     */
    @DefaultStringValue("Initial working directory for new terminals")

@@ -21,6 +21,7 @@ import { dirname, join } from 'path';
 import { restore, saveAndClear } from '../unit-utils';
 import {
   detectREnvironment,
+  detectREnvironmentAsync,
   frameworkVersionHome,
   parseRQueryResult,
   promptUserForR,
@@ -156,6 +157,32 @@ describe('DetectR', () => {
     } finally {
       rmSync(home, { recursive: true, force: true });
       rmSync(empty, { recursive: true, force: true });
+    }
+  });
+
+  it('reports an R that answers but never exits as a timeout, and remembers nothing of it', async function () {
+    if (process.platform === 'win32') {
+      this.skip();
+    }
+
+    // a stand-in R that prints a complete answer and then hangs
+    const fields = ['4.5.1', '/opt/fake-r', '/opt/fake-r/doc', '/opt/fake-r/include', '/opt/fake-r/share', '', '', '/opt/fake-r/lib', 'aarch64-fake'];
+    const dir = mkdtempSync(join(tmpdir(), 'detect-r-hang-'));
+    const fakeR = join(dir, 'R');
+    writeFileSync(fakeR, `#!/bin/sh\nprintf '\\036${fields.join('\\037')}'\nsleep 5\n`, { mode: 0o755 });
+
+    try {
+      const [, error] = await detectREnvironmentAsync(fakeR, 250);
+      assert.isNotNull(error);
+      assert.include(error.message, 'did not answer');
+
+      // nothing was cached: a query now has to launch the stand-in again,
+      // which cannot happen once it is gone
+      rmSync(dir, { recursive: true, force: true });
+      const [, again] = detectREnvironment(fakeR);
+      assert.isNotNull(again);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
     }
   });
 

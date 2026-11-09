@@ -62,6 +62,13 @@ TEST(SessionProjectsTests, IsPackageProjectFalseWithoutProject)
    EXPECT_FALSE(projectContext().isPackageProject());
 }
 
+TEST(SessionProjectsTests, UnavailableEncodingWarningEscapesEncoding)
+{
+   std::string message = unavailableEncodingWarning("<b>latin1</b>");
+   EXPECT_EQ(message.find('<'), std::string::npos) << message;
+   EXPECT_NE(message.find("'&lt;b&gt;latin1&lt;&#x2F;b&gt;'"), std::string::npos) << message;
+}
+
 TEST(SessionProjectsTests, ResolveWrittenEditorThemePreservesWhenKeyOmitted)
 {
    // No editor_theme key in the request -> keep the existing on-disk value.
