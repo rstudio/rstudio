@@ -129,7 +129,7 @@ Resources:
         - Key: rs:project
           Value: ide
         - Key: rs:environment
-          Value: ci
+          Value: development
         - Key: rs:subsystem
           Value: e2e_reports
         - Key: rs:stack
@@ -139,7 +139,10 @@ Resources:
 
   # Tags follow the account's rs:* convention; rs:owner and rs:project are
   # what the organization policy requires at launch (the rest is bookkeeping),
-  # and PropagateTagsToVolumeOnCreation puts them on the volume too.
+  # and PropagateTagsToVolumeOnCreation puts them on the volume too. The
+  # organization's tag policy also fixes the allowed values: rs:environment
+  # is one of production, staging, qa, development, infrastructure
+  # (`aws organizations describe-effective-policy --policy-type TAG_POLICY`).
   # The user data runs on every boot (cloud_final_modules below), so it has to
   # be idempotent, and a change to it takes effect with a stop/start rather
   # than a replacement. It is written without `${...}` shell syntax because
@@ -172,7 +175,7 @@ Resources:
         - Key: rs:project
           Value: ide
         - Key: rs:environment
-          Value: ci
+          Value: development
         - Key: rs:subsystem
           Value: e2e_reports
         - Key: rs:stack
