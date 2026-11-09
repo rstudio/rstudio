@@ -28,6 +28,7 @@
 #include <cctype>
 #include <cstdio>
 #include <cstdlib>
+#include <utility>
 
 #include <boost/algorithm/string/trim.hpp>
 
@@ -346,23 +347,52 @@ bool normalizeProxyUrl(const std::string& value, std::string* pNormalized)
    return true;
 }
 
+namespace {
+
+// Node reads the lowercase spelling of a proxy variable first and falls back
+// to the uppercase one only when the lowercase variable is absent; an empty
+// lowercase value counts as present. Returns the name Node will read, or
+// nullptr when neither is set.
+const char* selectProxyVariable(const core::system::Options& environment,
+                                const char* lower,
+                                const char* upper,
+                                std::string* pValue)
+{
+   for (const char* name : { lower, upper })
+   {
+      for (const auto& variable : environment)
+      {
+         if (variable.first == name)
+         {
+            *pValue = variable.second;
+            return name;
+         }
+      }
+   }
+   return nullptr;
+}
+
+} // anonymous namespace
+
 void applyEnvProxyOption(core::system::Options* pEnvironment)
 {
    // NODE_USE_ENV_PROXY=1 makes Node.js 22.21+ route fetch() through
    // http_proxy / https_proxy (https://github.com/nodejs/node/pull/57165).
    // Node parses those variables during bootstrap and exits on a value
    // without a scheme, which curl and R accept, so repair the child's copy
-   // first. When a value cannot be repaired, leave proxy support off rather
-   // than take the child down with it. Values are kept out of the log: they
-   // may carry credentials.
-   static const char* const kProxyVariables[] = {
-      "http_proxy", "HTTP_PROXY", "https_proxy", "HTTPS_PROXY"
+   // first. When a value cannot be repaired, leave proxy support off (also
+   // dropping a flag inherited from the session) rather than take the child
+   // down with it. Values are kept out of the log: they may carry credentials.
+   static const std::pair<const char*, const char*> kProxyVariables[] = {
+      { "http_proxy", "HTTP_PROXY" },
+      { "https_proxy", "HTTPS_PROXY" }
    };
 
-   for (const char* name : kProxyVariables)
+   for (const auto& spelling : kProxyVariables)
    {
-      std::string value = core::system::getenv(*pEnvironment, name);
-      if (value.empty())
+      std::string value;
+      const char* name = selectProxyVariable(*pEnvironment, spelling.first, spelling.second, &value);
+      if (name == nullptr || value.empty())
          continue;
 
       std::string normalized;
@@ -370,6 +400,7 @@ void applyEnvProxyOption(core::system::Options* pEnvironment)
       {
          WLOG("Not enabling Node.js proxy support: the {} environment variable "
               "is not a valid proxy URL.", name);
+         core::system::unsetenv(pEnvironment, "NODE_USE_ENV_PROXY");
          return;
       }
 

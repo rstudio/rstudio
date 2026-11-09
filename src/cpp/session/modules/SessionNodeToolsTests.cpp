@@ -240,6 +240,55 @@ TEST(SessionNodeToolsTest, ApplyEnvProxyOptionLeavesFlagUnsetForInvalidValue)
    EXPECT_EQ(core::system::getenv(env, "http_proxy"), "http://proxy.example.com:8080");
 }
 
+TEST(SessionNodeToolsTest, ApplyEnvProxyOptionDropsInheritedFlagForInvalidValue)
+{
+   core::system::Options env;
+   core::system::setenv(&env, "NODE_USE_ENV_PROXY", "1");
+   core::system::setenv(&env, "http_proxy", "http://proxy one:8080");
+
+   applyEnvProxyOption(&env);
+
+   EXPECT_EQ(core::system::getenv(env, "NODE_USE_ENV_PROXY"), "");
+}
+
+TEST(SessionNodeToolsTest, ApplyEnvProxyOptionHonorsLowercasePrecedence)
+{
+   // Node reads http_proxy before HTTP_PROXY, so an unused uppercase value
+   // must not disable proxy support, and is left as written.
+   core::system::Options env;
+   core::system::setenv(&env, "HTTP_PROXY", "http://");
+   core::system::setenv(&env, "http_proxy", "proxy.example.com:8080");
+
+   applyEnvProxyOption(&env);
+
+   EXPECT_EQ(core::system::getenv(env, "NODE_USE_ENV_PROXY"), "1");
+   EXPECT_EQ(core::system::getenv(env, "http_proxy"), "http://proxy.example.com:8080");
+   EXPECT_EQ(core::system::getenv(env, "HTTP_PROXY"), "http://");
+
+   // The lowercase value is what Node reads even when the uppercase one is fine.
+   core::system::Options env2;
+   core::system::setenv(&env2, "https_proxy", "http://");
+   core::system::setenv(&env2, "HTTPS_PROXY", "http://secure.example.com:8443");
+
+   applyEnvProxyOption(&env2);
+
+   EXPECT_EQ(core::system::getenv(env2, "NODE_USE_ENV_PROXY"), "");
+}
+
+TEST(SessionNodeToolsTest, ApplyEnvProxyOptionEmptyLowercaseHidesUppercase)
+{
+   // An empty lowercase variable is still the one Node reads, so the
+   // uppercase value is never parsed and cannot break startup.
+   core::system::Options env;
+   core::system::setenv(&env, "http_proxy", "");
+   core::system::setenv(&env, "HTTP_PROXY", "http://");
+
+   applyEnvProxyOption(&env);
+
+   EXPECT_EQ(core::system::getenv(env, "NODE_USE_ENV_PROXY"), "1");
+   EXPECT_EQ(core::system::getenv(env, "HTTP_PROXY"), "http://");
+}
+
 } // namespace tests
 } // namespace node_tools
 } // namespace modules
