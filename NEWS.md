@@ -62,6 +62,7 @@
 - ([#19380](https://github.com/rstudio/rstudio/issues/19380)): [Accessibility] Fixed an issue where the tabs shown when a pane is minimized were not announced as tabs by screen readers and could not be reached with the keyboard. They can now be focused with Tab, moved between with the arrow keys, and activated with Enter or Space to restore the pane. Restoring or maximizing a minimized pane from the keyboard now moves focus into the pane.
 
 ### Dependencies
+- ([#19095](https://github.com/rstudio/rstudio/issues/19095)): macOS builds now require C++20; Linux retains its C++17 minimum.
 - Quarto 1.11.9
 - Electron 44.10.2
 
