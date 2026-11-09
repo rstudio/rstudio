@@ -34,6 +34,7 @@ namespace tests {
 using core::FilePath;
 using modules::assistant::addPendingAgentRequestForTesting;
 using modules::assistant::AgentStderrTail;
+using modules::assistant::AgentStdoutReader;
 using modules::assistant::focusDocumentForTesting;
 using modules::assistant::agentRequestTimeout;
 using modules::assistant::agentStderrTail;
@@ -48,6 +49,256 @@ using modules::assistant::writeQueuedAgentRequestsForTesting;
 using std::chrono::milliseconds;
 using std::chrono::seconds;
 using std::chrono::steady_clock;
+
+namespace {
+
+std::string frame(const std::string& body)
+{
+   return "Content-Length: " + std::to_string(body.length()) + "\r\n\r\n" + body;
+}
+
+} // anonymous namespace
+
+TEST(SessionAssistant, StdoutReaderReturnsAWholeResponse)
+{
+   AgentStdoutReader reader;
+   EXPECT_EQ(reader.append(frame("{\"id\":1}")), std::vector<std::string>{"{\"id\":1}"});
+}
+
+TEST(SessionAssistant, StdoutReaderSplitsResponsesInOneRead)
+{
+   AgentStdoutReader reader;
+   std::vector<std::string> expected{"{\"id\":1}", "{\"id\":2}"};
+   EXPECT_EQ(reader.append(frame("{\"id\":1}") + frame("{\"id\":2}")), expected);
+}
+
+TEST(SessionAssistant, StdoutReaderJoinsAHeaderAndBodyReadSeparately)
+{
+   // The language server writes a header and its body separately, and a read
+   // can return between the two.
+   AgentStdoutReader reader;
+   std::vector<std::string> errors;
+   EXPECT_TRUE(reader.append("Content-Length: 8\r\n\r\n", &errors).empty());
+   EXPECT_EQ(reader.append("{\"id\":1}" + frame("{\"id\":2}"), &errors),
+             (std::vector<std::string>{"{\"id\":1}", "{\"id\":2}"}));
+   EXPECT_TRUE(errors.empty());
+}
+
+TEST(SessionAssistant, StdoutReaderKeepsAPartialBody)
+{
+   AgentStdoutReader reader;
+   EXPECT_TRUE(reader.append("Content-Length: 8\r\n\r\n{\"id\"").empty());
+   EXPECT_EQ(reader.append(":1}"), std::vector<std::string>{"{\"id\":1}"});
+}
+
+TEST(SessionAssistant, StdoutReaderKeepsAPartialHeader)
+{
+   AgentStdoutReader reader;
+   EXPECT_TRUE(reader.append("Content-Len").empty());
+   EXPECT_TRUE(reader.append("gth: 8\r\n").empty());
+   EXPECT_EQ(reader.append("\r\n{\"id\":1}"), std::vector<std::string>{"{\"id\":1}"});
+}
+
+TEST(SessionAssistant, StdoutReaderSkipsBlankLinesAndMatchesTheHeaderWithoutCase)
+{
+   AgentStdoutReader reader;
+   EXPECT_TRUE(reader.append("\r\n\n  ").empty());
+   EXPECT_EQ(reader.append("content-length:  2\r\nContent-Type: x\r\n\r\n{}"),
+             std::vector<std::string>{"{}"});
+}
+
+TEST(SessionAssistant, StdoutReaderSkipsAHeaderWithoutContentLength)
+{
+   AgentStdoutReader reader;
+   std::vector<std::string> errors;
+   EXPECT_EQ(reader.append("Content-Type: x\r\n\r\n{\"bad\":1}" + frame("{}"), &errors),
+             std::vector<std::string>{"{}"});
+   EXPECT_EQ(errors.size(), 1u);
+}
+
+TEST(SessionAssistant, StdoutReaderSkipsAnInvalidContentLength)
+{
+   AgentStdoutReader reader;
+   std::vector<std::string> errors;
+   std::vector<std::string> expected{"{\"id\":1}", "{\"id\":2}"};
+   EXPECT_EQ(reader.append("Content-Length: x\r\n\r\n{\"bad\":1}" + frame("{\"id\":1}") + frame("{\"id\":2}"), &errors),
+             expected);
+   EXPECT_EQ(errors.size(), 1u);
+}
+
+TEST(SessionAssistant, StdoutReaderSkipsAnInvalidContentLengthWhoseNextHeaderComesLater)
+{
+   AgentStdoutReader reader;
+   EXPECT_TRUE(reader.append("Content-Length: -5\r\n\r\n{\"bad\":1}").empty());
+   EXPECT_EQ(reader.append(frame("{\"id\":1}")), std::vector<std::string>{"{\"id\":1}"});
+}
+
+TEST(SessionAssistant, StdoutReaderSkipsAnOversizedContentLength)
+{
+   AgentStdoutReader reader;
+   EXPECT_EQ(reader.append("Content-Length: 999999999\r\n\r\n{}" + frame("{\"id\":1}")),
+             std::vector<std::string>{"{\"id\":1}"});
+}
+
+TEST(SessionAssistant, StdoutReaderRecoversFromAContentLengthThatIsTooShort)
+{
+   AgentStdoutReader reader;
+   std::vector<std::string> responses = reader.append("Content-Length: 1\r\n\r\n{}" + frame("{\"id\":1}"));
+   ASSERT_FALSE(responses.empty());
+   EXPECT_EQ(responses.back(), "{\"id\":1}");
+}
+
+TEST(SessionAssistant, StdoutReaderSkipsStrayOutputBeforeAHeader)
+{
+   AgentStdoutReader reader;
+   std::vector<std::string> expected{"{}", "{\"id\":1}"};
+   EXPECT_EQ(reader.append("warning\nContent-Length: 2\r\n\r\n{}" + frame("{\"id\":1}")), expected);
+}
+
+TEST(SessionAssistant, StdoutReaderCountsBytesNotCharacters)
+{
+   AgentStdoutReader reader;
+   std::string body = "{\"s\":\"h\xc3\xa9llo\"}";
+   std::vector<std::string> expected{body, "{}"};
+   EXPECT_EQ(reader.append(frame(body) + frame("{}")), expected);
+}
+
+TEST(SessionAssistant, StdoutReaderKeepsAHeaderSplitAcrossReadsAfterAResponse)
+{
+   AgentStdoutReader reader;
+   EXPECT_EQ(reader.append(frame("{}") + "Content-Le"), std::vector<std::string>{"{}"});
+   EXPECT_EQ(reader.append("ngth: 8\r\n\r\n{\"id\":1}"), std::vector<std::string>{"{\"id\":1}"});
+}
+
+TEST(SessionAssistant, StdoutReaderClearDropsAPartialResponse)
+{
+   AgentStdoutReader reader;
+   EXPECT_TRUE(reader.append("Content-Length: 8\r\n\r\n{\"id\"").empty());
+   reader.clear();
+   EXPECT_EQ(reader.append(frame("{}")), std::vector<std::string>{"{}"});
+}
+
+TEST(SessionAssistant, StdoutReaderSkipsAContentLengthWithSpaceBeforeTheColon)
+{
+   AgentStdoutReader reader;
+   std::vector<std::string> errors;
+   std::vector<std::string> expected{"{\"id\":1}", "{\"id\":2}"};
+   EXPECT_EQ(reader.append("Content-Length : x\r\n\r\n" + frame("{\"id\":1}") + frame("{\"id\":2}"), &errors),
+             expected);
+   EXPECT_EQ(errors.size(), 1u);
+}
+
+TEST(SessionAssistant, StdoutReaderResumesAtAHeaderBehindStrayOutput)
+{
+   AgentStdoutReader reader;
+   std::vector<std::string> errors;
+   std::vector<std::string> expected{"{}", "{\"id\":1}"};
+   EXPECT_EQ(reader.append("warningContent-Length: 2\r\n\r\n{}" + frame("{\"id\":1}"), &errors), expected);
+   EXPECT_EQ(errors.size(), 1u);
+}
+
+TEST(SessionAssistant, StdoutReaderSkipsTwoInvalidHeadersInARow)
+{
+   AgentStdoutReader reader;
+   std::vector<std::string> errors;
+   EXPECT_EQ(reader.append("Content-Length: x\r\n\r\nContent-Length: 0\r\n\r\n" + frame("{\"id\":1}"), &errors),
+             std::vector<std::string>{"{\"id\":1}"});
+   EXPECT_EQ(errors.size(), 2u);
+}
+
+TEST(SessionAssistant, StdoutReaderUsesALaterContentLengthAfterAnInvalidOne)
+{
+   AgentStdoutReader reader;
+   std::vector<std::string> errors;
+   EXPECT_EQ(reader.append("Content-Length: x\r\nContent-Length: 2\r\n\r\n{}", &errors),
+             std::vector<std::string>{"{}"});
+   EXPECT_EQ(errors.size(), 1u);
+}
+
+TEST(SessionAssistant, StdoutReaderKeepsABodyThatLooksLikeAHeader)
+{
+   AgentStdoutReader reader;
+   std::string body = "{\"s\":\"Content-Length: 3\\r\\n\r\n\r\nxyz\"}";
+   std::vector<std::string> expected{body, "{}"};
+   EXPECT_EQ(reader.append(frame(body) + frame("{}")), expected);
+}
+
+TEST(SessionAssistant, StdoutReaderReadsABodyOneByteAtATime)
+{
+   AgentStdoutReader reader;
+   std::string body = "{\"id\":1}";
+   EXPECT_TRUE(reader.append("Content-Length: 8\r\n\r\n").empty());
+   for (std::size_t i = 0; i + 1 < body.length(); i++)
+      EXPECT_TRUE(reader.append(body.substr(i, 1)).empty());
+   EXPECT_EQ(reader.append(body.substr(body.length() - 1)), std::vector<std::string>{body});
+}
+
+TEST(SessionAssistant, StdoutReaderDropsAHeaderThatDoesNotEnd)
+{
+   // Longer than the reader's 64 KiB limit for a header block.
+   AgentStdoutReader reader;
+   std::vector<std::string> errors;
+   EXPECT_TRUE(reader.append(std::string(64 * 1024 + 1, 'x'), &errors).empty());
+   EXPECT_EQ(errors.size(), 1u);
+
+   // None of the junk is kept, so the next header reads cleanly.
+   EXPECT_EQ(reader.append(frame("{}"), &errors), std::vector<std::string>{"{}"});
+   EXPECT_EQ(errors.size(), 1u);
+}
+
+TEST(SessionAssistant, StdoutReaderKeepsAHeaderCutOffAfterAHeaderThatDoesNotEnd)
+{
+   // The body of an invalid header is junk, over the 64 KiB limit, and the
+   // read ends partway into the next header's name.
+   AgentStdoutReader reader;
+   std::vector<std::string> errors;
+   std::string junk = "Content-Length: x\r\n\r\n" + std::string(100 * 1024, 'a');
+   EXPECT_TRUE(reader.append(junk + "content-Len", &errors).empty());
+   EXPECT_EQ(errors.size(), 2u);
+   EXPECT_EQ(reader.append("gth: 8\r\n\r\n{\"id\":1}", &errors), std::vector<std::string>{"{\"id\":1}"});
+   EXPECT_EQ(errors.size(), 2u);
+}
+
+TEST(SessionAssistant, StdoutReaderKeepsAHeaderCutOffAfterItsColon)
+{
+   AgentStdoutReader reader;
+   std::vector<std::string> errors;
+   EXPECT_TRUE(reader.append("Content-Length: x\r\n\r\n", &errors).empty());
+   EXPECT_TRUE(reader.append(std::string(64 * 1024, 'a') + "Content-Length: 8\r\n", &errors).empty());
+   EXPECT_EQ(errors.size(), 2u);
+   EXPECT_EQ(reader.append("\r\n{\"id\":1}", &errors), std::vector<std::string>{"{\"id\":1}"});
+   EXPECT_EQ(errors.size(), 2u);
+}
+
+TEST(SessionAssistant, StdoutReaderKeepsAWholeHeaderBlockCutOffInALaterHeader)
+{
+   // The read ends in "Content-", which also starts "Content-Length". Keeping
+   // only that would drop the block's real Content-Length.
+   AgentStdoutReader reader;
+   std::vector<std::string> errors;
+   EXPECT_TRUE(reader.append(std::string(64 * 1024, 'a') + "Content-Length: 8\r\nContent-", &errors).empty());
+   EXPECT_EQ(errors.size(), 1u);
+   EXPECT_EQ(reader.append("Type: x\r\n\r\n{\"id\":1}", &errors), std::vector<std::string>{"{\"id\":1}"});
+   EXPECT_EQ(errors.size(), 1u);
+}
+
+TEST(SessionAssistant, StdoutReaderResumesAtAHeaderWithSpaceBeforeTheColonBehindStrayOutput)
+{
+   // Junk that ends like the start of a header name is kept, and glues onto
+   // the header that follows.
+   AgentStdoutReader reader;
+   EXPECT_TRUE(reader.append(std::string(64 * 1024 + 1, 'x') + "c").empty());
+   EXPECT_EQ(reader.append("Content-Length : 2\r\n\r\n{}"), std::vector<std::string>{"{}"});
+}
+
+TEST(SessionAssistant, StdoutReaderShortensAnInvalidValueInItsError)
+{
+   AgentStdoutReader reader;
+   std::vector<std::string> errors;
+   reader.append("Content-Length: " + std::string(10000, '9') + "\r\n\r\n", &errors);
+   ASSERT_EQ(errors.size(), 1u);
+   EXPECT_LT(errors.front().length(), 100u);
+}
 
 TEST(SessionAssistant, StderrTailKeepsShortTextUnchanged)
 {

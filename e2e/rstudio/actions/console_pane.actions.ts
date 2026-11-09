@@ -184,8 +184,23 @@ export class ConsolePaneActions {
   }
 
   /**
+   * Evaluate an R expression that yields a single string and return it (or
+   * null if it couldn't be read). Same mechanism as evalRLogical: the
+   * auto-printed `[1] "..."` is read back out of a cleared console. R escapes
+   * a double quote or a newline inside the value, so keep to values without
+   * them (names, identifiers, forward-slash paths).
+   */
+  async evalRString(expr: string): Promise<string | null> {
+    await this.clearConsole();
+    await this.executeInConsole(`(${expr})`);
+    const output = await this.consolePane.consoleOutput.innerText();
+    const match = output.match(/\[1\]\s+"(.*)"/);
+    return match ? match[1] : null;
+  }
+
+  /**
    * Raw text currently in the console output pane. For turning a failed
-   * evalRLogical probe into a real error message -- a `null`/mismatched
+   * evalRLogical or evalRString probe into a real error message -- a `null`/mismatched
    * result means the console holds something other than TRUE/FALSE (an R
    * error, most often), and this is how a caller recovers what it actually
    * said. Callers that only need the TRUE/FALSE answer should use

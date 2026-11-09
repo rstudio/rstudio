@@ -112,6 +112,7 @@
     "unimplemented": "Unimplemented",
     "callbackNyiLowercase": "{{ipcName}} callback NYI",
     "rExecutableMissing": "{{path}} does not exist",
+    "rExecutableNotPrepared": "R at {{path}} has not been checked for this restart.",
     "rExecutableFailed": "{{path}} could not be run: {{error}}",
     "rExecutableNotOrthogonal": "{{path}} is set up to run the default version of R rather than itself",
     "rUpdatePrompt": "RStudio wants to update R {{version}} so it can run alongside other versions of R.",
@@ -130,6 +131,19 @@
   },
   "mainWindowTs": {
     "rSessionFailedToStart": "The R session failed to start."
+  },
+  "defaultFileHandlerTs": {
+    "confirmMessage": "Use RStudio to open R files?",
+    "confirmDetail": "R files (.R) currently open in another application, such as Xcode. You can change this later in Tools > Global Options > General > Advanced.",
+    "useRStudio": "Use RStudio",
+    "keepCurrent": "Keep Current Application"
+  },
+  "updaterTs": {
+    "updateNotInstalled": "RStudio {{version}} was not installed.",
+    "otherWindowsWereOpen": "Other RStudio windows were still open when RStudio quit. Close them, then choose Help > Check for Updates the next time RStudio starts to try again.",
+    "couldNotCheckOtherWindows": "RStudio could not check whether other RStudio windows were open. Choose Help > Check for Updates the next time RStudio starts to try again.",
+    "installerNoLongerAvailable": "The downloaded update is no longer available. Choose Help > Check for Updates the next time RStudio starts to download it again.",
+    "installerDidNotStart": "The installer could not be started. Choose Help > Check for Updates the next time RStudio starts to try again, or install the update from its installer."
   },
   "i18nManager": {
     "errorLocalizingDocument": "Error localizing document:"

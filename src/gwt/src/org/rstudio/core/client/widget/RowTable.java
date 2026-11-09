@@ -111,7 +111,11 @@ public abstract class RowTable<T> extends ScrollPanel
          @Override
          public void run()
          {
-            redraw();
+            // rebuilding the rows changes nothing while the rendered window
+            // stays put, as it always does in a list short enough to render
+            // whole
+            if (getScrolledOffset() != offset_)
+               redraw();
          }
       };
       
@@ -291,7 +295,10 @@ public abstract class RowTable<T> extends ScrollPanel
          return;
       
       addStyleName(RES.styles().focusVisible());
-      activateFirstRowIfUnselected(true);
+      if (selectedRow_ == -1)
+         activateFirstRowIfUnselected(true);
+      else
+         revealRow(selectedRow_);
    }
    
    private boolean isFocusRingShown()
@@ -310,7 +317,24 @@ public abstract class RowTable<T> extends ScrollPanel
       setActiveRow(0);
       updateActiveDescendant();
       if (scrollIntoView)
-         scrollIntoViewIfNeeded(0);
+         revealRow(0);
+   }
+
+   // Shows all of the row, also when an outer panel does the scrolling (the
+   // repository picker's). A row virtualization dropped is rendered at once,
+   // not on the scroll timer, so that aria-activedescendant names it as focus
+   // or the selection lands on it.
+   private void revealRow(int row)
+   {
+      if (getRenderedRowElement(row) == null)
+      {
+         scrollIntoViewIfNeeded(row);
+         redraw();
+      }
+
+      TableRowElement rowEl = getRenderedRowElement(row);
+      if (rowEl != null)
+         scrollIntoView(rowEl, "nearest");
    }
    
    private void setActiveRow(int row)
@@ -367,15 +391,8 @@ public abstract class RowTable<T> extends ScrollPanel
    public void redraw()
    {
       double scrollPos = getScrollTop();
-      
-      if (selectedRowElement_ != null)
-      {
-         selectedRowElement_.removeClassName(RES.styles().selected());
-         selectedRowElement_.removeAttribute("aria-selected");
-         selectedRowElement_ = null;
-      }
-     
-      updateOffset();
+
+      offset_ = getScrolledOffset();
       updatePaddingRow(topPaddingRowEl_, getTopPaddingHeight());
       updatePaddingRow(bottomPaddingRowEl_, getBottomPaddingHeight());
       
@@ -389,15 +406,29 @@ public abstract class RowTable<T> extends ScrollPanel
       }
       
       setScrollTop(scrollPos);
-      
-      int row = selectedRow_;
-      if (row != -1)
-      {
-         selectedRow_ = -1;
-         selectRow(row, ScrollType.NONE);
-      }
-      
+
+      // the selection itself is unchanged, so no SelectionEvent: a file
+      // dialog would copy the selected name over one typed since
+      markSelectedRowElement();
       updateActiveDescendant();
+   }
+
+   // Moves the selection styling to the element now rendering the selected
+   // row, if virtualization renders it; redraws reuse row elements.
+   private void markSelectedRowElement()
+   {
+      if (selectedRowElement_ != null)
+      {
+         selectedRowElement_.removeClassName(RES.styles().selected());
+         selectedRowElement_.removeAttribute("aria-selected");
+      }
+
+      selectedRowElement_ = getRenderedRowElement(selectedRow_);
+      if (selectedRowElement_ != null)
+      {
+         selectedRowElement_.addClassName(RES.styles().selected());
+         selectedRowElement_.setAttribute("aria-selected", "true");
+      }
    }
 
    public void draw(List<T> data)
@@ -455,6 +486,10 @@ public abstract class RowTable<T> extends ScrollPanel
          rowEl.addClassName(RES.styles().focused());
       else
          rowEl.removeClassName(RES.styles().focused());
+
+      // a reused element still has its earlier row's title, which would
+      // otherwise count as one set during draw
+      rowEl.setTitle("");
 
       // call back to implementing subclass to draw the row
       drawRowImpl(object, rowEl);
@@ -526,7 +561,8 @@ public abstract class RowTable<T> extends ScrollPanel
       return Math.min(data_.size(), MAX_VISIBLE_ROWS);
    }
    
-   private void updateOffset()
+   // The first row to render for the current scroll position.
+   private int getScrolledOffset()
    {
       double rowHeight = getRowHeight();
       
@@ -544,7 +580,7 @@ public abstract class RowTable<T> extends ScrollPanel
       int offset = numRowsScrolled - (n / 2);
       
       // clamp to boundaries of view
-      offset_ = MathUtil.clamp(offset, 0, data_.size() - n);
+      return MathUtil.clamp(offset, 0, data_.size() - n);
    }
    
    public void clear()
@@ -583,56 +619,35 @@ public abstract class RowTable<T> extends ScrollPanel
 
       row = MathUtil.clamp(row, 0, data_.size() - 1);
       if (row == selectedRow_)
+      {
+         // e.g. End again after the last row was scrolled away
+         if (scrollType != ScrollType.NONE)
+            revealRow(row);
          return;
+      }
       
       setActiveRow(-1);
       
       // callers may append to the list passed to draw() and then select the
       // new row without redrawing (DirectoryContentsWidget.addDirectory)
       syncEmptyState();
-      
-      if (selectedRowElement_ != null)
-      {
-         selectedRowElement_.removeClassName(RES.styles().selected());
-         selectedRowElement_.removeAttribute("aria-selected");
-         selectedRowElement_ = null;
-      }
-      
-      selectedRow_ = MathUtil.clamp(row, 0, data_.size() - 1);
+
+      selectedRow_ = row;
       selectedItem_ = data_.get(selectedRow_);
       SelectionEvent.fire(this, getSelectedItem());
-      
-      // if the requested row is part of the current view,
-      // apply selection styling to it
-      selectedRowElement_ = getRenderedRowElement(row);
+
+      markSelectedRowElement();
       if (selectedRowElement_ != null)
-      {
-         selectedRowElement_.addClassName(RES.styles().selected());
-         selectedRowElement_.setAttribute("aria-selected", "true");
          DomUtils.setFocus(selectedRowElement_, true);
-      }
       updateActiveDescendant();
       
-      if (scrollType != ScrollType.NONE)
-      {
-         if (selectedRowElement_ != null)
-         {
-            if (scrollType == ScrollType.DEFAULT)
-            {
-               selectedRowElement_.scrollIntoView();
-            }
-            else
-            {
-               String behaviour = scrollType.toString().toLowerCase();
-               scrollIntoView(selectedRowElement_, behaviour);
-            }
-            
-         }
-         else
-         {
-            scrollIntoViewIfNeeded(selectedRow_);
-         }
-      }
+      if (scrollType == ScrollType.NONE)
+         return;
+
+      if (scrollType == ScrollType.DEFAULT || selectedRowElement_ == null)
+         revealRow(selectedRow_);
+      else
+         scrollIntoView(selectedRowElement_, scrollType.toString().toLowerCase());
    }
    
    private void selectRow(Element rowEl)
