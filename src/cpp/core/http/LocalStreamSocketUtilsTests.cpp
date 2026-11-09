@@ -374,8 +374,62 @@ TEST_F(LocalStreamSocketUtilsTest, ClaimRefusesNonRegularLockFile)
 
    SocketAcceptorService<stream_protocol> service;
    LocalStreamIdentity identity;
-   EXPECT_TRUE(claimLocalStream(service, streamPath_, FileMode::USER_READ_WRITE, &identity));
+   Error error = claimLocalStream(service, streamPath_, FileMode::USER_READ_WRITE, &identity);
+   ASSERT_TRUE(error);
    EXPECT_FALSE(streamPath_.exists());
+
+   // the log must name the file to remove
+   EXPECT_EQ(error.getProperty("lock-file"), lockPath_.getAbsolutePath());
+   EXPECT_FALSE(error.getProperty("description").empty());
+}
+
+TEST_F(LocalStreamSocketUtilsTest, ClaimRunsCallbackWhileListeningAndLocked)
+{
+   SocketAcceptorService<stream_protocol> service;
+   LocalStreamIdentity identity;
+   bool called = false;
+   ASSERT_FALSE(claimLocalStream(
+      service,
+      streamPath_,
+      FileMode::USER_READ_WRITE,
+      &identity,
+      [&]()
+      {
+         called = true;
+         EXPECT_TRUE(listening());
+
+         // another claimant must still be waiting on the lock at this point
+         std::unique_ptr<std::FILE, decltype(&std::fclose)> lockFile(
+            std::fopen(lockPath_.getAbsolutePath().c_str(), "r+"),
+            &std::fclose);
+         EXPECT_NE(lockFile, nullptr);
+         if (lockFile)
+         {
+            EXPECT_EQ(::flock(::fileno(lockFile.get()), LOCK_EX | LOCK_NB), -1);
+            EXPECT_EQ(errno, EWOULDBLOCK);
+         }
+         return Success();
+      }));
+   EXPECT_TRUE(called);
+}
+
+TEST_F(LocalStreamSocketUtilsTest, ClaimReturnsCallbackError)
+{
+   SocketAcceptorService<stream_protocol> service;
+   LocalStreamIdentity identity;
+   Error error = claimLocalStream(
+      service,
+      streamPath_,
+      FileMode::USER_READ_WRITE,
+      &identity,
+      [&]()
+      {
+         return systemError(boost::system::errc::io_error, ERROR_LOCATION);
+      });
+   EXPECT_EQ(error, systemError(boost::system::errc::io_error, ErrorLocation()));
+
+   // the claim stands: the caller decides what to do with the bound socket
+   EXPECT_TRUE(listening());
 }
 
 TEST_F(LocalStreamSocketUtilsTest, IdentityOfMissingPathIsAnError)
