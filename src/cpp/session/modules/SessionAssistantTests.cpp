@@ -38,6 +38,7 @@ using modules::assistant::AgentStdoutReader;
 using modules::assistant::focusDocumentForTesting;
 using modules::assistant::agentRequestTimeout;
 using modules::assistant::agentStderrTail;
+using modules::assistant::agentStdoutErrorSummary;
 using modules::assistant::nesLanguageServerPath;
 using modules::assistant::queueAgentNotificationForTesting;
 using modules::assistant::queueAgentReplyForTesting;
@@ -298,6 +299,22 @@ TEST(SessionAssistant, StdoutReaderShortensAnInvalidValueInItsError)
    reader.append("Content-Length: " + std::string(10000, '9') + "\r\n\r\n", &errors);
    ASSERT_EQ(errors.size(), 1u);
    EXPECT_LT(errors.front().length(), 100u);
+}
+
+TEST(SessionAssistant, StdoutErrorSummaryOfNoErrorsIsEmpty)
+{
+   EXPECT_EQ(agentStdoutErrorSummary({}), "");
+}
+
+TEST(SessionAssistant, StdoutErrorSummaryOfOneErrorIsThatError)
+{
+   EXPECT_EQ(agentStdoutErrorSummary({"bad header"}), "bad header");
+}
+
+TEST(SessionAssistant, StdoutErrorSummaryCountsTheErrorsAfterTheFirst)
+{
+   EXPECT_EQ(agentStdoutErrorSummary({"first", "second", "third"}),
+             "first (and 2 more in this read)");
 }
 
 TEST(SessionAssistant, StderrTailKeepsShortTextUnchanged)

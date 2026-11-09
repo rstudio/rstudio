@@ -4936,13 +4936,9 @@ void onBackendStdout(core::system::ProcessOperations& ops,
          processBackendMessage(ops, messageValue);
    }
 
-   // One line per read, as junk can hold an error every few bytes.
-   if (errors.size() == 1)
-      WLOG("Malformed message from chat backend: {}", errors.front());
-   else if (errors.size() > 1)
-      WLOG("Malformed message from chat backend: {} (and {} more in this read)",
-           errors.front(),
-           errors.size() - 1);
+   if (!errors.empty())
+      WLOG("Malformed message from chat backend: {}",
+           assistant::agentStdoutErrorSummary(errors));
 }
 
 void onBackendStderr(core::system::ProcessOperations& ops, const std::string& output)

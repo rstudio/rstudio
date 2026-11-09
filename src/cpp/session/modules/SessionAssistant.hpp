@@ -98,6 +98,10 @@ private:
    std::size_t bodyLength_ = 0;
 };
 
+// The errors from one AgentStdoutReader::append() as one line, since junk can
+// hold an error every few bytes: the first, and how many more. Empty if none.
+std::string agentStdoutErrorSummary(const std::vector<std::string>& errors);
+
 // Resolve the next-edit-suggestion (NES) language server script within a Posit
 // Assistant installation directory. Returns an empty path when installPath is
 // empty (no installation was located) or holds no language server script.

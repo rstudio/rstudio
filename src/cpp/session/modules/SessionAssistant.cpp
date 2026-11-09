@@ -1179,11 +1179,8 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut, uint64_t
       }
    }
 
-   // One line per read, as junk can hold an error every few bytes.
-   if (errors.size() == 1)
-      ELOG("Internal error: {}.", errors.front());
-   else if (errors.size() > 1)
-      ELOG("Internal error: {} (and {} more in this read).", errors.front(), errors.size() - 1);
+   if (!errors.empty())
+      ELOG("Internal error: {}.", agentStdoutErrorSummary(errors));
 
    if (!errors.empty() && assistantLogLevel() >= 2)
    {
@@ -3180,6 +3177,14 @@ void AgentStdoutReader::clear()
 {
    buffer_.clear();
    bodyLength_ = 0;
+}
+
+std::string agentStdoutErrorSummary(const std::vector<std::string>& errors)
+{
+   if (errors.size() <= 1)
+      return errors.empty() ? std::string() : errors.front();
+
+   return errors.front() + " (and " + std::to_string(errors.size() - 1) + " more in this read)";
 }
 
 FilePath nesLanguageServerPath(const FilePath& installPath)
