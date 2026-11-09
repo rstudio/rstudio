@@ -33,24 +33,25 @@ export AWS_DEFAULT_REGION=us-east-1
 # caller asks for it with AmiId=...; otherwise the stack keeps its current
 # value and a redeploy only changes what the template changed.
 overrides=("$@")
+
+# The network is the account's shared VPC (an organization policy forbids
+# creating one) and its private-0 subnet (template.yaml says why). Looked
+# up by tag on every deploy, so a different subnet means a different
+# instance; VpcId=.../SubnetId=... arguments take precedence.
+if [[ ! " $* " =~ " VpcId=" ]]; then
+  VPC_ID=$(aws ec2 describe-vpcs --filters Name=tag:Name,Values=shared \
+    --query 'Vpcs[0].VpcId' --output text)
+  SUBNET_ID=$(aws ec2 describe-subnets --filters "Name=vpc-id,Values=$VPC_ID" Name=tag:Name,Values=private-0 \
+    --query 'Subnets[0].SubnetId' --output text)
+  if [[ $VPC_ID == None || $SUBNET_ID == None ]]; then
+    echo "Could not find the shared VPC's private-0 subnet; pass VpcId=... SubnetId=..." >&2
+    exit 1
+  fi
+  overrides+=("VpcId=$VPC_ID" "SubnetId=$SUBNET_ID")
+fi
+
 if ! aws cloudformation describe-stacks --stack-name "$STACK_NAME" > /dev/null 2>&1; then
   echo "Creating $STACK_NAME..."
-
-  # The network is the account's shared VPC (an organization policy forbids
-  # creating one); the public subnet is the one whose network ACL allows UDP
-  # (template.yaml). Only looked up at creation; VpcId=.../SubnetId=...
-  # arguments take precedence.
-  if [[ ! " $* " =~ " VpcId=" ]]; then
-    VPC_ID=$(aws ec2 describe-vpcs --filters Name=tag:Name,Values=shared \
-      --query 'Vpcs[0].VpcId' --output text)
-    SUBNET_ID=$(aws ec2 describe-subnets --filters "Name=vpc-id,Values=$VPC_ID" Name=tag:Name,Values=public-0 \
-      --query 'Subnets[0].SubnetId' --output text)
-    if [[ $VPC_ID == None || $SUBNET_ID == None ]]; then
-      echo "Could not find the shared VPC's public-0 subnet; pass VpcId=... SubnetId=..." >&2
-      exit 1
-    fi
-    overrides+=("VpcId=$VPC_ID" "SubnetId=$SUBNET_ID")
-  fi
 
   # rs:owner is the deploying SSO identity (the last path segment of the
   # assumed-role ARN is the user's email) unless given as Owner=...

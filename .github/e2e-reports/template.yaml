@@ -39,11 +39,10 @@ Parameters:
   SubnetId:
     Type: AWS::EC2::Subnet::Id
     Description: >-
-      A public subnet of VpcId (tag Name=public-0). The VPC's private subnets
-      have network ACLs that allow TCP only, which leaves Tailscale no UDP and
-      so no direct connections: every byte would go through a relay at about
-      1 MB/s. The public subnets allow UDP, and a public address lets other
-      tailnet nodes reach WireGuard directly. deploy.sh looks it up.
+      A private subnet of VpcId (tag Name=private-0): outbound internet through
+      the VPC's NAT gateway, S3 through its gateway endpoint, no public address.
+      Its network ACL allows TCP only, so Tailscale reaches the host through its
+      relays rather than directly (README.md). deploy.sh looks it up.
   Owner:
     Type: String
     AllowedPattern: '[^@\s]+@[^@\s]+'
@@ -111,21 +110,13 @@ Resources:
 
   # ------------------------------------------------------------------- EC2
 
-  # Nothing listens on the public address: nginx binds to localhost and
-  # Tailscale terminates TLS. The one inbound rule is WireGuard's port, so
-  # other tailnet nodes connect directly instead of through Tailscale's
-  # relays; WireGuard drops anything that is not from a tailnet peer.
+  # Nothing inbound: the host has no public address, nginx binds to
+  # localhost, and Tailscale needs only outbound connections.
   HostSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: e2e reports host (Tailscale only)
+      GroupDescription: e2e reports host (Tailscale only, no inbound)
       VpcId: !Ref VpcId
-      SecurityGroupIngress:
-        - IpProtocol: udp
-          FromPort: 41641
-          ToPort: 41641
-          CidrIp: 0.0.0.0/0
-          Description: WireGuard (Tailscale direct connections)
       SecurityGroupEgress:
         - IpProtocol: '-1'
           CidrIp: 0.0.0.0/0
@@ -162,14 +153,9 @@ Resources:
       ImageId: !Ref AmiId
       InstanceType: !Ref InstanceType
       IamInstanceProfile: !Ref HostInstanceProfile
-      # The shared VPC's public subnets do not assign public addresses by
-      # default, so ask for one explicitly.
-      NetworkInterfaces:
-        - DeviceIndex: '0'
-          AssociatePublicIpAddress: true
-          SubnetId: !Ref SubnetId
-          GroupSet:
-            - !Ref HostSecurityGroup
+      SubnetId: !Ref SubnetId
+      SecurityGroupIds:
+        - !Ref HostSecurityGroup
       MetadataOptions:
         HttpTokens: required
         HttpEndpoint: enabled

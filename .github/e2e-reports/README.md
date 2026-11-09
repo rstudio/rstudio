@@ -114,8 +114,9 @@ All of this is done once, by someone with the `ide-build` AWS profile
   the Tailscale admin console. The reports bucket is untouched.
 
 Cost: the instance (`t4g.micro`, about $6 a month), its 8 GB volume, and
-its public IPv4 address (about $4). Reads from the bucket go through the
-VPC's S3 gateway endpoint in the same region, so they are free.
+the shared VPC's NAT gateway processing charge on what the host sends to
+browsers. Reads from the bucket go through the VPC's S3 gateway endpoint in
+the same region, so they are free.
 
 ## Notes
 
@@ -124,13 +125,22 @@ VPC's S3 gateway endpoint in the same region, so they are free.
   for directories, `autoindex` listings elsewhere, content types from file
   extensions. New reports appear as soon as the upload finishes; Mountpoint
   caches directory listings only briefly.
-- The host lives in a public subnet of the account's shared VPC (an
-  organization policy forbids creating VPCs) with a public address, and the
-  security group admits only WireGuard's UDP port. nginx binds to localhost
-  and `tailscale serve` is the only way in. The private subnets were tried
-  first: their network ACLs allow TCP only, so Tailscale had no UDP, no
-  direct connections, and every transfer went through a relay at about
-  1 MB/s (a 20 MB trace took 25 seconds).
+- The host lives in a private subnet of the account's shared VPC (an
+  organization policy forbids creating VPCs): no public address, a security
+  group with no inbound rules, outbound through the VPC's NAT gateway. nginx
+  binds to localhost and `tailscale serve` is the only way in.
+- **Transfers are relayed.** The private subnets' network ACLs allow TCP
+  only, so Tailscale has no UDP there, cannot make a direct connection, and
+  carries everything through its DERP relays at roughly 1 MB/s: a report's
+  `index.html` (several MB) opens in a few seconds and a 20 MB trace takes
+  about 25 seconds. The host itself reads from the bucket at line rate. The
+  fix is on the network's side: an ACL rule allowing outbound UDP on ports
+  1024-65535 from the private subnets (what the public subnets already
+  have), which lets Tailscale negotiate direct connections through the NAT
+  gateway. The public subnets are not an alternative: they allow UDP but
+  their internet egress is filtered beyond this account's view (only AWS
+  services through the VPC's endpoints), so a host there cannot even install
+  packages.
 - The user data is a cloud-init multipart document whose `cloud_final_modules`
   setting makes the script run on every boot. It is written without `${...}`
   shell syntax because the template's `Fn::Sub` would try to resolve it.
