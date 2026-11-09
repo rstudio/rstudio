@@ -24,6 +24,7 @@ import org.rstudio.core.client.widget.ModalDialogTracker;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.QuitAbortedEvent;
 import org.rstudio.studio.client.application.events.QuitEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -221,6 +222,8 @@ public class ApplicationAutomation
    //     without this handler that flag would stay false forever on the
    //     failure path and openProject() would time out instead of surfacing
    //     the real error.
+   //   - QuitAbortedEvent: the session refused the quit (an error in .Last(),
+   //     say) after project.open() reset the flag, and carries on as before.
    //
    // doRestart-style flows (Electron relaunch on PAI uninstall etc.) reload
    // the GWT page entirely, so initializeRoot() handles their reset.
@@ -240,6 +243,7 @@ public class ApplicationAutomation
             setReadyFlag(false);
       });
       eventBus_.addHandler(OpenProjectErrorEvent.TYPE, event -> setReadyFlag(true));
+      eventBus_.addHandler(QuitAbortedEvent.TYPE, event -> setReadyFlag(true));
 
       // Re-join: a reload that reconnects to a still-running R session which has
       // already completed its deferred init. kDeferredInitCompleted fired once

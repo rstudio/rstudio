@@ -6,6 +6,9 @@ import { Locator, Page, Request, Route, expect } from '@playwright/test';
 import { executeCommand } from '@utils/commands';
 
 export const OPEN_FILE_DIALOG = '.gwt-DialogBox[aria-label="Open File"]';
+// The file (or folder) list and the File name box, in any of the dialogs.
+export const FILE_LIST = '#rstudio_directory_contents';
+export const FILE_NAME = '#file_dialog_name_prompt';
 
 // The RPC the GWT file dialogs list their directory with.
 export const LIST_FILES_RPC = /\/rpc\/list_files(?:\?|$)/;
