@@ -42,6 +42,13 @@ Parameters:
       A private subnet of VpcId (tag Name=private-0): outbound internet through
       the VPC's NAT gateway for Tailscale and the package repositories, S3
       through its gateway endpoint, and no public address. deploy.sh looks it up.
+  Owner:
+    Type: String
+    AllowedPattern: '[^@\s]+@[^@\s]+'
+    Description: >-
+      Email for the rs:owner tag. An organization policy refuses to launch an
+      instance without rs:owner and rs:project tags; deploy.sh fills in the
+      deploying identity's email.
   InstanceType:
     Type: String
     Default: t4g.micro
@@ -117,7 +124,22 @@ Resources:
       Tags:
         - Key: Name
           Value: !Ref AWS::StackName
+        - Key: rs:owner
+          Value: !Ref Owner
+        - Key: rs:project
+          Value: ide
+        - Key: rs:environment
+          Value: ci
+        - Key: rs:subsystem
+          Value: e2e_reports
+        - Key: rs:stack
+          Value: !Ref AWS::StackName
+        - Key: rs:managed-by
+          Value: cloudformation
 
+  # Tags follow the account's rs:* convention; rs:owner and rs:project are
+  # what the organization policy requires at launch (the rest is bookkeeping),
+  # and PropagateTagsToVolumeOnCreation puts them on the volume too.
   # The user data runs on every boot (cloud_final_modules below), so it has to
   # be idempotent, and a change to it takes effect with a stop/start rather
   # than a replacement. It is written without `${...}` shell syntax because
@@ -145,6 +167,18 @@ Resources:
       Tags:
         - Key: Name
           Value: !Ref AWS::StackName
+        - Key: rs:owner
+          Value: !Ref Owner
+        - Key: rs:project
+          Value: ide
+        - Key: rs:environment
+          Value: ci
+        - Key: rs:subsystem
+          Value: e2e_reports
+        - Key: rs:stack
+          Value: !Ref AWS::StackName
+        - Key: rs:managed-by
+          Value: cloudformation
       UserData:
         Fn::Base64: !Sub |
           Content-Type: multipart/mixed; boundary="//"

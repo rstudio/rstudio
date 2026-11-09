@@ -129,3 +129,7 @@ the same region, so they are free.
 - The instance uses IMDSv2 only, an encrypted gp3 root volume, and an
   instance role limited to reading the bucket and the auth key parameter,
   plus Session Manager.
+- The account's organization policy refuses `ec2:RunInstances` without
+  `rs:owner` and `rs:project` tags on the instance, and `ec2:CreateVpc`
+  altogether. The template tags everything with the account's `rs:*`
+  convention (`rs:owner` is whoever ran the first deploy, or `Owner=...`).

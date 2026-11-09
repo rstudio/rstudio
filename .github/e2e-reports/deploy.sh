@@ -51,6 +51,18 @@ if ! aws cloudformation describe-stacks --stack-name "$STACK_NAME" > /dev/null 2
     fi
     overrides+=("VpcId=$VPC_ID" "SubnetId=$SUBNET_ID")
   fi
+
+  # rs:owner is the deploying SSO identity (the last path segment of the
+  # assumed-role ARN is the user's email) unless given as Owner=...
+  if [[ ! " $* " =~ " Owner=" ]]; then
+    OWNER=$(aws sts get-caller-identity --query Arn --output text)
+    OWNER=${OWNER##*/}
+    if [[ $OWNER != *@* ]]; then
+      echo "Could not derive an email from the caller identity ($OWNER); pass Owner=you@posit.co" >&2
+      exit 1
+    fi
+    overrides+=("Owner=$OWNER")
+  fi
 elif [[ ! " $* " =~ " AmiId=" ]]; then
   overrides+=("AmiId=$(aws cloudformation describe-stacks --stack-name "$STACK_NAME" \
     --query "Stacks[0].Parameters[?ParameterKey=='AmiId'].ParameterValue" --output text)")
