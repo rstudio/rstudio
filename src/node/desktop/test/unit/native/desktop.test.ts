@@ -118,14 +118,11 @@ describe('Desktop Native Code', () => {
     assert.equal(await readClipboardHtml(), expected);
   });
 
-  // The dialog watcher's observable behavior (raising rsession dialogs above
-  // the RStudio window) needs a live rsession showing a Win32 dialog, so these
-  // tests only exercise the exported API surface across its lifecycle.
   // The registry readers must hand an InstallPath to JavaScript intact
   // (#19512): BMP and supplementary characters, a REG_EXPAND_SZ value, and a
   // value longer than the first 256-unit buffer. Fixtures are written under
   // HKCU\SOFTWARE\R-core so the real readers run against them, and removed
-  // afterwards.
+  // afterwards, along with any parent key the fixtures had to create.
   describe('win32 registry readers', () => {
     const tag = `RStudioTest-${process.pid}`;
     const rCore = 'HKCU\\SOFTWARE\\R-core';
@@ -134,27 +131,40 @@ describe('Desktop Native Code', () => {
     const expandValue = '%SystemDrive%\\R-expand\\é😀';
     const expandedPath = `${process.env.SystemDrive}\\R-expand\\é😀`;
 
+    const fixtureKeys = [`${rCore}\\R\\${tag}`, `${rCore}\\R\\${tag}-long`, `${rCore}\\${tag}`];
+    // the outermost of HKCU\SOFTWARE\R-core and ...\R-core\R that did not exist
+    // before the fixtures were written; `reg add` creates missing parents
+    let createdParentKey: string | undefined;
+
     function reg(...args: string[]) {
       const result = spawnSync('reg.exe', args, { encoding: 'utf8' });
       assert.equal(result.status, 0, `reg ${args.join(' ')}: ${result.stderr}`);
+    }
+
+    function regKeyExists(key: string): boolean {
+      return spawnSync('reg.exe', ['query', key], { encoding: 'utf8' }).status === 0;
     }
 
     before(function () {
       if (process.platform !== 'win32') {
         this.skip();
       }
-      reg('add', `${rCore}\\R\\${tag}`, '/v', 'InstallPath', '/t', 'REG_SZ', '/d', unicodePath, '/f');
-      reg('add', `${rCore}\\R\\${tag}-long`, '/v', 'InstallPath', '/t', 'REG_SZ', '/d', longPath, '/f');
-      reg('add', `${rCore}\\${tag}`, '/v', 'InstallPath', '/t', 'REG_EXPAND_SZ', '/d', expandValue, '/f');
+      createdParentKey = [rCore, `${rCore}\\R`].find((key) => !regKeyExists(key));
+      reg('add', fixtureKeys[0], '/v', 'InstallPath', '/t', 'REG_SZ', '/d', unicodePath, '/f');
+      reg('add', fixtureKeys[1], '/v', 'InstallPath', '/t', 'REG_SZ', '/d', longPath, '/f');
+      reg('add', fixtureKeys[2], '/v', 'InstallPath', '/t', 'REG_EXPAND_SZ', '/d', expandValue, '/f');
     });
 
     after(function () {
       if (process.platform !== 'win32') {
         return;
       }
-      spawnSync('reg.exe', ['delete', `${rCore}\\R\\${tag}`, '/f']);
-      spawnSync('reg.exe', ['delete', `${rCore}\\R\\${tag}-long`, '/f']);
-      spawnSync('reg.exe', ['delete', `${rCore}\\${tag}`, '/f']);
+      for (const key of fixtureKeys) {
+        reg('delete', key, '/f');
+      }
+      if (createdParentKey !== undefined) {
+        reg('delete', createdParentKey, '/f');
+      }
     });
 
     it('enumerates non-ASCII and long InstallPath values intact', () => {
@@ -172,6 +182,9 @@ describe('Desktop Native Code', () => {
     });
   });
 
+  // The dialog watcher's observable behavior (raising rsession dialogs above
+  // the RStudio window) needs a live rsession showing a Win32 dialog, so these
+  // tests only exercise the exported API surface across its lifecycle.
   describe('win32 session dialog watcher', () => {
     it('watch followed by stop does not throw', () => {
       desktop.win32WatchSessionDialogs(process.pid);
