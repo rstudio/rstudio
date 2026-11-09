@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.output.data;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -83,32 +82,14 @@ public class DataOutputPane extends WorkbenchPane
    {
       setDataFile(response.getTitle());
 
-      // Rescheduling cancels an older preview still waiting for the grid
-      // viewer to load, so it can't overwrite this one when it does.
-      pendingOutput_ = response;
-      outputTimer_.schedule(100);
+      // The frame holds these until gridviewer.html has loaded, and replays
+      // them when it reloads, so only the latest preview is ever shown.
+      gridViewer_.setOption("nullsAsNAs", "true");
+      gridViewer_.setOption("ordering", "false");
+      gridViewer_.setOption("rowNumbers", "false");
+      gridViewer_.setData(response.getData());
    }
 
-   private final Timer outputTimer_ = new Timer()
-   {
-      @Override
-      public void run()
-      {
-         if (!gridViewer_.isReady())
-         {
-            this.schedule(200);
-         }
-         else
-         {
-            gridViewer_.setOption("nullsAsNAs", "true");
-            gridViewer_.setOption("ordering", "false");
-            gridViewer_.setOption("rowNumbers", "false");
-            gridViewer_.setData(pendingOutput_.getData());
-         }
-      }
-   };
-
-   private DataOutputCompletedEvent pendingOutput_;
    GridViewerFrame gridViewer_;
    Label dataOutputFile_;
    private static final OutputConstants constants_ = GWT.create(OutputConstants.class);

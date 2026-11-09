@@ -15,6 +15,11 @@
 
 package org.rstudio.core.client.widget;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportDataActiveColumn;
 
@@ -42,6 +47,13 @@ public class GridViewerFrame extends RStudioThemedFrame
          null,
          false,
          enableThemes);
+
+      // The page's API (setOption/setData in DataViewer.js) is not there
+      // until gridviewer.html has loaded, and a reload empties the grid. The
+      // frame is re-inserted, and so reloaded, whenever its tab panel changes
+      // (WorkbenchTabPanel.setTabs clears and re-adds every tab), so the
+      // latest pushes are kept and replayed from every load.
+      addLoadHandler(event -> onGridViewerLoaded());
    }
    
    public void onAttach()
@@ -51,14 +63,19 @@ public class GridViewerFrame extends RStudioThemedFrame
    
    public void setData(JavaScriptObject data)
    {
-      WindowEx gridViewerFrameWindow = getIFrame().getContentWindow();
-      setDataNative(gridViewerFrameWindow, data);
+      data_ = data;
+      hasData_ = true;
+
+      if (isReady())
+         setDataNative(getWindow(), data);
    }
    
    public void setOption(String option, String value)
    {
-      WindowEx gridViewerFrameWindow = getIFrame().getContentWindow();
-      setOptionNative(gridViewerFrameWindow, option, value);
+      options_.put(option, value);
+
+      if (isReady())
+         setOptionNative(getWindow(), option, value);
    }
    
    public void setColumnDefinitionsUIVisible(
@@ -66,12 +83,19 @@ public class GridViewerFrame extends RStudioThemedFrame
       Operation onColumnOpen,
       Operation onColumnDismiss)
    {
-      WindowEx gridViewerFrameWindow = getIFrame().getContentWindow();
-      setColumnDefinitionsUIVisibleNative(
-            gridViewerFrameWindow,
-            value,
-            onColumnOpen,
-            onColumnDismiss);
+      columnDefinitionsUIVisible_ = value;
+      onColumnOpen_ = onColumnOpen;
+      onColumnDismiss_ = onColumnDismiss;
+      hasColumnDefinitionsUI_ = true;
+
+      if (isReady())
+      {
+         setColumnDefinitionsUIVisibleNative(
+               getWindow(),
+               value,
+               onColumnOpen,
+               onColumnDismiss);
+      }
    }
    
    public DataImportDataActiveColumn getActiveColumn()
@@ -80,19 +104,62 @@ public class GridViewerFrame extends RStudioThemedFrame
       return getActiveColumn(gridViewerFrameWindow);
    }
 
-   public boolean isReady()
+   private boolean isReady()
    {
-      WindowEx gridViewerFrameWindow = getIFrame().getContentWindow();
-      return canSetOptions(gridViewerFrameWindow);
+      return canSetOptions(getWindow());
+   }
+
+   private void onGridViewerLoaded()
+   {
+      WindowEx window = getWindow();
+      if (!canSetOptions(window))
+      {
+         // Chrome can fire load for the initial about:blank; anything else is
+         // the page having loaded without its script (or a redirect, e.g. to
+         // sign-in), and nothing will be shown.
+         String url = getLocationHref(window);
+         if (!StringUtil.equals(url, "about:blank"))
+            Debug.logWarning("Grid viewer frame loaded without its API: " + url);
+         return;
+      }
+
+      // Same order as the callers: options first, since setData reads them.
+      for (Map.Entry<String, String> option : options_.entrySet())
+         setOptionNative(window, option.getKey(), option.getValue());
+
+      if (hasData_)
+         setDataNative(window, data_);
+
+      if (hasColumnDefinitionsUI_)
+      {
+         setColumnDefinitionsUIVisibleNative(
+               window,
+               columnDefinitionsUIVisible_,
+               onColumnOpen_,
+               onColumnDismiss_);
+      }
    }
 
    // The frame has a contentWindow (about:blank) before gridviewer.html loads,
    // so wait for its API; setData also needs the document to be parsed.
-   private native boolean canSetOptions(WindowEx frameContentWindow) /*-{
-      return !!frameContentWindow &&
-             typeof frameContentWindow.setOption === "function" &&
-             typeof frameContentWindow.setData === "function" &&
-             frameContentWindow.document.readyState !== "loading";
+   private static native boolean canSetOptions(WindowEx frameContentWindow) /*-{
+      try {
+         return !!frameContentWindow &&
+                typeof frameContentWindow.setOption === "function" &&
+                typeof frameContentWindow.setData === "function" &&
+                frameContentWindow.document.readyState !== "loading";
+      } catch (e) {
+         // cross-origin window
+         return false;
+      }
+   }-*/;
+
+   private static native String getLocationHref(WindowEx frameContentWindow) /*-{
+      try {
+         return frameContentWindow ? frameContentWindow.location.href : null;
+      } catch (e) {
+         return null;
+      }
    }-*/;
    
    private final native void setDataNative(
@@ -128,4 +195,13 @@ public class GridViewerFrame extends RStudioThemedFrame
       WindowEx frameContentWindow) /*-{
       return frameContentWindow.getActiveColumn();
    }-*/;
+
+   // The latest pushes, replayed on every load of the page.
+   private final Map<String, String> options_ = new LinkedHashMap<>();
+   private JavaScriptObject data_;
+   private boolean hasData_;
+   private boolean columnDefinitionsUIVisible_;
+   private Operation onColumnOpen_;
+   private Operation onColumnDismiss_;
+   private boolean hasColumnDefinitionsUI_;
 }
