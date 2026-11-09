@@ -59,6 +59,7 @@
 - ([#19520](https://github.com/rstudio/rstudio/issues/19520)): Fixed an issue where messages from the Posit AI and GitHub Copilot code assistants were dropped, and errors such as "parsing response failed" were logged, when the language server's output arrived split across reads.
 - ([#19525](https://github.com/rstudio/rstudio/issues/19525)): Fixed an issue where Posit Assistant chat stopped handling messages from its backend, such as requests to run code or edit files, after the backend wrote a malformed message header.
 - ([#19470](https://github.com/rstudio/rstudio/issues/19470)): [Accessibility] Fixed an issue where the Packages pane showed an unlabeled Browse button for packages with no browse URL, such as those installed from a local path. Screen readers now announce the Browse and Remove buttons with the package's name (e.g. "Browse dplyr", "Remove dplyr") instead of the website's URL or a generic "Remove package".
+- ([#19517](https://github.com/rstudio/rstudio/issues/19517)): Fixed an issue where each document save added change-tracking handlers to the editor that were never removed.
 - ([#19380](https://github.com/rstudio/rstudio/issues/19380)): [Accessibility] Fixed an issue where the tabs shown when a pane is minimized were not announced as tabs by screen readers and could not be reached with the keyboard. They can now be focused with Tab, moved between with the arrow keys, and activated with Enter or Space to restore the pane. Restoring or maximizing a minimized pane from the keyboard now moves focus into the pane.
 
 ### Dependencies
