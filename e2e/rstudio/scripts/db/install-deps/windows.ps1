@@ -58,12 +58,21 @@ function Save-VerifiedDownload {
 
     for ($attempt = 0; ; $attempt++) {
         try {
-            # Bounded so a stalled connection becomes a retry rather than
-            # hanging the step until the job times out.
+            # -TimeoutSec bounds the wait for the response headers. Under
+            # Windows PowerShell 5.1 a stall partway through the body is cut
+            # off by .NET's 300s ReadWriteTimeout instead. Either way a stalled
+            # connection becomes a retry rather than hanging the step until the
+            # job times out.
             Invoke-WebRequest -Uri $Url -OutFile $OutFile -UseBasicParsing -TimeoutSec 120
             break
         } catch {
-            if ($attempt -ge $delays.Count) {
+            # A 4xx other than 408/429 is the server's final answer (the
+            # pinned asset is gone, or access is denied), so waiting won't
+            # change it. No response at all (DNS, timeout) casts to 0 and is
+            # retried.
+            $status = [int]$_.Exception.Response.StatusCode
+            $permanent = $status -ge 400 -and $status -lt 500 -and $status -notin @(408, 429)
+            if ($permanent -or $attempt -ge $delays.Count) {
                 throw
             }
             $delay = $delays[$attempt]
@@ -104,7 +113,20 @@ if (Test-Path -LiteralPath 'HKLM:\SOFTWARE\ODBC\ODBCINST.INI\PostgreSQL Unicode(
     $proc = Start-Process -FilePath msiexec.exe -ArgumentList $msiArgs -Wait -PassThru
     # 3010 is success with a reboot requested; ODBC registration doesn't need one.
     if ($proc.ExitCode -notin @(0, 3010)) {
-        Get-Content -Path $psqlOdbcLog -Tail 40 -ErrorAction SilentlyContinue
+        # A verbose MSI log ends with a property dump, so its tail says
+        # nothing about the failure. The first 'Return value 3' is the action
+        # that failed, and the lines before it carry the error. The log itself
+        # dies with the runner, so this excerpt is all that survives.
+        $failure = Get-Content -Path $psqlOdbcLog -ErrorAction SilentlyContinue |
+            Select-String -Pattern 'Return value 3' -Context 30, 2 |
+            Select-Object -First 1
+        if ($failure) {
+            @($failure.Context.PreContext) + $failure.Line + @($failure.Context.PostContext)
+        } else {
+            # No failing action (1618, 1619, 1620, ...): the exit code is the
+            # story, but show what little the log has.
+            Get-Content -Path $psqlOdbcLog -Tail 20 -ErrorAction SilentlyContinue
+        }
         throw "psqlodbc MSI install exited $($proc.ExitCode); log: $psqlOdbcLog"
     }
     Remove-Item $psqlOdbcMsi -Force -ErrorAction SilentlyContinue
