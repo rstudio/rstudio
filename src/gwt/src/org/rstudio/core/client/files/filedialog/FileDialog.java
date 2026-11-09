@@ -146,6 +146,7 @@ public abstract class FileDialog extends FileSystemDialog
          browser_.setFilename(file);
          browser_.setFilenameEnabled(false);
          acceptOnNavigated_ = true;
+         splitPath_ = filename;
          cd(dir);
          return false;
       }
@@ -259,6 +260,7 @@ public abstract class FileDialog extends FileSystemDialog
       // waited for was one of ours
       arrivedFromAccept_ = navigatingFromAccept_;
       navigatingFromAccept_ = false;
+      splitPath_ = null;
    }
 
    @Override
@@ -267,6 +269,17 @@ public abstract class FileDialog extends FileSystemDialog
       // a failed cd() does not reach onNavigated()
       browser_.setFilenameEnabled(true);
       navigatingFromAccept_ = false;
+
+      // the folder of a typed `dir/name` could not be entered: give the whole
+      // path back for correction, rather than leaving just `name` staged to
+      // be saved where the dialog still is
+      if (splitPath_ != null)
+      {
+         browser_.setFilename(splitPath_);
+         browser_.selectFilename();
+         splitPath_ = null;
+      }
+
       super.onError(errorMessage);
    }
 
@@ -293,5 +306,8 @@ public abstract class FileDialog extends FileSystemDialog
    // a cd() of ours is in flight / the last listing came from one
    private boolean navigatingFromAccept_ = false;
    private boolean arrivedFromAccept_ = false;
+
+   // the typed `dir/name` whose `dir` a cd() of ours is entering
+   private String splitPath_ = null;
    private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

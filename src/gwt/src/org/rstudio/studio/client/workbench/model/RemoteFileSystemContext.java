@@ -52,6 +52,19 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
       return globalDisplay_;
    }
    
+   /**
+    * A new set of callbacks is a new owner (a new dialog): results of the
+    * old owner's pending navigations must not reach it, and its opening
+    * navigation may fall back (see cd()).
+    */
+   @Override
+   public void setCallbacks(Callbacks callbacks)
+   {
+      super.setCallbacks(callbacks);
+      navigation_++;
+      openingNavigation_ = true;
+   }
+
    public void setwd(String relativeOrAbsolutePath)
    {
       workingDir_ = combine(pwd(), relativeOrAbsolutePath);
@@ -60,17 +73,28 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
          callbacks_.onNavigated();
    }
 
+   /**
+    * Only a dialog's opening navigation falls back to the project (or
+    * default working) directory, so the dialog can still open when the
+    * directory it would start in is gone (e.g. R/ in a package without one).
+    * A directory the user navigates to later fails outright instead, leaving
+    * the dialog where it was: silently listing a fallback there let a Save,
+    * Open, or Choose deferred behind the navigation complete in it (#18959).
+    */
    public void cd(String relativeOrAbsolutePath)
    {
-      // form the fallback path
-      String fallbackPath;
-      FileSystemItem projectDir = 
-            session_.getSessionInfo().getActiveProjectDir();
-      if (projectDir == null)
-         fallbackPath = session_.getSessionInfo().getDefaultWorkingDir();
-      else
-         fallbackPath = projectDir.getPath();
-      
+      String fallbackPath = null;
+      if (openingNavigation_)
+      {
+         FileSystemItem projectDir =
+               session_.getSessionInfo().getActiveProjectDir();
+         if (projectDir == null)
+            fallbackPath = session_.getSessionInfo().getDefaultWorkingDir();
+         else
+            fallbackPath = projectDir.getPath();
+      }
+      openingNavigation_ = false;
+
       cd(relativeOrAbsolutePath, fallbackPath);
    }
 
@@ -84,13 +108,19 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
     */
    public void cd(String relativeOrAbsolutePath, final String fallbackPath)
    {
-      cd(relativeOrAbsolutePath, fallbackPath, null, callbacks_);
+      navigation_++;
+      cd(relativeOrAbsolutePath, fallbackPath, navigation_);
    }
 
+   /**
+    * @param navigation This navigation's sequence number. A listing (or
+    *    error) is dropped once a later navigation or a new owner has
+    *    superseded it, so that out-of-order responses cannot move a dialog
+    *    and a closed or replaced dialog gets nothing.
+    */
    private void cd(String relativeOrAbsolutePath,
                    final String fallbackPath,
-                   final String navigationError,
-                   final Callbacks callbacks)
+                   final int navigation)
    {
       final String newPath = combine(workingDir_, relativeOrAbsolutePath);
 
@@ -108,26 +138,23 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
                @Override
                public void onError(ServerError error)
                {
-                  // A context can be reused by a new dialog while an old
-                  // navigation is pending. Ignore the old dialog's result.
-                  if (callbacks_ != callbacks)
+                  if (navigation != navigation_)
                      return;
 
                   if (fallbackPath != null)
                   {
-                     // Preserve the original error so a fallback listing
-                     // cannot be mistaken for the requested destination.
-                     cd(fallbackPath, null, error.getUserMessage(), callbacks);
+                     // the fallback continues this navigation, so a later
+                     // one supersedes it too
+                     cd(fallbackPath, null, navigation);
                   }
-                  else if (callbacks != null)
-                     callbacks.onError(error.getUserMessage());
+                  else if (callbacks_ != null)
+                     callbacks_.onError(error.getUserMessage());
                }
 
                @Override
                public void onResponseReceived(final DirectoryListing response)
                {
-                  // Discard stale listings before changing shared state, too.
-                  if (callbacks_ != callbacks)
+                  if (navigation != navigation_)
                      return;
 
                   final JsArray<FileSystemItem> files = response.getFiles();
@@ -137,13 +164,8 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
                   workingDir_ = newPath;
                   contents_ = fsi.toArray(new FileSystemItem[0]);
                   
-                  if (callbacks != null)
-                  {
-                     if (navigationError != null)
-                        callbacks.onNavigatedToFallback(navigationError);
-                     else
-                        callbacks.onNavigated();
-                  }
+                  if (callbacks_ != null)
+                     callbacks_.onNavigated();
                }
             });
    }
@@ -197,4 +219,8 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
    private final FileTypeRegistry fileTypeRegistry_;
    private final GlobalDisplay globalDisplay_;
    private final Session session_;
+
+   // see setCallbacks()
+   private int navigation_ = 0;
+   private boolean openingNavigation_ = true;
 }

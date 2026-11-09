@@ -172,9 +172,16 @@ public abstract class FileSystemDialog extends ModalDialogBase
    {
       FileSystemItem item = event.getSelectedItem();
       if (item != null && item.isDirectory())
+      {
+         // the user chose to go elsewhere: an accept waiting on an earlier
+         // navigation must not complete in the folder this one reaches
+         acceptOnNavigated_ = false;
          browser_.cd(item);
+      }
       else
+      {
          maybeAccept();
+      }
    }
 
    /**
@@ -268,37 +275,28 @@ public abstract class FileSystemDialog extends ModalDialogBase
       }
    }
 
-   @Override
-   public final void onNavigatedToFallback(String errorMessage)
-   {
-      // A fallback is useful for browsing, but it is not the destination the
-      // user accepted. Never run a deferred Save, Open, or Choose against it.
-      acceptOnNavigated_ = false;
-      onNavigated();
-      // The context can finish navigating after Cancel or Escape closed us.
-      if (isAttached())
-         onError(errorMessage);
-   }
-
    /**
     * Called when a directory listing arrives, after the browser shows it and
     * before any deferred accept runs. A navigation that fails outright skips
-    * it (see onError()). A fallback arrival also calls it, after canceling
-    * any deferred accept (see onNavigatedToFallback()).
+    * it (see onError()); only the opening navigation can recover by listing
+    * a fallback directory instead (RemoteFileSystemContext.cd()), and that
+    * listing arrives here as usual.
     */
    protected void onBrowserNavigated()
    {
    }
 
    /**
-    * Closing the dialog (Cancel, Escape) does not detach it from the context,
-    * so a listing that arrives afterwards still reaches onNavigated(). Drop
-    * any deferred accept so it cannot run the operation from a closed dialog.
+    * Closing the dialog (Cancel, Escape, or a completed operation) detaches
+    * it from the context, so a navigation still in flight cannot report a
+    * listing or an error to a dialog that is gone; the deferred accept it
+    * may have been carrying goes with it.
     */
    @Override
    protected void onUnload()
    {
       acceptOnNavigated_ = false;
+      context_.setCallbacks(null);
       super.onUnload();
    }
 

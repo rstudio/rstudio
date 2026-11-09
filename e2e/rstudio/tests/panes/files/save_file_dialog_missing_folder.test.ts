@@ -1,5 +1,7 @@
-// A failed typed directory must not save the staged filename in the fallback
-// directory (#18959). The suite uses GWT file dialogs on Desktop and Server.
+// A typed `dir/name` whose folder cannot be entered must leave the dialog
+// where it is, with the typed path given back, rather than staging `name` in
+// a fallback folder (#18959). The suite uses GWT file dialogs on Desktop and
+// Server.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
@@ -9,7 +11,7 @@ import { TIMEOUTS } from '@utils/constants';
 import { rPathLiteral } from '@utils/r';
 import { useSuiteSandbox } from '@utils/sandbox';
 
-test.describe('Save File dialog fallback', () => {
+test.describe('Save File dialog missing folder', () => {
   const sandbox = useSuiteSandbox();
 
   for (const relative of [true, false]) {
@@ -28,20 +30,25 @@ test.describe('Save File dialog fallback', () => {
       const leaf = sandbox.dir.split(/[\\/]/).pop()!;
       await expect(dialog.locator('[aria-current="location"]')).toHaveText(leaf, { timeout: TIMEOUTS.fileOpen });
 
-      const basename = `pw-fallback-${relative ? 'relative' : 'absolute'}.R`;
+      const basename = `pw-missing-${relative ? 'relative' : 'absolute'}.R`;
       const missing = `missing-${Date.now()}`;
-      const path = `${missing}/${basename}`;
-      await filename.fill(relative ? path : `${sandbox.dir}/${path}`);
+      const typed = relative ? `${missing}/${basename}` : `${sandbox.dir}/${missing}/${basename}`;
+      await filename.fill(typed);
       await dialog.getByRole('button', { name: 'Save', exact: true }).click();
 
       const error = page.getByRole('alertdialog', { name: 'Error', exact: true });
       await expect(error).toBeVisible({ timeout: TIMEOUTS.fileOpen });
       await error.getByRole('button', { name: 'OK' }).click();
       await expect(dialog).toBeVisible();
-      await expect(filename).toBeEnabled();
       expect(await page.evaluate(() => window.rstudio!.documents.active()!.path)).toBeNull();
 
-      // A corrected path still works after the fallback and its error.
+      // The dialog stays put and gives the whole typed path back, so a Save
+      // without correcting it cannot land `basename` in the folder shown.
+      await expect(dialog.locator('[aria-current="location"]')).toHaveText(leaf);
+      await expect(filename).toBeEnabled();
+      await expect(filename).toHaveValue(typed);
+
+      // A corrected path still works after the error.
       const corrected = `${sandbox.dir}/${basename}`;
       await filename.fill(corrected);
       await dialog.getByRole('button', { name: 'Save', exact: true }).click();
