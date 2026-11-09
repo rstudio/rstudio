@@ -266,16 +266,16 @@ public class AceEditorNative extends JavaScriptObject
       this.textInput.$focusScroll = "browser";
    }-*/;
 
-   /**
-    * Set an aria-label on the input element
-    * @param label
-    */
    // setAriaOptions is the API Ace's own completion popup uses; with no id it
    // clears the attribute and resets aria-haspopup and aria-autocomplete.
    public final native void setTextInputActiveDescendant(String id) /*-{
       this.textInput.setAriaOptions({ activeDescendant: id });
    }-*/;
 
+   /**
+    * Set an aria-label on the input element
+    * @param label
+    */
    public final void setTextInputAriaLabel(String label)
    {
       Element textInput = getTextInputElement();
