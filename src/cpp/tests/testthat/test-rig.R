@@ -1572,6 +1572,53 @@ test_that("each build of R this machine runs is checked, native first", {
 
 })
 
+test_that("on ARM64 Windows, R older than each build's minimum isn't offered", {
+
+   expect_identical(.rs.rig.minimumRVersion("arm64", windows = TRUE), "4.4.0")
+   expect_identical(.rs.rig.minimumRVersion("x86_64", windows = TRUE), "4.2.0")
+   expect_null(.rs.rig.minimumRVersion("", windows = TRUE))
+   expect_null(.rs.rig.minimumRVersion("arm64", windows = FALSE))
+   expect_null(.rs.rig.minimumRVersion("x86_64", windows = FALSE))
+
+   expect_true(.rs.rig.olderThan("4.1.3", "4.2.0"))
+   expect_true(.rs.rig.olderThan("4.1", "4.2.0"))
+   expect_true(.rs.rig.olderThan("3.6.3", "4.2.0"))
+   expect_false(.rs.rig.olderThan("4.2", "4.2.0"))
+   expect_false(.rs.rig.olderThan("4.2.0", "4.2.0"))
+   expect_false(.rs.rig.olderThan("5.0.1", "4.2.0"))
+   expect_false(.rs.rig.olderThan("release", "4.2.0"))
+   expect_false(.rs.rig.olderThan("4.1.3", NULL))
+
+   # below a build's minimum, rig isn't asked; at or above it, it still is
+   asked <- character()
+   resolve <- function(version, architecture, rig)
+   {
+      asked <<- c(asked, architecture)
+      "available"
+   }
+   windows <- function(architecture) .rs.rig.minimumRVersion(architecture, windows = TRUE)
+
+   expect_identical(
+      .rs.rig.checkRVersion("4.3.3", c("arm64", "x86_64"), "path/to/rig", resolve, windows),
+      list(
+         list(architecture = .rs.scalar("arm64"), status = .rs.scalar("unavailable")),
+         list(architecture = .rs.scalar("x86_64"), status = .rs.scalar("available"))
+      )
+   )
+   expect_identical(asked, "x86_64")
+
+   asked <- character()
+   expect_identical(
+      .rs.rig.checkRVersion("4.1.3", c("arm64", "x86_64"), "path/to/rig", resolve, windows),
+      list(
+         list(architecture = .rs.scalar("arm64"), status = .rs.scalar("unavailable")),
+         list(architecture = .rs.scalar("x86_64"), status = .rs.scalar("unavailable"))
+      )
+   )
+   expect_identical(asked, character())
+
+})
+
 test_that("an ARM64 Windows machine is recognized even from an emulated R", {
 
    skip_if_not(.rs.platform.isWindows, "not Windows")

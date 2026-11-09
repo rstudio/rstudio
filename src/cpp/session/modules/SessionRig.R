@@ -1244,21 +1244,52 @@
    "unknown"
 })
 
+#' The oldest version of R that installs as a usable build of R here, or NULL
+#' when only RStudio's own minimum applies. On ARM64 Windows (the only Windows
+#' with a choice of build), R has no ARM64 builds before 4.4, and R's x86_64
+#' installers before 4.2 install only 32-bit R there.
+.rs.addFunction("rig.minimumRVersion", function(architecture, windows = .rs.platform.isWindows)
+{
+   if (windows)
+      switch(architecture, arm64 = "4.4.0", x86_64 = "4.2.0", NULL)
+})
+
+#' Whether 'version' is older than 'minimum' (an x.y.0 release), comparing
+#' major.minor only, so "4.2" isn't taken as older than "4.2.0". A version
+#' that isn't a number (e.g. "release") is left for rig to judge.
+.rs.addFunction("rig.olderThan", function(version, minimum)
+{
+   parsed <- .rs.tryCatch(package_version(version))
+   if (is.null(minimum) || inherits(parsed, "error"))
+      return(FALSE)
+
+   have <- c(unlist(parsed), 0L)[1:2]
+   need <- unlist(package_version(minimum))[1:2]
+   have[[1L]] < need[[1L]] || (have[[1L]] == need[[1L]] && have[[2L]] < need[[2L]])
+})
+
 #' Ask rig, for each build of R this machine runs (native first; "" where
 #' there's no choice), whether it has an installer for the given version.
-#' Returns a list of each build and its status from .rs.rig.resolve().
+#' A version older than the build's minimum here is "unavailable" without
+#' asking. Returns a list of each build and its status from .rs.rig.resolve().
 .rs.addFunction("rig.checkRVersion", function(version,
                                               architectures = .rs.rig.installArchitectures(),
                                               rig = .rs.rig.find(),
-                                              resolve = .rs.rig.resolve)
+                                              resolve = .rs.rig.resolve,
+                                              minimum = .rs.rig.minimumRVersion)
 {
    if (length(architectures) == 0L)
       architectures <- ""
 
    lapply(architectures, function(architecture) {
+      status <- if (.rs.rig.olderThan(version, minimum(architecture)))
+         "unavailable"
+      else
+         resolve(version, architecture, rig)
+
       list(
          architecture = .rs.scalar(architecture),
-         status       = .rs.scalar(resolve(version, architecture, rig))
+         status       = .rs.scalar(status)
       )
    })
 })
