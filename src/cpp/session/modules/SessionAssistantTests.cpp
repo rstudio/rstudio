@@ -240,7 +240,23 @@ TEST(SessionAssistant, StdoutReaderDropsAHeaderThatDoesNotEnd)
    std::vector<std::string> errors;
    EXPECT_TRUE(reader.append(std::string(64 * 1024 + 1, 'x'), &errors).empty());
    EXPECT_EQ(errors.size(), 1u);
-   EXPECT_EQ(reader.append(frame("{}")), std::vector<std::string>{"{}"});
+
+   // None of the junk is kept, so the next header reads cleanly.
+   EXPECT_EQ(reader.append(frame("{}"), &errors), std::vector<std::string>{"{}"});
+   EXPECT_EQ(errors.size(), 1u);
+}
+
+TEST(SessionAssistant, StdoutReaderKeepsAHeaderCutOffAfterAHeaderThatDoesNotEnd)
+{
+   // The body of an invalid header is junk, over the 64 KiB limit, and the
+   // read ends partway into the next header's name.
+   AgentStdoutReader reader;
+   std::vector<std::string> errors;
+   std::string junk = "Content-Length: x\r\n\r\n" + std::string(100 * 1024, 'a');
+   EXPECT_TRUE(reader.append(junk + "content-Len", &errors).empty());
+   EXPECT_EQ(errors.size(), 2u);
+   EXPECT_EQ(reader.append("gth: 8\r\n\r\n{\"id\":1}", &errors), std::vector<std::string>{"{\"id\":1}"});
+   EXPECT_EQ(errors.size(), 2u);
 }
 
 TEST(SessionAssistant, StdoutReaderShortensAnInvalidValueInItsError)

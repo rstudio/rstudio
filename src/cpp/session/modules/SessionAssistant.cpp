@@ -3044,6 +3044,20 @@ std::size_t findContentLength(const std::string& text, std::size_t from)
    return match.empty() ? std::string::npos : static_cast<std::size_t>(match.begin() - text.begin());
 }
 
+// The length of the longest end of text that starts a Content-Length header
+// name, e.g. 11 for "...}Content-Len": the rest of the name may be in the next
+// read.
+std::size_t partialContentLengthLength(const std::string& text)
+{
+   std::size_t n = std::min(text.length(), kContentLengthName.length() - 1);
+   for (; n > 0; n--)
+   {
+      if (boost::iequals(text.substr(text.length() - n), kContentLengthName.substr(0, n)))
+         break;
+   }
+   return n;
+}
+
 // The value of the first Content-Length header in text[0, headerEnd), and
 // where its line starts, or npos. Lines are parsed as core::http::parseHeaders
 // does, which trims the name, so "Content-Length : 8" counts.
@@ -3095,7 +3109,9 @@ std::vector<std::string> AgentStdoutReader::append(const std::string& chunk,
             {
                if (pErrors)
                   pErrors->push_back("response header did not end");
-               buffer_.clear();
+
+               // Keep the start of a header the read cut off after the junk.
+               buffer_.erase(0, buffer_.length() - partialContentLengthLength(buffer_));
             }
             break; // the rest of the header has not arrived yet
          }
