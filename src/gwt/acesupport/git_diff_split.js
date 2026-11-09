@@ -185,6 +185,9 @@ PaddingPlan.prototype.copyWidget = function(widget) {
 };
 
 PaddingPlan.prototype.copySession = function(session) {
+   // Assumes Ace's screen/document conversion mutates only these two caches
+   // (true of the bundled Ace; check after an upgrade). Anything else it
+   // assigns lands on the copy, never on the session.
    var copy = Object.create(session);
    copy.lineWidgets = (session.lineWidgets || []).map(this.copyWidget.bind(this));
    copy.$docRowCache = [];

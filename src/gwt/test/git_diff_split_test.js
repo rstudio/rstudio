@@ -211,12 +211,15 @@ view.align();
 var widgetsBefore = view.sessionA.lineWidgets;
 var cacheBefore = view.sessionA.$docRowCache;
 view.$padChanges = function() { throw new Error("test planning failure"); };
+var threw = false;
 try {
    view.align();
 } catch (error) {
-   check("failed planning leaves the applied layout intact", view.sessionA.lineWidgets === widgetsBefore &&
-      view.sessionA.$docRowCache === cacheBefore && peek.rowCount === 3 && peek.gitDiffLentRows === 2);
+   threw = true;
 }
+check("failed planning throws", threw);
+check("failed planning leaves the applied layout intact", view.sessionA.lineWidgets === widgetsBefore &&
+   view.sessionA.$docRowCache === cacheBefore && peek.rowCount === 3 && peek.gitDiffLentRows === 2);
 check("failed planning clears the alignment guard", !view.$aligning);
 
 document.getElementById("passed").textContent = passed;
