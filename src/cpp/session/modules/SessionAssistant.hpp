@@ -78,8 +78,9 @@ std::string agentStderrTail(const std::string& text, std::size_t maxLength);
 // messages. A pipe read can end anywhere, including between a message's
 // header and its body, so a partial message is kept until the rest arrives.
 // A header block without a valid Content-Length is skipped up to the next
-// Content-Length header, with a description added to errors. Exposed for
-// testing.
+// Content-Length header, with a description added to errors. A
+// Content-Length that does not match its body cannot be detected, and costs
+// the message after it. Exposed for testing.
 class AgentStdoutReader
 {
 public:
@@ -89,6 +90,9 @@ public:
 
 private:
    std::string buffer_;
+
+   // The length of the body after a header already read from buffer_, or 0.
+   std::size_t bodyLength_ = 0;
 };
 
 // Resolve the next-edit-suggestion (NES) language server script within a Posit

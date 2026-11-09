@@ -1179,8 +1179,11 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut, uint64_t
       }
    }
 
-   for (const std::string& error : errors)
-      ELOG("Internal error: {}.", error);
+   // One line per read, as junk can hold an error every few bytes.
+   if (errors.size() == 1)
+      ELOG("Internal error: {}.", errors.front());
+   else if (errors.size() > 1)
+      ELOG("Internal error: {} (and {} more in this read).", errors.front(), errors.size() - 1);
 
    if (!errors.empty() && assistantLogLevel() >= 2)
    {
@@ -3019,9 +3022,16 @@ std::string agentStderrTail(const std::string& text, std::size_t maxLength)
 namespace {
 
 // Agent messages are JSON-RPC requests and replies, far smaller than this. A
-// larger Content-Length, or a header this long that never ends, is noise that
-// would otherwise hold back every message after it.
+// larger Content-Length is noise that would otherwise hold back every message
+// after it.
 const std::size_t kMaxAgentMessageSize = 64 * 1024 * 1024;
+
+// A header block is a few dozen bytes. One this long that has not ended is
+// stray output, and dropping it early bounds the search for its end.
+const std::size_t kMaxAgentHeaderSize = 64 * 1024;
+
+// An invalid Content-Length is quoted in the error, so keep it short.
+const std::size_t kMaxQuotedHeaderValue = 32;
 
 // Where the next Content-Length header starts at or after `from`, matched
 // without regard to case.
@@ -3031,6 +3041,29 @@ std::size_t findContentLength(const std::string& text, std::size_t from)
    auto it = std::search(text.begin() + from, text.end(), name.begin(), name.end(),
                          [](char a, char b) { return std::tolower(static_cast<unsigned char>(a)) == b; });
    return it == text.end() ? std::string::npos : static_cast<std::size_t>(it - text.begin());
+}
+
+// The value of the first Content-Length header in text[0, headerEnd), and
+// where its line starts, or npos. Lines are parsed as core::http::parseHeaders
+// does, which trims the name, so "Content-Length : 8" counts.
+std::string contentLengthHeader(const std::string& text,
+                                std::size_t headerEnd,
+                                std::size_t* pLineStart)
+{
+   for (std::size_t lineStart = 0; lineStart < headerEnd; )
+   {
+      std::size_t lineEnd = std::min(text.find('\n', lineStart), headerEnd);
+      core::http::Header header;
+      if (core::http::parseHeader(text.substr(lineStart, lineEnd - lineStart), &header) &&
+          boost::iequals(header.name, "Content-Length"))
+      {
+         *pLineStart = lineStart;
+         return header.value;
+      }
+      lineStart = lineEnd + 1;
+   }
+   *pLineStart = std::string::npos;
+   return std::string();
 }
 
 } // end anonymous namespace
@@ -3043,60 +3076,65 @@ std::vector<std::string> AgentStdoutReader::append(const std::string& chunk,
    std::vector<std::string> bodies;
    while (true)
    {
-      // Blank lines between messages carry nothing.
-      std::size_t start = buffer_.find_first_not_of(" \t\r\n");
-      if (start == std::string::npos)
+      if (bodyLength_ == 0)
       {
-         buffer_.clear();
-         break;
-      }
-      buffer_.erase(0, start);
+         // Blank lines between messages carry nothing.
+         std::size_t start = buffer_.find_first_not_of(" \t\r\n");
+         if (start == std::string::npos)
+         {
+            buffer_.clear();
+            break;
+         }
+         buffer_.erase(0, start);
 
-      std::size_t headerEnd = buffer_.find("\r\n\r\n");
-      if (headerEnd == std::string::npos)
-      {
-         if (buffer_.length() > kMaxAgentMessageSize)
+         std::size_t headerEnd = buffer_.find("\r\n\r\n");
+         if (headerEnd == std::string::npos)
+         {
+            if (buffer_.length() > kMaxAgentHeaderSize)
+            {
+               if (pErrors)
+                  pErrors->push_back("response header did not end");
+               buffer_.clear();
+            }
+            break; // the rest of the header has not arrived yet
+         }
+
+         std::size_t headerAt;
+         std::string contentLength = contentLengthHeader(buffer_, headerEnd, &headerAt);
+         int bodyLength = safe_convert::stringTo<int>(contentLength, -1);
+         if (bodyLength <= 0 || static_cast<std::size_t>(bodyLength) > kMaxAgentMessageSize)
          {
             if (pErrors)
-               pErrors->push_back("response header did not end");
-            buffer_.clear();
+            {
+               std::string quoted = contentLength.length() > kMaxQuotedHeaderValue
+                                       ? contentLength.substr(0, kMaxQuotedHeaderValue) + "..."
+                                       : contentLength;
+               pErrors->push_back(headerAt == std::string::npos
+                                     ? "response contains no Content-Length header"
+                                     : "response has an invalid Content-Length header (" + quoted + ")");
+            }
+
+            // Resume at the next Content-Length header, not after this block:
+            // what follows the block is its body, and reading that as a header
+            // would lose every message after it. Stray output in front of a
+            // header hides it from the parser, so without one resume at the
+            // first.
+            std::size_t next = findContentLength(buffer_, headerAt == std::string::npos ? 0 : headerAt + 1);
+            buffer_.erase(0, next == std::string::npos ? headerEnd + 4 : next);
+            continue;
          }
-         break; // the rest of the header has not arrived yet
+
+         // Parse the header once, however many reads the body takes.
+         buffer_.erase(0, headerEnd + 4);
+         bodyLength_ = static_cast<std::size_t>(bodyLength);
       }
 
-      core::http::Headers headers;
-      std::istringstream iss(buffer_.substr(0, headerEnd + 4));
-      core::http::parseHeaders(iss, &headers);
-      std::string contentLength = core::http::headerValue(headers, "Content-Length");
-      int bodyLength = safe_convert::stringTo<int>(contentLength, -1);
-      if (bodyLength <= 0 || static_cast<std::size_t>(bodyLength) > kMaxAgentMessageSize)
-      {
-         if (pErrors)
-         {
-            pErrors->push_back(contentLength.empty()
-                                  ? "response contains no Content-Length header"
-                                  : "response has an invalid Content-Length header (" + contentLength + ")");
-         }
-
-         // Resume at the next Content-Length header, not after this block:
-         // what follows the block is its body, and reading that as a header
-         // would lose every message after it. Stray output in front of a
-         // header hides it from the parser, so resume at that header.
-         std::size_t own = findContentLength(buffer_, 0);
-         std::size_t next = own == std::string::npos
-                               ? own
-                               : findContentLength(buffer_, contentLength.empty() && own > 0 ? own : own + 1);
-         buffer_.erase(0, next == std::string::npos ? headerEnd + 4 : next);
-         continue;
-      }
-
-      std::size_t bodyStart = headerEnd + 4;
-      std::size_t bodyEnd = bodyStart + static_cast<std::size_t>(bodyLength);
-      if (buffer_.length() < bodyEnd)
+      if (buffer_.length() < bodyLength_)
          break; // the rest of the body has not arrived yet
 
-      bodies.push_back(buffer_.substr(bodyStart, bodyLength));
-      buffer_.erase(0, bodyEnd);
+      bodies.push_back(buffer_.substr(0, bodyLength_));
+      buffer_.erase(0, bodyLength_);
+      bodyLength_ = 0;
    }
    return bodies;
 }
@@ -3104,6 +3142,7 @@ std::vector<std::string> AgentStdoutReader::append(const std::string& chunk,
 void AgentStdoutReader::clear()
 {
    buffer_.clear();
+   bodyLength_ = 0;
 }
 
 FilePath nesLanguageServerPath(const FilePath& installPath)
