@@ -403,6 +403,7 @@ public class TerminalSessionSocket
       pendingInput_.clear();
       connection_++;
       holdingInput_ = false;
+      outstandingWrites_ = 0;
       connectCallback_ = null;
       inputSequence_ = ShellInput.IGNORE_SEQUENCE;
       closeWebSocket();
@@ -466,12 +467,18 @@ public class TerminalSessionSocket
          callback.onConnected();
    }
 
-   // Held input (typed while the switch to RPC was in flight, or behind a
-   // write that flushes the server's queue) is written as one request, and
-   // input typed while that request is in flight stays queued behind it. The
-   // hold ends once nothing is left to write.
+   // Held input (typed while the switch to RPC was in flight, behind a write
+   // that flushes the server's queue, or after a failed write) is written as
+   // one request once nothing else is in flight, and input typed while that
+   // request is in flight stays queued behind it. Each write's completion
+   // calls back here, so the hold ends once nothing is left to write.
    private void flushPendingInput(final int connection)
    {
+      // A write still in flight could overtake a flush sent now and be
+      // consumed against the reset counter; wait for it to complete.
+      if (outstandingWrites_ > 0)
+         return;
+
       if (pendingInput_.isEmpty())
       {
          // A fallback after opening must not start the process and reload
@@ -495,18 +502,12 @@ public class TerminalSessionSocket
          {
             for (PendingInput input : pending)
                input.callback.onResponseReceived(response);
-            if (connection != connection_)
-               return;
-            flushPendingInput(connection);
          }
 
          @Override
          public void onError(ServerError error)
          {
             cancelPendingInput(pending, error);
-            if (connection != connection_)
-               return;
-            flushPendingInput(connection);
          }
       }));
    }
@@ -520,6 +521,7 @@ public class TerminalSessionSocket
    private void writeRpcInput(final PendingInput input)
    {
       final int connection = connection_;
+      outstandingWrites_++;
       consoleProcess_.writeStandardInput(
             ShellInput.create(nextInputSequence(), input.text, true /*echo input*/),
             new VoidServerRequestCallback()
@@ -527,7 +529,11 @@ public class TerminalSessionSocket
                @Override
                public void onResponseReceived(VoidResponse response)
                {
+                  if (connection == connection_)
+                     outstandingWrites_--;
                   input.callback.onResponseReceived(response);
+                  if (connection == connection_ && holdingInput_)
+                     flushPendingInput(connection);
                }
 
                @Override
@@ -535,10 +541,17 @@ public class TerminalSessionSocket
                {
                   // The server never saw this write, so it would hold every
                   // later number until its auto-flush. Resynchronize instead:
-                  // the next write flushes the server's queue again.
+                  // hold input until nothing is in flight, then flush the
+                  // server's queue again.
                   if (connection == connection_)
+                  {
+                     outstandingWrites_--;
                      inputSequence_ = ShellInput.IGNORE_SEQUENCE;
+                     holdingInput_ = true;
+                  }
                   input.callback.onError(error);
+                  if (connection == connection_)
+                     flushPendingInput(connection);
                }
             });
    }
@@ -640,6 +653,7 @@ public class TerminalSessionSocket
    private TerminalWebSocket socket_;
    private int connection_;
    private boolean holdingInput_;
+   private int outstandingWrites_;
    private int inputSequence_ = ShellInput.IGNORE_SEQUENCE;
    private final List<PendingInput> pendingInput_ = new ArrayList<>();
    private final TerminalLocalEcho localEcho_;

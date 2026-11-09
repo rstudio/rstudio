@@ -632,8 +632,10 @@ public class TerminalSessionSocketTests extends GWTTestCase
    }
 
    // A write the server never received leaves a gap it would wait on until
-   // its auto-flush; the next write flushes the server's queue instead.
-   public void testFailedNumberedWriteResynchronizesWithAFlush()
+   // its auto-flush, so the next write flushes the server's queue. That flush
+   // must not be sent while an older numbered write is still in flight: the
+   // old write could arrive after it and be consumed against the reset counter.
+   public void testFailedNumberedWriteResynchronizesWithAFlushAfterInFlightWrites()
    {
       Harness h = new Harness();
       Process process = h.connect(new Callback());
@@ -642,20 +644,25 @@ public class TerminalSessionSocketTests extends GWTTestCase
       h.socket.dispatchInput("a", false, new Ack());
       process.pendingWrites.remove(0).onResponseReceived(null);
       Ack b = new Ack();
+      Ack c = new Ack();
       h.socket.dispatchInput("b", false, b);
-      h.socket.dispatchInput("c", false, new Ack());
+      h.socket.dispatchInput("c", false, c);
       assertEquals(Arrays.asList(ShellInput.FLUSH_SEQUENCE, 0, 1), process.sequences);
 
       process.pendingWrites.remove(0).onError(rpcError());
       assertEquals(1, b.errors);
       h.socket.dispatchInput("d", false, new Ack());
       h.socket.dispatchInput("e", false, new Ack());
-      assertEquals("input behind the flush is held", Arrays.asList("a", "b", "c", "d"), process.inputs);
+      assertEquals("held while an older write is in flight", Arrays.asList("a", "b", "c"), process.inputs);
+
+      process.pendingWrites.remove(0).onResponseReceived(null);
+      assertEquals(1, c.count);
+      assertEquals(Arrays.asList("a", "b", "c", "de"), process.inputs);
       assertEquals(Arrays.asList(ShellInput.FLUSH_SEQUENCE, 0, 1, ShellInput.FLUSH_SEQUENCE), process.sequences);
 
       process.pendingWrites.remove(0).onResponseReceived(null);
-      process.pendingWrites.remove(0).onResponseReceived(null);
-      assertEquals(Arrays.asList("a", "b", "c", "d", "e"), process.inputs);
+      h.socket.dispatchInput("f", false, new Ack());
+      assertEquals(Arrays.asList("a", "b", "c", "de", "f"), process.inputs);
       assertEquals(Integer.valueOf(0), process.sequences.get(4));
    }
 
