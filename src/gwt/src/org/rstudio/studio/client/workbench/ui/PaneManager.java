@@ -3325,6 +3325,9 @@ public class PaneManager
       minimized.addWindowStateChangeHandler(event ->
          Scheduler.get().scheduleDeferred(() ->
          {
+            // An animated layout also focuses the pane when it ends
+            // (AnimationHelper), unconditionally but through WindowFrame.focus(),
+            // which reaches only CanFocus widgets; most panes have none.
             Element active = DomUtils.getActiveElement();
             if (active == null || active == Document.get().getBody() ||
                 minimized.getElement().isOrHasChild(active))
