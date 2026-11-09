@@ -337,7 +337,7 @@ public class DocUpdateSentinel
                                        final Command onSaved,
                                        final CommandWithArg<String> onError)
    {
-      if (!docDisplay_.getCode().equals(sourceDoc_.getContents()))
+      if (changeTracker_.hasChanged())
       {
          Scheduler.get().scheduleDeferred(() ->
             withSavedDocImpl(retryWrite, onSaved, onError));
