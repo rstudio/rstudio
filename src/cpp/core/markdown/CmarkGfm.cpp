@@ -16,25 +16,25 @@
 #include "CmarkGfm.hpp"
 
 #include <algorithm>
+#include <cctype>
 #include <cstdlib>
+#include <cstring>
 #include <memory>
 #include <mutex>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
+#include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/trim.hpp>
 
 #include <shared_core/Error.hpp>
-#include <core/StringUtils.hpp>
 
 #include <cmark-gfm.h>
 #include <cmark-gfm-core-extensions.h>
 #include <cmark-gfm-extension_api.h>
 #include <cmark-gfm/config.h>
-#include <chunk.h>
-#include <inlines.h>
-#include <parser.h>
 
 namespace rstudio {
 namespace core {
@@ -61,121 +61,198 @@ void attachGfmExtensions(cmark_parser* parser, const Extensions& extensions)
 
 struct SuperscriptState
 {
-   int depth = 0;
+   // Markers that the AST pass must still resolve or turn back into text.
+   int markers = 0;
+   // Pending ^( openers in the block being parsed, so only candidate closers
+   // enter the delimiter stack.
+   int openers = 0;
    const cmark_node* parent = nullptr;
-   bool unmatchedParenthesis = false;
 };
 
+const char* const kBareMarker = "^";
+const char* const kParenthesizedMarker = "^(";
+
+cmark_node* newMarker(cmark_syntax_extension* extension, const char* text)
+{
+   cmark_node* marker = cmark_node_new(CMARK_NODE_CUSTOM_INLINE);
+   cmark_node_set_on_enter(marker, text);
+   cmark_node_set_syntax_extension(marker, extension);
+   return marker;
+}
+
 cmark_node* matchSuperscript(cmark_syntax_extension* extension,
-                           cmark_parser* parser,
-                           cmark_node* parent,
-                           unsigned char character,
-                           cmark_inline_parser* inlineParser)
+                             cmark_parser*,
+                             cmark_node* parent,
+                             unsigned char character,
+                             cmark_inline_parser* inlineParser)
 {
    auto* state = static_cast<SuperscriptState*>(cmark_syntax_extension_get_private(extension));
-   if (character != '^' || state->depth >= 16)
-      return nullptr;
-
    if (state->parent != parent)
    {
       state->parent = parent;
-      state->unmatchedParenthesis = false;
+      state->openers = 0;
    }
 
-   cmark_chunk* chunk = cmark_inline_parser_get_chunk(inlineParser);
-   int offset = cmark_inline_parser_get_offset(inlineParser);
-   int begin = offset + 1;
-   if (begin >= chunk->len)
-      return nullptr;
-
-   bool parenthesized = chunk->data[begin] == '(';
-   if (!parenthesized)
+   if (character == ')')
    {
-      // Defer bare superscripts until emphasis and links have been parsed.
-      // Scanning to whitespace here would consume their closing delimiters.
-      cmark_node* marker = cmark_node_new(CMARK_NODE_CUSTOM_INLINE);
-      cmark_node_set_on_enter(marker, "^");
-      cmark_node_set_syntax_extension(marker, extension);
+      if (state->openers == 0)
+         return nullptr;
+      --state->openers;
+      cmark_node* closer = cmark_node_new(CMARK_NODE_TEXT);
+      cmark_node_set_literal(closer, ")");
       cmark_inline_parser_advance_offset(inlineParser);
-      return marker;
+      cmark_inline_parser_push_delimiter(inlineParser, '^', false, true, closer);
+      return closer;
    }
-   ++begin;
-   int end = begin;
-   if (state->unmatchedParenthesis)
+
+   if (character != '^')
       return nullptr;
-   while (end < chunk->len && chunk->data[end] != ')')
-      ++end;
-   if (end == chunk->len)
+
+   // Markers are custom inlines rather than text: the table extension only
+   // admits a fixed set of inline types to cells, and the parser attaches
+   // whatever this function returns, whereas later type changes are checked.
+   ++state->markers;
+   int offset = cmark_inline_parser_get_offset(inlineParser);
+   if (cmark_inline_parser_peek_at(inlineParser, offset + 1) == '(')
    {
-      // Avoid repeatedly scanning a long suffix containing unmatched ^(.
-      state->unmatchedParenthesis = true;
-      return nullptr;
+      // Pair ^( with ) in the delimiter stack, like strikethrough pairs its
+      // tildes, so the contents are parsed by the main inline parser along
+      // with emphasis, links and reference definitions.
+      ++state->openers;
+      cmark_node* opener = newMarker(extension, kParenthesizedMarker);
+      cmark_inline_parser_set_offset(inlineParser, offset + 2);
+      cmark_inline_parser_push_delimiter(inlineParser, '^', true, false, opener);
+      return opener;
    }
 
-   cmark_node* node = cmark_node_new(CMARK_NODE_CUSTOM_INLINE);
-   cmark_node_set_on_enter(node, end == begin ? "" : "<sup>");
-   cmark_node_set_on_exit(node, end == begin ? "" : "</sup>");
-   std::string content(reinterpret_cast<const char*>(chunk->data + begin), end - begin);
-   cmark_node_set_string_content(node, content.c_str());
+   // Defer bare superscripts until emphasis and links have been parsed.
+   // Scanning to whitespace here would consume their closing delimiters.
+   cmark_inline_parser_advance_offset(inlineParser);
+   return newMarker(extension, kBareMarker);
+}
 
-   // Parse the contents as inlines using the same extensions and reference
-   // definitions. This also keeps code spans, escaped carets, links and math
-   // out of the superscript scanner, unlike preprocessing with a regex.
-   SuperscriptState previous = *state;
-   ++state->depth;
-   cmark_parse_inlines(parser, node, parser->refmap, parser->options);
-   *state = previous;
-   cmark_inline_parser_set_offset(inlineParser, end + 1);
-   return node;
+bool hasImageAncestor(cmark_node* node)
+{
+   for (cmark_node* parent = cmark_node_parent(node); parent; parent = cmark_node_parent(parent))
+   {
+      if (cmark_node_get_type(parent) == CMARK_NODE_IMAGE)
+         return true;
+   }
+   return false;
+}
+
+delimiter* insertSuperscript(cmark_syntax_extension* extension,
+                             cmark_parser*,
+                             cmark_inline_parser* inlineParser,
+                             delimiter* opener,
+                             delimiter* closer)
+{
+   auto* state = static_cast<SuperscriptState*>(cmark_syntax_extension_get_private(extension));
+   delimiter* next = closer->next;
+   cmark_node* node = opener->inl_text;
+
+   // Image descriptions render only literal text, so leave the delimiters
+   // in place there; the AST pass turns the opener back into text.
+   if (!hasImageAncestor(node))
+   {
+      --state->markers;
+      if (cmark_node_next(node) == closer->inl_text)
+      {
+         // x^() contributes nothing, as with Sundown.
+         cmark_node_free(closer->inl_text);
+         cmark_node_free(node);
+      }
+      else
+      {
+         cmark_node_set_on_enter(node, "<sup>");
+         cmark_node_set_on_exit(node, "</sup>");
+         cmark_node_set_syntax_extension(node, nullptr);
+         for (cmark_node* child = cmark_node_next(node); child != closer->inl_text; )
+         {
+            cmark_node* following = cmark_node_next(child);
+            cmark_node_append_child(node, child);
+            child = following;
+         }
+         cmark_node_free(closer->inl_text);
+      }
+   }
+
+   for (delimiter* delim = closer; delim != opener; )
+   {
+      delimiter* previous = delim->previous;
+      cmark_inline_parser_remove_delimiter(inlineParser, delim);
+      delim = previous;
+   }
+   cmark_inline_parser_remove_delimiter(inlineParser, opener);
+   return next;
 }
 
 bool isSuperscript(cmark_node* node)
 {
    return cmark_node_get_type(node) == CMARK_NODE_CUSTOM_INLINE &&
-          std::string(cmark_node_get_on_enter(node)) == "<sup>";
+          std::strcmp(cmark_node_get_on_enter(node), "<sup>") == 0;
+}
+
+Error literalMarker(cmark_node* node)
+{
+   // Custom inline delimiters are omitted from image alternative text.
+   // Unresolved carets must behave like ordinary literal text.
+   std::string text = cmark_node_get_on_enter(node);
+   if (!cmark_node_set_type(node, CMARK_NODE_TEXT))
+      return systemError(boost::system::errc::invalid_argument,
+                         "Could not preserve literal caret", ERROR_LOCATION);
+   cmark_node_set_syntax_extension(node, nullptr);
+   cmark_node_set_literal(node, text.c_str());
+   return Success();
 }
 
 Error resolveSuperscripts(cmark_node* document, cmark_syntax_extension* extension)
 {
+   struct Entry
+   {
+      cmark_node* node;
+      int inheritedDepth;
+      bool inImage;
+   };
+
    // Cache inherited depth during traversal; walking ancestors per marker
    // would be quadratic in documents with deeply nested block containers.
-   std::vector<std::pair<cmark_node*, int>> nodes;
-   int inheritedDepth = 0;
+   std::vector<Entry> nodes;
+   int inheritedDepth = 0, imageDepth = 0;
    std::unique_ptr<cmark_iter, decltype(&cmark_iter_free)> iter(
       cmark_iter_new(document), cmark_iter_free);
    while (cmark_iter_next(iter.get()) != CMARK_EVENT_DONE)
    {
       cmark_node* node = cmark_iter_get_node(iter.get());
-      if (cmark_iter_get_event_type(iter.get()) == CMARK_EVENT_ENTER)
-      {
-         nodes.emplace_back(node, inheritedDepth);
-         if (isSuperscript(node))
-            ++inheritedDepth;
-      }
-      else if (isSuperscript(node))
-      {
-         --inheritedDepth;
-      }
+      bool entering = cmark_iter_get_event_type(iter.get()) == CMARK_EVENT_ENTER;
+      if (entering)
+         nodes.push_back({node, inheritedDepth, imageDepth > 0});
+      if (isSuperscript(node))
+         inheritedDepth += entering ? 1 : -1;
+      else if (cmark_node_get_type(node) == CMARK_NODE_IMAGE)
+         imageDepth += entering ? 1 : -1;
    }
    iter.reset();
 
    // Process later siblings and descendants first, so nested exponents have a
-   // known depth. Reuse the marker in place; table cells reject new custom
-   // inline children, but the parser has already placed this marker there.
+   // known depth. Reuse the marker in place; see matchSuperscript.
    std::unordered_map<cmark_node*, int> depths;
    std::unordered_map<cmark_node*, int> suffixDepths;
    for (auto it = nodes.rbegin(); it != nodes.rend(); ++it)
    {
-      cmark_node* node = it->first;
+      cmark_node* node = it->node;
       if (cmark_node_get_syntax_extension(node) == extension)
       {
+         bool bare = std::strcmp(cmark_node_get_on_enter(node), kBareMarker) == 0;
          std::vector<cmark_node*> contents;
          cmark_node* partial = nullptr;
          std::size_t prefixLength = 0;
-         int depth = suffixDepths[cmark_node_next(node)] + it->second;
+         int depth = suffixDepths[cmark_node_next(node)] + it->inheritedDepth;
          // Once a suffix reaches the depth limit, earlier markers must not
          // repeatedly walk it. The cached suffix depth keeps this linear.
-         for (cmark_node* next = cmark_node_next(node); depth < 16 && next; next = cmark_node_next(next))
+         for (cmark_node* next = cmark_node_next(node);
+              bare && !it->inImage && depth < 16 && next;
+              next = cmark_node_next(next))
          {
             cmark_node_type type = cmark_node_get_type(next);
             if (type == CMARK_NODE_SOFTBREAK || type == CMARK_NODE_LINEBREAK)
@@ -215,16 +292,13 @@ Error resolveSuperscripts(cmark_node* document, cmark_syntax_extension* extensio
             }
             cmark_node_set_on_enter(node, "<sup>");
             cmark_node_set_on_exit(node, "</sup>");
+            cmark_node_set_syntax_extension(node, nullptr);
          }
          else
          {
-            // Custom inline delimiters are omitted from image alternative
-            // text. Unresolved carets must behave like ordinary literal text.
-            if (!cmark_node_set_type(node, CMARK_NODE_TEXT))
-               return systemError(boost::system::errc::invalid_argument,
-                                  "Could not preserve literal caret", ERROR_LOCATION);
-            cmark_node_set_syntax_extension(node, nullptr);
-            cmark_node_set_literal(node, "^");
+            Error error = literalMarker(node);
+            if (error)
+               return error;
          }
       }
       int depth = 0;
@@ -234,10 +308,120 @@ Error resolveSuperscripts(cmark_node* document, cmark_syntax_extension* extensio
       cmark_node_type type = cmark_node_get_type(node);
       bool boundary = type == CMARK_NODE_SOFTBREAK || type == CMARK_NODE_LINEBREAK ||
          (type == CMARK_NODE_TEXT &&
-          std::string(cmark_node_get_literal(node)).find_first_of(" \t\r\n") != std::string::npos);
+          std::strpbrk(cmark_node_get_literal(node), " \t\r\n") != nullptr);
       suffixDepths[node] = boundary ? 0 : std::max(depths[node], suffixDepths[cmark_node_next(node)]);
    }
    return Success();
+}
+
+bool isWordBoundary(char c)
+{
+   unsigned char u = static_cast<unsigned char>(c);
+   return c == '\0' || std::isspace(u) || std::ispunct(u);
+}
+
+bool hasSuffix(const std::string& text, std::size_t pos, const char* suffix)
+{
+   for (; *suffix; ++suffix, ++pos)
+   {
+      if (pos >= text.size() || std::tolower(static_cast<unsigned char>(text[pos])) != *suffix)
+         return false;
+   }
+   return true;
+}
+
+// Sundown's smartypants also replaced these symbols and fractions; cmark's
+// smart punctuation only covers quotes, dashes and ellipses.
+std::string smartenSymbols(const std::string& text)
+{
+   std::string result;
+   result.reserve(text.size());
+   for (std::size_t i = 0; i < text.size(); ++i)
+   {
+      char c = text[i];
+      if (c == '(')
+      {
+         if (hasSuffix(text, i + 1, "c)"))
+         {
+            result += "\xC2\xA9";
+            i += 2;
+            continue;
+         }
+         if (hasSuffix(text, i + 1, "r)"))
+         {
+            result += "\xC2\xAE";
+            i += 2;
+            continue;
+         }
+         if (hasSuffix(text, i + 1, "tm)"))
+         {
+            result += "\xE2\x84\xA2";
+            i += 3;
+            continue;
+         }
+      }
+      else if ((c == '1' || c == '3') && (i == 0 || isWordBoundary(text[i - 1])) &&
+               i + 2 < text.size() && text[i + 1] == '/')
+      {
+         char denominator = text[i + 2];
+         bool boundary = i + 3 == text.size() || isWordBoundary(text[i + 3]);
+         const char* replacement = nullptr;
+         if (c == '1' && denominator == '2' && boundary)
+            replacement = "\xC2\xBD";
+         else if (c == '1' && denominator == '4' && (boundary || hasSuffix(text, i + 3, "th")))
+            replacement = "\xC2\xBC";
+         else if (c == '3' && denominator == '4' && (boundary || hasSuffix(text, i + 3, "ths")))
+            replacement = "\xC2\xBE";
+         if (replacement)
+         {
+            result += replacement;
+            i += 2;
+            continue;
+         }
+      }
+      result.push_back(c);
+   }
+   return result;
+}
+
+void smartenText(cmark_node* document)
+{
+   int imageDepth = 0;
+   std::unique_ptr<cmark_iter, decltype(&cmark_iter_free)> iter(
+      cmark_iter_new(document), cmark_iter_free);
+   while (cmark_iter_next(iter.get()) != CMARK_EVENT_DONE)
+   {
+      cmark_node* node = cmark_iter_get_node(iter.get());
+      cmark_node_type type = cmark_node_get_type(node);
+      bool entering = cmark_iter_get_event_type(iter.get()) == CMARK_EVENT_ENTER;
+      if (type == CMARK_NODE_IMAGE)
+         imageDepth += entering ? 1 : -1;
+      if (type != CMARK_NODE_TEXT || imageDepth > 0)
+         continue;
+      const char* literal = cmark_node_get_literal(node);
+      if (std::strchr(literal, '(') == nullptr && std::strchr(literal, '/') == nullptr)
+         continue;
+      std::string smartened = smartenSymbols(literal);
+      if (smartened != literal)
+         cmark_node_set_literal(node, smartened.c_str());
+   }
+}
+
+// Sundown accepted knitr-style fences such as ```{r} or ```{r, echo=FALSE}
+// and used the language inside the braces as the class.
+void normalizeFenceInfo(cmark_node* node)
+{
+   std::string info = cmark_node_get_fence_info(node);
+   if (info.empty() || info[0] != '{')
+      return;
+   std::size_t close = info.find('}');
+   if (close == std::string::npos)
+      return;
+   std::string language = boost::algorithm::trim_copy(info.substr(1, close - 1));
+   language = language.substr(0, language.find_first_of(" \t,"));
+   if (!language.empty() && language[0] == '.')
+      language.erase(0, 1);
+   cmark_node_set_fence_info(node, language.c_str());
 }
 
 void freeExtension(cmark_syntax_extension* extension)
@@ -278,25 +462,12 @@ Error filterNodes(cmark_node* document,
    // Collect before mutating, and visit children before parents so deleting an
    // image also safely discards any inline markup in its alternative text.
    std::vector<cmark_node*> nodes;
-   int linkDepth = 0;
    std::unique_ptr<cmark_iter, decltype(&cmark_iter_free)> iter(
       cmark_iter_new(document), cmark_iter_free);
    while (cmark_iter_next(iter.get()) != CMARK_EVENT_DONE)
    {
-      cmark_node* node = cmark_iter_get_node(iter.get());
       if (cmark_iter_get_event_type(iter.get()) == CMARK_EVENT_ENTER)
-      {
-         // Superscript contents use a fresh inline parser, which can create
-         // links inside an enclosing label. Keep the outer destination and
-         // render any inner link's children without a nested anchor.
-         if (cmark_node_get_type(node) == CMARK_NODE_LINK && linkDepth++ > 0)
-            cmark_node_set_syntax_extension(node, skippedLink);
-         nodes.push_back(node);
-      }
-      else if (cmark_node_get_type(node) == CMARK_NODE_LINK)
-      {
-         --linkDepth;
-      }
+         nodes.push_back(cmark_iter_get_node(iter.get()));
    }
    iter.reset();
 
@@ -317,22 +488,29 @@ Error filterNodes(cmark_node* document,
          // preserves all formatted label content without emitting an anchor.
          cmark_node_set_syntax_extension(node, skippedLink);
       }
+      else if (type == CMARK_NODE_CODE_BLOCK)
+      {
+         normalizeFenceInfo(node);
+      }
       else if (type == CMARK_NODE_HTML_INLINE || type == CMARK_NODE_HTML_BLOCK)
       {
          if (options.escape)
          {
             // Safe mode omits HTML. Help popups instead need to display the
-            // literal tags, while retaining Markdown-generated formatting.
+            // literal tags. The renderer escapes text nodes, and a block
+            // becomes a paragraph of text, as Sundown's HTML_ESCAPE produced.
+            std::string literal = cmark_node_get_literal(node);
+            boost::algorithm::trim_right_if(literal, boost::algorithm::is_any_of("\r\n"));
+            std::unique_ptr<cmark_node, decltype(&cmark_node_free)> text(
+               cmark_node_new(CMARK_NODE_TEXT), cmark_node_free);
+            cmark_node_set_literal(text.get(), literal.c_str());
             std::unique_ptr<cmark_node, decltype(&cmark_node_free)> replacement(
-               cmark_node_new(type == CMARK_NODE_HTML_INLINE ? CMARK_NODE_TEXT : CMARK_NODE_CUSTOM_BLOCK),
+               type == CMARK_NODE_HTML_INLINE ? text.release() : cmark_node_new(CMARK_NODE_PARAGRAPH),
                cmark_node_free);
-            if (type == CMARK_NODE_HTML_INLINE)
-               cmark_node_set_literal(replacement.get(), cmark_node_get_literal(node));
-            else
-            {
-               std::string escaped = string_utils::htmlEscape(cmark_node_get_literal(node));
-               cmark_node_set_on_enter(replacement.get(), escaped.c_str());
-            }
+            if (text && !cmark_node_append_child(replacement.get(), text.get()))
+               return systemError(boost::system::errc::invalid_argument,
+                                  "Could not escape raw HTML block", ERROR_LOCATION);
+            text.release();
             if (!cmark_node_replace(node, replacement.get()))
                return systemError(boost::system::errc::invalid_argument,
                                   "Could not replace raw HTML node", ERROR_LOCATION);
@@ -376,8 +554,9 @@ Error renderCmarkGfm(const std::string& input,
    if (options.hardWrap)
       flags |= CMARK_OPT_HARDBREAKS;
    // Presentations and HTML previews intentionally accept authored raw HTML.
-   // Help callers opt into escaping, safe links and image removal together.
-   if (!options.safelink)
+   // Like Sundown's HTML_SAFELINK, 'safelink' only filters link targets; raw
+   // HTML is removed or escaped by filterNodes for skipHTML and escape.
+   if (!options.escape && !options.skipHTML)
       flags |= CMARK_OPT_UNSAFE;
 
    SuperscriptState superscriptState;
@@ -398,10 +577,12 @@ Error renderCmarkGfm(const std::string& input,
       superscript.reset(cmark_syntax_extension_new("rstudio-superscript"));
       cmark_syntax_extension_set_private(superscript.get(), &superscriptState, nullptr);
       cmark_syntax_extension_set_match_inline_func(superscript.get(), matchSuperscript);
-      cmark_syntax_extension_set_special_inline_chars(
-         superscript.get(),
-         cmark_llist_append(cmark_get_default_mem_allocator(), nullptr,
-                            reinterpret_cast<void*>('^')));
+      cmark_syntax_extension_set_inline_from_delim_func(superscript.get(), insertSuperscript);
+      cmark_llist* specialChars = cmark_llist_append(cmark_get_default_mem_allocator(), nullptr,
+                                                     reinterpret_cast<void*>('^'));
+      specialChars = cmark_llist_append(cmark_get_default_mem_allocator(), specialChars,
+                                        reinterpret_cast<void*>(')'));
+      cmark_syntax_extension_set_special_inline_chars(superscript.get(), specialChars);
       cmark_parser_attach_syntax_extension(parser.get(), superscript.get());
    }
 
@@ -411,12 +592,15 @@ Error renderCmarkGfm(const std::string& input,
    if (!document)
       return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
 
-   if (extensions.superscript)
+   if (superscriptState.markers > 0)
    {
       Error error = resolveSuperscripts(document.get(), superscript.get());
       if (error)
          return error;
    }
+
+   if (options.smartypants)
+      smartenText(document.get());
 
    Error error = filterNodes(document.get(), options, skippedLink.get());
    if (error)

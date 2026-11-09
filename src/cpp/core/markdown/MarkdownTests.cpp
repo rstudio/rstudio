@@ -302,7 +302,8 @@ TEST(MarkdownTest, SuperscriptsDoNotNestLinks)
 {
    EXPECT_EQ("<p><a href=\"https://outer.example\">x<sup>https://inner.example</sup></a></p>\n",
              render("[x^(https://inner.example)](https://outer.example)"));
-   EXPECT_EQ("<p><a href=\"/outer\">x<sup>label</sup></a></p>\n",
+   // CommonMark resolves the innermost link; the outer brackets stay literal.
+   EXPECT_EQ("<p>[x<sup><a href=\"/inner\">label</a></sup>](/outer)</p>\n",
              render("[x^([label][ref])](/outer)\n\n[ref]: /inner"));
    EXPECT_EQ("<p>x<sup><a href=\"https://inner.example\">https://inner.example</a></sup></p>\n",
              render("x^(https://inner.example)"));
@@ -324,6 +325,61 @@ TEST(MarkdownTest, LiteralCaretsSurviveInImageAlternativeText)
    EXPECT_NE(std::string::npos, render("![x^ y](plot.png)").find("alt=\"x^ y\""));
    EXPECT_NE(std::string::npos, render("![x^](plot.png)").find("alt=\"x^\""));
    EXPECT_NE(std::string::npos, render("![x\\^2](plot.png)").find("alt=\"x^2\""));
+   EXPECT_NE(std::string::npos, render("![x^2 versus x](plot.png)").find("alt=\"x^2 versus x\""));
+   EXPECT_NE(std::string::npos, render("![x^(2) versus x](plot.png)").find("alt=\"x^(2) versus x\""));
+   EXPECT_NE(std::string::npos, render("![*x^(2)*](plot.png) y^(3)").find("alt=\"x^(2)\""));
+   EXPECT_NE(std::string::npos, render("![*x^(2)*](plot.png) y^(3)").find("y<sup>3</sup>"));
+}
+
+TEST(MarkdownTest, ParenthesizedSuperscriptsUseTheInlineParser)
+{
+   EXPECT_EQ("<p>a<sup>b<sup>c</sup></sup> ((x<sup>2</sup>))</p>\n", render("a^(b^(c)) ((x^(2)))"));
+   EXPECT_EQ("<p>x<sup>see <code>)</code> here</sup></p>\n", render("x^(see `)` here)"));
+   EXPECT_EQ("<p><strong>x^(a</strong>)</p>\n", render("**x^(a**)"));
+   EXPECT_EQ("<p>x<sup>a</sup>) (b</p>\n", render("x^(a)) (b"));
+   EXPECT_NE(std::string::npos, render("| h |\n| --- |\n| x^(2) y^2 |\n").find("<td>x<sup>2</sup> y<sup>2</sup></td>"));
+}
+
+TEST(MarkdownTest, SmartSymbolsAndFractions)
+{
+   EXPECT_EQ("<p>\xC2\xA9 2026 Posit \xC2\xAE \xE2\x84\xA2 \xC2\xBD \xC2\xBC \xC2\xBE</p>\n",
+             render("(c) 2026 Posit (r) (tm) 1/2 1/4 3/4"));
+   EXPECT_EQ("<p>\xC2\xBCth \xC2\xBEths 11/2 1/2x \xC2\xA9 \xE2\x84\xA2</p>\n",
+             render("1/4th 3/4ths 11/2 1/2x (C) (TM)"));
+   EXPECT_EQ("<p><code>(c)</code> <img src=\"p.png\" alt=\"(c) 1/2\" /></p>\n",
+             render("`(c)` ![(c) 1/2](p.png)"));
+   HTMLOptions options;
+   options.smartypants = false;
+   EXPECT_EQ("<p>(c) 1/2</p>\n", render("(c) 1/2", Extensions(), options));
+}
+
+TEST(MarkdownTest, HelpEscapesHtmlBlocksAsParagraphs)
+{
+   HTMLOptions options;
+   options.escape = options.safelink = options.skipImages = true;
+   EXPECT_EQ("<p>&lt;div&gt;\n**bold**\n&lt;/div&gt;</p>\n",
+             render("<div>\n**bold**\n</div>\n", Extensions(), options));
+   EXPECT_EQ("<p>&lt;!-- note --&gt;</p>\n<p>after</p>\n",
+             render("<!-- note -->\n\nafter\n", Extensions(), options));
+}
+
+TEST(MarkdownTest, SafeLinksAloneKeepAuthoredHtml)
+{
+   HTMLOptions options;
+   options.safelink = true;
+   std::string html = render("<span class=\"x\">a</span> [l](relative.html) [m](https://example.com)",
+                             Extensions(), options);
+   EXPECT_NE(std::string::npos, html.find("<span class=\"x\">a</span>"));
+   EXPECT_EQ(std::string::npos, html.find("href=\"relative.html\""));
+   EXPECT_NE(std::string::npos, html.find("href=\"https://example.com\""));
+}
+
+TEST(MarkdownTest, BracedFenceInfoStringsNameTheLanguage)
+{
+   EXPECT_EQ("<pre><code class=\"language-r\">x\n</code></pre>\n", render("```{r}\nx\n```\n"));
+   EXPECT_EQ("<pre><code class=\"language-r\">x\n</code></pre>\n", render("```{r, echo=FALSE}\nx\n```\n"));
+   EXPECT_EQ("<pre><code class=\"language-cpp\">x\n</code></pre>\n", render("```{.cpp}\nx\n```\n"));
+   EXPECT_EQ("<pre><code>x\n</code></pre>\n", render("```{}\nx\n```\n"));
 }
 
 TEST(MarkdownTest, SuperscriptsWithinDeepBlockquotes)
