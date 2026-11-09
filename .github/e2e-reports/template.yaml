@@ -29,7 +29,8 @@ Parameters:
     Description: >-
       SSM SecureString holding the Tailscale auth key the host enrolls with.
       Read by the instance at boot when it is not yet logged in; never part of
-      the template or the stack events.
+      the template or the stack events. When the parameter does not exist the
+      host instead prints a login URL to authorize it in a browser (README.md).
   InstanceType:
     Type: String
     Default: t4g.micro
@@ -315,12 +316,19 @@ Resources:
 
           # Tailscale: enroll once (the node keeps its identity across boots in
           # /var/lib/tailscale), then publish nginx at https://$HOSTNAME_TS.<tailnet>.
+          # Without a stored auth key the node waits to be authorized in a
+          # browser (README.md); the rest happens on the next run of this script.
           systemctl enable -q --now tailscaled
           if [ "$(tailscale status --json | jq -r .BackendState)" != Running ]; then
-            AUTHKEY=$(aws ssm get-parameter --region "$REGION" --name "$AUTHKEY_PARAM" \
-              --with-decryption --query Parameter.Value --output text)
-            tailscale up --auth-key="$AUTHKEY" --hostname="$HOSTNAME_TS"
-            unset AUTHKEY
+            if AUTHKEY=$(aws ssm get-parameter --region "$REGION" --name "$AUTHKEY_PARAM" \
+                 --with-decryption --query Parameter.Value --output text 2> /dev/null); then
+              tailscale up --auth-key="$AUTHKEY" --hostname="$HOSTNAME_TS"
+              unset AUTHKEY
+            else
+              tailscale up --hostname="$HOSTNAME_TS" --timeout=5s || true
+              echo "No auth key at $AUTHKEY_PARAM. Authorize this node at: $(tailscale status --json | jq -r .AuthURL)"
+              exit 0
+            fi
           fi
           tailscale set --auto-update
           tailscale serve --bg 8080

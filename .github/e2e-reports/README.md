@@ -27,24 +27,41 @@ because everything is served same-origin over HTTPS.
 All of this is done once, by someone with the `ide-build` AWS profile
 (account 749683154838) and a Posit Tailscale account.
 
-1. **Tailscale auth key.** In the Tailscale admin console, *Settings*, *Keys*,
-   generate an auth key: reusable, pre-approved, the longest expiry offered
-   (90 days; it is used only while enrolling), and tagged `tag:e2e-reports`
-   if that tag exists. A tagged node has no key expiry; an untagged one is
-   owned by whoever made the key and expires after 180 days unless an admin
-   disables key expiry for it in the console, so ask for one or the other.
+1. **Tailscale enrollment.** Two ways, depending on who you are in the
+   tailnet:
 
-2. **Store the key** where the host reads it at first boot. It is an SSM
-   SecureString, read by the instance role; it never appears in the template,
-   the repo, the user data, or the stack events:
+   - *An admin generates an auth key* (admin console, *Settings*, *Keys*):
+     reusable, pre-approved, tagged `tag:e2e-reports`, the longest expiry
+     offered. Store it where the host reads it at first boot: an SSM
+     SecureString, read by the instance role, never part of the template,
+     the repo, the user data, or the stack events:
 
-       aws ssm put-parameter --region us-east-1 --type SecureString \
-         --name /rstudio-e2e-reports/tailscale-authkey \
-         --value tskey-auth-...
+         aws ssm put-parameter --region us-east-1 --type SecureString \
+           --name /rstudio-e2e-reports/tailscale-authkey \
+           --value tskey-auth-...
 
-   Delete the parameter once the host is enrolled if you like; it is read
-   only when the node is not logged in, which after the first boot means a
-   replacement instance (below).
+     A tagged node has no key expiry, and a stored key lets a replacement
+     instance enroll unattended. This is the way to run it long term.
+
+   - *No admin at hand*: skip the parameter. The host then starts a login
+     and prints the URL to authorize it (`/var/log/e2e-reports-setup.log`,
+     or the Session Manager command below). Opening it in a browser as any
+     posit.co tailnet member adds the node under that account; the setup
+     script finishes on the next boot, or right away with the second command:
+
+         aws ssm send-command --instance-ids <InstanceId> --document-name AWS-RunShellScript \
+           --parameters 'commands=["tailscale status --json | jq -r .AuthURL"]'
+         aws ssm send-command --instance-ids <InstanceId> --document-name AWS-RunShellScript \
+           --parameters 'commands=["tailscale set --auto-update","tailscale serve --bg 8080"]'
+
+     (`aws ssm get-command-invocation` shows a command's output.) A node
+     enrolled this way is owned by whoever signed in and expires after 180
+     days unless an admin disables key expiry for it, so ask for that, or
+     for the tag.
+
+2. **Tailscale ACLs.** The default policy lets every member reach every
+   node; nothing to do unless the tailnet's policy is stricter, in which
+   case the node (or its tag) needs a rule allowing tcp/443 from members.
 
 3. **Deploy.**
 
@@ -71,10 +88,10 @@ All of this is done once, by someone with the `ide-build` AWS profile
   (`aws ec2 stop-instances` / `start-instances` with the `InstanceId`
   output). No replacement, no re-enrollment.
 - **Replacing the instance** (new AMI, or a terminated host) creates a new
-  tailnet node. Remove the old node in the admin console first, or Tailscale
-  gives the new one the name `e2e-reports-1` and the links break. The new
-  host reads the auth key from SSM again, so the parameter must hold a valid
-  key at that point.
+  tailnet node. Remove the old node first (admin console, or the Tailscale
+  app's machine list for a node you own), or Tailscale gives the new one the
+  name `e2e-reports-1` and the links break. The new host enrolls with the
+  SSM key if one is stored, else it waits to be authorized as at setup.
 - **Shell access** is through Session Manager, there is no SSH:
   `aws ssm start-session --target <InstanceId>`. The setup log is
   `/var/log/e2e-reports-setup.log`; the services are `reports-mount`,
