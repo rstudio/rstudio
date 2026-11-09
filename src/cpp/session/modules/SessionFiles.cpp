@@ -425,15 +425,18 @@ core::Error deleteFile(const FilePath& filePath)
 // offers the entries of the directory it is browsing, so a request for one of
 // these means the request itself is wrong (#19493: the Files pane's ".." row
 // could be selected from the keyboard and then deleted).
-core::Error validateDeletion(const FilePath& filePath)
+struct ProtectedDirectory
 {
-   struct Protected
-   {
-      FilePath path;
-      const char* description;
-   };
+   FilePath path;
+   const char* description;
+};
 
-   std::vector<Protected> roots = {
+// the protected directories, resolved once per request: the client and R may
+// refer to the same directory through a symlink (e.g. /var vs. /private/var
+// on macOS), and a trailing '.' or '..' must resolve to the directory it names
+std::vector<ProtectedDirectory> protectedDirectories()
+{
+   std::vector<ProtectedDirectory> roots = {
       { module_context::userHomePath(), "the home directory" },
       { module_context::safeCurrentPath(), "the current working directory" },
       { browsedPath(), "the directory shown in the Files pane" }
@@ -442,28 +445,34 @@ core::Error validateDeletion(const FilePath& filePath)
    if (projects::projectContext().hasProject())
       roots.push_back({ projects::projectContext().directory(), "the project directory" });
 
-   // compare resolved paths: the client and R may refer to the same directory
-   // through a symlink (e.g. /var vs. /private/var on macOS), and a trailing
-   // '.' or '..' must resolve to the directory it names. A symlink entry keeps
-   // its final component: deleting a link removes the link, not its target, so
-   // a link to a protected directory is still fair game.
+   std::vector<ProtectedDirectory> resolved;
+   for (const ProtectedDirectory& root : roots)
+   {
+      if (!root.path.isEmpty())
+         resolved.push_back({ FilePath(root.path.getWeaklyCanonicalPath()), root.description });
+   }
+
+   return resolved;
+}
+
+core::Error validateDeletion(const FilePath& filePath,
+                             const std::vector<ProtectedDirectory>& roots)
+{
+   // A symlink entry keeps its final component: deleting a link removes the
+   // link, not its target, so a link to a protected directory is still fair game.
    FilePath target = filePath.isSymlink()
          ? FilePath(filePath.getParent().getWeaklyCanonicalPath()).completeChildPath(filePath.getFilename())
          : FilePath(filePath.getWeaklyCanonicalPath());
 
-   for (const Protected& root : roots)
+   for (const ProtectedDirectory& root : roots)
    {
-      if (root.path.isEmpty())
-         continue;
-
-      FilePath protectedPath(root.path.getWeaklyCanonicalPath());
-      if (protectedPath.isWithin(target))
+      if (root.path.isWithin(target))
       {
-         std::string description = "Cannot delete '" + filePath.getAbsolutePath() +
+         // the text goes in the error's message, not a property: RPC error
+         // responses drop properties, and the Files pane shows the message
+         std::string message = "Cannot delete '" + filePath.getAbsolutePath() +
                "' because it is or contains " + root.description + ".";
-         return systemError(boost::system::errc::operation_not_permitted,
-                            description,
-                            ERROR_LOCATION);
+         return Error(boost::system::errc::operation_not_permitted, message, ERROR_LOCATION);
       }
    }
 
@@ -486,9 +495,10 @@ core::Error deleteFiles(const core::json::JsonRpcRequest& request,
       return extractError;
 
    // refuse the whole request before deleting anything
+   std::vector<ProtectedDirectory> roots = protectedDirectories();
    for (const FilePath& filePath : filePaths)
    {
-      Error validateError = validateDeletion(filePath);
+      Error validateError = validateDeletion(filePath, roots);
       if (validateError)
          return validateError;
    }

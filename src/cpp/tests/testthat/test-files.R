@@ -250,11 +250,16 @@ test_that("delete_files refuses the working directory and its ancestors", {
    # (the home directory is guarded by the same loop; it is deliberately not
    # exercised here, since a regressed guard would act on real user data)
 
-   # the directory shown in the Files pane (the one being monitored)
+   # the directory shown in the Files pane (the one being monitored). Listing
+   # with monitoring moves the session's Files listing monitor, and there is no
+   # RPC to stop it, so point it at the original working directory before this
+   # test's directories are removed rather than leave it on a deleted one.
    browsed <- file.path(root, "browsed")
    dir.create(browsed)
    .rs.invokeRpc("list_files", browsed, TRUE, FALSE)
-   expect_error(.rs.invokeRpc("delete_files", list(browsed)))
+   on.exit(.rs.invokeRpc("list_files", owd, TRUE, FALSE), add = TRUE, after = FALSE)
+   expect_error(.rs.invokeRpc("delete_files", list(browsed)),
+                "directory shown in the Files pane")
    expect_true(dir.exists(browsed))
 
    # a refused path refuses the whole request, so nothing beside it is deleted
