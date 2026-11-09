@@ -22,6 +22,7 @@ import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -30,6 +31,7 @@ import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.SelectWidget;
+import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.core.client.widget.VerticalSpacer;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -381,6 +383,44 @@ public class GeneralPreferencesPane extends PreferencesPane
             advanced.add(nativeFileDialogs_);
             disableRendererAccessibility_ = checkboxPref(prefs_.disableRendererAccessibility());
             advanced.add(disableRendererAccessibility_);
+         }
+
+         // macOS binds .R to its own Rez type, so only the user (via Launch
+         // Services) can make RStudio the default; this asks macOS to do so
+         if (BrowseCap.isMacintosh())
+         {
+            SmallButton defaultAppButton = new SmallButton(constants_.macDefaultAppForRFilesButtonLabel());
+            defaultAppButton.addClickHandler(event ->
+            {
+               // macOS asks about each file type in turn; a second click would ask again
+               defaultAppButton.setEnabled(false);
+               Desktop.getFrame().setDefaultApplicationForRFiles(result ->
+               {
+                  defaultAppButton.setEnabled(true);
+
+                  String caption = constants_.macDefaultAppForRFilesCaption();
+                  String error = result.getString("error");
+                  JsArrayString elsewhere = result.getObject("elsewhere");
+                  if (!StringUtil.isNullOrEmpty(error))
+                  {
+                     globalDisplay.showErrorMessage(caption, error);
+                  }
+                  else if (elsewhere.length() > 0)
+                  {
+                     String extensions = "." + elsewhere.join(", ."); //$NON-NLS-1$ //$NON-NLS-2$
+                     globalDisplay.showMessage(MessageDialog.INFO,
+                                               caption,
+                                               constants_.macDefaultAppForRFilesElsewhereMessage(extensions));
+                  }
+                  else
+                  {
+                     globalDisplay.showMessage(MessageDialog.INFO,
+                                               caption,
+                                               constants_.macDefaultAppForRFilesSuccessMessage());
+                  }
+               });
+            });
+            advanced.add(spaced(defaultAppButton));
          }
       }
 

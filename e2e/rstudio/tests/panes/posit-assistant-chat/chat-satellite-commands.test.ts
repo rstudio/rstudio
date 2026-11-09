@@ -3,11 +3,21 @@ import { requireAiCredentials } from '@utils/ai-credentials';
 import { CHAT_PROVIDERS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
-import { executeCommand } from '@utils/commands';
-import { createChatActions } from './_chat-setup';
+import { clearPref, executeCommand } from '@utils/commands';
+import type { Page } from 'playwright';
+import { createChatActions, selectPositChatProvider } from './_chat-setup';
 
 const CHAT_IFRAME = "iframe[title='Posit Assistant']";
 const RETURN_TO_MAIN_BTN = '#rstudio_chat_return_to_main_button';
+const PANES = '[id^="rstudio_"][id$="_pane"]';
+
+/** The id of the pane holding focus, or '' when focus is outside every pane. */
+async function focusedPane(page: Page): Promise<string> {
+  return page.evaluate(
+    panes => document.activeElement?.closest(panes)?.id ?? '',
+    PANES,
+  );
+}
 
 // Satellite pop-out on Server hits the Chrome window.open() reload path,
 // which is a separate concern from the command wiring this test covers.
@@ -56,5 +66,39 @@ test.describe.serial('Chat satellite -- commands', { tag: ['@ai', '@chat', '@des
 
     // After return, the iframe should be back in the main window.
     await expect(page.locator(CHAT_IFRAME)).toBeVisible({ timeout: 15000 });
+  });
+});
+
+// Popping chat out of a sidebar where it's the only tab takes the sidebar, and
+// the focus in it, away from the main window (#19312). No Posit AI service is
+// involved, so this doesn't need credentials.
+test.describe.serial('Chat satellite -- F6', { tag: ['@chat', '@desktop_only'] }, () => {
+  test.afterAll(async ({ rstudioPage: page }) => {
+    await clearPref(page, 'chat_provider');
+  });
+
+  test('F6 in popped-out chat focuses a main-window pane', async ({ rstudioPage: page }) => {
+    await selectPositChatProvider(page);
+    await createChatActions(page).chatActions.openChatPane();
+    await page.locator(CHAT_IFRAME).focus();
+
+    const satellitePromise = page.context().waitForEvent('page', { timeout: 30000 });
+    // The button's id gains a suffix when the toolbar is rebuilt, so find it by name.
+    await page.getByRole('button', { name: 'Show Posit Assistant in a separate window' }).click();
+    const satellitePage = await satellitePromise;
+    await expect(satellitePage.locator(RETURN_TO_MAIN_BTN)).toBeVisible({ timeout: 15000 });
+    await expect.poll(() => focusedPane(page)).toBe('');
+
+    try {
+      // Press F6 in the satellite's own document, outside the chat iframe.
+      await satellitePage.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+      await satellitePage.keyboard.press('F6');
+
+      await expect.poll(() => focusedPane(page)).toBe('rstudio_Source_pane');
+    } finally {
+      const closePromise = satellitePage.waitForEvent('close', { timeout: 30000 });
+      await executeCommand(page, 'returnChatToMain');
+      await closePromise;
+    }
   });
 });

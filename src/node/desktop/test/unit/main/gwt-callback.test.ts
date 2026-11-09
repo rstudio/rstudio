@@ -95,11 +95,22 @@ describe('DesktopCallback', () => {
       callback.setPendingQuit(PendingQuit.PendingQuitNone);
     });
 
-    it('records an R that runs and hands it over once', async () => {
+    it('hands over an R that runs, once the quit names it, and only once', async () => {
       sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{} as never, null]);
 
       assert.equal(await callback.setPendingRVersion(rPath), '');
+      // prepared is not pending: a quit that does not name it leaves it alone
+      assert.equal(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload), '');
+      assert.equal(callback.collectPendingRVersion(), '');
+
+      assert.equal(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload, rPath), '');
       assert.equal(callback.collectPendingRVersion(), rPath);
+      assert.equal(callback.collectPendingRVersion(), '');
+    });
+
+    it('refuses a quit naming an R that was not prepared', () => {
+      assert.isNotEmpty(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload, '/no/such/R'));
+      assert.equal(callback.collectPendingQuitRequest(), PendingQuit.PendingQuitNone);
       assert.equal(callback.collectPendingRVersion(), '');
     });
 
@@ -126,11 +137,43 @@ describe('DesktopCallback', () => {
     it('forgets the R when the quit it was meant for is abandoned', async () => {
       sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{} as never, null]);
 
-      callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload);
       assert.equal(await callback.setPendingRVersion(rPath), '');
+      assert.equal(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload, rPath), '');
 
       callback.setPendingQuit(PendingQuit.PendingQuitNone);
       assert.equal(callback.collectPendingRVersion(), '');
+    });
+  });
+
+  describe('collectPendingQuitRequest', () => {
+    afterEach(() => {
+      callback.setPendingQuit(PendingQuit.PendingQuitNone);
+    });
+
+    it('hands the pending quit over once', () => {
+      callback.setPendingQuit(PendingQuit.PendingQuitAndExit);
+      assert.equal(callback.collectPendingQuitRequest(), PendingQuit.PendingQuitAndExit);
+      assert.equal(callback.collectPendingQuitRequest(), PendingQuit.PendingQuitNone);
+    });
+
+    it('keeps an accepted update only for the quit-and-exit it was recorded for', () => {
+      const cancel = sinon.stub(callback.updater, 'cancelPendingInstall');
+
+      callback.setPendingQuit(PendingQuit.PendingQuitAndExit);
+      callback.collectPendingQuitRequest();
+      assert.isTrue(cancel.notCalled);
+
+      // the session exits to restart (Terminate R, a project switch), or crashed
+      for (const other of [
+        PendingQuit.PendingQuitRestartAndReload,
+        PendingQuit.PendingQuitAndRestart,
+        PendingQuit.PendingQuitNone,
+      ]) {
+        cancel.resetHistory();
+        callback.setPendingQuit(other);
+        callback.collectPendingQuitRequest();
+        assert.isTrue(cancel.called, `collected as ${PendingQuit[other]}`);
+      }
     });
   });
 

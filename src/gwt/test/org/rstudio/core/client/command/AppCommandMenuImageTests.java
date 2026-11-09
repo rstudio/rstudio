@@ -17,6 +17,8 @@ package org.rstudio.core.client.command;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.resources.client.ImageResource;
 
@@ -46,6 +48,22 @@ public class AppCommandMenuImageTests extends GWTTestCase
       assertTrue(html.contains("<img"));
       assertFalse(html.contains("rstudio-forced-colors-glyph"));
       assertFalse(html.contains("class=\"\""));
+   }
+
+   public void testIconCellIsHiddenFromAssistiveTechnology()
+   {
+      // Hidden with or without an icon: with none, its <br/> placeholder would
+      // otherwise add leading whitespace to the item's accessible name.
+      ImageResource[] icons = { null, ThemeResources.INSTANCE.executeChunk2x() };
+      for (ImageResource icon : icons)
+      {
+         Element label = Document.get().createDivElement();
+         label.setInnerHTML(icon == null
+               ? AppCommand.formatMenuLabel(null, "Item", "Ctrl+K")
+               : menuLabel(icon));
+         Element iconCell = label.getElementsByTagName("td").getItem(0);
+         assertEquals("true", iconCell.getAttribute("aria-hidden"));
+      }
    }
 
    @Override

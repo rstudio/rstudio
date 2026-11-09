@@ -135,7 +135,6 @@ pipeline {
             }
 
             environment {
-              GITHUB_LOGIN = credentials('posit-jenkins-rstudio')
               DOCKER_TAG = utils.getDockerTag()
               DOCKER_FILE = "docker/jenkins/Dockerfile.${env.os}"
             }
@@ -149,7 +148,7 @@ pipeline {
                 build_arg_jenkins_uid: 'JENKINS_UID',
                 build_arg_jenkins_gid: 'JENKINS_GID',
                 dockerfile: "${DOCKER_FILE}",
-                build_args: "--build-arg ARCH=${arch} --build-arg GITHUB_LOGIN=${GITHUB_LOGIN}",
+                build_args: "--build-arg ARCH=${arch}",
                 push: "${params.PUBLISH}"
               )
             }
