@@ -617,10 +617,12 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
    }
 
    // While a deferred recovery rescan is pending, skip MustScanSubDirs
-   // recursion below: fseventsd attaches that flag (typically to the root
-   // path), and honoring it would perform exactly the full-tree scan the
-   // debounce is deferring. The deferred rescan runs later and from the
-   // root, so it observes everything these scans would.
+   // recursion below, and let discoverAndProcessFileChanges defer its own
+   // subtree scans (added directories, failed-directory recovery): fseventsd
+   // attaches that flag (typically to the root path), and honoring it would
+   // perform exactly the full-tree scan the debounce is deferring. The
+   // deferred rescan runs later and from the root, so it observes everything
+   // these scans would.
    bool rescanPending = pContext->rescanTimerRef != nullptr;
 
    for (const std::pair<std::string, FSEventStreamEventFlags>& event : events)
@@ -643,7 +645,8 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
                                              pContext->filter,
                                              &(pContext->fileTree),
                                              pContext->callbacks.onFilesChanged,
-                                             pContext->recursive);
+                                             pContext->recursive,
+                                             rescanPending);
          if (error &&
             !isNotFoundError(error))
          {

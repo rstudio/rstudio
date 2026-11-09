@@ -288,12 +288,40 @@ void processFileRemoved(tree<FileInfo>::iterator parentIt,
    }
 }
 
+tree<FileInfo>::iterator findPath(tree<FileInfo>* pTree, const std::string& path)
+{
+   tree<FileInfo>::iterator it = pTree->begin();
+   if (it == pTree->end())
+      return pTree->end();
+
+   while (it->absolutePath() != path)
+   {
+      // Descend into the child whose path is a component-wise prefix.
+      tree<FileInfo>::sibling_iterator child = pTree->begin(it);
+      for (; child != pTree->end(it); ++child)
+      {
+         const std::string& childPath = child->absolutePath();
+         if (path.size() >= childPath.size() &&
+             path.compare(0, childPath.size(), childPath) == 0 &&
+             (path.size() == childPath.size() || path[childPath.size()] == '/'))
+         {
+            break;
+         }
+      }
+      if (child == pTree->end(it))
+         return pTree->end();
+      it = child;
+   }
+
+   return it;
+}
+
 void invalidateDirectory(
    const FileInfo& fileInfo,
    tree<FileInfo>* pTree,
    const boost::function<void(const std::vector<FileChangeEvent>&)>& onFilesChanged)
 {
-   auto it = impl::findFile(pTree->begin(), pTree->end(), fileInfo);
+   auto it = findPath(pTree, fileInfo.absolutePath());
    if (it == pTree->end() || !it->isDirectory() || it->scanFiltered() ||
        (it->isSymlink() && it != pTree->begin()))
    {
@@ -321,10 +349,11 @@ Error discoverAndProcessFileChanges(
    tree<FileInfo>* pTree,
    const  boost::function<void(const std::vector<FileChangeEvent>&)>&
                                                                onFilesChanged,
-   bool recursiveMonitor)
+   bool recursiveMonitor,
+   bool rescanPending)
 {
    // find this path in our fileTree
-   tree<FileInfo>::iterator it = impl::findFile(pTree->begin(), pTree->end(), fileInfo);
+   tree<FileInfo>::iterator it = findPath(pTree, fileInfo.absolutePath());
 
    // if we don't find it then it may have been excluded by a filter, just bail
    if (it == pTree->end())
@@ -337,7 +366,13 @@ Error discoverAndProcessFileChanges(
 
    // macOS ordinarily rescans only one directory even for recursive monitors.
    // Recovery must rebuild the failed subtree before advertising coverage.
-   recursive = recursive || (recursiveMonitor && (it->scanFailed() || it->scanFiltered()));
+   // A pending rescan from the root will do that rebuild (and scan any added
+   // directories), so avoid scanning the same subtrees twice meanwhile.
+   bool rebuildSubtree = recursiveMonitor && (it->scanFailed() || it->scanFiltered());
+   if (rebuildSubtree && rescanPending)
+      return Success();
+   recursive = recursive || rebuildSubtree;
+   bool scanAddedDirectories = recursive || (recursiveMonitor && !rescanPending);
 
    // scan this directory into a new tree which we can compare to the old tree
    tree<FileInfo> subdirTree;
@@ -411,7 +446,7 @@ Error discoverAndProcessFileChanges(
          {
             Error error = processFileAdded(it,
                                            fileChange,
-                                           recursive || recursiveMonitor,
+                                           scanAddedDirectories,
                                            filter,
                                            onBeforeScanDir,
                                            pTree,

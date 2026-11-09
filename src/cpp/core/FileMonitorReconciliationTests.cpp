@@ -17,6 +17,8 @@
 #include <unistd.h>
 #endif
 
+#include <algorithm>
+
 #include <gtest/gtest.h>
 
 #include <core/FileSerializer.hpp>
@@ -55,7 +57,10 @@ protected:
       EXPECT_FALSE(root_.removeIfExists());
    }
 
-   Error reconcile(const FilePath& path, bool recursive = true, bool recursiveMonitor = false)
+   Error reconcile(const FilePath& path,
+                   bool recursive = true,
+                   bool recursiveMonitor = false,
+                   bool rescanPending = false)
    {
       events_.clear();
       return monitor::discoverAndProcessFileChanges(
@@ -65,7 +70,16 @@ protected:
          options_.onBeforeScanDir,
          &files_,
          [this](const std::vector<FileChangeEvent>& events) { events_ = events; },
-         recursiveMonitor);
+         recursiveMonitor,
+         rescanPending);
+   }
+
+   bool hasEvent(FileChangeEvent::Type type, const FilePath& path) const
+   {
+      return std::any_of(events_.begin(), events_.end(), [&](const FileChangeEvent& event)
+      {
+         return event.type() == type && event.fileInfo().absolutePath() == path.getAbsolutePath();
+      });
    }
 
    void expectScanStatus(bool failed,
@@ -211,6 +225,69 @@ TEST_F(FileMonitorReconciliationTests, ShallowRescanIndexesNewlyIncludedDirector
       return event.type() == FileChangeEvent::FileAdded &&
              event.fileInfo().absolutePath() == nested.getAbsolutePath();
    }));
+}
+
+TEST_F(FileMonitorReconciliationTests, FindsPathsByDescendingFromRoot)
+{
+   FilePath nested = blocked_.completeChildPath("sub/helper.R");
+   ASSERT_FALSE(nested.getParent().ensureDirectory());
+   ASSERT_FALSE(writeStringToFile(nested, "helper <- function() TRUE\n"));
+   ASSERT_FALSE(system::scanFiles(FileInfo(root_), options_, &files_));
+
+   EXPECT_EQ(files_.begin(), monitor::findPath(&files_, root_.getAbsolutePath()));
+   auto found = monitor::findPath(&files_, nested.getAbsolutePath());
+   ASSERT_NE(files_.end(), found);
+   EXPECT_EQ(nested.getAbsolutePath(), found->absolutePath());
+
+   // Lookups must respect component boundaries and tolerate absent subtrees.
+   EXPECT_EQ(files_.end(), monitor::findPath(&files_, blocked_.getAbsolutePath() + "2/sub"));
+   EXPECT_EQ(files_.end(), monitor::findPath(&files_, root_.completeChildPath("missing/x").getAbsolutePath()));
+   EXPECT_EQ(files_.end(), monitor::findPath(&files_, root_.getParent().getAbsolutePath()));
+}
+
+TEST_F(FileMonitorReconciliationTests, PendingRescanDefersAddedDirectoryScan)
+{
+   FilePath nested = blocked_.completeChildPath("sub/helper.R");
+   ASSERT_FALSE(nested.getParent().ensureDirectory());
+   ASSERT_FALSE(writeStringToFile(nested, "helper <- function() TRUE\n"));
+   options_.filter = [this](const FileInfo& info)
+   {
+      return FilePath(info.absolutePath()) != blocked_;
+   };
+   ASSERT_FALSE(system::scanFiles(FileInfo(root_), options_, &files_));
+   options_.filter.clear();
+
+   // The directory itself is announced, but its contents wait for the rescan
+   // instead of being scanned twice during an overload burst.
+   ASSERT_FALSE(reconcile(root_, false, true, true));
+   EXPECT_TRUE(hasEvent(FileChangeEvent::FileAdded, blocked_));
+   EXPECT_FALSE(hasEvent(FileChangeEvent::FileAdded, nested));
+   EXPECT_EQ(files_.end(), monitor::findFile(files_.begin(), files_.end(), nested.getAbsolutePath()));
+
+   ASSERT_FALSE(reconcile(root_, true, true));
+   EXPECT_TRUE(hasEvent(FileChangeEvent::FileAdded, nested));
+   EXPECT_NE(files_.end(), monitor::findFile(files_.begin(), files_.end(), nested.getAbsolutePath()));
+}
+
+TEST_F(FileMonitorReconciliationTests, PendingRescanDefersFailedSubtreeRecovery)
+{
+   ASSERT_FALSE(writeStringToFile(source_, "x <- 1\n"));
+   failScan_ = true;
+   ASSERT_FALSE(system::scanFiles(FileInfo(root_), options_, &files_));
+   failScan_ = false;
+
+   // Recovery must not be advertised from a shallow scan; the pending rescan
+   // rebuilds the subtree and publishes it in one pass.
+   ASSERT_FALSE(reconcile(blocked_, false, true, true));
+   EXPECT_TRUE(events_.empty());
+   auto dir = monitor::findFile(files_.begin(), files_.end(), blocked_.getAbsolutePath());
+   ASSERT_NE(files_.end(), dir);
+   EXPECT_TRUE(dir->scanFailed());
+   EXPECT_EQ(files_.end(), monitor::findFile(files_.begin(), files_.end(), source_.getAbsolutePath()));
+
+   ASSERT_FALSE(reconcile(root_, true, true));
+   expectScanStatus(false);
+   EXPECT_TRUE(hasEvent(FileChangeEvent::FileAdded, source_));
 }
 
 TEST_F(FileMonitorReconciliationTests, FilteredDirectoryRecoversCompleteSubtree)
