@@ -50,6 +50,8 @@
 - ([#19193](https://github.com/rstudio/rstudio/issues/19193)): [Accessibility] Fixed an issue where Focus Next Pane (F6) and Focus Previous Pane (Shift+F6) opened a new untitled document when no documents were open. The hidden Source pane is now skipped.
 - ([#19520](https://github.com/rstudio/rstudio/issues/19520)): Fixed an issue where messages from the Posit AI and GitHub Copilot code assistants were dropped, and errors such as "parsing response failed" were logged, when the language server's output arrived split across reads.
 - ([#19470](https://github.com/rstudio/rstudio/issues/19470)): [Accessibility] Fixed an issue where the Packages pane showed an unlabeled Browse button for packages with no browse URL, such as those installed from a local path. Screen readers now announce the Browse and Remove buttons with the package's name (e.g. "Browse dplyr", "Remove dplyr") instead of the website's URL or a generic "Remove package".
+- ([#6167](https://github.com/rstudio/rstudio/issues/6167)): [Accessibility] Fixed an issue where screen readers didn't announce the code completion popup in the console and in documents such as R, R Markdown, Python, and SQL files. Screen readers now announce the selected completion as you move through the list.
+- ([#6168](https://github.com/rstudio/rstudio/issues/6168)): [Accessibility] Fixed an issue where screen readers didn't announce the console history popup (Ctrl+Up, or Cmd+Up on macOS). Screen readers now announce the selected command as you move through the list.
 
 ### Dependencies
 - Quarto 1.11.9

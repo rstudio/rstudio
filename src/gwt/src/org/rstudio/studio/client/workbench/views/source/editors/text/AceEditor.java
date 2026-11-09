@@ -1235,7 +1235,7 @@ public class AceEditor implements DocDisplay
                   managers.put(DocumentMode.Mode.R, new RCompletionManager(
                         editor,
                         editor,
-                        new CompletionPopupPanel(),
+                        new CompletionPopupPanel(editor),
                         server_,
                         new Filter(),
                         context_,
@@ -1249,7 +1249,7 @@ public class AceEditor implements DocDisplay
                {
                   managers.put(DocumentMode.Mode.MARKDOWN, MarkdownCompletionManager.create(
                         editor,
-                        new CompletionPopupPanel(),
+                        new CompletionPopupPanel(editor),
                         server_,
                         context_));
                }
@@ -1259,7 +1259,7 @@ public class AceEditor implements DocDisplay
                {
                   managers.put(DocumentMode.Mode.PYTHON, PythonCompletionManager.create(
                         editor,
-                        new CompletionPopupPanel(),
+                        new CompletionPopupPanel(editor),
                         server_,
                         context_));
                }
@@ -1278,7 +1278,7 @@ public class AceEditor implements DocDisplay
                {
                   managers.put(DocumentMode.Mode.SQL, SqlCompletionManager.create(
                         editor,
-                        new CompletionPopupPanel(),
+                        new CompletionPopupPanel(editor),
                         server_,
                         context_));
                }
@@ -1288,7 +1288,7 @@ public class AceEditor implements DocDisplay
                {
                   managers.put(DocumentMode.Mode.STAN, StanCompletionManager.create(
                         editor,
-                        new CompletionPopupPanel(),
+                        new CompletionPopupPanel(editor),
                         server_,
                         context_));
                }
@@ -1299,7 +1299,7 @@ public class AceEditor implements DocDisplay
                {
                   managers.put(DocumentMode.Mode.YAML, YamlCompletionManager.create(
                        editor,
-                       new CompletionPopupPanel(),
+                       new CompletionPopupPanel(editor),
                        server_,
                        context_
                   ));
@@ -5257,6 +5257,12 @@ public class AceEditor implements DocDisplay
    public final void setTextInputAriaLabel(String label)
    {
       widget_.getEditor().setTextInputAriaLabel(label);
+   }
+
+   @Override
+   public void setAriaActiveDescendant(String elementId)
+   {
+      widget_.getEditor().setTextInputActiveDescendant(elementId);
    }
 
    public void setTabAlwaysMovesFocus()
