@@ -156,7 +156,7 @@ public class DocUpdateSentinel
       eventBus_ = events;
       prefs_ = prefs;
       chunkDefProvider_ = chunkDefProvider;
-      changeTracker_ = docDisplay.getChangeTracker();
+      changeTracker_ = docDisplay.createChangeTracker();
       saveCommands_ = new ArrayList<>();
       propertyChangeHandlers_ = new HashMap<>();
       

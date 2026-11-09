@@ -2787,7 +2787,8 @@ public class AceEditor implements DocDisplay
       widget_.getEditor().toggleCommentLines();
    }
 
-   public ChangeTracker getChangeTracker()
+   @Override
+   public ChangeTracker createChangeTracker()
    {
       return new AceEditorChangeTracker();
    }
