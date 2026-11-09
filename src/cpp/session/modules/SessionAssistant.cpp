@@ -3021,9 +3021,9 @@ std::string agentStderrTail(const std::string& text, std::size_t maxLength)
 
 namespace {
 
-// Agent messages are JSON-RPC requests and replies, far smaller than this. A
-// larger Content-Length is noise that would otherwise hold back every message
-// after it.
+// Agent and chat backend messages are JSON-RPC messages, far smaller than
+// this, even those carrying a file the chat writes. A larger Content-Length is
+// noise that would otherwise hold back every message after it.
 const std::size_t kMaxAgentMessageSize = 64 * 1024 * 1024;
 
 // A header block is a few dozen bytes. One this long that has not ended is
