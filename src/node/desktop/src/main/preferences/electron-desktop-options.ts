@@ -58,6 +58,8 @@ const kRendererUseGpuDriverBugWorkarounds = 'renderer.useGpuDriverBugWorkarounds
 const kUseDefault32BitR = 'platform.windows.useDefault32BitR';
 const kUseDefault64BitR = 'platform.windows.useDefault64BitR';
 const kRExecutablePath = 'platform.windows.rExecutablePath';
+
+const kMacOSDefaultFileHandlerPrompted = 'platform.macos.defaultFileHandlerPrompted';
 const kPreferR64 = 'platform.windows.preferR64';
 
 const userStateSchema = generateSchema<RStudioUserState>(properties);
@@ -265,6 +267,17 @@ export class DesktopOptionsImpl implements DesktopOptions {
 
   public ignoredUpdateVersions(): string[] {
     return this.config.get(kIgnoredUpdateVersions, properties.general.default.ignoredUpdateVersions);
+  }
+
+  public setMacOSDefaultFileHandlerPrompted(value: boolean): void {
+    this.safeSet(kMacOSDefaultFileHandlerPrompted, value);
+  }
+
+  public macOSDefaultFileHandlerPrompted(): boolean {
+    return this.config.get(
+      kMacOSDefaultFileHandlerPrompted,
+      properties.platform.default.macos.defaultFileHandlerPrompted,
+    );
   }
 
   public setRenderingEngine(renderingEngine: string): void {
