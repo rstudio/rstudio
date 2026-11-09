@@ -60,10 +60,13 @@ inputs:
 runs:
   using: "composite"
   steps:
+    # Best-effort when retiring (the artifacts then simply stay for their
+    # retention day), fatal when restoring: skipping the restore would merge
+    # only the re-run shards and could report a green run for a fraction of it.
     - name: Configure AWS credentials
       id: creds
       if: inputs.role-arn != '' && (inputs.mode == 'retire' || github.run_attempt != '1')
-      continue-on-error: true
+      continue-on-error: ${{ inputs.mode == 'retire' }}
       uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
       with:
         role-to-assume: ${{ inputs.role-arn }}
