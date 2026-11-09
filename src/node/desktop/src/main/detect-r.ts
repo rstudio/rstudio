@@ -388,6 +388,7 @@ export function detectREnvironment(rPath: string): Expected<REnvironment> {
   }
   logger().logDebug(`Querying information about R executable at path: ${rExecutable}`);
 
+  const executableMissing = !existsSync(rExecutable.getAbsolutePath());
   const launch = rQueryCommand(rExecutable.getAbsolutePath(), environment);
   const [spawned, spawnError] = expect(() => {
     return spawnSync(launch.command, launch.args, {
@@ -400,7 +401,7 @@ export function detectREnvironment(rPath: string): Expected<REnvironment> {
   // spawnSync reports most launch failures in its result, but it can also throw
   let query: RQueryResult;
   if (spawnError) {
-    query = { stdout: '', stderr: '', status: null, error: spawnError };
+    query = { stdout: '', stderr: '', status: null, error: spawnError, executableMissing };
   } else {
     query = {
       stdout: spawned.stdout,
@@ -408,6 +409,7 @@ export function detectREnvironment(rPath: string): Expected<REnvironment> {
       status: spawned.status,
       signal: spawned.signal,
       error: spawned.error,
+      executableMissing,
     };
   }
   const result = rememberREnvironment(rPath, parseRQueryResult(rPath, query));
@@ -434,6 +436,7 @@ export async function detectREnvironmentAsync(rPath: string, timeoutMs = 0): Pro
   }
   logger().logDebug(`Querying information about R executable at path: ${rExecutable} (in background)`);
 
+  const executableMissing = !existsSync(rExecutable.getAbsolutePath());
   const launch = rQueryCommand(rExecutable.getAbsolutePath(), environment);
   const result = await new Promise<RQueryResult>((resolve) => {
     let stdout = '';
@@ -448,7 +451,7 @@ export async function detectREnvironmentAsync(rPath: string, timeoutMs = 0): Pro
         clearTimeout(timer);
         timer = null;
       }
-      resolve(outcome);
+      resolve({ ...outcome, executableMissing });
     };
     if (timeoutMs > 0) {
       timer = setTimeout(() => {
@@ -526,7 +529,9 @@ function rExecutableFor(rPath: string): FilePath {
 
 // small script for querying information about R; the marker character
 // '\x1E' lets us find our output even when the R installation prints
-// something on startup. kQueryFieldCount is how many values it writes
+// something on startup. kQueryFieldCount is how many values it writes;
+// writeLines() puts the separator after every value, the last included, so
+// a complete answer ends with one
 const kQueryFieldCount = 9;
 function rQueryScript(): string {
   return String.raw`
@@ -609,7 +614,7 @@ function rQueryEnvironment(): NodeJS.ProcessEnv {
   return envCopy;
 }
 
-/** What running the query script produced. */
+/** What launching R and running the query script produced. */
 export interface RQueryResult {
   stdout: string | null;
   stderr: string | null;
@@ -617,6 +622,15 @@ export interface RQueryResult {
   /** The signal that ended R, when it did not exit on its own. */
   signal?: NodeJS.Signals | null;
   error?: Error;
+  /**
+   * Whether nothing existed at the executable's path when it was launched:
+   * the R is not installed, or not where it was recorded, rather than
+   * broken. Decided by looking at the path, not at how the launch failed:
+   * an existing R whose interpreter or loader is missing fails with ENOENT
+   * too, and a missing framework version is launched through /bin/sh, which
+   * exits normally with an error of its own.
+   */
+  executableMissing?: boolean;
 }
 
 /**
@@ -637,16 +651,8 @@ export class RLaunchError extends Error {
 
   /** Whether the failure is that there is no executable at the path. */
   get executableMissing(): boolean {
-    return isExecutableMissing(this.result);
+    return this.result.executableMissing === true;
   }
-}
-
-/**
- * Whether the launch failed because nothing exists at the path: the R is
- * not installed, or not where it was recorded, rather than broken.
- */
-export function isExecutableMissing(result: RQueryResult): boolean {
-  return (result.error as NodeJS.ErrnoException | undefined)?.code === 'ENOENT';
 }
 
 // how much of R's stderr the user is shown: enough for R's own
@@ -663,7 +669,7 @@ export function rLaunchFailureMessage(rPath: string, result: RQueryResult): stri
     : undefined;
 
   // an R that is not there never ran, so there is nothing more to report
-  if (isExecutableMissing(result)) {
+  if (result.executableMissing) {
     return [t('detectRTs.noRExecutableAt', { rPath }), launchError].filter(Boolean).join('\n\n');
   }
 
@@ -724,14 +730,16 @@ export function parseRQueryResult(rPath: string, result: RQueryResult): Expected
   const fields = index === -1 ? [] : stdout.substring(index + 1).split('\x1F');
 
   // why the answer cannot be used, if it cannot: R never ran, R ran but
-  // never reached the query script, or R died partway through it
+  // never reached the query script, or R died partway through it. Only
+  // the trailing separator shows that the last field was written in full,
+  // so a complete answer has one more piece than it has fields
   let failure: string | undefined;
   if (!stdout) {
     failure = 'produced no output';
   } else if (index === -1) {
     failure = 'did not run the query script (no output marker)';
-  } else if (fields.length < kQueryFieldCount) {
-    failure = `answered with ${fields.length} of ${kQueryFieldCount} fields`;
+  } else if (fields.length <= kQueryFieldCount) {
+    failure = `answered with ${fields.length - 1} of ${kQueryFieldCount} fields`;
   }
 
   // a failed query, or an R that answered but did not end normally, is

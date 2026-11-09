@@ -84,7 +84,8 @@ describe('DetectR', () => {
       '/opt/R/lib',
       'aarch64-apple-darwin23',
     ];
-    const stdout = 'Loading profile...\x1E' + fields.join('\x1F');
+    // writeLines() ends every field with the separator, the last included
+    const stdout = 'Loading profile...\x1E' + fields.join('\x1F') + '\x1F';
 
     const [environment, error] = parseRQueryResult('/opt/R/bin/R', { stdout, stderr: '', status: 0 });
     assert.isNull(error);
@@ -215,6 +216,39 @@ describe('DetectR', () => {
     assert.include(error.message, 'SIGSEGV');
   });
 
+  it('rejects an answer cut inside or right before the last field', () => {
+    // without the trailing separator the last field may be incomplete, and
+    // a cut right after the eighth separator leaves it empty; both used to
+    // pass as a full answer with a wrong R_PLATFORM
+    const complete = [
+      '4.6.2',
+      '/opt/R',
+      '/opt/R/doc',
+      '/opt/R/include',
+      '/opt/R/share',
+      '',
+      '',
+      '',
+      'x86_64-pc-linux-gnu',
+    ];
+    for (const stdout of [
+      '\x1E' + complete.join('\x1F'),
+      '\x1E' + complete.slice(0, 8).join('\x1F') + '\x1F',
+      '\x1E' + complete.slice(0, 8).join('\x1F') + '\x1Fx86_64-pc',
+    ]) {
+      const [, error] = parseRQueryResult('/opt/R/bin/R', { stdout, stderr: '', status: null, signal: 'SIGKILL' });
+      assert.instanceOf(error, RLaunchError, JSON.stringify(stdout));
+    }
+
+    const [environment, error] = parseRQueryResult('/opt/R/bin/R', {
+      stdout: '\x1E' + complete.join('\x1F') + '\x1F',
+      stderr: '',
+      status: 0,
+    });
+    assert.isNull(error);
+    assert.equal(environment.envVars.R_PLATFORM, 'x86_64-pc-linux-gnu');
+  });
+
   it('reports a path with no executable as R not found, not as R failing to start', function () {
     if (process.platform === 'win32') {
       this.skip();
@@ -235,6 +269,53 @@ describe('DetectR', () => {
     }
   });
 
+  it('reports an R whose interpreter is missing as failing to start, not as missing', function () {
+    if (process.platform === 'win32') {
+      this.skip();
+    }
+
+    // execve() fails with ENOENT for an existing script whose interpreter
+    // (or an existing binary whose loader) is not there, the same error a
+    // missing file gives; the file itself is what decides
+    const dir = mkdtempSync(join(tmpdir(), 'detect-r-interp-'));
+    const fakeR = join(dir, 'R');
+    writeFileSync(fakeR, '#!/nonexistent/interpreter\n', { mode: 0o755 });
+
+    try {
+      const [, error] = detectREnvironment(fakeR);
+      assert.instanceOf(error, RLaunchError);
+      assert.isFalse(error.executableMissing);
+      assert.include(error.message, `R was found at ${fakeR} but failed to start`);
+      assert.include(error.message, 'ENOENT');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('reports an uninstalled framework version as missing, not as failing to start', function () {
+    if (process.platform === 'win32') {
+      this.skip();
+    }
+
+    // a versioned framework install is queried through /bin/sh, which is
+    // there and exits normally when the install is not; the dialog used to
+    // say R was found at the path
+    const dir = mkdtempSync(join(tmpdir(), 'detect-r-framework-'));
+    const resources = join(dir, 'R.framework', 'Versions', '4.6-arm64', 'Resources');
+    mkdirSync(resources, { recursive: true });
+    const missing = join(resources, 'bin', 'R');
+
+    try {
+      const [, error] = detectREnvironment(missing);
+      assert.instanceOf(error, RLaunchError);
+      assert.isTrue(error.executableMissing);
+      assert.include(error.message, `No R executable was found at ${missing}`);
+      assert.notInclude(error.message, 'failed to start');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('picks the dialog title by what went wrong', () => {
     // nothing found at all, or an error that is not about a particular R
     assert.deepEqual(rNotFoundDialog(), {
@@ -249,7 +330,13 @@ describe('DetectR', () => {
 
     // a path with no R at it
     const enoent = Object.assign(new Error('spawnSync /opt/R/typo/bin/R ENOENT'), { code: 'ENOENT' });
-    const missing = new RLaunchError('/opt/R/typo/bin/R', { stdout: null, stderr: null, status: null, error: enoent });
+    const missing = new RLaunchError('/opt/R/typo/bin/R', {
+      stdout: null,
+      stderr: null,
+      status: null,
+      error: enoent,
+      executableMissing: true,
+    });
     assert.deepEqual(rNotFoundDialog(missing), { title: 'R not found', message: missing.message });
     assert.include(missing.message, '/opt/R/typo/bin/R');
   });
@@ -369,7 +456,7 @@ describe('DetectR', () => {
     ];
     const dir = mkdtempSync(join(tmpdir(), 'detect-r-hang-'));
     const fakeR = join(dir, 'R');
-    writeFileSync(fakeR, `#!/bin/sh\nprintf '\\036${fields.join('\\037')}'\nsleep 5\n`, { mode: 0o755 });
+    writeFileSync(fakeR, `#!/bin/sh\nprintf '\\036${fields.join('\\037')}\\037'\nsleep 5\n`, { mode: 0o755 });
 
     try {
       const [, error] = await detectREnvironmentAsync(fakeR, 250);
@@ -406,7 +493,7 @@ describe('DetectR', () => {
     ];
     const dir = mkdtempSync(join(tmpdir(), 'detect-r-test-'));
     const fakeR = join(dir, 'R');
-    writeFileSync(fakeR, `#!/bin/sh\nprintf '\\036${fields.join('\\037')}'\n`, { mode: 0o755 });
+    writeFileSync(fakeR, `#!/bin/sh\nprintf '\\036${fields.join('\\037')}\\037'\n`, { mode: 0o755 });
 
     try {
       // the production wiring: main.ts starts the detection, and the launch
