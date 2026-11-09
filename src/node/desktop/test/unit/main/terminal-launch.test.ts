@@ -37,6 +37,13 @@ describe('TerminalLaunch', () => {
     }
   });
 
+  it('leaves project files from a terminal (e.g. xdg-open foo.Rproj) to Desktop', () => {
+    const terminal = { RSTUDIO_TERM: 'terminal-id', RS_RPOSTBACK_PATH: '/bin/rpostback' };
+    for (const args of [['foo.Rproj'], ['/abs/foo.RPROJ'], ['--', 'foo.Rproj'], ['a.R', 'foo.Rproj']]) {
+      assert.isUndefined(forwardTerminalCommand(args, terminal, 'linux'), JSON.stringify(args));
+    }
+  });
+
   describe('postback integration', function () {
     this.timeout(10000);
     let dir: string;

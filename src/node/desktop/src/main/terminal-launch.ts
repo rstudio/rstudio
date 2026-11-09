@@ -48,7 +48,8 @@ function logicalCwd(env: NodeJS.ProcessEnv): string {
  *
  * Only a command naming at least one file is treated as the terminal command;
  * switch-only and bare launches (e.g. a dev build's --no-sandbox, or the
- * installed binary by absolute path) still start Desktop from a terminal.
+ * installed binary by absolute path) still start Desktop from a terminal, as
+ * does a command naming a project file (e.g. xdg-open foo.Rproj).
  */
 export function forwardTerminalCommand(
   args: string[],
@@ -63,8 +64,13 @@ export function forwardTerminalCommand(
 
   // Operands are arguments not starting with '-', or anything after '--'.
   const separator = args.indexOf('--');
-  const hasOperand = args.some((arg, index) => !arg.startsWith('-') || (separator !== -1 && index > separator));
-  if (!hasOperand) {
+  const operands = args.filter((arg, index) => !arg.startsWith('-') || (separator !== -1 && index > separator));
+  if (operands.length === 0) {
+    return undefined;
+  }
+
+  // Desktop opens project files; the session's openfile would edit them as text.
+  if (operands.some((arg) => path.extname(arg).toLowerCase() === '.rproj')) {
     return undefined;
   }
 
