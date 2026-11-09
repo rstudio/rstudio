@@ -5194,11 +5194,8 @@ Error startChatBackend(bool resumeConversation)
    if (!certificatesFile.empty())
       core::system::setenv(&environment, "NODE_EXTRA_CA_CERTS", certificatesFile);
 
-   // Enable Node.js proxy support for fetch().
-   // When HTTP_PROXY / HTTPS_PROXY env vars are set (e.g. via ~/.Renviron),
-   // this tells Node.js 22.21+ to route fetch() through the proxy.
-   // See: https://github.com/nodejs/node/pull/57165
-   core::system::setenv(&environment, "NODE_USE_ENV_PROXY", "1");
+   // Route fetch() through HTTP_PROXY / HTTPS_PROXY (e.g. from ~/.Renviron).
+   node_tools::applyEnvProxyOption(&environment);
 
    node_tools::applySystemCaOption(&environment, nodePath);
 

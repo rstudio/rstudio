@@ -17,6 +17,8 @@
 
 #include <gtest/gtest.h>
 
+#include <core/system/Environment.hpp>
+
 namespace rstudio {
 namespace session {
 namespace modules {
@@ -129,6 +131,113 @@ TEST(SessionNodeToolsTest, ParseNodeVersionEmbeddedSuffix)
    EXPECT_TRUE(parseNodeVersion("v22.17.0-nightly", &major, &minor));
    EXPECT_EQ(major, 22);
    EXPECT_EQ(minor, 17);
+}
+
+TEST(SessionNodeToolsTest, NormalizeProxyUrlAddsSchemeToHostAndPort)
+{
+   std::string out;
+   EXPECT_TRUE(normalizeProxyUrl("proxy.example.com:8080", &out));
+   EXPECT_EQ(out, "http://proxy.example.com:8080");
+   EXPECT_TRUE(normalizeProxyUrl("192.168.1.1:3128", &out));
+   EXPECT_EQ(out, "http://192.168.1.1:3128");
+}
+
+TEST(SessionNodeToolsTest, NormalizeProxyUrlAddsSchemeToBareHost)
+{
+   std::string out;
+   EXPECT_TRUE(normalizeProxyUrl("proxy", &out));
+   EXPECT_EQ(out, "http://proxy");
+}
+
+TEST(SessionNodeToolsTest, NormalizeProxyUrlKeepsUrlsWithScheme)
+{
+   std::string out;
+   EXPECT_TRUE(normalizeProxyUrl("http://proxy.example.com:8080/", &out));
+   EXPECT_EQ(out, "http://proxy.example.com:8080/");
+   EXPECT_TRUE(normalizeProxyUrl("HTTPS://PROXY.EXAMPLE.COM:8080", &out));
+   EXPECT_EQ(out, "HTTPS://PROXY.EXAMPLE.COM:8080");
+   EXPECT_TRUE(normalizeProxyUrl("http://user:p%40ss@proxy.example.com:8080", &out));
+   EXPECT_EQ(out, "http://user:p%40ss@proxy.example.com:8080");
+   EXPECT_TRUE(normalizeProxyUrl("socks5://proxy.example.com:1080", &out));
+   EXPECT_EQ(out, "socks5://proxy.example.com:1080");
+}
+
+TEST(SessionNodeToolsTest, NormalizeProxyUrlStripsQuotesAndWhitespace)
+{
+   std::string out;
+   EXPECT_TRUE(normalizeProxyUrl("\"http://proxy.example.com:8080\"", &out));
+   EXPECT_EQ(out, "http://proxy.example.com:8080");
+   EXPECT_TRUE(normalizeProxyUrl("'proxy.example.com:8080'", &out));
+   EXPECT_EQ(out, "http://proxy.example.com:8080");
+   EXPECT_TRUE(normalizeProxyUrl("  http://proxy.example.com:8080 \n", &out));
+   EXPECT_EQ(out, "http://proxy.example.com:8080");
+}
+
+TEST(SessionNodeToolsTest, NormalizeProxyUrlBlankIsUnset)
+{
+   std::string out = "stale";
+   EXPECT_TRUE(normalizeProxyUrl("", &out));
+   EXPECT_EQ(out, "");
+   out = "stale";
+   EXPECT_TRUE(normalizeProxyUrl("  ", &out));
+   EXPECT_EQ(out, "");
+}
+
+TEST(SessionNodeToolsTest, NormalizeProxyUrlRejectsMissingHost)
+{
+   std::string out;
+   EXPECT_FALSE(normalizeProxyUrl("http://", &out));
+   EXPECT_FALSE(normalizeProxyUrl("http://:8080", &out));
+   EXPECT_FALSE(normalizeProxyUrl("http://user:pass@:8080", &out));
+   EXPECT_FALSE(normalizeProxyUrl(":8080", &out));
+}
+
+TEST(SessionNodeToolsTest, NormalizeProxyUrlRejectsEmbeddedWhitespace)
+{
+   std::string out;
+   EXPECT_FALSE(normalizeProxyUrl("http://proxy one:8080", &out));
+   EXPECT_FALSE(normalizeProxyUrl("proxy.example.com 8080", &out));
+}
+
+TEST(SessionNodeToolsTest, ApplyEnvProxyOptionEnablesWithoutProxyVariables)
+{
+   core::system::Options env;
+   core::system::setenv(&env, "PATH", "/usr/bin");
+
+   applyEnvProxyOption(&env);
+
+   EXPECT_EQ(core::system::getenv(env, "NODE_USE_ENV_PROXY"), "1");
+   EXPECT_EQ(env.size(), 2u);
+}
+
+TEST(SessionNodeToolsTest, ApplyEnvProxyOptionNormalizesSchemelessValues)
+{
+   core::system::Options env;
+   core::system::setenv(&env, "http_proxy", "proxy.example.com:8080");
+   core::system::setenv(&env, "HTTPS_PROXY", "http://secure.example.com:8443");
+   core::system::setenv(&env, "no_proxy", "localhost,127.0.0.1");
+
+   applyEnvProxyOption(&env);
+
+   EXPECT_EQ(core::system::getenv(env, "NODE_USE_ENV_PROXY"), "1");
+   EXPECT_EQ(core::system::getenv(env, "http_proxy"), "http://proxy.example.com:8080");
+   EXPECT_EQ(core::system::getenv(env, "HTTPS_PROXY"), "http://secure.example.com:8443");
+   EXPECT_EQ(core::system::getenv(env, "no_proxy"), "localhost,127.0.0.1");
+}
+
+TEST(SessionNodeToolsTest, ApplyEnvProxyOptionLeavesFlagUnsetForInvalidValue)
+{
+   core::system::Options env;
+   core::system::setenv(&env, "https_proxy", "http://");
+   core::system::setenv(&env, "http_proxy", "proxy.example.com:8080");
+
+   applyEnvProxyOption(&env);
+
+   EXPECT_EQ(core::system::getenv(env, "NODE_USE_ENV_PROXY"), "");
+   EXPECT_EQ(core::system::getenv(env, "https_proxy"), "http://");
+   // Variables before the invalid one are still normalized; the flag alone
+   // decides whether Node reads them.
+   EXPECT_EQ(core::system::getenv(env, "http_proxy"), "http://proxy.example.com:8080");
 }
 
 } // namespace tests

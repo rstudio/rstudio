@@ -301,6 +301,88 @@ void applySystemCaOption(core::system::Options* pEnvironment,
                         appendNodeOption(nodeOptions, "--use-system-ca"));
 }
 
+bool normalizeProxyUrl(const std::string& value, std::string* pNormalized)
+{
+   std::string proxy = boost::algorithm::trim_copy(value);
+
+   // A value quoted where the shell would not unquote it (a Windows
+   // environment variable, say) reaches Node with its quotes intact.
+   if (proxy.size() >= 2 &&
+       (proxy.front() == '"' || proxy.front() == '\'') &&
+       proxy.back() == proxy.front())
+   {
+      proxy = boost::algorithm::trim_copy(proxy.substr(1, proxy.size() - 2));
+   }
+
+   if (proxy.empty())
+   {
+      pNormalized->clear();
+      return true;
+   }
+
+   // Internal whitespace cannot be repaired without guessing.
+   if (proxy.find_first_of(" \t\r\n") != std::string::npos)
+      return false;
+
+   std::string::size_type schemeEnd = proxy.find("://");
+   if (schemeEnd == std::string::npos)
+   {
+      proxy = "http://" + proxy;
+      schemeEnd = 4;
+   }
+
+   // Node rejects a URL with no host; anything else (scheme, port, credentials)
+   // is left for Node to interpret as the user wrote it.
+   std::string authority = proxy.substr(schemeEnd + 3);
+   authority = authority.substr(0, authority.find('/'));
+   std::string::size_type at = authority.rfind('@');
+   if (at != std::string::npos)
+      authority = authority.substr(at + 1);
+   std::string host = authority.substr(0, authority.find(':'));
+   if (host.empty())
+      return false;
+
+   *pNormalized = proxy;
+   return true;
+}
+
+void applyEnvProxyOption(core::system::Options* pEnvironment)
+{
+   // NODE_USE_ENV_PROXY=1 makes Node.js 22.21+ route fetch() through
+   // http_proxy / https_proxy (https://github.com/nodejs/node/pull/57165).
+   // Node parses those variables during bootstrap and exits on a value
+   // without a scheme, which curl and R accept, so repair the child's copy
+   // first. When a value cannot be repaired, leave proxy support off rather
+   // than take the child down with it. Values are kept out of the log: they
+   // may carry credentials.
+   static const char* const kProxyVariables[] = {
+      "http_proxy", "HTTP_PROXY", "https_proxy", "HTTPS_PROXY"
+   };
+
+   for (const char* name : kProxyVariables)
+   {
+      std::string value = core::system::getenv(*pEnvironment, name);
+      if (value.empty())
+         continue;
+
+      std::string normalized;
+      if (!normalizeProxyUrl(value, &normalized))
+      {
+         WLOG("Not enabling Node.js proxy support: the {} environment variable "
+              "is not a valid proxy URL.", name);
+         return;
+      }
+
+      if (normalized != value)
+      {
+         DLOG("Normalized the {} environment variable for Node.js.", name);
+         core::system::setenv(pEnvironment, name, normalized);
+      }
+   }
+
+   core::system::setenv(pEnvironment, "NODE_USE_ENV_PROXY", "1");
+}
+
 } // namespace node_tools
 } // namespace modules
 } // namespace session
