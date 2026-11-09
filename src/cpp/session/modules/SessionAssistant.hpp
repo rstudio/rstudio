@@ -20,6 +20,7 @@
 #include <cstddef>
 #include <functional>
 #include <string>
+#include <vector>
 
 #include <shared_core/FilePath.hpp>
 
@@ -72,6 +73,29 @@ private:
 
 // One-shot convenience over AgentStderrTail, for bounding a single chunk.
 std::string agentStderrTail(const std::string& text, std::size_t maxLength);
+
+// Splits the stdout of the agent, or of the chat backend, into the bodies of
+// its Content-Length framed messages, keeping a message split across reads
+// until the rest arrives. A header block without a valid Content-Length is
+// skipped to the next Content-Length header, and described in errors. A
+// Content-Length that doesn't match its body can't be detected.
+class AgentStdoutReader
+{
+public:
+   std::vector<std::string> append(const std::string& chunk,
+                                   std::vector<std::string>* pErrors = nullptr);
+   void clear();
+
+private:
+   std::string buffer_;
+
+   // The length of the body after a header already read from buffer_, or 0.
+   std::size_t bodyLength_ = 0;
+};
+
+// The errors from one AgentStdoutReader::append() as one line, since junk can
+// hold an error every few bytes: the first, and how many more. Empty if none.
+std::string agentStdoutErrorSummary(const std::vector<std::string>& errors);
 
 // Resolve the next-edit-suggestion (NES) language server script within a Posit
 // Assistant installation directory. Returns an empty path when installPath is

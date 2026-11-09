@@ -1231,13 +1231,19 @@ void ProjectContext::updateDefaultEncoding()
       // enque a warning
       json::Object msgJson;
       msgJson["severe"] = false;
-      boost::format fmt(
-        "Project text encoding '%1%' not available (using UTF-8). "
-        "You can specify an alternate text encoding via Project Options.");
-      msgJson["message"] = boost::str(fmt % config().encoding);
+      msgJson["message"] = unavailableEncodingWarning(config().encoding);
       ClientEvent event(client_events::kShowWarningBar, msgJson);
       module_context::enqueClientEvent(event);
    }
+}
+
+std::string unavailableEncodingWarning(const std::string& encoding)
+{
+   // The warning bar renders HTML, and the encoding comes from the project file.
+   boost::format fmt(
+     "Project text encoding '%1%' not available (using UTF-8). "
+     "You can specify an alternate text encoding via Project Options.");
+   return boost::str(fmt % string_utils::htmlEscape(encoding));
 }
 
 void ProjectContext::updateBuildTargetPath()

@@ -1407,11 +1407,89 @@ bool isJsonFile(const FilePath& filePath)
    return boost::algorithm::ends_with(mimeType, "json");
 }
 
-} // anonymous namespace
+// lock files known to be text; the '.lock' extension alone says nothing, as
+// some (git's index.lock, for one) are binary
+bool hasTextLockFileName(const FilePath& filePath)
+{
+   static const char* const kTextLockFiles[] = {
+      "renv.lock",
+      "packrat.lock",
+      "poetry.lock",
+      "Pipfile.lock",
+      "uv.lock",
+      "yarn.lock",
+      "Cargo.lock",
+      "Gemfile.lock",
+   };
 
-bool isTextFile(const FilePath& targetPath)
+   std::string name = filePath.getFilename();
+   return std::find(std::begin(kTextLockFiles), std::end(kTextLockFiles), name) !=
+          std::end(kTextLockFiles);
+}
+
+// The content heuristic used when file(1) is unavailable or gives no answer.
+// Text has no null bytes, except UTF-16 (recognized by its BOM), where they
+// pad ASCII characters; a null code unit there still marks binary data. Like
+// git, only a prefix is read: the file may be enormous, and compressed or
+// encrypted data is all but sure to contain a null byte within it.
+bool hasTextContent(const FilePath& targetPath)
+{
+   const std::streamsize kProbeSize = 8192;
+
+   std::shared_ptr<std::istream> pStream;
+   Error error = targetPath.openForRead(pStream);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return true;
+   }
+
+   std::string contents(kProbeSize, '\0');
+   pStream->read(&contents[0], kProbeSize);
+   contents.resize(static_cast<std::size_t>(pStream->gcount()));
+
+   bool isUtf16 =
+      boost::algorithm::starts_with(contents, "\xFF\xFE") ||
+      boost::algorithm::starts_with(contents, "\xFE\xFF");
+
+   if (!isUtf16)
+      return contents.find('\0') == std::string::npos;
+
+   for (std::size_t i = 0; i + 1 < contents.size(); i += 2)
+   {
+      if (contents[i] == '\0' && contents[i + 1] == '\0')
+         return false;
+   }
+
+   return true;
+}
+
+FilePath findFileCommand()
+{
+#ifdef _WIN32
+   return FilePath();
+#else
+# ifdef __APPLE__
+   // the behavior of the 'file' command in the macOS High Sierra beta
+   // changed such that '--mime' no longer ensured that mime-type strings
+   // were actually emitted. prefer the system copy, which is known to
+   // accept the '-I' flag isTextFile() uses instead on macOS
+   FilePath systemFile("/usr/bin/file");
+   if (systemFile.exists())
+      return systemFile;
+# endif
+   return findProgram("file");
+#endif
+}
+
+// pFileCommand is null to look file(1) up, which is deferred until the
+// cheaper checks have failed since it searches the PATH
+bool isTextFileImpl(const FilePath& targetPath, const FilePath* pFileCommand)
 {
    if (hasTextMimeType(targetPath))
+      return true;
+
+   if (hasTextLockFileName(targetPath))
       return true;
 
    if (isJsonFile(targetPath))
@@ -1423,17 +1501,15 @@ bool isTextFile(const FilePath& targetPath)
    if (targetPath.getSize() == 0)
       return true;
 
-#ifndef _WIN32
+   FilePath fileCommand = pFileCommand ? *pFileCommand : findFileCommand();
 
-   std::string fileCommand = "file";
+   // no file(1) on this host (slim container images, for example); fall
+   // back to inspecting the contents, as we always do on Windows
+   if (fileCommand.isEmpty())
+      return hasTextContent(targetPath);
 
-   // the behavior of the 'file' command in the macOS High Sierra beta
-   // changed such that '--mime' no longer ensured that mime-type strings
-   // were actually emitted. using '-I' instead appears to work around this.
 #ifdef __APPLE__
    const char * const kMimeTypeArg = "-I";
-   if (FilePath::exists("/usr/bin/file"))
-      fileCommand = "/usr/bin/file";
 #else
    const char * const kMimeTypeArg = "--mime";
 #endif
@@ -1450,12 +1526,32 @@ bool isTextFile(const FilePath& targetPath)
    if (error)
    {
       LOG_ERROR(error);
-      return !!error;
+      return hasTextContent(targetPath);
    }
 
    // strip encoding
    std::string fileType = boost::algorithm::trim_copy(result.stdOut);
    fileType = fileType.substr(0, fileType.find(';'));
+
+   // the command runs through the shell, so a failure to launch it (or a
+   // failure within it) comes back as a non-zero exit status rather than
+   // an error. treat that as "unknown", not "binary".
+   if (result.exitStatus != 0 || fileType.empty())
+   {
+      // a broken file(1) (a missing magic database, say) fails this way for
+      // every file, so report it once rather than on every open. atomic, as
+      // open_document can also run on the offline service thread
+      static std::atomic<bool> s_warned(false);
+      if (!s_warned.exchange(true))
+      {
+         WLOGF("'{}' could not determine the type of '{}' (exit status {}): {}",
+               fileCommand.getAbsolutePath(),
+               targetPath.getAbsolutePath(),
+               result.exitStatus,
+               boost::algorithm::trim_copy(result.stdErr));
+      }
+      return hasTextContent(targetPath);
+   }
 
    // check value
    return boost::algorithm::starts_with(fileType, "text/") ||
@@ -1464,25 +1560,18 @@ bool isTextFile(const FilePath& targetPath)
           boost::algorithm::ends_with(fileType, "x-empty") ||
           boost::algorithm::equals(fileType, "application/json") ||
           boost::algorithm::equals(fileType, "application/postscript");
-#else
+}
 
-   // read contents of file
-   std::string contents;
-   Error error = core::readStringFromFile(targetPath, &contents);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return !!error;
-   }
+} // anonymous namespace
 
-   // does it have null bytes?
-   std::string nullBytes;
-   nullBytes.push_back('\0');
-   nullBytes.push_back('\0');
-   return !boost::algorithm::contains(contents, nullBytes);
+bool isTextFile(const FilePath& targetPath)
+{
+   return isTextFileImpl(targetPath, nullptr);
+}
 
-#endif
-
+bool isTextFile(const FilePath& targetPath, const FilePath& fileCommand)
+{
+   return isTextFileImpl(targetPath, &fileCommand);
 }
 
 void editFile(const core::FilePath& filePath, int lineNumber, int column)

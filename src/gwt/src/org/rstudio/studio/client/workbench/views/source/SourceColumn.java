@@ -1179,7 +1179,9 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
    public void onBeforeShow()
    {
-      // All columns aside from the main column should open with a document
+      // A column shown with no documents opens one, the main column included.
+      // Only the pass after restoring documents, beforeShow(true), skips the
+      // main column, so a session restored with none keeps Source hidden.
       if (getTabCount() == 0 && newTabPending_ == 0)
       {
          newTabPending_++;

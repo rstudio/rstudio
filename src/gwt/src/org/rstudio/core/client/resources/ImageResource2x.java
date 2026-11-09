@@ -94,32 +94,27 @@ public class ImageResource2x implements ImageResource
 
    public SafeHtml getSafeHtml(String altText)
    {
-      if (html_ == null)
+      SafeHtmlBuilder sb = new SafeHtmlBuilder();
+
+      sb.appendHtmlConstant("<img src=\"");
+      sb.appendHtmlConstant(getSafeUri().asString());
+      sb.appendHtmlConstant("\" width=\"");
+      sb.appendHtmlConstant(Integer.valueOf(getWidth()).toString());
+      sb.appendHtmlConstant("\" height=\"");
+      sb.appendHtmlConstant(Integer.valueOf(getHeight()).toString());
+      if (StringUtil.isNullOrEmpty(altText))
       {
-         SafeHtmlBuilder sb = new SafeHtmlBuilder();
-
-         sb.appendHtmlConstant("<img src=\"");
-         sb.appendHtmlConstant(getSafeUri().asString());
-         sb.appendHtmlConstant("\" width=\"");
-         sb.appendHtmlConstant(Integer.valueOf(getWidth()).toString());
-         sb.appendHtmlConstant("\" height=\"");
-         sb.appendHtmlConstant(Integer.valueOf(getHeight()).toString());
-         if (StringUtil.isNullOrEmpty(altText))
-         {
-            sb.appendHtmlConstant("\" alt");
-         }
-         else
-         {
-            sb.appendHtmlConstant("\" alt=\"");
-            sb.appendEscaped(altText);
-            sb.appendHtmlConstant("\"");
-         }
-         sb.appendHtmlConstant(">");
-
-         html_ = sb.toSafeHtml();
+         sb.appendHtmlConstant("\" alt");
       }
+      else
+      {
+         sb.appendHtmlConstant("\" alt=\"");
+         sb.appendEscaped(altText);
+         sb.appendHtmlConstant("\"");
+      }
+      sb.appendHtmlConstant(">");
 
-      return html_;
+      return sb.toSafeHtml();
    }
 
    public SafeHtml getSafeHtml()
@@ -129,6 +124,5 @@ public class ImageResource2x implements ImageResource
 
    private ImageResource ref_;
    private ImageResource ref2x_;
-   private SafeHtml html_;
    private boolean use2xResolution_ = true;
 }

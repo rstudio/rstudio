@@ -3066,6 +3066,19 @@ core::Error UserPrefValues::setReduceRemoteFilesystemOperations(bool val)
 }
 
 /**
+ * Whether to print a notice in the Console at startup when RStudio has reduced background file operations for the current project.
+ */
+bool UserPrefValues::showReducedFileOperationsNotice()
+{
+   return readPref<bool>("show_reduced_file_operations_notice");
+}
+
+core::Error UserPrefValues::setShowReducedFileOperationsNotice(bool val)
+{
+   return writePref("show_reduced_file_operations_notice", val);
+}
+
+/**
  * Initial directory for new terminals.
  */
 std::string UserPrefValues::terminalInitialDirectory()
@@ -4303,6 +4316,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kAutoSaveIdleMs,
       kAutoSaveOnBlur,
       kReduceRemoteFilesystemOperations,
+      kShowReducedFileOperationsNotice,
       kTerminalInitialDirectory,
       kFullProjectPathInWindowTitle,
       kVisualMarkdownEditingIsDefault,
