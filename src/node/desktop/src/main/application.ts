@@ -30,7 +30,6 @@ import {
   promptUserForR,
   rChooserLikely,
   rDetectionReady,
-  RLaunchError,
   scanForR,
   showRNotFoundError,
 } from './detect-r';
@@ -453,8 +452,8 @@ export class Application implements AppState {
         logger().logDebug(`Error scanning for R: ${error}`);
 
         // an R that was found but would not start is a different problem
-        // from no R at all; say which one it was
-        await showRNotFoundError(error instanceof RLaunchError ? error : undefined);
+        // from no R at all; the error says which one it was
+        await showRNotFoundError(error);
         return exitFailure();
       }
 
@@ -468,7 +467,8 @@ export class Application implements AppState {
     logger().logDebug(`Preparing environment using R: ${rPath}`);
     const prepareError = prepareEnvironment(rPath);
     if (prepareError) {
-      logger().logError(prepareError);
+      // the failure was logged where it happened, with R's full output
+      logger().logDebug(`Error preparing R environment: ${prepareError}`);
       await showRNotFoundError(prepareError);
       return exitFailure();
     }

@@ -62,14 +62,27 @@ interface REnvironment {
 }
 
 /**
- * Tells the user why there is no R to start a session with. Without an error,
- * no installation was found at all; with one, an R was found but could not
- * be used, and the error says which R and what it reported.
+ * Tells the user why there is no R to start a session with: no installation
+ * was found at all, there is no R at the path given, or an R was found but
+ * could not be used. Only an RLaunchError is shown, since it names the R and
+ * what it reported; any other error was logged where it happened and would
+ * tell the user no more than the generic message does.
  */
 export async function showRNotFoundError(error?: Error) {
-  const title = error ? t('detectRTs.rFailedToStart') : t('detectRTs.rNotFound');
-  const message = error?.message ?? t('detectRTs.couldNotLocateAnRInstallationOnTheSystem');
+  const { title, message } = rNotFoundDialog(error);
   await createStandaloneErrorDialog(title, message);
+}
+
+/**
+ * The title and message showRNotFoundError() shows for an error.
+ */
+export function rNotFoundDialog(error?: Error): { title: string; message: string } {
+  if (!(error instanceof RLaunchError)) {
+    return { title: t('detectRTs.rNotFound'), message: t('detectRTs.couldNotLocateAnRInstallationOnTheSystem') };
+  }
+
+  const title = error.executableMissing ? t('detectRTs.rNotFound') : t('detectRTs.rFailedToStart');
+  return { title, message: error.message };
 }
 
 function executeCommand(command: string): Expected<string> {
@@ -383,17 +396,20 @@ export function detectREnvironment(rPath: string): Expected<REnvironment> {
       env: launch.env,
     });
   });
-  if (spawnError) {
-    logger().logWarning(`Error querying information about R: ${spawnError}`);
-    return err(new RLaunchError(rPath, { stdout: '', stderr: '', status: null, error: spawnError }));
-  }
 
-  const query: RQueryResult = {
-    stdout: spawned.stdout,
-    stderr: spawned.stderr,
-    status: spawned.status,
-    error: spawned.error,
-  };
+  // spawnSync reports most launch failures in its result, but it can also throw
+  let query: RQueryResult;
+  if (spawnError) {
+    query = { stdout: '', stderr: '', status: null, error: spawnError };
+  } else {
+    query = {
+      stdout: spawned.stdout,
+      stderr: spawned.stderr,
+      status: spawned.status,
+      signal: spawned.signal,
+      error: spawned.error,
+    };
+  }
   const result = rememberREnvironment(rPath, parseRQueryResult(rPath, query));
   persistEnvironment(rExecutable, environment, result, query);
   return result;
@@ -443,7 +459,7 @@ export async function detectREnvironmentAsync(rPath: string, timeoutMs = 0): Pro
     child.stdout.on('data', (data) => (stdout += data));
     child.stderr.on('data', (data) => (stderr += data));
     child.on('error', (error) => settle({ stdout, stderr, status: null, error }));
-    child.on('close', (code) => settle({ stdout, stderr, status: code }));
+    child.on('close', (code, signal) => settle({ stdout, stderr, status: code, signal }));
 
     // R may exit before reading its input; that is reported through 'close'
     child.stdin.on('error', () => undefined);
@@ -510,7 +526,8 @@ function rExecutableFor(rPath: string): FilePath {
 
 // small script for querying information about R; the marker character
 // '\x1E' lets us find our output even when the R installation prints
-// something on startup
+// something on startup. kQueryFieldCount is how many values it writes
+const kQueryFieldCount = 9;
 function rQueryScript(): string {
   return String.raw`
 cat("\x1E", sep = "")
@@ -597,14 +614,17 @@ export interface RQueryResult {
   stdout: string | null;
   stderr: string | null;
   status: number | null;
+  /** The signal that ended R, when it did not exit on its own. */
+  signal?: NodeJS.Signals | null;
   error?: Error;
 }
 
 /**
- * An R that was found but did not answer the query: it could not be launched,
- * or it started and exited without running the query script. The message is
- * for the user and names the R, its exit status, and what it printed, so that
- * a broken R is not mistaken for a missing one.
+ * An R that did not answer the query: it could not be launched, or it started
+ * and exited without running the query script to the end. The message is for
+ * the user and names the R, how it ended, and what it printed, so that a
+ * broken R is not mistaken for a missing one. An R that is not there at all
+ * (executableMissing) is reported as missing, not broken.
  */
 export class RLaunchError extends Error {
   constructor(
@@ -614,6 +634,19 @@ export class RLaunchError extends Error {
     super(rLaunchFailureMessage(rPath, result));
     this.name = 'RLaunchError';
   }
+
+  /** Whether the failure is that there is no executable at the path. */
+  get executableMissing(): boolean {
+    return isExecutableMissing(this.result);
+  }
+}
+
+/**
+ * Whether the launch failed because nothing exists at the path: the R is
+ * not installed, or not where it was recorded, rather than broken.
+ */
+export function isExecutableMissing(result: RQueryResult): boolean {
+  return (result.error as NodeJS.ErrnoException | undefined)?.code === 'ENOENT';
 }
 
 // how much of R's stderr the user is shown: enough for R's own
@@ -625,10 +658,22 @@ const kStderrTailLineLength = 200;
  * The user-facing description of a failed R query.
  */
 export function rLaunchFailureMessage(rPath: string, result: RQueryResult): string {
+  const launchError = result.error
+    ? t('detectRTs.launchError', { error: result.error.message || String(result.error) })
+    : undefined;
+
+  // an R that is not there never ran, so there is nothing more to report
+  if (isExecutableMissing(result)) {
+    return [t('detectRTs.noRExecutableAt', { rPath }), launchError].filter(Boolean).join('\n\n');
+  }
+
   const parts = [t('detectRTs.rFoundButFailedToStart', { rPath })];
 
-  if (result.error) {
-    parts.push(t('detectRTs.launchError', { error: result.error.message || String(result.error) }));
+  if (launchError) {
+    parts.push(launchError);
+  }
+  if (result.signal) {
+    parts.push(t('detectRTs.terminatedBySignal', { signal: result.signal }));
   }
   if (result.status !== null) {
     parts.push(t('detectRTs.exitStatus', { status: result.status }));
@@ -662,19 +707,6 @@ class RQueryTimeout extends Error {
  * launch a session with that R.
  */
 export function parseRQueryResult(rPath: string, result: RQueryResult): Expected<REnvironment> {
-  let stdout = result.stdout || '';
-
-  // a query that produced nothing usable is logged at warning level, so the
-  // default log says why a found R was rejected; a successful one stays quiet
-  const index = stdout.indexOf('\x1E');
-  const log = (message: string) => (index === -1 ? logger().logWarning(message) : logger().logDebug(message));
-  log(`stdout: ${stdout.replaceAll('\x1E', EOL).replaceAll('\x1F', ';') || '[no stdout produced]'}`);
-  log(`stderr: ${result.stderr || '[no stderr produced]'}`);
-  log(`status: ${result.status} [${result.status === 0 ? 'success' : 'failure'}]`);
-  if (result.error) {
-    log(`error:  ${result.error}`);
-  }
-
   // NOTE: It's possible for spawnSync to fail to launch a process,
   // and so exit with a non-zero status code, but without an error.
   // For that reason, we need to check for a non-zero exit code
@@ -687,23 +719,42 @@ export function parseRQueryResult(rPath: string, result: RQueryResult): Expected
   //
   // Also, contrary to the declared type signatures, the values in 'result' can
   // be null, so check those in a 'null'-y way.
+  const stdout = result.stdout || '';
+  const index = stdout.indexOf('\x1E');
+  const fields = index === -1 ? [] : stdout.substring(index + 1).split('\x1F');
+
+  // why the answer cannot be used, if it cannot: R never ran, R ran but
+  // never reached the query script, or R died partway through it
+  let failure: string | undefined;
   if (!stdout) {
-    logger().logWarning(`R at ${rPath} produced no output`);
-    return err(new RLaunchError(rPath, result));
+    failure = 'produced no output';
+  } else if (index === -1) {
+    failure = 'did not run the query script (no output marker)';
+  } else if (fields.length < kQueryFieldCount) {
+    failure = `answered with ${fields.length} of ${kQueryFieldCount} fields`;
   }
 
-  // without the marker, R started but never ran the query script
-  if (index === -1) {
-    logger().logWarning(`R at ${rPath} did not run the query script (no output marker)`);
-    return err(new RLaunchError(rPath, result));
+  // a failed query, or an R that answered but did not end normally, is
+  // logged at warning level, so the default log says why a found R was
+  // rejected; a clean success stays quiet
+  const abnormal = failure !== undefined || result.status !== 0 || !!result.signal || !!result.error;
+  const log = (message: string) => (abnormal ? logger().logWarning(message) : logger().logDebug(message));
+  log(`R at ${rPath} ${failure ?? 'answered the query'}`);
+  log(`stdout: ${stdout.replaceAll('\x1E', EOL).replaceAll('\x1F', ';') || '[no stdout produced]'}`);
+  log(`stderr: ${result.stderr || '[no stderr produced]'}`);
+  log(
+    `status: ${result.status}${result.signal ? ` (${result.signal})` : ''} [${result.status === 0 ? 'success' : 'failure'}]`,
+  );
+  if (result.error) {
+    log(`error:  ${result.error}`);
   }
 
-  // trim off marker
-  stdout = stdout.substring(index + 1);
+  if (failure) {
+    return err(new RLaunchError(rPath, result));
+  }
 
   // unwrap query results
-  const [rVersion, rHome, rDocDir, rIncludeDir, rShareDir, rRuntime, rArch, rLdLibraryPath, rPlatform] =
-    stdout.split('\x1F');
+  const [rVersion, rHome, rDocDir, rIncludeDir, rShareDir, rRuntime, rArch, rLdLibraryPath, rPlatform] = fields;
 
   let adjustedRLdLibraryPath = rLdLibraryPath;
 
@@ -797,21 +848,18 @@ export function scanForRPosix(locations = defaultRLocationsPosix(), platform = p
     }
   }
 
-  let launchError: Error | undefined;
+  let launchError: RLaunchError | undefined;
   for (const location of locations) {
-    if (!existsSync(location)) {
-      continue;
-    }
-
-    logger().logDebug(`Validating R installation at path: ${location}`);
-    const [, error] = detectREnvironment(location);
+    const error = validateRBinary(location);
     if (!error) {
       logger().logDebug(`Using ${location} (found by searching known locations)`);
       return ok(location);
     }
 
     // remember the first R that was found but could not be started
-    launchError ??= error;
+    if (error instanceof RLaunchError) {
+      launchError ??= error;
+    }
   }
 
   return err(launchError);
@@ -925,13 +973,22 @@ export function isValidInstallation(rInstallPath: string, archDir: string): bool
 }
 
 export function isValidBinary(rExePath: string): boolean {
+  return validateRBinary(rExePath) == null;
+}
+
+/**
+ * Why the R executable at this path cannot be used, or null when it can. A
+ * path with nothing at it gives a plain Error; an R that was found but did
+ * not answer the query gives that query's RLaunchError.
+ */
+export function validateRBinary(rExePath: string): Err {
   if (!existsSync(rExePath)) {
-    return false;
+    return new Error(`${rExePath} does not exist`);
   }
 
   logger().logDebug(`Validating R installation at path: ${rExePath}`);
-  const [_, error] = detectREnvironment(rExePath);
-  return error == null;
+  const [, error] = detectREnvironment(rExePath);
+  return error;
 }
 
 function findDefaultInstallPathWin32(registryVersionKey: string): string {

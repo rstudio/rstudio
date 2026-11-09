@@ -31,6 +31,7 @@ import {
   rFromRStudioWhichR,
   RLaunchError,
   rLaunchFailureMessage,
+  rNotFoundDialog,
   rQueryCommand,
   resolveRHome,
   scanForRPosix,
@@ -72,7 +73,17 @@ describe('DetectR', () => {
   });
 
   it('parses the output of the R query script', () => {
-    const fields = ['4.5.1', '/opt/R', '/opt/R/doc', '/opt/R/include', '/opt/R/share', '', '', '/opt/R/lib', 'aarch64-apple-darwin23'];
+    const fields = [
+      '4.5.1',
+      '/opt/R',
+      '/opt/R/doc',
+      '/opt/R/include',
+      '/opt/R/share',
+      '',
+      '',
+      '/opt/R/lib',
+      'aarch64-apple-darwin23',
+    ];
     const stdout = 'Loading profile...\x1E' + fields.join('\x1F');
 
     const [environment, error] = parseRQueryResult('/opt/R/bin/R', { stdout, stderr: '', status: 0 });
@@ -176,18 +187,87 @@ describe('DetectR', () => {
     assert.include(message, 'line 40');
   });
 
-  it('describes an executable that cannot be launched at all', function () {
+  it('cuts long stderr lines in the launch failure message', () => {
+    const stderr = `Error: ${'x'.repeat(300)}\nshort`;
+    const message = rLaunchFailureMessage('/opt/R/bin/R', { stdout: '', stderr, status: 1 });
+    assert.include(message, `Error: ${'x'.repeat(193)}...`);
+    assert.notInclude(message, 'x'.repeat(194));
+    assert.include(message, 'short');
+  });
+
+  it('names the signal that killed R', () => {
+    // a crash at startup, or a kill by security software, leaves no status
+    // and usually no output; the signal is all there is to report
+    const [, error] = parseRQueryResult('/opt/R/bin/R', { stdout: '', stderr: '', status: null, signal: 'SIGKILL' });
+    assert.instanceOf(error, RLaunchError);
+    assert.include(error.message, 'SIGKILL');
+    assert.notInclude(error.message, 'Exit status');
+  });
+
+  it('treats an answer R died partway through as a launch failure', () => {
+    // the marker was printed but the query script did not finish; this
+    // used to throw while unpacking the fields, and the dialog showed the
+    // TypeError
+    const stdout = '\x1E4.6.2\x1F/opt/R/lib/R';
+    const [, error] = parseRQueryResult('/opt/R/bin/R', { stdout, stderr: '', status: null, signal: 'SIGSEGV' });
+    assert.instanceOf(error, RLaunchError);
+    assert.include(error.message, '/opt/R/bin/R');
+    assert.include(error.message, 'SIGSEGV');
+  });
+
+  it('reports a path with no executable as R not found, not as R failing to start', function () {
     if (process.platform === 'win32') {
       this.skip();
     }
 
+    // RSTUDIO_WHICH_R with a typo, or a recorded R that was uninstalled
     const dir = mkdtempSync(join(tmpdir(), 'detect-r-missing-'));
     try {
       const missing = join(dir, 'R');
       const [, error] = detectREnvironment(missing);
       assert.instanceOf(error, RLaunchError);
-      assert.include(error.message, missing);
+      assert.isTrue(error.executableMissing);
+      assert.include(error.message, `No R executable was found at ${missing}`);
       assert.include(error.message, 'ENOENT');
+      assert.notInclude(error.message, 'failed to start');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('picks the dialog title by what went wrong', () => {
+    // nothing found at all, or an error that is not about a particular R
+    assert.deepEqual(rNotFoundDialog(), {
+      title: 'R not found',
+      message: 'Could not locate an R installation on the system.',
+    });
+    assert.deepEqual(rNotFoundDialog(new TypeError('Cannot read properties of undefined')), rNotFoundDialog());
+
+    // an R that was found but did not start
+    const broken = new RLaunchError('/opt/R/bin/R', { stdout: '', stderr: 'Fatal error', status: 2 });
+    assert.deepEqual(rNotFoundDialog(broken), { title: 'R failed to start', message: broken.message });
+
+    // a path with no R at it
+    const enoent = Object.assign(new Error('spawnSync /opt/R/typo/bin/R ENOENT'), { code: 'ENOENT' });
+    const missing = new RLaunchError('/opt/R/typo/bin/R', { stdout: null, stderr: null, status: null, error: enoent });
+    assert.deepEqual(rNotFoundDialog(missing), { title: 'R not found', message: missing.message });
+    assert.include(missing.message, '/opt/R/typo/bin/R');
+  });
+
+  it('reports the signal of an R killed at startup', function () {
+    if (process.platform === 'win32') {
+      this.skip();
+    }
+
+    const dir = mkdtempSync(join(tmpdir(), 'detect-r-killed-'));
+    const fakeR = join(dir, 'R');
+    writeFileSync(fakeR, '#!/bin/sh\nkill -KILL $$\n', { mode: 0o755 });
+
+    try {
+      const [, error] = detectREnvironment(fakeR);
+      assert.instanceOf(error, RLaunchError);
+      assert.include(error.message, fakeR);
+      assert.include(error.message, 'Terminated by signal: SIGKILL');
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -201,7 +281,7 @@ describe('DetectR', () => {
     // a stand-in R that dies the way R does when its temp dir is unusable
     const dir = mkdtempSync(join(tmpdir(), 'detect-r-fatal-'));
     const fakeR = join(dir, 'R');
-    writeFileSync(fakeR, "#!/bin/sh\necho \"Fatal error: cannot create 'R_TempDir'\" >&2\nexit 2\n", { mode: 0o755 });
+    writeFileSync(fakeR, '#!/bin/sh\necho "Fatal error: cannot create \'R_TempDir\'" >&2\nexit 2\n', { mode: 0o755 });
 
     try {
       const [, error] = detectREnvironment(fakeR);
@@ -223,7 +303,7 @@ describe('DetectR', () => {
     // claimed no R could be located even though one was installed
     const dir = mkdtempSync(join(tmpdir(), 'detect-r-scan-'));
     const brokenR = join(dir, 'R');
-    writeFileSync(brokenR, "#!/bin/sh\necho \"Fatal error: cannot create 'R_TempDir'\" >&2\nexit 2\n", { mode: 0o755 });
+    writeFileSync(brokenR, '#!/bin/sh\necho "Fatal error: cannot create \'R_TempDir\'" >&2\nexit 2\n', { mode: 0o755 });
     const missingR = join(dir, 'missing', 'R');
 
     try {
@@ -276,7 +356,17 @@ describe('DetectR', () => {
     }
 
     // a stand-in R that prints a complete answer and then hangs
-    const fields = ['4.5.1', '/opt/fake-r', '/opt/fake-r/doc', '/opt/fake-r/include', '/opt/fake-r/share', '', '', '/opt/fake-r/lib', 'aarch64-fake'];
+    const fields = [
+      '4.5.1',
+      '/opt/fake-r',
+      '/opt/fake-r/doc',
+      '/opt/fake-r/include',
+      '/opt/fake-r/share',
+      '',
+      '',
+      '/opt/fake-r/lib',
+      'aarch64-fake',
+    ];
     const dir = mkdtempSync(join(tmpdir(), 'detect-r-hang-'));
     const fakeR = join(dir, 'R');
     writeFileSync(fakeR, `#!/bin/sh\nprintf '\\036${fields.join('\\037')}'\nsleep 5\n`, { mode: 0o755 });
@@ -303,7 +393,17 @@ describe('DetectR', () => {
 
     // a stand-in R: an executable that answers the version query the way R
     // would (\036 is the marker, \037 the field separator)
-    const fields = ['4.5.1', '/opt/fake-r', '/opt/fake-r/doc', '/opt/fake-r/include', '/opt/fake-r/share', '', '', '/opt/fake-r/lib', 'aarch64-fake'];
+    const fields = [
+      '4.5.1',
+      '/opt/fake-r',
+      '/opt/fake-r/doc',
+      '/opt/fake-r/include',
+      '/opt/fake-r/share',
+      '',
+      '',
+      '/opt/fake-r/lib',
+      'aarch64-fake',
+    ];
     const dir = mkdtempSync(join(tmpdir(), 'detect-r-test-'));
     const fakeR = join(dir, 'R');
     writeFileSync(fakeR, `#!/bin/sh\nprintf '\\036${fields.join('\\037')}'\n`, { mode: 0o755 });

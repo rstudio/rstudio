@@ -4,7 +4,6 @@
     "buttonCancel": "Annuler",
     "buttonBrowse": "Parcourir...",
     "buttonDownloadR": "Télécharger R...",
-    "unknownErrorOccurred": "Une erreur inconnue s'est produite.",
     "workingOnIt": "En cours d'élaboration...",
     "buttonYes": "Oui",
     "buttonNo": "Non",
@@ -109,7 +108,9 @@
     "couldNotLocateAnRInstallationOnTheSystem": "Impossible de localiser une installation R sur le système.",
     "rFailedToStart": "R n'a pas pu démarrer",
     "rFoundButFailedToStart": "R a été trouvé à l'emplacement {{- rPath}} mais n'a pas pu démarrer.",
+    "noRExecutableAt": "Aucun exécutable R n'a été trouvé à l'emplacement {{- rPath}}.",
     "launchError": "Erreur de lancement : {{- error}}",
+    "terminatedBySignal": "Interrompu par le signal : {{signal}}",
     "exitStatus": "Code de sortie : {{status}}",
     "rReported": "R a signalé :\n{{- output}}",
     "rProducedNoErrorOutput": "R n'a produit aucune sortie d'erreur."

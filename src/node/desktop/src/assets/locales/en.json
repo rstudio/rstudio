@@ -4,7 +4,6 @@
     "buttonCancel": "Cancel",
     "buttonBrowse": "Browse...",
     "buttonDownloadR": "Download R...",
-    "unknownErrorOccurred": "An unknown error occurred.",
     "workingOnIt": "Working on it...",
     "buttonYes": "Yes",
     "buttonNo": "No",
@@ -109,7 +108,9 @@
     "couldNotLocateAnRInstallationOnTheSystem": "Could not locate an R installation on the system.",
     "rFailedToStart": "R failed to start",
     "rFoundButFailedToStart": "R was found at {{- rPath}} but failed to start.",
+    "noRExecutableAt": "No R executable was found at {{- rPath}}.",
     "launchError": "Launch error: {{- error}}",
+    "terminatedBySignal": "Terminated by signal: {{signal}}",
     "exitStatus": "Exit status: {{status}}",
     "rReported": "R reported:\n{{- output}}",
     "rProducedNoErrorOutput": "R produced no error output."
