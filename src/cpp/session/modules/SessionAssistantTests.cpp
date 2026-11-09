@@ -259,6 +259,26 @@ TEST(SessionAssistant, StdoutReaderKeepsAHeaderCutOffAfterAHeaderThatDoesNotEnd)
    EXPECT_EQ(errors.size(), 2u);
 }
 
+TEST(SessionAssistant, StdoutReaderKeepsAHeaderCutOffAfterItsColon)
+{
+   AgentStdoutReader reader;
+   std::vector<std::string> errors;
+   EXPECT_TRUE(reader.append("Content-Length: x\r\n\r\n", &errors).empty());
+   EXPECT_TRUE(reader.append(std::string(64 * 1024, 'a') + "Content-Length: 8\r\n", &errors).empty());
+   EXPECT_EQ(errors.size(), 2u);
+   EXPECT_EQ(reader.append("\r\n{\"id\":1}", &errors), std::vector<std::string>{"{\"id\":1}"});
+   EXPECT_EQ(errors.size(), 2u);
+}
+
+TEST(SessionAssistant, StdoutReaderResumesAtAHeaderWithSpaceBeforeTheColonBehindStrayOutput)
+{
+   // Junk that ends like the start of a header name is kept, and glues onto
+   // the header that follows.
+   AgentStdoutReader reader;
+   EXPECT_TRUE(reader.append(std::string(64 * 1024 + 1, 'x') + "c").empty());
+   EXPECT_EQ(reader.append("Content-Length : 2\r\n\r\n{}"), std::vector<std::string>{"{}"});
+}
+
 TEST(SessionAssistant, StdoutReaderShortensAnInvalidValueInItsError)
 {
    AgentStdoutReader reader;

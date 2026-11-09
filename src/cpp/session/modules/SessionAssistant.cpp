@@ -3033,29 +3033,49 @@ const std::size_t kMaxAgentHeaderSize = 64 * 1024;
 // An invalid Content-Length is quoted in the error, so keep it short.
 const std::size_t kMaxQuotedHeaderValue = 32;
 
-const std::string kContentLengthName = "content-length:";
+// A header that a read cut off is a few dozen bytes.
+const std::size_t kMaxCutOffHeaderSize = 1024;
+
+const std::string kContentLengthName = "content-length";
 
 // Where the next Content-Length header starts at or after `from`, matched
-// without regard to case.
+// without regard to case. Space before the colon is allowed, as
+// contentLengthHeader allows it.
 std::size_t findContentLength(const std::string& text, std::size_t from)
 {
-   auto range = boost::make_iterator_range(text.begin() + from, text.end());
-   auto match = boost::algorithm::ifind_first(range, kContentLengthName);
-   return match.empty() ? std::string::npos : static_cast<std::size_t>(match.begin() - text.begin());
+   while (from < text.length())
+   {
+      auto range = boost::make_iterator_range(text.begin() + from, text.end());
+      auto match = boost::algorithm::ifind_first(range, kContentLengthName);
+      if (match.empty())
+         return std::string::npos;
+
+      std::size_t at = match.begin() - text.begin();
+      std::size_t colon = text.find_first_not_of(" \t", at + kContentLengthName.length());
+      if (colon != std::string::npos && text[colon] == ':')
+         return at;
+      from = at + 1;
+   }
+   return std::string::npos;
 }
 
-// The length of the longest end of text that starts a Content-Length header
-// name, e.g. 11 for "...}Content-Len": the rest of the name may be in the next
-// read.
-std::size_t partialContentLengthLength(const std::string& text)
+// Where a header that the read cut off at the end of text starts: the last
+// Content-Length name in its final kMaxCutOffHeaderSize bytes, else a partial
+// name at the very end, as in "...}Content-Len". text.length() if neither.
+std::size_t cutOffHeaderStart(const std::string& text)
 {
-   std::size_t n = std::min(text.length(), kContentLengthName.length() - 1);
-   for (; n > 0; n--)
+   std::size_t tailStart = text.length() - std::min(text.length(), kMaxCutOffHeaderSize);
+   auto tail = boost::make_iterator_range(text.begin() + tailStart, text.end());
+   auto match = boost::algorithm::ifind_last(tail, kContentLengthName);
+   if (!match.empty())
+      return match.begin() - text.begin();
+
+   for (std::size_t n = std::min(text.length(), kContentLengthName.length() - 1); n > 0; n--)
    {
       if (boost::iequals(text.substr(text.length() - n), kContentLengthName.substr(0, n)))
-         break;
+         return text.length() - n;
    }
-   return n;
+   return text.length();
 }
 
 // The value of the first Content-Length header in text[0, headerEnd), and
@@ -3110,8 +3130,8 @@ std::vector<std::string> AgentStdoutReader::append(const std::string& chunk,
                if (pErrors)
                   pErrors->push_back("response header did not end");
 
-               // Keep the start of a header the read cut off after the junk.
-               buffer_.erase(0, buffer_.length() - partialContentLengthLength(buffer_));
+               // Keep a header that the read cut off after the junk.
+               buffer_.erase(0, cutOffHeaderStart(buffer_));
             }
             break; // the rest of the header has not arrived yet
          }
