@@ -329,10 +329,13 @@ public class DocUpdateSentinel
       }
    }
 
-   // A save completes even if the user edited while it was in flight, leaving the
-   // session's copy behind the editor; callers of withSavedDoc() rely on the
-   // session having what the editor shows. Defer the next save until the
-   // finishing one clears isSaving_, or it would just queue behind it.
+   // A save completes even if the document changed while it was in flight,
+   // leaving the session's copy behind the editor; callers of withSavedDoc()
+   // rely on the session having what the editor shows. The tracker is only
+   // reset when nothing changed during the save, so hasChanged() answers
+   // whether another pass is needed (a line widget resize also counts, and
+   // costs one no-op pass). Defer that save until the finishing one clears
+   // isSaving_, or it would just queue behind it.
    private void runWhenSavedDocCurrent(final boolean retryWrite,
                                        final Command onSaved,
                                        final CommandWithArg<String> onError)

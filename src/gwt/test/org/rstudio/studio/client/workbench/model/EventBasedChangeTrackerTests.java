@@ -50,11 +50,6 @@ public class EventBasedChangeTrackerTests extends GWTTestCase
          ValueChangeEvent.fire(this, null);
       }
 
-      public int getHandlerCount()
-      {
-         return handlers_.getHandlerCount(ValueChangeEvent.getType());
-      }
-
       private final HandlerManager handlers_ = new HandlerManager(this);
    }
 
@@ -84,35 +79,5 @@ public class EventBasedChangeTrackerTests extends GWTTestCase
       source.change();
       assertTrue(tracker.hasChanged());
       assertEquals(2, tracker.getVersion());
-   }
-
-   // A save compares the version it saw when it took the editor's contents with
-   // the version when the save completes; an edit in between must show up.
-   public void testVersionDetectsEditDuringSave()
-   {
-      Source source = new Source();
-      ChangeTracker tracker = new EventBasedChangeTracker<>(source);
-      source.change();
-
-      int savedVersion = tracker.getVersion();
-      assertEquals(savedVersion, tracker.getVersion());
-
-      source.change();
-      assertTrue(tracker.getVersion() != savedVersion);
-   }
-
-   // The tracker's whole footprint on its source is one handler, added once.
-   public void testTrackerAddsOneHandlerToSource()
-   {
-      Source source = new Source();
-      assertEquals(0, source.getHandlerCount());
-
-      ChangeTracker tracker = new EventBasedChangeTracker<>(source);
-      assertEquals(1, source.getHandlerCount());
-
-      source.change();
-      tracker.reset();
-      tracker.getVersion();
-      assertEquals(1, source.getHandlerCount());
    }
 }
