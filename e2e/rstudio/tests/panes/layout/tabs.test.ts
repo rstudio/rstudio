@@ -78,8 +78,12 @@ async function restoreMinimizedPaneByKeyboard(page: Page): Promise<void> {
   await expect(page.locator(ENV_PANEL)).toBeVisible();
   await expect(page.locator(TAB_ENVIRONMENT)).toHaveAttribute('aria-selected', 'true');
   await expect(tablist).toBeHidden();
+  await expectFocusIn(page, TABSET1_PANE);
+}
+
+async function expectFocusIn(page: Page, selector: string): Promise<void> {
   await expect.poll(() => page.evaluate(
-    (pane) => document.activeElement?.closest(pane) !== null, TABSET1_PANE)).toBe(true);
+    (sel) => document.activeElement?.closest(sel) !== null, selector)).toBe(true);
 }
 
 test.describe('Workbench tabs', () => {
@@ -232,19 +236,38 @@ test.describe('Workbench tabs', () => {
     await expect(region.getByRole('tablist', { name: 'TabSet1', exact: true })).toBeVisible();
   });
 
-  // Restoring hides the focused minimized tab, so focus has to move into the
-  // restored pane. It does so on a different path depending on whether the
-  // restore is animated.
+  // Leaving the minimized strip hides whatever in it had focus, so focus has
+  // to move into the pane. The layout changes differently with and without
+  // animation, so both are covered.
   for (const reducedMotion of [false, true]) {
-    test(`a minimized pane restores from its tab strip by keyboard (reduced motion ${reducedMotion ? 'on' : 'off'})`,
-      async ({ rstudioPage: page }) => {
-        const fixtureReducedMotion = await getPref(page, 'reduced_motion') as boolean;
+    test.describe(`reduced motion ${reducedMotion ? 'on' : 'off'}`, () => {
+      let fixtureReducedMotion: boolean;
+
+      test.beforeEach(async ({ rstudioPage: page }) => {
+        fixtureReducedMotion = await getPref(page, 'reduced_motion') as boolean;
         await setPref(page, 'reduced_motion', reducedMotion);
-        try {
-          await restoreMinimizedPaneByKeyboard(page);
-        } finally {
-          await setPref(page, 'reduced_motion', fixtureReducedMotion);
-        }
       });
+
+      test.afterEach(async ({ rstudioPage: page }) => {
+        await setPref(page, 'reduced_motion', fixtureReducedMotion);
+      });
+
+      test('a minimized pane restores from its tab strip by keyboard', async ({ rstudioPage: page }) => {
+        await restoreMinimizedPaneByKeyboard(page);
+      });
+
+      for (const button of ['Restore TabSet1', 'Maximize TabSet1']) {
+        test(`${button} on a minimized pane moves focus into the pane`, async ({ rstudioPage: page }) => {
+          await executeCommand(page, 'maximizeTabSet2');
+          const region = page.getByRole('region', { name: 'TabSet1 minimized', exact: true });
+          await region.getByRole('button', { name: button, exact: true }).focus();
+          await page.keyboard.press('Enter');
+
+          await expect(region).toBeHidden();
+          await expect(page.locator(ENV_PANEL)).toBeVisible();
+          await expectFocusIn(page, TABSET1_PANE);
+        });
+      }
+    });
   }
 });

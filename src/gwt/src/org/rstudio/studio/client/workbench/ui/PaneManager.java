@@ -2852,8 +2852,7 @@ public class PaneManager
     * should move into the zoomed pane: the columns a zoom collapses are inert
     * (#19181) and the quadrants it hides are not rendered, so the browser
     * would drop focus to the page body. False if anything has moved focus
-    * since the zoom began. Restoring a minimized pane hides its tab strip
-    * the same way.
+    * since the zoom began.
     */
    private boolean zoomHidFocus(Element focusedBeforeZoom)
    {
@@ -3165,6 +3164,7 @@ public class PaneManager
       LogicalWindow logicalWindow =
             new LogicalWindow(frame, new MinimizedWindowFrame(frameName, frameName));
       hookPaneMaximize(frame, logicalWindow);
+      hookMinimizedFocus(logicalWindow);
 
       consoleTabPanel_ = new ConsoleTabPanel(
             frame,
@@ -3197,6 +3197,7 @@ public class PaneManager
       LogicalWindow sourceWindow = new LogicalWindow(
             sourceFrame,
             new MinimizedWindowFrame(frameName, accessibleName));
+      hookMinimizedFocus(sourceWindow);
       // Additional source columns have no maximize gesture. They have no
       // maximize button, no PrimaryWindowFrame title bar, and no
       // ModuleTabLayoutPanel tab bar to double-click. So there is nothing to
@@ -3219,6 +3220,7 @@ public class PaneManager
       final WindowFrame frame = new WindowFrame(persisterName, persisterName, showMaximizeButton, showMinimizeButton, isSidebar);
       final MinimizedModuleTabLayoutPanel minimized = new MinimizedModuleTabLayoutPanel(persisterName);
       final LogicalWindow logicalWindow = new LogicalWindow(frame, minimized);
+      hookMinimizedFocus(logicalWindow);
 
       // Wire sidebar button handlers. The sidebar maximizes by a zoom of its
       // column, not its quadrant. But it can still be the pane-zoomed window,
@@ -3261,15 +3263,6 @@ public class PaneManager
       {
          int tab = integerSelectionEvent.getSelectedItem();
          tabPanel.selectTab(tab);
-
-         // Selecting a minimized tab also restores the pane, which hides the
-         // tab that had focus. Move focus into the restored pane once it shows.
-         final Element focusedBeforeRestore = DomUtils.getActiveElement();
-         Scheduler.get().scheduleDeferred(() ->
-         {
-            if (zoomHidFocus(focusedBeforeRestore))
-               focusPane(logicalWindow);
-         });
       });
 
       tabPanel.addSelectionHandler(integerSelectionEvent ->
@@ -3318,6 +3311,25 @@ public class PaneManager
          logicalWindow,
          tabPanel,
          minimized);
+   }
+
+   /**
+    * A minimized pane's tabs and Restore and Maximize buttons hide the strip
+    * they sit on, and with it the element that had focus, so the browser
+    * would drop focus to the page body. Move focus into the pane instead,
+    * unless focus is still elsewhere: clicking a minimized tab doesn't take it.
+    */
+   private void hookMinimizedFocus(LogicalWindow window)
+   {
+      MinimizedWindowFrame minimized = window.getMinimized();
+      minimized.addWindowStateChangeHandler(event ->
+         Scheduler.get().scheduleDeferred(() ->
+         {
+            Element active = DomUtils.getActiveElement();
+            if (active == null || active == Document.get().getBody() ||
+                minimized.getElement().isOrHasChild(active))
+               focusPane(window);
+         }));
    }
 
    private Tab workbenchTabToTab(WorkbenchTab tab)
