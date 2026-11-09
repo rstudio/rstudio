@@ -13,6 +13,7 @@
 - ([#19241](https://github.com/rstudio/rstudio/issues/19241)): The Console notice shown at startup when RStudio reduces background file operations for a project can now be turned off with the `show_reduced_file_operations_notice` preference (e.g. from the Command Palette), or for all users by an administrator with `"show_reduced_file_operations_notice": false` in `rstudio-prefs.json`.
 
 ### Fixed
+- ([#19067](https://github.com/rstudio/rstudio/issues/19067)): Fixed package diagnostics failing to recognize local functions when the project build type is not Package, and inconsistent package detection for projects with a PackagePath subdirectory.
 - ([#18959](https://github.com/rstudio/rstudio/issues/18959)): Web file dialogs now report an error and stay in the current folder when a typed folder cannot be opened, instead of silently switching to the project or home folder and completing a pending Save, Open, or Choose there.
 - ([#19098](https://github.com/rstudio/rstudio/issues/19098)): Fixed an issue where `rstudio <file>` in the Terminal pane could launch another Desktop instance after a shell startup file reset `PATH`.
 - ([#19249](https://github.com/rstudio/rstudio/issues/19249)): Fixed an issue where All in the editor's Find/Replace bar ignored the Regex option and selected literal matches instead. With Whole word, a regex with alternatives such as `foo|bar` now bounds every alternative in Find Next, All, and Replace All.
