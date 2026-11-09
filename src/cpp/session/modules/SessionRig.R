@@ -683,10 +683,6 @@
 {
    if (nzchar(directory))
    {
-      # backslashes on Windows, as the install job passes it (see RInstallJob)
-      if (.rs.platform.isWindows)
-         directory <- chartr("/", "\\", directory)
-
       override <- Sys.getenv("RIG_R_INSTALL_DIR", unset = NA)
       Sys.setenv(RIG_R_INSTALL_DIR = directory)
       on.exit({
