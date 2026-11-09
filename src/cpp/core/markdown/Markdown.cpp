@@ -247,7 +247,7 @@ void stripMetadata(std::string* pInput)
    std::size_t firstDocumentLine = 0;
    if (hasFrontMatter)
    {
-      bool inFrontMatter = false;
+      bool inFrontMatter = false, hasField = false;
       boost::regex frontMatterFieldRegex("^[^:]+:.*$");
       boost::regex frontMatterContinuationRegex("^\\s+[^\\s].*$");
 
@@ -256,6 +256,10 @@ void stripMetadata(std::string* pInput)
          const std::string& line = lines[i];
          if (boost::algorithm::trim_copy(line).empty())
          {
+            // Fields may span blank lines, but a block whose opening
+            // delimiter is followed by a blank line is a thematic break.
+            if (inFrontMatter && !hasField)
+               break;
             continue;
          }
          else if (regex_utils::search(line, frontMatterDelimiterRegex))
@@ -270,8 +274,11 @@ void stripMetadata(std::string* pInput)
                break;
             }
          }
-         else if (!regex_utils::search(line, frontMatterFieldRegex) &&
-                  !regex_utils::search(line,frontMatterContinuationRegex))
+         else if (regex_utils::search(line, frontMatterFieldRegex))
+         {
+            hasField = true;
+         }
+         else if (!regex_utils::search(line,frontMatterContinuationRegex))
          {
             break;
          }

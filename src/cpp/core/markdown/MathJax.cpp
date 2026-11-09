@@ -54,6 +54,44 @@ struct CodePattern
    bool fenced;
 };
 
+// Find the end of the first line after 'begin' that closes a fence opened
+// with 'length' copies of 'fence': up to three spaces of indentation, at
+// least as many fence characters, and only trailing whitespace. Returns the
+// position of that line's newline, or 'end' when the fence is never closed.
+std::string::const_iterator findFenceCloser(std::string::const_iterator begin,
+                                            std::string::const_iterator end,
+                                            char fence,
+                                            std::size_t length)
+{
+   std::string::const_iterator line = begin;
+   while (line != end)
+   {
+      std::string::const_iterator newline = std::find(line, end, '\n');
+      std::string::const_iterator it = line;
+      for (int indent = 0; indent < 3 && it != newline && *it == ' '; ++indent)
+         ++it;
+
+      std::size_t count = 0;
+      for (; it != newline && *it == fence; ++it)
+         ++count;
+
+      if (count >= length)
+      {
+         while (it != newline && (*it == ' ' || *it == '\t'))
+            ++it;
+         if (it != newline && *it == '\r')
+            ++it;
+         if (it == newline)
+            return newline;
+      }
+
+      if (newline == end)
+         break;
+      line = newline + 1;
+   }
+   return end;
+}
+
 }
 
 MathJaxFilter::MathJaxFilter(std::string* pInput,
@@ -71,10 +109,12 @@ MathJaxFilter::MathJaxFilter(std::string* pInput,
       // Match the pinned inline parser's MAXBACKTICKS limit. No fallback may
       // split a longer run into shorter delimiters and hide ordinary math.
 #ifdef RSTUDIO_USE_CMARK_GFM
-      // An escaped backtick may immediately precede a real opening run.
-      // Consume an odd backslash run and that literal tick before matching it.
+      // An odd run of backslashes escapes the next backtick. Such a tick is
+      // literal text in cmark, so it cannot open a span, but a real run may
+      // start immediately after it. Consume the escape with the opener.
+      // Closers ignore escapes: backslashes are literal inside code spans.
       CodePattern(R"((?<!\\)(?:\\\\)*\\`(`{1,80})(?!`)[^\r\n]*?(?<!`)\1(?!`))"),
-      CodePattern(R"((?<!`)(`{1,80})(?!`)[^\r\n]*?(?<!`)\1(?!`))"),
+      CodePattern(R"((?<!\\)(?:\\\\)*(?<!`)(`{1,80})(?!`)[^\r\n]*?(?<!`)\1(?!`))"),
 #else
       CodePattern(R"((?<!`)(`+)(?!`)[^\r\n]*?(?<!`)\1(?!`))"),
       CodePattern(R"(`[^\n]+?`)"),
@@ -140,12 +180,7 @@ MathJaxFilter::MathJaxFilter(std::string* pInput,
             // 255 in blocks.c. Exclusions must end where that parser closes.
             length = std::min(length, std::size_t(255));
 #endif
-            boost::regex closer("^ {0,3}" + delimiter.substr(0, 1) + "{" +
-                                 std::to_string(length) + ",}[ \\t]*\\r?$");
-            boost::smatch end;
-            range.end = regex_utils::search(range.end, inputEnd, end, closer,
-                                            boost::match_prev_avail | boost::match_not_bob)
-               ? end[0].second : inputEnd;
+            range.end = findFenceCloser(range.end, inputEnd, delimiter[0], length);
          }
 
          // mark everything before the match as requiring processing

@@ -175,6 +175,12 @@ TEST(MarkdownTest, MetadataAndMath)
    EXPECT_NE(std::string::npos, html.find("Note: intro"));
    EXPECT_NE(std::string::npos, html.find("Detail: text"));
    EXPECT_NE(std::string::npos, html.find("Body"));
+   // A blank line directly after the opening delimiter makes it a rule.
+   html = render("---\n\n**Note:** requires R 4.0\n\n---\n\nBody\n");
+   EXPECT_NE(std::string::npos, html.find("<hr"));
+   EXPECT_NE(std::string::npos, html.find("<strong>Note:</strong> requires R 4.0"));
+   EXPECT_NE(std::string::npos, html.find("Body"));
+   EXPECT_EQ("<p>body</p>\n", render("---\ntitle: example\n\n\nauthor: name\n\n---\n\nbody"));
    EXPECT_EQ("<p><code>code</code>    \\( x_1 \\)</p>\n", render("`code`    $x_1$"));
    EXPECT_NE(std::string::npos, render("`code`\n    $x_1$").find("\\( x_1 \\)"));
 }
@@ -246,6 +252,10 @@ TEST(MarkdownTest, MathExclusionRespectsCodeDelimiterLengths)
       EXPECT_EQ(count == 80, html.find("<code>") != std::string::npos);
    }
    EXPECT_EQ("<p>`<code>a $x_1$ b</code></p>\n", render(R"(\``a $x_1$ b`)"));
+   EXPECT_EQ("<p>Use ` to quote; \\( x_1 \\) and <code>code</code></p>\n",
+             render(R"(Use \` to quote; $x_1$ and `code`)"));
+   EXPECT_EQ("<p>`a<code>b $x$</code>c`</p>\n", render(R"(\`a` b $x$ `c`)"));
+   EXPECT_EQ("<p>\\<code>a $x$</code></p>\n", render(R"(\\`a $x$`)"));
    for (std::size_t count : {1, 2, 3, 4})
    {
       std::string html = render(std::string(count, '\\') + "``a $x_1$ b`");
