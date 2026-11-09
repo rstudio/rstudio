@@ -1335,11 +1335,21 @@ FilePath ProjectContext::resolvePackageDirectoryInProject() const
 
    if (fileMonitorInitialized_ && monitoredDirectories_.count(indexedDir) == 0)
       return FilePath();
+
+   // Only the package's source directories feed package diagnostics. An
+   // unreadable or excluded data/ or inst/ subtree must not disable them,
+   // which would bring back the search-path fallback for the whole package.
+   FilePath rDirectory = indexedDir.completeChildPath("R");
+   FilePath testDirectory = indexedDir.completeChildPath("tests");
+   auto inSourceDirectory = [&](const FilePath& path)
+   {
+      return path.isWithin(rDirectory) || path.isWithin(testDirectory);
+   };
    for (const FilePath& failedDir : failedMonitorDirectories_)
-      if (failedDir.isWithin(indexedDir) || indexedDir.isWithin(failedDir))
+      if (indexedDir.isWithin(failedDir) || inSourceDirectory(failedDir))
          return FilePath();
    for (const FilePath& excludedDir : sourceIndexExcludedDirectories_)
-      if (indexedDir.isWithin(excludedDir) || excludedDir.isWithin(indexedDir.completeChildPath("R")))
+      if (indexedDir.isWithin(excludedDir) || excludedDir.isWithin(rDirectory))
          return FilePath();
 
    if (!packageFilterContext_)
@@ -1348,57 +1358,38 @@ FilePath ProjectContext::resolvePackageDirectoryInProject() const
 
    // A directory entry alone does not establish coverage for its files.
    // Copy relevant observations while holding the lock; resolving ambiguous
-   // links and checking directory filters stays on the session thread.
+   // links stays on the session thread. Entries for paths that no longer
+   // exist are dropped here: the filter records them again if they reappear.
    std::vector<std::pair<FilePath, UnmonitoredSource>> uncovered;
-   FilePath rDirectory = indexedDir.completeChildPath("R");
-   FilePath testDirectory = indexedDir.completeChildPath("tests");
-   auto inSourceDirectory = [&](const FilePath& path)
-   {
-      return path.isWithin(rDirectory) || path.isWithin(testDirectory);
-   };
    {
       std::lock_guard<std::mutex> lock(unmonitoredSourcesMutex_);
-      for (const auto& entry : unmonitoredSources_)
+      for (auto it = unmonitoredSources_.begin(); it != unmonitoredSources_.end(); )
       {
-         const FilePath& path = entry.first;
-         if ((entry.second == UnmonitoredSource::File && path.isWithin(indexedDir)) ||
-             (entry.second != UnmonitoredSource::File &&
+         const FilePath& path = it->first;
+         if (!path.exists() && !path.isSymlink())
+         {
+            it = unmonitoredSources_.erase(it);
+            continue;
+         }
+
+         if ((it->second == UnmonitoredSource::File && inSourceDirectory(path)) ||
+             (it->second != UnmonitoredSource::File &&
               (indexedDir.isWithin(path) || inSourceDirectory(path))))
          {
-            uncovered.push_back(entry);
+            uncovered.push_back(*it);
          }
+         ++it;
       }
    }
    for (const auto& entry : uncovered)
    {
       const FilePath& path = entry.first;
-      if (entry.second != UnmonitoredSource::File)
-      {
-         // A linked CSV or other fixture is not a source directory. Retain
-         // the observation so a later target-type change is checked again.
-         if (path.isDirectory())
-            return FilePath();
-         continue;
-      }
+      if (entry.second == UnmonitoredSource::File)
+         return FilePath();
 
-      // Windows can report children of excluded directories. Files in such
-      // non-source trees (for example .worktrees) do not belong to the package.
-      bool ignoredAncestor = false;
-      if (!inSourceDirectory(path))
-      {
-         for (FilePath dir = path.getParent();
-              dir != indexedDir && dir.isWithin(indexedDir);
-              dir = dir.getParent())
-         {
-            if (modules::code_search::isIgnoredDirectory(dir, true) ||
-                !fileMonitorFilter(FileInfo(dir.getAbsolutePath(), true), *packageFilterContext_))
-            {
-               ignoredAncestor = true;
-               break;
-            }
-         }
-      }
-      if (!ignoredAncestor && (path.exists() || path.isSymlink()))
+      // A linked CSV or other fixture is not a source directory. Retain
+      // the observation so a later target-type change is checked again.
+      if (path.isDirectory())
          return FilePath();
    }
 

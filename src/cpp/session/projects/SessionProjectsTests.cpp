@@ -189,6 +189,12 @@ protected:
       pContext->augmentRbuildignore();
    }
 
+   std::size_t unmonitoredSourceCount(ProjectContext* pContext)
+   {
+      std::lock_guard<std::mutex> lock(pContext->unmonitoredSourcesMutex_);
+      return pContext->unmonitoredSources_.size();
+   }
+
    void registerFileMonitor(ProjectContext* pContext, const FilePath& failedDirectory = FilePath())
    {
       pContext->resetFileMonitorCoverage();
@@ -739,6 +745,31 @@ TEST_F(PackageProjectInfoTests, LinkedNonSourceFixtureKeepsPackageCoverage)
    EXPECT_EQ(projectDir_, context.packageDirectoryInProject());
 }
 
+TEST_F(PackageProjectInfoTests, LinkedScriptOutsideSourceDirectoriesKeepsPackageCoverage)
+{
+   writeDescription("Package: localpkg\nVersion: 0.1.0\n");
+   ASSERT_FALSE(projectDir_.completeChildPath("R").ensureDirectory());
+   ASSERT_FALSE(projectDir_.completeChildPath("inst/examples").ensureDirectory());
+   ASSERT_FALSE(projectDir_.completeChildPath("tests/testthat").ensureDirectory());
+   FilePath external;
+   ASSERT_FALSE(FilePath::tempFilePath(external));
+   ASSERT_FALSE(writeStringToFile(external, "helper <- function() TRUE\n"));
+   RemoveOnExitScope removeExternal(external, ERROR_LOCATION);
+
+   // Only R/ and tests/ feed package diagnostics; a linked example script
+   // elsewhere in the package is not a reason to fall back to the search path.
+   FilePath demo = projectDir_.completeChildPath("inst/examples/demo.R");
+   ASSERT_EQ(0, ::symlink(external.getAbsolutePath().c_str(), demo.getAbsolutePath().c_str()));
+   ProjectContext context;
+   openProject(&context, "None", "", true);
+   EXPECT_EQ(projectDir_, context.packageDirectoryInProject());
+
+   FilePath helper = projectDir_.completeChildPath("tests/testthat/helper-linked.R");
+   ASSERT_EQ(0, ::symlink(external.getAbsolutePath().c_str(), helper.getAbsolutePath().c_str()));
+   registerFileMonitor(&context);
+   EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
+}
+
 TEST_F(PackageProjectInfoTests, LinkedHelperUsesFallbackUntilReplacedByObservedSource)
 {
    writeDescription("Package: localpkg\nVersion: 0.1.0\n");
@@ -841,6 +872,50 @@ TEST_F(PackageProjectInfoTests, FailedDirectoryRegistrationDisablesPackageCovera
       EXPECT_EQ(projectDir_, context.packageDirectoryInProject());
       EXPECT_EQ(std::set<std::string>{"compiler"}, r_util::RSourceIndex::getImportedPackages());
    }
+}
+
+TEST_F(PackageProjectInfoTests, FailedNonSourceDirectoryKeepsPackageCoverage)
+{
+   writeDescription("Package: localpkg\nVersion: 0.1.0\n");
+   ASSERT_FALSE(projectDir_.completeChildPath("R").ensureDirectory());
+   ASSERT_FALSE(writeStringToFile(projectDir_.completeChildPath("R/helper.R"), "helper <- function() TRUE\n"));
+   FilePath data = projectDir_.completeChildPath("data");
+   ASSERT_FALSE(data.ensureDirectory());
+   ProjectContext context;
+   openProject(&context, "None", "", true, false);
+
+   // With PackagePath: . an unreadable data/ would otherwise disable package
+   // diagnostics for the whole project, the #19067 symptom.
+   registerFileMonitor(&context, data);
+   EXPECT_EQ(projectDir_, context.packageDirectoryInProject());
+   notifyDirectoryStatus(&context, data, true);
+   EXPECT_EQ(projectDir_, context.packageDirectoryInProject());
+   notifyDirectoryStatus(&context, projectDir_.completeChildPath("R"), true);
+   EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
+}
+
+TEST_F(PackageProjectInfoTests, PrunesRemovedUnmonitoredEntries)
+{
+   writeDescription("Package: localpkg\nVersion: 0.1.0\n");
+   ASSERT_FALSE(projectDir_.completeChildPath("R").ensureDirectory());
+   ProjectContext context;
+   openProject(&context, "None", "", true);
+   // The initial scan already records filtered directories such as .Rproj.user.
+   std::size_t baseline = unmonitoredSourceCount(&context);
+
+   // Rejected paths are recorded by the monitor thread and only ever replaced
+   // by an accepted event for the same path, so deleted ones must be pruned.
+   FilePath scratch = projectDir_.completeChildPath(".scratch");
+   ASSERT_FALSE(scratch.ensureDirectory());
+   ASSERT_FALSE(filterMonitorEntry(&context, scratch));
+   EXPECT_EQ(baseline + 1, unmonitoredSourceCount(&context));
+   notifyDirectoryStatus(&context, projectDir_, false);
+   EXPECT_EQ(baseline + 1, unmonitoredSourceCount(&context));
+
+   ASSERT_FALSE(scratch.remove());
+   notifyDirectoryStatus(&context, projectDir_, false);
+   EXPECT_EQ(baseline, unmonitoredSourceCount(&context));
+   EXPECT_EQ(projectDir_, context.packageDirectoryInProject());
 }
 
 TEST_F(PackageProjectInfoTests, PartialScanFailureRetainsHealthyDescendantCoverage)
