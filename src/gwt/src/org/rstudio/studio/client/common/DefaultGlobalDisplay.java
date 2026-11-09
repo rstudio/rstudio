@@ -55,7 +55,8 @@ public class DefaultGlobalDisplay extends GlobalDisplay
       // This command is useful for testing warning bars (e.g. for accessibility) so please leave in.
       commands.showWarningBar().addHandler(appCommand ->
       {
-         view_.get().showWarning(false, constants_.warningMessage());
+         view_.get().undismissWarning("test-warning");
+         view_.get().showWarning("test-warning", false, constants_.warningMessage(), null, null);
       });
    }
 
@@ -254,9 +255,19 @@ public class DefaultGlobalDisplay extends GlobalDisplay
       view_.get().showWarning(severe, message, actionLabel, action);
    }
 
-   public void hideWarningBar()
+   public void showWarningBar(String id, boolean severe, String message, String actionLabel, Command action)
    {
-      view_.get().hideWarning();
+      view_.get().showWarning(id, severe, message, actionLabel, action);
+   }
+
+   public void hideWarningBar(String id)
+   {
+      view_.get().hideWarning(id);
+   }
+
+   public void undismissWarningBar(String id)
+   {
+      view_.get().undismissWarning(id);
    }
 
    public ProgressIndicator getProgressIndicator(final String errorCaption)

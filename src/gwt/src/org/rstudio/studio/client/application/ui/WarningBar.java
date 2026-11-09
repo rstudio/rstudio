@@ -14,10 +14,13 @@
  */
 package org.rstudio.studio.client.application.ui;
 
+import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
-import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NodeList;
 import com.google.inject.Inject;
-import org.rstudio.core.client.a11y.A11y;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
 import com.google.gwt.core.client.GWT;
@@ -36,15 +39,17 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.widget.CanFocus;
+import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.ImageButton;
+import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.studio.client.application.StudioClientApplicationConstants;
-import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.WarningBarClosedEvent;
-import org.rstudio.studio.client.common.Timers;
 
 public class WarningBar extends Composite
       implements HasCloseHandlers<WarningBar>
@@ -69,6 +74,9 @@ public class WarningBar extends Composite
       String left();
       String right();
       String center();
+      String message();
+      String controls();
+      String details();
       String warningIcon();
       String label();
       String action();
@@ -82,7 +90,7 @@ public class WarningBar extends Composite
    static final Binder binder = GWT.create(Binder.class);
 
    @Inject
-   public WarningBar(EventBus events, AriaLiveService ariaLive)
+   public WarningBar(EventBus events)
    {
       events_ = events;
       initWidget(binder.createAndBindUi(this));
@@ -99,17 +107,74 @@ public class WarningBar extends Composite
             action_.execute();
       });
       moreButton_.addClickHandler(event -> Desktop.getFrame().showLicenseDialog());
-      A11y.setARIAHidden(label_);
-      if (!ariaLive.isDisabled(AriaLiveService.WARNING_BAR))
-         Roles.getAlertRole().set(live_);
+      label_.setId(Document.get().createUniqueId());
+      Roles.getButtonRole().setAriaDescribedbyProperty(dismiss_.getElement(), Id.of(label_.getId()));
+      details_.setText(constants_.warningDetailsText());
+      details_.addClickHandler(event -> showDetails());
    }
 
    public void setText(String value)
    {
+      html_ = value;
       label_.setInnerHTML(value);
+      label_.setTitle(getText());
 
-      // Give screen reader time to process page to improve chance it will notice the live region
-      Timers.singleShot(AriaLiveService.UI_ANNOUNCEMENT_DELAY, () -> live_.setInnerText(value));
+      // Tabbing to a link would scroll the clipped message cell, and leave it
+      // scrolled. Details shows the same links, in full.
+      NodeList<Element> links = label_.getElementsByTagName("a");
+      for (int i = 0; i < links.getLength(); i++)
+         links.getItem(i).setTabIndex(-1);
+   }
+
+   public String getText()
+   {
+      return label_.getInnerText();
+   }
+
+   public void setWarningNumber(int number)
+   {
+      Roles.getGroupRole().set(getElement());
+      Roles.getGroupRole().setAriaLabelProperty(getElement(), constants_.warningNumberLabel(number));
+      dismiss_.setDescription(constants_.dismissWarningLabel(number));
+      Roles.getButtonRole().setAriaLabelProperty(details_.getElement(), constants_.warningDetailsLabel(number));
+   }
+
+   private void showDetails()
+   {
+      MessageDialog dialog = new MessageDialog(
+            MessageDialog.WARNING,
+            constants_.warningDetailsCaption(),
+            createDetailsMessage());
+      dialog.addButton(
+            constants_.okBtn(),
+            ElementIds.DIALOG_OK_BUTTON,
+            () -> FocusHelper.setFocusDeferred(detailsReturnFocus_),
+            true,
+            true);
+      dialog.showModal();
+   }
+
+   /** The message's own markup, so links in it remain usable. */
+   Widget createDetailsMessage()
+   {
+      HTML message = new HTML(html_);
+      message.setStylePrimaryName(ThemeResources.INSTANCE.themeStyles().dialogMessage());
+      return message;
+   }
+
+   public void setDetailsReturnFocus(CanFocus returnFocus)
+   {
+      detailsReturnFocus_ = returnFocus;
+   }
+
+   public void focusDetailsButton()
+   {
+      details_.setFocus(true);
+   }
+
+   public void focusDismissButton()
+   {
+      dismiss_.setFocus(true);
    }
 
    /**
@@ -153,8 +218,16 @@ public class WarningBar extends Composite
 
    public int getHeight()
    {
-      return 28;
+      return HEIGHT;
    }
+
+   public void setWarningId(String id)
+   {
+      id_ = id;
+   }
+
+   public static final int HEIGHT = 28;
+   private String id_;
 
    public HandlerRegistration addCloseHandler(CloseHandler<WarningBar> handler)
    {
@@ -164,14 +237,14 @@ public class WarningBar extends Composite
    @Override
    public void onDetach()
    {
-      events_.fireEvent(new WarningBarClosedEvent());
+      events_.fireEvent(new WarningBarClosedEvent(id_));
       super.onDetach();
    }
 
    @UiField
    SpanElement label_;
    @UiField
-   DivElement live_;
+   Button details_;
    @UiField
    Button moreButton_;
    @UiField
@@ -180,6 +253,8 @@ public class WarningBar extends Composite
    ImageButton dismiss_;
 
    private Command action_;
+   private String html_ = "";
+   private CanFocus detailsReturnFocus_ = this::focusDetailsButton;
 
    private static final Styles styles_ =
          ((Resources) GWT.create(Resources.class)).styles();
