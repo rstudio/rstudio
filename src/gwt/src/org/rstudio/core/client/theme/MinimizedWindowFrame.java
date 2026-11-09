@@ -119,7 +119,7 @@ public class MinimizedWindowFrame
          {
             event.preventDefault();
             event.stopPropagation();
-            fireEvent(new WindowStateChangeEvent(WindowState.NORMAL));
+            restore();
          }
       });
 
@@ -128,6 +128,11 @@ public class MinimizedWindowFrame
 
    public void showWindowFocusIndicator(boolean showFocusIndicator)
    {
+   }
+
+   protected void restore()
+   {
+      fireEvent(new WindowStateChangeEvent(WindowState.NORMAL));
    }
 
    protected Widget getExtraWidget()

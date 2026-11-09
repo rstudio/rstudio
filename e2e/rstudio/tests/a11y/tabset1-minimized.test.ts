@@ -11,13 +11,13 @@ const LAYOUT_SAVE_TIMEOUT = 15_000;
  * Whether a request saves TabSet1's minimized/normal state, `state`. The
  * window layout is project-persistent client state (the third
  * set_client_state parameter) that outlives the session -- see
- * DualWindowLayoutPanel.WindowLayoutStateValue.
+ * DualWindowLayoutPanel.WindowLayoutStateValue. TabSet1 is the top window of
+ * the right column.
  */
 function isLayoutSave(r: Request, state: 'MINIMIZE' | 'NORMAL'): boolean {
   if (!r.url().includes('set_client_state'))
     return false;
-  const layout = r.postDataJSON()?.params?.[2]?.windowlayoutstate;
-  return layout !== undefined && JSON.stringify(layout).includes(`"topwindowstate":"${state}"`);
+  return r.postDataJSON()?.params?.[2]?.windowlayoutstate?.right?.topwindowstate === state;
 }
 
 async function setTabSet1State(page: Page, button: string, state: 'MINIMIZE' | 'NORMAL'): Promise<void> {
@@ -46,9 +46,10 @@ test('minimized TabSet1 has no accessibility violations', { tag: ['@a11y', '@ser
       results = await scanA11y(page, testInfo);
     } catch (err) {
       // Only logged, so a restore problem can't hide the original error.
-      if (await restoreButton.isVisible())
-        await setTabSet1State(page, 'Restore TabSet1', 'NORMAL')
-          .catch((restoreErr: Error) => console.warn(`TabSet1 not restored: ${restoreErr.message}`));
+      await (async () => {
+        if (await restoreButton.isVisible())
+          await setTabSet1State(page, 'Restore TabSet1', 'NORMAL');
+      })().catch((restoreErr: Error) => console.warn(`TabSet1 not restored: ${restoreErr.message}`));
       throw err;
     }
     await setTabSet1State(page, 'Restore TabSet1', 'NORMAL');

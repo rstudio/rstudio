@@ -2,7 +2,9 @@
 // Sidebar-width-when-adding-tabs scenarios are exercised by panes.test.ts.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { executeCommand, isCommandChecked, resetLayoutZoom, resetSourcePaneState } from '@utils/commands';
+import {
+  executeCommand, getPref, isCommandChecked, resetLayoutZoom, resetSourcePaneState, setPref,
+} from '@utils/commands';
 import type { Page } from 'playwright';
 
 const WORKBENCH_TABS = [
@@ -27,6 +29,7 @@ const TAB_PLOTS = '#rstudio_workbench_tab_plots';
 
 const ENV_PANEL = '#rstudio_workbench_panel_environment';
 const CONSOLE_PANE = '#rstudio_Console_pane';
+const TABSET1_PANE = '#rstudio_TabSet1_pane';
 const TABSET2_PANE = '#rstudio_TabSet2_pane';
 
 async function getOffsetWidth(page: Page, selector: string): Promise<number> {
@@ -39,6 +42,44 @@ async function getOffsetHeight(page: Page, selector: string): Promise<number> {
 
 async function getAriaSelected(page: Page, selector: string): Promise<boolean> {
   return (await page.locator(selector).getAttribute('aria-selected')) === 'true';
+}
+
+async function restoreMinimizedPaneByKeyboard(page: Page): Promise<void> {
+  await executeCommand(page, 'activateHistory');
+  await executeCommand(page, 'maximizeTabSet2');
+  const tablist = page.getByRole('region', { name: 'TabSet1 minimized', exact: true })
+    .getByRole('tablist');
+  const historyTab = tablist.getByRole('tab', { name: 'History', exact: true });
+  const envTab = tablist.getByRole('tab', { name: 'Environment', exact: true });
+
+  // The pane's selected tab is the strip's one tab stop.
+  await expect(historyTab).toHaveAttribute('aria-selected', 'true');
+  await expect(historyTab).toHaveAttribute('tabindex', '0');
+  await expect(envTab).toHaveAttribute('aria-selected', 'false');
+  await expect(envTab).toHaveAttribute('tabindex', '-1');
+
+  // Arrows move focus without restoring the pane. Leaving the strip and
+  // coming back lands on the selected tab, not the one last focused.
+  await historyTab.focus();
+  await page.keyboard.press('ArrowLeft');
+  await expect(envTab).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(envTab).not.toBeFocused();
+  await expect(historyTab).not.toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await expect(historyTab).toBeFocused();
+
+  // Enter restores the pane on the focused tab, and focus follows it there.
+  await page.keyboard.press('ArrowLeft');
+  await expect(envTab).toBeFocused();
+  await expect(tablist).toBeVisible();
+  await page.keyboard.press('Enter');
+
+  await expect(page.locator(ENV_PANEL)).toBeVisible();
+  await expect(page.locator(TAB_ENVIRONMENT)).toHaveAttribute('aria-selected', 'true');
+  await expect(tablist).toBeHidden();
+  await expect.poll(() => page.evaluate(
+    (pane) => document.activeElement?.closest(pane) !== null, TABSET1_PANE)).toBe(true);
 }
 
 test.describe('Workbench tabs', () => {
@@ -191,30 +232,19 @@ test.describe('Workbench tabs', () => {
     await expect(region.getByRole('tablist', { name: 'TabSet1', exact: true })).toBeVisible();
   });
 
-  test('a minimized pane restores from its tab strip by keyboard', async ({ rstudioPage: page }) => {
-    await executeCommand(page, 'activateHistory');
-    await executeCommand(page, 'maximizeTabSet2');
-    const tablist = page.getByRole('region', { name: 'TabSet1 minimized', exact: true })
-      .getByRole('tablist');
-    const historyTab = tablist.getByRole('tab', { name: 'History', exact: true });
-    const envTab = tablist.getByRole('tab', { name: 'Environment', exact: true });
-
-    // The pane's selected tab is the strip's one tab stop.
-    await expect(historyTab).toHaveAttribute('aria-selected', 'true');
-    await expect(historyTab).toHaveAttribute('tabindex', '0');
-    await expect(envTab).toHaveAttribute('aria-selected', 'false');
-    await expect(envTab).toHaveAttribute('tabindex', '-1');
-
-    // Arrows move focus without restoring the pane; Enter restores it on the
-    // focused tab.
-    await historyTab.focus();
-    await page.keyboard.press('ArrowLeft');
-    await expect(envTab).toBeFocused();
-    await expect(tablist).toBeVisible();
-    await page.keyboard.press('Enter');
-
-    await expect(page.locator(ENV_PANEL)).toBeVisible();
-    await expect(page.locator(TAB_ENVIRONMENT)).toHaveAttribute('aria-selected', 'true');
-    await expect(tablist).toBeHidden();
-  });
+  // Restoring hides the focused minimized tab, so focus has to move into the
+  // restored pane. It does so on a different path depending on whether the
+  // restore is animated.
+  for (const reducedMotion of [false, true]) {
+    test(`a minimized pane restores from its tab strip by keyboard (reduced motion ${reducedMotion ? 'on' : 'off'})`,
+      async ({ rstudioPage: page }) => {
+        const fixtureReducedMotion = await getPref(page, 'reduced_motion') as boolean;
+        await setPref(page, 'reduced_motion', reducedMotion);
+        try {
+          await restoreMinimizedPaneByKeyboard(page);
+        } finally {
+          await setPref(page, 'reduced_motion', fixtureReducedMotion);
+        }
+      });
+  }
 });

@@ -18,6 +18,10 @@ import java.util.ArrayList;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.aria.client.SelectedValue;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
@@ -26,8 +30,6 @@ import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.FlowPanel;
 import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.events.WindowStateChangeEvent;
-import org.rstudio.core.client.layout.WindowState;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 
@@ -52,25 +54,25 @@ public class MinimizedModuleTabLayoutPanel
       Roles.getTablistRole().setAriaLabelProperty(tabList.getElement(), accessibleName);
    }
 
+   /**
+    * Replace the tabs. Follow with setSelectedIndex(), which marks the
+    * selected tab and makes it the strip's tab stop.
+    */
    public void setTabs(String[] tabNames)
    {
       FlowPanel tabList = getTabList();
       tabList.clear();
       tabs_.clear();
-      tabIndices_.clear();
 
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
       for (int i = 0; i < tabNames.length; i++)
       {
-         String tabName = tabNames[i];
-         if (tabName == null)
-            continue;
          ModuleTabLayoutPanel.ModuleTab tab
-               = new ModuleTabLayoutPanel.ModuleTab(tabName, styles, false, true /*minimized*/);
+               = new ModuleTabLayoutPanel.ModuleTab(tabNames[i], styles, false, true /*minimized*/);
          tab.addStyleName("gwt-TabLayoutPanelTab");
          tab.getElement().setId(ElementIds.getUniqueElementId(tab.getTabId()));
          Roles.getTabRole().set(tab.getElement());
-         final Integer thisIndex = i;
+         final int thisIndex = i;
          tab.addClickHandler(event ->
          {
             event.preventDefault();
@@ -79,11 +81,10 @@ public class MinimizedModuleTabLayoutPanel
                   thisIndex);
          });
          tab.addDomHandler(event -> onTabKeyDown(event, thisIndex), KeyDownEvent.getType());
+         tab.addDomHandler(this::onTabBlur, BlurEvent.getType());
          tabList.add(tab);
          tabs_.add(tab);
-         tabIndices_.add(thisIndex);
       }
-      setSelectedIndex(selectedIndex_);
    }
 
    /**
@@ -93,14 +94,12 @@ public class MinimizedModuleTabLayoutPanel
    public void setSelectedIndex(int index)
    {
       selectedIndex_ = index;
-      int selectedPos = Math.max(0, tabIndices_.indexOf(index));
-      for (int pos = 0; pos < tabs_.size(); pos++)
+      for (int i = 0; i < tabs_.size(); i++)
       {
-         boolean selected = tabIndices_.get(pos) == index;
-         Roles.getTabRole().setAriaSelectedState(tabs_.get(pos).getElement(),
-               selected ? SelectedValue.TRUE : SelectedValue.FALSE);
-         tabs_.get(pos).getElement().setTabIndex(pos == selectedPos ? 0 : -1);
+         Roles.getTabRole().setAriaSelectedState(tabs_.get(i).getElement(),
+               i == index ? SelectedValue.TRUE : SelectedValue.FALSE);
       }
+      setTabStop(selectedIndex_);
    }
 
    public HandlerRegistration addSelectionHandler(SelectionHandler<Integer> handler)
@@ -112,28 +111,30 @@ public class MinimizedModuleTabLayoutPanel
    // for Enter or Space (manual activation).
    private void onTabKeyDown(KeyDownEvent event, int index)
    {
-      int pos = tabIndices_.indexOf(index);
+      NativeEvent nativeEvent = event.getNativeEvent();
+      if (nativeEvent.getAltKey() || nativeEvent.getCtrlKey() ||
+          nativeEvent.getMetaKey() || nativeEvent.getShiftKey())
+         return;
+
       int count = tabs_.size();
       switch (event.getNativeKeyCode())
       {
          case KeyCodes.KEY_LEFT:
-            focusTabAt((pos - 1 + count) % count);
+            focusTab((index - 1 + count) % count);
             break;
          case KeyCodes.KEY_RIGHT:
-            focusTabAt((pos + 1) % count);
+            focusTab((index + 1) % count);
             break;
          case KeyCodes.KEY_HOME:
-            focusTabAt(0);
+            focusTab(0);
             break;
          case KeyCodes.KEY_END:
-            focusTabAt(count - 1);
+            focusTab(count - 1);
             break;
          case KeyCodes.KEY_ENTER:
          case KeyCodes.KEY_SPACE:
-            // A click on a tab also bubbles up to the frame, which restores
-            // the pane; a key press has to do both itself.
             SelectionEvent.fire(this, index);
-            fireEvent(new WindowStateChangeEvent(WindowState.NORMAL));
+            restore();
             break;
          default:
             return;
@@ -142,11 +143,29 @@ public class MinimizedModuleTabLayoutPanel
       event.stopPropagation();
    }
 
-   private void focusTabAt(int pos)
+   // Coming back to the strip should land on the selected tab, not on the
+   // one arrowed to last.
+   private void onTabBlur(BlurEvent event)
    {
+      EventTarget next = event.getNativeEvent().getRelatedEventTarget();
+      if (next == null || !Element.is(next) ||
+          !getTabList().getElement().isOrHasChild(Element.as(next)))
+         setTabStop(selectedIndex_);
+   }
+
+   private void focusTab(int index)
+   {
+      setTabStop(index);
+      tabs_.get(index).getElement().focus();
+   }
+
+   // The roving tab stop: only one tab is in the Tab order. With no selected
+   // tab, the first one is, so the strip stays reachable.
+   private void setTabStop(int index)
+   {
+      int stop = index >= 0 && index < tabs_.size() ? index : 0;
       for (int i = 0; i < tabs_.size(); i++)
-         tabs_.get(i).getElement().setTabIndex(i == pos ? 0 : -1);
-      tabs_.get(pos).getElement().focus();
+         tabs_.get(i).getElement().setTabIndex(i == stop ? 0 : -1);
    }
 
    private FlowPanel getTabList()
@@ -155,6 +174,5 @@ public class MinimizedModuleTabLayoutPanel
    }
 
    private final ArrayList<ModuleTabLayoutPanel.ModuleTab> tabs_ = new ArrayList<>();
-   private final ArrayList<Integer> tabIndices_ = new ArrayList<>();
    private int selectedIndex_ = -1;
 }

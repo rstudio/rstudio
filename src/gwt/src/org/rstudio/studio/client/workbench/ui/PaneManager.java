@@ -2852,7 +2852,8 @@ public class PaneManager
     * should move into the zoomed pane: the columns a zoom collapses are inert
     * (#19181) and the quadrants it hides are not rendered, so the browser
     * would drop focus to the page body. False if anything has moved focus
-    * since the zoom began.
+    * since the zoom began. Restoring a minimized pane hides its tab strip
+    * the same way.
     */
    private boolean zoomHidFocus(Element focusedBeforeZoom)
    {
@@ -3260,6 +3261,15 @@ public class PaneManager
       {
          int tab = integerSelectionEvent.getSelectedItem();
          tabPanel.selectTab(tab);
+
+         // Selecting a minimized tab also restores the pane, which hides the
+         // tab that had focus. Move focus into the restored pane once it shows.
+         final Element focusedBeforeRestore = DomUtils.getActiveElement();
+         Scheduler.get().scheduleDeferred(() ->
+         {
+            if (zoomHidFocus(focusedBeforeRestore))
+               focusPane(logicalWindow);
+         });
       });
 
       tabPanel.addSelectionHandler(integerSelectionEvent ->
