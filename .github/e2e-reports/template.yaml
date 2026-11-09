@@ -218,7 +218,10 @@ Resources:
             || dnf install -y -q https://s3.amazonaws.com/mountpoint-s3-release/latest/arm64/mount-s3.rpm
 
           # Security updates apply themselves; a kernel update waits for the
-          # next stop/start.
+          # next stop/start. AL2023 locks dnf to the release the AMI was built
+          # from, where nothing new ever appears, so follow the latest release
+          # instead (the AMI itself stays pinned, see the AmiId parameter).
+          echo latest > /etc/dnf/vars/releasever
           sed -i 's/^apply_updates = .*/apply_updates = yes/; s/^upgrade_type = .*/upgrade_type = security/' \
             /etc/dnf/automatic.conf
           systemctl enable -q --now dnf-automatic.timer
@@ -297,7 +300,9 @@ Resources:
               exit 0
             fi
           fi
-          tailscale set --auto-update
+          # Outside the enrollment guard so a changed TailscaleHostname reaches
+          # a node that is already enrolled.
+          tailscale set --hostname="$HOSTNAME_TS" --auto-update
           tailscale serve --bg 8080
 
           echo "== done $(date -Is)"

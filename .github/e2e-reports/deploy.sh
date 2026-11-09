@@ -31,7 +31,16 @@ export AWS_DEFAULT_REGION=us-east-1
 # left out of VpcId, SubnetId, AmiId and Owner.
 overrides=("$@")
 given() { [[ " $* " == *" $1="* ]]; }
-value_of() { for arg in "${@:2}"; do [[ $arg == "$1="* ]] && printf '%s' "${arg#*=}"; done; }
+value_of() {
+  local arg
+  for arg in "${@:2}"; do
+    if [[ $arg == "$1="* ]]; then
+      printf '%s' "${arg#*=}"
+      return 0
+    fi
+  done
+  return 1
+}
 
 # The network is the account's shared VPC (an organization policy forbids
 # creating one) and its private-0 subnet (template.yaml says why). Looked up
