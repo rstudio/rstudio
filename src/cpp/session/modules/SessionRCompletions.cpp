@@ -398,9 +398,6 @@ SEXP rs_isSubsequence(SEXP stringsSEXP, SEXP querySEXP)
 
 SEXP rs_getNAMESPACEImportedSymbols(SEXP documentIdSEXP)
 {
-   // Refresh imports if monitor coverage changed through ignore rules or links.
-   projects::projectContext().packageDirectoryInProject();
-
    std::string documentId = r::sexp::asString(documentIdSEXP);
    boost::shared_ptr<core::r_util::RSourceIndex> index =
          code_search::rSourceIndex().get(documentId);

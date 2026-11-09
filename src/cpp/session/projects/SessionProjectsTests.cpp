@@ -97,6 +97,8 @@ protected:
       EXPECT_FALSE(projectDir_.remove());
    }
 
+   // Unmonitored metadata re-reads DESCRIPTION only when its size or mtime
+   // changes, so successive contents written by a test must differ in length.
    void writeDescription(const std::string& contents, const std::string& subdir = "")
    {
       FilePath dir = projectDir_.completeChildPath(subdir);
@@ -601,24 +603,30 @@ TEST_F(PackageProjectInfoTests, ExcludedHelperWaitsForSourceCoverage)
    EXPECT_EQ(std::set<std::string>{"compiler"}, r_util::RSourceIndex::getImportedPackages());
 }
 
-TEST_F(PackageProjectInfoTests, NewlyFilteredHelperDoesNotDependOnDeliveredEvents)
+TEST_F(PackageProjectInfoTests, NewlyFilteredHelperRefreshesOnNextMonitorBatch)
 {
    json::Array ignores;
    ignores.push_back("/R/helper.R");
    ASSERT_FALSE(prefs::userPrefs().setFileMonitorIgnoredComponents(ignores));
    writeDescription("Package: localpkg\nVersion: 0.1.0\n");
-   ASSERT_FALSE(projectDir_.completeChildPath("R").ensureDirectory());
+   FilePath rDirectory = projectDir_.completeChildPath("R");
+   ASSERT_FALSE(rDirectory.ensureDirectory());
    ProjectContext context;
    openProject(&context, "None", "", true);
    ASSERT_EQ(projectDir_, context.packageDirectoryInProject());
 
-   FilePath helper = projectDir_.completeChildPath("R/helper.R");
+   // The monitor thread rejects the helper while scanning its parent. The
+   // delivered batch carries no entry for it, yet still refreshes the scope.
+   FilePath helper = rDirectory.completeChildPath("helper.R");
    ASSERT_FALSE(writeStringToFile(helper, "helper <- function() TRUE\n"));
    ASSERT_FALSE(filterMonitorEntry(&context, helper));
+   EXPECT_EQ(projectDir_, context.packageDirectoryInProject());
+   notifyDirectoryStatus(&context, rDirectory, false);
    EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
 
    // Ignored removals need not reach the subscriber either.
    ASSERT_FALSE(helper.remove());
+   notifyDirectoryStatus(&context, rDirectory, false);
    EXPECT_EQ(projectDir_, context.packageDirectoryInProject());
 
    ASSERT_FALSE(writeStringToFile(helper, "helper <- function() TRUE\n"));
@@ -717,13 +725,17 @@ TEST_F(PackageProjectInfoTests, LinkedNonSourceFixtureKeepsPackageCoverage)
    openProject(&context, "None", "", true);
    EXPECT_EQ(projectDir_, context.packageDirectoryInProject());
 
-   // A target can become a directory without any project monitor event.
+   // A target can become a directory without any project monitor event; the
+   // retained link observation is checked again on the next batch.
+   FilePath fixtures = fixture.getParent();
    ASSERT_FALSE(external.remove());
    ASSERT_FALSE(external.ensureDirectory());
    ASSERT_FALSE(writeStringToFile(external.completeChildPath("helper.R"), "helper <- function() TRUE\n"));
+   notifyDirectoryStatus(&context, fixtures, false);
    EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
    ASSERT_FALSE(external.remove());
    ASSERT_FALSE(writeStringToFile(external, "x,y\n1,2\n"));
+   notifyDirectoryStatus(&context, fixtures, false);
    EXPECT_EQ(projectDir_, context.packageDirectoryInProject());
 }
 
@@ -873,6 +885,7 @@ TEST_F(PackageProjectInfoTests, RefreshesImportsAcrossIgnoreRuleChanges)
    EXPECT_TRUE(r_util::RSourceIndex::getImportedPackages().empty());
 
    ASSERT_FALSE(writeStringToFile(ignoreFile, "# included again\n"));
+   notifyFileChanged(&context, ignoreFile, core::system::FileChangeEvent::FileModified);
    EXPECT_EQ(projectDir_, context.packageDirectoryInProject());
    EXPECT_EQ(std::set<std::string>{"splines"}, r_util::RSourceIndex::getImportedPackages());
 }

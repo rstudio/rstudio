@@ -897,6 +897,7 @@ void ProjectContext::onDeferredInit(bool newSession)
 {
    // update DESCRIPTION file index
    updatePackageInfo();
+   updatePackageDirectoryInProject();
 
    // kickoff file monitoring for this directory
    using boost::bind;
@@ -969,6 +970,7 @@ void ProjectContext::fileMonitorRegistered(
    // Changes between the initial metadata read and monitor registration may
    // appear only in the initial snapshot, without a separate file event.
    updatePackageInfo();
+   updatePackageDirectoryInProject();
 
    // re-augment .Rbuildignore to pick up any AI tool-state directories
    // (.posit/assistant, legacy .positai) that were created between project
@@ -1048,6 +1050,7 @@ void ProjectContext::fileMonitorFilesChanged(
 
    // own handler
    onProjectFilesChanged(*this, events);
+   updatePackageDirectoryInProject();
 
    // if an AI tool-state directory (or, for the nested ".posit/assistant", its
    // parent ".posit") was added, augment .Rbuildignore now -- we don't add
@@ -1088,6 +1091,7 @@ void ProjectContext::fileMonitorTermination(const Error& error)
       failedMonitorDirectories_.clear();
       sourceIndexExcludedDirectories_.clear();
       resetFileMonitorCoverage();
+      updatePackageDirectoryInProject();
 
       // notify end-user if this was an error condition
       if (error)
@@ -1279,23 +1283,30 @@ FilePath ProjectContext::packageDirectory() const
    return directory();
 }
 
-void ProjectContext::noteSourceIndexExcludedDirectory(const FilePath& directory) const
+void ProjectContext::noteSourceIndexExcludedDirectory(const FilePath& directory)
 {
-   sourceIndexExcludedDirectories_.insert(directory);
+   // Indexing runs after the monitor batch that announced the directory, so
+   // an exclusion affecting the package arrives after the last scope update.
+   bool inserted = sourceIndexExcludedDirectories_.insert(directory).second;
+   if (inserted && !indexedPackageDirectory_.isEmpty() &&
+       (indexedPackageDirectory_.isWithin(directory) ||
+        directory.isWithin(indexedPackageDirectory_.completeChildPath("R"))))
+   {
+      updatePackageDirectoryInProject();
+   }
 }
 
-FilePath ProjectContext::packageDirectoryInProject() const
+void ProjectContext::updatePackageDirectoryInProject()
 {
    FilePath packageDir = resolvePackageDirectoryInProject();
-   if (packageDir != indexedPackageDirectory_)
-   {
-      // Ignore rules and symlinks can change without a configuration event.
-      // Publish transitions so imports and metadata match the effective scope.
-      indexedPackageDirectory_ = packageDir;
-      updatePackageInfo();
-      onPackageDirectoryChanged(packageDir);
-   }
-   return packageDir;
+   if (packageDir == indexedPackageDirectory_)
+      return;
+
+   // Entering scope switches DESCRIPTION from on-demand reads to monitor
+   // events, so the cached metadata must be current at the transition.
+   indexedPackageDirectory_ = packageDir;
+   updatePackageInfo();
+   onPackageDirectoryChanged(packageDir);
 }
 
 FilePath ProjectContext::resolvePackageDirectoryInProject() const
@@ -1397,7 +1408,7 @@ FilePath ProjectContext::resolvePackageDirectoryInProject() const
    {
       if (modules::code_search::isIgnoredDirectory(dir, true))
       {
-         noteSourceIndexExcludedDirectory(dir);
+         sourceIndexExcludedDirectories_.insert(dir);
          return FilePath();
       }
       if (dir.isSymlink() ||
@@ -1417,7 +1428,7 @@ FilePath ProjectContext::resolvePackageDirectoryInProject() const
          return FilePath();
       if (name == "R" && modules::code_search::isIgnoredDirectory(path, true))
       {
-         noteSourceIndexExcludedDirectory(path);
+         sourceIndexExcludedDirectories_.insert(path);
          return FilePath();
       }
       if (name == "R" &&
@@ -1432,8 +1443,19 @@ FilePath ProjectContext::resolvePackageDirectoryInProject() const
 
 const r_util::RPackageInfo& ProjectContext::packageInfo() const
 {
-   if (!packageInfoInitialized_ || !hasFileMonitor() || packageDirectoryInProject().isEmpty())
+   if (!packageInfoInitialized_)
+   {
       updatePackageInfo();
+   }
+   else if (!packageDirectory().isEmpty() &&
+            (!hasFileMonitor() || indexedPackageDirectory_.isEmpty()))
+   {
+      // No file events reach an unmonitored package directory. A stat is
+      // cheap enough per call; only re-parse when DESCRIPTION has changed.
+      FilePath description = packageDirectory().completeChildPath("DESCRIPTION");
+      if (FileInfo(description) != descriptionInfo_)
+         updatePackageInfo();
+   }
 
    return packageInfo_;
 }
@@ -1445,8 +1467,14 @@ void ProjectContext::updatePackageInfo() const
    packageInfo_ = r_util::RPackageInfo();
    packageInfoInitialized_ = true;
 
+   descriptionInfo_ = FileInfo();
    FilePath packageDir = packageDirectory();
-   if (packageDir.isEmpty() || !packageDir.completeChildPath("DESCRIPTION").exists())
+   if (packageDir.isEmpty())
+      return;
+
+   FilePath description = packageDir.completeChildPath("DESCRIPTION");
+   descriptionInfo_ = FileInfo(description);
+   if (!description.exists())
       return;
 
    r_util::RPackageInfo info;

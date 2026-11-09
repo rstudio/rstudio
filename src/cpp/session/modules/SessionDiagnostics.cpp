@@ -1058,20 +1058,24 @@ void onFilesChanged(
    }
 }
 
-void afterSessionInitHook(bool newSession)
+void onPackageDirectoryChanged(projects::ProjectContext& context, const FilePath& packageDir)
 {
-   if (!projects::projectContext().packageDirectoryInProject().isEmpty())
-   {
-      onNAMESPACEchanged(projects::projectContext().packageDirectoryInProject());
-   }
+   onNAMESPACEchanged(packageDir);
 
-   if (!projects::projectContext().packageDirectoryInProject().isEmpty() &&
-       projects::projectContext().isPackageProject())
+   // The project's own package is treated as loaded. Scope can be established
+   // after the session init hook has run (for example when the initial monitor
+   // scan outlasts the hook's delay), so infer it on every transition.
+   if (!packageDir.isEmpty() && context.isPackageProject())
    {
-      std::string packageName = projects::projectContext().packageInfo().name();
-      RSourceIndex::addGloballyInferredPackage(packageName);
+      RSourceIndex::addGloballyInferredPackage(context.packageInfo().name());
       r_packages::AsyncPackageInformationProcess::update();
    }
+}
+
+void afterSessionInitHook(bool newSession)
+{
+   projects::ProjectContext& context = projects::projectContext();
+   onPackageDirectoryChanged(context, context.packageDirectoryInProject());
 }
 
 bool collectLint(int depth,
@@ -1129,8 +1133,10 @@ SEXP rs_lintDirectory(SEXP directorySEXP)
 
 void monitorProjectNamespace(projects::ProjectContext& context)
 {
-   context.onPackageDirectoryChanged.connect(onNAMESPACEchanged);
-   context.onConfigChanged.connect([&context]() { context.packageDirectoryInProject(); });
+   // The project context publishes scope transitions from its configuration
+   // and monitor callbacks, so no polling of the package directory is needed.
+   context.onPackageDirectoryChanged.connect(
+         boost::bind(onPackageDirectoryChanged, boost::ref(context), _1));
 
    projects::FileMonitorCallbacks cb;
    cb.onMonitoringEnabled = [&context](const tree<FileInfo>&)
@@ -1139,7 +1145,6 @@ void monitorProjectNamespace(projects::ProjectContext& context)
       // between session initialization and the initial monitor snapshot.
       onNAMESPACEchanged(context.packageDirectoryInProject());
    };
-   cb.onMonitoringDisabled = [&context]() { context.packageDirectoryInProject(); };
    cb.onFilesChanged = [&context](const std::vector<core::system::FileChangeEvent>& events)
    {
       onFilesChanged(context.packageDirectoryInProject(), events);

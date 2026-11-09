@@ -185,12 +185,15 @@ public:
       updateDefaultEncoding();
       updateBuildTargetPath();
       updatePackageInfo();
+      updatePackageDirectoryInProject();
       onConfigChanged();
    }
 
    // signal emitted when config changes
    RSTUDIO_BOOST_SIGNAL<void()> onConfigChanged;
-   mutable RSTUDIO_BOOST_SIGNAL<void(const core::FilePath&)> onPackageDirectoryChanged;
+
+   // Emitted when packageDirectoryInProject() changes, with the new value.
+   RSTUDIO_BOOST_SIGNAL<void(const core::FilePath&)> onPackageDirectoryChanged;
 
    core::Error readVcsOptions(RProjectVcsOptions* pOptions) const;
    core::Error writeVcsOptions(const RProjectVcsOptions& options) const;
@@ -234,11 +237,16 @@ public:
 
    // Return the package directory only when project indexing covers it.
    // Disabled indexing, external paths, symlinks, and excluded directories
-   // return an empty path (as does a session with no project).
-   core::FilePath packageDirectoryInProject() const;
+   // return an empty path (as does a session with no project). The value is
+   // cached: it is recomputed on configuration changes and monitor callbacks,
+   // so it reflects the state as of the last monitor batch.
+   core::FilePath packageDirectoryInProject() const
+   {
+      return indexedPackageDirectory_;
+   }
 
    // Retain source-index exclusions until a fresh monitor snapshot is indexed.
-   void noteSourceIndexExcludedDirectory(const core::FilePath& directory) const;
+   void noteSourceIndexExcludedDirectory(const core::FilePath& directory);
 
    // Metadata and package detection share the DESCRIPTION refreshed by the
    // file monitor. Without monitoring, refresh on demand.
@@ -299,6 +307,7 @@ private:
    void resetFileMonitorCoverage();
    FileMonitorFilterContext createFileMonitorFilterContext() const;
    core::FilePath resolvePackageDirectoryInProject() const;
+   void updatePackageDirectoryInProject();
 
    core::FilePath vcsOptionsFilePath() const;
    core::Error buildOptionsFile(core::Settings* pOptionsFile) const;
@@ -326,6 +335,9 @@ private:
    RProjectBuildOptions buildOptions_;
    mutable core::r_util::RPackageInfo packageInfo_;
    mutable bool packageInfoInitialized_;
+   // DESCRIPTION metadata as of the last read; unmonitored package
+   // directories re-read only when it changes.
+   mutable core::FileInfo descriptionInfo_;
    bool isNewProject_;
 
    bool hasFileMonitor_;
@@ -337,7 +349,7 @@ private:
    enum class UnmonitoredSource { File, Directory, Link };
    mutable std::mutex unmonitoredSourcesMutex_;
    mutable std::map<core::FilePath, UnmonitoredSource> unmonitoredSources_;
-   mutable core::FilePath indexedPackageDirectory_;
+   core::FilePath indexedPackageDirectory_;
    mutable boost::shared_ptr<FileMonitorFilterContext> packageFilterContext_;
    std::vector<std::string> monitorSubscribers_;
 
