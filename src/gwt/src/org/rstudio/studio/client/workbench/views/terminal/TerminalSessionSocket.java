@@ -113,19 +113,14 @@ public class TerminalSessionSocket
                                 int webSocketPingInterval,
                                 int webSocketConnectTimeout)
    {
-      // On desktop, rapid typing sometimes causes RPC messages for
-      // writeStandardInput to arrive out of sequence in the terminal; send a
-      // sequence number with each message so the server can put them back in order.
-      this(session, xterm, webSocketPingInterval, webSocketConnectTimeout,
-           TerminalWebSocket::new, Desktop.hasDesktopFrame());
+      this(session, xterm, webSocketPingInterval, webSocketConnectTimeout, TerminalWebSocket::new);
    }
 
    TerminalSessionSocket(Session session,
                          Emulator xterm,
                          int webSocketPingInterval,
                          int webSocketConnectTimeout,
-                         TerminalWebSocket.Factory socketFactory,
-                         boolean sequenceRpcInput)
+                         TerminalWebSocket.Factory socketFactory)
    {
       session_ = session;
       xterm_ = xterm;
@@ -133,7 +128,6 @@ public class TerminalSessionSocket
       webSocketPingInterval_ = webSocketPingInterval;
       webSocketConnectTimeout_ = webSocketConnectTimeout;
       socketFactory_ = socketFactory;
-      sequenceRpcInput_ = sequenceRpcInput;
    }
 
    /**
@@ -460,10 +454,8 @@ public class TerminalSessionSocket
    }
 
    // Input queued while the switch to RPC was in flight is written as one
-   // request. Sent as a request per keystroke, a burst can reach the server
-   // out of order, and only desktop numbers RPC input so the server can put
-   // it back in order. Input typed while the burst is in flight stays queued
-   // behind it, so the switch completes once nothing is left to write.
+   // request, so the switch completes once nothing is left to write. Input
+   // typed while the burst is in flight stays queued behind it.
    private void flushPendingInput(final int connection)
    {
       if (pendingInput_.isEmpty())
@@ -505,10 +497,12 @@ public class TerminalSessionSocket
       }));
    }
 
-   // Sequence numbers are assigned here, when input is actually written over
-   // RPC, rather than when it was typed. Input typed while the WebSocket was
-   // still in use, and queued after its send was rejected, is then numbered
-   // in order with the input that follows it.
+   // Each keystroke is its own RPC request, and concurrent requests can reach
+   // the server out of order (#19542), so every write carries a sequence
+   // number the server uses to put them back in order. Numbers are assigned
+   // here, when input is actually written over RPC, rather than when it was
+   // typed, so input queued after a rejected WebSocket send is numbered in
+   // order with the input that follows it.
    private void writeRpcInput(PendingInput input)
    {
       consoleProcess_.writeStandardInput(
@@ -517,9 +511,6 @@ public class TerminalSessionSocket
 
    private int nextInputSequence()
    {
-      if (!sequenceRpcInput_)
-         return ShellInput.IGNORE_SEQUENCE;
-
       if (inputSequence_ == ShellInput.IGNORE_SEQUENCE)
       {
          // First message sent for this connection: flush the server-side
@@ -626,6 +617,5 @@ public class TerminalSessionSocket
 
    private final int webSocketPingInterval_;
    private final int webSocketConnectTimeout_;
-   private final boolean sequenceRpcInput_;
    private static final TerminalConstants constants_ = com.google.gwt.core.client.GWT.create(TerminalConstants.class);
 }

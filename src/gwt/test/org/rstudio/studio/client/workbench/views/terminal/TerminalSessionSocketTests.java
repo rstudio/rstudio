@@ -209,18 +209,13 @@ public class TerminalSessionSocketTests extends GWTTestCase
    {
       Harness()
       {
-         this(false);
-      }
-
-      Harness(boolean sequenceRpcInput)
-      {
          socket = new TerminalSessionSocket(session, new Emulator(), 10, 10, (listener, ping, timeout) ->
                new TerminalWebSocket(listener, ping, timeout, url ->
                {
                   Socket created = new Socket(url);
                   sockets.add(created);
                   return created;
-               }, clock), sequenceRpcInput);
+               }, clock));
       }
 
       Process connect(Callback callback)
@@ -509,7 +504,7 @@ public class TerminalSessionSocketTests extends GWTTestCase
 
    public void testRejectedInputIsSequencedInOrderWithLaterInput()
    {
-      Harness h = new Harness(true);
+      Harness h = new Harness();
       Process process = h.connectClosing(new Callback());
       h.socket.dispatchInput("rejected", false, new Ack());
       h.socket.dispatchInput("typed during switch", false, new Ack());
@@ -589,14 +584,19 @@ public class TerminalSessionSocketTests extends GWTTestCase
       assertEquals(0, h.session.disconnected);
    }
 
-   public void testServerInputIsNotSequenced()
+   // Every keystroke is its own request and concurrent requests can arrive
+   // out of order, so RPC input is numbered on every platform, not only on
+   // desktop (#19542).
+   public void testRpcInputIsSequencedPerKeystroke()
    {
       Harness h = new Harness();
-      Process process = h.connectClosing(new Callback());
-      h.socket.dispatchInput("rejected", false, new Ack());
-      process.pendingRpc.onResponseReceived(null);
-      h.socket.dispatchInput("typed after switch", false, new Ack());
-      assertEquals(Arrays.asList(ShellInput.IGNORE_SEQUENCE, ShellInput.IGNORE_SEQUENCE), process.sequences);
+      Process process = h.connect(new Callback());
+      process.mode = ConsoleProcessInfo.CHANNEL_RPC;
+      h.socket.dispatchInput("e", false, new Ack());
+      h.socket.dispatchInput("c", false, new Ack());
+      h.socket.dispatchInput("h", false, new Ack());
+      assertEquals(Arrays.asList("e", "c", "h"), process.inputs);
+      assertEquals(Arrays.asList(ShellInput.FLUSH_SEQUENCE, 0, 1), process.sequences);
    }
 
    // GWT.create() is only legal once the test runs in the GWT module, not in a
