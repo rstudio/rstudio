@@ -251,6 +251,11 @@ TEST(SessionNodeToolsTest, ApplyEnvProxyOptionDropsInheritedFlagForInvalidValue)
    EXPECT_EQ(core::system::getenv(env, "NODE_USE_ENV_PROXY"), "");
 }
 
+// Windows environment names are case-insensitive (core::system::setenv and
+// Node both treat http_proxy and HTTP_PROXY as one variable), so the
+// lowercase-first precedence only exists on POSIX.
+#ifndef _WIN32
+
 TEST(SessionNodeToolsTest, ApplyEnvProxyOptionHonorsLowercasePrecedence)
 {
    // Node reads http_proxy before HTTP_PROXY, so an unused uppercase value
@@ -287,6 +292,40 @@ TEST(SessionNodeToolsTest, ApplyEnvProxyOptionEmptyLowercaseHidesUppercase)
 
    EXPECT_EQ(core::system::getenv(env, "NODE_USE_ENV_PROXY"), "1");
    EXPECT_EQ(core::system::getenv(env, "HTTP_PROXY"), "http://");
+}
+
+#endif // !_WIN32
+
+TEST(SessionNodeToolsTest, ApplyEnvProxyOptionMixedCaseName)
+{
+   core::system::Options env;
+   env.push_back(std::make_pair("Http_Proxy", "proxy.example.com:8080"));
+
+   applyEnvProxyOption(&env);
+
+   EXPECT_EQ(core::system::getenv(env, "NODE_USE_ENV_PROXY"), "1");
+#ifdef _WIN32
+   // Node reads it as http_proxy on Windows, so it must be normalized.
+   EXPECT_EQ(core::system::getenv(env, "http_proxy"), "http://proxy.example.com:8080");
+#else
+   // Node never reads this spelling on POSIX; leave it alone.
+   EXPECT_EQ(env[0].second, "proxy.example.com:8080");
+#endif
+}
+
+TEST(SessionNodeToolsTest, ApplyEnvProxyOptionMixedCaseInvalidValue)
+{
+   core::system::Options env;
+   env.push_back(std::make_pair("NODE_USE_ENV_PROXY", "1"));
+   env.push_back(std::make_pair("Https_Proxy", "http://"));
+
+   applyEnvProxyOption(&env);
+
+#ifdef _WIN32
+   EXPECT_EQ(core::system::getenv(env, "NODE_USE_ENV_PROXY"), "");
+#else
+   EXPECT_EQ(core::system::getenv(env, "NODE_USE_ENV_PROXY"), "1");
+#endif
 }
 
 } // namespace tests

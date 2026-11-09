@@ -30,6 +30,7 @@
 #include <cstdlib>
 #include <utility>
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
 #include <r/ROptions.hpp>
@@ -349,6 +350,18 @@ bool normalizeProxyUrl(const std::string& value, std::string* pNormalized)
 
 namespace {
 
+// Whether an environment entry is the named variable, with the platform's
+// rules: Windows names are case-insensitive, so Http_Proxy is read by Node
+// as http_proxy there and must be normalized too.
+bool isEnvironmentVariable(const core::system::Option& variable, const char* name)
+{
+#ifdef _WIN32
+   return boost::algorithm::iequals(variable.first, name);
+#else
+   return variable.first == name;
+#endif
+}
+
 // Node reads the lowercase spelling of a proxy variable first and falls back
 // to the uppercase one only when the lowercase variable is absent; an empty
 // lowercase value counts as present. Returns the name Node will read, or
@@ -362,7 +375,7 @@ const char* selectProxyVariable(const core::system::Options& environment,
    {
       for (const auto& variable : environment)
       {
-         if (variable.first == name)
+         if (isEnvironmentVariable(variable, name))
          {
             *pValue = variable.second;
             return name;
