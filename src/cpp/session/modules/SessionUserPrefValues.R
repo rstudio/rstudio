@@ -2200,6 +2200,16 @@
    clear = function() { .rs.clearUserPref("reduce_remote_filesystem_operations") }
 )
 
+# Show a notice in the Console when background file operations are reduced
+#
+# Whether to print a notice in the Console at startup when RStudio has reduced
+# background file operations for the current project.
+.rs.uiPrefs$showReducedFileOperationsNotice <- list(
+   get = function() { .rs.getUserPref("show_reduced_file_operations_notice") },
+   set = function(value) { .rs.setUserPref("show_reduced_file_operations_notice", value) },
+   clear = function() { .rs.clearUserPref("show_reduced_file_operations_notice") }
+)
+
 # Initial working directory for new terminals
 #
 # Initial directory for new terminals.

@@ -82,8 +82,11 @@ public abstract class FileSystemDialog extends ModalDialogBase
             {
                progress.onCompleted();
 
-               // navigate through the browser so an accept during the new
-               // folder's listing is deferred like any other
+               // entering the new folder supersedes a deferred accept, as in
+               // onSelectionCommit(); navigate through the browser so an
+               // accept during the new folder's listing is deferred like any
+               // other
+               acceptOnNavigated_ = false;
                browser_.cd(input);
             }
 
@@ -172,9 +175,17 @@ public abstract class FileSystemDialog extends ModalDialogBase
    {
       FileSystemItem item = event.getSelectedItem();
       if (item != null && item.isDirectory())
+      {
+         // a deferred accept waited for the listing this navigation supersedes
+         // (the context delivers only the latest); drop it rather than run it
+         // in a folder chosen after the accept was made
+         acceptOnNavigated_ = false;
          browser_.cd(item);
+      }
       else
+      {
          maybeAccept();
+      }
    }
 
    /**
