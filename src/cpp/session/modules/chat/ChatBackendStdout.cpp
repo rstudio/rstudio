@@ -15,6 +15,8 @@
 
 #include "ChatBackendStdout.hpp"
 
+#include "ChatLogging.hpp"
+
 namespace rstudio {
 namespace session {
 namespace modules {
@@ -38,7 +40,10 @@ std::vector<std::string> StdoutReader::append(std::uint64_t generation,
                                               std::vector<std::string>* pErrors)
 {
    if (generation_ == 0 || generation != generation_)
+   {
+      DLOG("Ignoring stdout from stopped or stale chat backend generation");
       return std::vector<std::string>();
+   }
 
    return reader_.append(chunk, pErrors);
 }
