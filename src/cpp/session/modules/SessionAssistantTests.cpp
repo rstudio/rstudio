@@ -270,6 +270,18 @@ TEST(SessionAssistant, StdoutReaderKeepsAHeaderCutOffAfterItsColon)
    EXPECT_EQ(errors.size(), 2u);
 }
 
+TEST(SessionAssistant, StdoutReaderKeepsAWholeHeaderBlockCutOffInALaterHeader)
+{
+   // The read ends in "Content-", which also starts "Content-Length". Keeping
+   // only that would drop the block's real Content-Length.
+   AgentStdoutReader reader;
+   std::vector<std::string> errors;
+   EXPECT_TRUE(reader.append(std::string(64 * 1024, 'a') + "Content-Length: 8\r\nContent-", &errors).empty());
+   EXPECT_EQ(errors.size(), 1u);
+   EXPECT_EQ(reader.append("Type: x\r\n\r\n{\"id\":1}", &errors), std::vector<std::string>{"{\"id\":1}"});
+   EXPECT_EQ(errors.size(), 1u);
+}
+
 TEST(SessionAssistant, StdoutReaderResumesAtAHeaderWithSpaceBeforeTheColonBehindStrayOutput)
 {
    // Junk that ends like the start of a header name is kept, and glues onto
