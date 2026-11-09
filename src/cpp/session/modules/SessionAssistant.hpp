@@ -79,8 +79,10 @@ std::string agentStderrTail(const std::string& text, std::size_t maxLength);
 // header and its body, so a partial message is kept until the rest arrives.
 // A header block without a valid Content-Length is skipped up to the next
 // Content-Length header, with a description added to errors. A
-// Content-Length that does not match its body cannot be detected, and costs
-// the message after it. Exposed for testing.
+// Content-Length that does not match its body cannot be detected. One too
+// short costs the message after it. One too long is filled out with the
+// messages after it, as many as fit in the excess, which can be up to 64 MiB
+// of output. Exposed for testing.
 class AgentStdoutReader
 {
 public:
