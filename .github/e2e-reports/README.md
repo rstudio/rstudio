@@ -105,7 +105,9 @@ All of this is done once, by someone with the `ide-build` AWS profile
   `nginx` and `tailscaled`; `tailscale serve status` shows the mapping.
 - **Updates**: `dnf-automatic` applies security updates daily and Tailscale
   updates itself (`tailscale set --auto-update`). A kernel update takes
-  effect at the next stop/start.
+  effect at the next stop/start, which is also when `mount-s3` (installed
+  from its release bucket, outside dnf's repositories) picks up a new
+  release.
 - **`blobs/<run id>/<label>/`** at the bucket root holds each run's
   per-shard blob reports, archived by the merge jobs before they delete the
   GitHub artifacts and restored on a re-run (`.github/actions/os-e2e-blobs`).
