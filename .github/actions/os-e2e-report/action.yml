@@ -162,22 +162,35 @@ runs:
       env:
         GH_TOKEN: ${{ inputs.github-token }}
         PREFIX: playwright-blob-report-${{ inputs.label }}-
+        SHARD_COUNT: ${{ inputs.shard-count }}
       run: |
-        # Every page first, then the deletes: removing entries while pages
-        # are still being fetched shifts the remaining ones across page
-        # boundaries and skips some. Other engines' merge jobs delete from
-        # the same list at the same time in a run-all workflow, which can
-        # shift entries too, so list again afterwards and repeat until a
-        # pass finds nothing left.
-        for pass in 1 2 3; do
-          mapfile -t ids < <(gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?per_page=100" \
-            --jq ".artifacts[] | select(.name | startswith(\"$PREFIX\")) | .id")
-          [ "${#ids[@]}" -eq 0 ] && break
-          echo "Pass $pass: deleting ${#ids[@]} blob artifact(s)."
-          for id in "${ids[@]}"; do
-            gh api -X DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$id" > /dev/null \
-              || echo "::warning::Could not delete artifact $id; it expires on its own within a day."
+        delete() {
+          gh api -X DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$1" > /dev/null \
+            || echo "::warning::Could not delete artifact $1; it expires on its own within a day."
+        }
+        list() {
+          gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?per_page=100&$1" --jq "$2"
+        }
+
+        # One exact-name query per shard (the shards are numbered 1..N, see
+        # os-e2e-shards). The run's artifact list is shared with the other
+        # engines' merge jobs in a run-all workflow, whose deletions shift a
+        # paginated listing while it is being read; an exact-name query is a
+        # single small page, so nothing moves out of it.
+        [[ $SHARD_COUNT =~ ^[0-9]+$ ]] || SHARD_COUNT=0
+        for shard in $(seq 1 "$SHARD_COUNT"); do
+          for id in $(list "name=$PREFIX$shard" '.artifacts[].id'); do
+            echo "Deleting $PREFIX$shard ($id)."
+            delete "$id"
           done
+        done
+
+        # Anything else with the prefix (there should be nothing): listed in
+        # full before deleting, since deleting while paging skips entries.
+        mapfile -t ids < <(list "" ".artifacts[] | select(.name | startswith(\"$PREFIX\")) | .id")
+        for id in "${ids[@]}"; do
+          echo "Deleting leftover blob artifact $id."
+          delete "$id"
         done
 
     # Release-gate floor, last so the reporting above still runs. A run that
