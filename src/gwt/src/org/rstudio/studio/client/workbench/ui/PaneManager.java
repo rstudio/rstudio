@@ -3365,8 +3365,7 @@ public class PaneManager
          if (!getTab(tab).isSuppressed())
             labels.add(getTabLabel(tab));
       }
-      minimized.setTabs(labels.toArray(new String[labels.size()]));
-      minimized.setSelectedIndex(tabPanel.getSelectedIndex());
+      minimized.setTabs(labels.toArray(new String[labels.size()]), tabPanel.getSelectedIndex());
    }
 
    private String getTabLabel(Tab tab)

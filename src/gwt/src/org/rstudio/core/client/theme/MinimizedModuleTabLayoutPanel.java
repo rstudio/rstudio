@@ -56,10 +56,9 @@ public class MinimizedModuleTabLayoutPanel
    }
 
    /**
-    * Replace the tabs. Follow with setSelectedIndex(), which marks the
-    * selected tab and makes it the strip's tab stop.
+    * Replace the tabs, marking the one at selectedIndex as selected.
     */
-   public void setTabs(String[] tabNames)
+   public void setTabs(String[] tabNames, int selectedIndex)
    {
       FlowPanel tabList = getTabList();
       tabList.clear();
@@ -89,6 +88,7 @@ public class MinimizedModuleTabLayoutPanel
          tabList.add(tab);
          tabs_.add(tab);
       }
+      setSelectedIndex(selectedIndex);
    }
 
    /**
