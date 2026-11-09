@@ -29,8 +29,7 @@ import i18next from 'i18next';
 import { spawnSync } from 'child_process';
 import { changeLanguage } from './i18n-manager';
 import { randomUUID } from 'crypto';
-import { appState } from './app-state';
-import { ModalDialogTracker } from './modal-dialog-tracker';
+import { appState, hasApplication } from './app-state';
 import { isOzonePlatformChromiumArgument } from './electron-flags';
 
 // work around Electron resolving the application path to 'app.asar'
@@ -518,15 +517,8 @@ export async function createStandaloneErrorDialog(
     // startup can fail before the Application singleton (which owns the modal
     // tracker) exists, e.g. when desktop options cannot be read (#19496); the
     // dialog is the only feedback the user gets, so show it untracked then
-    let modalTracker: ModalDialogTracker | undefined;
-    try {
-      modalTracker = appState().modalTracker;
-    } catch {
-      modalTracker = undefined;
-    }
-
-    if (modalTracker) {
-      await modalTracker.trackElectronModalAsync(showDialog);
+    if (hasApplication()) {
+      await appState().modalTracker.trackElectronModalAsync(showDialog);
     } else {
       await showDialog();
     }

@@ -75,6 +75,13 @@ export function appState(): AppState {
 }
 
 /**
+ * @returns Whether the application singleton has been set
+ */
+export function hasApplication(): boolean {
+  return rstudio !== null;
+}
+
+/**
  * @returns Set application singleton
  */
 export function setApplication(app: Application): void {

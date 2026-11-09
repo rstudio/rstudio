@@ -23,7 +23,8 @@ import { FilePath } from '../../../src/core/file-path';
 import { getenv, setenv, unsetenv } from '../../../src/core/environment';
 import { clearCoreSingleton } from '../../../src/core/core-state';
 import { NullLogger, setLogger } from '../../../src/core/logger';
-import { clearApplicationSingleton } from '../../../src/main/app-state';
+import { appState, clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
+import { Application } from '../../../src/main/application';
 
 import * as Utils from '../../../src/main/utils';
 import { userHomePath } from '../../../src/core/user';
@@ -216,6 +217,27 @@ describe('Utils', () => {
       showMessageBox.restore();
       consoleError.restore();
       window.destroy();
+    }
+  });
+
+  it('createStandaloneErrorDialog tracks the dialog once the application is set', async () => {
+    clearApplicationSingleton();
+    setApplication(new Application());
+    const track = sinon.spy(appState().modalTracker, 'trackElectronModalAsync');
+    const showMessageBox = sinon.stub(dialog, 'showMessageBox').resolves({ response: 0, checkboxChecked: false });
+    const consoleError = sinon.stub(console, 'error');
+    const window = new BrowserWindow({ show: false });
+    try {
+      await Utils.createStandaloneErrorDialog('title', 'message', { window, shouldCloseWindow: false });
+      assert.isTrue(track.calledOnce);
+      assert.isTrue(showMessageBox.calledOnce);
+      assert.isTrue(consoleError.notCalled);
+    } finally {
+      track.restore();
+      showMessageBox.restore();
+      consoleError.restore();
+      window.destroy();
+      clearApplicationSingleton();
     }
   });
 

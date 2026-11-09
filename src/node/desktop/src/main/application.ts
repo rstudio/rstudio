@@ -35,6 +35,7 @@ import {
 } from './detect-r';
 import { GwtCallback } from './gwt-callback';
 import { PendingWindow } from './pending-window';
+import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { exitFailure, exitSuccess, ProgramStatus, run } from './program-status';
 import { registerProcessDiagnostics } from './process-diagnostics';
 import { SatelliteWindow } from './satellite-window';
@@ -125,6 +126,7 @@ export class Application implements AppState {
     // surface any problems in an error dialog once the app is ready
     // https://github.com/rstudio/rstudio/issues/18179
     this.checkStateDirectories();
+    this.reportDesktopOptionsRecovery();
 
     // attempt to remove stale lockfiles, as they can impede application startup
     try {
@@ -180,6 +182,38 @@ export class Application implements AppState {
           `${i18next.t('applicationTs.stateFolderErrorPrefix')}\n\n${details}\n\n${i18next.t(
             'applicationTs.stateFolderErrorSuffix',
           )}`,
+        ),
+      )
+      .catch((error: unknown) => logger().logError(error));
+  }
+
+  /**
+   * Desktop options are read before the file logger or this Application
+   * exist, so a config.json moved aside at that point (#19496) could not be
+   * logged or shown then. Do both now: the user's zoom, window bounds and
+   * fonts have just been reset, and the backup is where they can get them back.
+   */
+  private reportDesktopOptionsRecovery(): void {
+    const recovery = ElectronDesktopOptions().configRecovery();
+    if (!recovery) {
+      return;
+    }
+
+    logger().logWarning(
+      `Could not read ${recovery.configPath} (${recovery.reason}); moved it to ${recovery.backupPath} and reset desktop options to their defaults.`,
+    );
+
+    // as above, the dialog has to wait for the app to be ready
+    app
+      .whenReady()
+      .then(async () =>
+        createStandaloneErrorDialog(
+          i18next.t('applicationTs.desktopOptionsResetTitle'),
+          i18next.t('applicationTs.desktopOptionsResetMessage', {
+            configPath: recovery.configPath,
+            backupPath: recovery.backupPath,
+            reason: recovery.reason,
+          }),
         ),
       )
       .catch((error: unknown) => logger().logError(error));
