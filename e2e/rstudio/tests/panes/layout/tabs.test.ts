@@ -5,6 +5,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import {
   executeCommand, getPref, isCommandChecked, resetLayoutZoom, resetSourcePaneState, setPref,
 } from '@utils/commands';
+import { CONSOLE_INPUT } from '@pages/console_pane.page';
 import type { Page } from 'playwright';
 
 const WORKBENCH_TABS = [
@@ -29,6 +30,7 @@ const TAB_PLOTS = '#rstudio_workbench_tab_plots';
 
 const ENV_PANEL = '#rstudio_workbench_panel_environment';
 const CONSOLE_PANE = '#rstudio_Console_pane';
+const SOURCE_PANE = '#rstudio_Source_pane';
 const TABSET1_PANE = '#rstudio_TabSet1_pane';
 const TABSET2_PANE = '#rstudio_TabSet2_pane';
 
@@ -257,6 +259,40 @@ test.describe('Workbench tabs', () => {
     await expect(envTab).toHaveAttribute('tabindex', '-1');
   });
 
+  test('minimized tab strip keys: Home, End, wrapping arrows, Space', async ({ rstudioPage: page }) => {
+    await executeCommand(page, 'maximizeTabSet2');
+    const tablist = page.getByRole('region', { name: 'TabSet1 minimized', exact: true })
+      .getByRole('tablist');
+    const tabs = tablist.getByRole('tab');
+    const first = tabs.first();
+    const last = tabs.last();
+    await expect(first).toHaveAttribute('aria-selected', 'true');
+
+    await first.focus();
+    await page.keyboard.press('End');
+    await expect(last).toBeFocused();
+    await page.keyboard.press('ArrowRight');
+    await expect(first).toBeFocused();
+    await page.keyboard.press('ArrowLeft');
+    await expect(last).toBeFocused();
+    await page.keyboard.press('Home');
+    await expect(first).toBeFocused();
+
+    // Modified keys are left to the browser and other handlers.
+    await page.keyboard.press('Shift+ArrowRight');
+    await expect(first).toBeFocused();
+    await expect(tablist).toBeVisible();
+
+    // Space activates like Enter.
+    await page.keyboard.press('ArrowRight');
+    const secondName = (await tabs.nth(1).textContent())!;
+    await page.keyboard.press('Space');
+    await expect(tablist).toBeHidden();
+    await expect(page.locator(TABSET1_PANE).getByRole('tab', { name: secondName, exact: true }))
+      .toHaveAttribute('aria-selected', 'true');
+    await expectFocusIn(page, TABSET1_PANE);
+  });
+
   // Leaving the minimized strip hides whatever in it had focus, so focus has
   // to move into the pane. The layout changes differently with and without
   // animation, so both are covered.
@@ -276,6 +312,37 @@ test.describe('Workbench tabs', () => {
       test('a minimized pane restores from its tab strip by keyboard', async ({ rstudioPage: page }) => {
         await restoreMinimizedPaneByKeyboard(page);
       });
+
+      test('clicking a minimized tab leaves focus that is elsewhere alone', async ({ rstudioPage: page }) => {
+        await executeCommand(page, 'maximizeTabSet2');
+        const region = page.getByRole('region', { name: 'TabSet1 minimized', exact: true });
+        await page.locator(CONSOLE_INPUT).focus();
+        // Environment, the selected tab, takes no focus of its own on
+        // selection (History focuses its search box).
+        await region.getByRole('tab', { name: 'Environment', exact: true }).click();
+
+        await expect(region).toBeHidden();
+        await expect(page.locator(ENV_PANEL)).toBeVisible();
+        await expect(page.locator(CONSOLE_INPUT)).toBeFocused();
+      });
+
+      for (const [name, pane] of [['Source', SOURCE_PANE], ['Console', CONSOLE_PANE]]) {
+        test(`Restore ${name} on a minimized pane moves focus into the pane`, async ({ rstudioPage: page }) => {
+          // Source and Console show Minimize buttons only with a document open.
+          await executeCommand(page, 'newSourceDoc');
+          try {
+            await page.getByRole('button', { name: `Minimize ${name}`, exact: true }).click();
+            const region = page.getByRole('region', { name: `${name} minimized`, exact: true });
+            await region.getByRole('button', { name: `Restore ${name}`, exact: true }).focus();
+            await page.keyboard.press('Enter');
+
+            await expect(region).toBeHidden();
+            await expectFocusIn(page, pane);
+          } finally {
+            await resetSourcePaneState(page);
+          }
+        });
+      }
 
       for (const button of ['Restore TabSet1', 'Maximize TabSet1']) {
         test(`${button} on a minimized pane moves focus into the pane`, async ({ rstudioPage: page }) => {
