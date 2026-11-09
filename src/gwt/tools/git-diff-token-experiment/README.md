@@ -230,7 +230,7 @@ within 4,096 characters across both mapped ranges, including boundary newlines.
 | --- | ---: | ---: |
 | Maximum combined lines per group | 32, or 128 when ambiguous | 128 |
 | Maximum combined characters per group | 4,096 | 8,192 |
-| Character-sequence reads per group | 200,000 | 100,000 |
+| Character-sequence reads per group | 200,000 | 150,000 |
 | Character-sequence reads per update | 2,000,000 | 300,000 |
 | Characters submitted per update | 65,536 | 16,384 |
 

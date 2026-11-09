@@ -12,7 +12,7 @@ const BOUNDED_LIMITS = Object.freeze({
    totalCharacters: 65536,
    highlightLines: 128,
    highlightCharacters: 8192,
-   highlightGroupReads: 100000,
+   highlightGroupReads: 150000,
    highlightTotalReads: 300000,
    highlightTotalCharacters: 16384
 });

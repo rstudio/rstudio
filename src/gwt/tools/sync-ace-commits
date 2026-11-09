@@ -5,7 +5,7 @@ set -ex
 # Based on rstudio/montauk-daisy, including the already-shipped tokenizer
 # fixes from rstudio/rstudio-ace#13 and bounded diff refinement for #19218.
 REPOSITORY=https://github.com/rstudio/rstudio-ace.git
-REVISION=438daddf239cd989210ef48e088179b3e9e9176c
+REVISION=8fd0c0786da079adde29c3bc8e137933e07015a4
 
 TOOLS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "${TOOLS_DIR}"
