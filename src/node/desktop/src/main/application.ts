@@ -209,10 +209,12 @@ export class Application implements AppState {
       .then(async () =>
         createStandaloneErrorDialog(
           i18next.t('applicationTs.desktopOptionsResetTitle'),
+          // the native message box shows text, not HTML: keep the paths readable
           i18next.t('applicationTs.desktopOptionsResetMessage', {
             configPath: recovery.configPath,
             backupPath: recovery.backupPath,
             reason: recovery.reason,
+            interpolation: { escapeValue: false },
           }),
         ),
       )
