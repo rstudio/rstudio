@@ -192,11 +192,24 @@ TEST(SessionNodeToolsTest, NormalizeProxyUrlRejectsMissingHost)
    EXPECT_FALSE(normalizeProxyUrl(":8080", &out));
 }
 
-TEST(SessionNodeToolsTest, NormalizeProxyUrlRejectsEmbeddedWhitespace)
+TEST(SessionNodeToolsTest, NormalizeProxyUrlRejectsWhitespaceOutsideCredentials)
 {
    std::string out;
    EXPECT_FALSE(normalizeProxyUrl("http://proxy one:8080", &out));
    EXPECT_FALSE(normalizeProxyUrl("proxy.example.com 8080", &out));
+   EXPECT_FALSE(normalizeProxyUrl("http://user:pass@proxy one:8080", &out));
+   EXPECT_FALSE(normalizeProxyUrl("http://proxy.example.com:8080/some path", &out));
+   EXPECT_FALSE(normalizeProxyUrl("ht tp://proxy.example.com:8080", &out));
+}
+
+TEST(SessionNodeToolsTest, NormalizeProxyUrlKeepsWhitespaceInCredentials)
+{
+   // Node percent-encodes whitespace in the userinfo, so these already work.
+   std::string out;
+   EXPECT_TRUE(normalizeProxyUrl("http://user:my password@proxy.example.com:8080", &out));
+   EXPECT_EQ(out, "http://user:my password@proxy.example.com:8080");
+   EXPECT_TRUE(normalizeProxyUrl("user:my password@proxy.example.com:8080", &out));
+   EXPECT_EQ(out, "http://user:my password@proxy.example.com:8080");
 }
 
 TEST(SessionNodeToolsTest, ApplyEnvProxyOptionEnablesWithoutProxyVariables)

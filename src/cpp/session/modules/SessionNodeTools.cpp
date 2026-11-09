@@ -322,10 +322,6 @@ bool normalizeProxyUrl(const std::string& value, std::string* pNormalized)
       return true;
    }
 
-   // Internal whitespace cannot be repaired without guessing.
-   if (proxy.find_first_of(" \t\r\n") != std::string::npos)
-      return false;
-
    std::string::size_type schemeEnd = proxy.find("://");
    if (schemeEnd == std::string::npos)
    {
@@ -333,13 +329,21 @@ bool normalizeProxyUrl(const std::string& value, std::string* pNormalized)
       schemeEnd = 4;
    }
 
-   // Node rejects a URL with no host; anything else (scheme, port, credentials)
-   // is left for Node to interpret as the user wrote it.
-   std::string authority = proxy.substr(schemeEnd + 3);
-   authority = authority.substr(0, authority.find('/'));
-   std::string::size_type at = authority.rfind('@');
-   if (at != std::string::npos)
-      authority = authority.substr(at + 1);
+   // Node rejects a URL with no host, or with whitespace anywhere but in the
+   // credentials (which it percent-encodes); anything else (scheme, port,
+   // credentials) is left for Node to interpret as the user wrote it.
+   static const char* const kWhitespace = " \t\r\n";
+   if (proxy.find_first_of(kWhitespace) < schemeEnd)
+      return false;
+   std::string::size_type authorityStart = schemeEnd + 3;
+   std::string::size_type authorityEnd = proxy.find('/', authorityStart);
+   std::string::size_type hostStart = authorityStart;
+   std::string::size_type at = proxy.rfind('@', authorityEnd);
+   if (at != std::string::npos && at >= authorityStart)
+      hostStart = at + 1;
+   if (proxy.find_first_of(kWhitespace, hostStart) != std::string::npos)
+      return false;
+   std::string authority = proxy.substr(hostStart, authorityEnd - hostStart);
    std::string host = authority.substr(0, authority.find(':'));
    if (host.empty())
       return false;
