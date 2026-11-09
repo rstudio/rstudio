@@ -190,6 +190,22 @@ public class RemoteFileSystemContextTests extends GWTTestCase
       assertDirectory("/default");
    }
 
+   // #18959: a directory the user navigates to later fails outright, so a
+   // deferred accept cannot complete in a silently listed fallback
+   public void testOnlyOpeningNavigationFallsBack()
+   {
+      context_.cd("/missing");
+      server_.fail(0);
+      server_.succeed(1);
+      assertDirectory("/default");
+
+      context_.cd("/gone");
+      server_.fail(2);
+      assertEquals(3, server_.requestCount());
+      assertEquals(1, errors_);
+      assertDirectory("/default");
+   }
+
    private void assertDirectory(String path)
    {
       assertEquals(path, context_.pwd());

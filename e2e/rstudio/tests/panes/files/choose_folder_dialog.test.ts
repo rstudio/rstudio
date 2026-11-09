@@ -11,7 +11,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { dismissBlockingModals } from '@pages/modals.page';
 import { executeCommand } from '@utils/commands';
 import { TIMEOUTS } from '@utils/constants';
-import { FILE_LIST, holdListFiles } from '@utils/file-dialogs';
+import { FILE_LIST, LIST_FILES_RPC, holdListFiles } from '@utils/file-dialogs';
 import { rPathLiteral } from '@utils/r';
 import { useSuiteSandbox } from '@utils/sandbox';
 import type { Locator, Page } from 'playwright';
@@ -24,6 +24,8 @@ const CHOOSER = '.gwt-DialogBox[aria-label="Choose Directory"]';
 const CHOOSE_BTN = '#rstudio_file_accept_choose';
 const NEW_FOLDER_BTN = '#rstudio_file_new_folder';
 const TEXT_ENTRY = '#rstudio_text_entry';
+const SEARCH_INPUT = '#rstudio_find_files_text';
+const FIND_OK_BTN = '#rstudio_dlg_ok';
 const CURRENT_LOCATION = '[aria-current="location"]';
 
 const BASE_NAME = `pw-choose-folder-${Date.now()}`;
@@ -96,7 +98,8 @@ test.describe('Choose Directory dialog', () => {
   test.afterEach(async ({ rstudioPage: page }) => {
     // after a failure the chooser, or a prompt over it, can still be up, and
     // its glass would block the Cancel click below
-    if (await page.locator(CHOOSER).isVisible())
+    if (await page.locator(CHOOSER).isVisible() ||
+        await page.getByRole('alertdialog', { name: 'Error', exact: true }).isVisible())
       await dismissBlockingModals(page);
 
     const findDialog = page.locator(FIND_DIALOG);
@@ -174,6 +177,160 @@ test.describe('Choose Directory dialog', () => {
     } finally {
       await listing.cleanup();
     }
+  });
+
+  test('choosing while a missing folder is loading reports an error and stays put', async ({ rstudioPage: page }) => {
+    const chooser = await openChooserAt(page, base);
+    const original = await page.locator(SEARCH_IN_TEXT).inputValue();
+    const shown = await chooser.locator('#file_dialog_name_prompt').inputValue();
+    const missing = `missing-${Date.now()}`;
+    const listing = await holdListFiles(page);
+
+    try {
+      await chooser.getByRole('button', { name: 'Go to directory' }).click();
+      const prompt = page.getByRole('dialog', { name: 'Go To Folder' });
+      await prompt.locator(TEXT_ENTRY).fill(`${base}/${missing}`);
+      await prompt.getByRole('button', { name: 'OK' }).click();
+      await expect.poll(
+        () => listing.heldPaths().some((p) => p.endsWith(`/${missing}`)),
+        { timeout: TIMEOUTS.fileOpen },
+      ).toBe(true);
+      await chooser.locator(CHOOSE_BTN).click();
+
+      listing.release();
+      const error = page.getByRole('alertdialog', { name: 'Error', exact: true });
+      await expect(error).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      await error.getByRole('button', { name: 'OK' }).click();
+      await expect(chooser).toBeVisible();
+      await expect(chooser.locator(CURRENT_LOCATION)).toHaveText(BASE_NAME);
+      await expect(page.locator(SEARCH_IN_TEXT)).toHaveValue(original);
+
+      // Choosing again returns the folder still shown, not a fallback.
+      await expect(chooser.locator('#file_dialog_name_prompt')).toHaveValue(shown);
+      await chooser.locator(CHOOSE_BTN).click();
+      await expect(chooser).toBeHidden();
+      await expect(page.locator(SEARCH_IN_TEXT)).toHaveValue(new RegExp(`/${BASE_NAME}$`));
+    } finally {
+      await listing.cleanup();
+    }
+  });
+
+  test('canceling a missing-folder navigation does not show a late error', async ({ rstudioPage: page }) => {
+    const chooser = await openChooserAt(page, base);
+    const missing = `missing-${Date.now()}`;
+    const listing = await holdListFiles(page, (path) => path.endsWith(`/${missing}`));
+
+    try {
+      await chooser.getByRole('button', { name: 'Go to directory' }).click();
+      const prompt = page.getByRole('dialog', { name: 'Go To Folder' });
+      await prompt.locator(TEXT_ENTRY).fill(`${base}/${missing}`);
+      await prompt.getByRole('button', { name: 'OK' }).click();
+      await expect.poll(() => listing.held(), { timeout: TIMEOUTS.fileOpen }).toBe(1);
+      await chooser.locator(CHOOSE_BTN).click();
+      await chooser.getByRole('button', { name: 'Cancel' }).click();
+      await expect(chooser).toBeHidden();
+
+      const failedListing = page.waitForResponse((response) =>
+        LIST_FILES_RPC.test(response.url()) &&
+        String(response.request().postDataJSON()?.params?.[0]).endsWith(`/${missing}`),
+      );
+      listing.release();
+      await (await failedListing).finished();
+
+      // A later round trip (reopening lists the chooser's folder) orders the
+      // assertion after the stale response's callback has run.
+      await page.locator(SEARCH_IN_BROWSE).click();
+      await expect(chooser.locator(CURRENT_LOCATION)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      await expect(page.getByRole('alertdialog', { name: 'Error', exact: true })).toHaveCount(0);
+    } finally {
+      await listing.cleanup();
+    }
+  });
+
+  test('reopening the chooser ignores a canceled navigation response', async ({ rstudioPage: page }) => {
+    const chooser = await openChooserAt(page, base);
+    const missing = `missing-${Date.now()}`;
+    const listing = await holdListFiles(page, (path) => path.endsWith(`/${missing}`));
+
+    try {
+      await chooser.getByRole('button', { name: 'Go to directory' }).click();
+      const prompt = page.getByRole('dialog', { name: 'Go To Folder' });
+      await prompt.locator(TEXT_ENTRY).fill(`${base}/${missing}`);
+      await prompt.getByRole('button', { name: 'OK' }).click();
+      await expect.poll(() => listing.held(), { timeout: TIMEOUTS.fileOpen }).toBe(1);
+      await chooser.getByRole('button', { name: 'Cancel' }).click();
+      await expect(chooser).toBeHidden();
+
+      // The same Browse control reuses its context for the new chooser.
+      await page.locator(SEARCH_IN_BROWSE).click();
+      await expect(chooser.locator(CURRENT_LOCATION)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      await chooser.getByRole('button', { name: 'Go to directory' }).click();
+      await prompt.locator(TEXT_ENTRY).fill(`${base}/${SUBFOLDER}`);
+      await prompt.getByRole('button', { name: 'OK' }).click();
+      await expect(chooser.locator(CURRENT_LOCATION)).toHaveText(SUBFOLDER, { timeout: TIMEOUTS.fileOpen });
+
+      const failedListing = page.waitForResponse((response) =>
+        LIST_FILES_RPC.test(response.url()) &&
+        String(response.request().postDataJSON()?.params?.[0]).endsWith(`/${missing}`),
+      );
+      listing.release();
+      await (await failedListing).finished();
+
+      // A later round trip orders the assertions after the stale response's
+      // callback has run; a leaked error would block it behind an alert.
+      await chooser.getByRole('button', { name: 'Go to directory' }).click();
+      await prompt.locator(TEXT_ENTRY).fill(base);
+      await prompt.getByRole('button', { name: 'OK' }).click();
+      await expect(chooser.locator(CURRENT_LOCATION)).toHaveText(BASE_NAME, { timeout: TIMEOUTS.fileOpen });
+      await expect(page.getByRole('alertdialog', { name: 'Error', exact: true })).toHaveCount(0);
+
+      await chooser.locator(CHOOSE_BTN).click();
+      await expect(chooser).toBeHidden();
+      await expect(page.locator(SEARCH_IN_TEXT)).toHaveValue(new RegExp(`/${BASE_NAME}$`));
+    } finally {
+      await listing.cleanup();
+    }
+  });
+
+  test('a missing starting folder opens the chooser in the fallback folder without an error', async ({ rstudioPage: page }) => {
+    // Find in Files reopens with the folder it last searched. Search in a
+    // folder, delete it, and the chooser's opening navigation cannot land.
+    const goneName = `gone-${Date.now()}`;
+    const gone = `${base}/${goneName}`;
+    const console = new ConsolePaneActions(page);
+    await console.executeInConsole(
+      `dir.create(file.path(${rPathLiteral(gone)}, "${SUBFOLDER}"), recursive = TRUE)`,
+      { wait: true },
+    );
+    const chooser = await openChooserAt(page, gone);
+    await chooser.locator(CHOOSE_BTN).click();
+    await expect(chooser).toBeHidden();
+    await expect(page.locator(SEARCH_IN_TEXT)).toHaveValue(new RegExp(`/${goneName}$`));
+    // Find enables its OK button on key-up, so type rather than fill.
+    await page.locator(SEARCH_INPUT).click();
+    await page.locator(SEARCH_INPUT).pressSequentially('pw-choose-folder');
+    await page.locator(FIND_OK_BTN).click();
+    await expect(page.locator(FIND_DIALOG)).toBeHidden();
+    await console.executeInConsole(`unlink(${rPathLiteral(gone)}, recursive = TRUE)`, { wait: true });
+
+    await executeCommand(page, 'findInFiles');
+    await expect(page.locator(FIND_DIALOG)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+    await expect(page.locator(SEARCH_IN_TEXT)).toHaveValue(new RegExp(`/${goneName}$`));
+    await page.locator(SEARCH_IN_BROWSE).click();
+    await expect(chooser).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+
+    // An error would be raised as the opening listing arrives, which is when
+    // the breadcrumb gains a current location.
+    await expect(chooser.locator(CURRENT_LOCATION)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+    await expect(page.getByRole('alertdialog', { name: 'Error', exact: true })).toHaveCount(0);
+    const fallback = await chooser.locator('#file_dialog_name_prompt').inputValue();
+    expect(fallback).not.toBe('');
+    expect(fallback.endsWith(goneName)).toBe(false);
+
+    // The fallback is a real folder, so choosing it works.
+    await chooser.locator(CHOOSE_BTN).click();
+    await expect(chooser).toBeHidden();
+    await expect(page.locator(SEARCH_IN_TEXT)).toHaveValue(fallback);
   });
 
   test('opening the chooser focuses the folder list without selecting a folder', async ({ rstudioPage: page }) => {
