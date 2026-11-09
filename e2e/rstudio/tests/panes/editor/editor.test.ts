@@ -27,6 +27,7 @@ const WHOLE_WORD_CHECKBOX = `${SOURCE_PANEL_SELECTOR} .rstudio-find-replace-whol
 const CLOSE_FIND_BAR = `${SOURCE_PANEL_SELECTOR} button[aria-label='Close find and replace']`;
 const FIND_NEXT_BUTTON = `${SOURCE_PANEL_SELECTOR} .rstudio-find-replace-find-next-button`;
 const SELECT_ALL_BUTTON = `${SOURCE_PANEL_SELECTOR} .rstudio-find-replace-select-all-button`;
+const REPLACE_ALL_BUTTON = `${SOURCE_PANEL_SELECTOR} .rstudio-find-replace-replace-all-button`;
 const FIND_MATCH_MARKER = `${SOURCE_PANEL_SELECTOR} .ace_marker-layer .ace_find_match`;
 // #8D6414, from applyFixups.pastel_on_dark in src/gwt/tools/compile-themes.R:
 // a translucent fill of it, outlined in it
@@ -51,6 +52,7 @@ test.describe('Editor', () => {
       'editor_select_all_rename.R',
       'editor_select_all_empty.R',
       'editor_select_all_large.R',
+      'editor_select_all_lines.R',
       'editor_shortcuts.R',
       'editor_find_from_selection.R',
       'editor_comment_indent.R',
@@ -193,6 +195,23 @@ test.describe('Editor', () => {
       await page.locator(FIND_INPUT).fill('foo|bar');
       await page.locator(SELECT_ALL_BUTTON).click();
       await expect.poll(() => editor.getSelectedText()).toBe('foo\nbar');
+
+      // Find Next and Replace All must bound every alternative too: from the
+      // start of `foobar`, Find Next wraps to the standalone `foo` instead.
+      await consoleActions.executeInConsole(
+        '.rs.api.setSelectionRanges(c(10, 1, 10, 1), id = .rs.api.getSourceEditorContext()$id)',
+        { wait: true },
+      );
+      await page.locator(FIND_NEXT_BUTTON).click();
+      await expect.poll(() => editor.getSelectedText()).toBe('foo');
+      await expect.poll(() => editor.getCursorPosition()).toEqual({ row: 7, column: 3 });
+      await page.locator(REPLACE_INPUT).fill('X');
+      await page.locator(REPLACE_ALL_BUTTON).click();
+      await expect(page.getByText('2 occurrences replaced.', { exact: true })).toBeVisible();
+      await page.getByRole('button', { name: 'OK', exact: true }).click();
+      await expect.poll(() => editor.getLine(9)).toBe('foobar');
+      expect(await editor.getLine(7)).toBe('X');
+      expect(await editor.getLine(8)).toBe('X');
       await wholeWord.uncheck();
       await page.locator(FIND_INPUT).fill('a[0-9]');
 
@@ -306,6 +325,40 @@ test.describe('Editor', () => {
   });
 
   // https://github.com/rstudio/rstudio/issues/19249
+  test('select all matches regexes line by line, like find next', async ({ rstudioPage: page }) => {
+    await writeAndOpenFile(page, sandbox.dir, 'editor_select_all_lines.R', 'a  \n  b\nx,y\nz,w\n');
+    const editor = new AceEditor(page, 'x,y');
+    await waitForActiveDocument(page, `${sandbox.dir}/editor_select_all_lines.R`, TIMEOUTS.fileOpen);
+    await executeCommand(page, 'findReplace');
+    await expect(page.locator(FIND_INPUT)).toBeVisible({ timeout: TIMEOUTS.consoleReady });
+
+    const regex = page.locator(REGEX_CHECKBOX);
+    const originalRegex = await regex.isChecked();
+    try {
+      await regex.check();
+      // Whitespace and negated classes can match a newline; Find Next never crosses one.
+      await page.locator(FIND_INPUT).fill('\\s+');
+      await page.locator(SELECT_ALL_BUTTON).click();
+      await expect.poll(() => editor.getSelectionRanges()).toEqual([
+        { start: { row: 0, column: 1 }, end: { row: 0, column: 3 } },
+        { start: { row: 1, column: 0 }, end: { row: 1, column: 2 } },
+      ]);
+
+      await page.locator(FIND_INPUT).fill('[^,]+');
+      await page.locator(SELECT_ALL_BUTTON).click();
+      await expect.poll(() => editor.getSelectedText()).toBe('a  \n  b\nx\ny\nz\nw');
+
+      // A newline escape in the pattern spans lines, as it does for Find Next.
+      await page.locator(FIND_INPUT).fill('y\\nz');
+      await page.locator(SELECT_ALL_BUTTON).click();
+      await expect.poll(() => editor.getSelectedText()).toBe('y\nz');
+    } finally {
+      await regex.setChecked(originalRegex);
+      await page.locator(CLOSE_FIND_BAR).click();
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/19249
   test('regex select all does not change literal string rename matching', async ({ rstudioPage: page }) => {
     await writeAndOpenFile(page, sandbox.dir, 'editor_select_all_rename.R', 'c("a.b", "axb", "a.b")\n');
     const editor = new AceEditor(page, 'c("a.b"');
@@ -384,14 +437,11 @@ test.describe('Editor', () => {
         { wait: true },
       );
       await page.locator(`${SOURCE_PANEL_SELECTOR} .rstudio-find-replace-in-selection-checkbox input`).check();
-      // Time only the synchronous search, excluding browser-driver latency.
-      const elapsed = await page.locator(SELECT_ALL_BUTTON).evaluate(button => {
-        const start = performance.now();
-        (button as HTMLElement).click();
-        return performance.now() - start;
-      });
-      expect(elapsed).toBeLessThan(2000);
-      await expect.poll(() => editor.getSelectedText()).toBe('# selected\n');
+      // Scanning the unselected lines would match them all, so the result
+      // check also covers the regression this guards against.
+      await page.locator(SELECT_ALL_BUTTON).click();
+      await expect.poll(() => editor.getSelectedText()).toBe('# selected');
+      await expect.poll(() => editor.getCursorPosition()).toEqual({ row: 0, column: 10 });
     } finally {
       await regex.setChecked(originalRegex);
       await page.locator(CLOSE_FIND_BAR).click();

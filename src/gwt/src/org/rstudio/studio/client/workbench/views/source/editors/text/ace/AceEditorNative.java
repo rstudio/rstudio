@@ -485,7 +485,14 @@ public class AceEditorNative extends JavaScriptObject
    }-*/;
    
    public final native int findAll(String needle) /*-{
-      return this.findAll(needle, {regExp: false});
+      // Ace merges these into the editor's persistent search options, so
+      // set each one or a previous Find/Replace All's settings leak in.
+      return this.findAll(needle, {
+         range: null,
+         wholeWord: false,
+         caseSensitive: true,
+         regExp: false
+      });
    }-*/;
    
    public final native int findAll(
@@ -508,10 +515,18 @@ public class AceEditorNative extends JavaScriptObject
       // Ace's bulk regex search mishandles named captures and multiline
       // matches in a range. Reuse its pattern options, but collect offsets
       // from exec() without changing the editor's persistent search state.
+      // $assembleRegExp and $isMultilineSearch are private Ace API; the
+      // bundled Ace is pinned, and the editor tests cover both.
       var Search = $wnd.require("ace/search").Search;
-      var re = new Search().$assembleRegExp(options, true);
+      var search = new Search();
+      var re = search.$assembleRegExp(options, true);
       if (!re)
          throw new Error("Invalid regular expression");
+
+      // Find Next matches each line on its own and spans lines only when
+      // the pattern itself contains a newline escape. Do the same, so All
+      // selects exactly the matches Find Next visits.
+      var multiline = search.$isMultilineSearch(options);
 
       var Document = $wnd.require("ace/document").Document;
       var Range = $wnd.require("ace/range").Range;
@@ -539,23 +554,32 @@ public class AceEditorNative extends JavaScriptObject
          return {row: row, column: index - lineOffset};
       };
 
+      var segments = multiline ? [text] : text.split("\n");
       var ranges = [];
-      var match;
-      while ((match = re.exec(text)))
+      var base = 0;
+      for (var s = 0; s < segments.length; s++)
       {
-         if (artificialEnd && match.index == text.length)
-            break;
-         ranges.push(Range.fromPoints(
-            toPosition(offset + match.index),
-            toPosition(offset + match.index + match[0].length)));
-
-         // Empty matches must advance, including past Unicode code points.
-         if (!match[0].length)
+         var segment = segments[s];
+         re.lastIndex = 0;
+         var match;
+         while ((match = re.exec(segment)))
          {
-            if (re.lastIndex >= text.length)
+            var index = base + match.index;
+            if (artificialEnd && index == text.length)
                break;
-            re.lastIndex += lang.skipEmptyMatch(text, re.lastIndex, re.unicode);
+            ranges.push(Range.fromPoints(
+               toPosition(offset + index),
+               toPosition(offset + index + match[0].length)));
+
+            // Empty matches must advance, including past Unicode code points.
+            if (!match[0].length)
+            {
+               if (re.lastIndex >= segment.length)
+                  break;
+               re.lastIndex += lang.skipEmptyMatch(segment, re.lastIndex, re.unicode);
+            }
          }
+         base += segment.length + 1;
       }
 
       if (!ranges.length)
