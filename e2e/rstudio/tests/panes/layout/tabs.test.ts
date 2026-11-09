@@ -328,19 +328,15 @@ test.describe('Workbench tabs', () => {
 
       for (const [name, pane] of [['Source', SOURCE_PANE], ['Console', CONSOLE_PANE]]) {
         test(`Restore ${name} on a minimized pane moves focus into the pane`, async ({ rstudioPage: page }) => {
-          // Source and Console show Minimize buttons only with a document open.
-          await executeCommand(page, 'newSourceDoc');
-          try {
-            await page.getByRole('button', { name: `Minimize ${name}`, exact: true }).click();
-            const region = page.getByRole('region', { name: `${name} minimized`, exact: true });
-            await region.getByRole('button', { name: `Restore ${name}`, exact: true }).focus();
-            await page.keyboard.press('Enter');
+          // Source and Console show Minimize buttons only with a document
+          // open; the per-test reset leaves one Untitled document.
+          await page.getByRole('button', { name: `Minimize ${name}`, exact: true }).click();
+          const region = page.getByRole('region', { name: `${name} minimized`, exact: true });
+          await region.getByRole('button', { name: `Restore ${name}`, exact: true }).focus();
+          await page.keyboard.press('Enter');
 
-            await expect(region).toBeHidden();
-            await expectFocusIn(page, pane);
-          } finally {
-            await resetSourcePaneState(page);
-          }
+          await expect(region).toBeHidden();
+          await expectFocusIn(page, pane);
         });
       }
 
