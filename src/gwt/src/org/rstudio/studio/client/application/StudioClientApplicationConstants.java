@@ -109,6 +109,11 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     String applicationUpdatedCaption();
     String applicationUpdatedMessage();
     String warningBarText();
+    String warningNumberLabel(int number);
+    String dismissWarningLabel(int number);
+    String warningDetailsLabel(int number);
+    String warningDetailsText();
+    String warningDetailsCaption();
     String workbenchLabel();
     String rSessionErrorCaption();
     String previousRSessionsMessage();

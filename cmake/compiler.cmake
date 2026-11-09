@@ -22,11 +22,16 @@ set(RSTUDIO_CMAKE_COMPILER_INCLUDED YES)
 # require position independent code for CMake targets
 set(CMAKE_POSITION_INDEPENDENT_CODE Yes)
 
-# require C++20 on Windows and C++17 elsewhere, with GNU extensions
+# require C++20 on Windows and macOS, and C++17 elsewhere, with GNU extensions
 #
 # C++20 on Windows is primarily for designated initializer support; other
 # compilers provide it as an extension even in C++17 mode, but MSVC requires
 # us to opt-in to C++20.
+#
+# macOS also builds as C++20 so that our existing CI exercises libc++ in that
+# mode. Keep C++17 on Linux for the older toolchains used by release builds,
+# including Workbench; the server-linux e2e workflow opts into C++20 with
+# -DCMAKE_CXX_STANDARD=20 so GCC/libstdc++ gets the same coverage.
 #
 # the required standard is a minimum, not a pin: when the compiler defaults to
 # a newer standard we build with that default, and a newer standard can be
@@ -35,7 +40,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE Yes)
 # C++20 builds, so RStudio has to be compiled with the same standard as that
 # Boost. CMake always emits the -std flag for CMAKE_CXX_STANDARD, even when the
 # compiler's own default is newer, so the raise has to be done here.
-if(WIN32)
+if(WIN32 OR APPLE)
   set(RSTUDIO_CXX_STANDARD_MINIMUM 20)
 else()
   set(RSTUDIO_CXX_STANDARD_MINIMUM 17)

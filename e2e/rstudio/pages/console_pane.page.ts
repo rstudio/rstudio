@@ -4,6 +4,7 @@ import { PageObject } from './page_object_base_classes';
 import { CRAN_REPOS, sleep, TIMEOUTS, typingTimeout } from '../utils/constants';
 import { documentCloseAllNoSave, executeCommand, getVersion } from '../utils/commands';
 import { AceEditorElement } from '../utils/ace';
+import { R_CONSOLE_LINE_MAX_BYTES } from '../utils/r';
 
 // ---------------------------------------------------------------------------
 // Class-based page object
@@ -408,6 +409,17 @@ export async function executeInConsole(
   command: string,
   opts: ExecuteInConsoleOptions = {},
 ): Promise<void> {
+  // A truncated line would leave R at a "+" prompt and fail some later,
+  // unrelated wait instead; fail here with the cause.
+  const longLine = command.split('\n').find(line => Buffer.byteLength(line, 'utf8') > R_CONSOLE_LINE_MAX_BYTES);
+  if (longLine !== undefined) {
+    throw new Error(
+      `executeInConsole: a command line is ${Buffer.byteLength(longLine, 'utf8')} bytes, over R's ` +
+      `${R_CONSOLE_LINE_MAX_BYTES}-byte console line limit; encode long values with rLongStringLiteral(). ` +
+      `Line starts: ${longLine.slice(0, 80)}`,
+    );
+  }
+
   // Focus the console through the activateConsole command rather than by
   // clicking its tab: two clicks on a pane tab within 500ms of each other are
   // a double-click, which maximizes that pane (ModuleTabLayoutPanel) and so

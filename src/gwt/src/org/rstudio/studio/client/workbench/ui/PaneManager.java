@@ -3164,6 +3164,7 @@ public class PaneManager
       LogicalWindow logicalWindow =
             new LogicalWindow(frame, new MinimizedWindowFrame(frameName, frameName));
       hookPaneMaximize(frame, logicalWindow);
+      hookMinimizedFocus(logicalWindow);
 
       consoleTabPanel_ = new ConsoleTabPanel(
             frame,
@@ -3196,6 +3197,7 @@ public class PaneManager
       LogicalWindow sourceWindow = new LogicalWindow(
             sourceFrame,
             new MinimizedWindowFrame(frameName, accessibleName));
+      hookMinimizedFocus(sourceWindow);
       // Additional source columns have no maximize gesture. They have no
       // maximize button, no PrimaryWindowFrame title bar, and no
       // ModuleTabLayoutPanel tab bar to double-click. So there is nothing to
@@ -3218,6 +3220,7 @@ public class PaneManager
       final WindowFrame frame = new WindowFrame(persisterName, persisterName, showMaximizeButton, showMinimizeButton, isSidebar);
       final MinimizedModuleTabLayoutPanel minimized = new MinimizedModuleTabLayoutPanel(persisterName);
       final LogicalWindow logicalWindow = new LogicalWindow(frame, minimized);
+      hookMinimizedFocus(logicalWindow);
 
       // Wire sidebar button handlers. The sidebar maximizes by a zoom of its
       // column, not its quadrant. But it can still be the pane-zoomed window,
@@ -3265,6 +3268,7 @@ public class PaneManager
       tabPanel.addSelectionHandler(integerSelectionEvent ->
       {
          int index = integerSelectionEvent.getSelectedItem();
+         minimized.setSelectedIndex(index);
          WorkbenchTab selected = tabPanel.getTab(index);
          lastSelectedTab_ = workbenchTabToTab(selected);
          session_.persistClientState();
@@ -3309,6 +3313,28 @@ public class PaneManager
          minimized);
    }
 
+   /**
+    * A minimized pane's tabs and Restore and Maximize buttons hide the strip
+    * they sit on, and with it the element that had focus, so the browser
+    * would drop focus to the page body. Move focus into the pane instead,
+    * unless focus is still elsewhere: clicking a minimized tab doesn't take it.
+    */
+   private void hookMinimizedFocus(LogicalWindow window)
+   {
+      MinimizedWindowFrame minimized = window.getMinimized();
+      minimized.addWindowStateChangeHandler(event ->
+         Scheduler.get().scheduleDeferred(() ->
+         {
+            // An animated layout also focuses the pane when it ends
+            // (AnimationHelper), unconditionally but through WindowFrame.focus(),
+            // which reaches only CanFocus widgets; most panes have none.
+            Element active = DomUtils.getActiveElement();
+            if (active == null || active == Document.get().getBody() ||
+                minimized.getElement().isOrHasChild(active))
+               focusPane(window);
+         }));
+   }
+
    private Tab workbenchTabToTab(WorkbenchTab tab)
    {
       return wbTabToTab_.get(tab);
@@ -3342,7 +3368,7 @@ public class PaneManager
          if (!getTab(tab).isSuppressed())
             labels.add(getTabLabel(tab));
       }
-      minimized.setTabs(labels.toArray(new String[labels.size()]));
+      minimized.setTabs(labels.toArray(new String[labels.size()]), tabPanel.getSelectedIndex());
    }
 
    private String getTabLabel(Tab tab)
