@@ -31,6 +31,17 @@ Parameters:
       Read by the instance at boot when it is not yet logged in; never part of
       the template or the stack events. When the parameter does not exist the
       host instead prints a login URL to authorize it in a browser (README.md).
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: >-
+      The account's shared VPC (tag Name=shared, provisioned by infraops; an
+      organization policy forbids creating VPCs). deploy.sh looks it up.
+  SubnetId:
+    Type: AWS::EC2::Subnet::Id
+    Description: >-
+      A private subnet of VpcId (tag Name=private-0): outbound internet through
+      the VPC's NAT gateway for Tailscale and the package repositories, S3
+      through its gateway endpoint, and no public address. deploy.sh looks it up.
   InstanceType:
     Type: String
     Default: t4g.micro
@@ -46,77 +57,6 @@ Parameters:
       dnf-automatic instead).
 
 Resources:
-  # --------------------------------------------------------------- Network
-
-  # A network of its own, so nothing here depends on another team's VPC: one
-  # public subnet with an internet gateway (Tailscale and the package
-  # repositories) and a gateway endpoint that keeps the S3 reads off the
-  # internet path. No NAT gateway, so the network costs nothing.
-  Vpc:
-    Type: AWS::EC2::VPC
-    Properties:
-      CidrBlock: 10.42.0.0/24
-      EnableDnsSupport: true
-      EnableDnsHostnames: true
-      Tags:
-        - Key: Name
-          Value: !Ref AWS::StackName
-
-  InternetGateway:
-    Type: AWS::EC2::InternetGateway
-    Properties:
-      Tags:
-        - Key: Name
-          Value: !Ref AWS::StackName
-
-  InternetGatewayAttachment:
-    Type: AWS::EC2::VPCGatewayAttachment
-    Properties:
-      VpcId: !Ref Vpc
-      InternetGatewayId: !Ref InternetGateway
-
-  Subnet:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref Vpc
-      CidrBlock: 10.42.0.0/24
-      AvailabilityZone: !Select [0, !GetAZs '']
-      MapPublicIpOnLaunch: true
-      Tags:
-        - Key: Name
-          Value: !Ref AWS::StackName
-
-  RouteTable:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId: !Ref Vpc
-      Tags:
-        - Key: Name
-          Value: !Ref AWS::StackName
-
-  DefaultRoute:
-    Type: AWS::EC2::Route
-    DependsOn: InternetGatewayAttachment
-    Properties:
-      RouteTableId: !Ref RouteTable
-      DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref InternetGateway
-
-  SubnetRouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref Subnet
-      RouteTableId: !Ref RouteTable
-
-  S3Endpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      VpcId: !Ref Vpc
-      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
-      VpcEndpointType: Gateway
-      RouteTableIds:
-        - !Ref RouteTable
-
   # ------------------------------------------------------------------- IAM
 
   # Read-only on the reports, plus the auth key at first boot and Session
@@ -162,21 +102,14 @@ Resources:
 
   # ------------------------------------------------------------------- EC2
 
-  # Nothing listens on the public address: nginx binds to localhost and
-  # Tailscale terminates TLS. The one inbound rule lets other tailnet nodes
-  # reach WireGuard directly instead of through Tailscale's relays; it is an
-  # optimization, not a requirement, and WireGuard drops anything unsigned.
+  # Nothing inbound: the host has no public address, nginx binds to
+  # localhost, and Tailscale needs only outbound connections (it reaches
+  # other nodes through NAT traversal or its relays).
   HostSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: e2e reports host (Tailscale only)
-      VpcId: !Ref Vpc
-      SecurityGroupIngress:
-        - IpProtocol: udp
-          FromPort: 41641
-          ToPort: 41641
-          CidrIp: 0.0.0.0/0
-          Description: WireGuard (Tailscale direct connections)
+      GroupDescription: e2e reports host (Tailscale only, no inbound)
+      VpcId: !Ref VpcId
       SecurityGroupEgress:
         - IpProtocol: '-1'
           CidrIp: 0.0.0.0/0
@@ -191,17 +124,13 @@ Resources:
   # Fn::Sub would try to resolve it; the only `${...}` are stack values.
   Host:
     Type: AWS::EC2::Instance
-    DependsOn: DefaultRoute
     Properties:
       ImageId: !Ref AmiId
       InstanceType: !Ref InstanceType
       IamInstanceProfile: !Ref HostInstanceProfile
-      NetworkInterfaces:
-        - DeviceIndex: '0'
-          AssociatePublicIpAddress: true
-          SubnetId: !Ref Subnet
-          GroupSet:
-            - !Ref HostSecurityGroup
+      SubnetId: !Ref SubnetId
+      SecurityGroupIds:
+        - !Ref HostSecurityGroup
       MetadataOptions:
         HttpTokens: required
         HttpEndpoint: enabled

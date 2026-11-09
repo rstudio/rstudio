@@ -19,7 +19,7 @@ Clicking a report link works as long as the Tailscale client is running;
 without it the hostname does not even resolve. The report's trace viewer works
 because everything is served same-origin over HTTPS.
 
-    template.yaml      # CloudFormation: VPC + instance + role; the host configures itself from user data
+    template.yaml      # CloudFormation: instance + role + security group; the host configures itself from user data
     deploy.sh          # create or update the stack
 
 ## One-time setup
@@ -106,9 +106,10 @@ All of this is done once, by someone with the `ide-build` AWS profile
   rstudio-e2e-reports-host`, then delete the SSM parameter and the node in
   the Tailscale admin console. The reports bucket is untouched.
 
-Cost: the instance (`t4g.micro`, about $6 a month) and its 8 GB volume. The
-network has no NAT gateway, and reads from the bucket go through a gateway
-endpoint in the same region, so they are free.
+Cost: the instance (`t4g.micro`, about $6 a month), its 8 GB volume, and
+the shared VPC's NAT gateway processing charge on what the host sends to
+browsers. Reads from the bucket go through the VPC's S3 gateway endpoint in
+the same region, so they are free.
 
 ## Notes
 
@@ -117,9 +118,11 @@ endpoint in the same region, so they are free.
   for directories, `autoindex` listings elsewhere, content types from file
   extensions. New reports appear as soon as the upload finishes; Mountpoint
   caches directory listings only briefly.
-- nginx binds to localhost only and `tailscale serve` is the only way in; the
-  security group has a single inbound rule, UDP 41641, which lets other
-  tailnet nodes connect directly instead of through Tailscale's relays.
+- The host lives in a private subnet of the account's shared VPC (an
+  organization policy forbids creating VPCs): no public address, a security
+  group with no inbound rules, outbound through the VPC's NAT gateway. nginx
+  binds to localhost and `tailscale serve` is the only way in; Tailscale
+  reaches it through NAT traversal or its relays.
 - The user data is a cloud-init multipart document whose `cloud_final_modules`
   setting makes the script run on every boot. It is written without `${...}`
   shell syntax because the template's `Fn::Sub` would try to resolve it.
