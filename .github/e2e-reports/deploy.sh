@@ -69,8 +69,17 @@ fi
 # The image: the newest Amazon Linux 2023 arm64 on the first deploy, then
 # whatever the stack already runs, because a new image means a new instance
 # that has to re-enroll in the tailnet (README.md). AmiId=ami-... forces one.
-STACK_EXISTS=true
-aws cloudformation describe-stacks --stack-name "$STACK_NAME" > /dev/null 2>&1 || STACK_EXISTS=false
+# Only a definite "does not exist" means a first deploy; any other failure
+# (expired SSO session, throttling) must not be read as one, or the stack
+# would be handed a new image and its host replaced.
+if describe_error=$(aws cloudformation describe-stacks --stack-name "$STACK_NAME" 2>&1 > /dev/null); then
+  STACK_EXISTS=true
+elif [[ $describe_error == *"does not exist"* ]]; then
+  STACK_EXISTS=false
+else
+  echo "Could not look up stack $STACK_NAME: $describe_error" >&2
+  exit 1
+fi
 if ! given AmiId "$@"; then
   if [[ $STACK_EXISTS == true ]]; then
     # ResolvedValue is set when the stack was created with the SSM alias as

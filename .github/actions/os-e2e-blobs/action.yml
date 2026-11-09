@@ -82,17 +82,26 @@ runs:
         LABEL: ${{ inputs.label }}
         BLOB_DIR: ${{ inputs.blob-dir }}
       run: |
-        set -uo pipefail
+        # A failure here fails the job on purpose: merging whatever subset of
+        # blobs happens to be present would publish a report, and possibly an
+        # all-green comment, for a fraction of the run.
+        set -euo pipefail
         mkdir -p "$BLOB_DIR"
-        ARCHIVE="s3://${BUCKET}/blobs/${GITHUB_RUN_ID}/${LABEL}/"
+        PREFIX="blobs/${GITHUB_RUN_ID}/${LABEL}/"
+        # list-objects-v2 rather than `s3 ls`, which exits 1 on an empty
+        # prefix (nothing archived yet is a normal state, not an error).
+        keys=$(aws s3api list-objects-v2 --bucket "$BUCKET" --prefix "$PREFIX" \
+          --query 'Contents[].Key' --output text)
         restored=0
-        while read -r _ _ _ name; do
-          [ -n "$name" ] || continue
+        for key in $keys; do
+          [ "$key" != None ] || continue
+          name=${key#"$PREFIX"}
           if [ ! -e "${BLOB_DIR}/${name}" ]; then
-            aws s3 cp "${ARCHIVE}${name}" "${BLOB_DIR}/${name}" --only-show-errors && restored=$((restored + 1))
+            aws s3 cp "s3://${BUCKET}/${key}" "${BLOB_DIR}/${name}" --only-show-errors
+            restored=$((restored + 1))
           fi
-        done < <(aws s3 ls "$ARCHIVE" 2> /dev/null)
-        echo "Restored ${restored} archived blob report(s) from ${ARCHIVE}."
+        done
+        echo "Restored ${restored} archived blob report(s) from s3://${BUCKET}/${PREFIX}."
 
     - name: Archive blob reports
       id: archive
