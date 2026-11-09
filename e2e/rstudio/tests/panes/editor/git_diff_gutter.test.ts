@@ -12,7 +12,7 @@ import type { Locator, Page, Request, Response, Route } from '@playwright/test';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { AceEditor } from '@pages/ace_editor.page';
-import { CONSOLE_OUTPUT, executeInConsole } from '@pages/console_pane.page';
+import { CONSOLE_OUTPUT, executeInConsole, executeInConsoleChecked } from '@pages/console_pane.page';
 import {
   clearPref,
   dismissAllModals,
@@ -94,30 +94,6 @@ const EDITED_LINES = ['a <- 1', 'a2 <- 1.5', 'b <- 2', 'c <- 3', 'd <- 40', 'e <
 // Expected markers, by 0-based row of the edited file. The removed `f <- 6`
 // leaves nothing to mark, so the wedge sits on the line that now follows it.
 const EDITED_MARKERS = { 1: [ADDED], 4: [MODIFIED], 6: [DELETED] };
-
-/**
- * executeInConsole only confirms that R reached a new prompt, which an R error
- * does just as readily as a success; scrape the output this command produced
- * for an error header so a failed setup step fails here, not as a later
- * unrelated-looking timeout.
- */
-async function executeInConsoleChecked(
-  page: Page,
-  command: string,
-  opts: { timeout?: number } = {},
-): Promise<void> {
-  const before = await page.locator(CONSOLE_OUTPUT).innerText();
-  await executeInConsole(page, command, { wait: true, timeout: opts.timeout });
-  const after = await page.locator(CONSOLE_OUTPUT).innerText();
-
-  const emitted = after.startsWith(before) ? after.slice(before.length) : after;
-  const errMatch = emitted.match(/(?:Error in|Error:)[^\n]*(?:\n[ \t]+[^\n]*)*/);
-  if (errMatch) {
-    throw new Error(
-      `R error running "${command.slice(0, 120)}": ${errMatch[0].replace(/\n+/g, ' | ').trim()}`,
-    );
-  }
-}
 
 /**
  * The Git marker classes on each rendered gutter cell of the active editor,

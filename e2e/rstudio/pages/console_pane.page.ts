@@ -67,6 +67,10 @@ export interface EnvironmentVersions {
 export const CONSOLE_INPUT = '#rstudio_console_input .ace_text-input';
 export const CONSOLE_TAB = '#rstudio_workbench_tab_console';
 export const CONSOLE_OUTPUT = '#rstudio_workbench_panel_console';
+// The output element alone: the scrollback and each submitted command's echo,
+// without the toolbar and live input line that CONSOLE_OUTPUT (the whole
+// panel) also covers.
+export const CONSOLE_SCROLLBACK = '#rstudio_console_output';
 export const INTERRUPT_R_BTN = "[id^='rstudio_tb_interruptr']";
 
 /**
@@ -580,3 +584,51 @@ export async function goToLine(page: Page, line: number): Promise<void> {
   await sleep(500);
 }
 
+/**
+ * The text `after` gained over `before`, for two snapshots of the same
+ * element. Once the scrollback is full the console trims from the top, so
+ * `before` need not stay a prefix of `after`: anchor on its tail instead, and
+ * fall back to everything when even that is gone.
+ */
+export function consoleTextAdded(before: string, after: string): string {
+  if (after.startsWith(before))
+    return after.slice(before.length);
+
+  const anchor = before.slice(-200);
+  const at = anchor.length > 0 ? after.lastIndexOf(anchor) : -1;
+  return at >= 0 ? after.slice(at + anchor.length) : after;
+}
+
+/**
+ * executeInConsole only confirms that R reached a new prompt, which an R error
+ * does just as readily as a success. Run the command, then scrape the output
+ * it produced for an error header, so a failed setup step fails here rather
+ * than as a later unrelated-looking timeout.
+ *
+ * Only this command's output is scanned: the console buffer is shared with
+ * everything else that ran in this worker, and an error an earlier spec left
+ * in it would otherwise fail every later call. The snapshots are of the
+ * output element alone (CONSOLE_SCROLLBACK): the whole panel also holds the
+ * live prompt line, which the command's echo replaces, so a before-snapshot
+ * of it is never a prefix of the after-snapshot and the fallback scanned the
+ * entire scrollback (run 42694353147, Windows shard 3).
+ */
+export async function executeInConsoleChecked(
+  page: Page,
+  command: string,
+  opts: { timeout?: number } = {},
+): Promise<void> {
+  const before = await page.locator(CONSOLE_SCROLLBACK).innerText();
+  await executeInConsole(page, command, { wait: true, timeout: opts.timeout });
+  const after = await page.locator(CONSOLE_SCROLLBACK).innerText();
+
+  // R formats errors as `Error in <call> :\n  <message>`, so take the indented
+  // continuation lines along with the header.
+  const emitted = consoleTextAdded(before, after);
+  const errMatch = emitted.match(/(?:Error in|Error:)[^\n]*(?:\n[ \t]+[^\n]*)*/);
+  if (errMatch) {
+    throw new Error(
+      `R error running "${command.slice(0, 120)}": ${errMatch[0].replace(/\n+/g, ' | ').trim()}`,
+    );
+  }
+}

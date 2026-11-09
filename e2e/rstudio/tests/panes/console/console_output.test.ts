@@ -13,7 +13,12 @@ import { useSuiteSandbox } from '@utils/sandbox';
 import { AceEditorElement } from '@utils/ace';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
 import { clearPref, executeCommand, setPref } from '@utils/commands';
-import { waitForConsoleFocus, waitForConsoleIdle } from '@pages/console_pane.page';
+import {
+  executeInConsole,
+  executeInConsoleChecked,
+  waitForConsoleFocus,
+  waitForConsoleIdle,
+} from '@pages/console_pane.page';
 import { heredoc } from '@utils/heredoc';
 
 const CONSOLE_OUTPUT = '#rstudio_console_output';
@@ -155,6 +160,20 @@ test.describe('Console output and annotation', () => {
         .filter((l) => l.length > 0 && !l.startsWith('>') && !l.startsWith('{ message'));
       return lines.at(-1);
     }).toBe('M2');
+  });
+
+  test('executeInConsoleChecked reports only the errors of its own command', async ({ rstudioPage: page }) => {
+    // An error an earlier test left in the scrollback must not fail a later
+    // clean command; the helper's own command's error still must.
+    await executeInConsole(page, 'stop("earlier failure")');
+    await executeInConsoleChecked(page, 'invisible(1)');
+
+    const err = await executeInConsoleChecked(page, 'stop("this one")').then(
+      () => null,
+      (e: Error) => e,
+    );
+    expect(err?.message).toContain('this one');
+    expect(err?.message).not.toContain('earlier failure');
   });
 
   test('long lines are truncated when consoleLineLengthLimit is reduced', async ({ rstudioPage: page }) => {
