@@ -224,8 +224,9 @@ function relaunchForOzonePlatform(config: ElectronFlagsConfig | undefined): Ozon
   return { relaunched: true };
 }
 
-// A terminal command must finish before Ozone relaunch, R detection, or any
-// Desktop windows are started. Dev builds have the app path in argv[1].
+// A terminal command naming a file must finish before Ozone relaunch, R
+// detection, or any Desktop windows are started. Dev builds have the app path
+// in argv[1].
 const terminalStatus = forwardTerminalCommand(process.argv.slice(app.isPackaged ? 1 : 2));
 if (terminalStatus !== undefined) {
   app.exit(terminalStatus);

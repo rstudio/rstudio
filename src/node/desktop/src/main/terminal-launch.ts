@@ -14,12 +14,41 @@
  */
 
 import { spawnSync } from 'child_process';
+import { statSync } from 'fs';
 import path from 'path';
+
+/**
+ * The shell's logical working directory, as the shell helper's "$PWD/$arg"
+ * sees it. process.cwd() resolves symlinks, so prefer PWD when it still names
+ * the same directory.
+ */
+function logicalCwd(env: NodeJS.ProcessEnv): string {
+  const cwd = process.cwd();
+  const pwd = env.PWD;
+  if (!pwd || !path.isAbsolute(pwd)) {
+    return cwd;
+  }
+
+  try {
+    const logical = statSync(pwd);
+    const physical = statSync(cwd);
+    if (logical.dev === physical.dev && logical.ino === physical.ino) {
+      return pwd;
+    }
+  } catch {
+    // a stale PWD falls back to the physical directory
+  }
+  return cwd;
+}
 
 /**
  * Handle the terminal's rstudio command even when a shell profile has removed
  * the postback helper from PATH. Return undefined for a normal Desktop launch,
  * otherwise an exit status. Keep the CLI consistent with session/postback/rstudio.
+ *
+ * Only a command naming at least one file is treated as the terminal command;
+ * switch-only and bare launches (e.g. a dev build's --no-sandbox, or the
+ * installed binary by absolute path) still start Desktop from a terminal.
  */
 export function forwardTerminalCommand(
   args: string[],
@@ -32,6 +61,13 @@ export function forwardTerminalCommand(
     return undefined;
   }
 
+  // Operands are arguments not starting with '-', or anything after '--'.
+  const separator = args.indexOf('--');
+  const hasOperand = args.some((arg, index) => !arg.startsWith('-') || (separator !== -1 && index > separator));
+  if (!hasOperand) {
+    return undefined;
+  }
+
   const usage = () => console.error('usage: rstudio [--] file[:line[:column]]...');
   let files = args;
   if (args[0] === '--') {
@@ -39,13 +75,8 @@ export function forwardTerminalCommand(
   } else if (args[0] === '-h' || args[0] === '--help') {
     usage();
     return 0;
-  } else if (args[0]?.startsWith('-')) {
+  } else if (args[0].startsWith('-')) {
     console.error(`rstudio: unknown option '${args[0]}'`);
-    usage();
-    return 1;
-  }
-
-  if (files.length === 0) {
     usage();
     return 1;
   }
@@ -57,11 +88,12 @@ export function forwardTerminalCommand(
     return 1;
   }
 
+  const cwd = logicalCwd(env);
   let status = 0;
   for (const file of files) {
     // Preserve :line[:column] and symlink/.. components for the session to
     // interpret. Its working directory can differ from the terminal's.
-    const target = path.isAbsolute(file) ? file : `${process.cwd()}/${file}`;
+    const target = path.isAbsolute(file) ? file : `${cwd}/${file}`;
     const result = spawnSync(env.RS_RPOSTBACK_PATH, ['openfile', target], { env, encoding: 'utf8' });
     if (result.stderr) {
       process.stderr.write(result.stderr);

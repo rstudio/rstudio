@@ -16,7 +16,7 @@
 import { assert } from 'chai';
 import { spawnSync } from 'child_process';
 import { app } from 'electron';
-import { mkdtempSync, realpathSync, rmSync, writeFileSync } from 'fs';
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import path from 'path';
 import { forwardTerminalCommand } from '../../../src/main/terminal-launch';
@@ -28,6 +28,13 @@ describe('TerminalLaunch', () => {
       assert.isUndefined(forwardTerminalCommand(['file.R'], env, 'linux'));
     }
     assert.isUndefined(forwardTerminalCommand(['file.R'], terminal, 'win32'));
+  });
+
+  it('leaves bare and switch-only launches from a terminal to Desktop', () => {
+    const terminal = { RSTUDIO_TERM: 'terminal-id', RS_RPOSTBACK_PATH: '/bin/rpostback' };
+    for (const args of [[], ['--'], ['--no-sandbox'], ['--version'], ['--help'], ['-h'], ['--unknown', '--']]) {
+      assert.isUndefined(forwardTerminalCommand(args, terminal, 'linux'), JSON.stringify(args));
+    }
   });
 
   describe('postback integration', function () {
@@ -71,17 +78,29 @@ esac
       rmSync(dir, { recursive: true, force: true });
     });
 
-    function launch(args: string[]) {
+    function launch(args: string[], cwd = dir, launchEnv = env) {
       const script = `
         const { forwardTerminalCommand } = require(${JSON.stringify(modulePath)});
         const status = forwardTerminalCommand(${JSON.stringify(args)});
         process.exit(status === undefined ? 99 : status);
       `;
       return spawnSync(process.execPath, ['-r', require.resolve('ts-node/register'), '-e', script], {
-        cwd: dir,
-        env,
+        cwd,
+        env: launchEnv,
         encoding: 'utf8',
       });
+    }
+
+    function launchHelper(args: string[], cwd = dir, launchEnv = env) {
+      return spawnSync('/bin/bash', [helper, ...args], { cwd, env: launchEnv, encoding: 'utf8' });
+    }
+
+    function assertMatchesHelper(args: string[], cwd = dir, launchEnv = env) {
+      const expected = launchHelper(args, cwd, launchEnv);
+      const actual = launch(args, cwd, launchEnv);
+      assert.equal(actual.status, expected.status, actual.stderr);
+      assert.equal(actual.stdout, expected.stdout);
+      assert.equal(actual.stderr, expected.stderr);
     }
 
     it('forwards multiple files and positions verbatim with a reset PATH', () => {
@@ -95,15 +114,41 @@ esac
       assert.isEmpty(result.stderr);
     });
 
-    for (const args of [[], ['--'], ['--help'], ['-h'], ['--unknown'], ['--', '-dash.R'], ['file.R', '--help']]) {
+    for (const args of [
+      ['--', '-dash.R'],
+      ['file.R', '--help'],
+      ['--help', 'file.R'],
+      ['-h', 'file.R'],
+      ['--unknown', 'file.R'],
+      ['--', '--help'],
+    ]) {
       it(`matches the shell helper for ${JSON.stringify(args)}`, () => {
-        const expected = spawnSync('/bin/bash', [helper, ...args], { cwd: dir, env, encoding: 'utf8' });
-        const actual = launch(args);
-        assert.equal(actual.status, expected.status, actual.stderr);
-        assert.equal(actual.stdout, expected.stdout);
-        assert.equal(actual.stderr, expected.stderr);
+        assertMatchesHelper(args);
       });
     }
+
+    it('matches the shell helper in a working directory reached through a symlink', () => {
+      const real = path.join(dir, 'real');
+      const link = path.join(dir, 'link');
+      mkdirSync(real);
+      symlinkSync('real', link);
+      // bash keeps an inherited PWD that names the current directory
+      const linkEnv = { ...env, PWD: link };
+      assertMatchesHelper(['file.R'], link, linkEnv);
+      const result = launch(['file.R'], link, linkEnv);
+      assert.equal(result.status, 0, result.stderr);
+      assert.equal(result.stdout, `<openfile>\n<${link}/file.R>\n`);
+    });
+
+    it('ignores a PWD that names a different directory', () => {
+      const real = path.join(dir, 'real');
+      mkdirSync(real);
+      for (const PWD of [dir, path.join(dir, 'missing'), 'relative']) {
+        const result = launch(['file.R'], real, { ...env, PWD });
+        assert.equal(result.status, 0, result.stderr);
+        assert.equal(result.stdout, `<openfile>\n<${real}/file.R>\n`, PWD);
+      }
+    });
 
     it('reports postback errors, continues with later files, and exits unsuccessfully', () => {
       const result = launch(['fail.R', 'success.R']);
