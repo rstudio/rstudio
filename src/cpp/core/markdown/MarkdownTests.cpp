@@ -387,8 +387,10 @@ TEST(MarkdownTest, SuperscriptsWithinDeepBlockquotes)
    std::string input(10000, '>');
    input += " ";
    for (int i = 0; i < 10000; ++i)
-      input += "x^2 ";
-   EXPECT_NE(std::string::npos, render(input).find("x<sup>2</sup>"));
+      input += "x^2 y^(3) ";
+   std::string html = render(input);
+   EXPECT_NE(std::string::npos, html.find("x<sup>2</sup>"));
+   EXPECT_NE(std::string::npos, html.find("y<sup>3</sup>"));
 }
 
 TEST(MarkdownTest, UnsupportedLegacyOptionsAreExplicit)

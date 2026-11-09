@@ -133,7 +133,11 @@ cmark_node* matchSuperscript(cmark_syntax_extension* extension,
 
 bool hasImageAncestor(cmark_node* node)
 {
-   for (cmark_node* parent = cmark_node_parent(node); parent; parent = cmark_node_parent(parent))
+   // Images are inline, so stop at the enclosing block rather than walking
+   // up to the document; this runs once per matched ^(...).
+   for (cmark_node* parent = cmark_node_parent(node);
+        parent && (cmark_node_get_type(parent) & CMARK_NODE_TYPE_MASK) == CMARK_NODE_TYPE_INLINE;
+        parent = cmark_node_parent(parent))
    {
       if (cmark_node_get_type(parent) == CMARK_NODE_IMAGE)
          return true;
@@ -167,7 +171,7 @@ delimiter* insertSuperscript(cmark_syntax_extension* extension,
          cmark_node_set_on_enter(node, "<sup>");
          cmark_node_set_on_exit(node, "</sup>");
          cmark_node_set_syntax_extension(node, nullptr);
-         for (cmark_node* child = cmark_node_next(node); child != closer->inl_text; )
+         for (cmark_node* child = cmark_node_next(node); child && child != closer->inl_text; )
          {
             cmark_node* following = cmark_node_next(child);
             cmark_node_append_child(node, child);
