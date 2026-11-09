@@ -2,8 +2,11 @@
 
 RStudio maintains its Ace changes in
 [rstudio/rstudio-ace](https://github.com/rstudio/rstudio-ace). The integration
-branch for the current bundles is `rstudio/montauk-daisy`; the fork's GitHub
-default branch is older and is not the target for these changes.
+branch is named after the release in `version/RELEASE` (`rstudio/parrot-balsam`
+for 2026.12); each release's `rel-*` branch rebuilds from its own fork branch,
+so main-bound changes never target the previous release's branch. The first
+fork change for a release cuts the new branch from the previous one. The fork's
+GitHub default branch is older and is not the target for these changes.
 
 `sync-ace-commits` records the repository and exact commit used for the bundled
 JavaScript. A moving release or feature branch is not sufficient to reproduce
@@ -36,7 +39,7 @@ language tools, diff, and workers; unrelated outputs should remain unchanged.
 The bounded-diff source revision includes the tokenizer fixes from
 [Ace PR #13](https://github.com/rstudio/rstudio-ace/pull/13), which were already
 shipped in RStudio but were not yet on the integration branch. Combining them
-with `rstudio/montauk-daisy` reproduced the previous core and diff bundles
+with `rstudio/montauk-daisy` (the 2026.11 branch) reproduced the previous core and diff bundles
 byte-for-byte before the bounded-diff change. Keep those fixes when updating
 the pin rather than reverting the shipped tokenizer behavior.
 Review of that dependency also added a plain-data clone fallback for Node 16

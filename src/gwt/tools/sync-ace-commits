@@ -2,7 +2,7 @@
 set -ex
 
 # Pin both the fork and source revision used to generate the shipped bundles.
-# Based on rstudio/montauk-daisy, including the already-shipped tokenizer
+# Based on rstudio/parrot-balsam, including the already-shipped tokenizer
 # fixes from rstudio/rstudio-ace#13 and bounded diff refinement for #19218.
 REPOSITORY=https://github.com/rstudio/rstudio-ace.git
 REVISION=8fd0c0786da079adde29c3bc8e137933e07015a4
