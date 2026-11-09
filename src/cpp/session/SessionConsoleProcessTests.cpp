@@ -206,6 +206,47 @@ TEST_F(ConsoleProcessTest, AutoflushHandlesUnresolvedGaps) {
    EXPECT_EQ("HELLO WORLD", result);
 }
 
+// A write delayed past the auto-flush of its successors, or a number the
+// client has reused, must not stall input until another auto-flush.
+TEST_F(ConsoleProcessTest, LateOrRepeatedSequenceIsDeliveredWithoutBlocking) {
+   // item "0" is delayed; its successors pile up and auto-flush
+   for (size_t i = 1; i <= kAutoFlushLength; i++)
+      pCP->enqueInput(ConsoleProcess::Input(gsl::narrow_cast<int>(i), boost::lexical_cast<std::string>(i)));
+
+   std::string result;
+   ConsoleProcess::Input next = pCP->dequeInput();
+   while (!next.empty())
+   {
+      result += next.text;
+      next = pCP->dequeInput();
+   }
+   EXPECT_EQ("1234567891011121314151617181920", result);
+
+   // the delayed item arrives: delivered at once, late rather than never
+   pCP->enqueInput(ConsoleProcess::Input(0, std::string("late")));
+   next = pCP->dequeInput();
+   EXPECT_EQ("late", next.text);
+   EXPECT_TRUE(pCP->dequeInput().empty());
+
+   // a repeat of a consumed number is also delivered at once
+   pCP->enqueInput(ConsoleProcess::Input(20, std::string("again")));
+   next = pCP->dequeInput();
+   EXPECT_EQ("again", next.text);
+
+   // and the sequence continues where the auto-flush left it
+   pCP->enqueInput(ConsoleProcess::Input(22, std::string("two")));
+   EXPECT_TRUE(pCP->dequeInput().empty());
+   pCP->enqueInput(ConsoleProcess::Input(21, std::string("one")));
+   result.clear();
+   next = pCP->dequeInput();
+   while (!next.empty())
+   {
+      result += next.text;
+      next = pCP->dequeInput();
+   }
+   EXPECT_EQ("onetwo", result);
+}
+
 TEST_F(ConsoleProcessTest, ExplicitFlushReturnsInputWithGapsAndResetsSequence) {
    std::vector<ConsoleProcess::Input> input;
    std::string expected;

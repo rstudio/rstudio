@@ -708,9 +708,10 @@ public class TerminalSessionSocketTests extends GWTTestCase
       assertEquals(Integer.valueOf(ShellInput.FLUSH_SEQUENCE), process.sequences.get(4));
    }
 
-   // A write from the previous connection can still reach the server after
-   // the replacement's flush, so that flush waits for it.
-   public void testReconnectWaitsForOldWritesBeforeItsFlush()
+   // Writes of a previous connection are not waited for (their completions
+   // may never arrive); the replacement flushes right away and a late old
+   // completion changes nothing for it.
+   public void testReconnectDoesNotWaitForOldWrites()
    {
       Harness h = new Harness();
       Process old = h.connect(new Callback());
@@ -718,7 +719,8 @@ public class TerminalSessionSocketTests extends GWTTestCase
       old.answerWrites = false;
       h.socket.dispatchInput("a", false, new Ack());
       old.pendingWrites.remove(0).onResponseReceived(null);
-      h.socket.dispatchInput("b", false, new Ack());
+      Ack b = new Ack();
+      h.socket.dispatchInput("b", false, b);
 
       h.socket.disconnect(false);
       Process next = h.connect(new Callback());
@@ -726,13 +728,14 @@ public class TerminalSessionSocketTests extends GWTTestCase
       next.answerWrites = false;
       h.socket.dispatchInput("c", false, new Ack());
       h.socket.dispatchInput("d", false, new Ack());
-      assertEquals("held until the old write completes", Arrays.asList(), next.inputs);
-
-      old.pendingWrites.remove(0).onResponseReceived(null);
-      assertEquals(Arrays.asList("cd"), next.inputs);
+      assertEquals(Arrays.asList("c"), next.inputs);
       assertEquals(Arrays.asList(ShellInput.FLUSH_SEQUENCE), next.sequences);
+
+      old.pendingWrites.remove(0).onError(rpcError());
+      assertEquals(1, b.errors);
+      assertEquals("old completion is ignored", Arrays.asList("c"), next.inputs);
       next.pendingWrites.remove(0).onResponseReceived(null);
-      h.socket.dispatchInput("e", false, new Ack());
+      assertEquals(Arrays.asList("c", "d"), next.inputs);
       assertEquals(Arrays.asList(ShellInput.FLUSH_SEQUENCE, 0), next.sequences);
    }
 

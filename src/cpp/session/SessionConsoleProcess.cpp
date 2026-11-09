@@ -461,6 +461,15 @@ ConsoleProcess::Input ConsoleProcess::dequeInput()
       return input;
    }
 
+   // A number the queue has already moved past (an arrival delayed past an
+   // auto-flush, or a client whose counter restarted) can never be waited
+   // for; deliver it now rather than block everything behind it.
+   if (input.sequence <= lastInputSequence_)
+   {
+      inputQueue_.pop_front();
+      return input;
+   }
+
    // Getting here means input is out of sequence. We want to prevent
    // getting permanently stuck if a message gets lost and the
    // gap(s) never get filled in. So we'll flush it if input piles up.

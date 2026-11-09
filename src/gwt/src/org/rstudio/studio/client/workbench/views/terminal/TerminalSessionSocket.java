@@ -244,7 +244,6 @@ public class TerminalSessionSocket
       if (holdingInput_)
          return;
       holdingInput_ = true;
-      rpcSwitchPending_ = true;
       closeWebSocket();
       localEcho_.clear();
       final int connection = connection_;
@@ -259,7 +258,6 @@ public class TerminalSessionSocket
             if (connection != connection_)
                return;
             diagnostic_.log(constants_.switchedToRPCMessage());
-            rpcSwitchPending_ = false;
             flushPendingInput(connection);
          }
 
@@ -269,7 +267,6 @@ public class TerminalSessionSocket
             if (connection != connection_)
                return;
             holdingInput_ = false;
-            rpcSwitchPending_ = false;
             diagnostic_.log(constants_.failedToSwitchRPCMessage() + error.getMessage());
             List<PendingInput> pending = new ArrayList<>(pendingInput_);
             pendingInput_.clear();
@@ -406,8 +403,8 @@ public class TerminalSessionSocket
       pendingInput_.clear();
       connection_++;
       holdingInput_ = false;
-      rpcSwitchPending_ = false;
       resyncNeeded_ = false;
+      outstandingWrites_ = 0;
       connectCallback_ = null;
       inputSequence_ = ShellInput.IGNORE_SEQUENCE;
       closeWebSocket();
@@ -478,11 +475,12 @@ public class TerminalSessionSocket
    // calls back here, so the hold ends once nothing is left to write.
    private void flushPendingInput(final int connection)
    {
-      // A write sent now could overtake one still in flight, even one from a
-      // previous connection, and its flush would be consumed against the
-      // wrong counter; and until the server has acknowledged the switch to
-      // RPC it would not accept the write at all.
-      if (rpcSwitchPending_ || outstandingWrites_ > 0)
+      // A write sent now could overtake one still in flight and have its
+      // flush consumed against the wrong counter; wait for it to complete.
+      // Writes of a previous connection are not waited for: their completions
+      // may never arrive, and the server delivers a stale number late rather
+      // than blocking on it.
+      if (outstandingWrites_ > 0)
          return;
 
       if (pendingInput_.isEmpty())
@@ -555,18 +553,19 @@ public class TerminalSessionSocket
                @Override
                public void onResponseReceived(VoidResponse response)
                {
-                  outstandingWrites_--;
+                  if (connection == connection_)
+                     outstandingWrites_--;
                   input.callback.onResponseReceived(response);
-                  if (holdingInput_)
-                     flushPendingInput(connection_);
+                  if (connection == connection_ && holdingInput_)
+                     flushPendingInput(connection);
                }
 
                @Override
                public void onError(ServerError error)
                {
-                  outstandingWrites_--;
                   if (connection == connection_)
                   {
+                     outstandingWrites_--;
                      // The server never saw this write, so it would hold every
                      // later number until its auto-flush. Resynchronize instead:
                      // hold input until nothing is in flight, then flush the
@@ -578,8 +577,8 @@ public class TerminalSessionSocket
                         resyncNeeded_ = true;
                   }
                   input.callback.onError(error);
-                  if (holdingInput_)
-                     flushPendingInput(connection_);
+                  if (connection == connection_ && holdingInput_)
+                     flushPendingInput(connection);
                }
             });
    }
@@ -689,10 +688,7 @@ public class TerminalSessionSocket
    private TerminalWebSocket socket_;
    private int connection_;
    private boolean holdingInput_;
-   private boolean rpcSwitchPending_;
    private boolean resyncNeeded_;
-   // Counted across connections: a write from a previous connection can still
-   // reach the server after this one's.
    private int outstandingWrites_;
    private int inputSequence_ = ShellInput.IGNORE_SEQUENCE;
    private final List<PendingInput> pendingInput_ = new ArrayList<>();
