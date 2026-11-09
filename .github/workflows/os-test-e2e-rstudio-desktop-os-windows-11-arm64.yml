@@ -1039,12 +1039,17 @@ jobs:
             }
           exit 0
 
+      # user-home holds the sandbox AI credential stores (.posit/ai/auth/data.json,
+      # github-copilot). Exclude it explicitly rather than relying on
+      # upload-artifact skipping hidden paths by default.
       - name: Upload PW sandbox (on failure)
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: pw-sandbox-shard-${{ matrix.shard }}
-          path: ${{ github.workspace }}\pw-sandbox\
+          path: |
+            ${{ github.workspace }}\pw-sandbox\
+            !${{ github.workspace }}\pw-sandbox\*\user-home\**
           retention-days: 15
           if-no-files-found: ignore
 
