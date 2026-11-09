@@ -111,7 +111,7 @@ TEST(SessionAssistant, StdoutReaderSkipsAHeaderWithoutContentLength)
 {
    AgentStdoutReader reader;
    std::vector<std::string> errors;
-   EXPECT_EQ(reader.append("Content-Type: x\r\n\r\n" + frame("{}"), &errors),
+   EXPECT_EQ(reader.append("Content-Type: x\r\n\r\n{\"bad\":1}" + frame("{}"), &errors),
              std::vector<std::string>{"{}"});
    EXPECT_EQ(errors.size(), 1u);
 }
@@ -120,9 +120,54 @@ TEST(SessionAssistant, StdoutReaderSkipsAnInvalidContentLength)
 {
    AgentStdoutReader reader;
    std::vector<std::string> errors;
-   EXPECT_EQ(reader.append("Content-Length: -5\r\n\r\n" + frame("{}"), &errors),
-             std::vector<std::string>{"{}"});
+   std::vector<std::string> expected{"{\"id\":1}", "{\"id\":2}"};
+   EXPECT_EQ(reader.append("Content-Length: x\r\n\r\n{\"bad\":1}" + frame("{\"id\":1}") + frame("{\"id\":2}"), &errors),
+             expected);
    EXPECT_EQ(errors.size(), 1u);
+}
+
+TEST(SessionAssistant, StdoutReaderSkipsAnInvalidContentLengthWhoseNextHeaderComesLater)
+{
+   AgentStdoutReader reader;
+   EXPECT_TRUE(reader.append("Content-Length: -5\r\n\r\n{\"bad\":1}").empty());
+   EXPECT_EQ(reader.append(frame("{\"id\":1}")), std::vector<std::string>{"{\"id\":1}"});
+}
+
+TEST(SessionAssistant, StdoutReaderSkipsAnOversizedContentLength)
+{
+   AgentStdoutReader reader;
+   EXPECT_EQ(reader.append("Content-Length: 999999999\r\n\r\n{}" + frame("{\"id\":1}")),
+             std::vector<std::string>{"{\"id\":1}"});
+}
+
+TEST(SessionAssistant, StdoutReaderRecoversFromAContentLengthThatIsTooShort)
+{
+   AgentStdoutReader reader;
+   std::vector<std::string> responses = reader.append("Content-Length: 1\r\n\r\n{}" + frame("{\"id\":1}"));
+   ASSERT_FALSE(responses.empty());
+   EXPECT_EQ(responses.back(), "{\"id\":1}");
+}
+
+TEST(SessionAssistant, StdoutReaderSkipsStrayOutputBeforeAHeader)
+{
+   AgentStdoutReader reader;
+   std::vector<std::string> expected{"{}", "{\"id\":1}"};
+   EXPECT_EQ(reader.append("warning\nContent-Length: 2\r\n\r\n{}" + frame("{\"id\":1}")), expected);
+}
+
+TEST(SessionAssistant, StdoutReaderCountsBytesNotCharacters)
+{
+   AgentStdoutReader reader;
+   std::string body = "{\"s\":\"h\xc3\xa9llo\"}";
+   std::vector<std::string> expected{body, "{}"};
+   EXPECT_EQ(reader.append(frame(body) + frame("{}")), expected);
+}
+
+TEST(SessionAssistant, StdoutReaderKeepsAHeaderSplitAcrossReadsAfterAResponse)
+{
+   AgentStdoutReader reader;
+   EXPECT_EQ(reader.append(frame("{}") + "Content-Le"), std::vector<std::string>{"{}"});
+   EXPECT_EQ(reader.append("ngth: 8\r\n\r\n{\"id\":1}"), std::vector<std::string>{"{\"id\":1}"});
 }
 
 TEST(SessionAssistant, StdoutReaderClearDropsAPartialResponse)

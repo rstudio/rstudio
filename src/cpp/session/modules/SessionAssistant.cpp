@@ -3018,35 +3018,22 @@ std::string agentStderrTail(const std::string& text, std::size_t maxLength)
 
 namespace {
 
-// The value of a Content-Length line in a header block, matched without
-// regard to case; empty when there is none.
-std::string contentLengthValue(const std::string& headerBlock)
+// Agent messages are JSON-RPC requests and replies, far smaller than this. A
+// larger Content-Length, or a header this long that never ends, is noise that
+// would otherwise hold back every message after it.
+const std::size_t kMaxAgentMessageSize = 64 * 1024 * 1024;
+
+// Where the next Content-Length header starts at or after `from`, matched
+// without regard to case.
+std::size_t findContentLength(const std::string& text, std::size_t from)
 {
    static const std::string name = "content-length:";
-   std::size_t lineStart = 0;
-   while (lineStart <= headerBlock.length())
-   {
-      std::size_t lineEnd = headerBlock.find("\r\n", lineStart);
-      if (lineEnd == std::string::npos)
-         lineEnd = headerBlock.length();
-
-      std::string line = headerBlock.substr(lineStart, lineEnd - lineStart);
-      if (line.length() >= name.length() &&
-          std::equal(name.begin(), name.end(), line.begin(),
-                     [](char a, char b) { return a == std::tolower(static_cast<unsigned char>(b)); }))
-      {
-         std::string value = line.substr(name.length());
-         std::size_t first = value.find_first_not_of(" \t");
-         std::size_t last = value.find_last_not_of(" \t");
-         return first == std::string::npos ? std::string() : value.substr(first, last - first + 1);
-      }
-
-      lineStart = lineEnd + 2;
-   }
-   return std::string();
+   auto it = std::search(text.begin() + from, text.end(), name.begin(), name.end(),
+                         [](char a, char b) { return std::tolower(static_cast<unsigned char>(a)) == b; });
+   return it == text.end() ? std::string::npos : static_cast<std::size_t>(it - text.begin());
 }
 
-} // anonymous namespace
+} // end anonymous namespace
 
 std::vector<std::string> AgentStdoutReader::append(const std::string& chunk,
                                                    std::vector<std::string>* pErrors)
@@ -3067,31 +3054,49 @@ std::vector<std::string> AgentStdoutReader::append(const std::string& chunk,
 
       std::size_t headerEnd = buffer_.find("\r\n\r\n");
       if (headerEnd == std::string::npos)
+      {
+         if (buffer_.length() > kMaxAgentMessageSize)
+         {
+            if (pErrors)
+               pErrors->push_back("response header did not end");
+            buffer_.clear();
+         }
          break; // the rest of the header has not arrived yet
+      }
 
-      std::string value = contentLengthValue(buffer_.substr(0, headerEnd));
-      bool valid = !value.empty() &&
-                   value.find_first_not_of("0123456789") == std::string::npos &&
-                   value.length() <= 9;
-      if (!valid)
+      core::http::Headers headers;
+      std::istringstream iss(buffer_.substr(0, headerEnd + 4));
+      core::http::parseHeaders(iss, &headers);
+      std::string contentLength = core::http::headerValue(headers, "Content-Length");
+      int bodyLength = safe_convert::stringTo<int>(contentLength, -1);
+      if (bodyLength <= 0 || static_cast<std::size_t>(bodyLength) > kMaxAgentMessageSize)
       {
          if (pErrors)
          {
-            pErrors->push_back(value.empty()
+            pErrors->push_back(contentLength.empty()
                                   ? "response contains no Content-Length header"
-                                  : "response has an invalid Content-Length header (" + value + ")");
+                                  : "response has an invalid Content-Length header (" + contentLength + ")");
          }
-         buffer_.erase(0, headerEnd + 4);
+
+         // Resume at the next Content-Length header, not after this block:
+         // what follows the block is its body, and reading that as a header
+         // would lose every message after it. Stray output in front of a
+         // header hides it from the parser, so resume at that header.
+         std::size_t own = findContentLength(buffer_, 0);
+         std::size_t next = own == std::string::npos
+                               ? own
+                               : findContentLength(buffer_, contentLength.empty() && own > 0 ? own : own + 1);
+         buffer_.erase(0, next == std::string::npos ? headerEnd + 4 : next);
          continue;
       }
 
       std::size_t bodyStart = headerEnd + 4;
-      std::size_t bodyLength = static_cast<std::size_t>(std::stoul(value));
-      if (buffer_.length() < bodyStart + bodyLength)
+      std::size_t bodyEnd = bodyStart + static_cast<std::size_t>(bodyLength);
+      if (buffer_.length() < bodyEnd)
          break; // the rest of the body has not arrived yet
 
       bodies.push_back(buffer_.substr(bodyStart, bodyLength));
-      buffer_.erase(0, bodyStart + bodyLength);
+      buffer_.erase(0, bodyEnd);
    }
    return bodies;
 }
