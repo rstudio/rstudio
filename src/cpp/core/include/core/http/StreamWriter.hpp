@@ -81,7 +81,7 @@ private:
 
          // first, write the chunk header
          writeChunkHeader(buffer->size,
-          [=](const boost::system::error_code& ec, size_t written) mutable
+          [sharedThis, buffer](const boost::system::error_code& ec, size_t written) mutable
           {
             if (sharedThis->handleError(ec))
                return;
@@ -89,7 +89,7 @@ private:
              // next, write the chunk body
              boost::asio::mutable_buffer buff(buffer->data, buffer->size);
              boost::asio::async_write(sharedThis->socket_, buff,
-              [=](const boost::system::error_code& ec, size_t written) mutable
+              [sharedThis, buffer](const boost::system::error_code& ec, size_t written) mutable
               {
                  // capture buffer here to ensure the chunk data is not freed until after
                  // it is written to the socket (required by boost to prevent corruption)
@@ -99,7 +99,7 @@ private:
                     return;
 
                  // finally, write the chunk footer
-                 sharedThis->writeChunkFooter([=](const boost::system::error_code& ec, size_t written)
+                 sharedThis->writeChunkFooter([sharedThis](const boost::system::error_code& ec, size_t written)
                  {
                     if (sharedThis->handleError(ec))
                        return;
@@ -126,7 +126,7 @@ private:
       boost::shared_ptr<std::string> headerBuff(new std::string(sstr.str()));
       boost::asio::const_buffer buffer(static_cast<const void*>(headerBuff->c_str()), headerBuff->size());
       boost::asio::async_write(socket_, buffer,
-       [=](const boost::system::error_code& ec, size_t written) mutable
+       [headerBuff, handler](const boost::system::error_code& ec, size_t written) mutable
        {
           // free header bytes (ensuring they exist during the write)
           headerBuff.reset();
@@ -151,7 +151,7 @@ private:
       boost::shared_ptr<StreamWriter> sharedThis = StreamWriter<SocketType>::shared_from_this();
 
       boost::asio::async_write(socket_, buffer,
-       [=](const boost::system::error_code& ec, size_t written)
+       [sharedThis](const boost::system::error_code& ec, size_t written)
        {
           if (sharedThis->handleError(ec))
              return;
