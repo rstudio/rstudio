@@ -64,145 +64,6 @@ std::string timestamp()
    }
 }
 
-
-// Convert between wide strings and UTF-8 on every platform. wchar_t holds
-// UTF-16 on Windows and UTF-32 elsewhere, and both are handled here so the
-// callers need no platform-specific code. Malformed input becomes U+FFFD.
-void appendUtf8(char32_t codePoint, std::string* pResult)
-{
-   if (codePoint > 0x10FFFF || (codePoint >= 0xD800 && codePoint <= 0xDFFF))
-      codePoint = 0xFFFD;
-
-   if (codePoint < 0x80)
-   {
-      pResult->push_back(static_cast<char>(codePoint));
-   }
-   else if (codePoint < 0x800)
-   {
-      pResult->push_back(static_cast<char>(0xC0 | (codePoint >> 6)));
-      pResult->push_back(static_cast<char>(0x80 | (codePoint & 0x3F)));
-   }
-   else if (codePoint < 0x10000)
-   {
-      pResult->push_back(static_cast<char>(0xE0 | (codePoint >> 12)));
-      pResult->push_back(static_cast<char>(0x80 | ((codePoint >> 6) & 0x3F)));
-      pResult->push_back(static_cast<char>(0x80 | (codePoint & 0x3F)));
-   }
-   else
-   {
-      pResult->push_back(static_cast<char>(0xF0 | (codePoint >> 18)));
-      pResult->push_back(static_cast<char>(0x80 | ((codePoint >> 12) & 0x3F)));
-      pResult->push_back(static_cast<char>(0x80 | ((codePoint >> 6) & 0x3F)));
-      pResult->push_back(static_cast<char>(0x80 | (codePoint & 0x3F)));
-   }
-}
-
-std::string wideToUtf8(const std::wstring& value)
-{
-   std::string result;
-   result.reserve(value.size());
-
-   for (size_t i = 0, n = value.size(); i < n; i++)
-   {
-      char32_t codePoint = static_cast<char32_t>(value[i]);
-
-      // UTF-16: combine a surrogate pair into one code point
-      if (sizeof(wchar_t) == 2 && codePoint >= 0xD800 && codePoint <= 0xDBFF && i + 1 < n)
-      {
-         char32_t low = static_cast<char32_t>(value[i + 1]);
-         if (low >= 0xDC00 && low <= 0xDFFF)
-         {
-            codePoint = 0x10000 + ((codePoint - 0xD800) << 10) + (low - 0xDC00);
-            i++;
-         }
-      }
-
-      appendUtf8(codePoint, &result);
-   }
-
-   return result;
-}
-
-std::wstring utf8ToWide(const std::string& value)
-{
-   std::wstring result;
-   result.reserve(value.size());
-
-   for (size_t i = 0, n = value.size(); i < n; )
-   {
-      unsigned char lead = static_cast<unsigned char>(value[i]);
-      size_t length;
-      char32_t codePoint;
-      if (lead < 0x80)
-      {
-         length = 1;
-         codePoint = lead;
-      }
-      else if ((lead & 0xE0) == 0xC0)
-      {
-         length = 2;
-         codePoint = lead & 0x1F;
-      }
-      else if ((lead & 0xF0) == 0xE0)
-      {
-         length = 3;
-         codePoint = lead & 0x0F;
-      }
-      else if ((lead & 0xF8) == 0xF0)
-      {
-         length = 4;
-         codePoint = lead & 0x07;
-      }
-      else
-      {
-         length = 1;
-         codePoint = 0xFFFD;
-      }
-
-      bool valid = i + length <= n;
-      for (size_t j = 1; valid && j < length; j++)
-      {
-         unsigned char trail = static_cast<unsigned char>(value[i + j]);
-         if ((trail & 0xC0) != 0x80)
-            valid = false;
-         else
-            codePoint = (codePoint << 6) | (trail & 0x3F);
-      }
-
-      if (!valid)
-      {
-         // consume only the lead byte so the bytes after it are decoded on their own
-         length = 1;
-         codePoint = 0xFFFD;
-      }
-      else if (codePoint > 0x10FFFF ||
-               (codePoint >= 0xD800 && codePoint <= 0xDFFF) ||
-               (length == 2 && codePoint < 0x80) ||
-               (length == 3 && codePoint < 0x800) ||
-               (length == 4 && codePoint < 0x10000))
-      {
-         // out of range, encoded surrogate, or overlong
-         codePoint = 0xFFFD;
-      }
-
-      i += length;
-
-      // UTF-16: split supplementary code points into a surrogate pair
-      if (sizeof(wchar_t) == 2 && codePoint >= 0x10000)
-      {
-         codePoint -= 0x10000;
-         result.push_back(static_cast<wchar_t>(0xD800 + (codePoint >> 10)));
-         result.push_back(static_cast<wchar_t>(0xDC00 + (codePoint & 0x3FF)));
-      }
-      else
-      {
-         result.push_back(static_cast<wchar_t>(codePoint));
-      }
-   }
-
-   return result;
-}
-
 } // end anonymous namespace
 
 #define DLOG(__X__)            \
@@ -226,6 +87,40 @@ std::wstring utf8ToWide(const std::string& value)
 #ifdef _WIN32
 
 namespace {
+
+// Convert between UTF-8 and the UTF-16 wchar_t strings used by the Win32 W
+// APIs. Invalid input is replaced with U+FFFD rather than failing.
+std::string wideToUtf8(const std::wstring& value)
+{
+   if (value.empty())
+      return std::string();
+
+   int size = ::WideCharToMultiByte(
+       CP_UTF8, 0, value.data(), static_cast<int>(value.size()), nullptr, 0, nullptr, nullptr);
+   if (size <= 0)
+      return std::string();
+
+   std::string result(size, '\0');
+   ::WideCharToMultiByte(
+       CP_UTF8, 0, value.data(), static_cast<int>(value.size()), &result[0], size, nullptr, nullptr);
+   return result;
+}
+
+std::wstring utf8ToWide(const std::string& value)
+{
+   if (value.empty())
+      return std::wstring();
+
+   int size = ::MultiByteToWideChar(
+       CP_UTF8, 0, value.data(), static_cast<int>(value.size()), nullptr, 0);
+   if (size <= 0)
+      return std::wstring();
+
+   std::wstring result(size, L'\0');
+   ::MultiByteToWideChar(
+       CP_UTF8, 0, value.data(), static_cast<int>(value.size()), &result[0], size);
+   return result;
+}
 
 std::string registryKeyToString(HKEY hKey)
 {
@@ -259,13 +154,13 @@ std::string registryKeyToString(HKEY hKey)
 
 std::string getErrorMessage(DWORD error)
 {
-   LPVOID lpMsgBuf;
-   DWORD length = ::FormatMessage(
+   LPWSTR lpMsgBuf = nullptr;
+   DWORD length = ::FormatMessageW(
       FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
       nullptr,
       error,
       MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-      (LPTSTR) &lpMsgBuf,
+      reinterpret_cast<LPWSTR>(&lpMsgBuf),
       0,
       nullptr
    );
@@ -273,8 +168,8 @@ std::string getErrorMessage(DWORD error)
    if (length == 0)
       return "Unknown error";
 
-   std::string msg((LPTSTR)lpMsgBuf);
-   LocalFree(lpMsgBuf);
+   std::string msg = wideToUtf8(std::wstring(lpMsgBuf, length));
+   ::LocalFree(lpMsgBuf);
    return msg;
 }
 
@@ -310,7 +205,7 @@ bool expandEnvironmentVariables(const std::wstring& value,
    {
       DWORD error = ::GetLastError();
       std::string message = getErrorMessage(error);
-      DLOG("Error " << result << " expanding environment strings: " << message);
+      DLOG("Error " << error << " expanding environment strings: " << message);
       return false;
    }
 
@@ -402,8 +297,8 @@ public:
             if (idxNull != std::wstring::npos)
                value.resize(idxNull);
 
-            if (type == REG_EXPAND_SZ)
-               expandEnvironmentVariables(value, &value);
+            if (type == REG_EXPAND_SZ && !expandEnvironmentVariables(value, &value))
+               return false;
 
             *pValue = wideToUtf8(value);
             return true;
@@ -438,11 +333,11 @@ public:
       for (DWORD i = 0; ; i++)
       {
          DWORD size = static_cast<DWORD>(nameBuffer.size());
-         LONG result = ::RegEnumKeyExW(hKey_,
-                                       i,
-                                       &nameBuffer[0],
-                                       &size,
-                                       nullptr, nullptr, nullptr, nullptr);
+         result = ::RegEnumKeyExW(hKey_,
+                                  i,
+                                  &nameBuffer[0],
+                                  &size,
+                                  nullptr, nullptr, nullptr, nullptr);
          switch (result)
          {
          case ERROR_SUCCESS:
@@ -456,10 +351,10 @@ public:
          }
          default:
          {
+            DLOG("Error " << result << " enumerating registry subkey " << i << ": " << getErrorMessage(result));
             break;
          }
          }
-
       }
 
       return results;
@@ -829,7 +724,7 @@ Napi::Value isCtrlKeyDown(const Napi::CallbackInfo& info)
 
 namespace {
 
-std::wstring currentCSIDLPersonalHomePathImpl()
+std::string currentCSIDLPersonalHomePathImpl()
 {
 #ifdef _WIN32
 
@@ -843,11 +738,11 @@ std::wstring currentCSIDLPersonalHomePathImpl()
                                    SHGFP_TYPE_CURRENT,
                                    buffer);
 
-   return std::wstring(buffer);
+   return wideToUtf8(std::wstring(buffer));
 
 #else
 
-   return std::wstring();
+   return std::string();
 
 #endif
 }
@@ -856,13 +751,13 @@ std::wstring currentCSIDLPersonalHomePathImpl()
 
 Napi::Value currentCSIDLPersonalHomePath(const Napi::CallbackInfo& info)
 {
-   std::string u8str = wideToUtf8(currentCSIDLPersonalHomePathImpl());
+   std::string u8str = currentCSIDLPersonalHomePathImpl();
    return Napi::String::New(info.Env(), u8str);
 }
 
 namespace {
 
-std::wstring defaultCSIDLPersonalHomePathImpl()
+std::string defaultCSIDLPersonalHomePathImpl()
 {
 #ifdef _WIN32
    wchar_t buffer[MAX_PATH];
@@ -876,11 +771,11 @@ std::wstring defaultCSIDLPersonalHomePathImpl()
                                    SHGFP_TYPE_DEFAULT,
                                    buffer);
 
-   return std::wstring(buffer);
+   return wideToUtf8(std::wstring(buffer));
 
 #else
 
-   return std::wstring();
+   return std::string();
 
 #endif
 }
@@ -889,7 +784,7 @@ std::wstring defaultCSIDLPersonalHomePathImpl()
 
 Napi::Value defaultCSIDLPersonalHomePath(const Napi::CallbackInfo& info)
 {
-   std::string u8str = wideToUtf8(defaultCSIDLPersonalHomePathImpl());
+   std::string u8str = defaultCSIDLPersonalHomePathImpl();
    return Napi::String::New(info.Env(), u8str);
 }
 
