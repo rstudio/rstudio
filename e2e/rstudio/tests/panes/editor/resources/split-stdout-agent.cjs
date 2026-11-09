@@ -47,8 +47,11 @@ function relay(header, body) {
     await sleep(pauseMs);
     await write(body);
     relayed++;
-    if (countFile)
-      fs.writeFileSync(countFile, String(relayed));
+    if (countFile) {
+      // Replace the file whole, so a reader never sees it empty mid-write.
+      fs.writeFileSync(`${countFile}.tmp`, String(relayed));
+      fs.renameSync(`${countFile}.tmp`, countFile);
+    }
   });
 }
 

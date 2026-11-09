@@ -27,12 +27,21 @@ const FILE_NAME = 'split_stdout_ghost_text.R';
 const COUNT_FILE = 'split-agent-count';
 
 // The running agent's language server script: the argument of the node child
-// of this rsession that runs dist/nes/language-server.
-const FIND_AGENT_R =
-  'local({ rows <- trimws(system2("ps", c("-A", "-o", "ppid=", "-o", "args="), stdout = TRUE)); ' +
-  'mine <- rows[startsWith(rows, paste0(Sys.getpid(), " "))]; ' +
-  'hits <- regmatches(mine, regexpr("/\\\\S+/dist/nes/language-server\\\\.c?js", mine)); ' +
-  'if (length(hits)) hits[[1]] else "" })';
+// of this rsession that runs dist/nes/language-server. ps doesn't quote
+// arguments, so a path with spaces is found by trying each "/" before the
+// script name as its start, and keeping the first that names a file.
+const FIND_AGENT_R = [
+  '(function() {',
+  'rows <- trimws(system2("ps", c("-A", "-o", "ppid=", "-o", "args="), stdout = TRUE));',
+  'for (line in rows[startsWith(rows, paste0(Sys.getpid(), " "))]) {',
+  String.raw`match <- regexpr("/dist/nes/language-server\\.c?js", line);`,
+  'if (match < 0) next;',
+  'end <- match + attr(match, "match.length") - 1L;',
+  'for (start in gregexpr("/", substr(line, 1L, end), fixed = TRUE)[[1L]]) {',
+  'script <- substr(line, start, end);',
+  'if (file.exists(script)) return(script) } };',
+  '"" })()',
+].join(' ');
 
 test.describe('Posit Assistant output split across reads', { tag: ['@ai'] }, () => {
   requireAiCredentials(test, 'positai');
