@@ -894,12 +894,17 @@ jobs:
       # sandbox artifacts (macOS pw-sandbox-${{ matrix.shard }}, Linux Desktop
       # pw-sandbox-linux-desktop-*) when they run under the combined PR
       # orchestrator.
+      # user-home holds the sandbox AI credential stores (.posit/ai/auth/data.json,
+      # github-copilot). Exclude it explicitly rather than relying on
+      # upload-artifact skipping hidden paths by default.
       - name: Upload PW sandbox (on failure)
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: pw-sandbox-linux-server-${{ matrix.shard }}
-          path: ${{ github.workspace }}/pw-sandbox/
+          path: |
+            ${{ github.workspace }}/pw-sandbox/
+            !${{ github.workspace }}/pw-sandbox/*/user-home/**
           if-no-files-found: ignore
 
       # Whatever is still running at the end of a failed shard gets the same
