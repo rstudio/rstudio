@@ -56,6 +56,7 @@
 - ([#19312](https://github.com/rstudio/rstudio/issues/19312)): [Accessibility] Fixed an issue where Focus Next Pane (F6) and Focus Previous Pane (Shift+F6) did nothing when focus wasn't in a pane, such as when focus was in the main toolbar. F6 now moves focus to the first pane, and Shift+F6 to the last.
 - ([#19193](https://github.com/rstudio/rstudio/issues/19193)): [Accessibility] Fixed an issue where Focus Next Pane (F6) and Focus Previous Pane (Shift+F6) opened a new untitled document when no documents were open. The hidden Source pane is now skipped.
 - ([#19520](https://github.com/rstudio/rstudio/issues/19520)): Fixed an issue where messages from the Posit AI and GitHub Copilot code assistants were dropped, and errors such as "parsing response failed" were logged, when the language server's output arrived split across reads.
+- ([#19525](https://github.com/rstudio/rstudio/issues/19525)): Fixed an issue where Posit Assistant chat stopped handling messages from its backend, such as requests to run code or edit files, after the backend wrote a malformed message header.
 - ([#19470](https://github.com/rstudio/rstudio/issues/19470)): [Accessibility] Fixed an issue where the Packages pane showed an unlabeled Browse button for packages with no browse URL, such as those installed from a local path. Screen readers now announce the Browse and Remove buttons with the package's name (e.g. "Browse dplyr", "Remove dplyr") instead of the website's URL or a generic "Remove package".
 
 ### Dependencies
