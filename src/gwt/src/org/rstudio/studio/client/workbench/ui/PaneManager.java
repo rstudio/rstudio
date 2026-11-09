@@ -899,21 +899,13 @@ public class PaneManager
    @Handler
    public void onFocusNextPane()
    {
-      LogicalWindow currentFocus = getActiveLogicalWindow();
-      if (currentFocus == null)
-         return;
-
-      focusAdjacentWindow(currentFocus, false /* before */);
+      focusAdjacentWindow(false /* before */);
    }
 
    @Handler
    public void onFocusPreviousPane()
    {
-      LogicalWindow currentFocus = getActiveLogicalWindow();
-      if (currentFocus == null)
-         return;
-
-      focusAdjacentWindow(currentFocus, true /* before */);
+      focusAdjacentWindow(true /* before */);
    }
 
    @Handler
@@ -1024,14 +1016,13 @@ public class PaneManager
       // if we're the last (!before or first (before) window in the display, wrap around to the
       // front
       if (!before && window == panes.get(lastIndex))
-         return additionalSourceCount_ > 0 ? sourceColumnManager_.getLeftColumnName() :
-            panes.get(0).getNormal().getName();
+         return getFocusCycleEnd(panes, false /* before */);
       else if (before)
       {
          if ((additionalSourceCount_ > 0 &&
             StringUtil.equals(name, sourceColumnManager_.getLeftColumnName())) ||
             (additionalSourceCount_ == 0 && window == panes.get(0)))
-            return panes.get(lastIndex).getNormal().getName();
+            return getFocusCycleEnd(panes, true /* before */);
          else if (window == panes.get(0))
             return sourceColumnManager_.get(1).getName();
       }
@@ -1134,16 +1125,50 @@ public class PaneManager
       }
    }
 
-   private void focusAdjacentWindow(LogicalWindow window, boolean before)
+   /**
+    * Where the focus cycle wraps to, and where it starts when no pane has focus.
+    * Forward, that's the first pane in the cycle, or the leftmost source column
+    * when extra columns are open, since those sit before the first pane.
+    * Backward (before), it's the last pane in the cycle.
+    */
+   private String getFocusCycleEnd(ArrayList<LogicalWindow> panes, boolean before)
    {
-      String adjacent = getAdjacentWindow(window, before);
+      if (before)
+         return panes.get(panes.size() - 1).getNormal().getName();
+      return additionalSourceCount_ > 0 ? sourceColumnManager_.getLeftColumnName() :
+         panes.get(0).getNormal().getName();
+   }
 
-      // TabSet1 and TabSet2 could be empty, if so skip to the next pane
-      while ((StringUtil.equals(UserPrefsAccessor.Panes.QUADRANTS_TABSET1, adjacent) && tabSet1TabPanel_.isEmpty()) ||
-             (StringUtil.equals(UserPrefsAccessor.Panes.QUADRANTS_TABSET2, adjacent) && tabSet2TabPanel_.isEmpty()))
+   private void focusAdjacentWindow(boolean before)
+   {
+      // Focus can be outside every pane, such as on the page body or in the
+      // main toolbar. Enter the cycle at an end.
+      LogicalWindow currentFocus = getActiveLogicalWindow();
+      String adjacent = currentFocus == null ?
+         getFocusCycleEnd(getFocusCycle(), before) :
+         getAdjacentWindow(currentFocus, before);
+
+      while (isEmptyPane(adjacent))
          adjacent = getAdjacentWindow(panesByName_.get(adjacent), before);
 
       focusWindow(adjacent);
+   }
+
+   /**
+    * Whether the focus cycle passes over a pane with nothing to focus. Focusing
+    * an empty main Source pane would open a document (#19193). Extra columns
+    * are empty only while loading, and stepping past one goes by the active
+    * column, which could return that same column forever.
+    */
+   private boolean isEmptyPane(String name)
+   {
+      if (StringUtil.equals(UserPrefsAccessor.Panes.QUADRANTS_TABSET1, name))
+         return tabSet1TabPanel_.isEmpty();
+      if (StringUtil.equals(UserPrefsAccessor.Panes.QUADRANTS_TABSET2, name))
+         return tabSet2TabPanel_.isEmpty();
+      if (StringUtil.equals(SourceColumnManager.MAIN_SOURCE_NAME, name))
+         return sourceColumnManager_.isEmpty(name);
+      return false;
    }
 
    private void swapConsolePane(PaneConfig paneConfig, int consoleTargetIndex)

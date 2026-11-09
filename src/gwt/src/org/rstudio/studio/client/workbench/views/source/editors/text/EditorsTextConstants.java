@@ -116,7 +116,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
     String saveAsPathName(String stem, String extension);
     String onResponseReceivedMessage();
     String errorSavingFile();
-    String onErrorMessage();
     String checkCompilersRnWPackageNotInstalled(String fRnWname, String forcontext, String fRnWPackage);
     String rnwFiles();
     String rnwFilesForProject();

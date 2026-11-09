@@ -35,6 +35,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.LauncherServerEvent;
 import org.rstudio.studio.client.application.events.DesktopMouseNavigateEvent;
+import org.rstudio.studio.client.application.events.DesktopUpdateDownloadedEvent;
 import org.rstudio.studio.client.application.events.SaveActionChangedEvent;
 import org.rstudio.studio.client.application.events.SuicideEvent;
 import org.rstudio.studio.client.application.model.ProductEditionInfo;
@@ -275,10 +276,7 @@ public class DesktopHooks
 
    void updateLicenseWarningBar(String licenseMessage)
    {
-      if (StringUtil.isNullOrEmpty(licenseMessage))
-         globalDisplay_.hideWarningBar();
-      else
-         globalDisplay_.showLicenseWarningBar(false, licenseMessage);
+      globalDisplay_.showLicenseWarningBar(false, licenseMessage);
    }
 
    void onLauncherServerEvent(String eventType, String details)
@@ -295,6 +293,16 @@ public class DesktopHooks
    void onDragStart()
    {
       workbenchContext_.setDroppedUrls(null);
+   }
+
+   void onUpdateDownloaded(String version)
+   {
+      events_.fireEvent(DesktopUpdateDownloadedEvent.downloaded(version));
+   }
+
+   void onUpdateDownloadFailed(String message)
+   {
+      events_.fireEvent(DesktopUpdateDownloadedEvent.failed(message));
    }
    
    void onUrlsDropped(String droppedUrls)

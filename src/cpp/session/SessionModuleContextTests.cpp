@@ -28,6 +28,7 @@
 #include <core/http/Request.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
+#include <core/system/ShellUtils.hpp>
 #include <shared_core/FilePath.hpp>
 
 #include <session/SessionOptions.hpp>
@@ -1233,6 +1234,169 @@ TEST(PositAssistantInstallationTest, EmptyEnvironmentVariableLeavesInstallationE
 
    EXPECT_TRUE(module_context::isPositAssistantInstallationEnabledByAdmin());
 }
+
+// isTextFile() with file(1) unavailable, missing, or answering (#19435)
+class IsTextFileTest : public ::testing::Test
+{
+protected:
+   void TearDown() override
+   {
+      for (core::FilePath& file : tempFiles_)
+         file.removeIfExists();
+   }
+
+   core::FilePath makeTempFile(const std::string& extension,
+                               const std::string& contents)
+   {
+      core::FilePath path;
+      core::Error error = core::FilePath::tempFilePath(extension, path);
+      EXPECT_FALSE(error) << error.asString();
+      error = core::writeStringToFile(path, contents);
+      EXPECT_FALSE(error) << error.asString();
+      tempFiles_.push_back(path);
+      return path;
+   }
+
+   // a file with exactly the given name, in a fresh temp directory
+   core::FilePath makeNamedTempFile(const std::string& name,
+                                    const std::string& contents)
+   {
+      core::FilePath dir;
+      core::Error error = core::FilePath::tempFilePath(dir);
+      EXPECT_FALSE(error) << error.asString();
+      error = dir.ensureDirectory();
+      EXPECT_FALSE(error) << error.asString();
+      tempFiles_.push_back(dir);
+
+      core::FilePath path = dir.completeChildPath(name);
+      error = core::writeStringToFile(path, contents);
+      EXPECT_FALSE(error) << error.asString();
+      return path;
+   }
+
+   static std::string binaryContents()
+   {
+      std::string contents = "PK";
+      contents.push_back('\0');
+      contents.push_back('\0');
+      contents += "payload";
+      return contents;
+   }
+
+#ifndef _WIN32
+   // a stand-in for file(1) that always answers with the given mime type
+   core::FilePath makeFileCommand(const std::string& mimeType)
+   {
+      core::FilePath script = makeTempFile(".sh", "#!/bin/sh\necho '" + mimeType + "'\n");
+      core::Error error = script.changeFileMode(core::FileMode::USER_READ_WRITE_EXECUTE);
+      EXPECT_FALSE(error) << error.asString();
+      return script;
+   }
+#endif
+
+   std::vector<core::FilePath> tempFiles_;
+};
+
+TEST_F(IsTextFileTest, KnownLockFilesAreTextByName)
+{
+   // answered from the name alone: even binary contents are not inspected
+   core::FilePath renvLock = makeNamedTempFile("renv.lock", binaryContents());
+   EXPECT_TRUE(isTextFile(renvLock, core::FilePath()));
+
+   // other .lock files are inspected, as some (git's index.lock) are binary
+   core::FilePath textLock = makeNamedTempFile("other.lock", "{}\n");
+   EXPECT_TRUE(isTextFile(textLock, core::FilePath()));
+
+   core::FilePath indexLock = makeNamedTempFile("index.lock", binaryContents());
+   EXPECT_FALSE(isTextFile(indexLock, core::FilePath()));
+}
+
+TEST_F(IsTextFileTest, UnavailableFileCommandInspectsContents)
+{
+   core::FilePath text = makeTempFile(".unmapped19435", "all: build\n");
+   EXPECT_TRUE(isTextFile(text, core::FilePath()));
+
+   core::FilePath binary = makeTempFile(".unmapped19435", binaryContents());
+   EXPECT_FALSE(isTextFile(binary, core::FilePath()));
+}
+
+TEST_F(IsTextFileTest, ContentInspectionRejectsAnyNullOutsideUtf16)
+{
+   // a single null byte marks binary data; requiring two in a row let most
+   // encrypted files through
+   std::string lone = "all: build";
+   lone.push_back('\0');
+   lone += "\n";
+   core::FilePath loneNull = makeTempFile(".unmapped19435", lone);
+   EXPECT_FALSE(isTextFile(loneNull, core::FilePath()));
+
+   // UTF-16LE with a BOM: "a" then U+4E00, whose bytes straddle a null pair
+   const char utf16[] = "\xFF\xFE" "a\0" "\0\x4E" "\n\0";
+   core::FilePath utf16Text = makeTempFile(".unmapped19435", std::string(utf16, sizeof(utf16) - 1));
+   EXPECT_TRUE(isTextFile(utf16Text, core::FilePath()));
+
+   // ... but a null code unit is still binary
+   const char utf16Null[] = "\xFF\xFE" "a\0" "\0\0" "\n\0";
+   core::FilePath utf16Binary = makeTempFile(".unmapped19435", std::string(utf16Null, sizeof(utf16Null) - 1));
+   EXPECT_FALSE(isTextFile(utf16Binary, core::FilePath()));
+}
+
+#ifndef _WIN32
+
+TEST_F(IsTextFileTest, MissingFileCommandInspectsContents)
+{
+   // the command runs through the shell, which exits 127 with nothing on
+   // stdout when the program does not exist; that used to read as "binary"
+   core::FilePath missing("/nonexistent/rstudio-19435/file");
+   ASSERT_FALSE(missing.exists());
+
+   core::FilePath text = makeTempFile(".unmapped19435", "all: build\n");
+   EXPECT_TRUE(isTextFile(text, missing));
+
+   core::FilePath binary = makeTempFile(".unmapped19435", binaryContents());
+   EXPECT_FALSE(isTextFile(binary, missing));
+}
+
+// The stand-ins for file(1) are scripts in the temp directory. Where that is
+// mounted noexec they cannot answer, which would fail these tests or let them
+// pass via the content fallback, so skip them instead.
+class IsTextFileStandInTest : public IsTextFileTest
+{
+protected:
+   void SetUp() override
+   {
+      core::FilePath probe = makeFileCommand("text/plain");
+      core::system::ProcessResult result;
+      core::Error error = core::system::runCommand(
+         core::shell_utils::escape(probe),
+         core::system::ProcessOptions(),
+         &result);
+
+      if (error || result.exitStatus != 0)
+         GTEST_SKIP() << "cannot run scripts in " << probe.getParent().getAbsolutePath();
+   }
+};
+
+TEST_F(IsTextFileStandInTest, FileCommandAnswerIsHonored)
+{
+   // when file(1) does answer, its verdict wins over the content heuristic
+   core::FilePath text = makeTempFile(".unmapped19435", "all: build\n");
+   EXPECT_FALSE(isTextFile(text, makeFileCommand("application/octet-stream")));
+
+   core::FilePath binary = makeTempFile(".unmapped19435", binaryContents());
+   EXPECT_TRUE(isTextFile(binary, makeFileCommand("text/plain; charset=us-ascii")));
+}
+
+TEST_F(IsTextFileStandInTest, EmptyFileCommandAnswerInspectsContents)
+{
+   core::FilePath text = makeTempFile(".unmapped19435", "all: build\n");
+   EXPECT_TRUE(isTextFile(text, makeFileCommand("")));
+
+   core::FilePath binary = makeTempFile(".unmapped19435", binaryContents());
+   EXPECT_FALSE(isTextFile(binary, makeFileCommand("")));
+}
+
+#endif
 
 } // namespace tests
 } // namespace module_context

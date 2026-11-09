@@ -327,6 +327,9 @@ void addFirstRunDocs(const core::FilePath& projectFilePath, const std::vector<st
 
 core::json::Array websiteOutputFormatsJson();
 
+// Returns the HTML warning shown when a project's text encoding is unavailable.
+std::string unavailableEncodingWarning(const std::string& encoding);
+
 // Returns the editor_theme value to write: the value from the request JSON when the
 // "editor_theme" key is present and a string (an explicit "" clears the override),
 // otherwise the existing on-disk value (preserved when the key is omitted).

@@ -2,16 +2,16 @@
 // Files "Search in" field. base-prefs.jsonc sets native_file_dialogs=false
 // suite-wide, so Desktop shows the GWT chooser too.
 //
-// Choose hands the caller the directory the chooser shows. #18938: a listing's
-// arrival wiped the chooser's path after it was set, so Choose returned an
-// empty path and blanked the caller's field.
+// Choose returns the selected folder, or the current directory when nothing
+// is selected. #18938: a listing's arrival wiped the chooser's path after it
+// was set. #18958: selecting the parent row returned the literal path `..`.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { dismissBlockingModals } from '@pages/modals.page';
 import { executeCommand } from '@utils/commands';
 import { TIMEOUTS } from '@utils/constants';
-import { LIST_FILES_RPC, holdListFiles } from '@utils/file-dialogs';
+import { FILE_LIST, LIST_FILES_RPC, holdListFiles } from '@utils/file-dialogs';
 import { rPathLiteral } from '@utils/r';
 import { useSuiteSandbox } from '@utils/sandbox';
 import type { Locator, Page } from 'playwright';
@@ -27,7 +27,6 @@ const TEXT_ENTRY = '#rstudio_text_entry';
 const SEARCH_INPUT = '#rstudio_find_files_text';
 const FIND_OK_BTN = '#rstudio_dlg_ok';
 const CURRENT_LOCATION = '[aria-current="location"]';
-const FOLDER_LIST = '#rstudio_directory_contents';
 
 const BASE_NAME = `pw-choose-folder-${Date.now()}`;
 const SUBFOLDER = 'target';
@@ -68,6 +67,22 @@ async function openChooserAt(page: Page, dir: string): Promise<Locator> {
   return chooser;
 }
 
+// Single-clicks the row named `row`, then clicks Choose. A navigation that
+// lands would return the same path as choosing the selected row, so list_files
+// is held instead: Choose waits on any navigation still in flight, so a click
+// that started one would leave the chooser up.
+async function chooseRow(page: Page, chooser: Locator, row: string): Promise<void> {
+  const listing = await holdListFiles(page);
+
+  try {
+    await chooser.getByText(row, { exact: true }).click();
+    await chooser.locator(CHOOSE_BTN).click();
+    await expect(chooser).toBeHidden();
+  } finally {
+    await listing.cleanup();
+  }
+}
+
 test.describe('Choose Directory dialog', () => {
   const sandbox = useSuiteSandbox();
   let base = '';
@@ -101,6 +116,35 @@ test.describe('Choose Directory dialog', () => {
 
     await chooser.locator(CHOOSE_BTN).click();
     await expect(chooser).toBeHidden();
+    await expect(page.locator(SEARCH_IN_TEXT)).toHaveValue(new RegExp(`/${BASE_NAME}/${SUBFOLDER}$`));
+  });
+
+  test('choosing a selected parent row returns the parent folder', async ({ rstudioPage: page }) => {
+    const chooser = await openChooserAt(page, base);
+    await chooser.getByText(SUBFOLDER, { exact: true }).dblclick();
+    await expect(chooser.locator(CURRENT_LOCATION)).toHaveText(SUBFOLDER, { timeout: TIMEOUTS.fileOpen });
+
+    // choosing the selected synthetic .. row returned `..` (#18958)
+    await chooseRow(page, chooser, '..');
+    await expect(page.locator(SEARCH_IN_TEXT)).toHaveValue(new RegExp(`/${BASE_NAME}$`));
+  });
+
+  test('double-clicking the parent row navigates to the parent folder', async ({ rstudioPage: page }) => {
+    const chooser = await openChooserAt(page, base);
+    await chooser.getByText(SUBFOLDER, { exact: true }).dblclick();
+    await expect(chooser.locator(CURRENT_LOCATION)).toHaveText(SUBFOLDER, { timeout: TIMEOUTS.fileOpen });
+
+    await chooser.getByText('..', { exact: true }).dblclick();
+    await expect(chooser.locator(CURRENT_LOCATION)).toHaveText(BASE_NAME, { timeout: TIMEOUTS.fileOpen });
+    await expect(chooser.getByText(SUBFOLDER, { exact: true })).toBeVisible();
+    await chooser.locator(CHOOSE_BTN).click();
+    await expect(chooser).toBeHidden();
+    await expect(page.locator(SEARCH_IN_TEXT)).toHaveValue(new RegExp(`/${BASE_NAME}$`));
+  });
+
+  test('choosing a selected child row returns the child folder', async ({ rstudioPage: page }) => {
+    const chooser = await openChooserAt(page, base);
+    await chooseRow(page, chooser, SUBFOLDER);
     await expect(page.locator(SEARCH_IN_TEXT)).toHaveValue(new RegExp(`/${BASE_NAME}/${SUBFOLDER}$`));
   });
 
@@ -293,8 +337,8 @@ test.describe('Choose Directory dialog', () => {
     // a selection would change the folder Choose returns (#19315)
     const chooser = await openChooser(page);
 
-    await expect(chooser.locator(FOLDER_LIST)).toBeFocused({ timeout: TIMEOUTS.fileOpen });
-    await expect(chooser.locator(`${FOLDER_LIST} tr[aria-selected]`)).toHaveCount(0);
+    await expect(chooser.locator(FILE_LIST)).toBeFocused({ timeout: TIMEOUTS.fileOpen });
+    await expect(chooser.locator(`${FILE_LIST} tr[aria-selected]`)).toHaveCount(0);
   });
 
   test('a listing that arrives after the chooser is shown still focuses the folder list', async ({ rstudioPage: page }) => {
@@ -310,7 +354,7 @@ test.describe('Choose Directory dialog', () => {
       await page.waitForTimeout(1000);
 
       listing.release();
-      await expect(chooser.locator(FOLDER_LIST)).toBeFocused({ timeout: TIMEOUTS.fileOpen });
+      await expect(chooser.locator(FILE_LIST)).toBeFocused({ timeout: TIMEOUTS.fileOpen });
     } finally {
       await listing.cleanup();
     }

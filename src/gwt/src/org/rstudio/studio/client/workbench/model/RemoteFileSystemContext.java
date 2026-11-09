@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.model;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.files.PosixFileSystemContext;
@@ -61,12 +62,13 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
    public void setCallbacks(Callbacks callbacks)
    {
       super.setCallbacks(callbacks);
-      navigation_++;
+      navigation_.invalidate();
       openingNavigation_ = true;
    }
 
    public void setwd(String relativeOrAbsolutePath)
    {
+      navigation_.invalidate();
       workingDir_ = combine(pwd(), relativeOrAbsolutePath);
       contents_ = null;
       if (callbacks_ != null)
@@ -108,25 +110,15 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
     */
    public void cd(String relativeOrAbsolutePath, final String fallbackPath)
    {
-      navigation_++;
-      cd(relativeOrAbsolutePath, fallbackPath, navigation_);
-   }
+      // Only the latest navigation (or owner) may update the listing or notify
+      // the dialog: onNavigated() can release an accept waiting for that
+      // directory, and a closed or replaced dialog must get nothing.
+      navigation_.invalidate();
+      final Invalidation.Token token = navigation_.getInvalidationToken();
 
-   /**
-    * @param navigation This navigation's sequence number. A listing (or
-    *    error) is dropped once a later navigation or a new owner has
-    *    superseded it, so that out-of-order responses cannot move a dialog
-    *    and a closed or replaced dialog gets nothing.
-    */
-   private void cd(String relativeOrAbsolutePath,
-                   final String fallbackPath,
-                   final int navigation)
-   {
       final String newPath = combine(workingDir_, relativeOrAbsolutePath);
 
       final FileSystemItem newPathEntry = FileSystemItem.createDir(newPath);
-      
-      final ArrayList<FileSystemItem> fsi = new ArrayList<>();
 
       server_.listFiles(
             newPathEntry,
@@ -138,14 +130,13 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
                @Override
                public void onError(ServerError error)
                {
-                  if (navigation != navigation_)
+                  if (token.isInvalid())
                      return;
 
                   if (fallbackPath != null)
                   {
-                     // the fallback continues this navigation, so a later
-                     // one supersedes it too
-                     cd(fallbackPath, null, navigation);
+                     // try fallback if supplied
+                     cd(fallbackPath, null);
                   }
                   else if (callbacks_ != null)
                      callbacks_.onError(error.getUserMessage());
@@ -154,10 +145,11 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
                @Override
                public void onResponseReceived(final DirectoryListing response)
                {
-                  if (navigation != navigation_)
+                  if (token.isInvalid())
                      return;
 
                   final JsArray<FileSystemItem> files = response.getFiles();
+                  ArrayList<FileSystemItem> fsi = new ArrayList<>();
                   for (int i = 0; i < files.length(); i++)
                      fsi.add(files.get(i));
                   
@@ -215,12 +207,12 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
       return fileTypeRegistry_.getIconForFile(item);
    }
 
+   private final Invalidation navigation_ = new Invalidation();
    private final FilesServerOperations server_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final GlobalDisplay globalDisplay_;
    private final Session session_;
 
    // see setCallbacks()
-   private int navigation_ = 0;
    private boolean openingNavigation_ = true;
 }

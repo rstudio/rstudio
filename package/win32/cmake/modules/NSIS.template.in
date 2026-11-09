@@ -20,6 +20,15 @@
   Var RunningAsShellUser
   Var RunningFromInstaller
   Var RunningAllUsers
+  ; 1 when launched by RStudio's in-app updater (/update)
+  Var UpdateMode
+  ; the RStudio to bring back when an in-app update fails
+  Var UpdateExeDir
+  ; 1 once the sections have started changing the installation, after which
+  ; there may be no intact RStudio to bring back
+  Var UpdateInstallBegun
+  ; the elevated instance's exit code for a failure after that point
+  !define RSTUDIO_UPDATE_ERROR_INSTALL_BEGUN 666670
 ;--------------------------------
 ;Include Modern UI
 
@@ -410,6 +419,9 @@ Function RunCrossModeUninstaller
 FunctionEnd
 
 Section "-Remove previous installation"
+  ; from here on a failed in-app update cannot simply bring the previous
+  ; RStudio back (see RelaunchAfterFailedUpdate)
+  StrCpy $UpdateInstallBegun 1
 
   ; remove an installation of the opposite mode (per-user vs all-users)
   !insertmacro UAC_AsUser_Call Function GetCrossModeUninstaller ${UAC_SYNCREGISTERS}
@@ -486,6 +498,14 @@ Section "-Core installation"
                  SW_SHOWNORMAL
   
 @CPACK_NSIS_EXTRA_INSTALL_COMMANDS@
+
+  ;
+  ; RSTUDIO CHANGE - an in-app update ends by bringing RStudio back. Run it as
+  ; the user who launched the updater, never as the elevated installer.
+  ;
+  ${If} $UpdateMode = 1
+    !insertmacro UAC_AsUser_ExecShell "" "$INSTDIR\rstudio.exe" "" "$INSTDIR" ""
+  ${EndIf}
 
 SectionEnd
 
@@ -660,18 +680,149 @@ Section "Uninstall"
 SectionEnd
 
 ;--------------------------------
+; RSTUDIO CHANGE - an in-app update (/update) that is not going to be
+; installed brings RStudio back, since the updater quit it for this
+; installer and would otherwise leave the user with neither. Called from
+; the instance that talks to the user: the unelevated outer one, or the
+; only one when no elevation was needed. The elevated inner instance hands
+; its failure to the outer one through its exit code instead.
+Function RelaunchAfterFailedUpdate
+  ; shown despite /S, for the same reason. The previous version is only
+  ; there to come back to while the install failed before the sections
+  ; started changing it (an elevation refused, say); after that (an
+  ; extraction error) the installation needs repairing, as it does when the
+  ; relaunch itself fails. --after-failed-update lets that RStudio reopen
+  ; the project remembered for the update (see args-manager.ts)
+  ${If} $UpdateInstallBegun = 0
+  ${AndIf} $UpdateExeDir != ""
+  ${AndIf} ${FileExists} "$UpdateExeDir\rstudio.exe"
+    MessageBox MB_OK|MB_ICONEXCLAMATION "The update could not be installed. @CPACK_PACKAGE_NAME@ will reopen on the version you had; choose Help > Check for Updates to try again, or run the installer yourself."
+    ClearErrors
+    Exec '"$UpdateExeDir\rstudio.exe" --after-failed-update'
+    ${IfNot} ${Errors}
+      Return
+    ${EndIf}
+  ${EndIf}
+  MessageBox MB_OK|MB_ICONEXCLAMATION "The update could not be installed, and the previous version of @CPACK_PACKAGE_NAME@ could not be started. Please run the @CPACK_PACKAGE_NAME@ installer to repair the installation."
+FunctionEnd
+
+Function .onInstFailed
+  ${If} $UpdateMode = 1
+    ${If} ${UAC_IsInnerInstance}
+      ; the outer instance brings RStudio back, or says the installation
+      ; needs repairing; it only needs to know which
+      ${If} $UpdateInstallBegun = 1
+        SetErrorLevel ${RSTUDIO_UPDATE_ERROR_INSTALL_BEGUN}
+      ${EndIf}
+    ${Else}
+      StrCpy $UpdateExeDir $INSTDIR
+      Call RelaunchAfterFailedUpdate
+    ${EndIf}
+  ${EndIf}
+FunctionEnd
+
+;--------------------------------
 Function .onInit
+
+  ;
+  ; RSTUDIO CHANGE - /update marks an installer spawned by RStudio's in-app
+  ; updater (src/node/desktop/src/main/updater.ts), always with /S and the
+  ; install mode. Parsed in both the outer and the elevated inner instance,
+  ; since NsisMultiUser relaunches with the same command line.
+  ;
+  StrCpy $UpdateMode 0
+  StrCpy $UpdateInstallBegun 0
+  ${GetParameters} $R9
+  ClearErrors
+  ${GetOptions} $R9 "/update" $R8
+  ${IfNot} ${Errors}
+    StrCpy $UpdateMode 1
+  ${EndIf}
 
   ; Guard the running-app check so it runs only in the (unelevated) outer
   ; instance, before MULTIUSER_INIT (which may relaunch elevated).
   ${ifnot} ${UAC_IsInnerInstance}
-    ${nsProcess::FindProcess} "rstudio.exe" $R0
-    ${If} $R0 = 0
-      MessageBox MB_OK|MB_ICONEXCLAMATION "@CPACK_PACKAGE_NAME@ is currently running. Please close it before installing a new version." /SD IDOK
-      Abort
+    ${If} $UpdateMode = 1
+      ; the updater spawns this installer and then quits RStudio, so give the
+      ; process a moment to go away instead of failing the update outright
+      StrCpy $R1 0
+      ${Do}
+        ${nsProcess::FindProcess} "rstudio.exe" $R0
+        ${If} $R0 <> 0
+          ${Break}
+        ${EndIf}
+        ${If} $R1 >= 60
+          ${Break}
+        ${EndIf}
+        Sleep 1000
+        IntOp $R1 $R1 + 1
+      ${Loop}
+      ${If} $R0 = 0
+        ; shown despite /S: the user accepted an update and RStudio has
+        ; closed its window, so they must hear why nothing happens
+        ${nsProcess::Unload}
+        MessageBox MB_OK|MB_ICONEXCLAMATION "@CPACK_PACKAGE_NAME@ is still running, so the update was not installed. Once it has exited, start it and choose Help > Check for Updates to try again."
+        Abort
+      ${EndIf}
+    ${Else}
+      ${nsProcess::FindProcess} "rstudio.exe" $R0
+      ${If} $R0 = 0
+        MessageBox MB_OK|MB_ICONEXCLAMATION "@CPACK_PACKAGE_NAME@ is currently running. Please close it before installing a new version." /SD IDOK
+        Abort
+      ${EndIf}
     ${EndIf}
     ${nsProcess::Unload}
   ${endif}
+
+  ;
+  ; RSTUDIO CHANGE - from here on, an update that cannot be installed brings
+  ; RStudio back (see RelaunchAfterFailedUpdate): the updater quit it for
+  ; this installer, and the preflight in updater.ts cannot foresee a
+  ; declined UAC prompt or an install error. The RStudio to relaunch is the
+  ; one registered for the requested mode, which is where the updater read
+  ; the mode from. An all-users update needs elevation; NsisMultiUser would
+  ; elevate from MULTIUSER_INIT and quit this outer instance as soon as the
+  ; elevated one is done, whatever the outcome, so it is done here instead,
+  ; and the elevated instance proceeds through MULTIUSER_INIT as usual.
+  ;
+  ${If} $UpdateMode = 1
+  ${AndIfNot} ${UAC_IsInnerInstance}
+    SetRegView 64
+    ${GetOptions} $R9 "/allusers" $R8
+    ${IfNot} ${Errors}
+      ReadRegStr $UpdateExeDir HKLM "${MULTIUSER_INSTALLMODE_UNINSTALL_REGISTRY_KEY_PATH}" "InstallLocation"
+      ${IfNot} ${UAC_IsAdmin}
+        !insertmacro UAC_RunElevated
+        ${If} $0 = 0
+        ${AndIf} $1 = 2
+          ; already running with high integrity: carry on in this instance
+        ${Else}
+          ${If} $0 = 0
+          ${AndIf} $1 = 1
+            ; the elevated instance ran and set the error level to its exit
+            ; code ($2); it relaunched RStudio itself when that is 0
+            ${If} $2 <> 0
+              ${If} $2 = ${RSTUDIO_UPDATE_ERROR_INSTALL_BEGUN}
+                StrCpy $UpdateInstallBegun 1
+              ${EndIf}
+              Call RelaunchAfterFailedUpdate
+            ${EndIf}
+          ${Else}
+            ; the prompt was declined (1223), a non-administrator account
+            ; was given (3), or the elevated instance could not start
+            ${If} $0 = 0
+              StrCpy $0 ${MULTIUSER_ERROR_ELEVATION_FAILED}
+            ${EndIf}
+            SetErrorLevel $0
+            Call RelaunchAfterFailedUpdate
+          ${EndIf}
+          Quit
+        ${EndIf}
+      ${EndIf}
+    ${Else}
+      ReadRegStr $UpdateExeDir HKCU "${MULTIUSER_INSTALLMODE_UNINSTALL_REGISTRY_KEY_PATH}" "InstallLocation"
+    ${EndIf}
+  ${EndIf}
 
   !insertmacro MULTIUSER_INIT
 
