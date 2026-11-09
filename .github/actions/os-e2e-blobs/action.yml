@@ -1,0 +1,150 @@
+name: "Keep or retire E2E shard blob reports"
+description: >
+  The per-shard Playwright blob reports are GitHub artifacts only because the
+  merge job has to get them somehow, and a GitHub artifact can be downloaded
+  by anyone signed in to GitHub. This action handles their life after the
+  merge in two modes:
+
+  - `restore`, before merging: on a re-run of the merge job, copies back from
+    the private reports bucket any blob that the shard artifacts no longer
+    provide (because a previous attempt retired them), so a "re-run failed
+    jobs" still merges every shard, and a reporting-only re-run has its
+    inputs.
+  - `retire`, after the report is published: archives the blobs to the bucket
+    under blobs/<run id>/<label>/ (the bucket's lifecycle rule reaps them), and
+    only then deletes the blob artifacts from the run. Deletion goes by exact
+    artifact name, one query per shard, when a shard count is given: the run's
+    artifact list is shared with other engines' merge jobs in a run-all
+    workflow, and their concurrent deletions shift a paginated listing while it
+    is being read, which an exact-name query (one small page) is immune to. A
+    full listing is used only as a sweep for leftovers, or when no shard count
+    is given (the PR workflow's single merge-all job, which has no concurrent
+    deleter).
+
+  Both modes are best-effort and need the OIDC role (role-arn); with none, as
+  on fork PRs, restore does nothing and retire deletes nothing, leaving the
+  artifacts to their one-day retention.
+
+inputs:
+  mode:
+    description: "'restore' or 'retire'."
+    required: true
+  role-arn:
+    description: "IAM role assumed via GitHub OIDC for the bucket (secrets.AWS_E2E_REPORTS_ROLE_ARN). Empty makes this a no-op."
+    required: false
+    default: ""
+  bucket:
+    description: "The reports bucket."
+    required: false
+    default: "rstudio-playwright-reports"
+  label:
+    description: "Archive key segment: the engine label, or 'all-platforms'."
+    required: true
+  blob-dir:
+    description: "Directory the blob reports were downloaded to."
+    required: false
+    default: "e2e/rstudio/all-blob-reports"
+  artifact-prefix:
+    description: "retire: artifact names starting with this are deleted, e.g. playwright-blob-report-mac-."
+    required: false
+    default: ""
+  shard-count:
+    description: "retire: when given, shards 1..N are deleted by exact name <artifact-prefix><n> first."
+    required: false
+    default: ""
+  github-token:
+    description: "retire: token with actions: write for deleting artifacts (github.token)."
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - name: Configure AWS credentials
+      id: creds
+      if: inputs.role-arn != '' && (inputs.mode == 'retire' || github.run_attempt != '1')
+      continue-on-error: true
+      uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
+      with:
+        role-to-assume: ${{ inputs.role-arn }}
+        aws-region: us-east-1
+
+    # Only blobs the artifacts did not provide are copied, so a re-run shard's
+    # fresh blob is never replaced by its archived predecessor. Blob file
+    # names are unique per platform and shard (see the blob reporter's
+    # fileName in playwright.config.ts), which is what makes this a plain
+    # name comparison.
+    - name: Restore archived blob reports
+      if: inputs.mode == 'restore' && steps.creds.outcome == 'success'
+      shell: bash
+      env:
+        BUCKET: ${{ inputs.bucket }}
+        LABEL: ${{ inputs.label }}
+        BLOB_DIR: ${{ inputs.blob-dir }}
+      run: |
+        set -uo pipefail
+        mkdir -p "$BLOB_DIR"
+        ARCHIVE="s3://${BUCKET}/blobs/${GITHUB_RUN_ID}/${LABEL}/"
+        restored=0
+        while read -r _ _ _ name; do
+          [ -n "$name" ] || continue
+          if [ ! -e "${BLOB_DIR}/${name}" ]; then
+            aws s3 cp "${ARCHIVE}${name}" "${BLOB_DIR}/${name}" --only-show-errors && restored=$((restored + 1))
+          fi
+        done < <(aws s3 ls "$ARCHIVE" 2> /dev/null)
+        echo "Restored ${restored} archived blob report(s) from ${ARCHIVE}."
+
+    - name: Archive blob reports
+      id: archive
+      if: inputs.mode == 'retire' && steps.creds.outcome == 'success'
+      shell: bash
+      env:
+        BUCKET: ${{ inputs.bucket }}
+        LABEL: ${{ inputs.label }}
+        BLOB_DIR: ${{ inputs.blob-dir }}
+      run: |
+        set -uo pipefail
+        ARCHIVE="s3://${BUCKET}/blobs/${GITHUB_RUN_ID}/${LABEL}/"
+        if aws s3 cp "$BLOB_DIR" "$ARCHIVE" --recursive --only-show-errors; then
+          echo "Archived $(find "$BLOB_DIR" -type f | wc -l) blob report(s) to ${ARCHIVE}."
+          echo "archived=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "::warning::Could not archive the blob reports; leaving the artifacts in place."
+        fi
+
+    - name: Delete blob artifacts
+      if: inputs.mode == 'retire' && steps.archive.outputs.archived == 'true'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        PREFIX: ${{ inputs.artifact-prefix }}
+        SHARD_COUNT: ${{ inputs.shard-count }}
+      run: |
+        set -uo pipefail
+        delete() {
+          gh api -X DELETE "repos/${GITHUB_REPOSITORY}/actions/artifacts/$1" > /dev/null \
+            || echo "::warning::Could not delete artifact $1; it expires on its own within a day."
+        }
+        list() {
+          gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts?per_page=100&$1" --jq "$2"
+        }
+
+        # One exact-name query per shard (the shards are numbered 1..N, see
+        # os-e2e-shards); see the action description for why.
+        if [[ $SHARD_COUNT =~ ^[0-9]+$ ]]; then
+          for shard in $(seq 1 "$SHARD_COUNT"); do
+            for id in $(list "name=${PREFIX}${shard}" '.artifacts[].id'); do
+              echo "Deleting ${PREFIX}${shard} (${id})."
+              delete "$id"
+            done
+          done
+        fi
+
+        # Everything else with the prefix: listed in full before deleting,
+        # since deleting while paging skips entries. With a shard count this
+        # is a sweep for leftovers that should not exist.
+        mapfile -t ids < <(list "" ".artifacts[] | select(.name | startswith(\"${PREFIX}\")) | .id")
+        echo "Deleting ${#ids[@]} blob artifact(s) by prefix ${PREFIX}."
+        for id in "${ids[@]}"; do
+          delete "$id"
+        done

@@ -106,6 +106,12 @@ All of this is done once, by someone with the `ide-build` AWS profile
 - **Updates**: `dnf-automatic` applies security updates daily and Tailscale
   updates itself (`tailscale set --auto-update`). A kernel update takes
   effect at the next stop/start.
+- **`blobs/<run id>/<label>/`** at the bucket root holds each run's
+  per-shard blob reports, archived by the merge jobs before they delete the
+  GitHub artifacts and restored on a re-run (`.github/actions/os-e2e-blobs`).
+  The CI role's policy (`RStudioE2eReportsWriteAccess`) therefore grants
+  `s3:GetObject` as well as put and list on the bucket. The lifecycle rule
+  reaps them with everything else.
 - **Who can see the reports** is whoever the tailnet ACLs let reach this
   node; the host does no authentication of its own. Sign-in and offboarding
   are Tailscale's.

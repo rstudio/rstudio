@@ -3,8 +3,9 @@ description: >
   The body of an engine workflow's e2e-merge job: merge the per-shard Playwright
   blob reports into one HTML report, parse the aggregated counts, publish the
   report to S3 (its only copy: a GitHub artifact can be downloaded by anyone
-  signed in to GitHub, so none is uploaded and the shard blobs are deleted once
-  merged), post a sticky PR comment with the totals, and optionally fail the
+  signed in to GitHub, so none is uploaded and the shard blobs are archived to
+  the bucket and deleted once merged), post a sticky PR comment with the
+  totals, and optionally fail the
   job when the run executed no tests. Every engine runs this behind a
   checkout, so the comment format, the artifact naming, and the release gate
   live in one place.
@@ -93,6 +94,14 @@ runs:
         path: e2e/rstudio/all-blob-reports
         merge-multiple: true
 
+    # On a re-run, blobs a previous attempt retired come back from the bucket.
+    - name: Restore archived blob reports
+      uses: ./.github/actions/os-e2e-blobs
+      with:
+        mode: restore
+        role-arn: ${{ inputs.role-arn }}
+        label: ${{ inputs.label }}
+
     - name: Merge shard reports
       id: merge
       shell: bash
@@ -151,47 +160,21 @@ runs:
           <sub>${{ inputs.shard-count == '1' && '1 shard' || format('{0} shards', inputs.shard-count) }} · ${{ inputs.runner-note }} · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
 
     # The shard blobs hold every trace and screenshot the report does, and a
-    # GitHub artifact can be downloaded by anyone signed in to GitHub. They
-    # exist only to be merged, so they go once the merged report is safely
-    # published; their one-day retention is the fallback when this job never
-    # gets this far. Not when the merge or the publish failed: the report
-    # would then exist nowhere, and a re-run of this job needs the blobs.
-    - name: Delete shard blob artifacts
+    # GitHub artifact can be downloaded by anyone signed in to GitHub. Once
+    # the merged report is safely published they are archived to the bucket
+    # and deleted from the run (os-e2e-blobs); their one-day retention is the
+    # fallback when this job never gets this far. Not when the merge or the
+    # publish failed: the report would then exist nowhere.
+    - name: Retire shard blob artifacts
       if: always() && steps.merge.outcome == 'success' && steps.publish-report.outputs.url != ''
-      shell: bash
-      env:
-        GH_TOKEN: ${{ inputs.github-token }}
-        PREFIX: playwright-blob-report-${{ inputs.label }}-
-        SHARD_COUNT: ${{ inputs.shard-count }}
-      run: |
-        delete() {
-          gh api -X DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$1" > /dev/null \
-            || echo "::warning::Could not delete artifact $1; it expires on its own within a day."
-        }
-        list() {
-          gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?per_page=100&$1" --jq "$2"
-        }
-
-        # One exact-name query per shard (the shards are numbered 1..N, see
-        # os-e2e-shards). The run's artifact list is shared with the other
-        # engines' merge jobs in a run-all workflow, whose deletions shift a
-        # paginated listing while it is being read; an exact-name query is a
-        # single small page, so nothing moves out of it.
-        [[ $SHARD_COUNT =~ ^[0-9]+$ ]] || SHARD_COUNT=0
-        for shard in $(seq 1 "$SHARD_COUNT"); do
-          for id in $(list "name=$PREFIX$shard" '.artifacts[].id'); do
-            echo "Deleting $PREFIX$shard ($id)."
-            delete "$id"
-          done
-        done
-
-        # Anything else with the prefix (there should be nothing): listed in
-        # full before deleting, since deleting while paging skips entries.
-        mapfile -t ids < <(list "" ".artifacts[] | select(.name | startswith(\"$PREFIX\")) | .id")
-        for id in "${ids[@]}"; do
-          echo "Deleting leftover blob artifact $id."
-          delete "$id"
-        done
+      uses: ./.github/actions/os-e2e-blobs
+      with:
+        mode: retire
+        role-arn: ${{ inputs.role-arn }}
+        label: ${{ inputs.label }}
+        artifact-prefix: playwright-blob-report-${{ inputs.label }}-
+        shard-count: ${{ inputs.shard-count }}
+        github-token: ${{ inputs.github-token }}
 
     # Release-gate floor, last so the reporting above still runs. A run that
     # executed nothing must not report green: Playwright suppresses its own
