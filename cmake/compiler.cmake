@@ -30,7 +30,8 @@ set(CMAKE_POSITION_INDEPENDENT_CODE Yes)
 #
 # macOS also builds as C++20 so that our existing CI exercises libc++ in that
 # mode. Keep C++17 on Linux for the older toolchains used by release builds,
-# including Workbench.
+# including Workbench; the server-linux e2e workflow opts into C++20 with
+# -DCMAKE_CXX_STANDARD=20 so GCC/libstdc++ gets the same coverage.
 #
 # the required standard is a minimum, not a pin: when the compiler defaults to
 # a newer standard we build with that default, and a newer standard can be
