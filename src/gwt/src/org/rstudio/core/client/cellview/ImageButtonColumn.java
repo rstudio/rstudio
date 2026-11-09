@@ -77,6 +77,10 @@ public class ImageButtonColumn<T> extends Column<T, T>
                                  NativeEvent event,
                                  ValueUpdater<U> valueUpdater)
       {
+         // A null value means the button is hidden and the cell is empty.
+         if (value == null)
+            return;
+
          super.onBrowserEvent(context, parent, value, event, valueUpdater);
 
          if (CLICK.equals(event.getType()))

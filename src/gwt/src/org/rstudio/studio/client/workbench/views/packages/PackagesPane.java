@@ -600,11 +600,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    
    private boolean showButtonImpl(PackageInfo object)
    {
-      if (object.getPackageSource() == null)
-         return false;
-      
-      String source = object.getPackageSource();
-      return source != "Base";
+      return !"Base".equals(object.getPackageSource());
    }
    
    private void initPackagesTable()
@@ -725,38 +721,25 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                @Override
                public String get(PackageInfo object)
                {
-                  String source = object.getPackageSource();
-                  String url = object.getBrowseUrl();
-
-                  if (Js.isTruthy(source))
-                  {
-                     if (Js.isTruthy(url))
-                     {
-                        return constants_.browsePackageOn(source, url);
-                     }
-                     else
-                     {
-                        return "";
-                     }
-                  }
-                  else
-                  {
-                     if (Js.isTruthy(url))
-                     {
-                        return constants_.browsePackageLabel(url);
-                     }
-                     else
-                     {
-                        return constants_.browsePackageCRANLabel();
-                     }
-                  }
+                  // The Source column's text often isn't the site Browse opens
+                  // (a repository URL, "Local [<path>]"), so leave it out.
+                  return constants_.browsePackageLabel(object.getName());
+               }
+            },
+            new TitleProvider<PackageInfo>()
+            {
+               @Override
+               public String get(PackageInfo object)
+               {
+                  return object.getBrowseUrl();
                }
             })
       {
          @Override
          public boolean showButton(PackageInfo object)
          {
-            return showButtonImpl(object);
+            // Packages installed from e.g. a local path have no browse URL.
+            return showButtonImpl(object) && Js.isTruthy(object.getBrowseUrl());
          }
       };
       
@@ -769,7 +752,14 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                   observer_.removePackage(packageInfo);
                }
             },
-            constants_.removePackageTitle())
+            new TitleProvider<PackageInfo>()
+            {
+               @Override
+               public String get(PackageInfo object)
+               {
+                  return constants_.removePackageLabel(object.getName());
+               }
+            })
       {
          @Override
          public boolean showButton(PackageInfo object)
