@@ -475,16 +475,17 @@ ConsoleProcess::Input ConsoleProcess::dequeInput()
 
    // Getting here means input is out of sequence. We want to prevent
    // getting permanently stuck if a message gets lost and the gap(s) never
-   // get filled in, so we flush if input piles up. Reordering a request's
-   // successors overtook resolves within milliseconds, so a gap still open
-   // after kAutoFlushDelay is a lost request, or a stale flush from a
-   // previous connection that reset the count: give up on it then, too,
-   // rather than hold the terminal until enough further typing arrives.
-   auto now = std::chrono::steady_clock::now();
+   // get filled in, so we flush if input piles up. The client sends one
+   // write at a time, so a gap comes from a lost request or from a write of
+   // a previous connection (a stale flush resetting the count, say), never
+   // from a live predecessor still on its way: give up on it after
+   // kAutoFlushDelay, too, rather than hold the terminal until enough
+   // further typing arrives.
+   auto now = inputClock_();
    if (inputGapSince_ == std::chrono::steady_clock::time_point())
       inputGapSince_ = now;
 
-   if (inputQueue_.size() >= kAutoFlushLength || now - inputGapSince_ >= inputGapTimeout_)
+   if (inputQueue_.size() >= kAutoFlushLength || now - inputGapSince_ >= kAutoFlushDelay)
    {
       // set everything in queue to "ignore" so it will be pulled from
       // queue as-is, even with gaps

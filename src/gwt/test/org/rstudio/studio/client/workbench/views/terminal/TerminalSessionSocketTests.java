@@ -631,11 +631,40 @@ public class TerminalSessionSocketTests extends GWTTestCase
       assertEquals(Arrays.asList(ShellInput.FLUSH_SEQUENCE, 0, 1), process.sequences);
    }
 
-   // A write the server never received leaves a gap it would wait on until
-   // its auto-flush, so the next write flushes the server's queue. That flush
-   // must not be sent while an older numbered write is still in flight: the
-   // old write could arrive after it and be consumed against the reset counter.
-   public void testFailedNumberedWriteResynchronizesWithAFlushAfterInFlightWrites()
+   // One write in flight at a time; keystrokes typed meanwhile are sent as
+   // one write once it completes.
+   public void testRpcWritesAreSerialized()
+   {
+      Harness h = new Harness();
+      Process process = h.connect(new Callback());
+      process.mode = ConsoleProcessInfo.CHANNEL_RPC;
+      process.answerWrites = false;
+      Ack a = new Ack();
+      Ack b = new Ack();
+      Ack c = new Ack();
+      h.socket.dispatchInput("a", false, a);
+      process.pendingWrites.remove(0).onResponseReceived(null);
+      h.socket.dispatchInput("b", false, b);
+      h.socket.dispatchInput("c", false, c);
+      h.socket.dispatchInput("d", false, new Ack());
+      assertEquals(Arrays.asList("a", "b"), process.inputs);
+
+      process.pendingWrites.remove(0).onResponseReceived(null);
+      assertEquals(1, b.count);
+      assertEquals(Arrays.asList("a", "b", "cd"), process.inputs);
+      assertEquals(Arrays.asList(ShellInput.FLUSH_SEQUENCE, 0, 1), process.sequences);
+      assertEquals(0, c.count);
+
+      process.pendingWrites.remove(0).onResponseReceived(null);
+      assertEquals(1, c.count);
+      h.socket.dispatchInput("e", false, new Ack());
+      assertEquals(Arrays.asList("a", "b", "cd", "e"), process.inputs);
+      assertEquals(Integer.valueOf(2), process.sequences.get(3));
+   }
+
+   // A write the server never received leaves a gap it would wait on, so the
+   // write after a failure flushes the server's queue and restarts the count.
+   public void testFailedWriteIsFollowedByAFlush()
    {
       Harness h = new Harness();
       Process process = h.connect(new Callback());
@@ -644,26 +673,17 @@ public class TerminalSessionSocketTests extends GWTTestCase
       h.socket.dispatchInput("a", false, new Ack());
       process.pendingWrites.remove(0).onResponseReceived(null);
       Ack b = new Ack();
-      Ack c = new Ack();
       h.socket.dispatchInput("b", false, b);
-      h.socket.dispatchInput("c", false, c);
-      assertEquals(Arrays.asList(ShellInput.FLUSH_SEQUENCE, 0, 1), process.sequences);
+      h.socket.dispatchInput("c", false, new Ack());
 
       process.pendingWrites.remove(0).onError(rpcError());
       assertEquals(1, b.errors);
+      assertEquals(Arrays.asList("a", "b", "c"), process.inputs);
+      assertEquals(Arrays.asList(ShellInput.FLUSH_SEQUENCE, 0, ShellInput.FLUSH_SEQUENCE), process.sequences);
+
+      process.pendingWrites.remove(0).onResponseReceived(null);
       h.socket.dispatchInput("d", false, new Ack());
-      h.socket.dispatchInput("e", false, new Ack());
-      assertEquals("held while an older write is in flight", Arrays.asList("a", "b", "c"), process.inputs);
-
-      process.pendingWrites.remove(0).onResponseReceived(null);
-      assertEquals(1, c.count);
-      assertEquals(Arrays.asList("a", "b", "c", "de"), process.inputs);
-      assertEquals(Arrays.asList(ShellInput.FLUSH_SEQUENCE, 0, 1, ShellInput.FLUSH_SEQUENCE), process.sequences);
-
-      process.pendingWrites.remove(0).onResponseReceived(null);
-      h.socket.dispatchInput("f", false, new Ack());
-      assertEquals(Arrays.asList("a", "b", "c", "de", "f"), process.inputs);
-      assertEquals(Integer.valueOf(0), process.sequences.get(4));
+      assertEquals(Integer.valueOf(0), process.sequences.get(3));
    }
 
    public void testFailedFlushWriteIsRetriedAsAFlush()
@@ -679,33 +699,6 @@ public class TerminalSessionSocketTests extends GWTTestCase
       assertEquals(1, a.errors);
       assertEquals(Arrays.asList("a", "b"), process.inputs);
       assertEquals(Arrays.asList(ShellInput.FLUSH_SEQUENCE, ShellInput.FLUSH_SEQUENCE), process.sequences);
-   }
-
-   // An acknowledged write stuck behind a lost one (an Enter, say) must be
-   // released even if nothing more is typed: one empty flush, not retried.
-   public void testFailedWriteWithNothingPendingSendsOneRecoveryFlush()
-   {
-      Harness h = new Harness();
-      Process process = h.connect(new Callback());
-      process.mode = ConsoleProcessInfo.CHANNEL_RPC;
-      process.answerWrites = false;
-      h.socket.dispatchInput("a", false, new Ack());
-      process.pendingWrites.remove(0).onResponseReceived(null);
-      h.socket.dispatchInput("b", false, new Ack());
-      h.socket.dispatchInput("\r", false, new Ack());
-
-      process.pendingWrites.remove(0).onError(rpcError());
-      assertEquals("waits for the in-flight write", 3, process.inputs.size());
-      process.pendingWrites.remove(0).onResponseReceived(null);
-      assertEquals(Arrays.asList("a", "b", "\r", ""), process.inputs);
-      assertEquals(Arrays.asList(ShellInput.FLUSH_SEQUENCE, 0, 1, ShellInput.FLUSH_SEQUENCE), process.sequences);
-
-      // the recovery flush fails too: no retry, the next keystroke flushes
-      process.pendingWrites.remove(0).onError(rpcError());
-      assertEquals(4, process.inputs.size());
-      h.socket.dispatchInput("c", false, new Ack());
-      assertEquals(Arrays.asList("a", "b", "\r", "", "c"), process.inputs);
-      assertEquals(Integer.valueOf(ShellInput.FLUSH_SEQUENCE), process.sequences.get(4));
    }
 
    // Writes of a previous connection are not waited for (their completions

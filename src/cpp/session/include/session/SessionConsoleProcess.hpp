@@ -19,6 +19,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <functional>
 #include <deque>
 
 #include <boost/regex.hpp>
@@ -163,9 +164,12 @@ public:
    void enqueInputInternalLock(const Input& input);
    Input dequeInput();
 
-   // How long dequeInput() waits on a missing sequence number before giving
-   // up on it; tests shorten this.
-   void setInputGapTimeout(std::chrono::milliseconds timeout) { inputGapTimeout_ = timeout; }
+   // The clock dequeInput() uses to give up on a missing sequence number
+   // after kAutoFlushDelay; tests substitute a controllable one.
+   void setInputClock(const std::function<std::chrono::steady_clock::time_point()>& clock)
+   {
+      inputClock_ = clock;
+   }
    void enquePrompt(const std::string& prompt);
    void interrupt();
    void terminate();
@@ -296,7 +300,7 @@ private:
    std::deque<Input> inputQueue_;
    int lastInputSequence_ = kIgnoreSequence;
    std::chrono::steady_clock::time_point inputGapSince_;
-   std::chrono::milliseconds inputGapTimeout_ = kAutoFlushDelay;
+   std::function<std::chrono::steady_clock::time_point()> inputClock_ = &std::chrono::steady_clock::now;
    boost::mutex inputOutputQueueMutex_;
 
    boost::function<bool(const std::string&, Input*)> onPrompt_;
