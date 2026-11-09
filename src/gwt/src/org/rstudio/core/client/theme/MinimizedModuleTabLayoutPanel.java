@@ -22,6 +22,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
@@ -81,6 +82,9 @@ public class MinimizedModuleTabLayoutPanel
                   thisIndex);
          });
          tab.addDomHandler(event -> onTabKeyDown(event, thisIndex), KeyDownEvent.getType());
+         // A focused tab is the tab stop. That includes the focus a tab gets
+         // back when the window regains focus, after its blur reset the stop.
+         tab.addDomHandler(event -> setTabStop(thisIndex), FocusEvent.getType());
          tab.addDomHandler(this::onTabBlur, BlurEvent.getType());
          tabList.add(tab);
          tabs_.add(tab);
@@ -155,7 +159,6 @@ public class MinimizedModuleTabLayoutPanel
 
    private void focusTab(int index)
    {
-      setTabStop(index);
       tabs_.get(index).getElement().focus();
    }
 

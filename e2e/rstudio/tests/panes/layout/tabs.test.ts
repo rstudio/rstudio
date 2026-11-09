@@ -236,6 +236,27 @@ test.describe('Workbench tabs', () => {
     await expect(region.getByRole('tablist', { name: 'TabSet1', exact: true })).toBeVisible();
   });
 
+  test('a minimized tab strip keeps its tab stop when the window loses focus', async ({ rstudioPage: page }) => {
+    await executeCommand(page, 'maximizeTabSet2');
+    const tablist = page.getByRole('region', { name: 'TabSet1 minimized', exact: true })
+      .getByRole('tablist');
+    const envTab = tablist.getByRole('tab', { name: 'Environment', exact: true });
+    const historyTab = tablist.getByRole('tab', { name: 'History', exact: true });
+    await expect(envTab).toHaveAttribute('aria-selected', 'true');
+    await envTab.focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(historyTab).toBeFocused();
+
+    // Headless pages can't lose window focus, so send the events switching
+    // apps does: a blur with no relatedTarget, then a focus on return.
+    await historyTab.evaluate((el) => {
+      el.dispatchEvent(new FocusEvent('blur', { relatedTarget: null }));
+      el.dispatchEvent(new FocusEvent('focus'));
+    });
+    await expect(historyTab).toHaveAttribute('tabindex', '0');
+    await expect(envTab).toHaveAttribute('tabindex', '-1');
+  });
+
   // Leaving the minimized strip hides whatever in it had focus, so focus has
   // to move into the pane. The layout changes differently with and without
   // animation, so both are covered.
