@@ -1039,43 +1039,51 @@ void onNAMESPACEchanged(const FilePath& packageDir)
    r_packages::AsyncPackageInformationProcess::update();
 }
 
+// The project's own package is treated as loaded for diagnostics.
+void inferProjectPackage(projects::ProjectContext& context)
+{
+   if (!context.isPackageProject())
+      return;
+
+   RSourceIndex::addGloballyInferredPackage(context.packageInfo().name());
+   r_packages::AsyncPackageInformationProcess::update();
+}
+
+// NAMESPACE imports and the inferred package describe the build target
+// itself and do not depend on the source index covering it; package-scope
+// symbol resolution consults packageDirectoryInProject() separately.
+void onPackageChanged(projects::ProjectContext& context)
+{
+   onNAMESPACEchanged(context.packageDirectory());
+   inferProjectPackage(context);
+}
+
 void onFilesChanged(
-      const FilePath& packageDir,
+      projects::ProjectContext& context,
       const std::vector<core::system::FileChangeEvent>& events)
 {
+   FilePath packageDir = context.packageDirectory();
    if (packageDir.isEmpty())
       return;
 
    // Normalize the full file paths so PackagePath: . matches monitor events.
    // This is lexical so removed files still match, without resolving symlinks.
    std::string namespacePath = packageDir.completePath("NAMESPACE").getLexicallyNormalPath();
+   std::string descriptionPath = packageDir.completePath("DESCRIPTION").getLexicallyNormalPath();
 
    for (const core::system::FileChangeEvent& event : events)
    {
       std::string eventPath = FilePath(event.fileInfo().absolutePath()).getLexicallyNormalPath();
       if (eventPath == namespacePath)
          onNAMESPACEchanged(packageDir);
-   }
-}
-
-void onPackageDirectoryChanged(projects::ProjectContext& context, const FilePath& packageDir)
-{
-   onNAMESPACEchanged(packageDir);
-
-   // The project's own package is treated as loaded. Scope can be established
-   // after the session init hook has run (for example when the initial monitor
-   // scan outlasts the hook's delay), so infer it on every transition.
-   if (!packageDir.isEmpty() && context.isPackageProject())
-   {
-      RSourceIndex::addGloballyInferredPackage(context.packageInfo().name());
-      r_packages::AsyncPackageInformationProcess::update();
+      else if (eventPath == descriptionPath)
+         inferProjectPackage(context);
    }
 }
 
 void afterSessionInitHook(bool newSession)
 {
-   projects::ProjectContext& context = projects::projectContext();
-   onPackageDirectoryChanged(context, context.packageDirectoryInProject());
+   onPackageChanged(projects::projectContext());
 }
 
 bool collectLint(int depth,
@@ -1133,21 +1141,18 @@ SEXP rs_lintDirectory(SEXP directorySEXP)
 
 void monitorProjectNamespace(projects::ProjectContext& context)
 {
-   // The project context publishes scope transitions from its configuration
-   // and monitor callbacks, so no polling of the package directory is needed.
-   context.onPackageDirectoryChanged.connect(
-         boost::bind(onPackageDirectoryChanged, boost::ref(context), _1));
+   context.onConfigChanged.connect([&context]() { onPackageChanged(context); });
 
    projects::FileMonitorCallbacks cb;
    cb.onMonitoringEnabled = [&context](const tree<FileInfo>&)
    {
-      // Refresh even without a scope transition: NAMESPACE may have changed
-      // between session initialization and the initial monitor snapshot.
-      onNAMESPACEchanged(context.packageDirectoryInProject());
+      // NAMESPACE and DESCRIPTION may have changed between session
+      // initialization and the initial monitor snapshot.
+      onPackageChanged(context);
    };
    cb.onFilesChanged = [&context](const std::vector<core::system::FileChangeEvent>& events)
    {
-      onFilesChanged(context.packageDirectoryInProject(), events);
+      onFilesChanged(context, events);
    };
    context.subscribeToFileMonitor("Diagnostics", cb);
 }

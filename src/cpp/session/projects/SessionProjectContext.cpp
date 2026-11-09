@@ -1306,7 +1306,6 @@ void ProjectContext::updatePackageDirectoryInProject()
    // events, so the cached metadata must be current at the transition.
    indexedPackageDirectory_ = packageDir;
    updatePackageInfo();
-   onPackageDirectoryChanged(packageDir);
 }
 
 FilePath ProjectContext::resolvePackageDirectoryInProject() const

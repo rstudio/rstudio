@@ -84,6 +84,8 @@ protected:
       ignoredComponents_ = prefs::userPrefs().fileMonitorIgnoredComponents();
       importedPackages_ = r_util::RSourceIndex::getImportedPackages();
       importFromDirectives_ = r_util::RSourceIndex::getImportFromDirectives();
+      r_util::RSourceIndex::setImportedPackages({});
+      r_util::RSourceIndex::setImportFromDirectives({});
       ASSERT_FALSE(FilePath::tempFilePath(projectDir_));
       ASSERT_FALSE(projectDir_.ensureDirectory());
    }
@@ -499,7 +501,7 @@ TEST_F(PackageProjectInfoTests, RefreshesNamespaceEventsWithDotPackagePath)
    EXPECT_TRUE(r_util::RSourceIndex::getImportFromDirectives().empty());
 }
 
-TEST_F(PackageProjectInfoTests, KeepsMetadataWithoutCodeIndexing)
+TEST_F(PackageProjectInfoTests, LoadsImportsAndMetadataWithoutCodeIndexing)
 {
    writeDescription("Package: before\nVersion: 0.1.0\n");
    ASSERT_FALSE(writeStringToFile(
@@ -512,14 +514,11 @@ TEST_F(PackageProjectInfoTests, KeepsMetadataWithoutCodeIndexing)
    EXPECT_TRUE(context.isPackageProject());
    EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
 
-   r_util::RSourceIndex::setImportedPackages({});
-   r_util::RSourceIndex::setImportFromDirectives({});
-   notifyFileChanged(
-         &context,
-         projectDir_.completeChildPath("NAMESPACE"),
-         core::system::FileChangeEvent::FileModified);
-   EXPECT_TRUE(r_util::RSourceIndex::getImportedPackages().empty());
-   EXPECT_TRUE(r_util::RSourceIndex::getImportFromDirectives().empty());
+   // Reading NAMESPACE does not depend on the source index, so completions
+   // still see the imports when code indexing is disabled.
+   context.setConfig(context.config());
+   EXPECT_EQ(std::set<std::string>{"splines"}, r_util::RSourceIndex::getImportedPackages());
+   EXPECT_EQ(1u, r_util::RSourceIndex::getImportFromDirectives().at("stats").count("median"));
 
    writeDescription("Package: after\nVersion: 0.2.0\n");
    EXPECT_EQ("after", context.packageInfo().name());
@@ -550,14 +549,15 @@ TEST_F(PackageProjectInfoTests, KeepsMetadataForExcludedPackageDirectories)
       EXPECT_TRUE(context.isPackageProject());
       EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
 
+      // Imports describe the configured package even when indexing excludes it.
       r_util::RSourceIndex::setImportedPackages({});
       r_util::RSourceIndex::setImportFromDirectives({});
       notifyFileChanged(
             &context,
             packageDir.completeChildPath("NAMESPACE"),
             core::system::FileChangeEvent::FileModified);
-      EXPECT_TRUE(r_util::RSourceIndex::getImportedPackages().empty());
-      EXPECT_TRUE(r_util::RSourceIndex::getImportFromDirectives().empty());
+      EXPECT_EQ(std::set<std::string>{"splines"}, r_util::RSourceIndex::getImportedPackages());
+      EXPECT_EQ(1u, r_util::RSourceIndex::getImportFromDirectives().at("stats").count("median"));
 
       writeDescription("Package: after\nVersion: 0.2.0\n", packagePath);
       EXPECT_EQ("after", context.packageInfo().name());
@@ -595,10 +595,11 @@ TEST_F(PackageProjectInfoTests, ExcludedHelperWaitsForSourceCoverage)
    ASSERT_FALSE(writeStringToFile(helper, "helper <- function() TRUE\n"));
    ASSERT_FALSE(writeStringToFile(projectDir_.completeChildPath("NAMESPACE"), "import(compiler)\n"));
    ProjectContext context;
-   openProject(&context, "None", "", true);
+   openProject(&context, "None", "", true, false);
    modules::diagnostics::monitorProjectNamespace(context);
+   registerFileMonitor(&context);
    EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
-   EXPECT_TRUE(r_util::RSourceIndex::getImportedPackages().empty());
+   EXPECT_EQ(std::set<std::string>{"compiler"}, r_util::RSourceIndex::getImportedPackages());
    writeDescription("Package: after\nVersion: 0.2.0\n");
    EXPECT_EQ("after", context.packageInfo().name());
 
@@ -864,7 +865,7 @@ TEST_F(PackageProjectInfoTests, FailedDirectoryRegistrationDisablesPackageCovera
       registerFileMonitor(&context, projectDir_.completeChildPath(path));
       EXPECT_TRUE(context.hasFileMonitor());
       EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
-      EXPECT_TRUE(r_util::RSourceIndex::getImportedPackages().empty());
+      EXPECT_EQ(std::set<std::string>{"compiler"}, r_util::RSourceIndex::getImportedPackages());
 
       writeDescription("Package: after\nVersion: 0.2.0\n");
       EXPECT_EQ("after", context.packageInfo().name());
@@ -925,20 +926,24 @@ TEST_F(PackageProjectInfoTests, PartialScanFailureRetainsHealthyDescendantCovera
    ASSERT_FALSE(writeStringToFile(projectDir_.completeChildPath("R/helper.R"), "helper <- function() TRUE\n"));
    ASSERT_FALSE(writeStringToFile(projectDir_.completeChildPath("NAMESPACE"), "import(compiler)\n"));
    ProjectContext context;
-   openProject(&context, "None", "", true);
+   openProject(&context, "None", "", true, false);
    modules::diagnostics::monitorProjectNamespace(context);
+   registerFileMonitor(&context);
    ASSERT_EQ(projectDir_, context.packageDirectoryInProject());
+   ASSERT_EQ(std::set<std::string>{"compiler"}, r_util::RSourceIndex::getImportedPackages());
 
+   // Losing coverage switches diagnostics to the search path; it does not
+   // discard the imports, which completions use regardless of scope.
    reconcileScanStatus(&context, true);
    EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
-   EXPECT_TRUE(r_util::RSourceIndex::getImportedPackages().empty());
+   EXPECT_EQ(std::set<std::string>{"compiler"}, r_util::RSourceIndex::getImportedPackages());
 
    reconcileScanStatus(&context, false);
    EXPECT_EQ(projectDir_, context.packageDirectoryInProject());
    EXPECT_EQ(std::set<std::string>{"compiler"}, r_util::RSourceIndex::getImportedPackages());
 }
 
-TEST_F(PackageProjectInfoTests, RefreshesImportsAcrossIgnoreRuleChanges)
+TEST_F(PackageProjectInfoTests, IgnoreRuleChangesAffectScopeButNotImports)
 {
    initializeGit();
    writeDescription("Package: localpkg\nVersion: 0.1.0\n");
@@ -957,7 +962,7 @@ TEST_F(PackageProjectInfoTests, RefreshesImportsAcrossIgnoreRuleChanges)
    ASSERT_FALSE(writeStringToFile(namespaceFile, "import(splines)\n"));
    notifyFileChanged(&context, namespaceFile, core::system::FileChangeEvent::FileModified);
    EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
-   EXPECT_TRUE(r_util::RSourceIndex::getImportedPackages().empty());
+   EXPECT_EQ(std::set<std::string>{"splines"}, r_util::RSourceIndex::getImportedPackages());
 
    ASSERT_FALSE(writeStringToFile(ignoreFile, "# included again\n"));
    notifyFileChanged(&context, ignoreFile, core::system::FileChangeEvent::FileModified);
@@ -965,7 +970,7 @@ TEST_F(PackageProjectInfoTests, RefreshesImportsAcrossIgnoreRuleChanges)
    EXPECT_EQ(std::set<std::string>{"splines"}, r_util::RSourceIndex::getImportedPackages());
 }
 
-TEST_F(PackageProjectInfoTests, ExternalPackageKeepsMetadataWithoutPackageDiagnostics)
+TEST_F(PackageProjectInfoTests, ExternalPackageProvidesMetadataAndImportsWithoutPackageDiagnostics)
 {
    FilePath externalDir;
    ASSERT_FALSE(FilePath::tempFilePath(externalDir));
@@ -996,22 +1001,25 @@ TEST_F(PackageProjectInfoTests, ExternalPackageKeepsMetadataWithoutPackageDiagno
    EXPECT_EQ("externalpkg", context.packageInfo().name());
    EXPECT_EQ(externalDir, context.packageDirectory());
    EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
-   EXPECT_TRUE(r_util::RSourceIndex::getImportedPackages().empty());
-   EXPECT_TRUE(r_util::RSourceIndex::getImportFromDirectives().empty());
 
-   // External files are not monitored by the project. Even an explicit event
-   // must not populate imports for a directory outside the source index.
-   notifyFileChanged(
-         &context,
-         externalDir.completeChildPath("NAMESPACE"),
-         core::system::FileChangeEvent::FileModified);
-   EXPECT_TRUE(r_util::RSourceIndex::getImportedPackages().empty());
-   EXPECT_TRUE(r_util::RSourceIndex::getImportFromDirectives().empty());
+   // Imports follow the build target even though it is outside the source
+   // index; the project root's NAMESPACE no longer applies.
+   EXPECT_EQ(std::set<std::string>{"splines"}, r_util::RSourceIndex::getImportedPackages());
+   EXPECT_EQ(0u, r_util::RSourceIndex::getImportFromDirectives().count("utils"));
+   EXPECT_EQ(1u, r_util::RSourceIndex::getImportFromDirectives().at("stats").count("median"));
+
+   // External files are not monitored by the project, so a later edit is only
+   // picked up by a configuration change or a new session.
+   ASSERT_FALSE(writeStringToFile(externalDir.completeChildPath("NAMESPACE"), "import(compiler)\n"));
+   notifyFileChanged(&context, namespaceFile, core::system::FileChangeEvent::FileModified);
+   EXPECT_EQ(std::set<std::string>{"splines"}, r_util::RSourceIndex::getImportedPackages());
+   context.setConfig(config);
+   EXPECT_EQ(std::set<std::string>{"compiler"}, r_util::RSourceIndex::getImportedPackages());
 }
 
 #ifndef _WIN32
 
-TEST_F(PackageProjectInfoTests, LinkedPackageKeepsMetadataWithoutPackageDiagnostics)
+TEST_F(PackageProjectInfoTests, LinkedPackageProvidesMetadataAndImportsWithoutPackageDiagnostics)
 {
    FilePath externalDir;
    ASSERT_FALSE(FilePath::tempFilePath(externalDir));
@@ -1059,15 +1067,8 @@ TEST_F(PackageProjectInfoTests, LinkedPackageKeepsMetadataWithoutPackageDiagnost
       EXPECT_TRUE(context.isPackageProject());
       EXPECT_EQ("linkedpkg", context.packageInfo().name());
       EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
-      EXPECT_TRUE(r_util::RSourceIndex::getImportedPackages().empty());
-      EXPECT_TRUE(r_util::RSourceIndex::getImportFromDirectives().empty());
-
-      notifyFileChanged(
-            &context,
-            context.packageDirectory().completeChildPath("NAMESPACE"),
-            core::system::FileChangeEvent::FileModified);
-      EXPECT_TRUE(r_util::RSourceIndex::getImportedPackages().empty());
-      EXPECT_TRUE(r_util::RSourceIndex::getImportFromDirectives().empty());
+      EXPECT_EQ(std::set<std::string>{"splines"}, r_util::RSourceIndex::getImportedPackages());
+      EXPECT_EQ(1u, r_util::RSourceIndex::getImportFromDirectives().at("stats").count("median"));
 
       // Linked directories have no watch, so metadata must refresh on demand.
       ASSERT_FALSE(writeStringToFile(description, "Package: updatedpkg\nVersion: 0.2.0\n"));

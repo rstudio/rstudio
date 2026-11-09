@@ -192,9 +192,6 @@ public:
    // signal emitted when config changes
    RSTUDIO_BOOST_SIGNAL<void()> onConfigChanged;
 
-   // Emitted when packageDirectoryInProject() changes, with the new value.
-   RSTUDIO_BOOST_SIGNAL<void(const core::FilePath&)> onPackageDirectoryChanged;
-
    core::Error readVcsOptions(RProjectVcsOptions* pOptions) const;
    core::Error writeVcsOptions(const RProjectVcsOptions& options) const;
 
