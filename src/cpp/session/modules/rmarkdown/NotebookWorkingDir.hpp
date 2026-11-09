@@ -30,6 +30,12 @@ namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
+// the directory a chunk runs in: the given working directory (root.dir, a
+// Quarto execute-dir, or the IDE's knit directory) when it exists, otherwise
+// the directory of the document; empty when the document has no path
+core::FilePath chunkWorkingDir(const std::string& docId,
+                               const core::FilePath& workingDir);
+
 class DirCapture : public NotebookCapture
 {
 public:

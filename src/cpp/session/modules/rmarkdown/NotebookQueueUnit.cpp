@@ -15,6 +15,8 @@
 
 #include "NotebookQueueUnit.hpp"
 
+#include <algorithm>
+
 #include <gsl/gsl-lite.hpp>
 
 #include <session/SessionModuleContext.hpp>
@@ -210,25 +212,51 @@ Error NotebookQueueUnit::parseOptions(json::Object* pOptions)
 }
 
 Error NotebookQueueUnit::replaceCodeFromFileOption(const json::Object& options,
-                                                   const FilePath& baseDir,
-                                                   FilePath* pFilePath)
+                                                   const FilePath& baseDir)
 {
    // as in knitr, a 'file' option supplies the chunk's code, and any code
    // in the chunk itself is ignored
-   std::string file;
-   if (json::readObject(options, "file", file) || file.empty())
+   json::Object::Iterator it = options.find("file");
+   if (it == options.end())
       return Success();
 
-   *pFilePath = file[0] == '~'
-                   ? module_context::resolveAliasedPath(file)
-                   : baseDir.completePath(file);
+   // knitr accepts a vector of files too, and concatenates their lines
+   // (xfun::read_all()); any other value is an error, not a silent fallback
+   json::Value value = (*it).getValue();
+   std::vector<std::string> files;
+   if (value.isString())
+      files.push_back(value.getString());
+   else if (!value.isArray() || !value.getArray().toVectorString(files))
+      return systemError(boost::system::errc::invalid_argument,
+                         "the 'file' chunk option must be a file path or a vector of file paths",
+                         ERROR_LOCATION);
 
-   // R's parser rejects '\r', so CRLF files (the default on Windows) must be
-   // normalized; knitr's readLines() does the same
+   // an empty path means no file, as before
+   files.erase(std::remove(files.begin(), files.end(), std::string()), files.end());
+   if (files.empty())
+      return Success();
+
    std::string code;
-   Error error = core::readStringFromFile(*pFilePath, &code, string_utils::LineEndingPosix);
-   if (error)
-      return error;
+   for (const std::string& file : files)
+   {
+      FilePath path = file[0] == '~'
+                         ? module_context::resolveAliasedPath(file)
+                         : baseDir.completePath(file);
+
+      // R's parser rejects '\r', so CRLF files (the default on Windows) must be
+      // normalized; knitr's readLines() does the same
+      std::string contents;
+      Error error = core::readStringFromFile(path, &contents, string_utils::LineEndingPosix);
+      if (error)
+      {
+         error.addOrUpdateProperty("path", path.getAbsolutePath());
+         return error;
+      }
+
+      if (!code.empty() && code.back() != '\n')
+         code.push_back('\n');
+      code.append(contents);
+   }
 
    replaceCode(code);
    return Success();

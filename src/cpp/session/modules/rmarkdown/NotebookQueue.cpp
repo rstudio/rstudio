@@ -29,6 +29,7 @@
 #include "NotebookCache.hpp"
 #include "NotebookAlternateEngines.hpp"
 #include "NotebookChunkOptions.hpp"
+#include "NotebookWorkingDir.hpp"
 
 #include <r/RInterface.hpp>
 #include <r/ROptions.hpp>
@@ -65,22 +66,6 @@ enum ChunkExecState
    ChunkExecFinished  = 1,
    ChunkExecCancelled = 2
 };
-
-// the directory a chunk runs in; mirrors DirCapture::connectDir, including
-// looking up the document's current path (it may have been saved elsewhere
-// since the queue was created)
-FilePath chunkDirectory(const FilePath& workingDir, const std::string& docId)
-{
-   if (workingDir.exists())
-      return workingDir;
-
-   std::string docPath;
-   source_database::getPath(docId, &docPath);
-   if (!docPath.empty())
-      return module_context::resolveAliasedPath(docPath).getParent();
-
-   return FilePath::safeCurrentPath(module_context::userHomePath());
-}
 
 // represents the global queue of work 
 class NotebookQueue : boost::noncopyable
@@ -468,32 +453,49 @@ private:
             unit->replaceCode(external);
       }
 
-      // read code from the 'file' chunk option; relative paths resolve
-      // against the directory the chunk runs in, as knitr's do
-      core::FilePath codeFilePath;
-      Error codeFileError = unit->replaceCodeFromFileOption(
-         chunkOptions,
-         chunkDirectory(workingDir, unit->docId()),
-         &codeFilePath);
+      // read code from the 'file' chunk option, again only when running the
+      // whole chunk; relative paths resolve against the directory the chunk
+      // runs in, as knitr's do (an unsaved document has none, so use the
+      // current directory)
+      Error codeFileError;
+      if (unit->execScope() == ExecScopeChunk)
+      {
+         FilePath baseDir = chunkWorkingDir(unit->docId(), workingDir);
+         if (baseDir.isEmpty())
+            baseDir = FilePath::safeCurrentPath(module_context::userHomePath());
+         codeFileError = unit->replaceCodeFromFileOption(chunkOptions, baseDir);
+      }
 
       // if the file can't be read, fail with an error as knitr does rather
       // than run the chunk's own code; output written before the chunk's input
-      // reaches R never shows in the chunk, so the error is raised as input
-      // (other engines still fall back to the chunk's own code)
+      // reaches R never shows in the chunk, so for R and Python the error is
+      // raised as the chunk's input (the message is converted from the system
+      // encoding, as the legacy Windows session isn't UTF-8)
+      std::string codeFileMessage;
       if (codeFileError)
       {
-         std::string message = string_utils::singleQuotedStrEscape(
-            "cannot open file '" + codeFilePath.getAbsolutePath() + "': " + codeFileError.getMessage());
+         std::string path = codeFileError.getProperty("path");
+         codeFileMessage = path.empty()
+            ? codeFileError.getMessage()
+            : "cannot open file '" + path + "': " + string_utils::systemToUtf8(codeFileError.getMessage());
+         std::string escaped = string_utils::singleQuotedStrEscape(codeFileMessage);
 
          if (engine == "r")
-            unit->replaceCode("stop('" + message + "', call. = FALSE)\n");
+         {
+            unit->replaceCode("stop('" + escaped + "', call. = FALSE)\n");
+         }
          else if (engine == "python")
-            unit->replaceCode("raise FileNotFoundError('" + message + "')\n");
+         {
+            std::string exception = path.empty() ? "ValueError"
+                                  : isFileNotFoundError(codeFileError) ? "FileNotFoundError"
+                                  : "OSError";
+            unit->replaceCode("raise " + exception + "('" + escaped + "')\n");
+         }
       }
-      bool codeFromFile = !codeFilePath.isEmpty() && !codeFileError;
 
-      // skip unit if it has no code to execute
-      if (!unit->hasPendingRanges())
+      // skip unit if it has no code to execute (an unreadable file is still
+      // reported below, even if the chunk itself is empty)
+      if (!unit->hasPendingRanges() && !codeFileError)
       {
          return skipUnit();
       }
@@ -520,13 +522,23 @@ private:
          execUnit_ = unit;
          enqueueExecStateChanged(ChunkExecStarted, options.chunkOptions());
       }
+      else if (codeFileError)
+      {
+         // show the error as the chunk's output; other engines produce output
+         // through a separate path, so the error can't be raised as input
+         execUnit_ = unit;
+         enqueueExecStateChanged(ChunkExecStarted, options.chunkOptions());
+
+         Error reportError = reportAlternateEngineChunkError(
+            unit->docId(), unit->chunkId(), label, ctx, unit->code(), codeFileMessage);
+         if (reportError)
+            LOG_ERROR(reportError);
+      }
       else
       {
-         // execute with alternate engine; code read from a file has no chunk
-         // fences, so extracting the chunk body would drop its first and last
-         // lines
-         std::string innerCode = unit->code();
-         error = codeFromFile ? Success() : unit->innerCode(&innerCode);
+         // execute with alternate engine
+         std::string innerCode;
+         error = unit->innerCode(&innerCode);
          if (error)
          {
             LOG_ERROR(error);
