@@ -336,7 +336,7 @@ bool normalizeProxyUrl(const std::string& value, std::string* pNormalized)
    if (proxy.find_first_of(kWhitespace) < schemeEnd)
       return false;
    std::string::size_type authorityStart = schemeEnd + 3;
-   std::string::size_type authorityEnd = proxy.find('/', authorityStart);
+   std::string::size_type authorityEnd = proxy.find_first_of("/?#", authorityStart);
    std::string::size_type hostStart = authorityStart;
    std::string::size_type at = proxy.rfind('@', authorityEnd);
    if (at != std::string::npos && at >= authorityStart)

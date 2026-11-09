@@ -200,6 +200,10 @@ TEST(SessionNodeToolsTest, NormalizeProxyUrlRejectsWhitespaceOutsideCredentials)
    EXPECT_FALSE(normalizeProxyUrl("http://user:pass@proxy one:8080", &out));
    EXPECT_FALSE(normalizeProxyUrl("http://proxy.example.com:8080/some path", &out));
    EXPECT_FALSE(normalizeProxyUrl("ht tp://proxy.example.com:8080", &out));
+   // '?' and '#' end the authority, so an '@' after them is not a credential
+   // separator and the whitespace before them is in the host, not the userinfo.
+   EXPECT_FALSE(normalizeProxyUrl("http://user:my password#tag@proxy.example.com:8080", &out));
+   EXPECT_FALSE(normalizeProxyUrl("http://user:my password?q@proxy.example.com:8080", &out));
 }
 
 TEST(SessionNodeToolsTest, NormalizeProxyUrlKeepsWhitespaceInCredentials)
@@ -262,6 +266,14 @@ TEST(SessionNodeToolsTest, ApplyEnvProxyOptionDropsInheritedFlagForInvalidValue)
    applyEnvProxyOption(&env);
 
    EXPECT_EQ(core::system::getenv(env, "NODE_USE_ENV_PROXY"), "");
+
+   core::system::Options env2;
+   core::system::setenv(&env2, "NODE_USE_ENV_PROXY", "1");
+   core::system::setenv(&env2, "https_proxy", "http://user:my password#tag@proxy.example.com:8080");
+
+   applyEnvProxyOption(&env2);
+
+   EXPECT_EQ(core::system::getenv(env2, "NODE_USE_ENV_PROXY"), "");
 }
 
 // Windows environment names are case-insensitive (core::system::setenv and
