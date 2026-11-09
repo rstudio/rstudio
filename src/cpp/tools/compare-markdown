@@ -66,16 +66,21 @@ def main():
         outputs = []
         for label, executable in [("sundown", args.baseline), ("cmark", args.candidate)]:
             command = [str(executable.resolve())] + (["--safe"] if args.safe else [])
-            html = subprocess.check_output(command, input=source).decode("utf-8")
+            result = subprocess.run(command, input=source, capture_output=True)
+            if result.returncode != 0:
+                # Record the failure as a difference instead of aborting the run.
+                html = f"<!-- {label} exited with {result.returncode}: {result.stderr.decode('utf-8', 'replace').strip()} -->\n"
+            else:
+                html = result.stdout.decode("utf-8")
             outputs.append(html)
-            (args.output / f"{index:03d}-{path.name}.{label}.html").write_text(html)
+            (args.output / f"{index:03d}-{path.name}.{label}.html").write_text(html, encoding="utf-8")
         if outputs[0] == outputs[1]:
             exact += 1
         before, after = map(normalize, outputs)
         if before != after:
             changed.append(str(path))
             diff = difflib.unified_diff(before, after, fromfile="sundown", tofile="cmark", lineterm="")
-            (args.output / f"{index:03d}-{path.name}.diff").write_text("\n".join(diff) + "\n")
+            (args.output / f"{index:03d}-{path.name}.diff").write_text("\n".join(diff) + "\n", encoding="utf-8")
     report = (
         f"{len(args.files)} inputs; {exact} byte-identical; "
         f"{len(args.files) - len(changed)} equivalent after normalization.\n"
@@ -83,7 +88,7 @@ def main():
         "void-tag slash and the language- code-class prefix.\n"
         "Inputs requiring review:\n" + "\n".join(changed) + "\n"
     )
-    (args.output / "report.txt").write_text(report)
+    (args.output / "report.txt").write_text(report, encoding="utf-8")
     print(report, end="")
 
 
