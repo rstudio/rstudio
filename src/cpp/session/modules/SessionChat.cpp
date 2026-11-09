@@ -4912,8 +4912,18 @@ std::string buildWebSocketUrl(int port)
 // Process Management
 // ============================================================================
 
-void onBackendStdout(core::system::ProcessOperations& ops, const std::string& output)
+void onBackendStdout(core::system::ProcessOperations& ops,
+                     const std::string& output,
+                     uint64_t generation)
 {
+   // A stopped backend's late output must not feed the replacement's reader,
+   // where a partial message would swallow the new backend's first messages.
+   if (generation != s_chatBackendGeneration)
+   {
+      DLOG("Ignoring stdout from stale chat backend generation");
+      return;
+   }
+
    // NOTE: We process messages immediately here (not deferred) because:
    // 1. callbacksRequireMainThread=true means we're already on the main thread
    // 2. We need the valid 'ops' reference to send responses to requests
@@ -5156,6 +5166,10 @@ Error startChatBackend(bool resumeConversation)
 
    uint64_t generation = ++s_chatBackendGeneration;
 
+   // The previous backend can write more after it is told to stop and before
+   // this one starts, which would leave part of a message in the reader.
+   s_backendStdout.clear();
+
    // A stale flag from a previous unreaped generation must not classify a
    // later crash of this backend as an expected shutdown.
    s_expectedShutdown = false;
@@ -5167,7 +5181,10 @@ Error startChatBackend(bool resumeConversation)
       s_chatBackendOps = ops.shared_from_this();
       DLOG("Chat backend started with PID: {}", s_chatBackendPid);
    };
-   callbacks.onStdout = onBackendStdout;
+   callbacks.onStdout = [generation](core::system::ProcessOperations& ops,
+                                     const std::string& output) {
+      onBackendStdout(ops, output, generation);
+   };
    callbacks.onStderr = onBackendStderr;
    callbacks.onExit = [generation](int exitCode)
    {
