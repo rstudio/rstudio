@@ -20,6 +20,7 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 
 import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -246,6 +247,24 @@ public abstract class FileDialog extends FileSystemDialog
       browser_.setFilenameEnabled(false);
       navigatingFromAccept_ = true;
       browser_.cd(path);
+   }
+
+   /**
+    * The user choosing a folder (a list row or a crumb) while a cd() of ours
+    * is pending supersedes it: the listing or error that arrives next is
+    * theirs, so a typed `dir/name` must not be put back over what they did.
+    */
+   @Override
+   public void onSelectionCommit(SelectionCommitEvent<FileSystemItem> event)
+   {
+      FileSystemItem item = event.getSelectedItem();
+      if (item != null && item.isDirectory())
+      {
+         navigatingFromAccept_ = false;
+         splitPath_ = null;
+      }
+
+      super.onSelectionCommit(event);
    }
 
    @Override

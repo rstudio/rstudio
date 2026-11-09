@@ -151,6 +151,34 @@ public class FileDialogNavigationTests extends GWTTestCase
       assertEquals("/home/new", context_.pwd());
    }
 
+   // a typed 'sub/file.R' whose cd('sub') fails is given back whole for
+   // correction, rather than leaving 'file.R' staged where the dialog still is
+   public void testFailedTypedFolderRestoresTypedPath()
+   {
+      SaveFileDialog dialog = saveFileDialog();
+      dialog.setFilename("sub/file.R");
+      dialog.maybeAccept();
+      assertEquals("file.R", dialog.browser_.getFilename());
+
+      server_.fail(1);
+      assertEquals("sub/file.R", dialog.browser_.getFilename());
+      assertEquals(0, accepted_.size());
+   }
+
+   // ... but not once the user has navigated elsewhere meanwhile: the failure
+   // is then theirs, and the typed path must not come back over their input
+   public void testNavigatingAfterDeferredSaveDropsTypedPath()
+   {
+      SaveFileDialog dialog = saveFileDialog();
+      dialog.setFilename("sub/file.R");
+      dialog.maybeAccept();
+      commitDirectory(dialog, "/a");
+
+      server_.fail(2);
+      assertEquals("file.R", dialog.browser_.getFilename());
+      assertEquals(0, accepted_.size());
+   }
+
    // a context shared across dialogs (e.g. Projects') is taken by the next
    // dialog to open; the earlier dialog closing must not detach it
    public void testClosingDialogLeavesNewerDialogAttached()
