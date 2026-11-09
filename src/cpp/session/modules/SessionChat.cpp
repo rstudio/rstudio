@@ -25,6 +25,7 @@
 #include "chat/ChatSelector.hpp"
 #include "chat/ChatSlots.hpp"
 #include "chat/ChatStaticFiles.hpp"
+#include "chat/ChatBackendStdout.hpp"
 #include "chat/ChatUpdateThrottle.hpp"
 
 #ifndef _WIN32
@@ -733,8 +734,8 @@ void callExpressionBoundaryHook(const std::string& hookName,
 // JSON-RPC Message Handling
 // ============================================================================
 
-// Splits the backend's stdout into its Content-Length framed messages.
-assistant::AgentStdoutReader s_backendStdout;
+// Splits the running backend's stdout into its Content-Length framed messages.
+chat::backend::StdoutReader s_backendStdout;
 
 // Map of notification method names to handler functions
 using NotificationHandler = std::function<void(const json::Object&)>;
@@ -4916,19 +4917,11 @@ void onBackendStdout(core::system::ProcessOperations& ops,
                      const std::string& output,
                      uint64_t generation)
 {
-   // A stopped backend's late output must not feed the replacement's reader,
-   // where a partial message would swallow the new backend's first messages.
-   if (generation != s_chatBackendGeneration)
-   {
-      DLOG("Ignoring stdout from stale chat backend generation");
-      return;
-   }
-
    // NOTE: We process messages immediately here (not deferred) because:
    // 1. callbacksRequireMainThread=true means we're already on the main thread
    // 2. We need the valid 'ops' reference to send responses to requests
    std::vector<std::string> errors;
-   for (const std::string& messageBody : s_backendStdout.append(output, &errors))
+   for (const std::string& messageBody : s_backendStdout.append(generation, output, &errors))
    {
       // Verbose logging (filtered by backend log level for logger/log notifications)
       if (chatLogLevel() >= 2 && shouldLogBackendMessage(messageBody))
@@ -5004,7 +4997,7 @@ void onBackendExit(int exitCode, uint64_t generation)
    // Clear state
    s_chatBackendPid = -1;
    clearChatBackendPort();
-   s_backendStdout.clear();
+   s_backendStdout.stop();
    s_chatBackendOps.reset();
    s_peerSentCapabilities = false;
    s_peerCapabilities.clear();
@@ -5165,10 +5158,7 @@ Error startChatBackend(bool resumeConversation)
 #endif
 
    uint64_t generation = ++s_chatBackendGeneration;
-
-   // The previous backend can write more after it is told to stop and before
-   // this one starts, which would leave part of a message in the reader.
-   s_backendStdout.clear();
+   s_backendStdout.start(generation);
 
    // A stale flag from a previous unreaped generation must not classify a
    // later crash of this backend as an expected shutdown.
@@ -5359,6 +5349,9 @@ Error chatStopBackend(const json::JsonRpcRequest& request,
       }
    }
 
+   // Whatever the backend writes from here on is not handled.
+   s_backendStdout.stop();
+
    // Release ProcessOperations reference before force termination
    s_chatBackendOps.reset();
 
@@ -5377,7 +5370,6 @@ Error chatStopBackend(const json::JsonRpcRequest& request,
 
    // Clear busy state
    s_chatBusy = false;
-   s_backendStdout.clear();
 
    result["success"] = true;
    result["message"] = "Backend stopped";
@@ -5621,6 +5613,10 @@ void stopChatBackendForInstall(const std::string& reason)
          elapsed += POLL_INTERVAL_MS;
       }
    }
+
+   // Whatever the backend writes from here on, including during the wait
+   // for it to exit, is not handled.
+   s_backendStdout.stop();
    s_chatBackendOps.reset();
 
    // Force-terminate if still running after grace period, then wait for the
@@ -5648,7 +5644,6 @@ void stopChatBackendForInstall(const std::string& reason)
    s_chatBackendPid = -1;
    clearChatBackendPort();
    s_chatBusy = false;
-   s_backendStdout.clear();
 }
 
 // Record an install failure and resolve the continuation. Every failure path
@@ -6065,6 +6060,10 @@ void stopChatBackendForSessionExit(const std::string& reason, int gracePeriodMs)
       }
    }
 
+   // Whatever the backend writes from here on, including during the wait
+   // for it to exit, is not handled.
+   s_backendStdout.stop();
+
    // Release ProcessOperations reference before force termination
    s_chatBackendOps.reset();
 
@@ -6144,9 +6143,8 @@ void onSuspend(const r::session::RSuspendOptions& options, Settings* pSettings)
    // while still allowing cleanup.
    stopChatBackendForSessionExit("suspend", 500);
 
-   // Clear busy state and JSON-RPC buffer
+   // Clear busy state
    s_chatBusy = false;
-   s_backendStdout.clear();
 }
 
 void onResume(const Settings& settings)
@@ -6170,9 +6168,8 @@ void onResume(const Settings& settings)
 
 void onShutdown(bool terminatedNormally)
 {
-   // Clear busy state and JSON-RPC state early
+   // Clear busy state early
    s_chatBusy = false;
-   s_backendStdout.clear();
 
    // Request graceful shutdown, wait, and escalate as needed. On the suspend
    // leg the suspend handler has already run this and the call is a no-op.
