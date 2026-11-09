@@ -165,13 +165,19 @@ runs:
       run: |
         # Every page first, then the deletes: removing entries while pages
         # are still being fetched shifts the remaining ones across page
-        # boundaries and skips some.
-        mapfile -t ids < <(gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?per_page=100" \
-          --jq ".artifacts[] | select(.name | startswith(\"$PREFIX\")) | .id")
-        echo "Deleting ${#ids[@]} blob artifact(s)."
-        for id in "${ids[@]}"; do
-          gh api -X DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$id" > /dev/null \
-            || echo "::warning::Could not delete artifact $id; it expires on its own within a day."
+        # boundaries and skips some. Other engines' merge jobs delete from
+        # the same list at the same time in a run-all workflow, which can
+        # shift entries too, so list again afterwards and repeat until a
+        # pass finds nothing left.
+        for pass in 1 2 3; do
+          mapfile -t ids < <(gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?per_page=100" \
+            --jq ".artifacts[] | select(.name | startswith(\"$PREFIX\")) | .id")
+          [ "${#ids[@]}" -eq 0 ] && break
+          echo "Pass $pass: deleting ${#ids[@]} blob artifact(s)."
+          for id in "${ids[@]}"; do
+            gh api -X DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$id" > /dev/null \
+              || echo "::warning::Could not delete artifact $id; it expires on its own within a day."
+          done
         done
 
     # Release-gate floor, last so the reporting above still runs. A run that
