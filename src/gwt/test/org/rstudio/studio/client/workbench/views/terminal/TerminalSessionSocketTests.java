@@ -681,6 +681,61 @@ public class TerminalSessionSocketTests extends GWTTestCase
       assertEquals(Arrays.asList(ShellInput.FLUSH_SEQUENCE, ShellInput.FLUSH_SEQUENCE), process.sequences);
    }
 
+   // An acknowledged write stuck behind a lost one (an Enter, say) must be
+   // released even if nothing more is typed: one empty flush, not retried.
+   public void testFailedWriteWithNothingPendingSendsOneRecoveryFlush()
+   {
+      Harness h = new Harness();
+      Process process = h.connect(new Callback());
+      process.mode = ConsoleProcessInfo.CHANNEL_RPC;
+      process.answerWrites = false;
+      h.socket.dispatchInput("a", false, new Ack());
+      process.pendingWrites.remove(0).onResponseReceived(null);
+      h.socket.dispatchInput("b", false, new Ack());
+      h.socket.dispatchInput("\r", false, new Ack());
+
+      process.pendingWrites.remove(0).onError(rpcError());
+      assertEquals("waits for the in-flight write", 3, process.inputs.size());
+      process.pendingWrites.remove(0).onResponseReceived(null);
+      assertEquals(Arrays.asList("a", "b", "\r", ""), process.inputs);
+      assertEquals(Arrays.asList(ShellInput.FLUSH_SEQUENCE, 0, 1, ShellInput.FLUSH_SEQUENCE), process.sequences);
+
+      // the recovery flush fails too: no retry, the next keystroke flushes
+      process.pendingWrites.remove(0).onError(rpcError());
+      assertEquals(4, process.inputs.size());
+      h.socket.dispatchInput("c", false, new Ack());
+      assertEquals(Arrays.asList("a", "b", "\r", "", "c"), process.inputs);
+      assertEquals(Integer.valueOf(ShellInput.FLUSH_SEQUENCE), process.sequences.get(4));
+   }
+
+   // A write from the previous connection can still reach the server after
+   // the replacement's flush, so that flush waits for it.
+   public void testReconnectWaitsForOldWritesBeforeItsFlush()
+   {
+      Harness h = new Harness();
+      Process old = h.connect(new Callback());
+      old.mode = ConsoleProcessInfo.CHANNEL_RPC;
+      old.answerWrites = false;
+      h.socket.dispatchInput("a", false, new Ack());
+      old.pendingWrites.remove(0).onResponseReceived(null);
+      h.socket.dispatchInput("b", false, new Ack());
+
+      h.socket.disconnect(false);
+      Process next = h.connect(new Callback());
+      next.mode = ConsoleProcessInfo.CHANNEL_RPC;
+      next.answerWrites = false;
+      h.socket.dispatchInput("c", false, new Ack());
+      h.socket.dispatchInput("d", false, new Ack());
+      assertEquals("held until the old write completes", Arrays.asList(), next.inputs);
+
+      old.pendingWrites.remove(0).onResponseReceived(null);
+      assertEquals(Arrays.asList("cd"), next.inputs);
+      assertEquals(Arrays.asList(ShellInput.FLUSH_SEQUENCE), next.sequences);
+      next.pendingWrites.remove(0).onResponseReceived(null);
+      h.socket.dispatchInput("e", false, new Ack());
+      assertEquals(Arrays.asList(ShellInput.FLUSH_SEQUENCE, 0), next.sequences);
+   }
+
    // GWT.create() is only legal once the test runs in the GWT module, not in a
    // static initializer, which the JUnit runner evaluates in the JVM.
    private static TerminalConstants constants()
