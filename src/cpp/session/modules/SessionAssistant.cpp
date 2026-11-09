@@ -27,8 +27,8 @@
 #endif
 
 #include <algorithm>
-#include <cctype>
 
+#include <boost/algorithm/string/find.hpp>
 #include <boost/current_function.hpp>
 #include <boost/scope_exit.hpp>
 
@@ -3033,14 +3033,15 @@ const std::size_t kMaxAgentHeaderSize = 64 * 1024;
 // An invalid Content-Length is quoted in the error, so keep it short.
 const std::size_t kMaxQuotedHeaderValue = 32;
 
+const std::string kContentLengthName = "content-length:";
+
 // Where the next Content-Length header starts at or after `from`, matched
 // without regard to case.
 std::size_t findContentLength(const std::string& text, std::size_t from)
 {
-   static const std::string name = "content-length:";
-   auto it = std::search(text.begin() + from, text.end(), name.begin(), name.end(),
-                         [](char a, char b) { return std::tolower(static_cast<unsigned char>(a)) == b; });
-   return it == text.end() ? std::string::npos : static_cast<std::size_t>(it - text.begin());
+   auto range = boost::make_iterator_range(text.begin() + from, text.end());
+   auto match = boost::algorithm::ifind_first(range, kContentLengthName);
+   return match.empty() ? std::string::npos : static_cast<std::size_t>(match.begin() - text.begin());
 }
 
 // The value of the first Content-Length header in text[0, headerEnd), and
