@@ -212,24 +212,29 @@ Error NotebookQueueUnit::parseOptions(json::Object* pOptions)
 }
 
 Error NotebookQueueUnit::replaceCodeFromFileOption(const json::Object& options,
-                                                   const FilePath& baseDir)
+                                                   const FilePath& baseDir,
+                                                   bool* pReplaced)
 {
+   *pReplaced = false;
+
    // as in knitr, a 'file' option supplies the chunk's code, and any code
-   // in the chunk itself is ignored
+   // in the chunk itself is ignored; a null value ('file: null', or a bare
+   // 'file:') is no file, as knitr treats it
    json::Object::Iterator it = options.find("file");
-   if (it == options.end())
+   if (it == options.end() || (*it).getValue().isNull())
       return Success();
 
    // knitr accepts a vector of files too, and concatenates their lines
    // (xfun::read_all()); any other value is an error, not a silent fallback
+   // (the message is the error's own text, as that is what the chunk shows)
    json::Value value = (*it).getValue();
    std::vector<std::string> files;
    if (value.isString())
       files.push_back(value.getString());
    else if (!value.isArray() || !value.getArray().toVectorString(files))
-      return systemError(boost::system::errc::invalid_argument,
-                         "the 'file' chunk option must be a file path or a vector of file paths",
-                         ERROR_LOCATION);
+      return Error(boost::system::errc::invalid_argument,
+                   "the 'file' chunk option must be a file path or a vector of file paths",
+                   ERROR_LOCATION);
 
    // an empty path means no file, as before
    files.erase(std::remove(files.begin(), files.end(), std::string()), files.end());
@@ -259,6 +264,7 @@ Error NotebookQueueUnit::replaceCodeFromFileOption(const json::Object& options,
    }
 
    replaceCode(code);
+   *pReplaced = true;
    return Success();
 }
 

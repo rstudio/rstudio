@@ -446,11 +446,15 @@ private:
       // is there external code for this chunk? if so, replace the chunk's
       // code with the code from the external file; see:
       // http://yihui.name/knitr/demo/externalization/
+      bool codeReplaced = false;
       if (unit->execScope() == ExecScopeChunk)
       {
          std::string external = docQueue->externalChunk(label);
          if (!external.empty())
+         {
             unit->replaceCode(external);
+            codeReplaced = true;
+         }
       }
 
       // read code from the 'file' chunk option, again only when running the
@@ -463,7 +467,9 @@ private:
          FilePath baseDir = chunkWorkingDir(unit->docId(), workingDir);
          if (baseDir.isEmpty())
             baseDir = FilePath::safeCurrentPath(module_context::userHomePath());
-         codeFileError = unit->replaceCodeFromFileOption(chunkOptions, baseDir);
+         bool replaced = false;
+         codeFileError = unit->replaceCodeFromFileOption(chunkOptions, baseDir, &replaced);
+         codeReplaced = codeReplaced || replaced;
       }
 
       // if the file can't be read, fail with an error as knitr does rather
@@ -536,9 +542,15 @@ private:
       }
       else
       {
-         // execute with alternate engine
+         // execute with alternate engine; code from read_chunk() or 'file'
+         // has no fences or option lines to strip, and may contain lines
+         // that look like them (e.g. a heredoc writing markdown), so it is
+         // passed through whole
          std::string innerCode;
-         error = unit->innerCode(&innerCode);
+         if (codeReplaced)
+            innerCode = unit->code();
+         else
+            error = unit->innerCode(&innerCode);
          if (error)
          {
             LOG_ERROR(error);

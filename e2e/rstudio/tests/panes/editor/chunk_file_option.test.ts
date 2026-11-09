@@ -63,6 +63,7 @@ test.describe('Chunk file option', { tag: ['@parallel_safe'] }, () => {
       'chunk_file_b.R',
       'chunk_file_partial.qmd',
       'chunk_file_partial.R',
+      'chunk_file_invalid.qmd',
     ]);
   });
 
@@ -140,7 +141,18 @@ test.describe('Chunk file option', { tag: ['@parallel_safe'] }, () => {
   test('passes the whole file to an alternate engine', async ({ rstudioPage: page }) => {
     test.skip(process.platform === 'win32', 'bash is not reliably available on Windows');
 
-    await seedSandboxFile(page, sandbox.dir, 'chunk_file_engine.sh', 'echo first-line\necho middle-line\necho last-line\n');
+    // A line of backticks looks like a chunk fence; the file is not chunk
+    // text, so it must not be cut there.
+    const script = [
+      'echo first-line',
+      "cat <<'EOF'",
+      '```',
+      'EOF',
+      'echo middle-line',
+      'echo last-line',
+      '',
+    ].join('\n');
+    await seedSandboxFile(page, sandbox.dir, 'chunk_file_engine.sh', script);
     await writeAndOpenFile(page, sandbox.dir, 'chunk_file_engine.qmd', qmd('Engine', [
       '```{bash shfile}',
       '#| file: chunk_file_engine.sh',
@@ -291,6 +303,44 @@ test.describe('Chunk file option', { tag: ['@parallel_safe'] }, () => {
     const output = page.locator('.rstudio_chunk_output_partial');
     await expect(output).toContainText('[1] "body-line"', { timeout: 20000 });
     await expect(output).not.toContainText('whole-file');
+  });
+
+  test('reports an invalid file option and ignores a null one', async ({ rstudioPage: page }) => {
+    // knitr reads `file: null` (and a bare `file:`) as no file, so the chunk
+    // runs its own code; any other non-path value is reported in the chunk.
+    await writeAndOpenFile(page, sandbox.dir, 'chunk_file_invalid.qmd', qmd('Invalid', [
+      '```{r invalid}',
+      '#| file: 5',
+      'print("ran-body")',
+      '```',
+      '',
+      '```{r nullfile}',
+      '#| file: null',
+      'print("null-body")',
+      '```',
+      '',
+      '```{r barefile}',
+      '#| file:',
+      'print("bare-body")',
+      '```',
+    ]));
+
+    await sourceActions.navigateToChunkByLabel('invalid');
+    await executeCommand(page, 'executeCurrentChunk');
+    const invalid = page.locator('.rstudio_chunk_output_invalid');
+    await expect(invalid).toContainText(
+      "Error: the 'file' chunk option must be a file path or a vector of file paths",
+      { timeout: 20000 },
+    );
+    await expect(invalid).not.toContainText('ran-body');
+
+    await sourceActions.navigateToChunkByLabel('nullfile');
+    await executeCommand(page, 'executeCurrentChunk');
+    await expect(page.locator('.rstudio_chunk_output_nullfile')).toContainText('[1] "null-body"', { timeout: 20000 });
+
+    await sourceActions.navigateToChunkByLabel('barefile');
+    await executeCommand(page, 'executeCurrentChunk');
+    await expect(page.locator('.rstudio_chunk_output_barefile')).toContainText('[1] "bare-body"', { timeout: 20000 });
   });
 
   test('reports a missing file in a Python chunk', async ({ rstudioPage: page }) => {

@@ -72,7 +72,8 @@ public:
    bool hasPendingRanges();
    void replaceCode(const std::string& code);
    core::Error replaceCodeFromFileOption(const core::json::Object& options,
-                                         const core::FilePath& baseDir);
+                                         const core::FilePath& baseDir,
+                                         bool* pReplaced);
 
    // accessors
    std::string docId() const;
