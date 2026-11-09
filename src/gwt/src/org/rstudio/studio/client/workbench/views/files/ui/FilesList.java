@@ -57,7 +57,9 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
+import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.DefaultSelectionEventManager;
+import com.google.gwt.view.client.DefaultSelectionEventManager.SelectAction;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.ProvidesKey;
@@ -107,16 +109,22 @@ public class FilesList extends Composite
       selectionModel_ = new MultiSelectionModel<>(KEY_PROVIDER);
       filesDataGrid_.setSelectionModel(
          selectionModel_,
-         DefaultSelectionEventManager.createCheckboxManager());
+         DefaultSelectionEventManager.createCustomManager(
+            new DefaultSelectionEventManager.CheckboxEventTranslator<FileSystemItem>()
+            {
+               @Override
+               public SelectAction translateSelectionEvent(CellPreviewEvent<FileSystemItem> event)
+               {
+                  // The ".." row has no checkbox, but the grid's keyboard
+                  // handling would still toggle it on Space, and a selected
+                  // parent row would be offered to commands such as Delete
+                  // (#19493). It is a navigation row: never select it.
+                  if (parentPath_ != null && event.getValue() == parentPath_)
+                     return SelectAction.IGNORE;
 
-      // The ".." row has no checkbox, but the grid's keyboard handling still
-      // toggles the keyboard-selected row on Space, and a selected parent row
-      // would be offered to commands such as Delete (#19493). Undo it.
-      selectionModel_.addSelectionChangeHandler(event ->
-      {
-         if (parentPath_ != null && selectionModel_.isSelected(parentPath_))
-            selectionModel_.setSelected(parentPath_, false);
-      });
+                  return super.translateSelectionEvent(event);
+               }
+            }));
       filesDataGrid_.setWidth("100%");
 
       filesDataGrid_.getElement().getStyle().setWhiteSpace(WhiteSpace.NOWRAP);

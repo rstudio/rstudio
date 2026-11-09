@@ -717,20 +717,15 @@ public class Files
    }
 
    // true when deleting 'file' would remove the directory the pane is showing,
-   // i.e. 'file' is that directory or one of its ancestors
+   // i.e. 'file' is that directory or one of its ancestors. The view never
+   // reports the parent row as selected, so this only matters when the pane
+   // has navigated away but the old listing is still displayed.
    private boolean containsCurrentPath(FileSystemItem file)
    {
       if (currentPath_ == null)
          return false;
 
-      if (currentPath_.equalTo(file))
-         return true;
-
-      String prefix = file.getPath();
-      if (!prefix.endsWith("/"))
-         prefix += "/";
-
-      return currentPath_.getPath().startsWith(prefix);
+      return currentPath_.equalTo(file) || currentPath_.getPathRelativeTo(file) != null;
    }
 
    private boolean validateNotRestrictedFolder(ArrayList<FileSystemItem> files,
