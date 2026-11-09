@@ -51,9 +51,7 @@ node src/background_tokenizer_test.js
 node src/ext/diff/diff_test.js
 node src/ext/diff/bounded_refinement_test.js
 
-# From RStudio:
-node --test src/gwt/tools/git-diff-token-experiment/experiment.test.cjs
-node src/gwt/tools/git-diff-token-experiment/run.cjs --samples 5
+# From RStudio (src/gwt/test/git_diff_test.html drives the real gutter and view):
 cd src/gwt
 ant testpage
 ```
