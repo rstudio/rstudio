@@ -3128,7 +3128,7 @@ std::vector<std::string> AgentStdoutReader::append(const std::string& chunk,
             if (buffer_.length() > kMaxAgentHeaderSize)
             {
                if (pErrors)
-                  pErrors->push_back("response header did not end");
+                  pErrors->push_back("message header did not end");
 
                // Keep a header that the read cut off after the junk.
                buffer_.erase(0, cutOffHeaderStart(buffer_));
@@ -3147,8 +3147,8 @@ std::vector<std::string> AgentStdoutReader::append(const std::string& chunk,
                                        ? contentLength.substr(0, kMaxQuotedHeaderValue) + "..."
                                        : contentLength;
                pErrors->push_back(headerAt == std::string::npos
-                                     ? "response contains no Content-Length header"
-                                     : "response has an invalid Content-Length header (" + quoted + ")");
+                                     ? "message contains no Content-Length header"
+                                     : "message has an invalid Content-Length header (" + quoted + ")");
             }
 
             // Resume at the next Content-Length header, not after this block:
