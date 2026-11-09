@@ -1179,11 +1179,8 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut, uint64_t
       }
    }
 
-   // One line per read, as junk can hold an error every few bytes.
-   if (errors.size() == 1)
-      ELOG("Internal error: {}.", errors.front());
-   else if (errors.size() > 1)
-      ELOG("Internal error: {} (and {} more in this read).", errors.front(), errors.size() - 1);
+   if (!errors.empty())
+      ELOG("Internal error: {}.", agentStdoutErrorSummary(errors));
 
    if (!errors.empty() && assistantLogLevel() >= 2)
    {
@@ -3021,9 +3018,9 @@ std::string agentStderrTail(const std::string& text, std::size_t maxLength)
 
 namespace {
 
-// Agent messages are JSON-RPC requests and replies, far smaller than this. A
-// larger Content-Length is noise that would otherwise hold back every message
-// after it.
+// Agent and chat backend messages are JSON-RPC messages, far smaller than
+// this, even those carrying a file the chat writes. A larger Content-Length is
+// noise that would otherwise hold back every message after it.
 const std::size_t kMaxAgentMessageSize = 64 * 1024 * 1024;
 
 // A header block is a few dozen bytes. One this long that has not ended is
@@ -3128,7 +3125,7 @@ std::vector<std::string> AgentStdoutReader::append(const std::string& chunk,
             if (buffer_.length() > kMaxAgentHeaderSize)
             {
                if (pErrors)
-                  pErrors->push_back("response header did not end");
+                  pErrors->push_back("message header did not end");
 
                // Keep a header that the read cut off after the junk.
                buffer_.erase(0, cutOffHeaderStart(buffer_));
@@ -3147,8 +3144,8 @@ std::vector<std::string> AgentStdoutReader::append(const std::string& chunk,
                                        ? contentLength.substr(0, kMaxQuotedHeaderValue) + "..."
                                        : contentLength;
                pErrors->push_back(headerAt == std::string::npos
-                                     ? "response contains no Content-Length header"
-                                     : "response has an invalid Content-Length header (" + quoted + ")");
+                                     ? "message contains no Content-Length header"
+                                     : "message has an invalid Content-Length header (" + quoted + ")");
             }
 
             // Resume at the next Content-Length header, not after this block:
@@ -3180,6 +3177,14 @@ void AgentStdoutReader::clear()
 {
    buffer_.clear();
    bodyLength_ = 0;
+}
+
+std::string agentStdoutErrorSummary(const std::vector<std::string>& errors)
+{
+   if (errors.size() <= 1)
+      return errors.empty() ? std::string() : errors.front();
+
+   return errors.front() + " (and " + std::to_string(errors.size() - 1) + " more in this read)";
 }
 
 FilePath nesLanguageServerPath(const FilePath& installPath)

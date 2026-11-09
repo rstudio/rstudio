@@ -71,6 +71,7 @@ public interface ThemeStyles extends CssResource
 
    String moduleTabPanel();
    String minimized();
+   String minimizedTabList();
 
    String firstTabSelected();
 

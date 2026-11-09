@@ -491,11 +491,109 @@ public class AceEditorNative extends JavaScriptObject
    }-*/;
    
    public final native int findAll(String needle) /*-{
-      return this.findAll(needle);
+      // Ace merges these into the editor's persistent search options, so
+      // set each one or a previous Find/Replace All's settings leak in.
+      return this.findAll(needle, {
+         range: null,
+         wholeWord: false,
+         caseSensitive: true,
+         regExp: false
+      });
    }-*/;
    
-   public final native int findAll(String needle, Range range, boolean wholeWord, boolean caseSensitive) /*-{
-      return this.findAll(needle, {range: range, wholeWord: wholeWord, caseSensitive: caseSensitive});
+   public final native int findAll(
+         String needle,
+         Range range,
+         boolean wholeWord,
+         boolean caseSensitive,
+         boolean regex) /*-{
+      var options = {
+         // Ace adds word boundaries without grouping the expression.
+         needle: regex && wholeWord ? "(?:" + needle + ")" : needle,
+         range: range,
+         wholeWord: wholeWord,
+         caseSensitive: caseSensitive,
+         regExp: regex
+      };
+      if (!regex)
+         return this.findAll(needle, options);
+
+      // Ace's bulk regex search mishandles named captures and multiline
+      // matches in a range. Reuse its pattern options, but collect offsets
+      // from exec() without changing the editor's persistent search state.
+      // $assembleRegExp and $isMultilineSearch are private Ace API; the
+      // bundled Ace is pinned, and the editor tests cover both.
+      var Search = $wnd.require("ace/search").Search;
+      var search = new Search();
+      var re = search.$assembleRegExp(options, true);
+      if (!re)
+         throw new Error("Invalid regular expression");
+
+      // Find Next matches each line on its own and spans lines only when
+      // the pattern itself contains a newline escape. Do the same, so All
+      // selects exactly the matches Find Next visits.
+      var multiline = search.$isMultilineSearch(options);
+
+      var Document = $wnd.require("ace/document").Document;
+      var Range = $wnd.require("ace/range").Range;
+      var lang = $wnd.require("ace/lib/lang");
+      // Normalize newlines for regex matching and offset conversion alike.
+      var lines = this.session.getDocument().getAllLines();
+      var doc = new Document(lines);
+      var text = doc.getValue();
+      var offset = range ? doc.positionToIndex(range.start) : 0;
+      var end = range ? doc.positionToIndex(range.end) : text.length;
+      var artificialEnd = end < text.length && end > offset && text.charAt(end - 1) == "\n";
+      // Match the selected text, as Replace All does. In Selection expands
+      // its range to whole lines, so the only artificial line boundary is
+      // the empty line after a trailing newline at a non-document endpoint.
+      text = text.substring(offset, end);
+
+      // Matches are ordered; walk the lines once instead of scanning from
+      // the start of the document for every match's offset conversion.
+      var row = 0;
+      var lineOffset = 0;
+      var toPosition = function(index)
+      {
+         while (row + 1 < lines.length && index > lineOffset + lines[row].length)
+            lineOffset += lines[row++].length + 1;
+         return {row: row, column: index - lineOffset};
+      };
+
+      var segments = multiline ? [text] : text.split("\n");
+      var ranges = [];
+      var base = 0;
+      for (var s = 0; s < segments.length; s++)
+      {
+         var segment = segments[s];
+         re.lastIndex = 0;
+         var match;
+         while ((match = re.exec(segment)))
+         {
+            var index = base + match.index;
+            if (artificialEnd && index == text.length)
+               break;
+            ranges.push(Range.fromPoints(
+               toPosition(offset + index),
+               toPosition(offset + index + match[0].length)));
+
+            // Empty matches must advance, including past Unicode code points.
+            if (!match[0].length)
+            {
+               if (re.lastIndex >= segment.length)
+                  break;
+               re.lastIndex += lang.skipEmptyMatch(segment, re.lastIndex, re.unicode);
+            }
+         }
+         base += segment.length + 1;
+      }
+
+      if (!ranges.length)
+         return 0;
+      this.multiSelect.toSingleRange(ranges[0]);
+      for (var i = ranges.length; i--;)
+         this.multiSelect.addRange(ranges[i], true);
+      return ranges.length;
    }-*/;
    
    public final native void insert(String text) /*-{
