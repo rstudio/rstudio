@@ -87,11 +87,18 @@ All of this is done once, by someone with the `ide-build` AWS profile
   change followed by `deploy.sh` and a stop/start of the instance
   (`aws ec2 stop-instances` / `start-instances` with the `InstanceId`
   output). No replacement, no re-enrollment.
-- **Replacing the instance** (new AMI, or a terminated host) creates a new
-  tailnet node. Remove the old node first (admin console, or the Tailscale
-  app's machine list for a node you own), or Tailscale gives the new one the
-  name `e2e-reports-1` and the links break. The new host enrolls with the
-  SSM key if one is stored, else it waits to be authorized as at setup.
+- **Replacing the instance** (new AMI, a template change to the network or
+  the instance itself, or a terminated host) creates a new tailnet node. The
+  old one keeps the name, so Tailscale would call the new one `e2e-reports-1`
+  and the links would break. Before the deploy, rename the old node from the
+  host itself (members cannot delete machines; only admins can):
+
+      aws ssm send-command --instance-ids <InstanceId> --document-name AWS-RunShellScript \
+        --parameters 'commands=["tailscale set --hostname e2e-reports-retired"]'
+
+  The new host enrolls with the SSM key if one is stored, else it waits to
+  be authorized as at setup. The retired node lingers in the machine list
+  until an admin removes it or its key expires.
 - **Shell access** is through Session Manager, there is no SSH:
   `aws ssm start-session --target <InstanceId>`. The setup log is
   `/var/log/e2e-reports-setup.log`; the services are `reports-mount`,
@@ -107,9 +114,8 @@ All of this is done once, by someone with the `ide-build` AWS profile
   the Tailscale admin console. The reports bucket is untouched.
 
 Cost: the instance (`t4g.micro`, about $6 a month), its 8 GB volume, and
-the shared VPC's NAT gateway processing charge on what the host sends to
-browsers. Reads from the bucket go through the VPC's S3 gateway endpoint in
-the same region, so they are free.
+its public IPv4 address (about $4). Reads from the bucket go through the
+VPC's S3 gateway endpoint in the same region, so they are free.
 
 ## Notes
 
@@ -118,11 +124,13 @@ the same region, so they are free.
   for directories, `autoindex` listings elsewhere, content types from file
   extensions. New reports appear as soon as the upload finishes; Mountpoint
   caches directory listings only briefly.
-- The host lives in a private subnet of the account's shared VPC (an
-  organization policy forbids creating VPCs): no public address, a security
-  group with no inbound rules, outbound through the VPC's NAT gateway. nginx
-  binds to localhost and `tailscale serve` is the only way in; Tailscale
-  reaches it through NAT traversal or its relays.
+- The host lives in a public subnet of the account's shared VPC (an
+  organization policy forbids creating VPCs) with a public address, and the
+  security group admits only WireGuard's UDP port. nginx binds to localhost
+  and `tailscale serve` is the only way in. The private subnets were tried
+  first: their network ACLs allow TCP only, so Tailscale had no UDP, no
+  direct connections, and every transfer went through a relay at about
+  1 MB/s (a 20 MB trace took 25 seconds).
 - The user data is a cloud-init multipart document whose `cloud_final_modules`
   setting makes the script run on every boot. It is written without `${...}`
   shell syntax because the template's `Fn::Sub` would try to resolve it.

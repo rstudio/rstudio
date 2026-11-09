@@ -37,16 +37,16 @@ if ! aws cloudformation describe-stacks --stack-name "$STACK_NAME" > /dev/null 2
   echo "Creating $STACK_NAME..."
 
   # The network is the account's shared VPC (an organization policy forbids
-  # creating one): its private subnet has NAT for outbound traffic and an S3
-  # gateway endpoint. Only looked up at creation; VpcId=.../SubnetId=...
+  # creating one); the public subnet is the one whose network ACL allows UDP
+  # (template.yaml). Only looked up at creation; VpcId=.../SubnetId=...
   # arguments take precedence.
   if [[ ! " $* " =~ " VpcId=" ]]; then
     VPC_ID=$(aws ec2 describe-vpcs --filters Name=tag:Name,Values=shared \
       --query 'Vpcs[0].VpcId' --output text)
-    SUBNET_ID=$(aws ec2 describe-subnets --filters "Name=vpc-id,Values=$VPC_ID" Name=tag:Name,Values=private-0 \
+    SUBNET_ID=$(aws ec2 describe-subnets --filters "Name=vpc-id,Values=$VPC_ID" Name=tag:Name,Values=public-0 \
       --query 'Subnets[0].SubnetId' --output text)
     if [[ $VPC_ID == None || $SUBNET_ID == None ]]; then
-      echo "Could not find the shared VPC's private-0 subnet; pass VpcId=... SubnetId=..." >&2
+      echo "Could not find the shared VPC's public-0 subnet; pass VpcId=... SubnetId=..." >&2
       exit 1
     fi
     overrides+=("VpcId=$VPC_ID" "SubnetId=$SUBNET_ID")
