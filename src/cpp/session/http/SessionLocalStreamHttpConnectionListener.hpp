@@ -64,16 +64,18 @@ private:
                                                                   pAcceptor)
    {
       // fails, leaving the stream and its pid file alone, when another
-      // process is serving this session already (#18941)
-      Error error = http::claimLocalStream(*pAcceptor,
-                                           localStreamPath_,
-                                           streamFileMode_,
-                                           &streamIdentity_);
-      if (error)
-         return error;
-
-      streamClaimed_ = true;
-      return writePidFile();
+      // process is serving this session already (#18941). The pid file is
+      // written while the claim is still held, so that a duplicate launch
+      // that loses the claim finds our pid, not a missing or stale one.
+      return http::claimLocalStream(*pAcceptor,
+                                    localStreamPath_,
+                                    streamFileMode_,
+                                    &streamIdentity_,
+                                    [this]()
+                                    {
+                                       streamClaimed_ = true;
+                                       return writePidFile();
+                                    });
    }
 
    virtual bool validateConnection(
