@@ -147,6 +147,16 @@ function isAddition(chunk) {
    return chunk.old.start.row === chunk.old.end.row;
 }
 
+// Whether a change is missing the character highlights a side-by-side view
+// would show: only a coarse one can be (see computeChunks), and the view
+// shows none for a whitespace-insensitive diff.
+function lacksHighlights(chunks, ignoreWhitespace) {
+   if (ignoreWhitespace)
+      return false;
+
+   return chunks.some(function(chunk) { return chunk.isCoarse; });
+}
+
 function sameChunk(a, b) {
    return a.old.start.row === b.old.start.row &&
           a.old.end.row === b.old.end.row &&
@@ -354,16 +364,8 @@ var GitDiffGutter = function(editor, strings) {
          this.splitView.baseEditor.commands.removeCommand("closeGitPeek");
       }
 
-      var refinementModeChanged = !!this.splitView !== !!view;
+      var opening = !this.splitView && !!view;
       this.splitView = view;
-      // Refresh cached chunks even without a pending edit: review can add
-      // character decorations, while both modes retain the same hunks.
-      if (refinementModeChanged)
-      {
-         this.updatePending = true;
-         if (!view)
-            this.flushUpdate();
-      }
       this.notifyStatus();
       if (!view)
          return;
@@ -374,11 +376,22 @@ var GitDiffGutter = function(editor, strings) {
       view.baseEditor.on("focus", this.onCursorActivity);
       view.baseEditor.commands.addCommand(this.closePeekCommand());
 
-      // (an update waiting out a slow diff's typing pause would otherwise
-      // hand the view the previous chunks, and its first folds with them)
-      this.flushUpdate();
+      // The view aligns its chunks against the base, so it gets the base
+      // first; an update then hands it the chunks (see setChunks). Both
+      // modes keep the same hunks, but the view also shows character
+      // highlights, which a coarse hunk only gets when the diff is run with
+      // the view attached (see computeChunks), so opening on one runs the
+      // diff again. Nothing else needs it, and closing never does. An
+      // update waiting out a slow diff's typing pause would otherwise hand
+      // the view the previous chunks, and its first folds with them.
       view.setBaseLines(this.baseLines);
-      view.setChunks(this.chunks, this.ignoreWhitespace);
+      if (opening && lacksHighlights(this.chunks, this.ignoreWhitespace))
+         this.updatePending = true;
+
+      if (this.updatePending)
+         this.flushUpdate();
+      else
+         view.setChunks(this.chunks, this.ignoreWhitespace);
    };
 
    // The Escape command that closes the peek (see the constructor), for an
@@ -560,7 +573,9 @@ var GitDiffGutter = function(editor, strings) {
          var options = {
             maxComputationTimeMs: MAX_COMPUTATION_MS,
             boundedRefinement: true,
-            includeBoundedHighlights: !!this.splitView
+            // (a side-by-side view drops the character ranges of a
+            // whitespace-insensitive diff, which do not fit the text)
+            includeBoundedHighlights: !!this.splitView && !this.ignoreWhitespace
          };
          var started = Date.now();
          var chunks = new DiffProvider().compute(base, lines, options);

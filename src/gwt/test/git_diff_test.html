@@ -47,6 +47,11 @@
       gutter.setBase(original.join("\n"));
       var expected = [[1, 4, 1, 4], [5, 8, 5, 8]];
       check("separate hunks around a short unchanged line", geometry(gutter.chunks), expected);
+      // (the edit's own scheduled update settles first)
+      await rendered();
+      var computes = 0;
+      var computeChunks = gutter.computeChunks;
+      gutter.computeChunks = function() { computes++; return computeChunks.apply(this, arguments); };
       for (var i = 0; i < 2; i++) {
          review = new SplitView(gutter, document.getElementById("review"));
          review.resize();
@@ -57,6 +62,7 @@
          review = null;
          check("closing review preserves hunks", geometry(gutter.chunks), expected);
       }
+      check("toggling review on refined hunks runs no diff", computes, 0);
       review = new SplitView(gutter, document.getElementById("review"));
       review.resize();
       editor.focus();
@@ -79,6 +85,22 @@
       check("large replacement has one valid hunk", geometry(gutter.chunks), [[0, 800, 0, 800]]);
       check("large review uses the same hunk", geometry(review.chunks), geometry(gutter.chunks));
       check("large review renders whole-line highlights", !!document.querySelector("#live .ace_diff.insert:not(.inline)"), true);
+      computes = 0;
+      review.dispose();
+      check("closing review on a coarse hunk runs no diff", computes, 0);
+      review = new SplitView(gutter, document.getElementById("review"));
+      review.resize();
+      check("opening review on a coarse hunk runs one diff", computes, 1);
+      check("the reopened review keeps the coarse hunk", geometry(review.chunks), [[0, 800, 0, 800]]);
+      gutter.setIgnoreWhitespace(true);
+      check("a whitespace-insensitive diff requests no highlights", gutter.chunks[0].charChanges == null, true);
+      computes = 0;
+      review.dispose();
+      review = new SplitView(gutter, document.getElementById("review"));
+      review.resize();
+      check("toggling review on a whitespace-insensitive diff runs no diff", computes, 0);
+      gutter.setIgnoreWhitespace(false);
+      gutter.computeChunks = computeChunks;
 
       original = ["header()", "keep_this_meaningful_statement()", "  keep_indented()", "x".repeat(5000) + "old", "tail()"];
       modified = ["header()", "inserted()", "keep_this_meaningful_statement()", "    keep_indented()", "y".repeat(5000) + "new", "tail()"];
@@ -94,6 +116,27 @@
       gutter.setBase(original.join("\n"));
       check("unequal line counts retain coarse metadata", gutter.chunks[0].isCoarse, true);
       check("clamped selection keeps the destination line end", review.transformPosition({row: 1, column: 2504}, true), {row: 0, column: 5});
+
+      // A timed-out line alignment comes back as one change over everything
+      // with the provider's timeout flag set; the gutter must show nothing
+      // rather than mark every line and hand Revert the whole document.
+      original = Array.from({length: 100}, (_, i) => "old" + i);
+      modified = Array.from({length: 100}, (_, i) => "new" + i);
+      var now = Date.now;
+      var clock = 0;
+      try {
+         Date.now = function() { return clock += 1000; };
+         editor.setValue(modified.join("\n"), -1);
+         gutter.setBase(original.join("\n"));
+      } finally {
+         Date.now = now;
+      }
+      check("a timed-out line alignment fails the diff", gutter.diffFailed, true);
+      check("a timed-out line alignment leaves no chunks", geometry(gutter.chunks), []);
+      check("review follows a timed-out alignment", geometry(review.chunks), []);
+      gutter.update();
+      check("the next update recovers from a timeout", gutter.diffFailed, false);
+      check("the recovered diff has its hunk", geometry(gutter.chunks), [[0, 100, 0, 100]]);
    } catch (error) {
       check("integration completes", String(error.stack || error), "no exception");
    } finally {
