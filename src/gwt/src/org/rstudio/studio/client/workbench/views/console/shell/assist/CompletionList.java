@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
@@ -153,7 +154,7 @@ class CompletionList<TItem> extends Composite
    /**
     * Sets the input that keeps keyboard focus while this list is shown. Its
     * aria-activedescendant names the selected item while the list is
-    * attached, which is how screen readers learn of the selection. Pass null
+    * shown, which is how screen readers learn of the selection. Pass null
     * to detach the input, e.g. when the list is no longer visible.
     */
    public void setInput(InputEditorDisplay input)
@@ -170,7 +171,7 @@ class CompletionList<TItem> extends Composite
          return;
 
       String id = null;
-      if (isAttached() && selectedIndex_ >= 0)
+      if (announceable_ && selectedIndex_ >= 0)
          id = grid_.getRowFormatter().getElement(selectedIndex_).getId();
       input_.setAriaActiveDescendant(id);
    }
@@ -178,6 +179,7 @@ class CompletionList<TItem> extends Composite
    @Override
    protected void onUnload()
    {
+      announceable_ = false;
       if (input_ != null)
          input_.setAriaActiveDescendant(null);
       super.onUnload();
@@ -200,6 +202,17 @@ class CompletionList<TItem> extends Composite
       }
       grid_.setWidth("100%");
       selectNext();
+
+      // Popups attach while hidden for positioning (setPopupPositionAndShow).
+      // VoiceOver ignores an active descendant that is hidden when named, and
+      // won't announce it once shown, so name it after the popup is visible.
+      Scheduler.get().scheduleDeferred(() ->
+      {
+         if (!isAttached())
+            return;
+         announceable_ = true;
+         updateActiveDescendant();
+      });
    }
 
    public int getItemCount()
@@ -345,6 +358,7 @@ class CompletionList<TItem> extends Composite
 
    private int selectedIndex_ = -1;
    private InputEditorDisplay input_;
+   private boolean announceable_;
 
    private final GridEx grid_;
    private final TItem[] items_;

@@ -73,6 +73,47 @@ async function expectArrowDownMovesOption(page: Page, listLabel: string, before:
   expect(after.text).not.toBe(before.text);
 }
 
+/**
+ * Record, at each aria-activedescendant write, whether the named element is
+ * visible. Screen readers (VoiceOver in Safari) skip a hidden target and
+ * don't re-announce once it becomes visible, and a MutationObserver would
+ * only run after the popup is made visible again, so wrap setAttribute.
+ */
+async function trackActiveDescendantWrites(page: Page) {
+  await page.evaluate(() => {
+    const w = window as unknown as { __adWrites: { id: string; visible: boolean }[] };
+    w.__adWrites = [];
+    const proto = Element.prototype as Element & { __adOriginal?: Element['setAttribute'] };
+    proto.__adOriginal ??= proto.setAttribute;
+    const original = proto.__adOriginal;
+    proto.setAttribute = function (name: string, value: string) {
+      original.call(this, name, value);
+      if (name === 'aria-activedescendant') {
+        const target = document.getElementById(value);
+        w.__adWrites.push({
+          id: value,
+          visible: !!target && target.checkVisibility({ visibilityProperty: true }),
+        });
+      }
+    };
+  });
+}
+
+async function untrackActiveDescendantWrites(page: Page) {
+  await page.evaluate(() => {
+    const proto = Element.prototype as Element & { __adOriginal?: Element['setAttribute'] };
+    if (proto.__adOriginal)
+      proto.setAttribute = proto.__adOriginal;
+  });
+}
+
+async function expectWritesNameVisibleItems(page: Page) {
+  const writes = await page.evaluate(
+    () => (window as unknown as { __adWrites: { id: string; visible: boolean }[] }).__adWrites);
+  expect(writes.length).toBeGreaterThan(0);
+  expect(writes.filter((w) => !w.visible)).toEqual([]);
+}
+
 async function expectNoActiveDescendant(page: Page, inputSelector: string) {
   await expect(page.locator(inputSelector)).not.toHaveAttribute('aria-activedescendant');
 }
@@ -90,6 +131,7 @@ test.describe('Completion popup screen reader support', () => {
   });
 
   test.afterEach(async ({ rstudioPage: page }) => {
+    await untrackActiveDescendantWrites(page);
     await setAlwaysShowCompletionPopup(page, false);
     await clearPref(page, 'code_completion');
     await page.keyboard.press('Escape');
@@ -99,12 +141,14 @@ test.describe('Completion popup screen reader support', () => {
 
   test('console completion popup announces the selected item', async ({ rstudioPage: page }) => {
     await setAlwaysShowCompletionPopup(page, true);
+    await trackActiveDescendantWrites(page);
     await consoleActions.typeInConsole('Sys.get');
     await waitForCompletionPopup(page);
     await expect(page.locator(COMPLETION_POPUP)).toBeVisible();
 
     const first = await expectActiveOption(page, 'Completions');
     expect(first.text).toContain('Sys.get');
+    await expectWritesNameVisibleItems(page);
     await expectArrowDownMovesOption(page, 'Completions', first);
 
     await page.keyboard.press('Escape');
@@ -118,12 +162,14 @@ test.describe('Completion popup screen reader support', () => {
     await sourceActions.sourcePane.aceTextInput.click({ force: true });
 
     await setAlwaysShowCompletionPopup(page, true);
+    await trackActiveDescendantWrites(page);
     await page.keyboard.type('Sys.get');
     await waitForCompletionPopup(page);
     await expect(page.locator(COMPLETION_POPUP)).toBeVisible();
 
     const first = await expectActiveOption(page, 'Completions');
     expect(first.text).toContain('Sys.get');
+    await expectWritesNameVisibleItems(page);
     await expectArrowDownMovesOption(page, 'Completions', first);
 
     await page.keyboard.press('Escape');
@@ -140,11 +186,13 @@ test.describe('Completion popup screen reader support', () => {
     await consoleActions.executeInConsole('historyAriaProbe <- 2', { wait: true });
 
     await consoleActions.typeInConsole('historyAriaProbe');
+    await trackActiveDescendantWrites(page);
     await page.keyboard.press('Control+ArrowUp');
 
     // The history popup selects the most recent entry, which is the last row.
     const last = await expectActiveOption(page, 'Console history');
     expect(last.text).toBe('historyAriaProbe <- 2');
+    await expectWritesNameVisibleItems(page);
 
     await page.keyboard.press('ArrowUp');
     await expect.poll(async () => (await activeOption(page))?.text).toBe('historyAriaProbe <- 1');
