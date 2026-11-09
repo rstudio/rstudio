@@ -152,19 +152,24 @@ runs:
 
     # The shard blobs hold every trace and screenshot the report does, and a
     # GitHub artifact can be downloaded by anyone signed in to GitHub. They
-    # exist only to be merged, so they go once the merge has succeeded; their
-    # one-day retention is the fallback when this job never gets this far.
-    # Not when the merge failed: a re-run of this job needs them.
+    # exist only to be merged, so they go once the merged report is safely
+    # published; their one-day retention is the fallback when this job never
+    # gets this far. Not when the merge or the publish failed: the report
+    # would then exist nowhere, and a re-run of this job needs the blobs.
     - name: Delete shard blob artifacts
-      if: always() && steps.merge.outcome == 'success'
+      if: always() && steps.merge.outcome == 'success' && steps.publish-report.outputs.url != ''
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.github-token }}
         PREFIX: playwright-blob-report-${{ inputs.label }}-
       run: |
-        gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" \
-          --jq ".artifacts[] | select(.name | startswith(\"$PREFIX\")) | .id" |
-        while read -r id; do
+        # Every page first, then the deletes: removing entries while pages
+        # are still being fetched shifts the remaining ones across page
+        # boundaries and skips some.
+        mapfile -t ids < <(gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?per_page=100" \
+          --jq ".artifacts[] | select(.name | startswith(\"$PREFIX\")) | .id")
+        echo "Deleting ${#ids[@]} blob artifact(s)."
+        for id in "${ids[@]}"; do
           gh api -X DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$id" > /dev/null \
             || echo "::warning::Could not delete artifact $id; it expires on its own within a day."
         done

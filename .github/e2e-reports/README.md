@@ -79,9 +79,9 @@ All of this is done once, by someone with the `ide-build` AWS profile
 
 - **Redeploy** after a template change with the same `deploy.sh` command.
   Stack parameters can be overridden with `KEY=VALUE` arguments, e.g.
-  `./deploy.sh InstanceType=t4g.small`. The AMI is pinned to what the stack
-  was created with (a new image would replace the instance); `AmiId=<ami>`
-  forces a new one.
+  `./deploy.sh InstanceType=t4g.small`. The image is pinned to the concrete
+  AMI the stack was created with (a new image would replace the instance);
+  `AmiId=ami-...` moves to a new one, after the node rename below.
 - **User data runs on every boot** and is idempotent, so a change to the
   host's configuration (nginx, the mount, Tailscale settings) is a template
   change followed by `deploy.sh` and a stop/start of the instance

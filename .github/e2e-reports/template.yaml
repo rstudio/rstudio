@@ -56,13 +56,14 @@ Parameters:
     AllowedPattern: '[a-z0-9]+g[a-z]*\.[a-z0-9]+'
     Description: Graviton (arm64) instance type; the AMI below is arm64.
   AmiId:
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-arm64
+    Type: AWS::EC2::Image::Id
     Description: >-
-      Amazon Linux 2023 arm64 image. Resolved from the public SSM parameter at
-      deploy time; deploy.sh passes it only on the first deploy, since a new
-      image replaces the instance (the running one keeps itself patched with
-      dnf-automatic instead).
+      Amazon Linux 2023 arm64 image. A concrete id rather than the SSM alias,
+      which CloudFormation would re-resolve on every update and so replace the
+      instance (and its tailnet identity) whenever Amazon publishes a new image.
+      deploy.sh resolves the latest image on the first deploy and keeps the
+      stack's current id afterwards; the running host patches itself with
+      dnf-automatic.
 
 Resources:
   # ------------------------------------------------------------------- IAM
