@@ -286,16 +286,8 @@ public class AceEditor implements DocDisplay
       private AceEditorChangeTracker()
       {
          super(AceEditor.this);
-         AceEditor.this.addFoldChangeHandler(event -> changed_ = true);
-         AceEditor.this.addLineWidgetsChangedHandler(event -> changed_ = true);
-      }
-
-      @Override
-      public ChangeTracker fork()
-      {
-         AceEditorChangeTracker forked = new AceEditorChangeTracker();
-         forked.changed_ = changed_;
-         return forked;
+         AceEditor.this.addFoldChangeHandler(event -> markChanged());
+         AceEditor.this.addLineWidgetsChangedHandler(event -> markChanged());
       }
    }
 
@@ -2795,7 +2787,8 @@ public class AceEditor implements DocDisplay
       widget_.getEditor().toggleCommentLines();
    }
 
-   public ChangeTracker getChangeTracker()
+   @Override
+   public ChangeTracker createChangeTracker()
    {
       return new AceEditorChangeTracker();
    }

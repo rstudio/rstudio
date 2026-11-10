@@ -47,6 +47,7 @@
 
 #include "SessionProjectFirstRun.hpp"
 #include "../modules/SessionLibGit2.hpp"
+#include "../modules/SessionCodeSearch.hpp"
 
 #define kStorageFolder "projects"
 
@@ -59,49 +60,18 @@ namespace projects {
 
 namespace {
 
-static std::unique_ptr<r_util::RPackageInfo> s_pIndexedPackageInfo = nullptr;
-
-// The directory whose DESCRIPTION file is indexed by the project file
-// monitor. For package projects this is the package directory, which can
-// differ from the project directory; for other build types it is the project
-// directory itself. (Note that buildTargetPath() is empty for build type
-// 'None', and a relative "DESCRIPTION" path would resolve against the working
-// directory rather than the project.)
-FilePath packageDescriptionDirectory()
+void onProjectFilesChanged(
+      ProjectContext& context,
+      const std::vector<core::system::FileChangeEvent>& events)
 {
-   ProjectContext& context = projectContext();
-   if (context.config().buildType == r_util::kBuildTypePackage)
-      return context.buildTargetPath();
-
-   return context.directory();
-}
-
-void onDescriptionChanged()
-{
-   s_pIndexedPackageInfo.reset();
-
-   // a removed DESCRIPTION simply means the project is no longer a package
-   FilePath descDir = packageDescriptionDirectory();
-   if (!descDir.completeChildPath("DESCRIPTION").exists())
-      return;
-
-   std::unique_ptr<r_util::RPackageInfo> pInfo(new r_util::RPackageInfo);
-   Error error = pInfo->read(descDir);
-   if (error)
-      LOG_ERROR(error);
-
-   pInfo.swap(s_pIndexedPackageInfo);
-}
-
-void onProjectFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
-{
-   FilePath descPath = packageDescriptionDirectory().completeChildPath("DESCRIPTION");
+   std::string descPath = context.packageDirectory()
+         .completeChildPath("DESCRIPTION").getLexicallyNormalPath();
    for (auto& event : events)
    {
       auto& info = event.fileInfo();
-      if (info.absolutePath() == descPath.getAbsolutePath())
+      if (FilePath(info.absolutePath()).getLexicallyNormalPath() == descPath)
       {
-         onDescriptionChanged();
+         context.updatePackageInfo();
          break;
       }
    }
@@ -497,7 +467,9 @@ Error ProjectContext::startup(const FilePath& projectFile,
 
 void ProjectContext::augmentRbuildignore()
 {
-   if (isPackageProject())
+   // These ignores describe files at the project root. A package in a
+   // separate PackagePath does not contain them.
+   if (isPackageProject() && packageDirectory().isEquivalentTo(directory()))
    {
       // constants
       const char * const kIgnoreRproj = R"(^.*\.Rproj$)";
@@ -747,7 +719,7 @@ Error ProjectContext::initialize()
 
 namespace {
 
-std::vector<std::string> fileMonitorIgnoredComponents()
+std::vector<std::string> fileMonitorIgnoredComponents(const ProjectContext& context)
 {
    // first, built-in ignores
    std::vector<std::string> ignores = {
@@ -812,9 +784,9 @@ std::vector<std::string> fileMonitorIgnoredComponents()
    
 #ifndef RSTUDIO_PACKAGE_BUILD
    // hard-code some extra ignores for RStudio
-   if (projects::projectContext().hasProject())
+   if (context.hasProject())
    {
-      FilePath projFilePath = projects::projectContext().file();
+      FilePath projFilePath = context.file();
       if (projFilePath.getFilename() == "rstudio.Rproj")
       {
          ignores.push_back("/src/build-cpp-");
@@ -832,11 +804,11 @@ std::vector<std::string> fileMonitorIgnoredComponents()
          ignores.push_back(userIgnore.getString());
 
    // don't monitor python envs
-   if (projects::projectContext().hasProject())
+   if (context.hasProject())
    {
-      const std::vector<FilePath>& envs = projects::projectContext().pythonEnvs();
-      std::transform(envs.begin(), envs.end(), std::back_inserter(ignores), [](const FilePath& envPath) {
-         return "/" + envPath.getRelativePath(projects::projectContext().directory());
+      const std::vector<FilePath>& envs = context.pythonEnvs();
+      std::transform(envs.begin(), envs.end(), std::back_inserter(ignores), [&context](const FilePath& envPath) {
+         return "/" + envPath.getRelativePath(context.directory());
       });
    }
 
@@ -845,13 +817,87 @@ std::vector<std::string> fileMonitorIgnoredComponents()
 
 }
 
+bool isIgnoredMonitorPath(const std::string& path, const FileMonitorFilterContext& context)
+{
+   for (const std::string& component : context.ignoredComponents)
+      if (boost::algorithm::icontains(path, component))
+         return true;
+   return false;
+}
+
+bool isRSourcePath(const FilePath& path)
+{
+   std::string extension = path.getExtensionLowerCase();
+   return extension == ".r" || extension == ".s";
+}
+
+void eraseDirectoriesWithin(std::set<FilePath>* directories, const FilePath& path)
+{
+   auto it = directories->lower_bound(path);
+   while (it != directories->end() && it->isWithin(path))
+      it = directories->erase(it);
+}
+
 } // end anonymous namespace
+
+FileMonitorFilterContext ProjectContext::createFileMonitorFilterContext() const
+{
+   FileMonitorFilterContext context;
+   context.ignoreObjectFiles = prefs::userPrefs().hideObjectFiles();
+   context.ignoredComponents = fileMonitorIgnoredComponents(*this);
+
+   // Each caller keeps its own Git handle: libgit2 caches ignore rules and
+   // reloads changed files, but a handle cannot be shared between the monitor
+   // thread and session-thread package diagnostics.
+   if (prefs::userPrefs().fileMonitorUseGitignore())
+      context.pGit = boost::make_shared<modules::libgit2::Git>(directory());
+
+   return context;
+}
+
+void ProjectContext::resetFileMonitorCoverage()
+{
+   packageFilterContext_.reset();
+   std::lock_guard<std::mutex> lock(unmonitoredSourcesMutex_);
+   unmonitoredSources_.clear();
+}
+
+void ProjectContext::noteUnmonitoredSource(const FileInfo& info) const
+{
+   FilePath path(info.absolutePath());
+   UnmonitoredSource type;
+   if (info.isDirectory())
+      type = UnmonitoredSource::Directory;
+   else if (isRSourcePath(path))
+      type = UnmonitoredSource::File;
+   else if (info.isSymlink())
+      type = UnmonitoredSource::Link;
+   else
+      return;
+
+   std::lock_guard<std::mutex> lock(unmonitoredSourcesMutex_);
+   unmonitoredSources_[path] = type;
+}
+
+bool ProjectContext::fileMonitorFilterWithCoverage(
+      const FileInfo& info,
+      const FileMonitorFilterContext& context) const
+{
+   // The registered root is scanned even when its spelling is a symlink
+   // or hidden directory; the filter applies to entries beneath it.
+   if (FilePath(info.absolutePath()) == directory())
+      return true;
+   bool accepted = fileMonitorFilter(info, context);
+   if (!accepted || info.isSymlink())
+      noteUnmonitoredSource(info);
+   return accepted;
+}
 
 void ProjectContext::onDeferredInit(bool newSession)
 {
    // update DESCRIPTION file index
-   if (projectContext().isPackageProject())
-      onDescriptionChanged();
+   updatePackageInfo();
+   updatePackageDirectoryInProject();
 
    // kickoff file monitoring for this directory
    using boost::bind;
@@ -867,24 +913,9 @@ void ProjectContext::onDeferredInit(bool newSession)
    cb.onUnregistered = bind(&ProjectContext::fileMonitorTermination,
                             this, Success());
 
-   FileMonitorFilterContext context;
-   context.ignoreObjectFiles = prefs::userPrefs().hideObjectFiles();
-   context.ignoredComponents = fileMonitorIgnoredComponents();
-
-   // Initialize gitignore support. The Git object (and its underlying
-   // git_repository handle) is kept alive for the lifetime of the file
-   // monitor. This is safe because libgit2 uses an internal attribute
-   // cache that checks .gitignore file timestamps and reloads when they
-   // change, so updated rules are picked up without re-opening the repo.
-   //
-   // NOTE: git_repository objects are not thread-safe for concurrent access.
-   // This is fine here because the file monitor filter callback is invoked
-   // from a single thread.
-   if (prefs::userPrefs().fileMonitorUseGitignore())
-   {
-      using modules::libgit2::Git;
-      context.pGit = boost::make_shared<Git>(directory());
-   }
+   // Use separate Git handles for monitor and session-thread filtering.
+   resetFileMonitorCoverage();
+   FileMonitorFilterContext context = createFileMonitorFilterContext();
 
    // High-churn directories that fileMonitorFilter always excludes. Passing
    // them to the file monitor as well lets backends with source-level
@@ -908,7 +939,7 @@ void ProjectContext::onDeferredInit(bool newSession)
    core::system::file_monitor::registerMonitor(
          directory(),
          true,
-         boost::bind(&ProjectContext::fileMonitorFilter, this, _1, context),
+         boost::bind(&ProjectContext::fileMonitorFilterWithCoverage, this, _1, context),
          cb,
          excludedPaths);
 }
@@ -917,8 +948,29 @@ void ProjectContext::fileMonitorRegistered(
                               core::system::file_monitor::Handle handle,
                               const tree<core::FileInfo>& files)
 {
-   // update state
+   // Record directories actually observed by the monitor. Relaxing an ignore
+   // rule cannot establish coverage for a subtree absent from this snapshot.
    hasFileMonitor_ = true;
+   fileMonitorInitialized_ = true;
+   monitoredDirectories_.clear();
+   failedMonitorDirectories_.clear();
+   sourceIndexExcludedDirectories_.clear();
+   monitoredDirectories_.insert(directory());
+   for (const FileInfo& info : files)
+   {
+      FilePath path(info.absolutePath());
+      if (info.isSymlink() && path != directory())
+         noteUnmonitoredSource(info);
+      if (info.scanFailed())
+         failedMonitorDirectories_.insert(path);
+      else if (info.isDirectory() && !info.isSymlink())
+         monitoredDirectories_.insert(path);
+   }
+
+   // Changes between the initial metadata read and monitor registration may
+   // appear only in the initial snapshot, without a separate file event.
+   updatePackageInfo();
+   updatePackageDirectoryInProject();
 
    // re-augment .Rbuildignore to pick up any AI tool-state directories
    // (.posit/assistant, legacy .positai) that were created between project
@@ -936,8 +988,69 @@ void ProjectContext::fileMonitorFilesChanged(
    // notify client (gwt)
    module_context::enqueFileChangedEvents(directory(), events);
 
+   // Update coverage before notifying package metadata and diagnostics.
+   if (!packageFilterContext_)
+      packageFilterContext_ = boost::make_shared<FileMonitorFilterContext>(
+            createFileMonitorFilterContext());
+   for (const auto& event : events)
+   {
+      const FileInfo& info = event.fileInfo();
+      FilePath path(info.absolutePath());
+      if (event.type() != core::system::FileChangeEvent::FileRemoved)
+      {
+         // Native file events do not always populate symlink metadata.
+         bool linked = path != directory() && (info.isSymlink() ||
+               ((info.isDirectory() || isRSourcePath(path)) && path.isSymlink()));
+         if (linked || (path != directory() && !fileMonitorFilter(info, *packageFilterContext_)))
+            noteUnmonitoredSource(FileInfo(info.absolutePath(), info.isDirectory(), linked));
+         else if (!info.scanFailed())
+         {
+            // Only a delivered, accepted observation can restore coverage.
+            // Removing an ignore rule alone does not populate the index.
+            std::lock_guard<std::mutex> lock(unmonitoredSourcesMutex_);
+            unmonitoredSources_.erase(path);
+         }
+      }
+      // Keep excluded paths across removals: an older queued removal must not
+      // erase a newer exclusion recorded on the monitor thread. Coverage
+      // checks below ignore entries that are no longer present on disk.
+      if (event.type() == core::system::FileChangeEvent::FileRemoved)
+      {
+         eraseDirectoriesWithin(&failedMonitorDirectories_, path);
+         eraseDirectoriesWithin(&sourceIndexExcludedDirectories_, path);
+      }
+      else if (info.scanFailed())
+      {
+         failedMonitorDirectories_.insert(path);
+      }
+      else
+      {
+         failedMonitorDirectories_.erase(path);
+      }
+
+      if ((event.type() == core::system::FileChangeEvent::FileRemoved ||
+           !info.isDirectory() || (info.isSymlink() && path != directory())) &&
+          (info.isDirectory() || monitoredDirectories_.count(path) != 0))
+      {
+         eraseDirectoriesWithin(&monitoredDirectories_, path);
+      }
+      else if (info.scanFailed())
+      {
+         // The failed-directory set blocks package coverage until recovery.
+         // Keep observed descendants: a partial scan can retain healthy R
+         // directories that will not emit another event when the error clears.
+         monitoredDirectories_.erase(path);
+      }
+      else if (event.type() != core::system::FileChangeEvent::FileRemoved &&
+               info.isDirectory() && (!info.isSymlink() || path == directory()))
+      {
+         monitoredDirectories_.insert(path);
+      }
+   }
+
    // own handler
-   onProjectFilesChanged(events);
+   onProjectFilesChanged(*this, events);
+   updatePackageDirectoryInProject();
 
    // if an AI tool-state directory (or, for the nested ".posit/assistant", its
    // parent ".posit") was added, augment .Rbuildignore now -- we don't add
@@ -974,6 +1087,11 @@ void ProjectContext::fileMonitorTermination(const Error& error)
    {
       // do this only once
       hasFileMonitor_ = false;
+      monitoredDirectories_.clear();
+      failedMonitorDirectories_.clear();
+      sourceIndexExcludedDirectories_.clear();
+      resetFileMonitorCoverage();
+      updatePackageDirectoryInProject();
 
       // notify end-user if this was an error condition
       if (error)
@@ -1019,9 +1137,8 @@ bool ProjectContext::fileMonitorFilter(
    // and so we need the filter to apply to files which are 'ignored'
    // and yet still monitored in ignored sub-directories
    const std::string& absPath = fileInfo.absolutePath();
-   for (auto&& component : context.ignoredComponents)
-      if (boost::algorithm::icontains(absPath, component))
-         return false;
+   if (isIgnoredMonitorPath(absPath, context))
+      return false;
 
    // Allow AI tool-state directories through the filter so we can react to
    // their creation and update ignore files accordingly. This must run before
@@ -1156,20 +1273,212 @@ void ProjectContext::updateBuildTargetPath()
       }
       else
       {
-         buildTargetPath_= projects::projectContext().directory().completeChildPath(
-            buildTarget);
+         buildTargetPath_ = directory().completeChildPath(buildTarget);
       }
    }
 }
 
-void ProjectContext::updatePackageInfo()
+FilePath ProjectContext::packageDirectory() const
 {
+   if (!hasProject())
+      return FilePath();
+
    if (config().buildType == r_util::kBuildTypePackage)
+      return buildTargetPath();
+
+   return directory();
+}
+
+void ProjectContext::noteSourceIndexExcludedDirectory(const FilePath& directory)
+{
+   // Indexing runs after the monitor batch that announced the directory, so
+   // an exclusion affecting the package arrives after the last scope update.
+   bool inserted = sourceIndexExcludedDirectories_.insert(directory).second;
+   if (inserted && !indexedPackageDirectory_.isEmpty() &&
+       (indexedPackageDirectory_.isWithin(directory) ||
+        directory.isWithin(indexedPackageDirectory_.completeChildPath("R"))))
    {
-      Error error = packageInfo_.read(buildTargetPath());
-      if (error)
-         LOG_ERROR(error);
+      updatePackageDirectoryInProject();
    }
+}
+
+void ProjectContext::updatePackageDirectoryInProject()
+{
+   FilePath packageDir = resolvePackageDirectoryInProject();
+   if (packageDir == indexedPackageDirectory_)
+      return;
+
+   // Entering scope switches DESCRIPTION from on-demand reads to monitor
+   // events, so the cached metadata must be current at the transition.
+   indexedPackageDirectory_ = packageDir;
+   updatePackageInfo();
+}
+
+FilePath ProjectContext::resolvePackageDirectoryInProject() const
+{
+   FilePath packageDir = packageDirectory();
+   if (!hasFileMonitor() || packageDir.isEmpty() || !packageDir.isWithin(directory()))
+      return FilePath();
+
+   // The monitor and source index preserve the project directory's spelling,
+   // including any dot components. Normalize only the package-relative suffix
+   // so PackagePath: . and ./pkg match those registered index keys.
+   std::string relativePath = packageDir.getRelativePath(directory());
+   FilePath indexedDir = directory();
+   if (!relativePath.empty() && relativePath != ".")
+   {
+      indexedDir = directory().completeChildPath(relativePath);
+      if (indexedDir.getFilename() == ".")
+         indexedDir = indexedDir.getParent();
+   }
+
+   // Lexical normalization can change the target when a symlink precedes
+   // ".." (for example, link/../pkg). Only use the normalized index path when
+   // it still refers to the actual package directory.
+   if (packageDir != indexedDir && !packageDir.isEquivalentTo(indexedDir))
+      return FilePath();
+
+   if (fileMonitorInitialized_ && monitoredDirectories_.count(indexedDir) == 0)
+      return FilePath();
+
+   // Only the package's source directories feed package diagnostics. An
+   // unreadable or excluded data/ or inst/ subtree must not disable them,
+   // which would bring back the search-path fallback for the whole package.
+   FilePath rDirectory = indexedDir.completeChildPath("R");
+   FilePath testDirectory = indexedDir.completeChildPath("tests");
+   auto inSourceDirectory = [&](const FilePath& path)
+   {
+      return path.isWithin(rDirectory) || path.isWithin(testDirectory);
+   };
+   for (const FilePath& failedDir : failedMonitorDirectories_)
+      if (indexedDir.isWithin(failedDir) || inSourceDirectory(failedDir))
+         return FilePath();
+   for (const FilePath& excludedDir : sourceIndexExcludedDirectories_)
+      if (indexedDir.isWithin(excludedDir) || excludedDir.isWithin(rDirectory))
+         return FilePath();
+
+   if (!packageFilterContext_)
+      packageFilterContext_ = boost::make_shared<FileMonitorFilterContext>(
+            createFileMonitorFilterContext());
+
+   // A directory entry alone does not establish coverage for its files.
+   // Copy relevant observations while holding the lock; resolving ambiguous
+   // links stays on the session thread. Entries for paths that no longer
+   // exist are dropped here: the filter records them again if they reappear.
+   std::vector<std::pair<FilePath, UnmonitoredSource>> uncovered;
+   {
+      std::lock_guard<std::mutex> lock(unmonitoredSourcesMutex_);
+      for (auto it = unmonitoredSources_.begin(); it != unmonitoredSources_.end(); )
+      {
+         const FilePath& path = it->first;
+         if (!path.exists() && !path.isSymlink())
+         {
+            it = unmonitoredSources_.erase(it);
+            continue;
+         }
+
+         if ((it->second == UnmonitoredSource::File && inSourceDirectory(path)) ||
+             (it->second != UnmonitoredSource::File &&
+              (indexedDir.isWithin(path) || inSourceDirectory(path))))
+         {
+            uncovered.push_back(*it);
+         }
+         ++it;
+      }
+   }
+   for (const auto& entry : uncovered)
+   {
+      const FilePath& path = entry.first;
+      if (entry.second == UnmonitoredSource::File)
+         return FilePath();
+
+      // A linked CSV or other fixture is not a source directory. Retain
+      // the observation so a later target-type change is checked again.
+      if (path.isDirectory())
+         return FilePath();
+   }
+
+   // The scanner does not recurse into symlinked or excluded directories.
+   // Check every ancestor, since filtering one removes its whole subtree.
+   for (FilePath dir = indexedDir; dir != directory(); dir = dir.getParent())
+   {
+      if (modules::code_search::isIgnoredDirectory(dir, true))
+      {
+         sourceIndexExcludedDirectories_.insert(dir);
+         return FilePath();
+      }
+      if (dir.isSymlink() ||
+          !fileMonitorFilter(FileInfo(dir.getAbsolutePath(), true), *packageFilterContext_))
+      {
+         return FilePath();
+      }
+   }
+
+   // Root-level exclusions can filter package contents without filtering the
+   // registered root itself. Both metadata files and R sources need coverage.
+   for (const std::string& name : {"DESCRIPTION", "NAMESPACE", "R"})
+   {
+      FilePath path = indexedDir.completeChildPath(name);
+      FileInfo info(path.getAbsolutePath(), name == "R");
+      if (path.isSymlink() || !fileMonitorFilter(info, *packageFilterContext_))
+         return FilePath();
+      if (name == "R" && modules::code_search::isIgnoredDirectory(path, true))
+      {
+         sourceIndexExcludedDirectories_.insert(path);
+         return FilePath();
+      }
+      if (name == "R" &&
+          (isIgnoredMonitorPath(path.getAbsolutePath() + "/", *packageFilterContext_) ||
+           (fileMonitorInitialized_ && path.exists() && monitoredDirectories_.count(path) == 0)))
+      {
+         return FilePath();
+      }
+   }
+   return indexedDir;
+}
+
+const r_util::RPackageInfo& ProjectContext::packageInfo() const
+{
+   if (!packageInfoInitialized_)
+   {
+      updatePackageInfo();
+   }
+   else if (!packageDirectory().isEmpty() &&
+            (!hasFileMonitor() || indexedPackageDirectory_.isEmpty()))
+   {
+      // No file events reach an unmonitored package directory. A stat is
+      // cheap enough per call; only re-parse when DESCRIPTION has changed.
+      FilePath description = packageDirectory().completeChildPath("DESCRIPTION");
+      if (FileInfo(description) != descriptionInfo_)
+         updatePackageInfo();
+   }
+
+   return packageInfo_;
+}
+
+void ProjectContext::updatePackageInfo() const
+{
+   // Read into a fresh object: optional fields removed from DESCRIPTION,
+   // parse failures, and deleted files must not retain old metadata.
+   packageInfo_ = r_util::RPackageInfo();
+   packageInfoInitialized_ = true;
+
+   descriptionInfo_ = FileInfo();
+   FilePath packageDir = packageDirectory();
+   if (packageDir.isEmpty())
+      return;
+
+   FilePath description = packageDir.completeChildPath("DESCRIPTION");
+   descriptionInfo_ = FileInfo(description);
+   if (!description.exists())
+      return;
+
+   r_util::RPackageInfo info;
+   Error error = info.read(packageDir);
+   if (error)
+      LOG_ERROR(error);
+   else
+      packageInfo_ = info;
 }
 
 void ProjectContext::worktreeNames(std::string* pPrimaryName, std::string* pDirectoryName) const
@@ -1526,24 +1835,11 @@ void ProjectContext::setWebsiteOutputFormat(
 
 bool ProjectContext::isPackageProject()
 {
-   // Without a project, there is no project directory to inspect. (Note that
-   // directory() is empty in this case, so r_util::isPackageDirectory() would
-   // otherwise look for a DESCRIPTION file in the current working directory.)
    if (!hasProject())
       return false;
 
-   // Prefer the indexed DESCRIPTION, which is kept current by the project
-   // file monitor; otherwise check the project directory itself. A package
-   // project whose package lives in a subdirectory (PackagePath) is thus not
-   // classified as one until its DESCRIPTION has been indexed; callers such
-   // as augmentRbuildignore() assume the package directory is the project
-   // directory, so this is left as it was. Callers that would otherwise hit
-   // this path repeatedly (e.g. the R parser, once per function call in a
-   // document) cache the result themselves.
-   if (s_pIndexedPackageInfo != nullptr)
-      return s_pIndexedPackageInfo->type() == kPackageType;
-
-   return r_util::isPackageDirectory(directory());
+   const r_util::RPackageInfo& info = packageInfo();
+   return !info.empty() && info.type() == kPackageType;
 }
 
 bool ProjectContext::supportsSharing()

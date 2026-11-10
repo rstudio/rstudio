@@ -191,6 +191,11 @@ jobs:
       # agent records (window.rstudio.errors) carry decodable Java stack traces.
       # Consumed by src/gwt/CMakeLists.txt; folded into the GWT cache key below.
       GWT_STYLE: PRETTY
+      # Build as C++20 so one Linux job exercises GCC/libstdc++ in that mode;
+      # the macOS and Windows builds already require C++20, but Linux release
+      # builds keep the C++17 minimum from cmake/compiler.cmake (#19095).
+      # Consumed by package/linux/make-package.
+      RSTUDIO_CMAKE_EXTRA_ARGS: -DCMAKE_CXX_STANDARD=20
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

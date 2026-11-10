@@ -60,6 +60,7 @@ import org.rstudio.studio.client.projects.model.ProjectTemplateWidgetTests;
 import org.rstudio.studio.client.rsconnect.ui.EnvironmentVariablesDialogTests;
 import org.rstudio.studio.client.server.ServerErrorCauseTests;
 import org.rstudio.studio.client.workbench.WorkbenchListManagerTests;
+import org.rstudio.studio.client.workbench.model.EventBasedChangeTrackerTests;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContextTests;
 import org.rstudio.studio.client.workbench.model.SessionOpenerTests;
 import org.rstudio.studio.client.workbench.model.SessionTests;
@@ -125,6 +126,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(SessionTests.class);
       suite.addTestSuite(SessionOpenerTests.class);
       suite.addTestSuite(RemoteFileSystemContextTests.class);
+      suite.addTestSuite(EventBasedChangeTrackerTests.class);
       suite.addTestSuite(FileDialogNavigationTests.class);
       suite.addTestSuite(WorkbenchListManagerTests.class);
       suite.addTestSuite(ErrorManagerTests.class);

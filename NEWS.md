@@ -13,6 +13,8 @@
 - ([#19241](https://github.com/rstudio/rstudio/issues/19241)): The Console notice shown at startup when RStudio reduces background file operations for a project can now be turned off with the `show_reduced_file_operations_notice` preference (e.g. from the Command Palette), or for all users by an administrator with `"show_reduced_file_operations_notice": false` in `rstudio-prefs.json`.
 
 ### Fixed
+- ([#19493](https://github.com/rstudio/rstudio/issues/19493)): Fixed an issue where the Files pane could delete the directory it was showing: pressing Space with the grid focused selected the hidden `..` row, and Delete then removed the parent directory. The parent row can no longer be selected, and the session refuses to delete the home directory, the working directory, the project directory, the directory shown in the Files pane, or any directory containing them.
+- ([#19067](https://github.com/rstudio/rstudio/issues/19067)): Fixed package diagnostics failing to recognize local functions when the project build type is not Package, and inconsistent package detection for projects with a PackagePath subdirectory.
 - ([#18959](https://github.com/rstudio/rstudio/issues/18959)): Web file dialogs now report an error and stay in the current folder when a typed folder cannot be opened, instead of silently switching to the project or home folder and completing a pending Save, Open, or Choose there.
 - ([#19098](https://github.com/rstudio/rstudio/issues/19098)): Fixed an issue where `rstudio <file>` in the Terminal pane could launch another Desktop instance after a shell startup file reset `PATH`.
 - ([#19249](https://github.com/rstudio/rstudio/issues/19249)): Fixed an issue where All in the editor's Find/Replace bar ignored the Regex option and selected literal matches instead. With Whole word, a regex with alternatives such as `foo|bar` now bounds every alternative in Find Next, All, and Replace All.
@@ -60,9 +62,11 @@
 - ([#19470](https://github.com/rstudio/rstudio/issues/19470)): [Accessibility] Fixed an issue where the Packages pane showed an unlabeled Browse button for packages with no browse URL, such as those installed from a local path. Screen readers now announce the Browse and Remove buttons with the package's name (e.g. "Browse dplyr", "Remove dplyr") instead of the website's URL or a generic "Remove package".
 - ([#6167](https://github.com/rstudio/rstudio/issues/6167)): [Accessibility] Fixed an issue where screen readers didn't announce the code completion popup in the console and in documents such as R, R Markdown, Python, and SQL files. Screen readers now announce the selected completion as you move through the list.
 - ([#6168](https://github.com/rstudio/rstudio/issues/6168)): [Accessibility] Fixed an issue where screen readers didn't announce the console history popup (Ctrl+Up, or Cmd+Up on macOS). Screen readers now announce the selected command as you move through the list.
+- ([#19517](https://github.com/rstudio/rstudio/issues/19517)): Fixed an issue where each document save added change-tracking handlers to the editor that were never removed.
 - ([#19380](https://github.com/rstudio/rstudio/issues/19380)): [Accessibility] Fixed an issue where the tabs shown when a pane is minimized were not announced as tabs by screen readers and could not be reached with the keyboard. They can now be focused with Tab, moved between with the arrow keys, and activated with Enter or Space to restore the pane. Restoring or maximizing a minimized pane from the keyboard now moves focus into the pane.
 
 ### Dependencies
+- ([#19095](https://github.com/rstudio/rstudio/issues/19095)): macOS builds now require C++20; Linux retains its C++17 minimum.
 - Quarto 1.11.9
 - Electron 44.10.2
 
