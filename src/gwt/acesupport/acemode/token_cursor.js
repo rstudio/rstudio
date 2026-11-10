@@ -661,15 +661,21 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
       if (clone.currentValue() === "]")
          return true;
 
-      // Walk back over a possibly qualified name, e.g. 'S<T>::f', to 'auto'.
+      // Walk back over a possibly qualified name, e.g. 'S<std::vector<T>>::f',
+      // to 'auto'. The tokenizer keeps '>>' as one token, closing two lists.
+      var depth = 0;
       for (;;) {
          var name = clone.currentValue();
-         if (name === ">" && !clone.bwdToMatchingArrow())
+         if (name === ">" || name === ">>")
+            depth += name.length;
+         else if (name === "<")
+            depth -= 1;
+         else if (depth > 0 && /^[;{}]$/.test(name))
             return false;
-         if (name !== ">" && name !== "::" && name !== "~" &&
-             clone.currentType() !== "identifier" && !/^operator/.test(name))
+         else if (depth === 0 && name !== "::" && name !== "~" &&
+                  clone.currentType() !== "identifier" && !/^operator/.test(name))
             break;
-         if (!clone.moveToPreviousToken())
+         if (depth < 0 || !clone.moveToPreviousToken())
             return false;
       }
       return clone.currentValue() === "auto";
