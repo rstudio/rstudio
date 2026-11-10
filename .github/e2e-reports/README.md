@@ -9,7 +9,7 @@ tailnet that mounts the bucket read-only and serves it with nginx behind
 exposed on the public internet, and no AWS service in front of the bucket
 (CloudFront, API Gateway) is involved.
 
-    browser (on Tailscale) --> https://e2e-reports.tail00da2.ts.net/
+    browser (on Tailscale) --> https://rstudio-reports.tail00da2.ts.net/
                                  | tailscale serve: TLS with a Tailscale-issued certificate
                                nginx (127.0.0.1:8080)
                                  | static files, directory listings
@@ -31,7 +31,7 @@ All of this is done once, by someone with the `ide-build` AWS profile
    tailnet:
 
    - *An admin generates an auth key* (admin console, *Settings*, *Keys*):
-     reusable, pre-approved, tagged `tag:e2e-reports`, the longest expiry
+     reusable, pre-approved, tagged `tag:rstudio-reports`, the longest expiry
      offered. Store it where the host reads it at first boot: an SSM
      SecureString, read by the instance role, never part of the template,
      the repo, the user data, or the stack events:
@@ -89,12 +89,12 @@ All of this is done once, by someone with the `ide-build` AWS profile
   output). No replacement, no re-enrollment.
 - **Replacing the instance** (new AMI, a template change to the network or
   the instance itself, or a terminated host) creates a new tailnet node. The
-  old one keeps the name, so Tailscale would call the new one `e2e-reports-1`
+  old one keeps the name, so Tailscale would call the new one `rstudio-reports-1`
   and the links would break. Before the deploy, rename the old node from the
   host itself (members cannot delete machines; only admins can):
 
       aws ssm send-command --instance-ids <InstanceId> --document-name AWS-RunShellScript \
-        --parameters 'commands=["tailscale set --hostname e2e-reports-retired"]'
+        --parameters 'commands=["tailscale set --hostname rstudio-reports-retired"]'
 
   The new host enrolls with the SSM key if one is stored, else it waits to
   be authorized as at setup. The retired node lingers in the machine list

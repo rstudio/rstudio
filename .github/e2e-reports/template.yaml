@@ -12,7 +12,7 @@ Parameters:
     Description: Existing bucket the e2e workflows publish reports into (os-publish-e2e-report).
   TailscaleHostname:
     Type: String
-    Default: e2e-reports
+    Default: rstudio-reports
     AllowedPattern: '[a-z0-9]([a-z0-9-]*[a-z0-9])?'
     Description: >-
       Machine name the host registers in the tailnet; the report URLs are
@@ -323,6 +323,17 @@ Resources:
           # Outside the enrollment guard so a changed TailscaleHostname reaches
           # a node that is already enrolled.
           tailscale set --hostname="$HOSTNAME_TS" --auto-update
+          # serve keys its config on the node's DNS name, which follows a
+          # rename only once the control plane confirms it: publishing before
+          # that serves the old name, and the new one fails its TLS handshake.
+          for _ in $(seq 1 30); do
+            case "$(tailscale status --json | jq -r .Self.DNSName)" in
+              "$HOSTNAME_TS".*) break ;;
+            esac
+            sleep 1
+          done
+          # Drop whatever an earlier name left behind.
+          tailscale serve reset
           tailscale serve --bg 8080
 
           echo "== done $(date -Is)"

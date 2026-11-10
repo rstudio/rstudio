@@ -36,7 +36,7 @@ inputs:
       output of the .github/e2e-reports stack. Report URLs are this plus the
       object key.
     required: false
-    default: "https://e2e-reports.tail00da2.ts.net"
+    default: "https://rstudio-reports.tail00da2.ts.net"
 
 outputs:
   url:
