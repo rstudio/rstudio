@@ -187,6 +187,21 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       menuBar_.selectLast();
    }
 
+   public void moveSelectionUp()
+   {
+      menuBar_.moveSelectionUp();
+   }
+
+   public void moveSelectionDown()
+   {
+      menuBar_.moveSelectionDown();
+   }
+
+   public void activateSelectedItem()
+   {
+      menuBar_.activateSelectedItem();
+   }
+
    public void moveSelectionFwd(int numElements)
    {
       menuBar_.moveSelectionFwd(numElements);
@@ -416,22 +431,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
                      case KeyCodes.KEY_ENTER:
                      case KeyCodes.KEY_SPACE:
                         nativePreviewEvent.cancel();
-                        final MenuItem menuItem = getSelectedItem();
-                        if (menuItem != null)
-                        {
-                           nativePreviewEvent.cancel();
-                           NativeEvent evt = Document.get().createClickEvent(
-                              0,
-                              0,
-                              0,
-                              0,
-                              0,
-                              false,
-                              false,
-                              false,
-                              false);
-                           menuItem.getElement().dispatchEvent(evt);
-                        }
+                        activateSelectedItem();
                         break;
                   }
                }
@@ -456,6 +456,26 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
                return i;
          }
          return -1;
+      }
+
+      // A click runs the item the same way the menu's own Enter key does
+      private void activateSelectedItem()
+      {
+         MenuItem menuItem = getSelectedItem();
+         if (menuItem == null)
+            return;
+
+         NativeEvent evt = Document.get().createClickEvent(
+            0,
+            0,
+            0,
+            0,
+            0,
+            false,
+            false,
+            false,
+            false);
+         menuItem.getElement().dispatchEvent(evt);
       }
 
       private void moveSelectionFwd(int numElements)

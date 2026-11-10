@@ -1,21 +1,24 @@
 // Main toolbar > Addins: keyboard navigation and screen reader semantics (#19552).
 //
-// Focus stays in the menu's search box while the arrow keys move the highlight.
-// The search box rebuilt the menu 200ms after any key, arrows included, which
-// put the highlight back on the first add-in. It now also acts as a combobox
-// whose aria-activedescendant names the highlighted add-in.
+// The search box sat inside the menu and rebuilt it 200ms after any key, arrows
+// included, which put the highlight back on the first add-in. It now sits above
+// the menu as a combobox: it passes the navigation keys to the menu, and its
+// aria-activedescendant names the highlighted add-in.
 
+import AxeBuilder from '@axe-core/playwright';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import type { Locator, Page } from '@playwright/test';
 
+import { ruleSetTags, violationSummary } from '@utils/a11y';
 import { sleep } from '@utils/constants';
 
 const ADDINS_BUTTON = '#rstudio_addins_toolbar_button';
+const SEARCH_LABEL = 'Search for addins';
 
 // Outlasts the search box's 200ms rebuild timer several times over.
 const REBUILD_WINDOW_MS = 1000;
 
-// devtools and styler, both in required-packages.txt, provide at least this many.
+// devtools, in required-packages.txt, provides five.
 const MIN_ADDINS = 3;
 
 // Asserts continuously for `durationMs`, failing on the first violation;
@@ -29,70 +32,119 @@ async function expectHoldsFor(durationMs: number, assertions: () => Promise<void
   }
 }
 
-// The add-in registry is filled in the background after startup, so a menu
-// opened too early can show "No addins found"; reopen until it has items.
-async function openAddinsMenu(page: Page): Promise<Locator> {
-  const menu = page.locator('[role=menu]:visible').filter({
-    has: page.getByLabel('Search for addins', { exact: true }),
+// The popup holding the search box and the menu. The search text outlives the
+// popup, so clear what an earlier test typed. The add-in registry is filled in
+// the background after startup, so a menu opened too early can show "No addins
+// found"; reopen until it has items.
+async function openAddinsPopup(page: Page): Promise<Locator> {
+  const popup = page.locator('.popupContent:visible').filter({
+    has: page.getByLabel(SEARCH_LABEL, { exact: true }),
   });
   await expect(async () => {
-    if (await menu.count() > 0)
+    if (await popup.count() > 0)
       await page.keyboard.press('Escape');
     await page.locator(ADDINS_BUTTON).click();
-    expect(await menu.getByRole('menuitem').count()).toBeGreaterThanOrEqual(MIN_ADDINS);
+    const search = popup.getByLabel(SEARCH_LABEL, { exact: true });
+    if (await search.inputValue() !== '')
+      await search.clear();
+    await expect(popup.getByRole('menuitem').nth(MIN_ADDINS - 1)).toBeVisible({ timeout: 2000 });
   }).toPass({ timeout: 60_000 });
-  return menu;
+  return popup;
 }
 
-function highlightedItem(menu: Locator): Locator {
-  return menu.locator('[role=menuitem].gwt-MenuItem-selected');
+function highlightedItem(popup: Locator): Locator {
+  return popup.locator('[role=menuitem].gwt-MenuItem-selected');
+}
+
+// Answers execute_r_addin without running anything, recording the add-ins asked for.
+async function captureAddinRuns(page: Page): Promise<string[]> {
+  const runs: string[] = [];
+  await page.route('**/rpc/execute_r_addin', async (route) => {
+    const params = (route.request().postDataJSON() as { params: string[] }).params;
+    runs.push(params[0]);
+    await route.fulfill({ contentType: 'application/json', body: '{"result":null}' });
+  });
+  return runs;
 }
 
 test.describe('Addins toolbar menu (#19552)', () => {
   test.afterEach(async ({ rstudioPage: page }) => {
+    await page.unrouteAll({ behavior: 'ignoreErrors' });
     await page.keyboard.press('Escape');
   });
 
   test('the arrow-key highlight stays on the chosen add-in', async ({ rstudioPage: page }) => {
-    const menu = await openAddinsMenu(page);
-    const items = menu.getByRole('menuitem');
+    const popup = await openAddinsPopup(page);
+    const items = popup.getByRole('menuitem');
     const third = await items.nth(2).textContent();
 
     for (let i = 0; i < 3; i++)
       await page.keyboard.press('ArrowDown');
-    await expect(highlightedItem(menu)).toHaveText(third!);
+    await expect(highlightedItem(popup)).toHaveText(third!);
 
     await expectHoldsFor(REBUILD_WINDOW_MS, async () => {
-      expect(await highlightedItem(menu).textContent(),
+      expect(await highlightedItem(popup).textContent(),
         'a navigation key must not rebuild the menu and reset the highlight').toBe(third);
     });
 
     await page.keyboard.press('End');
     const last = await items.last().textContent();
     await expectHoldsFor(REBUILD_WINDOW_MS, async () => {
-      expect(await highlightedItem(menu).textContent()).toBe(last);
+      expect(await highlightedItem(popup).textContent()).toBe(last);
     });
   });
 
+  test('Enter runs the highlighted add-in, and a typed space does not', async ({ rstudioPage: page }) => {
+    const runs = await captureAddinRuns(page);
+    const popup = await openAddinsPopup(page);
+    const search = popup.getByRole('combobox', { name: SEARCH_LABEL });
+
+    await page.keyboard.press('ArrowDown');
+    await expect(highlightedItem(popup)).toHaveCount(1);
+    await page.keyboard.type(' ');
+    await expectHoldsFor(500, async () => {
+      expect(runs, 'a space typed into the search box must not run an add-in').toEqual([]);
+    });
+    await expect(search).toHaveValue(' ');
+
+    // A non-interactive add-in runs at once; an interactive one first checks for
+    // Shiny. clipr comes with devtools, through usethis.
+    await search.clear();
+    await search.pressSequentially('Value to clipboard');
+    await expect(popup.getByRole('menuitem')).toHaveText(['Value to clipboard']);
+    await page.keyboard.press('ArrowDown');
+    await expect(highlightedItem(popup)).toHaveText('Value to clipboard');
+    await page.keyboard.press('Enter');
+    await expect.poll(() => runs).toEqual(['clipr::clipr_result']);
+  });
+
   test('the search box names the highlighted add-in to screen readers', async ({ rstudioPage: page }) => {
-    const menu = await openAddinsMenu(page);
-    const search = menu.getByRole('combobox', { name: 'Search for addins' });
+    const popup = await openAddinsPopup(page);
+    const search = popup.getByRole('combobox', { name: SEARCH_LABEL });
     await expect(search).toBeFocused();
     await expect(search).toBeEnabled();
     await expect(search).toHaveAttribute('aria-expanded', 'true');
     const controls = await search.getAttribute('aria-controls');
-    await expect(page.locator(`#${controls}`)).toHaveAttribute('role', 'menu');
+    const menu = page.locator(`#${controls}`);
+    await expect(menu).toHaveAttribute('role', 'menu');
 
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('ArrowDown');
-    const highlighted = highlightedItem(menu);
+    const highlighted = highlightedItem(popup);
     await expect(highlighted).toHaveCount(1);
     const id = await highlighted.getAttribute('id');
     await expect(search).toHaveAttribute('aria-activedescendant', id!);
 
+    // A menu may contain only items, groups, and separators.
+    const results = await new AxeBuilder({ page })
+      .include(`#${controls}`)
+      .withTags(ruleSetTags({ level: 'AA', version: '2.2' }))
+      .analyze();
+    expect(violationSummary(results)).toEqual([]);
+
     // With nothing left to highlight, the search box must not name a removed item.
     await search.pressSequentially('zzz-no-such-addin');
-    await expect(menu.getByText('No addins found')).toBeVisible();
+    await expect(popup.getByText('No addins found')).toBeVisible();
     await expect(search).not.toHaveAttribute('aria-activedescendant');
   });
 });

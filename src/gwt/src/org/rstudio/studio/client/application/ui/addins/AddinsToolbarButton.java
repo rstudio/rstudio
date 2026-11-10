@@ -52,14 +52,15 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuItem;
-import com.google.gwt.user.client.ui.MenuItemSeparator;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 public class AddinsToolbarButton extends ToolbarMenuButton
@@ -117,27 +118,65 @@ public class AddinsToolbarButton extends ToolbarMenuButton
          @Override
          public void run()
          {
-            onSearchValueChange();
+            // SearchWidget reports its first key as a change even when the text
+            // is unchanged; rebuilding then would reset the highlight.
+            if (!searchWidget_.getValue().equals(populatedQuery_))
+               populate();
          }
       };
+      searchWidget_.addValueChangeHandler(event -> searchValueChangeTimer_.schedule(200));
+      searchWidget_.addKeyDownHandler(this::onSearchKeyDown);
 
-      searchEl_ = searchWidget_.getElement();
-
-      searchEl_.getStyle().setMarginLeft(10, Unit.PX);
-      searchEl_.getStyle().setMarginRight(10, Unit.PX);
-      searchEl_.getStyle().setMarginTop(-2, Unit.PX);
-
-      DOM.sinkEvents(searchEl_, Event.KEYEVENTS);
-      DOM.setEventListener(searchEl_, new EventListener()
-      {
-         @Override
-         public void onBrowserEvent(Event event)
-         {
-            searchValueChangeTimer_.schedule(200);
-         }
-      });
-
+      addSearchHeader();
       initComboboxRole();
+   }
+
+   // The search box sits above the menu rather than inside it, since a menu may
+   // contain only items, groups, and separators.
+   private void addSearchHeader()
+   {
+      Style style = searchWidget_.getElement().getStyle();
+      style.setMarginTop(4, Unit.PX);
+      style.setMarginBottom(4, Unit.PX);
+      style.setMarginLeft(10, Unit.PX);
+      style.setMarginRight(10, Unit.PX);
+
+      Widget menuWidget = menu_.getWidget();
+      FlowPanel panel = new FlowPanel();
+      panel.add(searchWidget_);
+      panel.add(menuWidget);
+      menu_.setWidget(panel);
+   }
+
+   // Focus stays in the search box, so it hands the menu's navigation keys to the
+   // menu. Page Up, Page Down, and Escape already reach the menu from anywhere.
+   private void onSearchKeyDown(KeyDownEvent event)
+   {
+      switch (event.getNativeKeyCode())
+      {
+         case KeyCodes.KEY_UP:
+            menu_.moveSelectionUp();
+            break;
+         case KeyCodes.KEY_DOWN:
+            menu_.moveSelectionDown();
+            break;
+         case KeyCodes.KEY_HOME:
+            menu_.selectFirst();
+            break;
+         case KeyCodes.KEY_END:
+            menu_.selectLast();
+            break;
+         case KeyCodes.KEY_ENTER:
+            menu_.activateSelectedItem();
+            break;
+         case KeyCodes.KEY_TAB:
+            // Leave the default action, so focus moves on as the menu closes
+            menu_.hide();
+            return;
+         default:
+            return;
+      }
+      event.preventDefault();
    }
 
    // Focus stays in the search box while the arrow keys move the highlight, so the
@@ -180,29 +219,17 @@ public class AddinsToolbarButton extends ToolbarMenuButton
 
       MapUtil.forEach(addinsByPkg, new MapUtil.ForEachCommand<String, List<RAddin>>()
       {
-         private int separatorCount_ = 0;
-
          @Override
          public void execute(final String pkg, final List<RAddin> addins)
          {
-            final boolean hasSearch = separatorCount_++ == 0;
-            MenuItemSeparator header = new CustomMenuItemSeparator()
+            menu_.addSeparator(new CustomMenuItemSeparator()
             {
                @Override
                public Element createMainElement()
                {
-                  Label label = new Label(pkg);
-                  label.addStyleName(ThemeStyles.INSTANCE.menuSubheader());
-                  label.getElement().getStyle().setPaddingLeft(2, Unit.PX);
-                  if (hasSearch)
-                     return createSearchSeparator(label);
-                  else
-                     return label.getElement();
+                  return createSubheader(pkg);
                }
-            };
-            if (hasSearch)
-               removeSeparatorRole(header);
-            menu_.addSeparator(header);
+            });
             menu_.addSeparator();
 
             addins.sort(new Comparator<RAddin>()
@@ -240,19 +267,14 @@ public class AddinsToolbarButton extends ToolbarMenuButton
 
    private void populateEmptyMenu()
    {
-      MenuItemSeparator header = new CustomMenuItemSeparator()
+      menu_.addSeparator(new CustomMenuItemSeparator()
       {
          @Override
          public Element createMainElement()
          {
-            Label label = new Label(constants_.noAddinsFound());
-            label.addStyleName(ThemeStyles.INSTANCE.menuSubheader());
-            label.getElement().getStyle().setPaddingLeft(2, Unit.PX);
-            return createSearchSeparator(label);
+            return createSubheader(constants_.noAddinsFound());
          }
-      };
-      removeSeparatorRole(header);
-      menu_.addSeparator(header);
+      });
 
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
@@ -311,37 +333,12 @@ public class AddinsToolbarButton extends ToolbarMenuButton
       return organized;
    }
 
-   private Element createSearchSeparator(Label label)
+   private Element createSubheader(String text)
    {
-      final Element searchEl = searchWidget_.getElement();
-      final Element labelEl = label.getElement();
-
-      labelEl.getStyle().setFloat(Style.Float.LEFT);
-      searchEl.getStyle().setFloat(Style.Float.RIGHT);
-
-      Element container = DOM.createDiv();
-      container.appendChild(labelEl);
-      container.appendChild(searchEl);
-      return container;
-   }
-
-   // The row holding the search box is a separator only for layout. Its separator role
-   // would expose the search box as disabled, so screen readers would call it unavailable.
-   private void removeSeparatorRole(MenuItemSeparator separator)
-   {
-      Element el = separator.getElement();
-      el.removeAttribute("role");
-      el.removeAttribute("aria-disabled");
-   }
-
-   private void onSearchValueChange()
-   {
-      // Navigation keys pressed in the search box also land here; rebuilding the
-      // menu for them would move the highlight back to the first add-in.
-      if (searchWidget_.getValue().equals(populatedQuery_))
-         return;
-
-      populate();
+      Label label = new Label(text);
+      label.addStyleName(ThemeStyles.INSTANCE.menuSubheader());
+      label.getElement().getStyle().setPaddingLeft(2, Unit.PX);
+      return label.getElement();
    }
 
    @Inject
@@ -354,7 +351,6 @@ public class AddinsToolbarButton extends ToolbarMenuButton
 
    private final ToolbarPopupMenu menu_;
    private final SearchWidget searchWidget_;
-   private final Element searchEl_;
    private final Timer searchValueChangeTimer_;
 
    private int menuWidth_ = 0;
