@@ -274,22 +274,13 @@
    <set-if-unset  property="node.dir" value="../../dependencies/common/node/${node.version}"/>
 
 
-   <!-- use yarn from system but will prefer yarn from dependencies if available -->
-   <set-if-exists property="yarn.bin" value="${node.dir}/bin/yarn"/>
-   <set-if-exists property="yarn.bin" value="/opt/rstudio-tools/dependencies/common/node/${node.version}/bin/yarn"/>
-   <set-if-exists property="yarn.bin" value="${env.RSTUDIO_TOOLS_ROOT}/dependencies/common/node/${node.version}/node_modules/yarn/bin/yarn.cmd"/>
-   <set-if-exists property="yarn.bin" value="${env.SYSTEMDRIVE}/rstudio-tools/dependencies/common/node/${node.version}/node_modules/yarn/bin/yarn.cmd"/>
-   <set-if-exists property="yarn.bin" value="c:/rstudio-tools/dependencies/common/node/${node.version}/node_modules/yarn/bin/yarn.cmd"/>
-   <set-if-exists property="yarn.bin" value="${node.dir}/node_modules/yarn/bin/yarn.cmd"/>
-   <set-if-unset  property="yarn.bin" value="yarn"/>
-
    <!-- use node from dependencies if available, otherwise from the system -->
    <set-if-exists property="node.bin" value="${node.dir}/bin/node"/>
    <set-if-exists property="node.bin" value="${node.dir}/node.exe"/>
    <set-if-unset  property="node.bin" value="node"/>
 
-   <!-- yarn and npm are scripts that run whichever node is first on PATH, so put the
-        pinned node there; otherwise they use the developer's default node, which may
+   <!-- npm is a script that runs whichever node is first on PATH, so put the
+        pinned node there; otherwise it uses the developer's default node, which may
         be older than the build requires. Windows env vars arrive as env.Path. -->
    <condition property="env.PATH" value="${env.Path}">
       <isset property="env.Path"/>
