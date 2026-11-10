@@ -148,8 +148,9 @@ test.describe('Addins toolbar menu (#19552)', () => {
       [el.selectionStart, el.selectionEnd])).toEqual([0, 4]);
   });
 
-  // The menu takes focus as it opens. Safari defers that focus, which made it land
-  // after the search box's on the first open; Chromium doesn't show that ordering.
+  // The menu focuses itself as it opens. In Safari, GWT's FocusImplSafari defers
+  // that focus with setTimeout, so it could land after the search box took focus.
+  // The fixtures run Chromium, which focuses at once, so replay Safari's deferral.
   test('opening the menu from the keyboard focuses the search box', async ({
     rstudioPage: page,
   }) => {
@@ -158,14 +159,35 @@ test.describe('Addins toolbar menu (#19552)', () => {
     const button = page.locator(ADDINS_BUTTON);
     await expect(button).toBeFocused();
 
-    await page.keyboard.press('Enter');
-    const popup = page.locator('.popupContent:visible').filter({
-      has: page.getByLabel(SEARCH_LABEL, { exact: true }),
+    await page.evaluate(() => {
+      const focus = HTMLElement.prototype.focus;
+      (window as unknown as { __pwFocus: typeof focus }).__pwFocus = focus;
+      HTMLElement.prototype.focus = function (this: HTMLElement, options?: FocusOptions) {
+        if (this.getAttribute('role') === 'menu')
+          setTimeout(() => focus.call(this, options), 0);
+        else
+          focus.call(this, options);
+      };
     });
-    const search = popup.getByRole('combobox', { name: SEARCH_LABEL });
-    await expect(search).toBeFocused();
-    const firstId = await popup.getByRole('menuitem').first().getAttribute('id');
-    await expect(search).toHaveAttribute('aria-activedescendant', firstId!);
+    try {
+      await page.keyboard.press('Enter');
+      const popup = page.locator('.popupContent:visible').filter({
+        has: page.getByLabel(SEARCH_LABEL, { exact: true }),
+      });
+      const search = popup.getByRole('combobox', { name: SEARCH_LABEL });
+      await expect(search).toBeFocused();
+      await expectHoldsFor(REBUILD_WINDOW_MS, async () => {
+        expect(await search.evaluate((el) => el === document.activeElement),
+          'the menu\'s deferred focus must not take focus from the search box').toBe(true);
+      });
+      const firstId = await popup.getByRole('menuitem').first().getAttribute('id');
+      await expect(search).toHaveAttribute('aria-activedescendant', firstId!);
+    } finally {
+      await page.evaluate(() => {
+        HTMLElement.prototype.focus =
+          (window as unknown as { __pwFocus: typeof HTMLElement.prototype.focus }).__pwFocus;
+      });
+    }
   });
 
   test('closing the menu returns focus to the Addins button', async ({
