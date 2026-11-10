@@ -278,6 +278,7 @@ jobs:
 
       # On a re-run, blobs a previous attempt retired come back from the bucket.
       - name: Restore archived blob reports
+        id: restore
         uses: ./.github/actions/os-e2e-blobs
         with:
           mode: restore
@@ -342,6 +343,8 @@ jobs:
             ${{ steps.summary.outputs.platform_table }}
 
             ${{ steps.publish-report.outputs.url != '' && format('**[View report online]({0})**', steps.publish-report.outputs.url) || '_No report was published; see the run log._' }}
+
+            ${{ steps.restore.outputs.restored != '' && steps.restore.outputs.restored != '0' && format(':warning: {0} shard report(s) are from a previous attempt of this run: shards that did not re-run, or that re-ran without producing one (the merge job warns about each).', steps.restore.outputs.restored) || '' }}
 
             ---
             <sub>All platforms - commit <code>${{ github.event.pull_request.head.sha }}</code> - <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>

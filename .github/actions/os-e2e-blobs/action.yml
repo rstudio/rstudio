@@ -57,6 +57,11 @@ inputs:
     required: false
     default: ""
 
+outputs:
+  restored:
+    description: "restore: how many blob reports came from the archive rather than this attempt's artifacts (empty when restoring did not run)."
+    value: ${{ steps.restore.outputs.restored }}
+
 runs:
   using: "composite"
   steps:
@@ -76,8 +81,12 @@ runs:
     # fresh blob is never replaced by its archived predecessor. Blob file
     # names are unique per platform and shard (see the blob reporter's
     # fileName in playwright.config.ts), which is what makes this a plain
-    # name comparison.
+    # name comparison. The copy cannot tell a shard that did not re-run from
+    # one that re-ran and died before uploading (its archived blob then
+    # stands in for a result this attempt never produced), so every restored
+    # blob is called out in the log and the count goes into the PR comment.
     - name: Restore archived blob reports
+      id: restore
       if: inputs.mode == 'restore' && steps.creds.outcome == 'success'
       shell: bash
       env:
@@ -101,10 +110,12 @@ runs:
           name=${key#"$PREFIX"}
           if [ ! -e "${BLOB_DIR}/${name}" ]; then
             aws s3 cp "s3://${BUCKET}/${key}" "${BLOB_DIR}/${name}" --only-show-errors
+            echo "::warning::${name} was not produced by this attempt; using the copy archived by a previous one."
             restored=$((restored + 1))
           fi
         done
         echo "Restored ${restored} archived blob report(s) from s3://${BUCKET}/${PREFIX}."
+        echo "restored=${restored}" >> "$GITHUB_OUTPUT"
 
     - name: Archive blob reports
       id: archive
@@ -137,6 +148,9 @@ runs:
           gh api -X DELETE "repos/${GITHUB_REPOSITORY}/actions/artifacts/$1" > /dev/null \
             || echo "::warning::Could not delete artifact $1; it expires on its own within a day."
         }
+        # Prints the matching ids, one per line. A failed listing must not
+        # read as "nothing to delete": the blobs would then stay on GitHub
+        # with the job green, so the caller checks the exit status.
         list() {
           gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts?per_page=100&$1" --jq "$2"
         }
@@ -145,7 +159,11 @@ runs:
         # os-e2e-shards); see the action description for why.
         if [[ $SHARD_COUNT =~ ^[0-9]+$ ]]; then
           for shard in $(seq 1 "$SHARD_COUNT"); do
-            for id in $(list "name=${PREFIX}${shard}" '.artifacts[].id'); do
+            if ! listed=$(list "name=${PREFIX}${shard}" '.artifacts[].id'); then
+              echo "::warning::Could not list the artifact ${PREFIX}${shard}; it expires on its own within a day."
+              continue
+            fi
+            for id in $listed; do
               echo "Deleting ${PREFIX}${shard} (${id})."
               delete "$id"
             done
@@ -155,7 +173,11 @@ runs:
         # Everything else with the prefix: listed in full before deleting,
         # since deleting while paging skips entries. With a shard count this
         # is a sweep for leftovers that should not exist.
-        mapfile -t ids < <(list "" ".artifacts[] | select(.name | startswith(\"${PREFIX}\")) | .id")
+        if ! listed=$(list "" ".artifacts[] | select(.name | startswith(\"${PREFIX}\")) | .id"); then
+          echo "::warning::Could not list the run's artifacts; any ${PREFIX}* blob not deleted above expires on its own within a day."
+          exit 0
+        fi
+        mapfile -t ids < <(printf '%s' "$listed")
         echo "Deleting ${#ids[@]} blob artifact(s) by prefix ${PREFIX}."
         for id in "${ids[@]}"; do
           delete "$id"

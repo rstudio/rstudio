@@ -271,6 +271,10 @@ Resources:
 
               server {
                   listen 127.0.0.1:8080;
+                  # Directory redirects (/pr-1234 -> /pr-1234/) must stay relative:
+                  # the absolute default names this host and port, which only
+                  # tailscale serve can reach.
+                  absolute_redirect off;
                   root $MOUNT;
                   autoindex on;
                   autoindex_exact_size off;
@@ -298,6 +302,13 @@ Resources:
           # Without a stored auth key the node waits to be authorized in a
           # browser (README.md); the rest happens on the next run of this script.
           systemctl enable -q --now tailscaled
+          # The service is up before its socket answers; a `tailscale up`
+          # that lands in that window would abort this script (set -e) with
+          # nginx never published. `status --json` reports every state.
+          for _ in $(seq 1 30); do
+            tailscale status --json > /dev/null 2>&1 && break
+            sleep 1
+          done
           if [ "$(tailscale status --json | jq -r .BackendState)" != Running ]; then
             if AUTHKEY=$(aws ssm get-parameter --region "$REGION" --name "$AUTHKEY_PARAM" \
                  --with-decryption --query Parameter.Value --output text 2> /dev/null); then

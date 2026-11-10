@@ -87,7 +87,8 @@ if ! given AmiId "$@"; then
     # value is the concrete id already.
     AMI_ID=$(aws cloudformation describe-stacks --stack-name "$STACK_NAME" \
       --query "Stacks[0].Parameters[?ParameterKey=='AmiId'] | [0].[ResolvedValue, ParameterValue]" --output text \
-      | tr '\t' '\n' | grep -m1 '^ami-')
+      | tr '\t' '\n' | grep -m1 '^ami-') \
+      || { echo "Stack $STACK_NAME has no ami- value for AmiId; pass AmiId=ami-... to replace the host" >&2; exit 1; }
   else
     AMI_ID=$(aws ssm get-parameter --name /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-arm64 \
       --query Parameter.Value --output text)
