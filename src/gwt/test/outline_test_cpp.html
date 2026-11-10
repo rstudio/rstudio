@@ -165,6 +165,10 @@ check("a requires-clause after a trailing return type is not part of it",
       ["f(T t): int [0..0]",
        "g(T t): int [1..1]"].join("\n"));
 
+check("a function-try-block's 'try' is not part of the return type",
+      tree(makeSession("auto f() -> int try { return 1; } catch (...) { return 0; }\n")),
+      "f(): int [0..0]");
+
 check("comparisons in a trailing return type are kept",
       tree(makeSession("auto g() -> std::enable_if_t<N == 1, int> { return 1; }\n")),
       "g(): std::enable_if_t<N == 1, int> [0..0]");

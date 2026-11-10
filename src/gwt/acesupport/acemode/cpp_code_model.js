@@ -530,7 +530,8 @@ var CppCodeModel = function(session, tokenizer,
 
                            // With 'auto f() -> int', the trailing type is the
                            // one worth showing rather than 'auto'. A requires-
-                           // clause, 'override' or 'final' after it isn't part of it.
+                           // clause, 'override', 'final' or the 'try' of a
+                           // function-try-block after it isn't part of it.
                            if (fnArgsEndCursor.currentValue() === "->") {
                               var bracePos = tokenCursor.currentPosition();
                               fnType = this.$session.getTextRange(new Range(
@@ -538,7 +539,7 @@ var CppCodeModel = function(session, tokenizer,
                                  bracePos.row, bracePos.column
                               ))
                                  .replace(/\brequires\b[\s\S]*$/, "")
-                                 .replace(/(\s+(override|final))+\s*$/, "");
+                                 .replace(/(\s+(override|final|try))+\s*$/, "");
                            }
 
                         }
