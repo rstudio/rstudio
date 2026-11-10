@@ -134,6 +134,7 @@ public class AddinsToolbarButton extends ToolbarMenuButton
 
    private void populate()
    {
+      populatedQuery_ = searchWidget_.getValue();
       menu_.clearItems();
 
       Map<String, List<RAddin>> addinsByPkg = organizeAddins();
@@ -287,6 +288,11 @@ public class AddinsToolbarButton extends ToolbarMenuButton
 
    private void onSearchValueChange()
    {
+      // Navigation keys pressed in the search box also land here; rebuilding the
+      // menu for them would move the highlight back to the first add-in.
+      if (searchWidget_.getValue().equals(populatedQuery_))
+         return;
+
       populate();
    }
 
@@ -304,6 +310,7 @@ public class AddinsToolbarButton extends ToolbarMenuButton
    private final Timer searchValueChangeTimer_;
 
    private int menuWidth_ = 0;
+   private String populatedQuery_ = "";
 
    // Injected ----
    private AddinsCommandManager manager_;
