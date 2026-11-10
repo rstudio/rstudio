@@ -179,12 +179,15 @@ test.describe('Completion popup screen reader support', () => {
 
   test('C++ completion popup announces the selected item', async ({ rstudioPage: page }) => {
     // A standalone .cpp file gets compile arguments, and so completions,
-    // only as an Rcpp (or cpp11) source file.
+    // only as an Rcpp (or cpp11) source file. Completion produces no popup on
+    // the Linux CI runners (libclang 18 can't parse the file, #19559) or on
+    // the Windows ones, so the test runs only against macOS sessions.
     const canComplete = await consoleActions.evalRLogical(
-      '.rs.isClangAvailable() && requireNamespace("Rcpp", quietly = TRUE)');
+      '.rs.isClangAvailable() && requireNamespace("Rcpp", quietly = TRUE) && ' +
+      'Sys.info()[["sysname"]] == "Darwin"');
     expect(canComplete, `Unreadable probe result:\n${await consoleActions.lastOutputText()}`)
       .not.toBeNull();
-    test.skip(!canComplete, 'C++ completion needs libclang and the Rcpp package');
+    test.skip(!canComplete, 'C++ completion needs a macOS session with libclang and Rcpp');
 
     // C++ completion asks libclang for the members of `s` once `s.` is typed.
     // The file needs a path on disk, which is how it gets Rcpp compile arguments.
