@@ -94,8 +94,10 @@ std::string bashPromptCommand()
    // prompt, and bash has been seen stuck waiting on that child with the
    // prompt never drawn and typed input echoed but not run (#19542). A
    // `${string//pattern/~}` replacement is avoided because bash treats the
-   // tilde in the replacement inconsistently.
-   return R"(_RS_PWD=${PWD}; if [ -n "${HOME}" ]; then case "${_RS_PWD}/" in "${HOME}/"*) _RS_PWD="~${_RS_PWD#"${HOME}"}";; esac; fi; printf '\033]0;%s\007' "${_RS_PWD}"; unset _RS_PWD)";
+   // tilde in the replacement inconsistently. The hook runs in the user's
+   // shell, so it has to survive `set -u` with HOME unset, and like bash it
+   // leaves a HOME of "/" unabbreviated.
+   return R"(_RS_PWD=${PWD}; if [ -n "${HOME:-}" ] && [ "${HOME}" != "/" ]; then case "${_RS_PWD}/" in "${HOME}/"*) _RS_PWD="~${_RS_PWD#"${HOME}"}";; esac; fi; printf '\033]0;%s\007' "${_RS_PWD}"; unset _RS_PWD)";
 }
 
 // create process options for a terminal
@@ -450,42 +452,21 @@ ConsoleProcess::Input ConsoleProcess::dequeInput()
    Input input = inputQueue_.front();
    if (input.sequence == kIgnoreSequence || input.sequence == kFlushSequence)
    {
-      inputGapSince_ = std::chrono::steady_clock::time_point();
       inputQueue_.pop_front();
       return input;
    }
 
    if (input.sequence == lastInputSequence_ + 1)
    {
-      inputGapSince_ = std::chrono::steady_clock::time_point();
       lastInputSequence_++;
       inputQueue_.pop_front();
       return input;
    }
 
-   // A number the queue has already moved past (an arrival delayed past an
-   // auto-flush, or a client whose counter restarted) can never be waited
-   // for; deliver it now rather than block everything behind it.
-   if (input.sequence <= lastInputSequence_)
-   {
-      inputGapSince_ = std::chrono::steady_clock::time_point();
-      inputQueue_.pop_front();
-      return input;
-   }
-
    // Getting here means input is out of sequence. We want to prevent
-   // getting permanently stuck if a message gets lost and the gap(s) never
-   // get filled in, so we flush if input piles up. The client sends one
-   // write at a time, so a gap comes from a lost request or from a write of
-   // a previous connection (a stale flush resetting the count, say), never
-   // from a live predecessor still on its way: give up on it after
-   // kAutoFlushDelay, too, rather than hold the terminal until enough
-   // further typing arrives.
-   auto now = inputClock_();
-   if (inputGapSince_ == std::chrono::steady_clock::time_point())
-      inputGapSince_ = now;
-
-   if (inputQueue_.size() >= kAutoFlushLength || now - inputGapSince_ >= kAutoFlushDelay)
+   // getting permanently stuck if a message gets lost and the
+   // gap(s) never get filled in. So we'll flush it if input piles up.
+   if (inputQueue_.size() >= kAutoFlushLength)
    {
       // set everything in queue to "ignore" so it will be pulled from
       // queue as-is, even with gaps
@@ -495,7 +476,6 @@ ConsoleProcess::Input ConsoleProcess::dequeInput()
          it.sequence = kIgnoreSequence;
       }
 
-      inputGapSince_ = std::chrono::steady_clock::time_point();
       input.sequence = kIgnoreSequence;
       inputQueue_.pop_front();
       return input;

@@ -306,15 +306,21 @@ public class TerminalSessionSocket
       switch (consoleProcess_.getChannelMode())
       {
       case ConsoleProcessInfo.CHANNEL_RPC:
-         if (outstandingWrites_ > 0 || nextWriteFlushesServer())
+         if (outstandingWrites_ > 0)
          {
             // One write in flight at a time: concurrent requests can reach
-            // the server out of order (#19542), and the first write of a
-            // connection resets the server's count, so nothing may overtake
-            // it. Input typed meanwhile is held and sent as one write.
+            // the server out of order (#19542). Input typed meanwhile is
+            // held and sent as one write when that write completes.
+            //
+            // This is a deliberate trade of latency for order. Held input
+            // waits out the round trip of the write ahead of it, so its echo
+            // can take up to two round trips instead of one, and a request
+            // that never completes holds later input until the browser fails
+            // it. The alternative, numbering concurrent writes for the server
+            // to reorder, stalls on a lost request as well and cannot tell a
+            // late write of a previous connection from a live one.
             pendingInput_.add(pending);
             holdingInput_ = true;
-            flushPendingInput(connection_);
          }
          else
          {
@@ -405,7 +411,6 @@ public class TerminalSessionSocket
       holdingInput_ = false;
       outstandingWrites_ = 0;
       connectCallback_ = null;
-      inputSequence_ = ShellInput.IGNORE_SEQUENCE;
       closeWebSocket();
       registrations_.removeHandler();
       if (permanent)
@@ -474,9 +479,8 @@ public class TerminalSessionSocket
    // once nothing is left to write.
    private void flushPendingInput(final int connection)
    {
-      // Writes of a previous connection are not waited for: their completions
-      // may never arrive, and the server delivers a stale number late rather
-      // than blocking on it.
+      // Only this connection's writes are counted: the completion of a
+      // previous connection's write may never arrive.
       if (outstandingWrites_ > 0)
          return;
 
@@ -513,18 +517,16 @@ public class TerminalSessionSocket
       }));
    }
 
-   // Writes go out one at a time, but still carry a sequence number: the
-   // server uses it to recognize a write from a previous connection that
-   // arrives late, and desktop has always numbered them. Numbers are assigned
-   // here, when input is actually written over RPC, rather than when it was
-   // typed, so input queued after a rejected WebSocket send is numbered in
-   // order with the input that follows it.
+   // Writes carry no sequence number. They go out one at a time, so the
+   // server receives a connection's input in order without one, and a number
+   // would not let it tell a late write of a previous connection from a live
+   // one anyway.
    private void writeRpcInput(final PendingInput input)
    {
       final int connection = connection_;
       outstandingWrites_++;
       consoleProcess_.writeStandardInput(
-            ShellInput.create(nextInputSequence(), input.text, true /*echo input*/),
+            ShellInput.create(input.text, true /*echo input*/),
             new VoidServerRequestCallback()
             {
                @Override
@@ -541,46 +543,12 @@ public class TerminalSessionSocket
                public void onError(ServerError error)
                {
                   if (connection == connection_)
-                  {
                      outstandingWrites_--;
-                     // The server never saw this write, so it would wait on
-                     // its number; the next write flushes the server's queue
-                     // and starts the count over.
-                     inputSequence_ = ShellInput.IGNORE_SEQUENCE;
-                     holdingInput_ = true;
-                  }
                   input.callback.onError(error);
                   if (connection == connection_ && holdingInput_)
                      flushPendingInput(connection);
                }
             });
-   }
-
-   // The first write of a connection flushes the server-side queue, resetting
-   // the server's "last sequence" to its default; so does a write after a very
-   // diligent typist wraps the counter.
-   private boolean nextWriteFlushesServer()
-   {
-      return inputSequence_ == ShellInput.IGNORE_SEQUENCE ||
-             inputSequence_ >= Integer.MAX_VALUE - 100;
-   }
-
-   private int nextInputSequence()
-   {
-      if (nextWriteFlushesServer())
-      {
-         inputSequence_ = ShellInput.FLUSH_SEQUENCE;
-      }
-      else if (inputSequence_ == ShellInput.FLUSH_SEQUENCE)
-      {
-         // Last message has flushed the server, start tracking sequences again.
-         inputSequence_ = 0;
-      }
-      else
-      {
-         inputSequence_++;
-      }
-      return inputSequence_;
    }
 
    // Queued input is one burst of typing that was lost together, so report
@@ -654,7 +622,6 @@ public class TerminalSessionSocket
    private int connection_;
    private boolean holdingInput_;
    private int outstandingWrites_;
-   private int inputSequence_ = ShellInput.IGNORE_SEQUENCE;
    private final List<PendingInput> pendingInput_ = new ArrayList<>();
    private final TerminalLocalEcho localEcho_;
    private final TerminalDiagnostics diagnostic_ = new TerminalDiagnostics();

@@ -19,7 +19,6 @@
 
 #include <atomic>
 #include <chrono>
-#include <functional>
 #include <deque>
 
 #include <boost/regex.hpp>
@@ -46,7 +45,6 @@ namespace console_process {
 const int kFlushSequence = -2; // see ShellInput.FLUSH_SEQUENCE
 const int kIgnoreSequence = -1; // see ShellInput.IGNORE_SEQUENCE
 const size_t kAutoFlushLength = 20;
-const std::chrono::milliseconds kAutoFlushDelay(500);
 
 class ConsoleProcess;
 typedef boost::shared_ptr<ConsoleProcess> ConsoleProcessPtr;
@@ -163,13 +161,6 @@ public:
    void enqueInput(const Input& input);
    void enqueInputInternalLock(const Input& input);
    Input dequeInput();
-
-   // The clock dequeInput() uses to give up on a missing sequence number
-   // after kAutoFlushDelay; tests substitute a controllable one.
-   void setInputClock(const std::function<std::chrono::steady_clock::time_point()>& clock)
-   {
-      inputClock_ = clock;
-   }
    void enquePrompt(const std::string& prompt);
    void interrupt();
    void terminate();
@@ -299,8 +290,6 @@ private:
    // Pending input (writes or ptyInterrupts)
    std::deque<Input> inputQueue_;
    int lastInputSequence_ = kIgnoreSequence;
-   std::chrono::steady_clock::time_point inputGapSince_;
-   std::function<std::chrono::steady_clock::time_point()> inputClock_ = &std::chrono::steady_clock::now;
    boost::mutex inputOutputQueueMutex_;
 
    boost::function<bool(const std::string&, Input*)> onPrompt_;

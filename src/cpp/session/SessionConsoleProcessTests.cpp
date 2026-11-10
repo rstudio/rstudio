@@ -206,92 +206,6 @@ TEST_F(ConsoleProcessTest, AutoflushHandlesUnresolvedGaps) {
    EXPECT_EQ("HELLO WORLD", result);
 }
 
-// A write delayed past the auto-flush of its successors, or a number the
-// client has reused, must not stall input until another auto-flush.
-TEST_F(ConsoleProcessTest, LateOrRepeatedSequenceIsDeliveredWithoutBlocking) {
-   // item "0" is delayed; its successors pile up and auto-flush
-   for (size_t i = 1; i <= kAutoFlushLength; i++)
-      pCP->enqueInput(ConsoleProcess::Input(gsl::narrow_cast<int>(i), boost::lexical_cast<std::string>(i)));
-
-   std::string result;
-   ConsoleProcess::Input next = pCP->dequeInput();
-   while (!next.empty())
-   {
-      result += next.text;
-      next = pCP->dequeInput();
-   }
-   EXPECT_EQ("1234567891011121314151617181920", result);
-
-   // the delayed item arrives: delivered at once, late rather than never
-   pCP->enqueInput(ConsoleProcess::Input(0, std::string("late")));
-   next = pCP->dequeInput();
-   EXPECT_EQ("late", next.text);
-   EXPECT_TRUE(pCP->dequeInput().empty());
-
-   // a repeat of a consumed number is also delivered at once
-   pCP->enqueInput(ConsoleProcess::Input(20, std::string("again")));
-   next = pCP->dequeInput();
-   EXPECT_EQ("again", next.text);
-
-   // and the sequence continues where the auto-flush left it
-   pCP->enqueInput(ConsoleProcess::Input(22, std::string("two")));
-   EXPECT_TRUE(pCP->dequeInput().empty());
-   pCP->enqueInput(ConsoleProcess::Input(21, std::string("one")));
-   result.clear();
-   next = pCP->dequeInput();
-   while (!next.empty())
-   {
-      result += next.text;
-      next = pCP->dequeInput();
-   }
-   EXPECT_EQ("onetwo", result);
-}
-
-// A gap that stays open is given up on after kAutoFlushDelay as well as
-// after kAutoFlushLength requests. One such gap: a flush from a previous
-// connection arriving after the replacement's first numbered input, resetting
-// the count so the replacement's next number no longer follows it.
-TEST_F(ConsoleProcessTest, GapOpenPastTimeoutIsFlushed) {
-   std::chrono::steady_clock::time_point now(std::chrono::seconds(1000));
-   pCP->setInputClock([&now]() { return now; });
-
-   pCP->enqueInput(ConsoleProcess::Input(0, std::string("a")));
-   EXPECT_EQ("a", pCP->dequeInput().text);
-
-   // repeated polling before the deadline keeps waiting for the predecessor
-   pCP->enqueInput(ConsoleProcess::Input(2, std::string("c")));
-   EXPECT_TRUE(pCP->dequeInput().empty());
-   now += kAutoFlushDelay / 2;
-   EXPECT_TRUE(pCP->dequeInput().empty());
-   now += kAutoFlushDelay / 2 - std::chrono::milliseconds(1);
-   EXPECT_TRUE(pCP->dequeInput().empty());
-
-   // once the deadline passes, the blocked input is delivered
-   now += std::chrono::milliseconds(1);
-   EXPECT_EQ("c", pCP->dequeInput().text);
-   EXPECT_TRUE(pCP->dequeInput().empty());
-
-   // the late predecessor is delivered when it arrives, and numbering resumes
-   pCP->enqueInput(ConsoleProcess::Input(1, std::string("b")));
-   EXPECT_EQ("b", pCP->dequeInput().text);
-   pCP->enqueInput(ConsoleProcess::Input(3, std::string("d")));
-   EXPECT_EQ("d", pCP->dequeInput().text);
-
-   // a stale flush resets the count; the next number gets a fresh deadline
-   // and is given up on after it, numbering continuing from there
-   pCP->enqueInput(ConsoleProcess::Input(kFlushSequence, std::string("")));
-   EXPECT_EQ("", pCP->dequeInput().text);
-   pCP->enqueInput(ConsoleProcess::Input(4, std::string("e")));
-   EXPECT_TRUE(pCP->dequeInput().empty());
-   now += kAutoFlushDelay - std::chrono::milliseconds(1);
-   EXPECT_TRUE(pCP->dequeInput().empty());
-   now += std::chrono::milliseconds(1);
-   EXPECT_EQ("e", pCP->dequeInput().text);
-   pCP->enqueInput(ConsoleProcess::Input(5, std::string("f")));
-   EXPECT_EQ("f", pCP->dequeInput().text);
-   EXPECT_TRUE(pCP->dequeInput().empty());
-}
-
 TEST_F(ConsoleProcessTest, ExplicitFlushReturnsInputWithGapsAndResetsSequence) {
    std::vector<ConsoleProcess::Input> input;
    std::string expected;
@@ -416,8 +330,11 @@ TEST(ConsoleProcessConPty, StripsStartupClearArrivingInLaterChunk)
 namespace {
 
 // Runs the terminal's PROMPT_COMMAND once in bash with the given $HOME and
-// working directory, returning what it wrote to the terminal.
-std::string promptTitleOutput(const core::FilePath& cwd, const core::FilePath& home)
+// working directory, returning what it wrote to the terminal. 'setup' is
+// shell code run before the hook, in the same shell.
+std::string promptTitleOutput(const core::FilePath& cwd,
+                              const core::FilePath& home,
+                              const std::string& setup = std::string())
 {
    core::system::Options env;
    core::system::environment(&env);
@@ -430,9 +347,10 @@ std::string promptTitleOutput(const core::FilePath& cwd, const core::FilePath& h
 
    core::system::ProcessResult result;
    core::Error error = core::system::runCommand(
-            "/bin/bash --norc --noprofile -c 'eval \"$PROMPT_COMMAND\"'", options, &result);
+            "/bin/bash --norc --noprofile -c '" + setup + " eval \"$PROMPT_COMMAND\"'", options, &result);
    EXPECT_FALSE(error);
    EXPECT_EQ(0, result.exitStatus) << result.stdErr;
+   EXPECT_EQ("", result.stdErr);
    return result.stdOut;
 }
 
@@ -467,6 +385,15 @@ TEST(ConsoleProcessBashPrompt, AbbreviatesHomeWithoutForking)
    EXPECT_EQ("\033]0;" + sibling.getAbsolutePath() + "\007", promptTitleOutput(sibling, home));
    EXPECT_EQ("\033]0;" + home.getAbsolutePath() + "\007",
              promptTitleOutput(home, core::FilePath()));
+
+   // the hook runs in the user's shell, under the user's shell options
+   EXPECT_EQ("\033]0;" + home.getAbsolutePath() + "\007",
+             promptTitleOutput(home, home, "set -u; unset HOME;"));
+
+   // like `dirs +0`, a HOME of "/" abbreviates nothing
+   core::FilePath root("/");
+   EXPECT_EQ("\033]0;/\007", promptTitleOutput(root, root));
+   EXPECT_EQ("\033]0;" + sub.getAbsolutePath() + "\007", promptTitleOutput(sub, root));
 
    home.removeIfExists();
    sibling.removeIfExists();
