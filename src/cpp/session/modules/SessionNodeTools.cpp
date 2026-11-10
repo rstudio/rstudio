@@ -402,9 +402,10 @@ bool isValidProxyHost(const std::string& host)
    std::vector<std::string> labels;
    boost::algorithm::split(labels, host, boost::algorithm::is_any_of("."));
 
-   std::string last = labels.back();
-   if (last.empty() && labels.size() > 1)
-      last = labels[labels.size() - 2];
+   // a trailing dot (the DNS root) does not change what the host is
+   if (labels.size() > 1 && labels.back().empty())
+      labels.pop_back();
+   const std::string& last = labels.back();
 
    bool isNumber = false;
    if (last.size() >= 2 && last[0] == '0' && (last[1] == 'x' || last[1] == 'X'))

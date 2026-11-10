@@ -249,6 +249,7 @@ TEST(SessionNodeToolsTest, NormalizeProxyUrlChecksHost)
    std::string out;
    EXPECT_TRUE(normalizeProxyUrl("http://proxy_one.example-corp.com.:8080", &out));
    EXPECT_TRUE(normalizeProxyUrl("http://10.0.0.1", &out));
+   EXPECT_TRUE(normalizeProxyUrl("http://10.0.0.1.:3128", &out));
    EXPECT_TRUE(normalizeProxyUrl("http://[::1]:8080", &out));
    EXPECT_TRUE(normalizeProxyUrl("http://[2001:db8::1]", &out));
    EXPECT_TRUE(normalizeProxyUrl("[::1]:8080", &out));
