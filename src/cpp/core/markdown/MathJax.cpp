@@ -21,7 +21,9 @@
 #include <boost/function.hpp>
 #include <boost/algorithm/string.hpp>
 
+#include <core/HtmlUtils.hpp>
 #include <core/RegexUtils.hpp>
+#include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
 
 using namespace boost::placeholders;
@@ -41,60 +43,145 @@ bool hasLessThanThreeNewlines(const std::string& str)
    return std::count(str.begin(), str.end(), '\n') < 3;
 }
 
+struct CodePattern
+{
+   CodePattern(const std::string& pattern, bool fenced = false)
+      : begin(pattern), fenced(fenced)
+   {
+   }
+
+   boost::regex begin;
+   bool fenced;
+};
+
+// Find the end of the first line after 'begin' that closes a fence opened
+// with 'length' copies of 'fence': up to three spaces of indentation, at
+// least as many fence characters, and only trailing whitespace. Returns the
+// position of that line's newline, or 'end' when the fence is never closed.
+std::string::const_iterator findFenceCloser(std::string::const_iterator begin,
+                                            std::string::const_iterator end,
+                                            char fence,
+                                            std::size_t length)
+{
+   std::string::const_iterator line = begin;
+   while (line != end)
+   {
+      std::string::const_iterator newline = std::find(line, end, '\n');
+      std::string::const_iterator it = line;
+      for (int indent = 0; indent < 3 && it != newline && *it == ' '; ++indent)
+         ++it;
+
+      std::size_t count = 0;
+      for (; it != newline && *it == fence; ++it)
+         ++count;
+
+      if (count >= length)
+      {
+         while (it != newline && (*it == ' ' || *it == '\t'))
+            ++it;
+         if (it != newline && *it == '\r')
+            ++it;
+         if (it == newline)
+            return newline;
+      }
+
+      if (newline == end)
+         break;
+      line = newline + 1;
+   }
+   return end;
 }
 
-MathJaxFilter::MathJaxFilter(const std::vector<html_utils::ExcludePattern>& excludePatterns,
-                             std::string* pInput,
-                             std::string* pHTMLOutput)
-   : pHTMLOutput_(pHTMLOutput)
+}
+
+MathJaxFilter::MathJaxFilter(std::string* pInput,
+                             std::string* pHTMLOutput,
+                             bool escapeHtml)
+   : pHTMLOutput_(pHTMLOutput), escapeHtml_(escapeHtml)
 {
+   // Retain the legacy backtick-only, column-zero fence rules. The filter
+   // does not implement full CommonMark context or tilde-fence exclusions.
+   // The legacy filter cannot determine
+   // where an enclosing list ends. Match only the opener until it is selected,
+   // so a fence nested in another code block never scans for its own closer.
+   const std::vector<CodePattern> patterns = {
+      CodePattern(R"(^(`{3,})(?!`)[^`\r\n]*(?:\r?\n|\z))", true),
+      // Match the pinned inline parser's MAXBACKTICKS limit. No fallback may
+      // split a longer run into shorter delimiters and hide ordinary math.
+#ifdef RSTUDIO_USE_CMARK_GFM
+      // An odd run of backslashes escapes the next backtick. Such a tick is
+      // literal text in cmark, so it cannot open a span, but a real run may
+      // start immediately after it. Consume the escape with the opener.
+      // Closers ignore escapes: backslashes are literal inside code spans.
+      CodePattern(R"((?<!\\)(?:\\\\)*\\`(`{1,80})(?!`)[^\r\n]*?(?<!`)\1(?!`))"),
+      CodePattern(R"((?<!\\)(?:\\\\)*(?<!`)(`{1,80})(?!`)[^\r\n]*?(?<!`)\1(?!`))"),
+#else
+      CodePattern(R"((?<!`)(`+)(?!`)[^\r\n]*?(?<!`)\1(?!`))"),
+      CodePattern(R"(`[^\n]+?`)"),
+#endif
+      CodePattern(R"((\A|\A\s*\n|\n\s*\n)(( {4}|\t)[^\n]*\n)*(( {4}|\t)[^\n]*))")
+   };
+
    // divide the document into ranges (some of which will be processed
    // and some of which will not -- we don't process some regions so that
    // we don't need to worry about mathjax ambiguity within code regions)
    std::vector<TextRange> ranges;
    std::string::const_iterator pos = pInput->begin();
    std::string::const_iterator inputEnd = pInput->end();
+   // Retain future matches (including exhaustion) instead of searching the
+   // entire suffix for every pattern after each inline code span.
+   std::vector<boost::smatch> nextMatches(patterns.size());
+   std::vector<bool> searched(patterns.size(), false);
+   bool afterFence = false;
    while (pos != inputEnd)
    {
-      // try all of the exclude patterns
-      std::vector<TextRange> matchedRanges;
-      for (const html_utils::ExcludePattern& pattern : excludePatterns)
+      std::size_t closest = patterns.size();
+      for (std::size_t i = 0; i < patterns.size(); ++i)
       {
-         boost::smatch m;
-         if (regex_utils::search(pos, inputEnd, m, pattern.begin))
+         boost::smatch& next = nextMatches[i];
+         auto flags = pos == pInput->begin() ? boost::match_default : boost::match_prev_avail;
+         // The indented-code pattern's \A also applies just after a fence,
+         // where a new block can start without a blank line. Inline spans do
+         // not create this boundary: following spaces are still paragraph text.
+         boost::smatch atBoundary;
+         if (afterFence && regex_utils::search(pos, inputEnd, atBoundary, patterns[i].begin,
+                                               flags | boost::match_continuous))
          {
-            // set begin and end (may change if there is an end pattern)
-            std::string::const_iterator begin = m[0].first;
-            std::string::const_iterator end = m[0].second;
-
-            // check for a second match
-            if (!pattern.end.empty())
-            {
-               if (regex_utils::search(end, inputEnd, m, pattern.end))
-               {
-                  // update end to be the end of the match
-                  end = m[0].second;
-               }
-               else
-               {
-                  // didn't find a matching end pattern so set the end to the
-                  // end of the document -- this will cause us to exclude the
-                  // rest of the document from processing
-                  end = inputEnd;
-               }
-            }
-
-            // add the matched range to our list
-            matchedRanges.push_back(TextRange(false, begin, end));
+            next = atBoundary;
          }
+         else if (!searched[i] || (!next.empty() && next[0].first < pos))
+         {
+            next = boost::smatch();
+            if (pos != pInput->begin())
+               flags |= boost::match_not_bob;
+            if (!regex_utils::search(pos, inputEnd, next, patterns[i].begin, flags))
+               next = boost::smatch();
+         }
+         searched[i] = true;
+         if (!next.empty() &&
+             (closest == patterns.size() || next[0].first < nextMatches[closest][0].first))
+            closest = i;
       }
 
       // if we found at least one matched range then find the closest one,
       // add it to our list, and continue
-      if (!matchedRanges.empty())
+      if (closest != patterns.size())
       {
-         // find the closest range
-         TextRange range = findClosestRange(pos, matchedRanges);
+         const boost::smatch& match = nextMatches[closest];
+         TextRange range(false, match[0].first, match[0].second);
+         if (patterns[closest].fenced)
+         {
+            // A closer must use the same character and at least as many
+            // delimiters as its opener. Search only for the chosen block.
+            std::string delimiter = match[1];
+            std::size_t length = delimiter.size();
+#ifdef RSTUDIO_USE_CMARK_GFM
+            // The pinned parser stores fence_length in a byte and caps it at
+            // 255 in blocks.c. Exclusions must end where that parser closes.
+            length = std::min(length, std::size_t(255));
+#endif
+            range.end = findFenceCloser(range.end, inputEnd, delimiter[0], length);
+         }
 
          // mark everything before the match as requiring processing
          ranges.push_back(TextRange(true, pos, range.begin));
@@ -104,15 +191,17 @@ MathJaxFilter::MathJaxFilter(const std::vector<html_utils::ExcludePattern>& excl
 
          // update the position
          pos = range.end;
+         afterFence = patterns[closest].fenced;
       }
 
       // no match -- consume remaining input and tag it for processing
       else
       {
-         ranges.push_back(TextRange(true, pos, pInput->end()));
-         pos = pInput->end();
+         break;
       }
    }
+   if (pos != inputEnd)
+      ranges.push_back(TextRange(true, pos, inputEnd));
 
    // now iterate through the ranges and substitute a guid for math blocks
    std::string filteredInput;
@@ -206,7 +295,9 @@ std::string MathJaxFilter::substitute(
    }
    else
    {
-      std::string guid = core::system::generateUuid(false);
+      // A fixed digit-and-letter prefix keeps math placeholders from being
+      // interpreted as HTML tag names or ordered-list markers.
+      std::string guid = "0x" + core::system::generateUuid(false);
       std::string suffix = (match.size() > 2) ? std::string(match[2]) : "";
       pMathBlocks->insert(std::make_pair(guid, MathBlock(equation,suffix)));
       return guid;
@@ -218,10 +309,13 @@ void MathJaxFilter::restore(
                const std::string& beginDelim,
                const std::string& endDelim)
 {
+   // Restoration happens after the Markdown renderer's escaping pass.
+   std::string equation = escapeHtml_ ? string_utils::htmlEscape(block.second.equation)
+                                     : block.second.equation;
    boost::algorithm::replace_first(
      *pHTMLOutput_,
      block.first,
-     beginDelim + " " + block.second.equation + " " + endDelim +
+     beginDelim + " " + equation + " " + endDelim +
        block.second.suffix);
 }
 

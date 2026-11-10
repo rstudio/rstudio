@@ -1,0 +1,197 @@
+name: "Merge and report E2E results"
+description: >
+  The body of an engine workflow's e2e-merge job: merge the per-shard Playwright
+  blob reports into one HTML report, parse the aggregated counts, publish the
+  report to S3 (its only copy: a GitHub artifact can be downloaded by anyone
+  signed in to GitHub, so none is uploaded and the shard blobs are archived to
+  the bucket and deleted once merged), post a sticky PR comment with the
+  totals, and optionally fail the
+  job when the run executed no tests. Every engine runs this behind a
+  checkout, so the comment format, the artifact naming, and the release gate
+  live in one place.
+
+  The calling job must have checked out the repository (a local action cannot
+  be resolved before that) and must grant pull-requests: write for the
+  comment, id-token: write for the S3 upload, and actions: write to delete
+  the blob artifacts.
+
+inputs:
+  label:
+    description: >-
+      The engine label its shards used for their artifacts. Blob reports are
+      downloaded from playwright-blob-report-<label>-*, the merged report is
+      published to S3 under <label>, and the sticky comment is keyed
+      e2e-<label>-results.
+    required: true
+  title:
+    description: "Heading of the PR comment, e.g. 'macOS Desktop E2E - ARM64'."
+    required: true
+  runner-note:
+    description: "Runner description for the comment footer, e.g. 'macos-26 ARM64'."
+    required: true
+  shard-count:
+    description: "Number of shards the engine ran, for the comment footer."
+    required: true
+  result:
+    description: "The e2e job's needs.<job>.result; anything but 'success' reports the run as failed."
+    required: true
+  post-pr-comment:
+    description: "Post the sticky PR comment ('true' / 'false')."
+    required: false
+    default: "false"
+  require-tests-passed:
+    description: "Fail when zero tests passed ('true' / 'false'); see the gate step for why a zero-passed run must not report green."
+    required: false
+    default: "false"
+  role-arn:
+    description: "IAM role assumed via OIDC for the S3 upload (secrets.AWS_E2E_REPORTS_ROLE_ARN). Empty, as on fork PRs, makes publishing a no-op."
+    required: false
+    default: ""
+  github-token:
+    description: "Token used to post the sticky PR comment and delete the blob artifacts (github.token)."
+    required: true
+
+outputs:
+  passed:
+    description: "Number of passed tests."
+    value: ${{ steps.summary.outputs.passed }}
+  failed:
+    description: "Number of failed tests."
+    value: ${{ steps.summary.outputs.failed }}
+  skipped:
+    description: "Number of skipped tests."
+    value: ${{ steps.summary.outputs.skipped }}
+  flaky:
+    description: "Number of flaky tests."
+    value: ${{ steps.summary.outputs.flaky }}
+  run-under-test:
+    description: "The build under test as the summarizer names it, or empty when the merged report does not say."
+    value: ${{ steps.summary.outputs.run_under_test_1 }}
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      with:
+        node-version: 24
+        cache: 'npm'
+        cache-dependency-path: e2e/rstudio/package-lock.json
+
+    # --ignore-scripts skips the postinstall that downloads browser binaries;
+    # this job only invokes `playwright merge-reports`, which doesn't need
+    # Chromium. Saves ~30s + ~150MB of downloads per merge job.
+    - name: Install Playwright
+      shell: bash
+      working-directory: e2e/rstudio
+      run: npm ci --ignore-scripts
+
+    # Engine-scoped glob: in a combined parent run every other engine also
+    # publishes blob reports, and the label keeps this merge to our own shards.
+    - name: Download shard blob reports
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+      with:
+        pattern: playwright-blob-report-${{ inputs.label }}-*
+        path: e2e/rstudio/all-blob-reports
+        merge-multiple: true
+
+    # On a re-run, blobs a previous attempt retired come back from the bucket.
+    - name: Restore archived blob reports
+      id: restore
+      uses: ./.github/actions/os-e2e-blobs
+      with:
+        mode: restore
+        role-arn: ${{ inputs.role-arn }}
+        label: ${{ inputs.label }}
+
+    - name: Merge shard reports
+      id: merge
+      shell: bash
+      working-directory: e2e/rstudio
+      run: |
+        if [ -z "$(ls -A all-blob-reports 2>/dev/null)" ]; then
+          echo "::error::No blob reports found -- no shard produced artifacts"
+          exit 1
+        fi
+        npx playwright merge-reports --config merge.config.ts ./all-blob-reports
+
+    # Shared summarizer (also used by the PR run's e2e-merge-all job) so every
+    # comment computes pass/fail counts and the rate bar from one definition.
+    - name: Parse aggregated results
+      id: summary
+      if: always()
+      shell: bash
+      working-directory: e2e/rstudio
+      run: node scripts/summarize-merged-report.mjs
+
+    # The report's only copy, browsable from the Posit tailnet (see
+    # .github/e2e-reports). Best-effort: a no-op on fork PRs (no secret) and
+    # never fails the job. The bucket's 14-day lifecycle rule reaps it.
+    - name: Publish report to S3
+      id: publish-report
+      if: always()
+      uses: ./.github/actions/os-publish-e2e-report
+      with:
+        role-arn: ${{ inputs.role-arn }}
+        label: ${{ inputs.label }}
+
+    - name: Post E2E results to PR
+      if: |
+        always() &&
+        inputs.post-pr-comment == 'true' &&
+        github.event.pull_request.head.repo.fork == false &&
+        (steps.summary.outputs.passed != '0' || steps.summary.outputs.failed != '0' || steps.summary.outputs.skipped != '0' || steps.summary.outputs.flaky != '0')
+      uses: marocchino/sticky-pull-request-comment@447031a6bb83f7438d890bb0136932be78342022 # v3.0.0
+      with:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        header: e2e-${{ inputs.label }}-results
+        message: |
+          ## ${{ inputs.title }}
+
+          ${{ inputs.result == 'success' && steps.summary.outputs.failed == '0' && '### ✅ All tests passed!' || format('### ❌ {0} test(s) failed', steps.summary.outputs.failed) }}
+
+          `${{ steps.summary.outputs.bar }}` **${{ steps.summary.outputs.rate }}%** pass rate
+
+          | ✅ Passed | ❌ Failed | ⚠️ Skipped | 🔁 Flaky |
+          | :---: | :---: | :---: | :---: |
+          | **${{ steps.summary.outputs.passed }}** | **${{ steps.summary.outputs.failed }}** | **${{ steps.summary.outputs.skipped }}** | **${{ steps.summary.outputs.flaky }}** |
+
+          ${{ steps.publish-report.outputs.url != '' && format('**[View report online]({0})**', steps.publish-report.outputs.url) || '_No report was published; see the run log._' }}
+
+          ${{ steps.restore.outputs.restored != '' && steps.restore.outputs.restored != '0' && format(':warning: {0} shard report(s) are from a previous attempt of this run: shards that did not re-run, or that re-ran without producing one (the merge job warns about each).', steps.restore.outputs.restored) || '' }}
+
+          ---
+          <sub>${{ inputs.shard-count == '1' && '1 shard' || format('{0} shards', inputs.shard-count) }} · ${{ inputs.runner-note }} · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
+
+    # The shard blobs hold every trace and screenshot the report does, and a
+    # GitHub artifact can be downloaded by anyone signed in to GitHub. Once
+    # the merged report is safely published they are archived to the bucket
+    # and deleted from the run (os-e2e-blobs); their one-day retention is the
+    # fallback when this job never gets this far. Not when the merge or the
+    # publish failed: the report would then exist nowhere.
+    - name: Retire shard blob artifacts
+      if: always() && steps.merge.outcome == 'success' && steps.publish-report.outputs.url != ''
+      uses: ./.github/actions/os-e2e-blobs
+      with:
+        mode: retire
+        role-arn: ${{ inputs.role-arn }}
+        label: ${{ inputs.label }}
+        artifact-prefix: playwright-blob-report-${{ inputs.label }}-
+        shard-count: ${{ inputs.shard-count }}
+        github-token: ${{ inputs.github-token }}
+
+    # Release-gate floor, last so the reporting above still runs. A run that
+    # executed nothing must not report green: Playwright suppresses its own
+    # "no tests found" error whenever --shard is passed (which every engine
+    # does), and requireAiCredentials turns a credential lapse into skips --
+    # both leave a zero-passed run looking clean.
+    - name: Require the run to have executed tests
+      if: always() && inputs.require-tests-passed == 'true'
+      shell: bash
+      env:
+        PASSED: ${{ steps.summary.outputs.passed }}
+      run: |
+        if [ -z "$PASSED" ] || [ "$PASSED" = "0" ]; then
+          echo "::error::This run passed 0 tests, so it proves nothing. Refusing to report green."
+          exit 1
+        fi
+        echo "::notice::Gate floor met: $PASSED test(s) passed."

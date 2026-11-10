@@ -522,6 +522,20 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       });
    };
 
+   // Whether a range on the given side starts on a line that maps to before
+   // the other side's first line: one of a block the other side has none of,
+   // at its very top. Ace maps such a start onto the other side's first
+   // line, so a fold from there would hide less than the fold it mirrors.
+   this.$startsBeforeFirstLine = function(range, isOrig) {
+      var side = isOrig ? "old" : "new";
+      var otherSide = isOrig ? "new" : "old";
+      return this.chunks.some(function(chunk) {
+         return chunk[otherSide].end.row === 0 &&
+                chunk[side].start.row <= range.start.row &&
+                range.start.row < chunk[side].end.row;
+      });
+   };
+
    // The range a counterpart fold takes: for a structural fold, the other
    // side's own fold range for the mapped first row, when it spans the
    // mapped rows (Ace maps the columns of a changed line only roughly -- a
@@ -530,8 +544,8 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
    // as it runs forward and fits as it is (Ace would clip it into something
    // else, or nothing). Null when there is none.
    this.$counterpartRange = function(session, mapped, structural) {
-      // (a range mapped to before the first line -- a fold over an added
-      // first line and the one after it -- or past the last has no place)
+      // (a range mapped past the last line has no place; one that starts
+      // before the first is left out by mirrorFold)
       if (mapped.start.row < 0 || mapped.end.row >= session.getLength())
          return null;
 
@@ -580,7 +594,7 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
          }
       }
 
-      if (!counterpart && !this.$withinChange(range, isOrig)) {
+      if (!counterpart && !this.$withinChange(range, isOrig) && !this.$startsBeforeFirstLine(range, isOrig)) {
          var source = isOrig ? this.sessionA : this.sessionB;
          var otherRange = this.$counterpartRange(other, this.transformRange(range, isOrig), isStructuralFold(source, range));
          if (otherRange) {

@@ -28,6 +28,9 @@ namespace markdown {
 
 struct Extensions
 {
+   // The legacy syntax switches remain for the temporary Sundown build. With
+   // cmark-gfm, noIntraEmphasis, fencedCode, laxSpacing and spaceHeaders must
+   // retain their defaults; CommonMark determines their precise semantics.
    Extensions()
       : noIntraEmphasis(true),
         tables(true),
@@ -58,6 +61,8 @@ struct Extensions
 
 struct HTMLOptions
 {
+   // cmark-gfm supports the settings used by callers. Non-default useXHTML,
+   // toc and skipStyle settings return not_supported (see markdown/README.md).
    HTMLOptions()
       : useXHTML(true),
         hardWrap(false),

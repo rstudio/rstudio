@@ -296,6 +296,9 @@ fi
 # NOTE:  The PRODUCT, OS, and ARCH environment variables are
 # normally set as part of the matrix builds on Jenkins; they
 # will typically be undefined in local / development builds.
+#
+# RSTUDIO_CMAKE_EXTRA_ARGS may hold additional -D definitions from the
+# environment (used by CI; empty otherwise).
 cmake                                                    \
    -G"${CMAKE_GENERATOR}"                                \
    -DRSTUDIO_BUILDINFO_PRODUCT="${PRODUCT}"              \
@@ -311,6 +314,7 @@ cmake                                                    \
    -DGWT_EXTRAS_DIR="${BUILD_DIR}/gwt/extras"            \
    -DGWT_BUILD="${GWT_BUILD}"                            \
    -DSCCACHE_ENABLED=${SCCACHE_ENABLED}                  \
+   ${RSTUDIO_CMAKE_EXTRA_ARGS}                           \
    "${PKG_DIR}/../.."
 
 cmake --build . --target all -- ${MAKEFLAGS}

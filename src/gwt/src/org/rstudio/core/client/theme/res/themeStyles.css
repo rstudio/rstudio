@@ -1447,6 +1447,13 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    margin-top: -1px;
 }
 
+/* Lays the minimized tabs out in a row. A div rather than a table, so no
+   table rows or cells sit between the tablist and its tabs. */
+.minimizedTabList {
+   display: flex;
+   align-items: flex-start;
+}
+
 .moduleTabPanel .gwt-TabLayoutPanelTab .tabLayoutLeft {
    width: 3px;
    height: 23px;

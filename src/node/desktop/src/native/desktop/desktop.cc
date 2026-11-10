@@ -66,7 +66,6 @@ std::string timestamp()
    }
 }
 
-
 } // end anonymous namespace
 
 #define DLOG(__X__)            \
@@ -90,6 +89,40 @@ std::string timestamp()
 #ifdef _WIN32
 
 namespace {
+
+// Convert between UTF-8 and the UTF-16 wchar_t strings used by the Win32 W
+// APIs. Invalid input is replaced with U+FFFD rather than failing.
+std::string wideToUtf8(const std::wstring& value)
+{
+   if (value.empty())
+      return std::string();
+
+   int size = ::WideCharToMultiByte(
+       CP_UTF8, 0, value.data(), static_cast<int>(value.size()), nullptr, 0, nullptr, nullptr);
+   if (size <= 0)
+      return std::string();
+
+   std::string result(size, '\0');
+   ::WideCharToMultiByte(
+       CP_UTF8, 0, value.data(), static_cast<int>(value.size()), &result[0], size, nullptr, nullptr);
+   return result;
+}
+
+std::wstring utf8ToWide(const std::string& value)
+{
+   if (value.empty())
+      return std::wstring();
+
+   int size = ::MultiByteToWideChar(
+       CP_UTF8, 0, value.data(), static_cast<int>(value.size()), nullptr, 0);
+   if (size <= 0)
+      return std::wstring();
+
+   std::wstring result(size, L'\0');
+   ::MultiByteToWideChar(
+       CP_UTF8, 0, value.data(), static_cast<int>(value.size()), &result[0], size);
+   return result;
+}
 
 std::string registryKeyToString(HKEY hKey)
 {
@@ -123,13 +156,13 @@ std::string registryKeyToString(HKEY hKey)
 
 std::string getErrorMessage(DWORD error)
 {
-   LPVOID lpMsgBuf;
-   DWORD length = ::FormatMessage(
+   LPWSTR lpMsgBuf = nullptr;
+   DWORD length = ::FormatMessageW(
       FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
       nullptr,
       error,
       MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-      (LPTSTR) &lpMsgBuf,
+      reinterpret_cast<LPWSTR>(&lpMsgBuf),
       0,
       nullptr
    );
@@ -137,8 +170,8 @@ std::string getErrorMessage(DWORD error)
    if (length == 0)
       return "Unknown error";
 
-   std::string msg((LPTSTR)lpMsgBuf);
-   LocalFree(lpMsgBuf);
+   std::string msg = wideToUtf8(std::wstring(lpMsgBuf, length));
+   ::LocalFree(lpMsgBuf);
    return msg;
 }
 
@@ -148,8 +181,8 @@ namespace rstudio {
 namespace core {
 namespace system {
 
-bool expandEnvironmentVariables(const std::string& value,
-                                std::string* pResult)
+bool expandEnvironmentVariables(const std::wstring& value,
+                                std::wstring* pResult)
 {
    if (value.empty())
    {
@@ -157,28 +190,36 @@ bool expandEnvironmentVariables(const std::string& value,
       return true;
    }
 
-   DWORD sizeRequired = ::ExpandEnvironmentStrings(value.c_str(), nullptr, 0);
+   DWORD sizeRequired = ::ExpandEnvironmentStringsW(value.c_str(), nullptr, 0);
    if (!sizeRequired)
    {
       DLOG("Error expanding environment strings: couldn't determine required size");
       return false;
    }
 
-   std::vector<char> buffer(sizeRequired);
-   auto result = ::ExpandEnvironmentStrings(
+   std::vector<wchar_t> buffer(sizeRequired);
+   DWORD result = ::ExpandEnvironmentStringsW(
        value.c_str(),
        &buffer[0],
-       static_cast<DWORD>(buffer.capacity()));
+       static_cast<DWORD>(buffer.size()));
 
-   if (!result || result > buffer.capacity())
+   if (!result)
    {
       DWORD error = ::GetLastError();
       std::string message = getErrorMessage(error);
-      DLOG("Error " << result << " expanding environment strings: " << message);
+      DLOG("Error " << error << " expanding environment strings: " << message);
       return false;
    }
 
-   *pResult = std::string(&buffer[0]);
+   // a success that no longer fits (the environment grew between the two
+   // calls) sets no error code
+   if (result > buffer.size())
+   {
+      DLOG("Error expanding environment strings: required size grew from " << buffer.size() << " to " << result);
+      return false;
+   }
+
+   *pResult = std::wstring(&buffer[0]);
    return true;
 }
 
@@ -201,7 +242,7 @@ public:
 
    bool open(HKEY hKey, const std::string& subKey, REGSAM samDesired)
    {
-      LONG error = ::RegOpenKeyEx(hKey, subKey.c_str(), 0, samDesired, &hKey_);
+      LONG error = ::RegOpenKeyExW(hKey, utf8ToWide(subKey).c_str(), 0, samDesired, &hKey_);
       if (error != ERROR_SUCCESS)
       {
          std::string message = getErrorMessage(error);
@@ -234,18 +275,19 @@ public:
    bool getStringValue(const std::string& name,
                        std::string* pValue)
    {
-      std::vector<char> buffer(256);
+      std::wstring wideName = utf8ToWide(name);
+      std::vector<wchar_t> buffer(256);
       while (true)
       {
          DWORD type;
-         DWORD size = static_cast<DWORD>(buffer.capacity());
+         DWORD size = static_cast<DWORD>(buffer.size() * sizeof(wchar_t));
 
-         LONG result = ::RegQueryValueEx(
+         LONG result = ::RegQueryValueExW(
              hKey_,
-             name.c_str(),
+             wideName.c_str(),
              nullptr,
              &type,
-             (LPBYTE)(&buffer[0]),
+             reinterpret_cast<LPBYTE>(&buffer[0]),
              &size);
 
          switch (result)
@@ -258,22 +300,22 @@ public:
                return false;
             }
 
-            *pValue = std::string(&buffer[0], buffer.capacity());
+            // 'size' is in bytes. REG_SZ and friends may or may not be
+            // null-terminated, so trim the string at the first null, if any.
+            std::wstring value(&buffer[0], size / sizeof(wchar_t));
+            size_t idxNull = value.find(L'\0');
+            if (idxNull != std::wstring::npos)
+               value.resize(idxNull);
 
-            // REG_SZ and friends may or may not be null-terminated.
-            // So trim the string at the first null, if any.
-            size_t idxNull = pValue->find('\0');
-            if (idxNull != std::string::npos)
-               pValue->resize(idxNull);
+            if (type == REG_EXPAND_SZ && !expandEnvironmentVariables(value, &value))
+               return false;
 
-            if (type == REG_EXPAND_SZ)
-               expandEnvironmentVariables(*pValue, pValue);
-
+            *pValue = wideToUtf8(value);
             return true;
          }
 
          case ERROR_MORE_DATA:
-            buffer.reserve(size);
+            buffer.resize(size / sizeof(wchar_t) + 1);
             continue;
 
          default:
@@ -284,30 +326,33 @@ public:
 
    std::vector<std::string> keyNames()
    {
-      LONG result;
+      DWORD subKeys = 0, maxLen = 0;
+      LONG result = ::RegQueryInfoKeyW(hKey_, nullptr, nullptr, nullptr, &subKeys, &maxLen,
+                                       nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
+      if (result != ERROR_SUCCESS)
+      {
+         DLOG("Error " << result << " querying registry key info: " << getErrorMessage(result));
+         return std::vector<std::string>();
+      }
 
-      DWORD subKeys, maxLen;
-      result = ::RegQueryInfoKey(hKey_, nullptr, nullptr, nullptr, &subKeys, &maxLen,
-                                 nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
-
-
-      std::vector<char> nameBuffer(maxLen + 2);
+      // maxLen is in characters and excludes the terminating null
+      std::vector<wchar_t> nameBuffer(maxLen + 1);
       std::vector<std::string> results;
       results.reserve(subKeys);
 
       for (DWORD i = 0; ; i++)
       {
-         DWORD size = static_cast<DWORD>(nameBuffer.capacity());
-         LONG result = ::RegEnumKeyEx(hKey_,
-                                      i,
-                                      &nameBuffer[0],
-                                      &size,
-                                      nullptr, nullptr, nullptr, nullptr);
+         DWORD size = static_cast<DWORD>(nameBuffer.size());
+         result = ::RegEnumKeyExW(hKey_,
+                                  i,
+                                  &nameBuffer[0],
+                                  &size,
+                                  nullptr, nullptr, nullptr, nullptr);
          switch (result)
          {
          case ERROR_SUCCESS:
          {
-            results.push_back(std::string(&nameBuffer[0], size));
+            results.push_back(wideToUtf8(std::wstring(&nameBuffer[0], size)));
             break;
          }
          case ERROR_NO_MORE_ITEMS:
@@ -316,10 +361,10 @@ public:
          }
          default:
          {
+            DLOG("Error " << result << " enumerating registry subkey " << i << ": " << getErrorMessage(result));
             break;
          }
          }
-
       }
 
       return results;
@@ -689,32 +734,7 @@ Napi::Value isCtrlKeyDown(const Napi::CallbackInfo& info)
 
 namespace {
 
-// Convert a wide string to UTF-8. On Windows, wchar_t strings hold UTF-16 and
-// are converted with WideCharToMultiByte. On other platforms this is a
-// deliberate stub that returns an empty string for any input: wide-to-UTF-8
-// conversion is only needed on the Windows-only CSIDL code paths below.
-std::string wideToUtf8(const std::wstring& value)
-{
-#ifdef _WIN32
-   if (value.empty())
-      return std::string();
-
-   int size = ::WideCharToMultiByte(
-       CP_UTF8, 0, value.data(), (int) value.size(), nullptr, 0, nullptr, nullptr);
-   if (size <= 0)
-      return std::string();
-
-   std::string result(size, '\0');
-   ::WideCharToMultiByte(
-       CP_UTF8, 0, value.data(), (int) value.size(), &result[0], size, nullptr, nullptr);
-   return result;
-#else
-   (void) value;
-   return std::string();
-#endif
-}
-
-std::wstring currentCSIDLPersonalHomePathImpl()
+std::string currentCSIDLPersonalHomePathImpl()
 {
 #ifdef _WIN32
 
@@ -728,11 +748,14 @@ std::wstring currentCSIDLPersonalHomePathImpl()
                                    SHGFP_TYPE_CURRENT,
                                    buffer);
 
-   return std::wstring(buffer);
+   if (FAILED(hr))
+      return std::string();
+
+   return wideToUtf8(std::wstring(buffer));
 
 #else
 
-   return std::wstring();
+   return std::string();
 
 #endif
 }
@@ -741,16 +764,16 @@ std::wstring currentCSIDLPersonalHomePathImpl()
 
 Napi::Value currentCSIDLPersonalHomePath(const Napi::CallbackInfo& info)
 {
-   std::string u8str = wideToUtf8(currentCSIDLPersonalHomePathImpl());
+   std::string u8str = currentCSIDLPersonalHomePathImpl();
    return Napi::String::New(info.Env(), u8str);
 }
 
 namespace {
 
-std::wstring defaultCSIDLPersonalHomePathImpl()
+std::string defaultCSIDLPersonalHomePathImpl()
 {
 #ifdef _WIN32
-   wchar_t buffer[MAX_PATH];
+   wchar_t buffer[MAX_PATH] = {};
 
    // query for default and force creation (works around situations
    // where redirected path is not available)
@@ -761,11 +784,14 @@ std::wstring defaultCSIDLPersonalHomePathImpl()
                                    SHGFP_TYPE_DEFAULT,
                                    buffer);
 
-   return std::wstring(buffer);
+   if (FAILED(hr))
+      return std::string();
+
+   return wideToUtf8(std::wstring(buffer));
 
 #else
 
-   return std::wstring();
+   return std::string();
 
 #endif
 }
@@ -774,7 +800,7 @@ std::wstring defaultCSIDLPersonalHomePathImpl()
 
 Napi::Value defaultCSIDLPersonalHomePath(const Napi::CallbackInfo& info)
 {
-   std::string u8str = wideToUtf8(defaultCSIDLPersonalHomePathImpl());
+   std::string u8str = defaultCSIDLPersonalHomePathImpl();
    return Napi::String::New(info.Env(), u8str);
 }
 

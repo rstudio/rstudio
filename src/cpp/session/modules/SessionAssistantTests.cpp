@@ -38,6 +38,7 @@ using modules::assistant::AgentStdoutReader;
 using modules::assistant::focusDocumentForTesting;
 using modules::assistant::agentRequestTimeout;
 using modules::assistant::agentStderrTail;
+using modules::assistant::agentStdoutErrorSummary;
 using modules::assistant::nesLanguageServerPath;
 using modules::assistant::queueAgentNotificationForTesting;
 using modules::assistant::queueAgentReplyForTesting;
@@ -146,6 +147,16 @@ TEST(SessionAssistant, StdoutReaderRecoversFromAContentLengthThatIsTooShort)
    std::vector<std::string> responses = reader.append("Content-Length: 1\r\n\r\n{}" + frame("{\"id\":1}"));
    ASSERT_FALSE(responses.empty());
    EXPECT_EQ(responses.back(), "{\"id\":1}");
+}
+
+TEST(SessionAssistant, StdoutReaderFillsAContentLengthThatIsTooLongWithTheNextMessage)
+{
+   // The excess can't be told apart from a body, so the next message is lost.
+   AgentStdoutReader reader;
+   std::string next = frame("{\"id\":1}");
+   std::string body = "{}" + next;
+   EXPECT_EQ(reader.append("Content-Length: " + std::to_string(body.length()) + "\r\n\r\n{}" + next),
+             std::vector<std::string>{body});
 }
 
 TEST(SessionAssistant, StdoutReaderSkipsStrayOutputBeforeAHeader)
@@ -298,6 +309,22 @@ TEST(SessionAssistant, StdoutReaderShortensAnInvalidValueInItsError)
    reader.append("Content-Length: " + std::string(10000, '9') + "\r\n\r\n", &errors);
    ASSERT_EQ(errors.size(), 1u);
    EXPECT_LT(errors.front().length(), 100u);
+}
+
+TEST(SessionAssistant, StdoutErrorSummaryOfNoErrorsIsEmpty)
+{
+   EXPECT_EQ(agentStdoutErrorSummary({}), "");
+}
+
+TEST(SessionAssistant, StdoutErrorSummaryOfOneErrorIsThatError)
+{
+   EXPECT_EQ(agentStdoutErrorSummary({"bad header"}), "bad header");
+}
+
+TEST(SessionAssistant, StdoutErrorSummaryCountsTheErrorsAfterTheFirst)
+{
+   EXPECT_EQ(agentStdoutErrorSummary({"first", "second", "third"}),
+             "first (and 2 more in this read)");
 }
 
 TEST(SessionAssistant, StderrTailKeepsShortTextUnchanged)

@@ -286,16 +286,8 @@ public class AceEditor implements DocDisplay
       private AceEditorChangeTracker()
       {
          super(AceEditor.this);
-         AceEditor.this.addFoldChangeHandler(event -> changed_ = true);
-         AceEditor.this.addLineWidgetsChangedHandler(event -> changed_ = true);
-      }
-
-      @Override
-      public ChangeTracker fork()
-      {
-         AceEditorChangeTracker forked = new AceEditorChangeTracker();
-         forked.changed_ = changed_;
-         return forked;
+         AceEditor.this.addFoldChangeHandler(event -> markChanged());
+         AceEditor.this.addLineWidgetsChangedHandler(event -> markChanged());
       }
    }
 
@@ -1235,7 +1227,7 @@ public class AceEditor implements DocDisplay
                   managers.put(DocumentMode.Mode.R, new RCompletionManager(
                         editor,
                         editor,
-                        new CompletionPopupPanel(),
+                        new CompletionPopupPanel(editor),
                         server_,
                         new Filter(),
                         context_,
@@ -1249,7 +1241,7 @@ public class AceEditor implements DocDisplay
                {
                   managers.put(DocumentMode.Mode.MARKDOWN, MarkdownCompletionManager.create(
                         editor,
-                        new CompletionPopupPanel(),
+                        new CompletionPopupPanel(editor),
                         server_,
                         context_));
                }
@@ -1259,7 +1251,7 @@ public class AceEditor implements DocDisplay
                {
                   managers.put(DocumentMode.Mode.PYTHON, PythonCompletionManager.create(
                         editor,
-                        new CompletionPopupPanel(),
+                        new CompletionPopupPanel(editor),
                         server_,
                         context_));
                }
@@ -1278,7 +1270,7 @@ public class AceEditor implements DocDisplay
                {
                   managers.put(DocumentMode.Mode.SQL, SqlCompletionManager.create(
                         editor,
-                        new CompletionPopupPanel(),
+                        new CompletionPopupPanel(editor),
                         server_,
                         context_));
                }
@@ -1288,7 +1280,7 @@ public class AceEditor implements DocDisplay
                {
                   managers.put(DocumentMode.Mode.STAN, StanCompletionManager.create(
                         editor,
-                        new CompletionPopupPanel(),
+                        new CompletionPopupPanel(editor),
                         server_,
                         context_));
                }
@@ -1299,7 +1291,7 @@ public class AceEditor implements DocDisplay
                {
                   managers.put(DocumentMode.Mode.YAML, YamlCompletionManager.create(
                        editor,
-                       new CompletionPopupPanel(),
+                       new CompletionPopupPanel(editor),
                        server_,
                        context_
                   ));
@@ -2795,7 +2787,8 @@ public class AceEditor implements DocDisplay
       widget_.getEditor().toggleCommentLines();
    }
 
-   public ChangeTracker getChangeTracker()
+   @Override
+   public ChangeTracker createChangeTracker()
    {
       return new AceEditorChangeTracker();
    }
@@ -5262,6 +5255,12 @@ public class AceEditor implements DocDisplay
    public final void setTextInputAriaLabel(String label)
    {
       widget_.getEditor().setTextInputAriaLabel(label);
+   }
+
+   @Override
+   public void setAriaActiveDescendant(String elementId)
+   {
+      widget_.getEditor().setTextInputActiveDescendant(elementId);
    }
 
    public void setTabAlwaysMovesFocus()

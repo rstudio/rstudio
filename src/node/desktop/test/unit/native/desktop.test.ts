@@ -18,6 +18,7 @@ import { clipboard, ClipboardItem } from 'electron';
 import { describe } from 'mocha';
 
 import os from 'os';
+import { spawnSync } from 'child_process';
 
 import desktop from '../../../src/native/desktop.node';
 
@@ -115,6 +116,101 @@ describe('Desktop Native Code', () => {
     await clipboard.write([new ClipboardItem({ 'text/plain': plainText, 'text/html': htmlText })]);
     desktop.cleanClipboard(false);
     assert.equal(await readClipboardHtml(), expected);
+  });
+
+  // The registry readers must hand an InstallPath to JavaScript intact
+  // (#19512): BMP and supplementary characters, a REG_EXPAND_SZ value, and a
+  // value longer than the first 256-unit buffer. Fixtures are written under
+  // HKCU\SOFTWARE\R-core so the real readers run against them, and removed
+  // afterwards, along with any parent key that is left empty.
+  describe('win32 registry readers', () => {
+    const tag = `RStudioTest-${process.pid}`;
+    const rCore = 'HKCU\\SOFTWARE\\R-core';
+    const unicodePath = 'C:\\Users\\Jürgen\\张伟\\R-4.6.2 😀';
+    const longPath = `C:\\${'x'.repeat(300)}\\R`;
+    const expandValue = '%SystemDrive%\\R-expand\\é😀';
+    const expandedPath = `${process.env.SystemDrive}\\R-expand\\é😀`;
+
+    const fixtureKeys = [`${rCore}\\R\\${tag}`, `${rCore}\\R\\${tag}-long`, `${rCore}\\${tag}`];
+    // `reg add` creates missing parents; innermost first, so that removing an
+    // empty ...\R-core\R can leave R-core empty in turn
+    const parentKeys = [`${rCore}\\R`, rCore];
+
+    // returns a description of the failure, or undefined on success
+    function tryReg(...args: string[]): string | undefined {
+      const result = spawnSync('reg.exe', args, { encoding: 'utf8' });
+      if (result.status === 0) {
+        return undefined;
+      }
+      return `reg ${args.join(' ')}: ${result.stderr}`;
+    }
+
+    function reg(...args: string[]) {
+      assert.isUndefined(tryReg(...args));
+    }
+
+    // Only a query that succeeds and lists no values or subkeys counts: a
+    // failed query must never let after() delete a real R registration.
+    function regKeyIsEmpty(key: string): boolean {
+      const result = spawnSync('reg.exe', ['query', key], { encoding: 'utf8' });
+      if (result.status !== 0) {
+        return false;
+      }
+      const self = key.replace(/^HKCU\\/, 'HKEY_CURRENT_USER\\').toLowerCase();
+      const entries = result.stdout
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0 && line.toLowerCase() !== self);
+      return entries.length === 0;
+    }
+
+    before(function () {
+      if (process.platform !== 'win32') {
+        this.skip();
+      }
+      reg('add', fixtureKeys[0], '/v', 'InstallPath', '/t', 'REG_SZ', '/d', unicodePath, '/f');
+      reg('add', fixtureKeys[1], '/v', 'InstallPath', '/t', 'REG_SZ', '/d', longPath, '/f');
+      reg('add', fixtureKeys[2], '/v', 'InstallPath', '/t', 'REG_EXPAND_SZ', '/d', expandValue, '/f');
+    });
+
+    after(function () {
+      if (process.platform !== 'win32') {
+        return;
+      }
+
+      // attempt every delete, so one failure does not strand the other keys
+      const failures: string[] = [];
+      for (const key of fixtureKeys) {
+        const failure = tryReg('delete', key, '/f');
+        if (failure !== undefined) {
+          failures.push(failure);
+        }
+      }
+      for (const key of parentKeys) {
+        if (regKeyIsEmpty(key)) {
+          const failure = tryReg('delete', key, '/f');
+          if (failure !== undefined) {
+            failures.push(failure);
+          }
+        }
+      }
+
+      assert.isEmpty(failures, failures.join('\n'));
+    });
+
+    it('enumerates non-ASCII and long InstallPath values intact', () => {
+      const installations = desktop.searchRegistryForInstallationsOfR();
+      assert.include(installations, unicodePath);
+      assert.include(installations, longPath);
+    });
+
+    it('reads a non-ASCII REG_EXPAND_SZ default InstallPath, expanded', () => {
+      assert.equal(desktop.searchRegistryForDefaultInstallationOfR(tag), expandedPath);
+    });
+
+    it('returns an empty string for a version key that does not exist', () => {
+      assert.equal(desktop.searchRegistryForDefaultInstallationOfR(`${tag}-missing`), '');
+    });
   });
 
   // The dialog watcher's observable behavior (raising rsession dialogs above
