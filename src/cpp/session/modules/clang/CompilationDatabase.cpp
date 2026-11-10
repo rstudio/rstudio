@@ -55,7 +55,7 @@ using namespace boost::placeholders;
 // Bump this version if you'd like newer versions of RStudio
 // to be forced to rebuild the compilation database, e.g. because
 // the methodology used to infer compilation flags has changed.
-#define kCompilationDatabaseVersion 5
+#define kCompilationDatabaseVersion 6
 
 namespace rstudio {
 namespace session {
@@ -1582,11 +1582,16 @@ std::vector<std::string> ClangCompilationDatabase::baseCompilationArgs(bool isCp
    auto clArgs = clang().compileArgs(isCpp);
    args.insert(args.end(), clArgs.begin(), clArgs.end());
    
-   // add system include headers as reported by compiler
+   // add system include headers as reported by compiler. These are passed
+   // with '-isystem' so that they're searched in the order the compiler
+   // reported: clang drops a '-I' directory that is also one of its own
+   // system directories, which can leave another of these (say, the
+   // compiler's builtin headers) ahead of the C++ standard library's, and
+   // libc++ requires that its <stddef.h> be found before the builtin one.
    std::vector<std::string> includes;
    discoverSystemIncludePaths(&includes);
    for (auto&& include : includes)
-      args.push_back("-I" + include);
+      args.push_back("-isystem" + include);
 #endif
 
    if (verbose(3))
