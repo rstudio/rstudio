@@ -174,6 +174,16 @@ check("trailing return definitions keep their qualifiers and specifiers",
        "h(): template <typename T> int S<T>:: [4..4]",
        "count(): int A:: [5..5]"].join("\n"));
 
+check("noexcept with an argument before a trailing return type",
+      tree(makeSession([
+        "int x;",
+        "auto f() const noexcept(noexcept(g())) -> int { return 1; }",
+        "auto h() noexcept(true) -> decltype(x) { return x; }",
+        ""
+      ].join("\n"))),
+      ["f() const noexcept(noexcept(g())): int [1..1]",
+       "h() noexcept(true): decltype(x) [2..2]"].join("\n"));
+
 check("a requires-clause after a trailing return type is not part of it",
       tree(makeSession([
         "template <class T> auto f(T t) -> int requires std::integral<T> { return 1; }",
