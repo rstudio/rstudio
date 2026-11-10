@@ -38,7 +38,6 @@ import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
-import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
@@ -88,7 +87,7 @@ public class AddinsToolbarButton extends ToolbarMenuButton
       RStudioGinjector.INSTANCE.injectMembers(this);
 
       ElementIds.assignElementId(this, ElementIds.ADDINS_TOOLBAR_BUTTON);
-      menu_ = getMenu();
+      menu_ = (ScrollableToolbarPopupMenu) getMenu();
 
       menu_.setAutoHideRedundantSeparators(false);
 
@@ -265,7 +264,7 @@ public class AddinsToolbarButton extends ToolbarMenuButton
       role.setAriaAutocompleteProperty(input, AutocompleteValue.LIST);
       role.setAriaControlsProperty(input, Id.of(menuEl));
 
-      ((ScrollableToolbarPopupMenu) menu_).addSelectionHandler(event ->
+      menu_.addSelectionHandler(event ->
       {
          MenuItem item = event.getSelectedItem();
          if (item == null)
@@ -412,7 +411,7 @@ public class AddinsToolbarButton extends ToolbarMenuButton
       executor_ = executor;
    }
 
-   private final ToolbarPopupMenu menu_;
+   private final ScrollableToolbarPopupMenu menu_;
    private final SearchWidget searchWidget_;
    private final Timer searchValueChangeTimer_;
 
