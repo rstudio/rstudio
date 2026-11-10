@@ -52,6 +52,21 @@ export function isAutomated(): boolean {
 }
 
 /**
+ * Automation windows sit behind the user's own, and one they clicked to watch
+ * a run and then covered again would otherwise report itself hidden and stop
+ * painting, stalling the tests.
+ */
+export function keepAutomationWindowsRendering(): void {
+  if (!isAutomated()) {
+    return;
+  }
+
+  app.on('web-contents-created', (_event, contents) => {
+    contents.setBackgroundThrottling(false);
+  });
+}
+
+/**
  * Put a window on screen during an automation run without activating it or
  * raising it over whatever the user is working in. A window that is already
  * on screen is left exactly where it is, so the user can click one to watch a

@@ -49,6 +49,7 @@ import {
   initializeLang,
   initializeSharedSecret,
   isAutomated,
+  keepAutomationWindowsRendering,
   showWindowForAutomation,
   loadRWebsite,
   raiseAndActivateWindow,
@@ -248,14 +249,7 @@ export class Application implements AppState {
       this.createMessageClient();
     }
 
-    // Automation windows sit behind the user's own, and one they clicked to
-    // watch a run and then covered again would otherwise report itself hidden
-    // and stop painting, stalling the tests.
-    if (isAutomated()) {
-      app.on('web-contents-created', (_event, contents) => {
-        contents.setBackgroundThrottling(false);
-      });
-    }
+    keepAutomationWindowsRendering();
 
     app.on('second-instance', (_event, argv) => {
       logger().logDebug(`second-instance event: ARGS ${argv}`);

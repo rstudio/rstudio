@@ -258,6 +258,40 @@ describe('Utils', () => {
     }
   });
 
+  describe('keepAutomationWindowsRendering', () => {
+    // creates a real window after the call, and reports whether its page would
+    // still be throttled once the window is covered
+    function throttlesNewWindows(): boolean {
+      const before = app.listeners('web-contents-created');
+      Utils.keepAutomationWindowsRendering();
+
+      const window = new BrowserWindow({ show: false });
+      try {
+        return window.webContents.getBackgroundThrottling();
+      } finally {
+        window.destroy();
+        for (const listener of app.listeners('web-contents-created')) {
+          if (!before.includes(listener)) {
+            app.removeListener('web-contents-created', listener as (...args: unknown[]) => void);
+          }
+        }
+      }
+    }
+
+    it('leaves background throttling on outside automation', () => {
+      assert.isTrue(throttlesNewWindows());
+    });
+
+    it('turns background throttling off for windows created in automation mode', () => {
+      app.commandLine.appendSwitch('automation-agent');
+      try {
+        assert.isFalse(throttlesNewWindows());
+      } finally {
+        app.commandLine.removeSwitch('automation-agent');
+      }
+    });
+  });
+
   describe('showWindowForAutomation', () => {
     function fakeWindow(state: { visible: boolean; minimized: boolean }) {
       return {
