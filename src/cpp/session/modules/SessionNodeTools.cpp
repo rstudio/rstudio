@@ -36,6 +36,7 @@
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/asio/ip/address_v6.hpp>
@@ -549,9 +550,12 @@ void applyEnvProxyOption(core::system::Options* pEnvironment)
 
             // An inherited NODE_OPTIONS can turn the same parsing on. Node
             // honors the last spelling of an option, so negate it at the end
-            // rather than edit the user's value.
+            // rather than edit the user's value. Node reads underscores as
+            // dashes and takes an =value suffix, hence the loose match; a
+            // false positive only adds a redundant negation.
             std::string nodeOptions = core::system::getenv(*pEnvironment, "NODE_OPTIONS");
-            if (containsOptionToken(nodeOptions, "--use-env-proxy"))
+            std::string dashed = boost::algorithm::replace_all_copy(nodeOptions, "_", "-");
+            if (dashed.find("--use-env-proxy") != std::string::npos)
                core::system::setenv(pEnvironment, "NODE_OPTIONS", nodeOptions + " --no-use-env-proxy");
 
             return;

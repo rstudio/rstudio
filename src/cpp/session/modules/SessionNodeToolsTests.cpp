@@ -374,6 +374,19 @@ TEST(SessionNodeToolsTest, ApplyEnvProxyOptionNegatesInheritedNodeOptionForInval
    EXPECT_EQ(core::system::getenv(env, "NODE_OPTIONS"),
              "--max-old-space-size=4096 --use-env-proxy --no-use-env-proxy");
 
+   // Node also takes underscores for dashes, and an =value suffix.
+   for (const char* option : { "--use_env_proxy", "--use_env-proxy", "--use-env-proxy=true" })
+   {
+      core::system::Options spelled;
+      core::system::setenv(&spelled, "NODE_OPTIONS", option);
+      core::system::setenv(&spelled, "http_proxy", "http://proxy.example.com:abc");
+
+      applyEnvProxyOption(&spelled);
+
+      EXPECT_EQ(core::system::getenv(spelled, "NODE_OPTIONS"),
+                std::string(option) + " --no-use-env-proxy");
+   }
+
    // Other options are left alone, as is everything when the value is valid.
    core::system::Options env2;
    core::system::setenv(&env2, "NODE_OPTIONS", "--max-old-space-size=4096");
