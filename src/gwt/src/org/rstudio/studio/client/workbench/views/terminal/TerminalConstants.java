@@ -94,6 +94,7 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
     String failedToSwitchRPCMessage();
     String terminalFailedToConnectMessage();
     String sendUserInputMessage();
+    String rpcWriteTimedOutMessage();
     String permanentlyDisconnectedLabel();
     String disconnectedLabel();
     String closeAllTerminalsCaption();
