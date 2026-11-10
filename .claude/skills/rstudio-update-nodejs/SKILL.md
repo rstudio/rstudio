@@ -226,7 +226,7 @@ rm -f node-v<BUILD_VERSION>-* node-v<INSTALLED_VERSION>-*
 
 ### 7. Verify the install
 
-Run the dependency installer to confirm the S3 binaries download and extract correctly. The script must be run from `dependencies/common/` because it invokes `./install-node` and `./install-yarn` via relative paths. It installs into `dependencies/common/node/` which is gitignored.
+Run the dependency installer to confirm the S3 binaries download and extract correctly. The script must be run from `dependencies/common/` because it invokes `./install-node` via a relative path. It installs into `dependencies/common/node/` which is gitignored.
 
 First, remove any cached local installs for the new version(s) so the installer is forced to download fresh from S3. The `install-node` script skips download when it finds an existing `node/<version>/bin/node`, so stale local copies would mask a broken upload.
 
