@@ -13,10 +13,15 @@ import { useSuiteSandbox } from '@utils/sandbox';
 import { AceEditorElement } from '@utils/ace';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
 import { clearPref, executeCommand, setPref } from '@utils/commands';
-import { waitForConsoleFocus, waitForConsoleIdle } from '@pages/console_pane.page';
+import {
+  CONSOLE_SCROLLBACK,
+  executeInConsole,
+  executeInConsoleChecked,
+  findRErrorAfter,
+  waitForConsoleFocus,
+  waitForConsoleIdle,
+} from '@pages/console_pane.page';
 import { heredoc } from '@utils/heredoc';
-
-const CONSOLE_OUTPUT = '#rstudio_console_output';
 
 async function consoleSpanTexts(page: Page): Promise<string[]> {
   return page.evaluate((sel: string) => {
@@ -25,7 +30,7 @@ async function consoleSpanTexts(page: Page): Promise<string[]> {
     return Array.from(root.querySelectorAll('span'))
       .map((s) => (s as HTMLElement).innerText)
       .filter((t) => t.length > 0);
-  }, CONSOLE_OUTPUT);
+  }, CONSOLE_SCROLLBACK);
 }
 
 async function readConsoleInput(page: Page): Promise<string> {
@@ -155,6 +160,94 @@ test.describe('Console output and annotation', () => {
         .filter((l) => l.length > 0 && !l.startsWith('>') && !l.startsWith('{ message'));
       return lines.at(-1);
     }).toBe('M2');
+  });
+
+  test('executeInConsoleChecked reports only the errors of its own command', async ({ rstudioPage: page }) => {
+    // An error an earlier test left in the scrollback must not fail a later
+    // clean command; the helper's own command's error still must.
+    await executeInConsole(page, 'stop("earlier failure")');
+    await executeInConsoleChecked(page, 'invisible(1)');
+
+    // Match the reported error rather than the command text quoted ahead of it.
+    await expect(executeInConsoleChecked(page, 'stop("this one")'))
+      .rejects.toThrow(/: Error[^|]*this one/);
+  });
+
+  test('executeInConsoleChecked ignores error text in the command echo', async ({ rstudioPage: page }) => {
+    await executeInConsoleChecked(page, 'invisible(grepl("Error in", "Error: none"))');
+
+    // Later lines of a multi-line command are echoed after the marker.
+    await executeInConsoleChecked(
+      page,
+      heredoc`
+        {
+          x <- grepl("Error in", "Error: none")
+        }
+      `,
+    );
+    await expect(executeInConsoleChecked(page, '{\n  stop("on a later line")\n}'))
+      .rejects.toThrow(/: Error: on a later line/);
+  });
+
+  test('executeInConsoleChecked reports a command that fails to parse', async ({ rstudioPage: page }) => {
+    await expect(executeInConsoleChecked(page, 'x <- <- 1'))
+      .rejects.toThrow(/: Error: unexpected assignment/);
+  });
+
+  test('executeInConsoleChecked reports a command whose output it cannot locate', async ({ rstudioPage: page }) => {
+    // A form feed clears the console, and the marker with it.
+    await expect(executeInConsoleChecked(page, 'cat("\\f")'))
+      .rejects.toThrow(/output marker not found/);
+  });
+
+  test('executeInConsoleChecked refuses a line the console would truncate', async ({ rstudioPage: page }) => {
+    // Within the limit on its own, over it once the marker is prefixed.
+    const limit = /exceeds the console's 4094-byte input limit/;
+    await expect(executeInConsoleChecked(page, `invisible("${'x'.repeat(4070)}")`))
+      .rejects.toThrow(limit);
+
+    // A non-ASCII character is counted as the escape a Windows code page
+    // without it would need, not as its UTF-8 bytes.
+    await expect(executeInConsoleChecked(page, `invisible("${'é'.repeat(450)}")`))
+      .rejects.toThrow(limit);
+
+    // One outside the BMP can be escaped a surrogate half at a time.
+    await expect(executeInConsoleChecked(page, `invisible("${'\u{1F600}'.repeat(350)}")`))
+      .rejects.toThrow(limit);
+  });
+
+  test('findRErrorAfter attributes only the errors that follow the marker', () => {
+    // createSandbox reports its failures this way: its marker is in the
+    // command's echo, and an earlier spec's error precedes that.
+    const echo = '> { setwd(d); cat("__M__", d, "__M__") }';
+    const failed = `Error: stale\n${echo}\nError in setwd(d) : \n  cannot change working directory\n> `;
+    expect(findRErrorAfter(failed, '__M__')).toBe('Error in setwd(d) :  |   cannot change working directory');
+    expect(findRErrorAfter(`Error: stale\n${echo}\n> `, '__M__')).toBeNull();
+    expect(findRErrorAfter('Error: stale\n> ', '__M__')).toBeNull();
+  });
+
+  test('executeInConsoleChecked finds its own output in a trimming scrollback', async ({ rstudioPage: page }) => {
+    const output = page.locator(CONSOLE_SCROLLBACK);
+    await setPref(page, 'console_max_lines', 50);
+    try {
+      // Fill the scrollback past its limit, so that every later write trims
+      // from the top, and leave an error near the end of it.
+      await executeInConsole(page, 'cat("first-line-sentinel", rep("filler", 200), sep = "\\n")');
+      await expect(output).not.toContainText('first-line-sentinel');
+      await executeInConsole(page, 'stop("earlier failure")');
+      await expect(output).toContainText('earlier failure');
+      await executeInConsoleChecked(page, 'cat(rep("more", 10), sep = "\\n")');
+
+      // Identical output repeating while the scrollback trims, long enough
+      // that the console ends on the same text before and after, is still
+      // attributed to the command that wrote it.
+      for (let i = 0; i < 2; i++) {
+        await expect(executeInConsoleChecked(page, 'stop(strrep("repeated ", 40))'))
+          .rejects.toThrow(/: Error[^|]*repeated/);
+      }
+    } finally {
+      await clearPref(page, 'console_max_lines');
+    }
   });
 
   test('long lines are truncated when consoleLineLengthLimit is reduced', async ({ rstudioPage: page }) => {

@@ -1378,11 +1378,8 @@ Error startAgent(const std::string& assistantType = "")
    if (!certificatesFile.empty())
       environment.push_back(std::make_pair("NODE_EXTRA_CA_CERTS", certificatesFile));
 
-   // Enable Node.js proxy support for fetch().
-   // When HTTP_PROXY / HTTPS_PROXY env vars are set (e.g. via ~/.Renviron),
-   // this tells Node.js 22.21+ to route fetch() through the proxy.
-   // See: https://github.com/nodejs/node/pull/57165
-   core::system::setenv(&environment, "NODE_USE_ENV_PROXY", "1");
+   // Route fetch() through HTTP_PROXY / HTTPS_PROXY (e.g. from ~/.Renviron).
+   node_tools::applyEnvProxyOption(&environment);
 
 #ifdef _WIN32
    // On Windows, R sets HOME to the user's Documents directory rather than

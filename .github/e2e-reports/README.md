@@ -40,6 +40,11 @@ All of this is done once, by someone with the `ide-build` AWS profile
            --name /rstudio-e2e-reports/tailscale-authkey \
            --value tskey-auth-...
 
+     An OAuth client secret (`tskey-client-...`) from a client that owns the
+     tag works the same way and does not expire: the host then asks for the
+     `TailscaleTags` stack parameter's tags as a pre-approved, non-ephemeral
+     node.
+
      A tagged node has no key expiry, and a stored key lets a replacement
      instance enroll unattended. This is the way to run it long term.
 
@@ -99,6 +104,15 @@ All of this is done once, by someone with the `ide-build` AWS profile
   The new host enrolls with the SSM key if one is stored, else it waits to
   be authorized as at setup. The retired node lingers in the machine list
   until an admin removes it or its key expires.
+- **Re-enrolling** the same instance (a new key, or moving a node someone
+  signed in under their own account to the tag): store the key, then free
+  the name and log the node out; the next boot enrolls it again.
+
+      aws ssm send-command --instance-ids <InstanceId> --document-name AWS-RunShellScript \
+        --parameters 'commands=["tailscale set --hostname rstudio-reports-retired","tailscale logout"]'
+
+  Stop and start the instance. Links are down in between, and the retired
+  node is an admin's to remove.
 - **Shell access** is through Session Manager, there is no SSH:
   `aws ssm start-session --target <InstanceId>`. The setup log is
   `/var/log/e2e-reports-setup.log`; the services are `reports-mount`,
@@ -133,6 +147,10 @@ the same region, so they are free.
   for directories, `autoindex` listings elsewhere, content types from file
   extensions. New reports appear as soon as the upload finishes; Mountpoint
   caches directory listings only briefly.
+- nginx gzips text responses and marks the content-addressed files
+  (`data/<sha1>.*` attachments, traces included, and the trace viewer's
+  hashed bundles) as immutable, so a browser downloads each of them once.
+  Everything else is revalidated on each visit.
 - The host lives in a private subnet of the account's shared VPC (an
   organization policy forbids creating VPCs): no public address, a security
   group with no inbound rules, outbound through the VPC's NAT gateway. nginx

@@ -16,7 +16,6 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
@@ -27,7 +26,6 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLTable.Cell;
 import com.google.gwt.user.client.ui.HTMLTable.CellFormatter;
 import com.google.gwt.user.client.ui.ScrollPanel;
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.dom.DomUtils;
@@ -119,29 +117,13 @@ class CompletionList<TItem> extends Composite
       items_ = items;
    }
 
-   // Ace's own completion popup uses menu roles in Safari, for VoiceOver;
-   // match it so both popups read the same way there.
-   private static final boolean USE_MENU_ROLES = BrowseCap.isSafari();
-   private static final String ACTIVE_STATE =
-         USE_MENU_ROLES ? "aria-current" : "aria-selected";
-
    private static void initAria(GridEx grid, String ariaLabel)
    {
-      Element table = grid.getElement();
-      if (USE_MENU_ROLES)
-         Roles.getMenuRole().set(table);
-      else
-         Roles.getListboxRole().set(table);
-      table.setAttribute("aria-label", ariaLabel);
+      CompletionListAria.setListRole(grid.getElement(), ariaLabel);
 
       for (int i = 0; i < grid.getRowCount(); i++)
       {
-         Element row = grid.getRowFormatter().getElement(i);
-         if (USE_MENU_ROLES)
-            Roles.getMenuitemRole().set(row);
-         else
-            Roles.getOptionRole().set(row);
-         DomUtils.ensureHasId(row);
+         CompletionListAria.setItemRole(grid.getRowFormatter().getElement(i));
          Roles.getPresentationRole().set(grid.getCellFormatter().getElement(i, 0));
       }
 
@@ -307,8 +289,8 @@ class CompletionList<TItem> extends Composite
          if (selectedIndex_ >= 0)
          {
             cf.removeStyleName(selectedIndex_, 0, styles_.selected());
-            grid_.getRowFormatter().getElement(selectedIndex_)
-                  .removeAttribute(ACTIVE_STATE);
+            CompletionListAria.setItemActive(
+                  grid_.getRowFormatter().getElement(selectedIndex_), false);
          }
 
          selectedIndex_ = index;
@@ -316,8 +298,8 @@ class CompletionList<TItem> extends Composite
          if (index >= 0)
          {
             cf.addStyleName(selectedIndex_, 0, styles_.selected());
-            grid_.getRowFormatter().getElement(selectedIndex_)
-                  .setAttribute(ACTIVE_STATE, "true");
+            CompletionListAria.setItemActive(
+                  grid_.getRowFormatter().getElement(selectedIndex_), true);
             com.google.gwt.dom.client.Element el =
                   DomUtils.getTableCell(grid_.getElement(), index, 0);
             DomUtils.ensureVisibleVert(scrollPanel_.getElement(), el, 2);

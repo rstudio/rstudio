@@ -59,7 +59,12 @@ class TerminalWebSocket
 
    TerminalWebSocket(Listener listener, int pingInterval, int connectTimeout)
    {
-      this(listener, pingInterval, connectTimeout, Websocket::new, (delay, command) ->
+      this(listener, pingInterval, connectTimeout, Websocket::new, browserTimers());
+   }
+
+   static Scheduler browserTimers()
+   {
+      return (delay, command) ->
       {
          Timer timer = new Timer()
          {
@@ -71,7 +76,7 @@ class TerminalWebSocket
          };
          timer.schedule(delay);
          return timer::cancel;
-      });
+      };
    }
 
    TerminalWebSocket(Listener listener, int pingInterval, int connectTimeout,

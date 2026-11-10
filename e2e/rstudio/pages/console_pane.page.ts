@@ -68,6 +68,10 @@ export interface EnvironmentVersions {
 export const CONSOLE_INPUT = '#rstudio_console_input .ace_text-input';
 export const CONSOLE_TAB = '#rstudio_workbench_tab_console';
 export const CONSOLE_OUTPUT = '#rstudio_workbench_panel_console';
+// The output element alone: the scrollback and each submitted command's echo,
+// without the toolbar and live input line that CONSOLE_OUTPUT (the whole
+// panel) also covers.
+export const CONSOLE_SCROLLBACK = '#rstudio_console_output';
 export const INTERRUPT_R_BTN = "[id^='rstudio_tb_interruptr']";
 
 /**
@@ -592,3 +596,106 @@ export async function goToLine(page: Page, line: number): Promise<void> {
   await sleep(500);
 }
 
+/**
+ * The first R error in `text`, flattened onto one line, or null. R formats
+ * errors as `Error in <call> :\n  <message>`, so the indented continuation
+ * lines are taken along with the header.
+ */
+export function findRError(text: string): string | null {
+  const match = text.match(/(?:Error in|Error:)[^\n]*(?:\n[ \t]+[^\n]*)*/);
+  return match ? match[0].replace(/\n+/g, ' | ').trim() : null;
+}
+
+/**
+ * The first R error after the last occurrence of `marker` in `text`, or null
+ * when there is none, or no marker to scan from. The console buffer is shared
+ * with everything else that ran in the worker, so a command's errors are only
+ * those that follow a marker the command itself put there.
+ *
+ * Lines at R's continuation prompt are skipped: the session echoes each line
+ * of a multi-line command as R reads it, so all but the first land after the
+ * marker, and they are the command's source rather than its output.
+ */
+export function findRErrorAfter(text: string, marker: string): string | null {
+  const at = text.lastIndexOf(marker);
+  if (at < 0)
+    return null;
+
+  const output = text.slice(at + marker.length).split('\n').filter((line) => !line.startsWith('+ '));
+  return findRError(output.join('\n'));
+}
+
+let checkedCommandCount = 0;
+
+// The session truncates a console input line to what R's read buffer holds
+// (RStdCallbacks.cpp: CONSOLE_BUFFER_SIZE less the newline and terminator).
+const MAX_CONSOLE_LINE_BYTES = 4094;
+
+/**
+ * An upper bound on the bytes the session hands R for one input line. The
+ * line is converted to R's native encoding first, and on Windows a character
+ * the code page lacks becomes an escape of up to ten bytes. Counted per UTF-16
+ * code unit, since one conversion path escapes each surrogate half on its own.
+ */
+function consoleLineBytes(line: string): number {
+  let bytes = 0;
+  for (let i = 0; i < line.length; i++)
+    bytes += line.charCodeAt(i) < 0x80 ? 1 : 10;
+
+  return bytes;
+}
+
+/**
+ * executeInConsole only confirms that R reached a new prompt, which an R error
+ * does just as readily as a success. Run the command, then scrape the output
+ * it produced for an error header, so a failed setup step fails here rather
+ * than as a later unrelated-looking timeout.
+ *
+ * Only this command's output is scanned: the console buffer is shared with
+ * everything else that ran in this worker, and an error an earlier spec left
+ * in it would otherwise fail every later call (run 42694353147, Windows
+ * shard 3). The command is prefixed with a cat() of a unique marker, and the
+ * scan starts after it. Comparing before/after snapshots of the console text
+ * cannot place that boundary reliably: the scrollback trims from the top, and
+ * output can repeat.
+ */
+export async function executeInConsoleChecked(
+  page: Page,
+  command: string,
+  opts: { timeout?: number } = {},
+): Promise<void> {
+  // The marker is assembled by R, so the command's echo does not contain it
+  // and its only occurrence is the cat() output, just ahead of the command's
+  // own. That also keeps the echo's first line out of the scan.
+  const id = `${Date.now()}_${checkedCommandCount++}__`;
+  const marker = `__CHECKED_${id}`;
+  const prefix = `cat(paste0("__CHECKED_", "${id}\\n")); `;
+
+  const label = `R error running "${command.slice(0, 120)}"`;
+
+  // A truncated line can lose its closing delimiters after the marker has
+  // printed, which would read as a clean run of a command that never ran.
+  const longest = Math.max(...(prefix + command).split('\n').map(consoleLineBytes));
+  if (longest > MAX_CONSOLE_LINE_BYTES) {
+    throw new Error(
+      `${label}: a line of up to ${longest} bytes exceeds the console's ${MAX_CONSOLE_LINE_BYTES}-byte input limit`,
+    );
+  }
+
+  await executeInConsole(page, prefix + command, { wait: true, timeout: opts.timeout });
+  const text = await page.locator(CONSOLE_SCROLLBACK).innerText();
+
+  // The console evaluates a line one statement at a time, so the marker is
+  // written even when the command itself fails to parse. No marker means the
+  // command cleared the console or wrote enough to push the marker out of the
+  // scrollback, and its result cannot be vouched for.
+  if (!text.includes(marker)) {
+    const tail = text.slice(-300);
+    const detail = findRError(tail) ?? `console tail: ${tail.replace(/\n+/g, ' | ').trim()}`;
+    throw new Error(`${label}: output marker not found; ${detail}`);
+  }
+
+  const error = findRErrorAfter(text, marker);
+  if (error)
+    throw new Error(`${label}: ${error}`);
+}

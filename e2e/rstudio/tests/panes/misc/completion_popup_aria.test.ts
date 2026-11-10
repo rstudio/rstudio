@@ -1,7 +1,7 @@
-// Screen reader support for the console/editor completion popup (#6167) and
-// the console history popup (#6168). Keyboard focus stays in the Ace text
-// input while either popup is open, so the input's aria-activedescendant is
-// what tells a screen reader which item is selected.
+// Screen reader support for the console/editor completion popup (#6167), the
+// C/C++ completion popup (#19532), and the console history popup (#6168).
+// Keyboard focus stays in the Ace text input while a popup is open, so the
+// input's aria-activedescendant tells a screen reader which item is selected.
 
 import type { Page } from 'playwright';
 import { test, expect } from '@fixtures/rstudio.fixture';
@@ -74,10 +74,10 @@ async function expectArrowDownMovesOption(page: Page, listLabel: string, before:
 }
 
 /**
- * Record, at each aria-activedescendant write, whether the named element is
- * visible. Screen readers (VoiceOver in Safari) skip a hidden target and
- * don't re-announce once it becomes visible, and a MutationObserver would
- * only run after the popup is made visible again, so wrap setAttribute.
+ * Record, at each aria-activedescendant write on an Ace text input, whether the
+ * named element is visible. VoiceOver skips a hidden target and won't announce
+ * it once shown; a MutationObserver would run too late to see that, so wrap
+ * setAttribute.
  */
 async function trackActiveDescendantWrites(page: Page) {
   await page.evaluate(() => {
@@ -88,7 +88,7 @@ async function trackActiveDescendantWrites(page: Page) {
     const original = proto.__adOriginal;
     proto.setAttribute = function (name: string, value: string) {
       original.call(this, name, value);
-      if (name === 'aria-activedescendant') {
+      if (name === 'aria-activedescendant' && this.classList.contains('ace_text-input')) {
         const target = document.getElementById(value);
         w.__adWrites.push({
           id: value,
@@ -119,7 +119,7 @@ async function expectNoActiveDescendant(page: Page, inputSelector: string) {
 }
 
 test.describe('Completion popup screen reader support', () => {
-  // The editor test creates a file in the working directory.
+  // The editor and C++ tests create files in the working directory.
   useSuiteSandbox();
   let consoleActions: ConsolePaneActions;
   let sourceActions: SourcePaneActions;
@@ -174,6 +174,61 @@ test.describe('Completion popup screen reader support', () => {
 
     await page.keyboard.press('Escape');
     await expect(page.locator(COMPLETION_POPUP)).toBeHidden();
+    await expect.poll(() => activeOption(page)).toBeNull();
+  });
+
+  test('C++ completion popup announces the selected item', async ({ rstudioPage: page }) => {
+    // A standalone .cpp file gets compile arguments, and so completions,
+    // only as an Rcpp (or cpp11) source file. Completion produces no popup on
+    // the Linux CI runners (libclang 18 can't parse the file, #19559) or on
+    // the Windows ones, so the test runs only against macOS sessions.
+    const canComplete = await consoleActions.evalRLogical(
+      '.rs.isClangAvailable() && requireNamespace("Rcpp", quietly = TRUE) && ' +
+      'Sys.info()[["sysname"]] == "Darwin"');
+    expect(canComplete, `Unreadable probe result:\n${await consoleActions.lastOutputText()}`)
+      .not.toBeNull();
+    test.skip(!canComplete, 'C++ completion needs a macOS session with libclang and Rcpp');
+
+    // C++ completion asks libclang for the members of `s` once `s.` is typed.
+    // The file needs a path on disk, which is how it gets Rcpp compile arguments.
+    const fileName = `completion_aria_${Date.now()}.cpp`;
+    await sourceActions.createAndOpenFile(fileName, [
+      '#include <Rcpp.h>',
+      '#include <string>',
+      '// [[Rcpp::export]]',
+      'int probe() {',
+      '  std::string s;',
+      '  ',
+      '  return 0;',
+      '}',
+    ].join('\n'));
+    await sourceActions.sourcePane.aceTextInput.click({ force: true });
+    await page.evaluate(() => {
+      const editor = window.rstudio?.documents.activeEditor() ?? null;
+      if (!editor) throw new Error('No active source editor');
+      editor.focus();
+      editor.gotoLine(6, 2);
+    });
+
+    await trackActiveDescendantWrites(page);
+    await page.keyboard.type('s.');
+
+    // libclang compiles the translation unit on the first request, which can
+    // take several seconds.
+    // Located by structure, not ARIA, so a missing label fails on the label.
+    const popup = page.locator('.themedPopupPanel:visible .gwt-MenuBar-vertical');
+    await expect(popup).toBeVisible({ timeout: 60000 });
+
+    const first = await expectActiveOption(page, 'Completions');
+    expect(first.text.length).toBeGreaterThan(0);
+    await expectWritesNameVisibleItems(page);
+    await expectArrowDownMovesOption(page, 'Completions', first);
+
+    // The type icons are decorative; the item's text names it.
+    await expect(popup.locator('img:not([role="presentation"][alt=""])')).toHaveCount(0);
+
+    await page.keyboard.press('Escape');
+    await expect(popup).toBeHidden();
     await expect.poll(() => activeOption(page)).toBeNull();
   });
 
