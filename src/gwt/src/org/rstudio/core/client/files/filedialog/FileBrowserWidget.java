@@ -209,6 +209,11 @@ public class FileBrowserWidget extends Composite
       return directory_.getSelectedTarget();
    }
 
+   public FileSystemItem resolveItem(FileSystemItem item)
+   {
+      return directory_.resolveItem(item);
+   }
+
    public FileSystemItem getCurrentDirectory()
    {
       return context_.pwdItem();

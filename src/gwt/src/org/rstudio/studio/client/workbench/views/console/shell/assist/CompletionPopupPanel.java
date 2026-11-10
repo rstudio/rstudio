@@ -33,6 +33,7 @@ import org.rstudio.core.client.widget.ThemedPopupPanel;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
+import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo.ParsedInfo;
 
 import com.google.gwt.core.client.GWT;
@@ -58,9 +59,10 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 public class CompletionPopupPanel extends ThemedPopupPanel
       implements CompletionPopupDisplay
 {
-   public CompletionPopupPanel()
+   public CompletionPopupPanel(InputEditorDisplay input)
    {
       super();
+      input_ = input;
       autoConstrain_ = false;
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
 
@@ -111,6 +113,9 @@ public class CompletionPopupPanel extends ThemedPopupPanel
 
    public void placeOffscreen()
    {
+      // An offscreen list stays attached; stop announcing its selection.
+      if (list_ != null)
+         list_.setInput(null);
       setPopupPosition(-10000, -10000);
       help_.setPopupPosition(-10000, -10000);
    }
@@ -136,6 +141,9 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    @Override
    public void clearCompletions()
    {
+      // The cleared list can stay attached, offscreen or behind a message.
+      if (list_ != null)
+         list_.setInput(null);
       list_ = null;
    }
 
@@ -167,7 +175,9 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       // we'll have relatively less space available. In that case, try to display
       // fewer items, so we can fit the visible space.
       int numVisibleItems = isShowingOnBottom ? 9 : 6;
-      CompletionList<QualifiedName> list = new CompletionList<>(values, numVisibleItems, true, true);
+      CompletionList<QualifiedName> list = new CompletionList<>(
+            values, numVisibleItems, true, true, constants_.completionsListLabel());
+      list.setInput(input_);
 
       list.addSelectionCommitHandler((SelectionCommitEvent<QualifiedName> event) ->
       {
@@ -524,6 +534,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       resetIgnoredKeysHandle();
    }
 
+   private final InputEditorDisplay input_;
    private CompletionList<QualifiedName> list_;
    private HelpInfoPopupPanel help_;
    private final ConsoleResources.ConsoleStyles styles_;

@@ -69,23 +69,6 @@ private:
    FilePath basePath_;
 };
 
-struct ExcludePattern
-{
-   ExcludePattern(const boost::regex& pattern)
-      : begin(pattern)
-   {
-   }
-
-   ExcludePattern(const boost::regex& beginPattern,
-                  const boost::regex& endPattern)
-      : begin(beginPattern), end(endPattern)
-   {
-   }
-
-   boost::regex begin;
-   boost::regex end;
-};
-
 struct TextRange
 {
    TextRange(bool process,
@@ -99,10 +82,6 @@ struct TextRange
    std::string::const_iterator begin;
    std::string::const_iterator end;
 };
-
-
-TextRange findClosestRange(std::string::const_iterator pos,
-                           const std::vector<TextRange>& ranges);
 
 
 class HtmlPreserver : boost::noncopyable

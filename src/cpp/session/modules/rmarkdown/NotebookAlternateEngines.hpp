@@ -37,6 +37,16 @@ core::Error executeAlternateEngineChunk(const std::string& docId,
                                   ExecScope execScope,
                                   int pixelWidth,
                                   int charWidth);
+
+// show an error as the output of an alternate-engine chunk that could not be
+// run (e.g. because its code could not be read)
+core::Error reportAlternateEngineChunkError(const std::string& docId,
+                                            const std::string& chunkId,
+                                            const std::string& label,
+                                            const std::string& nbCtxId,
+                                            const std::string& code,
+                                            const std::string& message);
+
 } // namespace notebook
 } // namespace rmarkdown
 } // namespace modules

@@ -383,6 +383,7 @@ namespace prefs {
 #define kAutoSaveIdleMs "auto_save_idle_ms"
 #define kAutoSaveOnBlur "auto_save_on_blur"
 #define kReduceRemoteFilesystemOperations "reduce_remote_filesystem_operations"
+#define kShowReducedFileOperationsNotice "show_reduced_file_operations_notice"
 #define kTerminalInitialDirectory "terminal_initial_directory"
 #define kTerminalInitialDirectoryProject "project"
 #define kTerminalInitialDirectoryCurrent "current"
@@ -1927,6 +1928,12 @@ public:
     */
    bool reduceRemoteFilesystemOperations();
    core::Error setReduceRemoteFilesystemOperations(bool val);
+
+   /**
+    * Whether to print a notice in the Console at startup when RStudio has reduced background file operations for the current project.
+    */
+   bool showReducedFileOperationsNotice();
+   core::Error setShowReducedFileOperationsNotice(bool val);
 
    /**
     * Initial directory for new terminals.
