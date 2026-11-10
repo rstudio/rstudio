@@ -529,13 +529,14 @@ var CppCodeModel = function(session, tokenizer,
                               ));
 
                            // With 'auto f() -> int', the trailing type is the
-                           // one worth showing rather than 'auto'.
+                           // one worth showing rather than 'auto'. Any
+                           // 'override' or 'final' after it isn't part of it.
                            if (fnArgsEndCursor.currentValue() === "->") {
                               var bracePos = tokenCursor.currentPosition();
                               fnType = this.$session.getTextRange(new Range(
                                  fnArgsEndPos.row, fnArgsEndPos.column + 2,
                                  bracePos.row, bracePos.column
-                              ));
+                              )).replace(/(\s+(override|final))+\s*$/, "");
                            }
 
                         }

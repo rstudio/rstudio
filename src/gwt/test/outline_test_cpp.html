@@ -142,6 +142,20 @@ check("functions with trailing return types are labelled",
        "  operator->(): T* [7..7]",
        "  operator->(): T* [8..8]"].join("\n"));
 
+check("virt-specifiers after a trailing return type are not part of it",
+      tree(makeSession([
+        "struct S {",
+        "  auto size() const -> std::size_t override { return 0; }",
+        "  auto f() -> int final { return 1; }",
+        "  auto g() -> int override final { return 1; }",
+        "};",
+        ""
+      ].join("\n"))),
+      ["S [0..4]",
+       "  size() const: std::size_t [1..1]",
+       "  f(): int [2..2]",
+       "  g(): int [3..3]"].join("\n"));
+
 check("comparisons in a trailing return type are kept",
       tree(makeSession("auto g() -> std::enable_if_t<N == 1, int> { return 1; }\n")),
       "g(): std::enable_if_t<N == 1, int> [0..0]");
