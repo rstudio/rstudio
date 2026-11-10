@@ -107,8 +107,7 @@ curl -fsSL https://nodejs.org/dist/index.json \
 sed -n '/<target name="panmirror"/,/<\/target>/p' src/gwt/build.xml | grep 'exec executable'
 ```
 
-The last command shows which tool the `panmirror` target in `src/gwt/build.xml` runs:
-`${npm.bin}` or `${yarn.bin}`.
+The last command shows which tool the `panmirror` target in `src/gwt/build.xml` runs.
 
 - If `RSTUDIO_NODE_VERSION` does not satisfy `engines.node`, stop and tell the user: Node.js must
   be raised first, in a separate PR (the rstudio-update-nodejs skill), merged before this one.
@@ -148,10 +147,9 @@ The grep should print nothing, and the diff should show the two scripts, one lin
 #### If step 4 found a package manager change
 
 Switch the `panmirror` target in `src/gwt/build.xml` to the new tool, for both the dependency
-install and the build, and keep the diff to that target. Use the existing `npm.bin` or `yarn.bin`
-property rather than adding or moving a lookup: rstudio-pro's `build.xml` has its own lookups
-beside `yarn.bin`, so a moved one conflicts when this merges downstream. The diff should then show the two
-scripts plus `build.xml`.
+install and the build, and keep the diff to that target. `npm.bin` is the only package manager
+lookup; for another tool, add its lookup without moving existing lines, so the downstream merge
+into rstudio-pro stays clean. The diff should then show the two scripts plus `build.xml`.
 
 #### Build panmirror from the new branch
 

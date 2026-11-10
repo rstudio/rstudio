@@ -54,11 +54,8 @@ var MARKER_HIT_WIDTH = 6;
 var SLOW_DIFF_MS = 20;
 var SLOW_UPDATE_DELAY_MS = 150;
 
-// Bail out on pathological inputs rather than hang the UI thread. The
-// provider does not say when it gave up; a timed-out line alignment comes
-// back as one change spanning both documents, with the budget spent (see
-// computeChunks for how that is told apart from a document that did change
-// throughout).
+// Limit line alignment on pathological inputs. Character refinement uses
+// independent work budgets, falling back to coarse hunks when exhausted.
 var MAX_COMPUTATION_MS = 250;
 
 // Peek text when none is supplied (the IDE passes translated strings in).
@@ -109,45 +106,6 @@ function trimCommonLines(base, lines) {
    return { prefix: prefix, suffix: suffix };
 }
 
-// Stands a token in for each line, the same token for identical lines. The
-// provider refines each change character by character, which is quadratic
-// in the characters of the change and of no use here (only the line ranges
-// are read), so a large replaced block spends the whole budget there; on
-// one-character tokens that work is negligible. The tokens come from the CJK
-// Unified Ideographs block, none of them whitespace: one code point per
-// distinct line, two once there are more than 20,992. The indentation goes
-// with the rest of the text, so the provider cannot use it to place a chunk
-// that could sit at more than one row.
-var TOKEN_FIRST = 0x4E00;
-var TOKEN_COUNT = 0x9FFF - TOKEN_FIRST + 1;
-
-function tokenFor(id) {
-   var token = "";
-   do
-   {
-      token += String.fromCharCode(TOKEN_FIRST + id % TOKEN_COUNT);
-      id = Math.floor(id / TOKEN_COUNT);
-   }
-   while (id > 0);
-
-   return token;
-}
-
-function tokenizeLines(base, lines) {
-   var ids = new Map();
-   var tokenize = function(line) {
-      var id = ids.get(line);
-      if (id == null)
-      {
-         id = ids.size;
-         ids.set(line, id);
-      }
-      return tokenFor(id);
-   };
-
-   return { base: base.map(tokenize), lines: lines.map(tokenize) };
-}
-
 function offsetRange(range, rows) {
    return new Range(range.start.row + rows, range.start.column, range.end.row + rows, range.end.column);
 }
@@ -162,7 +120,8 @@ function offsetChunks(chunks, rows) {
    return chunks.map(function(chunk) {
       var result = {
          old: offsetRange(chunk.old, rows),
-         new: offsetRange(chunk.new, rows)
+         new: offsetRange(chunk.new, rows),
+         isCoarse: chunk.isCoarse
       };
 
       if (chunk.charChanges)
@@ -173,14 +132,6 @@ function offsetChunks(chunks, rows) {
       }
 
       return result;
-   });
-}
-
-// The character ranges of a diff over tokens describe the tokens, not the
-// text; only the line ranges carry over.
-function dropCharChanges(chunks) {
-   return chunks.map(function(chunk) {
-      return { old: chunk.old, new: chunk.new };
    });
 }
 
@@ -196,13 +147,15 @@ function isAddition(chunk) {
    return chunk.old.start.row === chunk.old.end.row;
 }
 
-function isWholeDocument(chunks, base, lines) {
-   if (chunks.length !== 1)
+// Whether a diff has to be run again for a side-by-side view to show its
+// character highlights: only a coarse change can be missing them, and only
+// if the diff was not asked for them (see computeChunks). The view shows
+// none for a whitespace-insensitive diff.
+function needsHighlights(chunks, highlightsRequested, ignoreWhitespace) {
+   if (ignoreWhitespace || highlightsRequested)
       return false;
 
-   var chunk = chunks[0];
-   return chunk.old.start.row === 0 && chunk.old.end.row === base.length &&
-          chunk.new.start.row === 0 && chunk.new.end.row === lines.length;
+   return chunks.some(function(chunk) { return chunk.isCoarse; });
 }
 
 function sameChunk(a, b) {
@@ -249,6 +202,7 @@ var GitDiffGutter = function(editor, strings) {
    this.updatePending = false;
    this.lastDiffMs = 0;
    this.diffFailed = false;
+   this.highlightsRequested = false;
    this.ignoreWhitespace = false;
    this.peek = null;
    this.baseRefresher = null;
@@ -412,6 +366,7 @@ var GitDiffGutter = function(editor, strings) {
          this.splitView.baseEditor.commands.removeCommand("closeGitPeek");
       }
 
+      var opening = !this.splitView && !!view;
       this.splitView = view;
       this.notifyStatus();
       if (!view)
@@ -423,11 +378,25 @@ var GitDiffGutter = function(editor, strings) {
       view.baseEditor.on("focus", this.onCursorActivity);
       view.baseEditor.commands.addCommand(this.closePeekCommand());
 
-      // (an update waiting out a slow diff's typing pause would otherwise
-      // hand the view the previous chunks, and its first folds with them)
-      this.flushUpdate();
+      // The view aligns its chunks against the base, so it gets the base
+      // first; an update then hands it the chunks (see setChunks). Both
+      // modes keep the same hunks, but the view also shows character
+      // highlights, which a coarse hunk only gets when the diff is run with
+      // the view attached (see computeChunks), so opening on one whose diff
+      // ran without a view runs the diff again. Nothing else needs it, and
+      // closing never does: the chunks keep their highlights, so reopening
+      // with no edit in between reuses them. An update waiting out a slow
+      // diff's typing pause would otherwise hand the view the previous
+      // chunks, and its first folds with them. A diff that gave up is
+      // tried again too: what stalled it may have passed.
       view.setBaseLines(this.baseLines);
-      view.setChunks(this.chunks, this.ignoreWhitespace);
+      if (opening && (this.diffFailed || needsHighlights(this.chunks, this.highlightsRequested, this.ignoreWhitespace)))
+         this.updatePending = true;
+
+      if (this.updatePending)
+         this.flushUpdate();
+      else
+         view.setChunks(this.chunks, this.ignoreWhitespace);
    };
 
    // The Escape command that closes the peek (see the constructor), for an
@@ -583,6 +552,10 @@ var GitDiffGutter = function(editor, strings) {
    };
 
    this.computeChunks = function(base, lines) {
+      // (a side-by-side view drops the character ranges of a
+      // whitespace-insensitive diff, which do not fit the text)
+      this.highlightsRequested = !!this.splitView && !this.ignoreWhitespace;
+
       var common = trimCommonLines(base, lines);
       if (common.prefix > 0 || common.suffix > 0)
       {
@@ -606,28 +579,21 @@ var GitDiffGutter = function(editor, strings) {
       try
       {
          var DiffProvider = require("ace/ext/diff/providers/default").DiffProvider;
-         var options = { maxComputationTimeMs: MAX_COMPUTATION_MS };
+         var options = {
+            maxComputationTimeMs: MAX_COMPUTATION_MS,
+            boundedRefinement: true,
+            includeBoundedHighlights: this.highlightsRequested
+         };
          var started = Date.now();
          var chunks = new DiffProvider().compute(base, lines, options);
          this.lastDiffMs = Date.now() - started;
 
-         // A timed-out line alignment is not a diff: it would mark every
-         // line changed and hand Revert the whole document. But a large
-         // replaced block looks the same, and spends the budget just as
-         // surely, in the character-level refinement that follows a sound
-         // alignment (quadratic in the block, and of no use here). The diff
-         // is run again on tokens, which leaves the budget to the alignment;
-         // only if that too gives up are there better no markers.
-         if (this.lastDiffMs >= MAX_COMPUTATION_MS && isWholeDocument(chunks, base, lines))
+         // Character-budget exhaustion keeps a valid coarse hunk. A failed
+         // line alignment cannot safely supply markers or a revert scope.
+         if (chunks.hitTimeout)
          {
-            var tokens = tokenizeLines(base, lines);
-            started = Date.now();
-            chunks = dropCharChanges(new DiffProvider().compute(tokens.base, tokens.lines, options));
-            if (Date.now() - started >= MAX_COMPUTATION_MS && isWholeDocument(chunks, base, lines))
-            {
-               this.diffFailed = true;
-               return [];
-            }
+            this.diffFailed = true;
+            return [];
          }
 
          return offsetChunks(chunks, common.prefix);

@@ -50,6 +50,7 @@ permissions:
   # job declares id-token: write for the OIDC S3 report upload, which never
   # runs in build_only mode.
   id-token: write
+  actions: write  # the engines' e2e-merge job deletes the shard blob artifacts once merged
 
 jobs:
   seed:

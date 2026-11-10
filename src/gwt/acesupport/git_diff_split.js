@@ -157,6 +157,98 @@ function returnRows(widget) {
    widget.gitDiffLentRows = 0;
 }
 
+// Measure a new layout without touching the editors' widgets or row caches.
+// Ace's coordinate conversion can use the existing document, folds and wrap
+// data, but needs its own caches and widgets as padding is accumulated.
+// Keep aliases (a widget at both ends of a fold) and foreign widget identity
+// so that planning can use the same placement rules as the live sessions.
+function PaddingPlan() {
+   this.copies = new Map();
+   this.originals = new Map();
+}
+
+PaddingPlan.prototype.copyWidget = function(widget) {
+   if (!widget)
+      return widget;
+   if (isPadding(widget))
+      return this.copyWidget(widget.$oldWidget);
+   if (this.copies.has(widget))
+      return this.copies.get(widget);
+
+   var copy = Object.assign({}, widget);
+   this.copies.set(widget, copy);
+   this.originals.set(copy, widget);
+   copy.$oldWidget = this.copyWidget(widget.$oldWidget);
+   if (copy.gitDiffLentRows)
+      returnRows(copy);
+   return copy;
+};
+
+PaddingPlan.prototype.copySession = function(session) {
+   // Assumes Ace's screen/document conversion mutates only these two caches
+   // (true of the bundled Ace; check after an upgrade). Anything else it
+   // assigns lands on the copy, never on the session.
+   var copy = Object.create(session);
+   copy.lineWidgets = (session.lineWidgets || []).map(this.copyWidget.bind(this));
+   copy.$docRowCache = [];
+   copy.$screenRowCache = [];
+   return copy;
+};
+
+PaddingPlan.prototype.sameWidget = function(current, planned) {
+   if (!current || !planned)
+      return !current && !planned;
+   if (isPadding(current) !== isPadding(planned))
+      return false;
+   if (!isPadding(planned) && this.originals.get(planned) !== current)
+      return false;
+
+   return current.row === planned.row &&
+          current.rowCount === planned.rowCount &&
+          (current.rowsAbove || 0) === (planned.rowsAbove || 0) &&
+          !!current.hidden === !!planned.hidden &&
+          (current.gitDiffLentRows || 0) === (planned.gitDiffLentRows || 0) &&
+          (current.gitDiffLentAbove || 0) === (planned.gitDiffLentAbove || 0) &&
+          this.sameWidget(current.$oldWidget, planned.$oldWidget);
+};
+
+PaddingPlan.prototype.apply = function(session, planned) {
+   var current = session.lineWidgets || [];
+   var widgets = planned.lineWidgets;
+   var length = Math.max(current.length, widgets.length);
+   var row = 0;
+   while (row < length && this.sameWidget(current[row], widgets[row]))
+      row++;
+   if (row === length)
+      return;
+
+   var self = this;
+   var restore = function(widget) {
+      if (!widget)
+         return widget;
+      if (isPadding(widget)) {
+         widget.session = session;
+         return widget;
+      }
+
+      var original = self.originals.get(widget);
+      // Only the peek lends rows. Preserve the real widget, including its
+      // element and manager bookkeeping, while applying that loan.
+      if (original.gitDiffLentRows || widget.gitDiffLentRows) {
+         original.rowCount = widget.rowCount;
+         original.rowsAbove = widget.rowsAbove;
+         original.gitDiffLentRows = widget.gitDiffLentRows;
+         original.gitDiffLentAbove = widget.gitDiffLentAbove;
+         original.gitDiffOwnRowCount = widget.gitDiffOwnRowCount;
+      }
+      original.$oldWidget = restore(widget.$oldWidget);
+      return original;
+   };
+   session.lineWidgets = widgets.map(restore);
+   session.$resetRowCache(0);
+   session._emit("changeFold", { data: { start: { row: 0 } } });
+};
+
 // Whether two fold lines hold a pair of mirrored folds (see mirrorFold).
 function foldLinesPaired(a, b) {
    return a.folds.some(function(fold) {
@@ -430,6 +522,20 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       });
    };
 
+   // Whether a range on the given side starts on a line that maps to before
+   // the other side's first line: one of a block the other side has none of,
+   // at its very top. Ace maps such a start onto the other side's first
+   // line, so a fold from there would hide less than the fold it mirrors.
+   this.$startsBeforeFirstLine = function(range, isOrig) {
+      var side = isOrig ? "old" : "new";
+      var otherSide = isOrig ? "new" : "old";
+      return this.chunks.some(function(chunk) {
+         return chunk[otherSide].end.row === 0 &&
+                chunk[side].start.row <= range.start.row &&
+                range.start.row < chunk[side].end.row;
+      });
+   };
+
    // The range a counterpart fold takes: for a structural fold, the other
    // side's own fold range for the mapped first row, when it spans the
    // mapped rows (Ace maps the columns of a changed line only roughly -- a
@@ -438,8 +544,8 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
    // as it runs forward and fits as it is (Ace would clip it into something
    // else, or nothing). Null when there is none.
    this.$counterpartRange = function(session, mapped, structural) {
-      // (a range mapped to before the first line -- a fold over an added
-      // first line and the one after it -- or past the last has no place)
+      // (a range mapped past the last line has no place; one that starts
+      // before the first is left out by mirrorFold)
       if (mapped.start.row < 0 || mapped.end.row >= session.getLength())
          return null;
 
@@ -488,7 +594,7 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
          }
       }
 
-      if (!counterpart && !this.$withinChange(range, isOrig)) {
+      if (!counterpart && !this.$withinChange(range, isOrig) && !this.$startsBeforeFirstLine(range, isOrig)) {
          var source = isOrig ? this.sessionA : this.sessionB;
          var otherRange = this.$counterpartRange(other, this.transformRange(range, isOrig), isStructuralFold(source, range));
          if (otherRange) {
@@ -733,26 +839,31 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       }, 0);
    };
 
-   // Ace's align, with two differences. The sides are marked as being
-   // aligned while it runs, so that the changeFold events it raises are
-   // told from a line widget changing on its own (see onChangeFold). And
-   // before the changes are padded for, the document's own line widgets
-   // are: chunk output takes rows the base does not have, whether or not a
-   // change lies below it to pad at (Ace pads at change boundaries only).
-   // The change padding that follows measures screen rows, so it takes
-   // this padding into account rather than counting the widget twice.
+   // Compute padding before applying it: typing in an already changed line
+   // often leaves it identical. Chunk ranges alone cannot tell us that,
+   // since soft wrap and foreign widgets also affect the screen rows.
+   // The planner runs the same placement rules on isolated widget data;
+   // only a session whose resulting padding differs is reset and signalled.
    this.align = function() {
       this.$aligning = true;
       try {
          this.$initWidgets(this.editorA);
          this.$initWidgets(this.editorB);
-         if (this.hasBase) {
-            this.$padForeignWidgets();
-            this.$padWrapDifferences();
+         var plan = new PaddingPlan();
+         var view = Object.create(this);
+         view.sessionA = plan.copySession(this.sessionA);
+         view.sessionB = plan.copySession(this.sessionB);
+         var self = this;
+         view.$isPeek = function(widget) {
+            return self.$isPeek(plan.originals.get(widget));
+         };
+         if (view.hasBase) {
+            view.$padForeignWidgets();
+            view.$padWrapDifferences();
          }
-         this.$padChanges();
-         this.sessionA._emit("changeFold", { data: { start: { row: 0 } } });
-         this.sessionB._emit("changeFold", { data: { start: { row: 0 } } });
+         view.$padChanges();
+         plan.apply(this.sessionA, view.sessionA);
+         plan.apply(this.sessionB, view.sessionB);
       } finally {
          this.$aligning = false;
       }
@@ -919,12 +1030,8 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       SplitDiffView.prototype.searchHighlight.call(this, selection);
    };
 
-   // Alignment padding is applied as line widgets without content. Ace's
-   // align() clears every line widget in both sessions before placing its
-   // own; here only the previous padding goes, so that notebook chunk output
-   // and other widgets on the live side survive. A row already holding one
-   // of those gets no padding (the next change boundary realigns the sides),
-   // since Ace shows a single widget per row.
+   // Install Ace's widget support once. Alignment plans start without the
+   // old padding, while the live widgets and caches stay intact until apply.
    this.$initWidgets = function(editor) {
       var session = editor.session;
       if (!session.widgetManager) {
@@ -933,10 +1040,8 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
          session.widgetManager.attach(editor);
       }
 
-      this.$removeLineWidgets(session);
       if (!session.lineWidgets)
          session.lineWidgets = [];
-      session.$resetRowCache(0);
    };
 
    this.$addWidget = function(session, w) {

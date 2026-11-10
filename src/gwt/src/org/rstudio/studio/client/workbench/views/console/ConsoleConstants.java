@@ -35,6 +35,8 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
     String f1prompt();
     String errorRetrievingHelp();
     String noMatchingCommandsText();
+    String completionsListLabel();
+    String historyListLabel();
     String openingHelpProgressMessage();
     String findingDefinitionProgressMessage();
     String helpCaption();

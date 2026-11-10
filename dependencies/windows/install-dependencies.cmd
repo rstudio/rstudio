@@ -260,13 +260,6 @@ if exist node\%NODEBUNDLE_FILE% (
   rmdir /s /q node\%NODEBUNDLE_FILE% 2>NUL
 )
 
-pushd node\%NODEBUILD_VERSION%
-if not exist yarn.cmd (
-  echo -- Installing yarn
-  call npm install --global yarn
-)
-popd
-
 echo -- Installing packages
 call "%COMMON_SCRIPTS_DIR%\install-packages.cmd"
 

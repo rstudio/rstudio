@@ -28,6 +28,8 @@
 #include <string>
 #include <vector>
 
+#include "desktop_mac.h"
+
 #ifdef __APPLE__
 # include <CoreFoundation/CoreFoundation.h>
 # include <Carbon/Carbon.h>
@@ -1084,6 +1086,25 @@ Napi::Value macOSListFonts(const Napi::CallbackInfo& info)
    return result;
 }
 
+#ifndef __APPLE__
+
+// desktop_mac.mm implements these on macOS; elsewhere they are exported as
+// stubs so the addon's exports match desktop.node.d.ts on every platform
+
+Napi::Value macOSIsDefaultApplicationForFileExtension(const Napi::CallbackInfo& info)
+{
+   return Napi::Boolean::New(info.Env(), false);
+}
+
+Napi::Value macOSSetDefaultApplicationForFileExtension(const Napi::CallbackInfo& info)
+{
+   Napi::Promise::Deferred deferred = Napi::Promise::Deferred::New(info.Env());
+   deferred.Reject(Napi::Error::New(info.Env(), "Setting the default application for a file type is only supported on macOS").Value());
+   return deferred.Promise();
+}
+
+#endif
+
 } // end namespace desktop
 } // end namespace rstudio
 
@@ -1110,6 +1131,8 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
    RS_EXPORT_FUNCTION("win32WatchSessionDialogs", rstudio::desktop::win32WatchSessionDialogs);
    RS_EXPORT_FUNCTION("win32StopWatchingSessionDialogs", rstudio::desktop::win32StopWatchingSessionDialogs);
    RS_EXPORT_FUNCTION("macOSListFonts", rstudio::desktop::macOSListFonts);
+   RS_EXPORT_FUNCTION("macOSIsDefaultApplicationForFileExtension", rstudio::desktop::macOSIsDefaultApplicationForFileExtension);
+   RS_EXPORT_FUNCTION("macOSSetDefaultApplicationForFileExtension", rstudio::desktop::macOSSetDefaultApplicationForFileExtension);
 
    return exports;
 
