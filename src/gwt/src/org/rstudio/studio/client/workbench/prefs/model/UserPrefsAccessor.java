@@ -278,6 +278,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String AUTO_SAVE_IDLE_MS = "auto_save_idle_ms";
    public static final String AUTO_SAVE_ON_BLUR = "auto_save_on_blur";
    public static final String REDUCE_REMOTE_FILESYSTEM_OPERATIONS = "reduce_remote_filesystem_operations";
+   public static final String SHOW_REDUCED_FILE_OPERATIONS_NOTICE = "show_reduced_file_operations_notice";
    public static final String TERMINAL_INITIAL_DIRECTORY = "terminal_initial_directory";
    public static final String FULL_PROJECT_PATH_IN_WINDOW_TITLE = "full_project_path_in_window_title";
    public static final String VISUAL_MARKDOWN_EDITING_IS_DEFAULT = "visual_markdown_editing_is_default";
@@ -3617,6 +3618,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to print a notice in the Console at startup when RStudio has reduced background file operations for the current project.
+    */
+   public PrefValue<Boolean> showReducedFileOperationsNotice()
+   {
+      return bool(
+         "show_reduced_file_operations_notice",
+         _constants.showReducedFileOperationsNoticeTitle(), 
+         _constants.showReducedFileOperationsNoticeDescription(), 
+         true);
+   }
+
+   /**
     * Initial directory for new terminals.
     */
    public PrefValue<String> terminalInitialDirectory()
@@ -5230,6 +5243,8 @@ public class UserPrefsAccessor extends Prefs
          autoSaveOnBlur().setValue(layer, source.getBool("auto_save_on_blur"));
       if (source.hasKey("reduce_remote_filesystem_operations"))
          reduceRemoteFilesystemOperations().setValue(layer, source.getBool("reduce_remote_filesystem_operations"));
+      if (source.hasKey("show_reduced_file_operations_notice"))
+         showReducedFileOperationsNotice().setValue(layer, source.getBool("show_reduced_file_operations_notice"));
       if (source.hasKey("terminal_initial_directory"))
          terminalInitialDirectory().setValue(layer, source.getString("terminal_initial_directory"));
       if (source.hasKey("full_project_path_in_window_title"))
@@ -5622,6 +5637,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(autoSaveIdleMs());
       prefs.add(autoSaveOnBlur());
       prefs.add(reduceRemoteFilesystemOperations());
+      prefs.add(showReducedFileOperationsNotice());
       prefs.add(terminalInitialDirectory());
       prefs.add(fullProjectPathInWindowTitle());
       prefs.add(visualMarkdownEditingIsDefault());

@@ -14,6 +14,7 @@ import { rLibsUserTemplate, workerRLibsUser } from './r-libs-setup';
 import { trackForReaping } from './process-reaper';
 import { keepRequestInterceptionOn } from './request-interception';
 import { userHomeForAuthState, strippedProvidersFromEnv } from '../utils/auth';
+import { withoutCredentials } from '../utils/env';
 
 // PW_SANDBOX is exported by the globalSetup hook in fixtures/sandbox-setup.ts
 // before any worker spawns. Resolve lazily so importing this module (for
@@ -232,7 +233,7 @@ async function spawnSandboxedRserver(): Promise<SpawnedServer | null> {
   const rsessionWrapper = writeRsessionWrapper(serverRoot, userHome, rserverBin, rserverConf);
 
   const env = {
-    ...process.env,
+    ...withoutCredentials(process.env),
     HOME: userHome,
     USERPROFILE: userHome,
     // The rserver process's own copy, which does NOT reach its rsessions (see

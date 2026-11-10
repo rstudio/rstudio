@@ -19,9 +19,17 @@ import com.google.gwt.event.shared.GwtEvent;
 
 public class WarningBarClosedEvent extends GwtEvent<WarningBarClosedEvent.Handler>
 {
-   public WarningBarClosedEvent()
+   public WarningBarClosedEvent(String id)
    {
+      id_ = id;
    }
+
+   public String getId()
+   {
+      return id_;
+   }
+
+   private final String id_;
 
    public interface Handler extends EventHandler
    {

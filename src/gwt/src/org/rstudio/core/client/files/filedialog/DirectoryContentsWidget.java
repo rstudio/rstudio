@@ -178,7 +178,7 @@ public class DirectoryContentsWidget extends Composite
     * and a macOS Finder alias / Windows shortcut is its target, so acting on
     * the row navigates into the target instead of cd-ing into the link file.
     */
-   private FileSystemItem resolveItem(FileSystemItem item)
+   public FileSystemItem resolveItem(FileSystemItem item)
    {
       if (StringUtil.equals(item.getName(), ".."))
          item = parentDirectory_;

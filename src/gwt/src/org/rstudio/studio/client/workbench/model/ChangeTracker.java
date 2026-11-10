@@ -24,5 +24,9 @@ public interface ChangeTracker
     */
    void reset();
 
-   ChangeTracker fork();
+   /**
+    * A counter that increases with every change and is never reset. Compare
+    * two readings to find out whether anything changed between them.
+    */
+   int getVersion();
 }
