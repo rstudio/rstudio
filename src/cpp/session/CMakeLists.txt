@@ -210,6 +210,7 @@ set(SESSION_SOURCE_FILES
    modules/SessionAuthoring.cpp
    modules/SessionBreakpoints.cpp
    modules/SessionChat.cpp
+   modules/chat/ChatBackendStdout.cpp
    modules/chat/ChatConstants.cpp
    modules/chat/ChatTypes.cpp
    modules/chat/ChatLogging.cpp

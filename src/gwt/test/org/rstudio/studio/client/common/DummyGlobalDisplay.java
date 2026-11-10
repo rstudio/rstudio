@@ -144,9 +144,18 @@ public class DummyGlobalDisplay extends GlobalDisplay
     }
 
     @Override
-    public void hideWarningBar()
+    public void showWarningBar(String id, boolean severe, String message, String actionLabel, Command action)
     {
+    }
 
+    @Override
+    public void hideWarningBar(String id)
+    {
+    }
+
+    @Override
+    public void undismissWarningBar(String id)
+    {
     }
 
     @Override
