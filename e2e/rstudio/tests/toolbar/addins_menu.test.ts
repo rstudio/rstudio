@@ -148,6 +148,26 @@ test.describe('Addins toolbar menu (#19552)', () => {
       [el.selectionStart, el.selectionEnd])).toEqual([0, 4]);
   });
 
+  // The menu takes focus as it opens. Safari defers that focus, which made it land
+  // after the search box's on the first open; Chromium doesn't show that ordering.
+  test('opening the menu from the keyboard focuses the search box', async ({
+    rstudioPage: page,
+  }) => {
+    await openAddinsPopup(page);
+    await page.keyboard.press('Escape');
+    const button = page.locator(ADDINS_BUTTON);
+    await expect(button).toBeFocused();
+
+    await page.keyboard.press('Enter');
+    const popup = page.locator('.popupContent:visible').filter({
+      has: page.getByLabel(SEARCH_LABEL, { exact: true }),
+    });
+    const search = popup.getByRole('combobox', { name: SEARCH_LABEL });
+    await expect(search).toBeFocused();
+    const firstId = await popup.getByRole('menuitem').first().getAttribute('id');
+    await expect(search).toHaveAttribute('aria-activedescendant', firstId!);
+  });
+
   test('closing the menu returns focus to the Addins button', async ({
     rstudioPage: page,
   }) => {

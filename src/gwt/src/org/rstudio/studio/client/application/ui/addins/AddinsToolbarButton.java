@@ -46,7 +46,6 @@ import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -64,6 +63,9 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+
+import elemental2.dom.HTMLElement;
+import jsinterop.base.Js;
 
 public class AddinsToolbarButton extends ToolbarMenuButton
 {
@@ -142,6 +144,13 @@ public class AddinsToolbarButton extends ToolbarMenuButton
 
       addSearchHeader();
       initComboboxRole();
+
+      // The menu takes focus whenever it opens, but typing belongs in the search
+      // box, which hands the navigation keys to the menu. Redirecting the menu's
+      // focus, rather than focusing the search box after opening, doesn't depend
+      // on which runs last; Safari defers the menu's focus.
+      HTMLElement menuEl = Js.cast(menu_.getMenuBarElement());
+      menuEl.addEventListener("focus", event -> searchWidget_.getInputElement().focus());
    }
 
    // The search box sits above the menu rather than inside it, since a menu may
@@ -296,15 +305,6 @@ public class AddinsToolbarButton extends ToolbarMenuButton
          int menuWidth = Math.max(MIN_WIDTH_PX, menuWidth_);
          tableEl.getStyle().setWidth(menuWidth, Unit.PX);
       }
-
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
-      {
-         @Override
-         public void execute()
-         {
-            searchWidget_.getInputElement().focus();
-         }
-      });
    }
 
    private void populateEmptyMenu()
@@ -315,15 +315,6 @@ public class AddinsToolbarButton extends ToolbarMenuButton
          public Element createMainElement()
          {
             return createSubheader(constants_.noAddinsFound());
-         }
-      });
-
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
-      {
-         @Override
-         public void execute()
-         {
-            searchWidget_.getInputElement().focus();
          }
       });
    }
