@@ -1,28 +1,40 @@
 #!/usr/bin/env bash
 set -ex
 
-BRANCH=rstudio/parrot-balsam
+# Pin both the fork and source revision used to generate the shipped bundles.
+# Based on rstudio/parrot-balsam, including the already-shipped tokenizer
+# fixes from rstudio/rstudio-ace#13 and bounded diff refinement for #19218.
+REPOSITORY=https://github.com/rstudio/rstudio-ace.git
+REVISION=8ed24017163b542beeff027d4b07a12ce5a097be
+
+TOOLS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "${TOOLS_DIR}"
 
 PROGRAMS=("git" "npm")
 for PROGRAM in "${PROGRAMS[@]}"; do
     if ! command -v "${PROGRAM}" &> /dev/null; then
         echo "program '${PROGRAM}' not found; exiting"
+        exit 1
     fi
 done
 
 # check out our copy of ace
 if [ ! -d rstudio-ace ]; then
-    git clone git@github.com:rstudio/rstudio-ace.git
+    git clone "${REPOSITORY}" rstudio-ace
     cd rstudio-ace
     git remote add upstream git@github.com:ajaxorg/ace.git
     cd ..
 fi
 
 cd rstudio-ace
-git fetch
-git reset --hard "origin/${BRANCH}"
+# Fetch from the pinned repository even if this checkout's origin was changed
+# for development. Never let a moving branch silently change a rebuild.
+git fetch --recurse-submodules=no "${REPOSITORY}" "${REVISION}"
+git reset --hard "${REVISION}"
 git submodule update --init --recursive --force
 npm install
 cd ..
 
-./build-ace
+# (build-ace takes another source checkout from the environment; the pinned
+# one is the only source here)
+ACE_SOURCE_DIR="${TOOLS_DIR}/rstudio-ace" ./build-ace
