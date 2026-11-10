@@ -1518,6 +1518,21 @@ std::vector<std::string> ClangCompilationDatabase::argsForRCmdSHLIB(
 }
 
 
+// The arguments for the include directories reported by the compiler, in the
+// order it reported them. They are passed with '-isystem' so that libclang
+// searches them in that order: clang drops a '-I' directory that is also one
+// of its own system directories, which can leave another of these (say, the
+// compiler's builtin headers) ahead of the C++ standard library's, and libc++
+// requires that its <stddef.h> be found before the builtin one.
+std::vector<std::string> systemIncludeArgs(const std::vector<std::string>& includes)
+{
+   std::vector<std::string> args;
+   for (const std::string& include : includes)
+      args.push_back("-isystem" + include);
+
+   return args;
+}
+
 std::vector<std::string> ClangCompilationDatabase::baseCompilationArgs(bool isCpp) const
 {
    std::vector<std::string> args;
@@ -1582,16 +1597,11 @@ std::vector<std::string> ClangCompilationDatabase::baseCompilationArgs(bool isCp
    auto clArgs = clang().compileArgs(isCpp);
    args.insert(args.end(), clArgs.begin(), clArgs.end());
    
-   // add system include headers as reported by compiler. These are passed
-   // with '-isystem' so that they're searched in the order the compiler
-   // reported: clang drops a '-I' directory that is also one of its own
-   // system directories, which can leave another of these (say, the
-   // compiler's builtin headers) ahead of the C++ standard library's, and
-   // libc++ requires that its <stddef.h> be found before the builtin one.
+   // add system include headers as reported by compiler
    std::vector<std::string> includes;
    discoverSystemIncludePaths(&includes);
-   for (auto&& include : includes)
-      args.push_back("-isystem" + include);
+   std::vector<std::string> includeArgs = systemIncludeArgs(includes);
+   args.insert(args.end(), includeArgs.begin(), includeArgs.end());
 #endif
 
    if (verbose(3))

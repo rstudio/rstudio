@@ -216,6 +216,66 @@ TEST_F(CompileFlagsTest, RemovesUserFlagsPchOnceItsFlagsFileIsGone)
    EXPECT_TRUE(platform.completeChildPath("Rcpp-std=gnu++17.cpp").exists());
 }
 
+TEST_F(CompileFlagsTest, SystemIncludeArgsAreSearchedInReportedOrder)
+{
+   core::libclang::LibClang& lib = core::libclang::clang();
+   if (!lib.isLoaded())
+      GTEST_SKIP() << "libclang is not available";
+
+   // 'std' stands in for the C++ standard library, whose <stddef.h> wraps
+   // the one in 'builtin', the compiler's own headers
+   FilePath std = root_.completeChildPath("std");
+   FilePath builtin = root_.completeChildPath("builtin");
+   std.ensureDirectory();
+   builtin.ensureDirectory();
+   writeStringToFile(std.completeChildPath("stddef.h"), R"(
+#define STD_STDDEF_SEEN 1
+#include_next <stddef.h>
+)");
+   writeStringToFile(builtin.completeChildPath("stddef.h"), R"(
+#define BUILTIN_STDDEF_SEEN 1
+)");
+
+   FilePath source = root_.completeChildPath("probe.c");
+   writeStringToFile(source, R"(
+#include <stddef.h>
+#ifndef STD_STDDEF_SEEN
+#error builtin stddef.h was found ahead of the standard library one
+#endif
+#ifndef BUILTIN_STDDEF_SEEN
+#error builtin stddef.h was not found
+#endif
+)");
+
+   // the trailing '-isystem' makes 'std' one of libclang's system
+   // directories too, as the standard library's directory is in practice;
+   // that is what gets a '-I' for the same directory dropped
+   std::vector<std::string> args = {"-nostdinc"};
+   std::vector<std::string> includeArgs = systemIncludeArgs({std.getAbsolutePath(), builtin.getAbsolutePath()});
+   args.insert(args.end(), includeArgs.begin(), includeArgs.end());
+   args.push_back("-isystem" + std.getAbsolutePath());
+
+   std::vector<const char*> argv;
+   for (const std::string& arg : args)
+      argv.push_back(arg.c_str());
+
+   CXIndex index = lib.createIndex(0, 0);
+   CXTranslationUnit tu = lib.parseTranslationUnit(
+      index,
+      source.getAbsolutePath().c_str(),
+      argv.data(),
+      static_cast<int>(argv.size()),
+      nullptr,
+      0,
+      CXTranslationUnit_None);
+
+   ASSERT_NE(tu, nullptr);
+   EXPECT_EQ(lib.getNumDiagnostics(tu), 0u);
+
+   lib.disposeTranslationUnit(tu);
+   lib.disposeIndex(index);
+}
+
 } // anonymous namespace
 } // namespace clang
 } // namespace modules
