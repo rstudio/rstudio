@@ -301,8 +301,20 @@ public class AddinsToolbarButton extends ToolbarMenuButton
                }
             });
 
-            for (RAddin addin : addins)
-               menu_.addItem(menuItem(addin));
+            for (int i = 0; i < addins.size(); i++)
+            {
+               RAddin addin = addins.get(i);
+               MenuItem item = menuItem(addin);
+
+               // The arrow keys skip the package heading, so the package's first
+               // add-in names it for screen readers
+               if (i == 0)
+               {
+                  Roles.getMenuitemRole().setAriaLabelProperty(item.getElement(),
+                        constants_.addinInPackageLabel(pkg, addin.getName()));
+               }
+               menu_.addItem(item);
+            }
          }
       });
 

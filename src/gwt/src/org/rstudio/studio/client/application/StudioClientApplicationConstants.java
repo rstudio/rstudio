@@ -146,6 +146,7 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     String addinsText();
     String searchForAddinsLabel();
     String noAddinsFound();
+    String addinInPackageLabel(String packageName, String addinName);
     String rFatalErrorMessage();
     String sessionTerminatedMessage();
     String browserDisconnectedMessage();
