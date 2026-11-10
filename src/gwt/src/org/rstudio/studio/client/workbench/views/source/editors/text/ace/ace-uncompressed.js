@@ -42985,25 +42985,46 @@ function cloneContext(context) {
     if (context == null)
         return {};
     for (var key in context)
-        return structuredClone(context);
+        return clonePlainContext(context, new Map());
     return {};
 }
 function isPlainObject(value) {
     var proto = Object.getPrototypeOf(value);
     return proto === Object.prototype || proto === null;
 }
+function clonePlainContext(value, copies) {
+    if (value == null || typeof value !== "object")
+        return value;
+    if (!Array.isArray(value) && !isPlainObject(value))
+        return value;
+    if (copies.has(value))
+        return copies.get(value);
+    var clone = Array.isArray(value) ? new Array(value.length) : Object.create(Object.getPrototypeOf(value));
+    copies.set(value, clone);
+    Object.keys(value).forEach(function (key) {
+        Object.defineProperty(clone, key, {
+            value: clonePlainContext(value[key], copies),
+            enumerable: true, configurable: true, writable: true
+        });
+    });
+    return clone;
+}
 function equalContextValues(lhs, rhs, depth) {
     if (lhs === rhs)
         return true;
     if (typeof lhs === "number" && typeof rhs === "number")
-        return lhs !== lhs && rhs !== rhs; // both NaN
+        return Number.isNaN(lhs) && Number.isNaN(rhs);
     if (depth <= 0 || lhs == null || rhs == null)
         return false;
     if (typeof lhs !== "object" || typeof rhs !== "object")
         return false;
     if (Array.isArray(lhs) !== Array.isArray(rhs))
         return false;
+    if (Array.isArray(lhs) && lhs.length !== rhs.length)
+        return false;
     if (!Array.isArray(lhs) && (!isPlainObject(lhs) || !isPlainObject(rhs)))
+        return false;
+    if (Object.getPrototypeOf(lhs) !== Object.getPrototypeOf(rhs))
         return false;
     var keys = Object.keys(lhs);
     if (keys.length !== Object.keys(rhs).length)

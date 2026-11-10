@@ -31,6 +31,15 @@ Parameters:
       Read by the instance at boot when it is not yet logged in; never part of
       the template or the stack events. When the parameter does not exist the
       host instead prints a login URL to authorize it in a browser (README.md).
+      An OAuth client secret (tskey-client-...) works too, see TailscaleTags.
+  TailscaleTags:
+    Type: String
+    Default: tag:rstudio-reports
+    AllowedPattern: 'tag:[A-Za-z][A-Za-z0-9-]*(,tag:[A-Za-z][A-Za-z0-9-]*)*'
+    Description: >-
+      Tags the node asks for when the stored key is an OAuth client secret,
+      which mints the node's key itself and so has to be told; the client
+      must own them. Unused with an auth key, which carries its own tags.
   VpcId:
     Type: AWS::EC2::VPC::Id
     Description: >-
@@ -207,6 +216,7 @@ Resources:
           BUCKET=${ReportsBucket}
           HOSTNAME_TS=${TailscaleHostname}
           AUTHKEY_PARAM=${TailscaleAuthKeyParameter}
+          TAGS=${TailscaleTags}
           MOUNT=/srv/reports
 
           # Packages. mount-s3 (AWS Mountpoint for Amazon S3) has no AL2023
@@ -269,6 +279,15 @@ Resources:
               access_log /var/log/nginx/access.log;
               sendfile on;
 
+              # Transfers are relayed and slow (README.md), so compress what
+              # compresses. Trace .zip files, images and videos already are.
+              gzip on;
+              gzip_comp_level 5;
+              gzip_min_length 1024;
+              gzip_proxied any;
+              gzip_vary on;
+              gzip_types text/plain text/css text/javascript application/javascript application/json application/manifest+json image/svg+xml;
+
               server {
                   listen 127.0.0.1:8080;
                   # Directory redirects (/pr-1234 -> /pr-1234/) must stay relative:
@@ -280,8 +299,22 @@ Resources:
                   autoindex_exact_size off;
                   autoindex_localtime on;
 
+                  # Listings and reports are revalidated on every visit (a 304
+                  # when unchanged); without a Cache-Control header browsers
+                  # guess a lifetime and can show a stale listing.
                   location / {
                       try_files \$uri \$uri/ =404;
+                      add_header Cache-Control "no-cache";
+                  }
+
+                  # Content-addressed files never change under their name, so
+                  # the browser keeps them: report attachments (data/<sha1>.*,
+                  # traces included) and the trace viewer's hashed bundles.
+                  location ~ "/data/[0-9a-f]{40}\.[a-z0-9]+\$" {
+                      add_header Cache-Control "private, max-age=31536000, immutable";
+                  }
+                  location ~ "/trace/(assets/)?[^/]+[.-][A-Za-z0-9_-]{8}\.(js|css)\$" {
+                      add_header Cache-Control "private, max-age=31536000, immutable";
                   }
               }
           }
@@ -312,7 +345,18 @@ Resources:
           if [ "$(tailscale status --json | jq -r .BackendState)" != Running ]; then
             if AUTHKEY=$(aws ssm get-parameter --region "$REGION" --name "$AUTHKEY_PARAM" \
                  --with-decryption --query Parameter.Value --output text 2> /dev/null); then
-              tailscale up --auth-key="$AUTHKEY" --hostname="$HOSTNAME_TS"
+              # An OAuth client secret is not a key but mints one: the key's
+              # properties ride on it as query parameters (the defaults are an
+              # ephemeral node awaiting approval) and the tags must be named.
+              case "$AUTHKEY" in
+                tskey-client-*)
+                  tailscale up --auth-key="$AUTHKEY?ephemeral=false&preauthorized=true" \
+                    --advertise-tags="$TAGS" --hostname="$HOSTNAME_TS"
+                  ;;
+                *)
+                  tailscale up --auth-key="$AUTHKEY" --hostname="$HOSTNAME_TS"
+                  ;;
+              esac
               unset AUTHKEY
             else
               tailscale up --hostname="$HOSTNAME_TS" --timeout=5s || true
