@@ -191,11 +191,9 @@
    <!-- acesupport file watcher for development -->
    <target name="acesupport-watch-install" description="Install acesupport watcher dependencies">
       <retry retrycount="3">
-         <exec executable="${yarn.bin}" dir="${acesupport.watcher.dir}" resolveexecutable="true" failonerror="true">
+         <exec executable="${npm.bin}" dir="${acesupport.watcher.dir}" resolveexecutable="true" failonerror="true">
             <env key="PATH" value="${node.path}"/>
-            <arg value="install"/>
-            <arg value="--network-timeout"/>
-            <arg value="240000"/>
+            <arg value="ci"/>
          </exec>
       </retry>
    </target>
