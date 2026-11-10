@@ -540,6 +540,14 @@ public class TerminalSessionSocket
       // never arrives would hold all later input. Stop waiting for it after
       // a while; if it completes later, its callback still runs. Scheduled
       // before the write, which may complete synchronously.
+      //
+      // This gives up the ordering guarantee for that one write: if it is
+      // still in transit, rather than lost, the input released here can
+      // reach the server ahead of it. That takes a request stalled in the
+      // network for the whole timeout while a later one gets through, and a
+      // terminal that stops accepting input is the worse failure. A write
+      // that is merely waiting on a busy session has already arrived, and
+      // the session handles requests in the order they arrived.
       final Runnable cancelWatchdog = scheduler_.schedule(RPC_WRITE_TIMEOUT_MS, () ->
       {
          if (connection != connection_ || abandoned[0])
