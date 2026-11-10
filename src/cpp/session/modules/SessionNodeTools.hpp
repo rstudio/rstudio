@@ -116,7 +116,8 @@ bool normalizeProxyUrl(const std::string& value, std::string* pNormalized);
  * child-process environment, first normalizing the http_proxy / https_proxy
  * values Node will read (lowercase, or uppercase when the lowercase one is
  * empty) so values that R and curl accept do not abort Node at startup.
- * Leaves the flag unset, with a logged warning, when one of them cannot be
+ * Leaves the flag unset (and negates a --use-env-proxy inherited through
+ * NODE_OPTIONS), with a logged warning, when one of them cannot be
  * normalized.
  *
  * @param pEnvironment The child-process environment to modify.

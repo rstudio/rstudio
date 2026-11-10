@@ -546,6 +546,14 @@ void applyEnvProxyOption(core::system::Options* pEnvironment)
             WLOG("Not enabling Node.js proxy support: the {} environment variable "
                  "is not a proxy URL that Node.js accepts.", name);
             core::system::unsetenv(pEnvironment, "NODE_USE_ENV_PROXY");
+
+            // An inherited NODE_OPTIONS can turn the same parsing on. Node
+            // honors the last spelling of an option, so negate it at the end
+            // rather than edit the user's value.
+            std::string nodeOptions = core::system::getenv(*pEnvironment, "NODE_OPTIONS");
+            if (containsOptionToken(nodeOptions, "--use-env-proxy"))
+               core::system::setenv(pEnvironment, "NODE_OPTIONS", nodeOptions + " --no-use-env-proxy");
+
             return;
          }
 

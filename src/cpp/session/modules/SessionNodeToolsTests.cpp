@@ -361,6 +361,38 @@ TEST(SessionNodeToolsTest, ApplyEnvProxyOptionDropsInheritedFlagForInvalidValue)
    EXPECT_EQ(core::system::getenv(env2, "NODE_USE_ENV_PROXY"), "");
 }
 
+TEST(SessionNodeToolsTest, ApplyEnvProxyOptionNegatesInheritedNodeOptionForInvalidValue)
+{
+   // --use-env-proxy in NODE_OPTIONS enables the parsing without the flag.
+   core::system::Options env;
+   core::system::setenv(&env, "NODE_OPTIONS", "--max-old-space-size=4096 --use-env-proxy");
+   core::system::setenv(&env, "http_proxy", "http://proxy.example.com:abc");
+
+   applyEnvProxyOption(&env);
+
+   EXPECT_EQ(core::system::getenv(env, "NODE_USE_ENV_PROXY"), "");
+   EXPECT_EQ(core::system::getenv(env, "NODE_OPTIONS"),
+             "--max-old-space-size=4096 --use-env-proxy --no-use-env-proxy");
+
+   // Other options are left alone, as is everything when the value is valid.
+   core::system::Options env2;
+   core::system::setenv(&env2, "NODE_OPTIONS", "--max-old-space-size=4096");
+   core::system::setenv(&env2, "http_proxy", "http://proxy.example.com:abc");
+
+   applyEnvProxyOption(&env2);
+
+   EXPECT_EQ(core::system::getenv(env2, "NODE_OPTIONS"), "--max-old-space-size=4096");
+
+   core::system::Options env3;
+   core::system::setenv(&env3, "NODE_OPTIONS", "--use-env-proxy");
+   core::system::setenv(&env3, "http_proxy", "proxy.example.com:8080");
+
+   applyEnvProxyOption(&env3);
+
+   EXPECT_EQ(core::system::getenv(env3, "NODE_USE_ENV_PROXY"), "1");
+   EXPECT_EQ(core::system::getenv(env3, "NODE_OPTIONS"), "--use-env-proxy");
+}
+
 TEST(SessionNodeToolsTest, ApplyEnvProxyOptionLeavesFlagUnsetForUrlsNodeRejects)
 {
    // Each of these makes Node 24 exit during startup with the flag on.
