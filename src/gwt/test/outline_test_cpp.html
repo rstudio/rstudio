@@ -152,12 +152,18 @@ check("qualified and array trailing return declarations are labelled",
         "template <typename T> auto S<T>::h() -> int { return 1; }",
         "auto a() -> int (*)[3] { return nullptr; }",
         "template <typename T> auto S<std::vector<T>>::k() -> decltype(x) { return x; }",
+        "template <> auto S<(8 >> 1)>::m() -> decltype(x) { return x; }",
+        "template <> auto S<sizeof(int{})>::n() -> decltype(x) { return x; }",
+        "auto operator \"\" _u(long double x) -> decltype(x) { return x; }",
         ""
       ].join("\n"))),
       ["g(): int [0..0]",
        "h(): int [1..1]",
        "a(): int (*)[3] [2..2]",
-       "k(): decltype(x) [3..3]"].join("\n"));
+       "k(): decltype(x) [3..3]",
+       "m(): decltype(x) [4..4]",
+       "n(): decltype(x) [5..5]",
+       "_u(long double x): decltype(x) [6..6]"].join("\n"));
 
 check("lambdas with trailing return types are labelled",
       tree(makeSession("auto l = [](int x) -> int { return x; };\n")),
