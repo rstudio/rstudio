@@ -273,13 +273,6 @@ test.describe('Addins toolbar menu (#19552)', () => {
     const id = await highlighted.getAttribute('id');
     await expect(search).toHaveAttribute('aria-activedescendant', id!);
 
-    // A menu may contain only items, groups, and separators.
-    const results = await new AxeBuilder({ page })
-      .include(`#${controls}`)
-      .withTags(ruleSetTags({ level: 'AA', version: '2.2' }))
-      .analyze();
-    expect(violationSummary(results)).toEqual([]);
-
     // Package headings are text; screen readers announce a separator as a splitter
     await expect(menu.getByText('devtools', { exact: true })).toBeVisible();
     await expect(menu.getByRole('separator').filter({ hasText: /\S/ })).toHaveCount(0);
@@ -293,5 +286,24 @@ test.describe('Addins toolbar menu (#19552)', () => {
     await search.pressSequentially('zzz-no-such-addin');
     await expect(popup.getByText('No addins found')).toBeVisible();
     await expect(search).not.toHaveAttribute('aria-activedescendant');
+  });
+
+  // axe opens a page of its own to merge its results, which Desktop's CDP
+  // connection to Electron refuses (Target.createTarget: Not supported).
+  test('the menu has no accessibility violations', { tag: '@server_only' }, async ({
+    rstudioPage: page,
+  }) => {
+    const popup = await openAddinsPopup(page);
+    await page.keyboard.press('ArrowDown');
+    await expect(highlightedItem(popup)).toHaveCount(1);
+    const controls = await popup.getByRole('combobox', { name: SEARCH_LABEL })
+      .getAttribute('aria-controls');
+
+    // A menu may contain only items, groups, and separators.
+    const results = await new AxeBuilder({ page })
+      .include(`#${controls}`)
+      .withTags(ruleSetTags({ level: 'AA', version: '2.2' }))
+      .analyze();
+    expect(violationSummary(results)).toEqual([]);
   });
 });
