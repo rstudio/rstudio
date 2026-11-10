@@ -154,11 +154,14 @@ check("member access before a brace does not make a function",
         "  get()->y = Foo{1};",
         "  p->z = Foo{1};",
         "  auto l = [x = p->y]() { return x; };",
+        "  get()->n += Foo{1};",
+        "  consume(get()->v, []() { return 1; });",
         "}",
         ""
       ].join("\n"))),
-      ["f(P* p) [0..5]",
-       "  lambda () [4..4]"].join("\n"));
+      ["f(P* p) [0..7]",
+       "  lambda () [4..4]",
+       "  lambda () [6..6]"].join("\n"));
 
 document.getElementById("passed").textContent = passed;
 document.getElementById("failed").textContent = failed;

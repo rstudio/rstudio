@@ -640,8 +640,8 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
 
    // From the last token of a trailing return type, e.g. the 'int' of
    // 'auto f() const -> int', move to the token before its '->'. Stopping at
-   // '=' and the token before '->' keep expressions such as 'get()->x = T{1}'
-   // and 'p->x' from being read as one.
+   // assignments and ']', and checking the token before '->', keep
+   // 'get()->x += T{1}', 'f(get()->x, []() {' and 'p->x' from being read as one.
    this.bwdOverTrailingReturnType = function() {
 
       var clone = this.cloneCursor();
@@ -649,7 +649,7 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
          var value = clone.currentValue();
          if (value === "->")
             break;
-         if (/^[;{}(=]$/.test(value))
+         if (/^[;{}(\]]$/.test(value) || /=$/.test(value))
             return false;
          if (value === ")" && !clone.bwdToMatchingToken())
             return false;
