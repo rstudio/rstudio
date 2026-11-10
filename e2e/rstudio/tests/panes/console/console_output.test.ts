@@ -175,6 +175,18 @@ test.describe('Console output and annotation', () => {
 
   test('executeInConsoleChecked ignores error text in the command echo', async ({ rstudioPage: page }) => {
     await executeInConsoleChecked(page, 'invisible(grepl("Error in", "Error: none"))');
+
+    // Later lines of a multi-line command are echoed after the marker.
+    await executeInConsoleChecked(
+      page,
+      heredoc`
+        {
+          x <- grepl("Error in", "Error: none")
+        }
+      `,
+    );
+    await expect(executeInConsoleChecked(page, '{\n  stop("on a later line")\n}'))
+      .rejects.toThrow(/: Error: on a later line/);
   });
 
   test('executeInConsoleChecked reports a command that fails to parse', async ({ rstudioPage: page }) => {

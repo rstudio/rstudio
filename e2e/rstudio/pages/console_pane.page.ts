@@ -599,10 +599,18 @@ export function findRError(text: string): string | null {
  * when there is none, or no marker to scan from. The console buffer is shared
  * with everything else that ran in the worker, so a command's errors are only
  * those that follow a marker the command itself put there.
+ *
+ * Lines at R's continuation prompt are skipped: the session echoes each line
+ * of a multi-line command as R reads it, so all but the first land after the
+ * marker, and they are the command's source rather than its output.
  */
 export function findRErrorAfter(text: string, marker: string): string | null {
   const at = text.lastIndexOf(marker);
-  return at >= 0 ? findRError(text.slice(at + marker.length)) : null;
+  if (at < 0)
+    return null;
+
+  const output = text.slice(at + marker.length).split('\n').filter((line) => !line.startsWith('+ '));
+  return findRError(output.join('\n'));
 }
 
 let checkedCommandCount = 0;
@@ -646,7 +654,7 @@ export async function executeInConsoleChecked(
 ): Promise<void> {
   // The marker is assembled by R, so the command's echo does not contain it
   // and its only occurrence is the cat() output, just ahead of the command's
-  // own. That also keeps the echo itself out of the scan.
+  // own. That also keeps the echo's first line out of the scan.
   const id = `${Date.now()}_${checkedCommandCount++}__`;
   const marker = `__CHECKED_${id}`;
   const prefix = `cat(paste0("__CHECKED_", "${id}\\n")); `;
