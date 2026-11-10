@@ -203,8 +203,18 @@ test.describe('Addins toolbar menu (#19552)', () => {
       await expect(search).not.toHaveAttribute('aria-activedescendant');
 
       await page.keyboard.press('ArrowDown');
-      const firstId = await popup.getByRole('menuitem').first().getAttribute('id');
+      const items = popup.getByRole('menuitem');
+      const firstId = await items.first().getAttribute('id');
       await expect(search).toHaveAttribute('aria-activedescendant', firstId!);
+
+      // From nothing highlighted, Up starts at the end instead
+      await page.keyboard.press('Escape');
+      await expect(button).toBeFocused();
+      await page.keyboard.press('Enter');
+      await expect(search).toBeFocused();
+      await page.keyboard.press('ArrowUp');
+      const lastId = await items.last().getAttribute('id');
+      await expect(search).toHaveAttribute('aria-activedescendant', lastId!);
     } finally {
       await page.evaluate(() => {
         HTMLElement.prototype.focus =

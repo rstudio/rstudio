@@ -217,7 +217,12 @@ public class AddinsToolbarButton extends ToolbarMenuButton
       switch (key)
       {
          case KeyCodes.KEY_UP:
-            menu_.moveSelectionUp();
+            // With nothing highlighted, Up starts from the last add-in, as in the
+            // combobox pattern; the menu itself would start from the first
+            if (menu_.getSelectedIndex() < 0)
+               menu_.selectLast();
+            else
+               menu_.moveSelectionUp();
             break;
          case KeyCodes.KEY_DOWN:
             menu_.moveSelectionDown();
