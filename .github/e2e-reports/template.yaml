@@ -1,0 +1,348 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Tailnet-only access to the e2e Playwright reports: one small EC2 instance
+  that mounts the (private) reports bucket read-only and serves it with nginx
+  behind `tailscale serve`, so https://<hostname>.<tailnet>.ts.net/ reaches it
+  from Tailscale and from nowhere else. See README.md next to this file.
+
+Parameters:
+  ReportsBucket:
+    Type: String
+    Default: rstudio-playwright-reports
+    Description: Existing bucket the e2e workflows publish reports into (os-publish-e2e-report).
+  TailscaleHostname:
+    Type: String
+    Default: rstudio-reports
+    AllowedPattern: '[a-z0-9]([a-z0-9-]*[a-z0-9])?'
+    Description: >-
+      Machine name the host registers in the tailnet; the report URLs are
+      https://<TailscaleHostname>.<TailnetDnsSuffix>/... A stale node with the
+      same name makes Tailscale append "-1", so remove the old node before
+      replacing the instance (see README.md).
+  TailnetDnsSuffix:
+    Type: String
+    Default: tail00da2.ts.net
+    Description: MagicDNS suffix of the tailnet the auth key belongs to (posit.co).
+  TailscaleAuthKeyParameter:
+    Type: String
+    Default: /rstudio-e2e-reports/tailscale-authkey
+    Description: >-
+      SSM SecureString holding the Tailscale auth key the host enrolls with.
+      Read by the instance at boot when it is not yet logged in; never part of
+      the template or the stack events. When the parameter does not exist the
+      host instead prints a login URL to authorize it in a browser (README.md).
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: >-
+      The account's shared VPC (tag Name=shared, provisioned by infraops; an
+      organization policy forbids creating VPCs). deploy.sh looks it up.
+  SubnetId:
+    Type: AWS::EC2::Subnet::Id
+    Description: >-
+      A private subnet of VpcId (tag Name=private-0): outbound internet through
+      the VPC's NAT gateway, S3 through its gateway endpoint, no public address.
+      Its network ACL allows TCP only, so Tailscale reaches the host through its
+      relays rather than directly (README.md). deploy.sh looks it up.
+  Owner:
+    Type: String
+    AllowedPattern: '[^@\s]+@[^@\s]+'
+    Description: >-
+      Email for the rs:owner tag. An organization policy refuses to launch an
+      instance without rs:owner and rs:project tags; deploy.sh fills in the
+      deploying identity's email.
+  InstanceType:
+    Type: String
+    Default: t4g.micro
+    AllowedPattern: '[a-z0-9]+g[a-z]*\.[a-z0-9]+'
+    Description: Graviton (arm64) instance type; the AMI below is arm64.
+  AmiId:
+    Type: AWS::EC2::Image::Id
+    Description: >-
+      Amazon Linux 2023 arm64 image. A concrete id rather than the SSM alias,
+      which CloudFormation would re-resolve on every update and so replace the
+      instance (and its tailnet identity) whenever Amazon publishes a new image.
+      deploy.sh resolves the latest image on the first deploy and keeps the
+      stack's current id afterwards; the running host patches itself with
+      dnf-automatic.
+
+Resources:
+  # ------------------------------------------------------------------- IAM
+
+  # Read-only on the reports, plus the auth key at first boot and Session
+  # Manager for maintenance: the host has no SSH and no inbound rules.
+  HostRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: read-reports
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                  - s3:GetBucketLocation
+                Resource: !Sub arn:aws:s3:::${ReportsBucket}
+              - Effect: Allow
+                Action: s3:GetObject
+                Resource: !Sub arn:aws:s3:::${ReportsBucket}/*
+        - PolicyName: read-tailscale-auth-key
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: ssm:GetParameter
+                Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${TailscaleAuthKeyParameter}
+
+  HostInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref HostRole
+
+  # ------------------------------------------------------------------- EC2
+
+  # Nothing inbound: the host has no public address, nginx binds to
+  # localhost, and Tailscale needs only outbound connections.
+  HostSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: e2e reports host (Tailscale only, no inbound)
+      VpcId: !Ref VpcId
+      SecurityGroupEgress:
+        - IpProtocol: '-1'
+          CidrIp: 0.0.0.0/0
+          Description: Tailscale, S3, package repositories
+      Tags:
+        - Key: Name
+          Value: !Ref AWS::StackName
+        - Key: rs:owner
+          Value: !Ref Owner
+        - Key: rs:project
+          Value: ide
+        - Key: rs:environment
+          Value: development
+        - Key: rs:subsystem
+          Value: e2e_reports
+        - Key: rs:stack
+          Value: !Ref AWS::StackName
+        - Key: rs:managed-by
+          Value: cloudformation
+
+  # Tags follow the account's rs:* convention; rs:owner and rs:project are
+  # what the organization policy requires at launch (the rest is bookkeeping),
+  # and PropagateTagsToVolumeOnCreation puts them on the volume too. The
+  # organization's tag policy also fixes the allowed values: rs:environment
+  # is one of production, staging, qa, development, infrastructure
+  # (`aws organizations describe-effective-policy --policy-type TAG_POLICY`).
+  # The user data runs on every boot (cloud_final_modules below), so it has to
+  # be idempotent, and a change to it takes effect with a stop/start rather
+  # than a replacement. It is written without `${...}` shell syntax because
+  # Fn::Sub would try to resolve it; the only `${...}` are stack values.
+  Host:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref AmiId
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref HostInstanceProfile
+      SubnetId: !Ref SubnetId
+      SecurityGroupIds:
+        - !Ref HostSecurityGroup
+      MetadataOptions:
+        HttpTokens: required
+        HttpEndpoint: enabled
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp3
+            VolumeSize: 8
+            Encrypted: true
+            DeleteOnTermination: true
+      PropagateTagsToVolumeOnCreation: true
+      Tags:
+        - Key: Name
+          Value: !Ref AWS::StackName
+        - Key: rs:owner
+          Value: !Ref Owner
+        - Key: rs:project
+          Value: ide
+        - Key: rs:environment
+          Value: development
+        - Key: rs:subsystem
+          Value: e2e_reports
+        - Key: rs:stack
+          Value: !Ref AWS::StackName
+        - Key: rs:managed-by
+          Value: cloudformation
+      UserData:
+        Fn::Base64: !Sub |
+          Content-Type: multipart/mixed; boundary="//"
+          MIME-Version: 1.0
+
+          --//
+          Content-Type: text/cloud-config; charset="us-ascii"
+
+          #cloud-config
+          cloud_final_modules:
+            - [scripts-user, always]
+
+          --//
+          Content-Type: text/x-shellscript; charset="us-ascii"
+
+          #!/bin/bash
+          set -euo pipefail
+          exec > >(tee -a /var/log/e2e-reports-setup.log) 2>&1
+          echo "== e2e reports host setup $(date -Is)"
+
+          REGION=${AWS::Region}
+          BUCKET=${ReportsBucket}
+          HOSTNAME_TS=${TailscaleHostname}
+          AUTHKEY_PARAM=${TailscaleAuthKeyParameter}
+          MOUNT=/srv/reports
+
+          # Packages. mount-s3 (AWS Mountpoint for Amazon S3) has no AL2023
+          # repository, so it comes straight from its release bucket, on every
+          # boot: dnf upgrades an installed package when the file is newer, so
+          # this is also how mount-s3 gets updated (dnf-automatic never sees
+          # it). A failed download only matters when nothing is installed yet.
+          curl -fsSL https://pkgs.tailscale.com/stable/amazon-linux/2023/tailscale.repo \
+            -o /etc/yum.repos.d/tailscale.repo
+          dnf install -y -q nginx tailscale jq dnf-automatic
+          MOUNT_S3_BEFORE=$(rpm -q mount-s3 2> /dev/null || true)
+          dnf install -y -q https://s3.amazonaws.com/mountpoint-s3-release/latest/arm64/mount-s3.rpm \
+            || rpm -q mount-s3 > /dev/null
+
+          # Security updates apply themselves; a kernel update waits for the
+          # next stop/start. AL2023 locks dnf to the release the AMI was built
+          # from, where nothing new ever appears, so follow the latest release
+          # instead (the AMI itself stays pinned, see the AmiId parameter).
+          echo latest > /etc/dnf/vars/releasever
+          sed -i 's/^apply_updates = .*/apply_updates = yes/; s/^upgrade_type = .*/upgrade_type = security/' \
+            /etc/dnf/automatic.conf
+          systemctl enable -q --now dnf-automatic.timer
+
+          # The bucket, mounted read-only. nginx runs as its own user, hence
+          # --allow-other; root needs no fuse.conf change for that.
+          mkdir -p "$MOUNT"
+          cat > /etc/systemd/system/reports-mount.service <<UNIT
+          [Unit]
+          Description=Mount the e2e reports bucket read-only
+          After=network-online.target
+          Wants=network-online.target
+
+          [Service]
+          Type=simple
+          ExecStart=/usr/bin/mount-s3 --foreground --read-only --allow-other --region $REGION --dir-mode 0755 --file-mode 0644 $BUCKET $MOUNT
+          ExecStopPost=-/usr/bin/fusermount -u $MOUNT
+          Restart=always
+          RestartSec=5
+
+          [Install]
+          WantedBy=multi-user.target
+          UNIT
+
+          # nginx: the mount, directory listings, index.html for directories,
+          # localhost only. The report's trace viewer is a same-origin fetch of
+          # trace .zip files, so plain static serving is all it needs.
+          cat > /etc/nginx/nginx.conf <<NGINX
+          user nginx;
+          worker_processes 1;
+          error_log /var/log/nginx/error.log notice;
+          pid /run/nginx.pid;
+
+          events {
+              worker_connections 1024;
+          }
+
+          http {
+              include /etc/nginx/mime.types;
+              default_type application/octet-stream;
+              access_log /var/log/nginx/access.log;
+              sendfile on;
+
+              server {
+                  listen 127.0.0.1:8080;
+                  # Directory redirects (/pr-1234 -> /pr-1234/) must stay relative:
+                  # the absolute default names this host and port, which only
+                  # tailscale serve can reach.
+                  absolute_redirect off;
+                  root $MOUNT;
+                  autoindex on;
+                  autoindex_exact_size off;
+                  autoindex_localtime on;
+
+                  location / {
+                      try_files \$uri \$uri/ =404;
+                  }
+              }
+          }
+          NGINX
+
+          systemctl daemon-reload
+          systemctl enable -q --now reports-mount.service
+          # The mount may have started before the upgrade above; only a new
+          # process runs the new binary.
+          if [[ $(rpm -q mount-s3) != "$MOUNT_S3_BEFORE" ]]; then
+            systemctl restart reports-mount.service
+          fi
+          systemctl enable -q nginx
+          systemctl restart nginx
+
+          # Tailscale: enroll once (the node keeps its identity across boots in
+          # /var/lib/tailscale), then publish nginx at https://$HOSTNAME_TS.<tailnet>.
+          # Without a stored auth key the node waits to be authorized in a
+          # browser (README.md); the rest happens on the next run of this script.
+          systemctl enable -q --now tailscaled
+          # The service is up before its socket answers; a `tailscale up`
+          # that lands in that window would abort this script (set -e) with
+          # nginx never published. `status --json` reports every state.
+          for _ in $(seq 1 30); do
+            tailscale status --json > /dev/null 2>&1 && break
+            sleep 1
+          done
+          if [ "$(tailscale status --json | jq -r .BackendState)" != Running ]; then
+            if AUTHKEY=$(aws ssm get-parameter --region "$REGION" --name "$AUTHKEY_PARAM" \
+                 --with-decryption --query Parameter.Value --output text 2> /dev/null); then
+              tailscale up --auth-key="$AUTHKEY" --hostname="$HOSTNAME_TS"
+              unset AUTHKEY
+            else
+              tailscale up --hostname="$HOSTNAME_TS" --timeout=5s || true
+              echo "No auth key at $AUTHKEY_PARAM. Authorize this node at: $(tailscale status --json | jq -r .AuthURL)"
+              exit 0
+            fi
+          fi
+          # Outside the enrollment guard so a changed TailscaleHostname reaches
+          # a node that is already enrolled.
+          tailscale set --hostname="$HOSTNAME_TS" --auto-update
+          # serve keys its config on the node's DNS name, which follows a
+          # rename only once the control plane confirms it: publishing before
+          # that serves the old name, and the new one fails its TLS handshake.
+          for _ in $(seq 1 30); do
+            case "$(tailscale status --json | jq -r .Self.DNSName)" in
+              "$HOSTNAME_TS".*) break ;;
+            esac
+            sleep 1
+          done
+          # Drop whatever an earlier name left behind.
+          tailscale serve reset
+          tailscale serve --bg 8080
+
+          echo "== done $(date -Is)"
+          --//--
+
+Outputs:
+  ReportsBaseUrl:
+    Description: Base URL for published reports; the publish action prefixes report paths with it.
+    Value: !Sub https://${TailscaleHostname}.${TailnetDnsSuffix}
+  InstanceId:
+    Description: For `aws ssm start-session --target` and stop/start after a user-data change.
+    Value: !Ref Host

@@ -13,6 +13,8 @@
  */
 
 import { assert, expect } from 'chai';
+import { chmodSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'fs';
+import { join } from 'path';
 import { app, BrowserWindow, screen } from 'electron';
 import { Display } from 'electron/main';
 import { describe } from 'mocha';
@@ -339,5 +341,117 @@ describe('Font tests', () => {
       testDesktopOptions.rBinDir(),
       process.platform === 'win32' ? normalizeSeparatorsNative(testRBinDir) : '',
     );
+  });
+});
+
+// conf parses config.json inside the ElectronStore constructor and throws on a
+// damaged file; before #19496 that throw aborted startup with no dialog.
+describe('DesktopOptions with a corrupt config.json', () => {
+  const configPath = join(kTestingConfigDirectory, 'config.json');
+
+  function writeConfig(contents: string | Buffer): void {
+    mkdirSync(kTestingConfigDirectory, { recursive: true });
+    writeFileSync(configPath, contents);
+  }
+
+  function corruptBackups(): string[] {
+    return readdirSync(kTestingConfigDirectory).filter((name) => name.startsWith('config.json.corrupt-'));
+  }
+
+  // chmod cannot take away the owner's access on Windows, nor root's anywhere
+  const canRestrictPermissions = process.platform !== 'win32' && process.getuid?.() !== 0;
+
+  afterEach(() => {
+    // undo the permission changes made below so the directory can be removed
+    if (existsSync(configPath)) {
+      chmodSync(kTestingConfigDirectory, 0o755);
+      chmodSync(configPath, 0o644);
+    }
+    assert(isSuccessful(deleteTestingDesktopOptions()));
+  });
+
+  it('moves a truncated config.json aside and starts with defaults', () => {
+    const truncated = '{"view":{"zoomLevel":';
+    writeConfig(truncated);
+
+    const options = testingDesktopOptions();
+
+    assert.equal(options.zoomLevel(), properties.view.default.zoomLevel);
+    const backups = corruptBackups();
+    assert.lengthOf(backups, 1);
+    assert.equal(readFileSync(join(kTestingConfigDirectory, backups[0]), 'utf8'), truncated);
+
+    const recovery = options.configRecovery();
+    assert.equal(recovery?.configPath, configPath);
+    assert.equal(recovery?.backupPath, join(kTestingConfigDirectory, backups[0]));
+    assert.include(recovery?.reason, 'JSON');
+  });
+
+  it('recovers from a config.json full of NUL bytes', () => {
+    writeConfig(Buffer.alloc(64));
+
+    const options = testingDesktopOptions();
+
+    assert.equal(options.zoomLevel(), properties.view.default.zoomLevel);
+    assert.lengthOf(corruptBackups(), 1);
+  });
+
+  it('recovers from a config.json that violates the schema', () => {
+    writeConfig('{"view":{"zoomLevel":"huge"}}');
+
+    const options = testingDesktopOptions();
+
+    assert.equal(options.zoomLevel(), properties.view.default.zoomLevel);
+    assert.lengthOf(corruptBackups(), 1);
+  });
+
+  it('persists options again after recovering', () => {
+    writeConfig('{"view":');
+
+    const options = testingDesktopOptions();
+    options.setZoomLevel(1.5);
+
+    assert.equal(options.zoomLevel(), 1.5);
+    assert.equal(JSON.parse(readFileSync(configPath, 'utf8')).view.zoomLevel, 1.5);
+  });
+
+  it('leaves a valid config.json alone', () => {
+    writeConfig(JSON.stringify({ view: { zoomLevel: 1.25 } }));
+
+    const options = testingDesktopOptions();
+
+    assert.equal(options.zoomLevel(), 1.25);
+    assert.lengthOf(corruptBackups(), 0);
+    assert.isUndefined(options.configRecovery());
+  });
+
+  it('fails with one error when a damaged config.json cannot be moved aside', function () {
+    if (!canRestrictPermissions) {
+      this.skip();
+    }
+
+    const truncated = '{"view":';
+    writeConfig(truncated);
+    chmodSync(kTestingConfigDirectory, 0o555);
+
+    assert.throws(() => testingDesktopOptions(), /could not move it aside/);
+    assert.equal(readFileSync(configPath, 'utf8'), truncated);
+    assert.lengthOf(corruptBackups(), 0);
+  });
+
+  it('does not treat an unreadable config.json as damaged', function () {
+    if (!canRestrictPermissions) {
+      this.skip();
+    }
+
+    const contents = JSON.stringify({ view: { zoomLevel: 1.25 } });
+    writeConfig(contents);
+    chmodSync(configPath, 0o000);
+
+    assert.throws(() => testingDesktopOptions(), /EACCES/);
+    assert.lengthOf(corruptBackups(), 0);
+
+    chmodSync(configPath, 0o644);
+    assert.equal(readFileSync(configPath, 'utf8'), contents);
   });
 });

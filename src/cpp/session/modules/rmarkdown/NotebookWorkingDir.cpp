@@ -41,25 +41,26 @@ DirCapture::~DirCapture()
 {
 }
 
+FilePath chunkWorkingDir(const std::string& docId, const FilePath& workingDir)
+{
+   // prefer manually specified working directory
+   if (workingDir.exists())
+      return workingDir;
+
+   // no manually specified dir; use the document's directory, if it has one
+   // (looked up each time, as the document may have been saved elsewhere)
+   std::string docPath;
+   source_database::getPath(docId, &docPath);
+   if (!docPath.empty())
+      return module_context::resolveAliasedPath(docPath).getParent();
+
+   return FilePath();
+}
+
 Error DirCapture::connectDir(const std::string& docId, 
                              const core::FilePath& workingDir)
 {
-   if (workingDir.exists())
-   {
-      // prefer manually specified working directory
-      workingDir_ = workingDir;
-   }
-   else
-   {
-      // no manually specified dir; use working directory to doc path, if it
-      // has one
-      std::string docPath;
-      source_database::getPath(docId, &docPath);
-      if (!docPath.empty())
-      {
-         workingDir_ = module_context::resolveAliasedPath(docPath).getParent();
-      }
-   }
+   workingDir_ = chunkWorkingDir(docId, workingDir);
 
    if (!workingDir_.isEmpty())
    {
