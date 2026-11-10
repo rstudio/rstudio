@@ -8,11 +8,12 @@ import {
   waitForSessionRestart,
 } from '@utils/project';
 import { useSuiteSandbox } from '@utils/sandbox';
-import { executeCommand, openProject } from '@utils/commands';
+import { clearPref, executeCommand, openProject, setPref } from '@utils/commands';
 import { sleep, TIMEOUTS } from '@utils/constants';
 import type { Page } from 'playwright';
 
 const NOTICE = 'RStudio has reduced background file operations';
+const NOTICE_PREF = 'show_reduced_file_operations_notice';
 
 // The per-project override stands in for a remote filesystem. It is read once
 // at project startup, so it only takes effect in the next session of the
@@ -67,6 +68,7 @@ test.describe('Reduced background file operations notice', { tag: ['@server_only
   const sandbox = useSuiteSandbox();
 
   test.afterAll(async ({ rstudioPage: page }) => {
+    await clearPref(page, NOTICE_PREF);
     await closeProjectIfOpen(page);
   });
 
@@ -95,5 +97,19 @@ test.describe('Reduced background file operations notice', { tag: ['@server_only
 
     await suspendAndResume(page);
     await expectNoticeCount(page, 1, 'notice after restart + suspend + resume');
+  });
+
+  test('is not emitted when the notice preference is off (#19241)', async ({ rstudioPage: page }) => {
+    await createAndOpenProject(page, sandbox.dir, 'ReducedFileOpsHidden');
+    await setPref(page, NOTICE_PREF, false);
+    await enableReducedFileOps(page);
+    await restartR(page);
+    await expectNoticeCount(page, 0, 'notice with the preference off');
+
+    // The preference hides only the message: the reduction is still on, and a
+    // hidden notice is not recorded as shown, so turning it back on prints it.
+    await clearPref(page, NOTICE_PREF);
+    await restartR(page);
+    await expectNoticeCount(page, 1, 'notice after the preference is cleared');
   });
 });

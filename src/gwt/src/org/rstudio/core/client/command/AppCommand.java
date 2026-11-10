@@ -692,7 +692,9 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 
       text.append("border=0 cellpadding=0 cellspacing=0 width='100%'><tr>");
 
-      text.append("<td width=\"25\" style=\"vertical-align: top\">" +
+      // The icon cell is decorative: icons have empty alt text, and the <br/>
+      // placeholder would otherwise add whitespace to the item's name.
+      text.append("<td width=\"25\" style=\"vertical-align: top\" aria-hidden=\"true\">" +
                   "<div style=\"width: 25px; margin-top: " +
                   topOffset + "px; margin-bottom: -10px\">");
       if (icon != null)

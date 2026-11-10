@@ -82,8 +82,11 @@ public abstract class FileSystemDialog extends ModalDialogBase
             {
                progress.onCompleted();
 
-               // navigate through the browser so an accept during the new
-               // folder's listing is deferred like any other
+               // entering the new folder supersedes a deferred accept, as in
+               // onSelectionCommit(); navigate through the browser so an
+               // accept during the new folder's listing is deferred like any
+               // other
+               acceptOnNavigated_ = false;
                browser_.cd(input);
             }
 
@@ -172,9 +175,17 @@ public abstract class FileSystemDialog extends ModalDialogBase
    {
       FileSystemItem item = event.getSelectedItem();
       if (item != null && item.isDirectory())
+      {
+         // a deferred accept waited for the listing this navigation supersedes
+         // (the context delivers only the latest); drop it rather than run it
+         // in a folder chosen after the accept was made
+         acceptOnNavigated_ = false;
          browser_.cd(item);
+      }
       else
+      {
          maybeAccept();
+      }
    }
 
    /**
@@ -256,30 +267,41 @@ public abstract class FileSystemDialog extends ModalDialogBase
       if (acceptOnNavigated_)
       {
          acceptOnNavigated_ = false;
-         maybeAccept();
+         inDeferredAccept_ = true;
+         try
+         {
+            maybeAccept();
+         }
+         finally
+         {
+            inDeferredAccept_ = false;
+         }
       }
    }
 
    /**
     * Called when a directory listing arrives, after the browser shows it and
     * before any deferred accept runs. A navigation that fails outright skips
-    * it (see onError()), but one the context recovers from by listing a
-    * fallback directory instead (RemoteFileSystemContext.cd() falls back to
-    * the project or default working directory) arrives here as usual.
+    * it (see onError()); only the opening navigation can recover by listing
+    * a fallback directory instead (RemoteFileSystemContext.cd()), and that
+    * listing arrives here as usual.
     */
    protected void onBrowserNavigated()
    {
    }
 
    /**
-    * Closing the dialog (Cancel, Escape) does not detach it from the context,
-    * so a listing that arrives afterwards still reaches onNavigated(). Drop
-    * any deferred accept so it cannot run the operation from a closed dialog.
+    * Closing the dialog (Cancel, Escape, or a completed operation) detaches
+    * it from the context, so a navigation still in flight cannot report a
+    * listing or an error to a dialog that is gone; the deferred accept it
+    * may have been carrying goes with it. A newer dialog that has taken the
+    * context meanwhile stays attached.
     */
    @Override
    protected void onUnload()
    {
       acceptOnNavigated_ = false;
+      context_.releaseCallbacks(this);
       super.onUnload();
    }
 
@@ -453,6 +475,9 @@ public abstract class FileSystemDialog extends ModalDialogBase
    private final ProgressIndicator progress_;
    protected FileBrowserWidget browser_;
    protected boolean acceptOnNavigated_ = false;
+
+   // true while onNavigated() runs the accept deferred to it
+   protected boolean inDeferredAccept_ = false;
    private String initialFilename_;
    private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

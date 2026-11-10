@@ -3922,20 +3922,23 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     // bar is to stay in view all the same.
     const editor = new AceEditor(page, '');
     const base = page.locator(BASE_EDITOR);
-    const live = liveEditors(page, 'tail');
     const rowTop = (view: Locator, row: number) =>
       view.evaluate((el, row) => {
         type Measured = { renderer: { textToScreenCoordinates(row: number, column: number): { pageY: number } } };
         const editor = (el as AceEditorElement).env?.editor as unknown as Measured;
         return Math.round(editor.renderer.textToScreenCoordinates(row, 0).pageY);
       }, row);
+    // The live editor is the active document's, not the one showing "tail":
+    // once the fold is padded for the wrapped header, the lines after it are
+    // below the view, and Ace renders only what is in view (#19436).
     const barInView = () =>
-      live.evaluate((el) => {
-        type Scrolled = { renderer: { scroller: HTMLElement } };
-        const bar = el.querySelector('.ace_git-peek-compact');
-        if (!bar) return false;
+      page.evaluate(() => {
+        type Scrolled = { container: HTMLElement; renderer: { scroller: HTMLElement } };
+        const editor = window.rstudio?.documents.activeEditor() as unknown as Scrolled | undefined;
+        const bar = editor?.container.querySelector('.ace_git-peek-compact');
+        if (!editor || !bar) return false;
         const box = bar.getBoundingClientRect();
-        const view = ((el as AceEditorElement).env?.editor as unknown as Scrolled).renderer.scroller.getBoundingClientRect();
+        const view = editor.renderer.scroller.getBoundingClientRect();
         return box.top >= view.top && box.bottom <= view.bottom + 1;
       });
 

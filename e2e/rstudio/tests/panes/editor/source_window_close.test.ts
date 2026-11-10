@@ -12,6 +12,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { TIMEOUTS } from '@utils/constants';
 import { openFile, seedSandboxFile } from '@utils/files';
+import { waitForRpcResponse } from '@utils/rpc';
 import { executeCommand, resetSourcePaneState } from '@utils/commands';
 import { SOURCE_WINDOW_URL, closeSourceWindows, expectNoSourceWindowAfterReload } from '@utils/source-windows';
 
@@ -46,15 +47,9 @@ async function closeLikeUser(satellite: Page): Promise<void> {
 // The main window closes the window's documents once it hears the window is
 // gone; on a build that loses the notification this RPC is never sent.
 async function closeAndExpectDocumentReleased(page: Page, satellite: Page): Promise<void> {
-  const released = page.waitForResponse(
-    (response) => response.url().includes('/rpc/close_document'),
-    { timeout: TIMEOUTS.consoleReady },
-  );
+  const released = waitForRpcResponse(page, 'close_document');
   await closeLikeUser(satellite);
-
-  // A rejected RPC still answers HTTP 200, with an "error" member.
-  const response = await released;
-  expect(await response.text()).not.toContain('"error"');
+  await released;
 }
 
 test.describe('Closing a popped-out source window (#18987)', () => {

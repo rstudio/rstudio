@@ -182,7 +182,9 @@ public interface DocDisplay extends HasValueChangeHandlers<VoidResponse>,
 
    void reindent();
    void reindent(Range range);
-   ChangeTracker getChangeTracker();
+   // Each call builds a new tracker that adds handlers to the editor for its
+   // lifetime, so create one per consumer, not per use.
+   ChangeTracker createChangeTracker();
 
    String getCode(Position start, Position end);
    DocDisplay.AnchoredSelection createAnchoredSelection(Widget hostWidget,

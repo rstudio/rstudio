@@ -155,7 +155,7 @@ public class SVNCommandHandler
       @Override
       public String getIgnoresCaption()
       {
-         return constants_.svnColonIgnore();
+         return "svn:ignore";
       }
 
       @Override

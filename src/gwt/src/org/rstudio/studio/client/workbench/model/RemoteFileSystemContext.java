@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.model;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.files.PosixFileSystemContext;
@@ -52,25 +53,50 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
       return globalDisplay_;
    }
    
+   /**
+    * A new set of callbacks is a new owner (a new dialog): results of the
+    * old owner's pending navigations must not reach it, and its opening
+    * navigation may fall back (see cd()).
+    */
+   @Override
+   public void setCallbacks(Callbacks callbacks)
+   {
+      super.setCallbacks(callbacks);
+      navigation_.invalidate();
+      openingNavigation_ = true;
+   }
+
    public void setwd(String relativeOrAbsolutePath)
    {
+      navigation_.invalidate();
       workingDir_ = combine(pwd(), relativeOrAbsolutePath);
       contents_ = null;
       if (callbacks_ != null)
          callbacks_.onNavigated();
    }
 
+   /**
+    * Only a dialog's opening navigation falls back to the project (or
+    * default working) directory, so the dialog can still open when the
+    * directory it would start in is gone (e.g. R/ in a package without one).
+    * A directory the user navigates to later fails outright instead, leaving
+    * the dialog where it was: silently listing a fallback there let a Save,
+    * Open, or Choose deferred behind the navigation complete in it (#18959).
+    */
    public void cd(String relativeOrAbsolutePath)
    {
-      // form the fallback path
-      String fallbackPath;
-      FileSystemItem projectDir = 
-            session_.getSessionInfo().getActiveProjectDir();
-      if (projectDir == null)
-         fallbackPath = session_.getSessionInfo().getDefaultWorkingDir();
-      else
-         fallbackPath = projectDir.getPath();
-      
+      String fallbackPath = null;
+      if (openingNavigation_)
+      {
+         FileSystemItem projectDir =
+               session_.getSessionInfo().getActiveProjectDir();
+         if (projectDir == null)
+            fallbackPath = session_.getSessionInfo().getDefaultWorkingDir();
+         else
+            fallbackPath = projectDir.getPath();
+      }
+      openingNavigation_ = false;
+
       cd(relativeOrAbsolutePath, fallbackPath);
    }
 
@@ -84,11 +110,15 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
     */
    public void cd(String relativeOrAbsolutePath, final String fallbackPath)
    {
+      // Only the latest navigation (or owner) may update the listing or notify
+      // the dialog: onNavigated() can release an accept waiting for that
+      // directory, and a closed or replaced dialog must get nothing.
+      navigation_.invalidate();
+      final Invalidation.Token token = navigation_.getInvalidationToken();
+
       final String newPath = combine(workingDir_, relativeOrAbsolutePath);
 
       final FileSystemItem newPathEntry = FileSystemItem.createDir(newPath);
-      
-      final ArrayList<FileSystemItem> fsi = new ArrayList<>();
 
       server_.listFiles(
             newPathEntry,
@@ -100,6 +130,9 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
                @Override
                public void onError(ServerError error)
                {
+                  if (token.isInvalid())
+                     return;
+
                   if (fallbackPath != null)
                   {
                      // try fallback if supplied
@@ -111,8 +144,12 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
 
                @Override
                public void onResponseReceived(final DirectoryListing response)
-               { 
+               {
+                  if (token.isInvalid())
+                     return;
+
                   final JsArray<FileSystemItem> files = response.getFiles();
+                  ArrayList<FileSystemItem> fsi = new ArrayList<>();
                   for (int i = 0; i < files.length(); i++)
                      fsi.add(files.get(i));
                   
@@ -170,8 +207,12 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
       return fileTypeRegistry_.getIconForFile(item);
    }
 
+   private final Invalidation navigation_ = new Invalidation();
    private final FilesServerOperations server_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final GlobalDisplay globalDisplay_;
    private final Session session_;
+
+   // see setCallbacks()
+   private boolean openingNavigation_ = true;
 }
