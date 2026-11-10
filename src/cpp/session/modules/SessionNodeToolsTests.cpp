@@ -290,6 +290,13 @@ TEST(SessionNodeToolsTest, NormalizeProxyUrlChecksCredentials)
    EXPECT_FALSE(normalizeProxyUrl("http://user:p%4@proxy.example.com:8080", &out));
    EXPECT_FALSE(normalizeProxyUrl("http://user:%ff@proxy.example.com:8080", &out));
    EXPECT_FALSE(normalizeProxyUrl("http://user:%C3x%A9@proxy.example.com:8080", &out));
+
+   // Node rejects a line break inside the value, but not other whitespace
+   EXPECT_FALSE(normalizeProxyUrl("http://user:a\rb@proxy.example.com:8080", &out));
+   EXPECT_FALSE(normalizeProxyUrl("http://user:a\nb@proxy.example.com:8080", &out));
+   EXPECT_FALSE(normalizeProxyUrl("\"http://user:a\r\nb@proxy.example.com:8080\"", &out));
+   EXPECT_TRUE(normalizeProxyUrl("http://user:a\tb@proxy.example.com:8080", &out));
+   EXPECT_TRUE(normalizeProxyUrl("http://user:pass@proxy.example.com:8080\r\n", &out));
 }
 
 TEST(SessionNodeToolsTest, NormalizeProxyUrlKeepsWhitespaceInCredentials)

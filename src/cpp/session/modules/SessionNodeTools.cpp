@@ -451,6 +451,11 @@ bool normalizeProxyUrl(const std::string& value, std::string* pNormalized)
       return true;
    }
 
+   // Node rejects a line break anywhere in the value; trimming only took the
+   // ones at the ends. Other whitespace is fine in the credentials.
+   if (proxy.find_first_of("\r\n") != std::string::npos)
+      return false;
+
    std::string::size_type schemeEnd = proxy.find("://");
    if (schemeEnd == std::string::npos)
    {
