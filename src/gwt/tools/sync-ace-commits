@@ -5,7 +5,7 @@ set -ex
 # Based on rstudio/parrot-balsam, including the already-shipped tokenizer
 # fixes from rstudio/rstudio-ace#13 and bounded diff refinement for #19218.
 REPOSITORY=https://github.com/rstudio/rstudio-ace.git
-REVISION=b6efba12acd03ea1eae58861ebceda414562c0dd
+REVISION=8ed24017163b542beeff027d4b07a12ce5a097be
 
 TOOLS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "${TOOLS_DIR}"
