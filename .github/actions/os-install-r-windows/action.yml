@@ -48,8 +48,7 @@ runs:
         $ProgressPreference = 'SilentlyContinue'
 
         # rstudio-tools.sh, not its .cmd twin: one file is the pin's home, and
-        # the .sh is plain text a Windows runner reads just as easily. The same
-        # Select-String shape the yarn step already uses for RSTUDIO_NODE_VERSION.
+        # the .sh is plain text a Windows runner reads just as easily.
         $toolsFile = Join-Path $env:GITHUB_WORKSPACE 'dependencies\tools\rstudio-tools.sh'
         function Read-Pin([string] $name) {
           # Array-wrapped and last-wins, mirroring the `| tail -1` the Unix

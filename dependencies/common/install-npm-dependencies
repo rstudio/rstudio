@@ -59,10 +59,3 @@ install-node "${RSTUDIO_INSTALLED_NODE_VERSION}" installed
 
 # the version we use for building product components
 install-node "${RSTUDIO_NODE_VERSION}"
-
-# install yarn
-case "$(uname -sm)" in
-"Linux aarch64") ./install-yarn-linux-aarch64 ;;
-*)               ./install-yarn               ;;
-esac
-
