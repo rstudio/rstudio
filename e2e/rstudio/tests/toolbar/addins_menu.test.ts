@@ -118,7 +118,9 @@ test.describe('Addins toolbar menu (#19552)', () => {
     await expect.poll(() => runs).toEqual(['clipr::clipr_result']);
   });
 
-  test('Tab and Shift+Tab leave the menu as they would leave the Addins button', async ({ rstudioPage: page }) => {
+  test('closing the menu returns focus to the Addins button', async ({
+    rstudioPage: page,
+  }) => {
     const button = page.locator(ADDINS_BUTTON);
     const focusedId = () => page.evaluate(() => document.activeElement?.id ?? '');
     await button.focus();
@@ -139,6 +141,11 @@ test.describe('Addins toolbar menu (#19552)', () => {
     await page.keyboard.press('Shift+Tab');
     await expect(popup).toBeHidden();
     expect(await focusedId()).toBe(previous);
+
+    await openAddinsPopup(page);
+    await page.keyboard.press('Escape');
+    await expect(popup).toBeHidden();
+    await expect(button).toBeFocused();
   });
 
   test('the search box names the highlighted add-in to screen readers', async ({ rstudioPage: page }) => {

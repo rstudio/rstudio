@@ -29,6 +29,7 @@ import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.MapUtil;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -47,6 +48,7 @@ import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
@@ -127,6 +129,20 @@ public class AddinsToolbarButton extends ToolbarMenuButton
       searchWidget_.addValueChangeHandler(event -> searchValueChangeTimer_.schedule(200));
       searchWidget_.addKeyDownHandler(this::onSearchKeyDown);
 
+      // Closing the menu removes the focused search box. Put focus back on this
+      // button rather than leave it on the page body; Tab's default action then
+      // moves on from here.
+      menu_.addCloseHandler(event ->
+      {
+         Element focused = DomUtils.getActiveElement();
+         if (focused == null ||
+             focused == Document.get().getBody() ||
+             menu_.getElement().isOrHasChild(focused))
+         {
+            setFocus(true);
+         }
+      });
+
       addSearchHeader();
       initComboboxRole();
    }
@@ -152,7 +168,21 @@ public class AddinsToolbarButton extends ToolbarMenuButton
    // menu. Page Up, Page Down, and Escape already reach the menu from anywhere.
    private void onSearchKeyDown(KeyDownEvent event)
    {
-      switch (event.getNativeKeyCode())
+      int key = event.getNativeKeyCode();
+      if (key == KeyCodes.KEY_TAB)
+      {
+         menu_.hide();
+         return;
+      }
+
+      boolean navigation =
+            key == KeyCodes.KEY_UP || key == KeyCodes.KEY_DOWN ||
+            key == KeyCodes.KEY_HOME || key == KeyCodes.KEY_END ||
+            key == KeyCodes.KEY_ENTER;
+      if (!navigation)
+         return;
+
+      switch (key)
       {
          case KeyCodes.KEY_UP:
             menu_.moveSelectionUp();
@@ -169,14 +199,6 @@ public class AddinsToolbarButton extends ToolbarMenuButton
          case KeyCodes.KEY_ENTER:
             menu_.activateSelectedItem();
             break;
-         case KeyCodes.KEY_TAB:
-            // Hiding the menu removes the focused search box, so first put focus
-            // back on this button; the default action then moves on from here.
-            setFocus(true);
-            menu_.hide();
-            return;
-         default:
-            return;
       }
       event.preventDefault();
    }
