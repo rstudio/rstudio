@@ -74,12 +74,10 @@ async function expectArrowDownMovesOption(page: Page, listLabel: string, before:
 }
 
 /**
- * Record, at each aria-activedescendant write on the focused element, whether
- * the named element is visible. Screen readers (VoiceOver in Safari) skip a
- * hidden target and don't re-announce once it becomes visible, and a
- * MutationObserver would only run after the popup is made visible again, so
- * wrap setAttribute. Writes on unfocused elements, such as the one GWT's
- * MenuBar keeps on itself, are not announced and so are not recorded.
+ * Record, at each aria-activedescendant write on an Ace text input, whether the
+ * named element is visible. VoiceOver skips a hidden target and won't announce
+ * it once shown; a MutationObserver would run too late to see that, so wrap
+ * setAttribute.
  */
 async function trackActiveDescendantWrites(page: Page) {
   await page.evaluate(() => {
@@ -90,7 +88,7 @@ async function trackActiveDescendantWrites(page: Page) {
     const original = proto.__adOriginal;
     proto.setAttribute = function (name: string, value: string) {
       original.call(this, name, value);
-      if (name === 'aria-activedescendant' && this === document.activeElement) {
+      if (name === 'aria-activedescendant' && this.classList.contains('ace_text-input')) {
         const target = document.getElementById(value);
         w.__adWrites.push({
           id: value,
@@ -184,7 +182,9 @@ test.describe('Completion popup screen reader support', () => {
     // only as an Rcpp (or cpp11) source file.
     const canComplete = await consoleActions.evalRLogical(
       '.rs.isClangAvailable() && requireNamespace("Rcpp", quietly = TRUE)');
-    test.skip(canComplete !== true, 'C++ completion needs libclang and the Rcpp package');
+    expect(canComplete, `Unreadable probe result:\n${await consoleActions.lastOutputText()}`)
+      .not.toBeNull();
+    test.skip(!canComplete, 'C++ completion needs libclang and the Rcpp package');
 
     // C++ completion asks libclang for the members of `s` once `s.` is typed.
     // The file must exist on disk, since completion compiles the saved file.
@@ -222,7 +222,7 @@ test.describe('Completion popup screen reader support', () => {
     await expectArrowDownMovesOption(page, 'Completions', first);
 
     // The type icons are decorative; the item's text names it.
-    await expect(popup.locator('img:not([role="presentation"])')).toHaveCount(0);
+    await expect(popup.locator('img:not([role="presentation"][alt=""])')).toHaveCount(0);
 
     await page.keyboard.press('Escape');
     await expect(popup).toBeHidden();

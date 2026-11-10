@@ -202,14 +202,6 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
       });
    }
 
-   @Override
-   protected void onUnload()
-   {
-      announceable_ = false;
-      docDisplay_.setAriaActiveDescendant(null);
-      super.onUnload();
-   }
-
    private void addToolTipHandler()
    {
       toolTip_ = new CppCompletionToolTip();
