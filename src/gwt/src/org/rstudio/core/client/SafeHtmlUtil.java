@@ -83,6 +83,7 @@ public class SafeHtmlUtil
                                   ImageResource image)
    {
       sb.append(SafeHtmlUtil.createOpenTag("img",
+                                           "alt", "",
                                            "role", "presentation",
                                            "class", style,
                                            "width", Integer.toString(image.getWidth()),
