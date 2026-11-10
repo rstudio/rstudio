@@ -723,7 +723,7 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
    //                     ^~~~~~~~~~~~~^
    //
    // Places the token cursor on the first token following a closing paren.
-   this.bwdOverConstNoexceptDecltype = function() {
+   this.bwdOverFunctionQualifiers = function() {
 
       var clone = this.cloneCursor();
       if (clone.currentValue() !== "{") {

@@ -434,7 +434,7 @@ var CppCodeModel = function(session, tokenizer,
 
             // function and lambdas
             else if (
-               localCursor.bwdOverConstNoexceptDecltype() &&
+               localCursor.bwdOverFunctionQualifiers() &&
                (localCursor.bwdOverInitializationList() &&
                 localCursor.moveBackwardOverMatchingParens()) ||
                   localCursor.moveBackwardOverMatchingParens()) {
