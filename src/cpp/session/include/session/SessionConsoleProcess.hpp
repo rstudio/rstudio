@@ -311,6 +311,11 @@ private:
 };
 
 core::json::Array processesAsJson(SerializationMode serialMode);
+
+// The PROMPT_COMMAND given to Bash terminals: sets the xterm title to the
+// working directory with $HOME abbreviated to '~'. Exposed for tests.
+std::string bashPromptCommand();
+
 core::Error initialize();
 
 } // namespace console_process

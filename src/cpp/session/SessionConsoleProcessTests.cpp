@@ -20,6 +20,12 @@
 #include <boost/lexical_cast.hpp>
 #include <gtest/gtest.h>
 
+#include <shared_core/FilePath.hpp>
+
+#include <core/system/Environment.hpp>
+#include <core/system/Process.hpp>
+#include <core/system/System.hpp>
+
 namespace rstudio {
 namespace session {
 namespace console_process {
@@ -318,6 +324,82 @@ TEST(ConsoleProcessConPty, StripsStartupClearArrivingInLaterChunk)
    EXPECT_EQ(second, "$ ");
 }
 #endif // _WIN32
+
+#ifndef _WIN32
+
+namespace {
+
+// Runs the terminal's PROMPT_COMMAND once in bash with the given $HOME and
+// working directory, returning what it wrote to the terminal. 'setup' is
+// shell code run before the hook, in the same shell.
+std::string promptTitleOutput(const core::FilePath& cwd,
+                              const core::FilePath& home,
+                              const std::string& setup = std::string())
+{
+   core::system::Options env;
+   core::system::environment(&env);
+   core::system::setenv(&env, "HOME", home.getAbsolutePath());
+   core::system::setenv(&env, "PROMPT_COMMAND", bashPromptCommand());
+
+   core::system::ProcessOptions options;
+   options.environment = env;
+   options.workingDir = cwd;
+
+   core::system::ProcessResult result;
+   core::Error error = core::system::runCommand(
+            "/bin/bash --norc --noprofile -c '" + setup + " eval \"$PROMPT_COMMAND\"'", options, &result);
+   EXPECT_FALSE(error);
+   EXPECT_EQ(0, result.exitStatus) << result.stdErr;
+   EXPECT_EQ("", result.stdErr);
+   return result.stdOut;
+}
+
+} // anonymous namespace
+
+// The hook abbreviates $HOME like `dirs +0` but must not fork: a subshell or
+// command substitution at every prompt is where bash was seen hanging with
+// typed input echoed but never run (#19542).
+TEST(ConsoleProcessBashPrompt, AbbreviatesHomeWithoutForking)
+{
+   if (!core::FilePath("/bin/bash").exists())
+      GTEST_SKIP() << "no /bin/bash";
+
+   std::string hook = bashPromptCommand();
+   EXPECT_EQ(std::string::npos, hook.find("$(")) << "command substitution forks";
+   EXPECT_EQ(std::string::npos, hook.find('`')) << "command substitution forks";
+   EXPECT_NE('(', hook[0]) << "a subshell forks";
+
+   // bash reports $PWD as the physical path, so compare resolved paths
+   core::FilePath tempDir;
+   ASSERT_FALSE(core::FilePath::tempFilePath(tempDir));
+   ASSERT_FALSE(tempDir.ensureDirectory());
+   core::FilePath home;
+   ASSERT_FALSE(core::system::realPath(tempDir, &home));
+   core::FilePath sub = home.completeChildPath("sub");
+   ASSERT_FALSE(sub.ensureDirectory());
+   core::FilePath sibling(home.getAbsolutePath() + "ling");
+   ASSERT_FALSE(sibling.ensureDirectory());
+
+   EXPECT_EQ("\033]0;~\007", promptTitleOutput(home, home));
+   EXPECT_EQ("\033]0;~/sub\007", promptTitleOutput(sub, home));
+   EXPECT_EQ("\033]0;" + sibling.getAbsolutePath() + "\007", promptTitleOutput(sibling, home));
+   EXPECT_EQ("\033]0;" + home.getAbsolutePath() + "\007",
+             promptTitleOutput(home, core::FilePath()));
+
+   // the hook runs in the user's shell, under the user's shell options
+   EXPECT_EQ("\033]0;" + home.getAbsolutePath() + "\007",
+             promptTitleOutput(home, home, "set -u; unset HOME;"));
+
+   // like `dirs +0`, a HOME of "/" abbreviates nothing
+   core::FilePath root("/");
+   EXPECT_EQ("\033]0;/\007", promptTitleOutput(root, root));
+   EXPECT_EQ("\033]0;" + sub.getAbsolutePath() + "\007", promptTitleOutput(sub, root));
+
+   home.removeIfExists();
+   sibling.removeIfExists();
+}
+
+#endif // !_WIN32
 
 } // namespace tests
 } // namespace console_process

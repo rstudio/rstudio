@@ -157,6 +157,27 @@ test_that("the default R install directory is rig's user-mode root", {
 
 })
 
+test_that("rig is given the R install directory with backslashes on Windows only", {
+
+   # the form validateInstallDir() produces on Windows
+   expect_identical(.rs.rig.installDirForRig("C:/Users/me/AppData/Roaming/rig/data/r", windows = TRUE),
+                    "C:\\Users\\me\\AppData\\Roaming\\rig\\data\\r")
+   expect_identical(.rs.rig.installDirForRig("D:/", windows = TRUE), "D:\\")
+   expect_identical(.rs.rig.installDirForRig("//server/share/R versions", windows = TRUE),
+                    "\\\\server\\share\\R versions")
+   expect_identical(.rs.rig.installDirForRig("C:\\R", windows = TRUE), "C:\\R")
+
+   # elsewhere a backslash is an ordinary character in a file name
+   expect_identical(.rs.rig.installDirForRig("/home/me/R", windows = FALSE), "/home/me/R")
+   expect_identical(.rs.rig.installDirForRig("/home/me/odd\\name", windows = FALSE), "/home/me/odd\\name")
+
+   # the platform's own form is the default
+   directory <- "C:/Users/me/R"
+   expect_identical(.rs.rig.installDirForRig(directory),
+                    .rs.rig.installDirForRig(directory, windows = .rs.platform.isWindows))
+
+})
+
 test_that("the bundled rig follows an explicit override and precedes system copies", {
 
    bundled <- file.path(tempdir(), "RStudio", "bin", "rig")

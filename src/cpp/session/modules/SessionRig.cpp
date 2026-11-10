@@ -167,8 +167,14 @@ private:
    {
       jobs::setJobStatus(pJob_, "Installing R " + version_);
 
+      // the destination as rig takes it (with backslashes on Windows, #19468)
+      std::string rigDirectory = directory_;
+      Error directoryError = r::exec::RFunction(".rs.rig.installDirForRig", directory_).call(&rigDirectory);
+      if (directoryError)
+         LOG_ERROR(directoryError);
+
       std::vector<std::string> args = { "add", version_, "--user" };
-      log("Installing into " + directory_ + "\n");
+      log("Installing into " + rigDirectory + "\n");
       log("$ " + rigPath + " " + core::algorithm::join(args, " ") + "\n");
 
       boost::shared_ptr<RInstallJob> self = shared_from_this();
@@ -213,7 +219,7 @@ private:
       // changes is put back when the job finishes (#19229)
       std::vector<std::string> notes;
       Error beginError = r::exec::RFunction(".rs.rig.userInstallBegin", rigPath, installSnapshotPath().getAbsolutePath())
-            .addParam("directory", directory_)
+            .addParam("directory", rigDirectory)
             .call(&notes);
       logNotes(notes);
       if (beginError)
@@ -231,7 +237,7 @@ private:
       // override), which the snapshot above was taken for as well
       core::system::Options environment;
       core::system::environment(&environment);
-      core::system::setenv(&environment, "RIG_R_INSTALL_DIR", directory_);
+      core::system::setenv(&environment, "RIG_R_INSTALL_DIR", rigDirectory);
 
 #ifndef _WIN32
       // rig also appends to the shell startup files unless its user-mode

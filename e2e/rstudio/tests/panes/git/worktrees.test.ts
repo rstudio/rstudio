@@ -5,7 +5,7 @@
 // runner.
 import { test, expect } from '@fixtures/rstudio.fixture';
 import type { Page } from '@playwright/test';
-import { CONSOLE_OUTPUT, executeInConsole } from '@pages/console_pane.page';
+import { executeInConsoleChecked } from '@pages/console_pane.page';
 import { CONFIRM_BTN } from '@pages/modals.page';
 import { executeCommand, openProject } from '@utils/commands';
 import { heredoc } from '@utils/heredoc';
@@ -43,30 +43,6 @@ const LINKED_WORKTREE = 'WorktreeDemo-feature';
 const LINKED_BRANCH = 'feature/a';
 const NEW_BRANCH = 'feature/new-worktree';
 const BRANCH_DIALOG_BRANCH = 'feature/from-branch-dialog';
-
-/**
- * executeInConsole only confirms that R reached a new prompt, which an R error
- * does just as readily as a success; scrape the output this command produced
- * for an error header so a failed setup step fails here, not as a later
- * unrelated-looking timeout.
- */
-async function executeInConsoleChecked(
-  page: Page,
-  command: string,
-  opts: { timeout?: number } = {},
-): Promise<void> {
-  const before = await page.locator(CONSOLE_OUTPUT).innerText();
-  await executeInConsole(page, command, { wait: true, timeout: opts.timeout });
-  const after = await page.locator(CONSOLE_OUTPUT).innerText();
-
-  const emitted = after.startsWith(before) ? after.slice(before.length) : after;
-  const errMatch = emitted.match(/(?:Error in|Error:)[^\n]*(?:\n[ \t]+[^\n]*)*/);
-  if (errMatch) {
-    throw new Error(
-      `R error running "${command.slice(0, 120)}": ${errMatch[0].replace(/\n+/g, ' | ').trim()}`,
-    );
-  }
-}
 
 /**
  * Open the Git pane's branch menu and return its item texts. Waits for the
