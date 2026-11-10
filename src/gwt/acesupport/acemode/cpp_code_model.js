@@ -520,13 +520,24 @@ var CppCodeModel = function(session, tokenizer,
                               fnArgsCursor.fwdToMatchingToken();
                            }
 
-                           var fnArgsEndPos = fnArgsCursor.peekFwd().currentPosition();
+                           var fnArgsEndCursor = fnArgsCursor.peekFwd();
+                           var fnArgsEndPos = fnArgsEndCursor.currentPosition();
                            if (fnArgsEndPos)
                               fnArgs = this.$session.getTextRange(new Range(
                                  fnArgsStartPos.row, fnArgsStartPos.column,
                                  fnArgsEndPos.row, fnArgsEndPos.column
                               ));
-                           
+
+                           // With 'auto f() -> int', the trailing type is the
+                           // one worth showing rather than 'auto'.
+                           if (fnArgsEndCursor.currentValue() === "->") {
+                              var bracePos = tokenCursor.currentPosition();
+                              fnType = this.$session.getTextRange(new Range(
+                                 fnArgsEndPos.row, fnArgsEndPos.column + 2,
+                                 bracePos.row, bracePos.column
+                              ));
+                           }
+
                         }
                         
                         var fullFnName;

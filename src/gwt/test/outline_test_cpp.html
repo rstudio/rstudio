@@ -117,6 +117,49 @@ check("the scope tree is rebuilt after the edit",
        "  f(): void [1..4]",
        "  g(): void [5..6]"].join("\n"));
 
+// A trailing return type names the function and is shown as its return type.
+check("functions with trailing return types are labelled",
+      tree(makeSession([
+        "auto a() -> int { return 1; }",
+        "auto b(int x) -> decltype(x) { return x; }",
+        "auto c() -> std::pair<int, int> { return {}; }",
+        "auto d() -> std::function<void(int)> { return {}; }",
+        "auto e() const noexcept -> int& { return i; }",
+        "struct S {",
+        "  auto m() const -> int { return 1; }",
+        "  auto operator->() -> T* { return p; }",
+        "  T* operator->() { return p; }",
+        "};",
+        ""
+      ].join("\n"))),
+      ["a(): int [0..0]",
+       "b(int x): decltype(x) [1..1]",
+       "c(): std::pair<int, int> [2..2]",
+       "d(): std::function<void(int)> [3..3]",
+       "e() const noexcept: int& [4..4]",
+       "struct S [5..9]",
+       "  m() const: int [6..6]",
+       "  operator->(): T* [7..7]",
+       "  operator->(): T* [8..8]"].join("\n"));
+
+check("lambdas with trailing return types are labelled",
+      tree(makeSession("auto l = [](int x) -> int { return x; };\n")),
+      "lambda (int x) -> int [0..0]");
+
+// A '->' in an expression before a brace is not a trailing return type.
+check("member access before a brace does not make a function",
+      tree(makeSession([
+        "void f(P* p) {",
+        "  if (p->x) { }",
+        "  get()->y = Foo{1};",
+        "  p->z = Foo{1};",
+        "  auto l = [x = p->y]() { return x; };",
+        "}",
+        ""
+      ].join("\n"))),
+      ["f(P* p) [0..5]",
+       "  lambda () [4..4]"].join("\n"));
+
 document.getElementById("passed").textContent = passed;
 document.getElementById("failed").textContent = failed;
 

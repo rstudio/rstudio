@@ -647,6 +647,35 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
    //                    ^~~~~~~~~~~~~~~~~~~~^
    //
    // Places the token cursor on the first token following a closing paren.
+   // From the last token of a trailing return type, e.g. the 'int' of
+   // 'auto f() const -> int', move to the token before its '->'. Stopping at
+   // '=' and the token before '->' keep expressions such as 'get()->x = T{1}'
+   // and 'p->x' from being read as one.
+   this.bwdOverTrailingReturnType = function() {
+
+      var clone = this.cloneCursor();
+      do {
+         var value = clone.currentValue();
+         if (value === "->")
+            break;
+         if (/^[;{}(=]$/.test(value))
+            return false;
+         if (value === ")" && !clone.bwdToMatchingToken())
+            return false;
+      } while (clone.moveToPreviousToken());
+
+      if (clone.currentValue() !== "->" || !clone.moveToPreviousToken())
+         return false;
+
+      var before = clone.currentValue();
+      if (before !== ")" && before !== "const" && before !== "noexcept")
+         return false;
+
+      this.$row = clone.$row;
+      this.$offset = clone.$offset;
+      return true;
+   };
+
    this.bwdOverConstNoexceptDecltype = function() {
 
       var clone = this.cloneCursor();
@@ -658,21 +687,9 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
       if (!clone.moveToPreviousToken())
          return false;
 
-      // Try moving over a '-> decltype()'
-      var cloneDecltype = clone.cloneCursor();
-      if (cloneDecltype.currentValue() === ")") {
-         if (cloneDecltype.bwdToMatchingToken()) {
-            if (cloneDecltype.moveToPreviousToken()) {
-               if (cloneDecltype.currentValue() === "decltype") {
-                  if (cloneDecltype.moveToPreviousToken()) {
-                     clone.$row = cloneDecltype.$row;
-                     clone.$offset = cloneDecltype.$offset;
-                  }
-               }
-            }
-         }
-      }
-      
+      // Try moving over a trailing return type, e.g. '-> int'
+      clone.bwdOverTrailingReturnType();
+
       // Try moving over a 'noexcept()'.
       var cloneNoexcept = clone.cloneCursor();
       if (cloneNoexcept.currentValue() === ")") {
