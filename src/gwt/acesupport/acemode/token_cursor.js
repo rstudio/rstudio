@@ -667,7 +667,7 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
       return true;
    };
 
-   // Move the tokne cursor backwards from an open brace over const, noexcept,
+   // Move the token cursor backwards from an open brace over const, noexcept,
    // for function definitions.
    //
    // E.g.
