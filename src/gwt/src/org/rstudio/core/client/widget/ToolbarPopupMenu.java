@@ -458,7 +458,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
          return -1;
       }
 
-      // A click runs the item the same way the menu's own Enter key does
+      // Runs the item as a click on it does
       private void activateSelectedItem()
       {
          MenuItem menuItem = getSelectedItem();

@@ -73,13 +73,16 @@ test.describe('Addins toolbar menu (#19552)', () => {
     await page.keyboard.press('Escape');
   });
 
-  test('the arrow-key highlight stays on the chosen add-in', async ({ rstudioPage: page }) => {
+  test('the arrow-key highlight stays on the chosen add-in', async ({
+    rstudioPage: page,
+  }) => {
     const popup = await openAddinsPopup(page);
     const items = popup.getByRole('menuitem');
     const third = await items.nth(2).textContent();
 
-    for (let i = 0; i < 3; i++)
-      await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Home');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
     await expect(highlightedItem(popup)).toHaveText(third!);
 
     await expectHoldsFor(REBUILD_WINDOW_MS, async () => {
@@ -94,7 +97,9 @@ test.describe('Addins toolbar menu (#19552)', () => {
     });
   });
 
-  test('Enter runs the highlighted add-in, and a typed space does not', async ({ rstudioPage: page }) => {
+  test('Enter runs the highlighted add-in, and a typed space does not', async ({
+    rstudioPage: page,
+  }) => {
     const runs = await captureAddinRuns(page);
     const popup = await openAddinsPopup(page);
     const search = popup.getByRole('combobox', { name: SEARCH_LABEL });
@@ -173,7 +178,9 @@ test.describe('Addins toolbar menu (#19552)', () => {
     await expect(button).toBeFocused();
   });
 
-  test('the search box names the highlighted add-in to screen readers', async ({ rstudioPage: page }) => {
+  test('the search box names the highlighted add-in to screen readers', async ({
+    rstudioPage: page,
+  }) => {
     const popup = await openAddinsPopup(page);
     const search = popup.getByRole('combobox', { name: SEARCH_LABEL });
     await expect(search).toBeFocused();
