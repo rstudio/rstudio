@@ -688,9 +688,9 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
 
    // From the last token of a trailing return type, e.g. the 'int' of
    // 'auto f() const -> int', move to the token before its '->'.
-   this.bwdOverTrailingReturnType = function() {
+   var bwdOverTrailingReturnType = function(cursor) {
 
-      var clone = this.cloneCursor();
+      var clone = cursor.cloneCursor();
       do {
          var value = clone.currentValue();
          if (value === "->")
@@ -707,8 +707,8 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
       if (!isTrailingReturnDeclarator(clone))
          return false;
 
-      this.$row = clone.$row;
-      this.$offset = clone.$offset;
+      cursor.$row = clone.$row;
+      cursor.$offset = clone.$offset;
       return true;
    };
 
@@ -735,7 +735,7 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
          return false;
 
       // Try moving over a trailing return type, e.g. '-> int'
-      clone.bwdOverTrailingReturnType();
+      bwdOverTrailingReturnType(clone);
 
       // Try moving over a 'noexcept()'.
       var cloneNoexcept = clone.cloneCursor();
