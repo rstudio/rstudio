@@ -24,8 +24,6 @@
 #include <boost/regex.hpp>
 #include <boost/function.hpp>
 
-#include <core/HtmlUtils.hpp>
-
 namespace rstudio {
 namespace core {
 namespace markdown {
@@ -45,9 +43,9 @@ struct MathBlock
 class MathJaxFilter : boost::noncopyable
 {
 public:
-   MathJaxFilter(const std::vector<html_utils::ExcludePattern>& excludePatterns,
-                 std::string* pInput,
-                 std::string* pHTMLOutput);
+   MathJaxFilter(std::string* pInput,
+                 std::string* pHTMLOutput,
+                 bool escapeHtml);
    ~MathJaxFilter();
 
 private:
@@ -77,6 +75,7 @@ private:
 
 private:
    std::string* pHTMLOutput_;
+   bool escapeHtml_;
    std::map<std::string,MathBlock> displayMathBlocks_;
    std::map<std::string,MathBlock> inlineMathBlocks_;
 };

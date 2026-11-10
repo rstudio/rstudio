@@ -66,6 +66,7 @@
 - ([#6168](https://github.com/rstudio/rstudio/issues/6168)): [Accessibility] Fixed an issue where screen readers didn't announce the console history popup (Ctrl+Up, or Cmd+Up on macOS). Screen readers now announce the selected command as you move through the list.
 
 ### Dependencies
+- ([#18904](https://github.com/rstudio/rstudio/issues/18904)): Replaced the built-in Sundown Markdown renderer with cmark-gfm for Markdown previews, help descriptions, tutorials, and R Presentations. Rendering now follows CommonMark rules, with GFM tables, strikethrough, and autolinks; RStudio superscripts and MathJax support are retained.
 - ([#19095](https://github.com/rstudio/rstudio/issues/19095)): macOS builds now require C++20; Linux retains its C++17 minimum.
 - Quarto 1.11.9
 - Electron 44.10.2
