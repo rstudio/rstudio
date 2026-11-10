@@ -666,6 +666,18 @@
 
 .rs.setVar("rig.installState", new.env(parent = emptyenv()))
 
+#' An R install directory in the form rig takes it in RIG_R_INSTALL_DIR. On
+#' Windows that is with backslashes: rig 0.11.0 compares the targets of its
+#' R links (e.g. R-release.exe) against the value as given, and stops with
+#' "invalid R link file" when it has forward slashes (#19468).
+.rs.addFunction("rig.installDirForRig", function(directory, windows = .rs.platform.isWindows)
+{
+   if (windows)
+      chartr("/", "\\", directory)
+   else
+      directory
+})
+
 #' rig's user-mode directories as 'rig add' will see them when installing
 #' into 'directory': rig takes the destination from RIG_R_INSTALL_DIR, which
 #' the install runs with, so it is set for this query as well.
@@ -673,11 +685,6 @@
 {
    if (nzchar(directory))
    {
-      # backslashes on Windows, the same form RInstallJob (SessionRig.cpp)
-      # gives 'rig add' (#19468)
-      if (.rs.platform.isWindows)
-         directory <- chartr("/", "\\", directory)
-
       override <- Sys.getenv("RIG_R_INSTALL_DIR", unset = NA)
       Sys.setenv(RIG_R_INSTALL_DIR = directory)
       on.exit({

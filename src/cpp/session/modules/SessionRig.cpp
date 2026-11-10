@@ -15,8 +15,6 @@
 
 #include "SessionRig.hpp"
 
-#include <algorithm>
-
 #include <boost/bind/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/regex.hpp>
@@ -169,12 +167,11 @@ private:
    {
       jobs::setJobStatus(pJob_, "Installing R " + version_);
 
-      // rig 0.11.0 on Windows stops with "invalid R link file" when RIG_R_INSTALL_DIR
-      // has forward slashes and its R links (e.g. R-release.exe) exist (#19468)
+      // the destination as rig takes it (with backslashes on Windows, #19468)
       std::string rigDirectory = directory_;
-#ifdef _WIN32
-      std::replace(rigDirectory.begin(), rigDirectory.end(), '/', '\\');
-#endif
+      Error directoryError = r::exec::RFunction(".rs.rig.installDirForRig", directory_).call(&rigDirectory);
+      if (directoryError)
+         LOG_ERROR(directoryError);
 
       std::vector<std::string> args = { "add", version_, "--user" };
       log("Installing into " + rigDirectory + "\n");
@@ -222,7 +219,7 @@ private:
       // changes is put back when the job finishes (#19229)
       std::vector<std::string> notes;
       Error beginError = r::exec::RFunction(".rs.rig.userInstallBegin", rigPath, installSnapshotPath().getAbsolutePath())
-            .addParam("directory", directory_)
+            .addParam("directory", rigDirectory)
             .call(&notes);
       logNotes(notes);
       if (beginError)
