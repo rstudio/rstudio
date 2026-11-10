@@ -4,7 +4,7 @@ import { test } from '../fixtures/rstudio.fixture';
 import {
   executeInConsole,
   ensureConsoleIdle,
-  findRError,
+  findRErrorAfter,
   CONSOLE_OUTPUT,
   waitForConsoleIdle,
 } from '../pages/console_pane.page';
@@ -137,8 +137,7 @@ export async function createSandbox(page: Page): Promise<string> {
   // from there: the buffer is shared with earlier specs, and an error one of
   // them left behind is not this command's.
   const tail = await page.locator(CONSOLE_OUTPUT).innerText();
-  const echoAt = tail.lastIndexOf(marker);
-  const rError = echoAt >= 0 ? findRError(tail.slice(echoAt)) : null;
+  const rError = findRErrorAfter(tail, marker);
   const detail = rError
     ? `R error: ${rError}`
     : `console tail: ${tail.slice(-300).replace(/\n+/g, ' | ').trim()}`;

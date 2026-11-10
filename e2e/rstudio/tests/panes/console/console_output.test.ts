@@ -17,6 +17,7 @@ import {
   CONSOLE_SCROLLBACK,
   executeInConsole,
   executeInConsoleChecked,
+  findRErrorAfter,
   waitForConsoleFocus,
   waitForConsoleIdle,
 } from '@pages/console_pane.page';
@@ -197,6 +198,20 @@ test.describe('Console output and annotation', () => {
     // without it would need, not as its UTF-8 bytes.
     await expect(executeInConsoleChecked(page, `invisible("${'é'.repeat(450)}")`))
       .rejects.toThrow(limit);
+
+    // One outside the BMP can be escaped a surrogate half at a time.
+    await expect(executeInConsoleChecked(page, `invisible("${'\u{1F600}'.repeat(350)}")`))
+      .rejects.toThrow(limit);
+  });
+
+  test('findRErrorAfter attributes only the errors that follow the marker', () => {
+    // createSandbox reports its failures this way: its marker is in the
+    // command's echo, and an earlier spec's error precedes that.
+    const echo = '> { setwd(d); cat("__M__", d, "__M__") }';
+    const failed = `Error: stale\n${echo}\nError in setwd(d) : \n  cannot change working directory\n> `;
+    expect(findRErrorAfter(failed, '__M__')).toBe('Error in setwd(d) :  |   cannot change working directory');
+    expect(findRErrorAfter(`Error: stale\n${echo}\n> `, '__M__')).toBeNull();
+    expect(findRErrorAfter('Error: stale\n> ', '__M__')).toBeNull();
   });
 
   test('executeInConsoleChecked finds its own output in a trimming scrollback', async ({ rstudioPage: page }) => {

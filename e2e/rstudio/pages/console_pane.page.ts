@@ -594,6 +594,17 @@ export function findRError(text: string): string | null {
   return match ? match[0].replace(/\n+/g, ' | ').trim() : null;
 }
 
+/**
+ * The first R error after the last occurrence of `marker` in `text`, or null
+ * when there is none, or no marker to scan from. The console buffer is shared
+ * with everything else that ran in the worker, so a command's errors are only
+ * those that follow a marker the command itself put there.
+ */
+export function findRErrorAfter(text: string, marker: string): string | null {
+  const at = text.lastIndexOf(marker);
+  return at >= 0 ? findRError(text.slice(at + marker.length)) : null;
+}
+
 let checkedCommandCount = 0;
 
 // The session truncates a console input line to what R's read buffer holds
@@ -603,12 +614,13 @@ const MAX_CONSOLE_LINE_BYTES = 4094;
 /**
  * An upper bound on the bytes the session hands R for one input line. The
  * line is converted to R's native encoding first, and on Windows a character
- * the code page lacks becomes an escape of up to ten bytes.
+ * the code page lacks becomes an escape of up to ten bytes. Counted per UTF-16
+ * code unit, since one conversion path escapes each surrogate half on its own.
  */
 function consoleLineBytes(line: string): number {
   let bytes = 0;
-  for (const ch of line)
-    bytes += ch.charCodeAt(0) < 0x80 ? 1 : 10;
+  for (let i = 0; i < line.length; i++)
+    bytes += line.charCodeAt(i) < 0x80 ? 1 : 10;
 
   return bytes;
 }
@@ -657,14 +669,13 @@ export async function executeInConsoleChecked(
   // written even when the command itself fails to parse. No marker means the
   // command cleared the console or wrote enough to push the marker out of the
   // scrollback, and its result cannot be vouched for.
-  const at = text.lastIndexOf(marker);
-  if (at < 0) {
+  if (!text.includes(marker)) {
     const tail = text.slice(-300);
     const detail = findRError(tail) ?? `console tail: ${tail.replace(/\n+/g, ' | ').trim()}`;
     throw new Error(`${label}: output marker not found; ${detail}`);
   }
 
-  const error = findRError(text.slice(at + marker.length));
+  const error = findRErrorAfter(text, marker);
   if (error)
     throw new Error(`${label}: ${error}`);
 }
