@@ -32,7 +32,11 @@ import { loadRWebsite } from '../../main/utils';
 declare const CHOOSE_R_WEBPACK_ENTRY: string;
 declare const CHOOSE_R_PRELOAD_WEBPACK_ENTRY: string;
 
-function checkValid(data: CallbackData) {
+/**
+ * Whether the R the user picked can be used; when it cannot, tells them
+ * which R failed and what it reported.
+ */
+export function checkValid(data: CallbackData) {
   const binaryPath = data.binaryPath;
   if (!binaryPath) {
     logger().logErrorMessage('internal error: binaryPath was unexpectedly null');
@@ -52,6 +56,7 @@ function checkValid(data: CallbackData) {
         type: 'error',
         title: t('chooseRDialog.rLaunchFailedTitle'),
         message: t('chooseRDialog.rLaunchFailedMessage'),
+        detail: err.message,
         buttons: [t('common.buttonOk')],
       }),
     );

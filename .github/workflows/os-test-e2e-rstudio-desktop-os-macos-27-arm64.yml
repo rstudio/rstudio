@@ -547,26 +547,11 @@ jobs:
       # Fork PRs and any caller that doesn't pass the token land on present=false,
       # which skips the retrieve step below; the auth setup project then falls back
       # to its no-credentials path instead of failing the run.
-      - name: Check for OP service account token
-        id: op_token_check
-        env:
-          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
-        run: |
-          if [ -n "$OP_SERVICE_ACCOUNT_TOKEN" ]; then
-            echo "present=true" >> "$GITHUB_OUTPUT"
-            echo "::notice::OP service account token present; test credentials will be retrieved."
-          else
-            echo "present=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::No OP service account token in this job. AI-gated tests will skip, so this run does NOT exercise Posit AI."
-          fi
-
       - name: Retrieve test credentials
-        id: op
-        if: steps.op_token_check.outputs.present == 'true'
-        uses: 1password/load-secrets-action@eb2efd0703da22a93c467f2d1ffbb6826c11e19c # v4.1.1
-        env:
-          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
-          OP_ENV_FILE: ./e2e/rstudio/.env.op
+        id: credentials
+        uses: ./.github/actions/os-e2e-credentials
+        with:
+          op-service-account-token: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
 
       # Opt this run into the Posit Assistant pre-release manifest. A per-run
       # prefs override, never a base pref -- every other run keeps testing GA.
@@ -605,8 +590,8 @@ jobs:
           # reporter still runs but its uploads fail with warnings (never fails
           # the run).
           CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
-          POSIT_EMAIL: ${{ steps.op.outputs.POSIT_EMAIL }}
-          POSIT_PASSWORD: ${{ steps.op.outputs.POSIT_PASSWORD }}
+          POSIT_EMAIL: ${{ steps.credentials.outputs.posit-email }}
+          POSIT_PASSWORD: ${{ steps.credentials.outputs.posit-password }}
           SHARD_NAME: desktop-macos27-${{ matrix.shard }}
           # Print the GWT launch timeline so the next launch failure shows
           # which phase exceeded the deadline (CDP-connect vs. bridge-installed
@@ -673,12 +658,19 @@ jobs:
       # globalTeardown leaves this in place when any test failed; if every
       # test passed the directory is gone and `if-no-files-found: ignore`
       # silently skips upload.
+      # user-home holds the sandbox AI credential stores (.posit/ai/auth/data.json,
+      # github-copilot), and so do its per-worker and aiAuth-stripped copies
+      # (user-home-<n>, user-home-no-<provider>; see utils/auth.ts). Exclude
+      # them all explicitly rather than relying on upload-artifact skipping
+      # hidden paths by default.
       - name: Upload PW sandbox (on failure)
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: pw-sandbox-macos27-${{ matrix.shard }}
-          path: ${{ github.workspace }}/pw-sandbox/
+          path: |
+            ${{ github.workspace }}/pw-sandbox/
+            !${{ github.workspace }}/pw-sandbox/*/user-home*/**
           if-no-files-found: ignore
 
       # macOS writes Electron / rsession crash reports here; useful when a
@@ -705,125 +697,37 @@ jobs:
       pull-requests: write
       # OIDC token for the S3 report upload (os-publish-e2e-report).
       id-token: write
+      # Deleting the shard blob artifacts once merged (os-e2e-report).
+      actions: write
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - name: Merge shard reports and post results
+        id: report
+        uses: ./.github/actions/os-e2e-report
         with:
-          node-version: 24
-          cache: 'npm'
-          cache-dependency-path: e2e/rstudio/package-lock.json
-
-      - name: Install Playwright
-        working-directory: e2e/rstudio
-        run: npm ci --ignore-scripts
-
-      - name: Download shard blob reports
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
-        with:
-          pattern: playwright-blob-report-macos27-*
-          path: e2e/rstudio/all-blob-reports
-          merge-multiple: true
-
-      - name: Merge shard reports
-        working-directory: e2e/rstudio
-        run: |
-          if [ -z "$(ls -A all-blob-reports 2>/dev/null)" ]; then
-            echo "::error::No blob reports found -- every shard failed to produce artifacts"
-            exit 1
-          fi
-          npx playwright merge-reports --config merge.config.ts ./all-blob-reports
-
-      # Shared summarizer (also used by the PR run's e2e-merge-all job) so every
-      # comment computes pass/fail counts and the rate bar from one definition.
-      - name: Parse aggregated results
-        id: summary
-        if: always()
-        working-directory: e2e/rstudio
-        run: node scripts/summarize-merged-report.mjs
-
-      - name: Upload merged Playwright report
-        id: upload-report
-        if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: playwright-report-macos27
-          path: e2e/rstudio/playwright-report/
-          retention-days: 15
-          if-no-files-found: ignore
-
-      # Publish a browsable copy of the report to S3 on failure only, so
-      # reviewers can inspect it without downloading the zip. Best-effort: does
-      # nothing on fork PRs (no secret) and never fails the job.
-      - name: Publish report to S3
-        id: publish-report
-        if: always() && steps.summary.outputs.failed != '0' && steps.summary.outputs.failed != ''
-        uses: ./.github/actions/os-publish-e2e-report
-        with:
-          role-arn: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
           label: macos27
-
-      - name: Post E2E results to PR
-        if: |
-          always() &&
-          inputs.post_pr_comment == true &&
-          github.event.pull_request.head.repo.fork == false &&
-          (steps.summary.outputs.passed != '0' || steps.summary.outputs.failed != '0' || steps.summary.outputs.skipped != '0' || steps.summary.outputs.flaky != '0')
-        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
-        with:
-          GITHUB_TOKEN: ${{ github.token }}
-          header: e2e-macos-27-arm64-results
-          message: |
-            ## 🍎 macOS 27 Desktop E2E · ARM64
-
-            ${{ needs.e2e-desktop-macos27.result == 'success' && steps.summary.outputs.failed == '0' && '### ✅ All tests passed!' || format('### ❌ {0} test(s) failed', steps.summary.outputs.failed) }}
-
-            `${{ steps.summary.outputs.bar }}` **${{ steps.summary.outputs.rate }}%** pass rate
-
-            | ✅ Passed | ❌ Failed | ⚠️ Skipped | 🔁 Flaky |
-            | :---: | :---: | :---: | :---: |
-            | **${{ steps.summary.outputs.passed }}** | **${{ steps.summary.outputs.failed }}** | **${{ steps.summary.outputs.skipped }}** | **${{ steps.summary.outputs.flaky }}** |
-
-            <details>
-            <summary>📥 Download Playwright report</summary>
-            ${{ steps.publish-report.outputs.url != '' && format('
-            **[🌐 View report online]({0})** — opens in the browser, no download needed. Available for 14 days.
-            ', steps.publish-report.outputs.url) || '' }}
-            **[⬇️ playwright-report.zip](${{ steps.upload-report.outputs.artifact-url }})** — extract and open `index.html`
-
-            > Includes screenshots, traces, and step-by-step details for every test. Expires in 15 days.
-
-            </details>
-
-            ---
-            <sub>${{ needs.shards.outputs.count }} shards · xcode-27 (macOS 27) ARM64 · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
-
-      # Release-gate floor, last so the reporting above still runs. A run that
-      # executed nothing must not report green: Playwright suppresses its own
-      # "no tests found" error whenever --shard is passed (which every engine
-      # does), and requireAiCredentials turns a credential lapse into skips --
-      # both leave a zero-passed run looking clean.
-      - name: Require the run to have executed tests
-        if: always() && inputs.require_tests_passed
-        env:
-          PASSED: ${{ steps.summary.outputs.passed }}
-        run: |
-          if [ -z "$PASSED" ] || [ "$PASSED" = "0" ]; then
-            echo "::error::This run passed 0 tests, so it proves nothing. Refusing to report green."
-            exit 1
-          fi
-          echo "::notice::Gate floor met: $PASSED test(s) passed."
+          title: "🍎 macOS 27 Desktop E2E · ARM64"
+          runner-note: "xcode-27 (macOS 27) ARM64"
+          shard-count: ${{ needs.shards.outputs.count }}
+          result: ${{ needs.e2e-desktop-macos27.result }}
+          post-pr-comment: ${{ inputs.post_pr_comment }}
+          require-tests-passed: ${{ inputs.require_tests_passed }}
+          role-arn: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+          github-token: ${{ github.token }}
 
       # Does nothing: the name is the point. A step name can read step outputs
       # (jobs.<id>.steps.name allows the `steps` context), so this puts the build
       # under test in the job's step list, readable without expanding anything.
-      # The run page itself has no surface for a runtime value -- a run's title is
-      # fixed before it starts, and annotation placement is GitHub's to decide --
-      # so the summarizer also emits these as annotations, and this is the same
-      # facts one click in. Last, and if: always(), so the gate above can't
-      # suppress it. Skipped on an empty output, which is how the summarizer
-      # reports "no engine in that slot".
-      - name: ${{ steps.summary.outputs.run_under_test_1 }}
-        if: always() && steps.summary.outputs.run_under_test_1 != ''
+      # It stays here rather than inside os-e2e-report because a composite's
+      # own steps only show once that step is expanded, which defeats the
+      # purpose. The run page itself has no surface for a runtime value -- a
+      # run's title is fixed before it starts, and annotation placement is
+      # GitHub's to decide -- so the summarizer also emits this as an
+      # annotation, and this is the same fact one click in. Last, and
+      # if: always(), so the gate inside the action can't suppress it. Skipped
+      # on an empty output, which is how the summarizer reports "unknown".
+      - name: ${{ steps.report.outputs.run-under-test }}
+        if: always() && steps.report.outputs.run-under-test != ''
         run: 'true'
