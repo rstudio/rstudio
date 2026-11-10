@@ -156,14 +156,32 @@ check("virt-specifiers after a trailing return type are not part of it",
        "  f(): int [2..2]",
        "  g(): int [3..3]"].join("\n"));
 
+// The label keeps what precedes 'auto', as ordinary definitions keep what
+// precedes their name, so 'A::size' and 'B::size' can be told apart.
+check("trailing return definitions keep their qualifiers and specifiers",
+      tree(makeSession([
+        "int x;",
+        "auto A::size() -> int { return 1; }",
+        "auto B::size() -> int { return 2; }",
+        "static auto st() -> int { return 1; }",
+        "template <typename T> auto S<T>::h() -> int { return 1; }",
+        "int A::count() { return 1; }",
+        ""
+      ].join("\n"))),
+      ["size(): int A:: [1..1]",
+       "size(): int B:: [2..2]",
+       "st(): static int [3..3]",
+       "h(): template <typename T> int S<T>:: [4..4]",
+       "count(): int A:: [5..5]"].join("\n"));
+
 check("a requires-clause after a trailing return type is not part of it",
       tree(makeSession([
         "template <class T> auto f(T t) -> int requires std::integral<T> { return 1; }",
         "template <class T> auto g(T t) -> int requires (sizeof(T) > 1) { return 1; }",
         ""
       ].join("\n"))),
-      ["f(T t): int [0..0]",
-       "g(T t): int [1..1]"].join("\n"));
+      ["f(T t): <class T> int [0..0]",
+       "g(T t): template <class T> int [1..1]"].join("\n"));
 
 check("a function-try-block's 'try' is not part of the return type",
       tree(makeSession("auto f() -> int try { return 1; } catch (...) { return 0; }\n")),
@@ -185,12 +203,12 @@ check("qualified and array trailing return declarations are labelled",
         ""
       ].join("\n"))),
       ["g(): int [0..0]",
-       "h(): int [1..1]",
+       "h(): template <typename T> int S<T>:: [1..1]",
        "a(): int (*)[3] [2..2]",
-       "k(): decltype(x) [3..3]",
-       "m(): decltype(x) [4..4]",
+       "k(): template <typename T> decltype(x) S<std::vector<T>>:: [3..3]",
+       "m(): template <> decltype(x) S<(8 >> 1)>:: [4..4]",
        "n(): decltype(x) [5..5]",
-       "_u(long double x): decltype(x) [6..6]"].join("\n"));
+       "_u(long double x): decltype(x) operator \"\" [6..6]"].join("\n"));
 
 check("lambdas with trailing return types are labelled",
       tree(makeSession("auto l = [](int x) -> int { return x; };\n")),

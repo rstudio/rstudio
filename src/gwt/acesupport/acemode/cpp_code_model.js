@@ -528,18 +528,23 @@ var CppCodeModel = function(session, tokenizer,
                                  fnArgsEndPos.row, fnArgsEndPos.column
                               ));
 
-                           // With 'auto f() -> int', the trailing type is the
-                           // one worth showing rather than 'auto'. A requires-
-                           // clause, 'override', 'final' or the 'try' of a
-                           // function-try-block after it isn't part of it.
+                           // With 'auto A::f() -> int', show 'int A::' as for
+                           // 'int A::f()'. A requires-clause, 'override',
+                           // 'final' or the 'try' of a function-try-block after
+                           // the trailing type isn't part of it.
                            if (fnArgsEndCursor.currentValue() === "->") {
                               var bracePos = tokenCursor.currentPosition();
-                              fnType = this.$session.getTextRange(new Range(
+                              var trailingType = this.$session.getTextRange(new Range(
                                  fnArgsEndPos.row, fnArgsEndPos.column + 2,
                                  bracePos.row, bracePos.column
                               ))
                                  .replace(/\brequires\b[\s\S]*$/, "")
-                                 .replace(/(\s+(override|final|try))+\s*$/, "");
+                                 .replace(/(\s+(override|final|try))+\s*$/, "")
+                                 .trim();
+                              var lastAuto = /\bauto\b(?![\s\S]*\bauto\b)/;
+                              fnType = lastAuto.test(fnType)
+                                 ? fnType.replace(lastAuto, function() { return trailingType; })
+                                 : trailingType;
                            }
 
                         }
