@@ -49,6 +49,7 @@ import {
   initializeLang,
   initializeSharedSecret,
   isAutomated,
+  showWindowForAutomation,
   loadRWebsite,
   raiseAndActivateWindow,
   removeStaleOptionsLockfile,
@@ -245,6 +246,15 @@ export class Application implements AppState {
       this.createMessageServer();
     } else {
       this.createMessageClient();
+    }
+
+    // Automation windows sit behind the user's own, and one they clicked to
+    // watch a run and then covered again would otherwise report itself hidden
+    // and stop painting, stalling the tests.
+    if (isAutomated()) {
+      app.on('web-contents-created', (_event, contents) => {
+        contents.setBackgroundThrottling(false);
+      });
     }
 
     app.on('second-instance', (_event, argv) => {
@@ -638,7 +648,7 @@ export class Application implements AppState {
     // windowOpening() created the window hidden; surface it without pulling
     // OS focus away from whatever the user is doing while the tests run.
     if (isAutomated()) {
-      newWindow.showInactive();
+      showWindowForAutomation(newWindow);
     }
   }
 

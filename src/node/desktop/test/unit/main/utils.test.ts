@@ -29,6 +29,7 @@ import { Application } from '../../../src/main/application';
 import * as Utils from '../../../src/main/utils';
 import { userHomePath } from '../../../src/core/user';
 import { FileFilter } from 'electron/main';
+import dock from '../../../src/native/dock.node';
 
 describe('Utils', () => {
   const envVars: Record<string, string> = {
@@ -255,5 +256,52 @@ describe('Utils', () => {
       consoleError.restore();
       window.destroy();
     }
+  });
+
+  describe('showWindowForAutomation', () => {
+    function fakeWindow(state: { visible: boolean; minimized: boolean }) {
+      return {
+        isVisible: sinon.stub().returns(state.visible),
+        isMinimized: sinon.stub().returns(state.minimized),
+        showInactive: sinon.stub(),
+        getNativeWindowHandle: sinon.stub().returns(Buffer.alloc(8)),
+      };
+    }
+
+    afterEach(() => {
+      sinon.restore();
+    });
+
+    // the user may have clicked the window to watch the run
+    it('leaves a window that is already on screen alone', () => {
+      const orderWindowBack = sinon.stub(dock, 'orderWindowBack').returns(true);
+      const window = fakeWindow({ visible: true, minimized: false });
+      Utils.showWindowForAutomation(window as unknown as BrowserWindow);
+
+      assert.isFalse(window.showInactive.called);
+      assert.isFalse(orderWindowBack.called);
+    });
+
+    it('shows a hidden window, behind other applications on macOS', () => {
+      const orderWindowBack = sinon.stub(dock, 'orderWindowBack').returns(true);
+      const window = fakeWindow({ visible: false, minimized: false });
+      Utils.showWindowForAutomation(window as unknown as BrowserWindow);
+
+      assert.isTrue(window.showInactive.calledOnce);
+      assert.strictEqual(orderWindowBack.callCount, process.platform === 'darwin' ? 1 : 0);
+      if (process.platform === 'darwin') {
+        assert.isTrue(orderWindowBack.calledAfter(window.showInactive));
+      }
+    });
+
+    // a minimized window cannot be restacked
+    it('does not reorder a minimized window', () => {
+      const orderWindowBack = sinon.stub(dock, 'orderWindowBack').returns(true);
+      const window = fakeWindow({ visible: false, minimized: true });
+      Utils.showWindowForAutomation(window as unknown as BrowserWindow);
+
+      assert.isTrue(window.showInactive.calledOnce);
+      assert.isFalse(orderWindowBack.called);
+    });
   });
 });

@@ -231,6 +231,33 @@ describe('DesktopCallback', () => {
     });
   });
 
+  describe('desktop_bring_main_frame_to_front', () => {
+    it('focuses the main window', () => {
+      const main = fakeBrowserWindow();
+      mainWindow.window = main as unknown as BrowserWindow;
+      ipcMain.emit('desktop_bring_main_frame_to_front');
+
+      assert.isTrue(main.focus.calledOnce);
+    });
+
+    it('leaves a visible main window alone in automation mode', () => {
+      const main = fakeBrowserWindow();
+      mainWindow.window = main as unknown as BrowserWindow;
+
+      app.commandLine.appendSwitch('automation-agent');
+      try {
+        ipcMain.emit('desktop_bring_main_frame_to_front');
+      } finally {
+        app.commandLine.removeSwitch('automation-agent');
+      }
+
+      assert.isFalse(main.focus.called);
+      assert.isFalse(main.show.called);
+      assert.isFalse(main.showInactive.called);
+      assert.isFalse(main.moveTop.called);
+    });
+  });
+
   describe('desktop_bring_main_frame_behind_active', () => {
     // this callback means "make the main window as visible as possible, but leave
     // focus alone"; touching focus at all strands it on the main window under

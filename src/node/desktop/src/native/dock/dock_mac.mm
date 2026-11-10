@@ -306,12 +306,34 @@ Napi::Value setDockLabel(const Napi::CallbackInfo& info)
   return Napi::Value();
 }
 
+Napi::Value orderWindowBack(const Napi::CallbackInfo& info)
+{
+  Napi::Env env = info.Env();
+
+  // BrowserWindow.getNativeWindowHandle() is a buffer holding an NSView*
+  if (info.Length() < 1 || !info[0].IsBuffer())
+    return Napi::Boolean::New(env, false);
+
+  Napi::Buffer<uint8_t> handle = info[0].As<Napi::Buffer<uint8_t>>();
+  if (handle.Length() != sizeof(NSView*))
+    return Napi::Boolean::New(env, false);
+
+  NSView* view = *reinterpret_cast<NSView**>(handle.Data());
+  NSWindow* window = [view window];
+  if (window == nil)
+    return Napi::Boolean::New(env, false);
+
+  [window orderBack:nil];
+  return Napi::Boolean::New(env, true);
+}
+
 } // end namespace dock
 } // end namespace rstudio
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
 
   RS_EXPORT_FUNCTION("setDockLabel", rstudio::dock::setDockLabel);
+  RS_EXPORT_FUNCTION("orderWindowBack", rstudio::dock::orderWindowBack);
 
   return exports;
 
