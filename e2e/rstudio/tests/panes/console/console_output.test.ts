@@ -187,6 +187,28 @@ test.describe('Console output and annotation', () => {
       .rejects.toThrow(/output marker not found/);
   });
 
+  test('executeInConsoleChecked refuses a line the console would truncate', async ({ rstudioPage: page }) => {
+    // Within the limit on its own, over it once the marker is prefixed.
+    const command = `invisible("${'x'.repeat(4070)}")`;
+    await expect(executeInConsoleChecked(page, command))
+      .rejects.toThrow(/exceeds the console's 4094-byte input limit/);
+  });
+
+  test('executeInConsoleChecked finds its own output in a trimming scrollback', async ({ rstudioPage: page }) => {
+    // Fill the scrollback past its line limit, so that every later write
+    // trims from the top, and leave an error near the end of it.
+    await executeInConsole(page, 'cat(rep("filler", 1200), sep = "\\n")');
+    await executeInConsole(page, 'stop("earlier failure")');
+    await executeInConsoleChecked(page, 'cat(rep("more", 50), sep = "\\n")');
+
+    // Identical output repeating while the scrollback trims is still
+    // attributed to the command that wrote it.
+    for (let i = 0; i < 2; i++) {
+      await expect(executeInConsoleChecked(page, 'stop("repeated")'))
+        .rejects.toThrow(/: Error[^|]*repeated/);
+    }
+  });
+
   test('long lines are truncated when consoleLineLengthLimit is reduced', async ({ rstudioPage: page }) => {
     await setPref(page, 'console_line_length_limit', 10);
     try {

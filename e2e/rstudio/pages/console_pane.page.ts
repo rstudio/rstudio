@@ -596,6 +596,10 @@ export function findRError(text: string): string | null {
 
 let checkedCommandCount = 0;
 
+// The session truncates a console input line to what R's read buffer holds
+// (RStdCallbacks.cpp: CONSOLE_BUFFER_SIZE less the newline and terminator).
+const MAX_CONSOLE_LINE_BYTES = 4094;
+
 /**
  * executeInConsole only confirms that R reached a new prompt, which an R error
  * does just as readily as a success. Run the command, then scrape the output
@@ -622,9 +626,19 @@ export async function executeInConsoleChecked(
   const marker = `__CHECKED_${id}`;
   const prefix = `cat(paste0("__CHECKED_", "${id}\\n")); `;
 
+  const label = `R error running "${command.slice(0, 120)}"`;
+
+  // A truncated line can lose its closing delimiters after the marker has
+  // printed, which would read as a clean run of a command that never ran.
+  const longest = Math.max(...(prefix + command).split('\n').map((line) => Buffer.byteLength(line)));
+  if (longest > MAX_CONSOLE_LINE_BYTES) {
+    throw new Error(
+      `${label}: a line of ${longest} bytes exceeds the console's ${MAX_CONSOLE_LINE_BYTES}-byte input limit`,
+    );
+  }
+
   await executeInConsole(page, prefix + command, { wait: true, timeout: opts.timeout });
   const text = await page.locator(CONSOLE_SCROLLBACK).innerText();
-  const label = `R error running "${command.slice(0, 120)}"`;
 
   // The console evaluates a line one statement at a time, so the marker is
   // written even when the command itself fails to parse. No marker means the
