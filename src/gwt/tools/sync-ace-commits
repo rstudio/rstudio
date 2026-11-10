@@ -35,4 +35,6 @@ git submodule update --init --recursive --force
 npm install
 cd ..
 
-./build-ace
+# (build-ace takes another source checkout from the environment; the pinned
+# one is the only source here)
+ACE_SOURCE_DIR="${TOOLS_DIR}/rstudio-ace" ./build-ace
