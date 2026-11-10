@@ -601,6 +601,19 @@ let checkedCommandCount = 0;
 const MAX_CONSOLE_LINE_BYTES = 4094;
 
 /**
+ * An upper bound on the bytes the session hands R for one input line. The
+ * line is converted to R's native encoding first, and on Windows a character
+ * the code page lacks becomes an escape of up to ten bytes.
+ */
+function consoleLineBytes(line: string): number {
+  let bytes = 0;
+  for (const ch of line)
+    bytes += ch.charCodeAt(0) < 0x80 ? 1 : 10;
+
+  return bytes;
+}
+
+/**
  * executeInConsole only confirms that R reached a new prompt, which an R error
  * does just as readily as a success. Run the command, then scrape the output
  * it produced for an error header, so a failed setup step fails here rather
@@ -630,10 +643,10 @@ export async function executeInConsoleChecked(
 
   // A truncated line can lose its closing delimiters after the marker has
   // printed, which would read as a clean run of a command that never ran.
-  const longest = Math.max(...(prefix + command).split('\n').map((line) => Buffer.byteLength(line)));
+  const longest = Math.max(...(prefix + command).split('\n').map(consoleLineBytes));
   if (longest > MAX_CONSOLE_LINE_BYTES) {
     throw new Error(
-      `${label}: a line of ${longest} bytes exceeds the console's ${MAX_CONSOLE_LINE_BYTES}-byte input limit`,
+      `${label}: a line of up to ${longest} bytes exceeds the console's ${MAX_CONSOLE_LINE_BYTES}-byte input limit`,
     );
   }
 

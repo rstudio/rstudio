@@ -189,23 +189,37 @@ test.describe('Console output and annotation', () => {
 
   test('executeInConsoleChecked refuses a line the console would truncate', async ({ rstudioPage: page }) => {
     // Within the limit on its own, over it once the marker is prefixed.
-    const command = `invisible("${'x'.repeat(4070)}")`;
-    await expect(executeInConsoleChecked(page, command))
-      .rejects.toThrow(/exceeds the console's 4094-byte input limit/);
+    const limit = /exceeds the console's 4094-byte input limit/;
+    await expect(executeInConsoleChecked(page, `invisible("${'x'.repeat(4070)}")`))
+      .rejects.toThrow(limit);
+
+    // A non-ASCII character is counted as the escape a Windows code page
+    // without it would need, not as its UTF-8 bytes.
+    await expect(executeInConsoleChecked(page, `invisible("${'é'.repeat(450)}")`))
+      .rejects.toThrow(limit);
   });
 
   test('executeInConsoleChecked finds its own output in a trimming scrollback', async ({ rstudioPage: page }) => {
-    // Fill the scrollback past its line limit, so that every later write
-    // trims from the top, and leave an error near the end of it.
-    await executeInConsole(page, 'cat(rep("filler", 1200), sep = "\\n")');
-    await executeInConsole(page, 'stop("earlier failure")');
-    await executeInConsoleChecked(page, 'cat(rep("more", 50), sep = "\\n")');
+    const output = page.locator(CONSOLE_SCROLLBACK);
+    await setPref(page, 'console_max_lines', 50);
+    try {
+      // Fill the scrollback past its limit, so that every later write trims
+      // from the top, and leave an error near the end of it.
+      await executeInConsole(page, 'cat("first-line-sentinel", rep("filler", 200), sep = "\\n")');
+      await expect(output).not.toContainText('first-line-sentinel');
+      await executeInConsole(page, 'stop("earlier failure")');
+      await expect(output).toContainText('earlier failure');
+      await executeInConsoleChecked(page, 'cat(rep("more", 10), sep = "\\n")');
 
-    // Identical output repeating while the scrollback trims is still
-    // attributed to the command that wrote it.
-    for (let i = 0; i < 2; i++) {
-      await expect(executeInConsoleChecked(page, 'stop("repeated")'))
-        .rejects.toThrow(/: Error[^|]*repeated/);
+      // Identical output repeating while the scrollback trims, long enough
+      // that the console ends on the same text before and after, is still
+      // attributed to the command that wrote it.
+      for (let i = 0; i < 2; i++) {
+        await expect(executeInConsoleChecked(page, 'stop(strrep("repeated ", 40))'))
+          .rejects.toThrow(/: Error[^|]*repeated/);
+      }
+    } finally {
+      await clearPref(page, 'console_max_lines');
     }
   });
 
