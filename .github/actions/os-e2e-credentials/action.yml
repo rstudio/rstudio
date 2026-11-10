@@ -1,0 +1,49 @@
+name: "Retrieve E2E test credentials"
+description: >
+  Resolve the Posit AI test account from 1Password when the job has a service
+  account token, and say so loudly when it does not: the AI-gated tests then
+  skip, so the run does not exercise Posit AI. The secret references live in
+  e2e/rstudio/.env.op; this action only decides whether to resolve them and
+  hands the results back as outputs.
+
+inputs:
+  op-service-account-token:
+    description: "secrets.OP_SERVICE_ACCOUNT_TOKEN. Empty (fork PRs, or a job without the secret) skips the lookup with a warning."
+    required: false
+    default: ""
+
+outputs:
+  present:
+    description: "'true' when a service account token was available and the credentials were resolved."
+    value: ${{ steps.check.outputs.present }}
+  posit-email:
+    description: "Posit AI test account email, or empty when no token was available."
+    value: ${{ steps.op.outputs.POSIT_EMAIL }}
+  posit-password:
+    description: "Posit AI test account password, or empty when no token was available."
+    value: ${{ steps.op.outputs.POSIT_PASSWORD }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check for OP service account token
+      id: check
+      shell: bash
+      env:
+        OP_SERVICE_ACCOUNT_TOKEN: ${{ inputs.op-service-account-token }}
+      run: |
+        if [ -n "$OP_SERVICE_ACCOUNT_TOKEN" ]; then
+          echo "present=true" >> "$GITHUB_OUTPUT"
+          echo "::notice::OP service account token present; test credentials will be retrieved."
+        else
+          echo "present=false" >> "$GITHUB_OUTPUT"
+          echo "::warning::No OP service account token in this job. AI-gated tests will skip, so this run does NOT exercise Posit AI."
+        fi
+
+    - name: Retrieve test credentials
+      id: op
+      if: steps.check.outputs.present == 'true'
+      uses: 1password/load-secrets-action@eb2efd0703da22a93c467f2d1ffbb6826c11e19c # v4.1.1
+      env:
+        OP_SERVICE_ACCOUNT_TOKEN: ${{ inputs.op-service-account-token }}
+        OP_ENV_FILE: ./e2e/rstudio/.env.op

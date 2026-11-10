@@ -16,6 +16,7 @@ permissions:
   # The called workflow's e2e-merge job assumes the S3 report-upload role via
   # OIDC; a reusable workflow's id-token grant is capped by its caller's.
   id-token: write
+  actions: write  # the engines' e2e-merge job deletes the shard blob artifacts once merged
 
 jobs:
   run-windows-2025:

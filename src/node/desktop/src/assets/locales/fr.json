@@ -4,7 +4,6 @@
     "buttonCancel": "Annuler",
     "buttonBrowse": "Parcourir...",
     "buttonDownloadR": "Télécharger R...",
-    "unknownErrorOccurred": "Une erreur inconnue s'est produite.",
     "workingOnIt": "En cours d'élaboration...",
     "buttonYes": "Oui",
     "buttonNo": "Non",
@@ -102,16 +101,27 @@
     "newRstudioWindow": "Nouvelle fenêtre RStudio",
     "stateFolderErrorTitle": "RStudio ne peut pas écrire dans les dossiers requis",
     "stateFolderErrorPrefix": "RStudio nécessite un accès en écriture aux dossiers suivants, mais l'écriture a échoué :",
-    "stateFolderErrorSuffix": "RStudio peut ne pas démarrer ou ne pas fonctionner correctement tant que ce problème n'est pas résolu. Veuillez vérifier que ces dossiers ont les permissions et le propriétaire attendus."
+    "stateFolderErrorSuffix": "RStudio peut ne pas démarrer ou ne pas fonctionner correctement tant que ce problème n'est pas résolu. Veuillez vérifier que ces dossiers ont les permissions et le propriétaire attendus.",
+    "desktopOptionsResetTitle": "Les options de bureau de RStudio ont été réinitialisées",
+    "desktopOptionsResetMessage": "RStudio n'a pas pu lire son fichier d'options de bureau :\n\n{{configPath}}\n({{reason}})\n\nLe fichier a été déplacé vers :\n\n{{backupPath}}\n\nLes options de bureau telles que le niveau de zoom, la taille de la fenêtre et les polices ont été réinitialisées à leurs valeurs par défaut."
   },
   "detectRTs": {
     "rNotFound": "R non trouvé",
-    "couldNotLocateAnRInstallationOnTheSystem": "Impossible de localiser une installation R sur le système."
+    "couldNotLocateAnRInstallationOnTheSystem": "Impossible de localiser une installation R sur le système.",
+    "rFailedToStart": "R n'a pas pu démarrer",
+    "rFoundButFailedToStart": "R a été trouvé à l'emplacement {{- rPath}} mais n'a pas pu démarrer.",
+    "noRExecutableAt": "Aucun exécutable R n'a été trouvé à l'emplacement {{- rPath}}.",
+    "launchError": "Erreur de lancement : {{- error}}",
+    "terminatedBySignal": "Interrompu par le signal : {{signal}}",
+    "exitStatus": "Code de sortie : {{status}}",
+    "rReported": "R a signalé :\n{{- output}}",
+    "rProducedNoErrorOutput": "R n'a produit aucune sortie d'erreur."
   },
   "gwtCallbackTs": {
     "unimplemented": "Non implémenté",
     "callbackNyiLowercase": "{{ipcName}} pas encore implémenté",
     "rExecutableMissing": "{{path}} n'existe pas",
+    "rExecutableNotPrepared": "R dans {{path}} n'a pas été vérifié pour ce redémarrage.",
     "rExecutableFailed": "{{path}} n'a pas pu être exécuté : {{error}}",
     "rExecutableNotOrthogonal": "{{path}} est configuré pour exécuter la version de R par défaut plutôt que lui-même",
     "rUpdatePrompt": "RStudio souhaite mettre à jour R {{version}} afin qu'il puisse fonctionner avec d'autres versions de R.",
@@ -130,6 +140,19 @@
   },
   "mainWindowTs": {
     "rSessionFailedToStart": "La session R n'a pas réussi à démarrer."
+  },
+  "defaultFileHandlerTs": {
+    "confirmMessage": "Utiliser RStudio pour ouvrir les fichiers R ?",
+    "confirmDetail": "Les fichiers R (.R) s'ouvrent actuellement dans une autre application, comme Xcode. Vous pourrez modifier ce choix plus tard dans Outils > Options globales > Général > Avancé.",
+    "useRStudio": "Utiliser RStudio",
+    "keepCurrent": "Conserver l'application actuelle"
+  },
+  "updaterTs": {
+    "updateNotInstalled": "RStudio {{version}} n'a pas été installé.",
+    "otherWindowsWereOpen": "D'autres fenêtres RStudio étaient encore ouvertes lorsque RStudio a quitté. Fermez-les, puis choisissez Aide > Vérifier les mises à jour au prochain démarrage de RStudio pour réessayer.",
+    "couldNotCheckOtherWindows": "RStudio n'a pas pu vérifier si d'autres fenêtres RStudio étaient ouvertes. Choisissez Aide > Vérifier les mises à jour au prochain démarrage de RStudio pour réessayer.",
+    "installerNoLongerAvailable": "La mise à jour téléchargée n'est plus disponible. Choisissez Aide > Vérifier les mises à jour au prochain démarrage de RStudio pour la télécharger à nouveau.",
+    "installerDidNotStart": "Le programme d'installation n'a pas pu démarrer. Choisissez Aide > Vérifier les mises à jour au prochain démarrage de RStudio pour réessayer, ou installez la mise à jour depuis son programme d'installation."
   },
   "i18nManager": {
     "errorLocalizingDocument": "Erreur de localisation du document :"

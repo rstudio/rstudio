@@ -29,6 +29,17 @@ test_that("--| cell options are removed by .rs.extractChunkInnerCode() (#18093)"
    expect_true(any(grepl("SELECT 1", extract)))
 })
 
+test_that(".rs.extractChunkInnerCode() keeps every line when there are no fences (#19454)", {
+   # code from knitr's 'file' option or read_chunk() arrives without fences
+   code <- "echo first\necho middle\necho last"
+   expect_equal(.rs.extractChunkInnerCode(code), code)
+   expect_equal(.rs.extractChunkInnerCode("echo only"), "echo only")
+
+   # fenced chunks still yield just the body
+   expect_equal(.rs.extractChunkInnerCode("```{bash}\necho body\n```"), "echo body")
+   expect_equal(.rs.extractChunkInnerCode("```{bash}\n```"), "")
+})
+
 test_that(".rs.truncateDataCapture() truncates data.table columns positionally (#18317)", {
    skip_if_not_installed("data.table")
 

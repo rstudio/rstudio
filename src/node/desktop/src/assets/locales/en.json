@@ -4,7 +4,6 @@
     "buttonCancel": "Cancel",
     "buttonBrowse": "Browse...",
     "buttonDownloadR": "Download R...",
-    "unknownErrorOccurred": "An unknown error occurred.",
     "workingOnIt": "Working on it...",
     "buttonYes": "Yes",
     "buttonNo": "No",
@@ -102,16 +101,27 @@
     "newRstudioWindow": "New RStudio Window",
     "stateFolderErrorTitle": "RStudio cannot write to required folders",
     "stateFolderErrorPrefix": "RStudio requires write access to the following folders, but writing to them failed:",
-    "stateFolderErrorSuffix": "RStudio may fail to start or may not work correctly until this is resolved. Please check that these folders have the expected ownership and permissions."
+    "stateFolderErrorSuffix": "RStudio may fail to start or may not work correctly until this is resolved. Please check that these folders have the expected ownership and permissions.",
+    "desktopOptionsResetTitle": "RStudio desktop options were reset",
+    "desktopOptionsResetMessage": "RStudio could not read its desktop options file:\n\n{{configPath}}\n({{reason}})\n\nThe file was moved to:\n\n{{backupPath}}\n\nDesktop options such as the zoom level, window size and fonts have been reset to their defaults."
   },
   "detectRTs": {
     "rNotFound": "R not found",
-    "couldNotLocateAnRInstallationOnTheSystem": "Could not locate an R installation on the system."
+    "couldNotLocateAnRInstallationOnTheSystem": "Could not locate an R installation on the system.",
+    "rFailedToStart": "R failed to start",
+    "rFoundButFailedToStart": "R was found at {{- rPath}} but failed to start.",
+    "noRExecutableAt": "No R executable was found at {{- rPath}}.",
+    "launchError": "Launch error: {{- error}}",
+    "terminatedBySignal": "Terminated by signal: {{signal}}",
+    "exitStatus": "Exit status: {{status}}",
+    "rReported": "R reported:\n{{- output}}",
+    "rProducedNoErrorOutput": "R produced no error output."
   },
   "gwtCallbackTs": {
     "unimplemented": "Unimplemented",
     "callbackNyiLowercase": "{{ipcName}} callback NYI",
     "rExecutableMissing": "{{path}} does not exist",
+    "rExecutableNotPrepared": "R at {{path}} has not been checked for this restart.",
     "rExecutableFailed": "{{path}} could not be run: {{error}}",
     "rExecutableNotOrthogonal": "{{path}} is set up to run the default version of R rather than itself",
     "rUpdatePrompt": "RStudio wants to update R {{version}} so it can run alongside other versions of R.",
@@ -130,6 +140,19 @@
   },
   "mainWindowTs": {
     "rSessionFailedToStart": "The R session failed to start."
+  },
+  "defaultFileHandlerTs": {
+    "confirmMessage": "Use RStudio to open R files?",
+    "confirmDetail": "R files (.R) currently open in another application, such as Xcode. You can change this later in Tools > Global Options > General > Advanced.",
+    "useRStudio": "Use RStudio",
+    "keepCurrent": "Keep Current Application"
+  },
+  "updaterTs": {
+    "updateNotInstalled": "RStudio {{version}} was not installed.",
+    "otherWindowsWereOpen": "Other RStudio windows were still open when RStudio quit. Close them, then choose Help > Check for Updates the next time RStudio starts to try again.",
+    "couldNotCheckOtherWindows": "RStudio could not check whether other RStudio windows were open. Choose Help > Check for Updates the next time RStudio starts to try again.",
+    "installerNoLongerAvailable": "The downloaded update is no longer available. Choose Help > Check for Updates the next time RStudio starts to download it again.",
+    "installerDidNotStart": "The installer could not be started. Choose Help > Check for Updates the next time RStudio starts to try again, or install the update from its installer."
   },
   "i18nManager": {
     "errorLocalizingDocument": "Error localizing document:"

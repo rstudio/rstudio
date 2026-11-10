@@ -27,7 +27,7 @@ Several accessibility-related options are available under the Help / Accessibili
 | Focus / Focus Main Toolbar         | Move keyboard focus to the main toolbar                                                                           |
 | Focus / Tab Key Always Moves Focus | Toggles a mode where the Tab key will always move focus to the next element, even when in a text editing control  |
 | Accessibility Options              | Display the Global Options dialog and automatically open the Accessibility pane                                   |
-| Accessibility Help                 | Opens this web page                                                                                               |
+| Accessibility Help                 | Opens the [Accessibility Features](accessibility.html) page                                                       |
 
 ## RStudio Desktop
 

@@ -30,10 +30,9 @@ async function recordAnnouncements(page: Page): Promise<void> {
   await page.evaluate(() => {
     const w = window as unknown as { __plotAnnouncements: string[] };
     w.__plotAnnouncements = [];
-    // the widget pairs its status region with an alert region; other widgets,
-    // such as info bars, have status regions of their own
-    const regions = document.querySelectorAll(
-      'div:has(> [role=status] + [role=alert]) > [role=status]');
+    // other widgets, such as info bars and the application warnings, have
+    // status regions of their own
+    const regions = document.querySelectorAll('#rstudio_app_aria_live_status > [role=status]');
     if (regions.length !== 1)
       throw new Error(`Expected one app status live region, found ${regions.length}`);
     const region = regions[0];

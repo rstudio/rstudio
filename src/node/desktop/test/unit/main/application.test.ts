@@ -21,7 +21,8 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 
-import { Menu } from 'electron';
+import { BrowserWindow, dialog, Menu, MessageBoxOptions } from 'electron';
+import i18next from 'i18next';
 
 import { createSinonStubInstance, restore, saveAndClear } from '../unit-utils';
 import { Application, collectStateDirIssues } from '../../../src/main/application';
@@ -35,6 +36,8 @@ import { kRunDiagnosticsOption } from '../../../src/main/args-manager';
 import { DesktopBrowserWindow } from '../../../src/main/desktop-browser-window';
 import { MainWindow } from '../../../src/main/main-window';
 import { PendingWindow } from '../../../src/main/pending-window';
+import { initI18n } from '../../../src/main/i18n-manager';
+import { clearOptionsSingleton, ElectronDesktopOptions } from '../../../src/main/preferences/electron-desktop-options';
 
 describe('Application', () => {
   before(() => {
@@ -97,6 +100,63 @@ describe('Application', () => {
       assert.lengthOf(issues, 1);
       assert.strictEqual(issues[0].directory, logDir);
       assert.isNotEmpty(issues[0].message);
+    });
+  });
+
+  describe('reportDesktopOptionsRecovery', () => {
+    let configDir: string;
+
+    before(async () => {
+      initI18n();
+      await new Promise<void>((resolve) => {
+        if (i18next.isInitialized) {
+          resolve();
+        } else {
+          i18next.on('initialized', () => resolve());
+        }
+      });
+    });
+
+    beforeEach(() => {
+      clearOptionsSingleton();
+      configDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rstudio-application-recovery-test-'));
+    });
+
+    afterEach(() => {
+      sinon.restore();
+      clearOptionsSingleton();
+      fs.rmSync(configDir, { recursive: true, force: true });
+    });
+
+    // i18next HTML-escapes interpolated values by default, which would turn
+    // the backup path the dialog exists to show into '&#x2F;Users&#x2F;...'
+    it('shows the backup path verbatim in the reset dialog', async () => {
+      fs.writeFileSync(path.join(configDir, 'config.json'), '{"view":{"zoomLevel":"huge"}}');
+      const recovery = ElectronDesktopOptions(configDir).configRecovery();
+      assert.isDefined(recovery);
+
+      const showMessageBox = sinon.stub(dialog, 'showMessageBox').resolves({ response: 0, checkboxChecked: false });
+      const app = new Application();
+      try {
+        (app as unknown as { reportDesktopOptionsRecovery(): void }).reportDesktopOptionsRecovery();
+        while (!showMessageBox.called) {
+          await new Promise((resolve) => setImmediate(resolve));
+        }
+
+        // the stub's typing sees only the one-argument overload
+        const [, options] = showMessageBox.firstCall.args as unknown as [BrowserWindow, MessageBoxOptions];
+        const text = process.platform === 'win32' ? options.message : options.detail;
+        assert.include(text, recovery!.configPath);
+        assert.include(text, recovery!.backupPath);
+        assert.include(text, recovery!.reason);
+        assert.notInclude(text, '&#x2F;');
+        assert.notInclude(text, '&lt;');
+      } finally {
+        // the dialog's default window is not closed by the dialog itself (#19535)
+        if (showMessageBox.called) {
+          (showMessageBox.firstCall.args[0] as unknown as BrowserWindow).destroy();
+        }
+      }
     });
   });
 
