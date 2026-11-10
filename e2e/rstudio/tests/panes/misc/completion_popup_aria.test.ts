@@ -1,7 +1,7 @@
-// Screen reader support for the console/editor completion popup (#6167) and
-// the console history popup (#6168). Keyboard focus stays in the Ace text
-// input while either popup is open, so the input's aria-activedescendant is
-// what tells a screen reader which item is selected.
+// Screen reader support for the console/editor completion popup (#6167), the
+// C/C++ completion popup (#19532), and the console history popup (#6168).
+// Keyboard focus stays in the Ace text input while a popup is open, so the
+// input's aria-activedescendant tells a screen reader which item is selected.
 
 import type { Page } from 'playwright';
 import { test, expect } from '@fixtures/rstudio.fixture';
@@ -119,7 +119,7 @@ async function expectNoActiveDescendant(page: Page, inputSelector: string) {
 }
 
 test.describe('Completion popup screen reader support', () => {
-  // The editor test creates a file in the working directory.
+  // The editor and C++ tests create files in the working directory.
   useSuiteSandbox();
   let consoleActions: ConsolePaneActions;
   let sourceActions: SourcePaneActions;
@@ -187,7 +187,7 @@ test.describe('Completion popup screen reader support', () => {
     test.skip(!canComplete, 'C++ completion needs libclang and the Rcpp package');
 
     // C++ completion asks libclang for the members of `s` once `s.` is typed.
-    // The file must exist on disk, since completion compiles the saved file.
+    // The file needs a path on disk, which is how it gets Rcpp compile arguments.
     const fileName = `completion_aria_${Date.now()}.cpp`;
     await sourceActions.createAndOpenFile(fileName, [
       '#include <Rcpp.h>',
