@@ -66,23 +66,12 @@ public class SafeHtmlUtil
       sb.appendHtmlConstant("</span>");   
    }
 
-   public static void appendImage(SafeHtmlBuilder sb,
-                                  String style,
-                                  ImageResource image)
-   {
-      sb.append(SafeHtmlUtil.createOpenTag("img",
-                                           "class", style,
-                                           "width", Integer.toString(image.getWidth()),
-                                           "height", Integer.toString(image.getHeight()),
-                                           "src", image.getSafeUri().asString()));
-      sb.appendHtmlConstant("</img>");   
-   }
-
    public static void appendPresentationImage(SafeHtmlBuilder sb,
                                   String style,
                                   ImageResource image)
    {
       sb.append(SafeHtmlUtil.createOpenTag("img",
+                                           "alt", "",
                                            "role", "presentation",
                                            "class", style,
                                            "width", Integer.toString(image.getWidth()),
