@@ -133,6 +133,10 @@ the same region, so they are free.
   for directories, `autoindex` listings elsewhere, content types from file
   extensions. New reports appear as soon as the upload finishes; Mountpoint
   caches directory listings only briefly.
+- nginx gzips text responses and marks the content-addressed files
+  (`data/<sha1>.*` attachments, traces included, and the trace viewer's
+  hashed bundles) as immutable, so a browser downloads each of them once.
+  Everything else is revalidated on each visit.
 - The host lives in a private subnet of the account's shared VPC (an
   organization policy forbids creating VPCs): no public address, a security
   group with no inbound rules, outbound through the VPC's NAT gateway. nginx

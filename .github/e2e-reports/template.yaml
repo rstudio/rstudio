@@ -269,6 +269,15 @@ Resources:
               access_log /var/log/nginx/access.log;
               sendfile on;
 
+              # Transfers are relayed and slow (README.md), so compress what
+              # compresses. Trace .zip files, images and videos already are.
+              gzip on;
+              gzip_comp_level 5;
+              gzip_min_length 1024;
+              gzip_proxied any;
+              gzip_vary on;
+              gzip_types text/plain text/css text/javascript application/javascript application/json application/manifest+json image/svg+xml;
+
               server {
                   listen 127.0.0.1:8080;
                   # Directory redirects (/pr-1234 -> /pr-1234/) must stay relative:
@@ -280,8 +289,22 @@ Resources:
                   autoindex_exact_size off;
                   autoindex_localtime on;
 
+                  # Listings and reports are revalidated on every visit (a 304
+                  # when unchanged); without a Cache-Control header browsers
+                  # guess a lifetime and can show a stale listing.
                   location / {
                       try_files \$uri \$uri/ =404;
+                      add_header Cache-Control "no-cache";
+                  }
+
+                  # Content-addressed files never change under their name, so
+                  # the browser keeps them: report attachments (data/<sha1>.*,
+                  # traces included) and the trace viewer's hashed bundles.
+                  location ~ "/data/[0-9a-f]{40}\.[a-z0-9]+\$" {
+                      add_header Cache-Control "private, max-age=31536000, immutable";
+                  }
+                  location ~ "/trace/(assets/)?[^/]+[.-][A-Za-z0-9_-]{8}\.(js|css)\$" {
+                      add_header Cache-Control "private, max-age=31536000, immutable";
                   }
               }
           }
