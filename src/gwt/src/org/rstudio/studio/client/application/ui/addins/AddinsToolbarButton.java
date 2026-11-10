@@ -159,10 +159,8 @@ public class AddinsToolbarButton extends ToolbarMenuButton
       boxStyle.setProperty("width", "auto");
       boxStyle.setMarginRight(0, Unit.PX);
 
-      // Not a credential field: keep browser autofill and LastPass's field icon away
-      Element input = searchWidget_.getInputElement();
-      DomUtils.disableAutoBehavior(input);
-      input.setAttribute("data-lpignore", "true");
+      // Not a credential field; keep 1Password's field icon out of it
+      searchWidget_.getInputElement().setAttribute("data-1p-ignore", "true");
 
       Widget menuWidget = menu_.getWidget();
       FlowPanel panel = new FlowPanel();
