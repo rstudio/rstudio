@@ -638,10 +638,45 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
 
    var contains = Utils.contains;
 
+   // With the cursor just before a '->', whether it follows the declarator of
+   // a function, 'auto [S::]f(...) [const] [noexcept[(...)]]', or of a lambda,
+   // '[...](...)'. A trailing return type is valid only there, so this keeps
+   // member access such as 'return get()->n == T{1}' from being read as one.
+   var isTrailingReturnDeclarator = function(cursor) {
+
+      var clone = cursor.cloneCursor();
+      for (;;) {
+         var value = clone.currentValue();
+         if (value === "const" || value === "noexcept") {
+            if (!clone.moveToPreviousToken())
+               return false;
+            continue;
+         }
+         if (value !== ")" || !clone.bwdToMatchingToken() || !clone.moveToPreviousToken())
+            return false;
+         if (clone.currentValue() !== "noexcept")
+            break;
+      }
+
+      if (clone.currentValue() === "]")
+         return true;
+
+      // Walk back over a possibly qualified name, e.g. 'S<T>::f', to 'auto'.
+      for (;;) {
+         var name = clone.currentValue();
+         if (name === ">" && !clone.bwdToMatchingArrow())
+            return false;
+         if (name !== ">" && name !== "::" && name !== "~" &&
+             clone.currentType() !== "identifier" && !/^operator/.test(name))
+            break;
+         if (!clone.moveToPreviousToken())
+            return false;
+      }
+      return clone.currentValue() === "auto";
+   };
+
    // From the last token of a trailing return type, e.g. the 'int' of
-   // 'auto f() const -> int', move to the token before its '->'. Stopping at
-   // assignments and ']', and checking the token before '->', keep
-   // 'get()->x += T{1}', 'f(get()->x, []() {' and 'p->x' from being read as one.
+   // 'auto f() const -> int', move to the token before its '->'.
    this.bwdOverTrailingReturnType = function() {
 
       var clone = this.cloneCursor();
@@ -649,7 +684,7 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
          var value = clone.currentValue();
          if (value === "->")
             break;
-         if (/^[;{}(\]]$/.test(value) || /^([-+*\/%&|^]|<<|>>)?=$/.test(value))
+         if (/^[;{}(]$/.test(value))
             return false;
          if (value === ")" && !clone.bwdToMatchingToken())
             return false;
@@ -658,8 +693,7 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
       if (clone.currentValue() !== "->" || !clone.moveToPreviousToken())
          return false;
 
-      var before = clone.currentValue();
-      if (before !== ")" && before !== "const" && before !== "noexcept")
+      if (!isTrailingReturnDeclarator(clone))
          return false;
 
       this.$row = clone.$row;

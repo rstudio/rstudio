@@ -142,9 +142,20 @@ check("functions with trailing return types are labelled",
        "  operator->(): T* [7..7]",
        "  operator->(): T* [8..8]"].join("\n"));
 
-check("comparisons in a trailing return type are not assignments",
+check("comparisons in a trailing return type are kept",
       tree(makeSession("auto g() -> std::enable_if_t<N == 1, int> { return 1; }\n")),
       "g(): std::enable_if_t<N == 1, int> [0..0]");
+
+check("qualified and array trailing return declarations are labelled",
+      tree(makeSession([
+        "auto S::g() -> int { return 1; }",
+        "template <typename T> auto S<T>::h() -> int { return 1; }",
+        "auto a() -> int (*)[3] { return nullptr; }",
+        ""
+      ].join("\n"))),
+      ["g(): int [0..0]",
+       "h(): int [1..1]",
+       "a(): int (*)[3] [2..2]"].join("\n"));
 
 check("lambdas with trailing return types are labelled",
       tree(makeSession("auto l = [](int x) -> int { return x; };\n")),
@@ -160,10 +171,12 @@ check("member access before a brace does not make a function",
         "  auto l = [x = p->y]() { return x; };",
         "  get()->n += Foo{1};",
         "  consume(get()->v, []() { return 1; });",
+        "  get()->n and_eq Foo{1};",
+        "  return get()->n == Foo{1};",
         "}",
         ""
       ].join("\n"))),
-      ["f(P* p) [0..7]",
+      ["f(P* p) [0..9]",
        "  lambda () [4..4]",
        "  lambda () [6..6]"].join("\n"));
 
