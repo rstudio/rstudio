@@ -675,7 +675,7 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
             depth += name.length;
          else if (name === "<")
             depth -= 1;
-         else if (depth > 0 && /^[;{}]$/.test(name))
+         else if (depth > 0 && contains([";", "{", "}"], name))
             return false;
          else if (depth === 0 && name !== "::" && name !== "~" && name !== "\"\"" &&
                   clone.currentType() !== "identifier" && !/^operator/.test(name))
@@ -695,7 +695,7 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
          var value = clone.currentValue();
          if (value === "->")
             break;
-         if (/^[;{}(]$/.test(value))
+         if (contains([";", "{", "}", "("], value))
             return false;
          if (value === ")" && !clone.bwdToMatchingToken())
             return false;
@@ -713,12 +713,14 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
    };
 
    // Move the token cursor backwards from an open brace over const, noexcept,
-   // for function definitions.
+   // and a trailing return type, for function definitions.
    //
    // E.g.
    //
    //     int foo(int a) const noexcept(...) {
    //                    ^~~~~~~~~~~~~~~~~~~~^
+   //     auto foo(int a) const -> int {
+   //                     ^~~~~~~~~~~~~^
    //
    // Places the token cursor on the first token following a closing paren.
    this.bwdOverConstNoexceptDecltype = function() {
