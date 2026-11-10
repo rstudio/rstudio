@@ -180,6 +180,11 @@ test.describe('Addins toolbar menu (#19552)', () => {
         expect(await search.evaluate((el) => el === document.activeElement),
           'the menu\'s deferred focus must not take focus from the search box').toBe(true);
       });
+      // Nothing is highlighted yet, so screen readers announce the search box
+      await expect(highlightedItem(popup)).toHaveCount(0);
+      await expect(search).not.toHaveAttribute('aria-activedescendant');
+
+      await page.keyboard.press('ArrowDown');
       const firstId = await popup.getByRole('menuitem').first().getAttribute('id');
       await expect(search).toHaveAttribute('aria-activedescendant', firstId!);
     } finally {

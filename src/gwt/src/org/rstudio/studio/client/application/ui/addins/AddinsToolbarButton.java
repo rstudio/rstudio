@@ -149,8 +149,19 @@ public class AddinsToolbarButton extends ToolbarMenuButton
       // box, which hands the navigation keys to the menu. Redirecting the menu's
       // focus, rather than focusing the search box after opening, doesn't depend
       // on which runs last; Safari defers the menu's focus.
-      HTMLElement menuEl = Js.cast(menu_.getMenuBarElement());
-      menuEl.addEventListener("focus", event -> searchWidget_.getInputElement().focus());
+      HTMLElement popupEl = Js.cast(menu_.getElement());
+      Object menuEl = menu_.getMenuBarElement();
+      popupEl.addEventListener("focus", event ->
+      {
+         if (event.target != menuEl)
+            return;
+
+         // Caught while capturing, so the menu never sees it: its own focus
+         // handling would highlight the first add-in, and screen readers would
+         // then announce that add-in instead of the search box.
+         event.stopPropagation();
+         searchWidget_.getInputElement().focus();
+      }, true);
    }
 
    // The search box sits above the menu rather than inside it, since a menu may
@@ -222,13 +233,16 @@ public class AddinsToolbarButton extends ToolbarMenuButton
 
    // Rebuilds the menu for the search text now, rather than when the search
    // timer fires, so a navigation key acts on the list for the text typed so
-   // far. SearchWidget reports its first key as a change even when the text is
-   // unchanged, and rebuilding then would reset the highlight.
+   // far, with its first match highlighted. SearchWidget reports its first key
+   // as a change even when the text is unchanged; that must not reset the highlight.
    private void applyPendingSearch()
    {
       searchValueChangeTimer_.cancel();
       if (!searchWidget_.getValue().equals(populatedQuery_))
+      {
          populate();
+         menu_.selectFirst();
+      }
    }
 
    // Focus stays in the search box while the arrow keys move the highlight, so the
@@ -297,8 +311,6 @@ public class AddinsToolbarButton extends ToolbarMenuButton
                menu_.addItem(menuItem(addin));
          }
       });
-
-      menu_.selectFirst();
 
       Element tableEl = menu_.getMenuTableElement();
       if (tableEl != null)
