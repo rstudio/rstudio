@@ -14,14 +14,13 @@ import { AceEditorElement } from '@utils/ace';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
 import { clearPref, executeCommand, setPref } from '@utils/commands';
 import {
+  CONSOLE_SCROLLBACK,
   executeInConsole,
   executeInConsoleChecked,
   waitForConsoleFocus,
   waitForConsoleIdle,
 } from '@pages/console_pane.page';
 import { heredoc } from '@utils/heredoc';
-
-const CONSOLE_OUTPUT = '#rstudio_console_output';
 
 async function consoleSpanTexts(page: Page): Promise<string[]> {
   return page.evaluate((sel: string) => {
@@ -30,7 +29,7 @@ async function consoleSpanTexts(page: Page): Promise<string[]> {
     return Array.from(root.querySelectorAll('span'))
       .map((s) => (s as HTMLElement).innerText)
       .filter((t) => t.length > 0);
-  }, CONSOLE_OUTPUT);
+  }, CONSOLE_SCROLLBACK);
 }
 
 async function readConsoleInput(page: Page): Promise<string> {
@@ -168,12 +167,24 @@ test.describe('Console output and annotation', () => {
     await executeInConsole(page, 'stop("earlier failure")');
     await executeInConsoleChecked(page, 'invisible(1)');
 
-    const err = await executeInConsoleChecked(page, 'stop("this one")').then(
-      () => null,
-      (e: Error) => e,
-    );
-    expect(err?.message).toContain('this one');
-    expect(err?.message).not.toContain('earlier failure');
+    // Match the reported error rather than the command text quoted ahead of it.
+    await expect(executeInConsoleChecked(page, 'stop("this one")'))
+      .rejects.toThrow(/: Error[^|]*this one/);
+  });
+
+  test('executeInConsoleChecked ignores error text in the command echo', async ({ rstudioPage: page }) => {
+    await executeInConsoleChecked(page, 'invisible(grepl("Error in", "Error: none"))');
+  });
+
+  test('executeInConsoleChecked reports a command that fails to parse', async ({ rstudioPage: page }) => {
+    await expect(executeInConsoleChecked(page, 'x <- <- 1'))
+      .rejects.toThrow(/: Error: unexpected assignment/);
+  });
+
+  test('executeInConsoleChecked reports a command whose output it cannot locate', async ({ rstudioPage: page }) => {
+    // A form feed clears the console, and the marker with it.
+    await expect(executeInConsoleChecked(page, 'cat("\\f")'))
+      .rejects.toThrow(/output marker not found/);
   });
 
   test('long lines are truncated when consoleLineLengthLimit is reduced', async ({ rstudioPage: page }) => {

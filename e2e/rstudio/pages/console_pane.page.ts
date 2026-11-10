@@ -585,19 +585,16 @@ export async function goToLine(page: Page, line: number): Promise<void> {
 }
 
 /**
- * The text `after` gained over `before`, for two snapshots of the same
- * element. Once the scrollback is full the console trims from the top, so
- * `before` need not stay a prefix of `after`: anchor on its tail instead, and
- * fall back to everything when even that is gone.
+ * The first R error in `text`, flattened onto one line, or null. R formats
+ * errors as `Error in <call> :\n  <message>`, so the indented continuation
+ * lines are taken along with the header.
  */
-export function consoleTextAdded(before: string, after: string): string {
-  if (after.startsWith(before))
-    return after.slice(before.length);
-
-  const anchor = before.slice(-200);
-  const at = anchor.length > 0 ? after.lastIndexOf(anchor) : -1;
-  return at >= 0 ? after.slice(at + anchor.length) : after;
+export function findRError(text: string): string | null {
+  const match = text.match(/(?:Error in|Error:)[^\n]*(?:\n[ \t]+[^\n]*)*/);
+  return match ? match[0].replace(/\n+/g, ' | ').trim() : null;
 }
+
+let checkedCommandCount = 0;
 
 /**
  * executeInConsole only confirms that R reached a new prompt, which an R error
@@ -607,28 +604,40 @@ export function consoleTextAdded(before: string, after: string): string {
  *
  * Only this command's output is scanned: the console buffer is shared with
  * everything else that ran in this worker, and an error an earlier spec left
- * in it would otherwise fail every later call. The snapshots are of the
- * output element alone (CONSOLE_SCROLLBACK): the whole panel also holds the
- * live prompt line, which the command's echo replaces, so a before-snapshot
- * of it is never a prefix of the after-snapshot and the fallback scanned the
- * entire scrollback (run 42694353147, Windows shard 3).
+ * in it would otherwise fail every later call (run 42694353147, Windows
+ * shard 3). The command is prefixed with a cat() of a unique marker, and the
+ * scan starts after it. Comparing before/after snapshots of the console text
+ * cannot place that boundary reliably: the scrollback trims from the top, and
+ * output can repeat.
  */
 export async function executeInConsoleChecked(
   page: Page,
   command: string,
   opts: { timeout?: number } = {},
 ): Promise<void> {
-  const before = await page.locator(CONSOLE_SCROLLBACK).innerText();
-  await executeInConsole(page, command, { wait: true, timeout: opts.timeout });
-  const after = await page.locator(CONSOLE_SCROLLBACK).innerText();
+  // The marker is assembled by R, so the command's echo does not contain it
+  // and its only occurrence is the cat() output, just ahead of the command's
+  // own. That also keeps the echo itself out of the scan.
+  const id = `${Date.now()}_${checkedCommandCount++}__`;
+  const marker = `__CHECKED_${id}`;
+  const prefix = `cat(paste0("__CHECKED_", "${id}\\n")); `;
 
-  // R formats errors as `Error in <call> :\n  <message>`, so take the indented
-  // continuation lines along with the header.
-  const emitted = consoleTextAdded(before, after);
-  const errMatch = emitted.match(/(?:Error in|Error:)[^\n]*(?:\n[ \t]+[^\n]*)*/);
-  if (errMatch) {
-    throw new Error(
-      `R error running "${command.slice(0, 120)}": ${errMatch[0].replace(/\n+/g, ' | ').trim()}`,
-    );
+  await executeInConsole(page, prefix + command, { wait: true, timeout: opts.timeout });
+  const text = await page.locator(CONSOLE_SCROLLBACK).innerText();
+  const label = `R error running "${command.slice(0, 120)}"`;
+
+  // The console evaluates a line one statement at a time, so the marker is
+  // written even when the command itself fails to parse. No marker means the
+  // command cleared the console or wrote enough to push the marker out of the
+  // scrollback, and its result cannot be vouched for.
+  const at = text.lastIndexOf(marker);
+  if (at < 0) {
+    const tail = text.slice(-300);
+    const detail = findRError(tail) ?? `console tail: ${tail.replace(/\n+/g, ' | ').trim()}`;
+    throw new Error(`${label}: output marker not found; ${detail}`);
   }
+
+  const error = findRError(text.slice(at + marker.length));
+  if (error)
+    throw new Error(`${label}: ${error}`);
 }
