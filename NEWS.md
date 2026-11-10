@@ -72,6 +72,7 @@
 - ([#19380](https://github.com/rstudio/rstudio/issues/19380)): [Accessibility] Fixed an issue where the tabs shown when a pane is minimized were not announced as tabs by screen readers and could not be reached with the keyboard. They can now be focused with Tab, moved between with the arrow keys, and activated with Enter or Space to restore the pane. Restoring or maximizing a minimized pane from the keyboard now moves focus into the pane.
 - ([#6167](https://github.com/rstudio/rstudio/issues/6167)): [Accessibility] Fixed an issue where screen readers didn't announce the code completion popup in the console and in documents such as R, R Markdown, Python, and SQL files. Screen readers now announce the selected completion as you move through the list.
 - ([#6168](https://github.com/rstudio/rstudio/issues/6168)): [Accessibility] Fixed an issue where screen readers didn't announce the console history popup (Ctrl+Up, or Cmd+Up on macOS). Screen readers now announce the selected command as you move through the list.
+- ([#19401](https://github.com/rstudio/rstudio/issues/19401)): [Accessibility] Fixed an issue where menus, trees, toolbar buttons, document outlines, and the `manipulate()` slider each contained a hidden text field that assistive technologies could still reach.
 - ([#19532](https://github.com/rstudio/rstudio/issues/19532)): [Accessibility] Fixed an issue where screen readers didn't announce the code completion popup in C and C++ files. Screen readers now announce the selected completion as you move through the list.
 
 ### Dependencies
