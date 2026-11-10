@@ -15,6 +15,8 @@
 
 #include <core/libclang/SourceIndex.hpp>
 
+#include <algorithm>
+
 #include <boost/scoped_ptr.hpp>
 
 #include <gsl/gsl-lite.hpp>
@@ -40,6 +42,18 @@ unsigned parseTranslationUnitOptions()
    return (
       CXTranslationUnit_None |
       CXTranslationUnit_Incomplete |
+      CXTranslationUnit_DetailedPreprocessingRecord
+   );
+}
+
+// With modules enabled (C++20 and newer), libclang refuses a precompiled
+// header that wasn't built with the detailed preprocessing record when the
+// translation unit including it asks for one, so this must stay in step
+// with parseTranslationUnitOptions().
+unsigned precompiledHeaderOptions()
+{
+   return (
+      CXTranslationUnit_ForSerialization |
       CXTranslationUnit_DetailedPreprocessingRecord
    );
 }
@@ -71,6 +85,27 @@ void removeMismatchedStdArgs(const std::string& filename, std::vector<std::strin
          return arg.find("-std") == 0 && arg.find("++") == std::string::npos;
       });
    }
+}
+
+// remove '-include-pch <path>' from the arguments, returning true if
+// anything was removed
+bool removePrecompiledHeaderArgs(std::vector<std::string>* pArgs)
+{
+   const std::string flag = "-include-pch";
+   bool removed = false;
+
+   auto it = std::find(pArgs->begin(), pArgs->end(), flag);
+   while (it != pArgs->end())
+   {
+      // the flag takes its path as the next argument
+      auto last = (it + 1 == pArgs->end()) ? it + 1 : it + 2;
+      it = pArgs->erase(it, last);
+      removed = true;
+
+      it = std::find(it, pArgs->end(), flag);
+   }
+
+   return removed;
 }
 
 // the clang driver finds the macOS SDK through these variables
@@ -315,6 +350,26 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
                          parseTranslationUnitOptions()
                          );
 
+   // libclang fails the whole parse when it can't load the precompiled
+   // header (e.g. one built with other options, or by another libclang).
+   // Parse without it in that case: slower, but everything still works.
+   // The original arguments are what's stored, so that later requests
+   // reparse this translation unit rather than repeating the failure.
+   std::vector<std::string> pchFreeArgs = args;
+   if (tu == nullptr && removePrecompiledHeaderArgs(&pchFreeArgs))
+   {
+      LOG_ERROR_MESSAGE("Error parsing translation unit " + filename + " with its precompiled header; parsing without it");
+
+      core::system::ProcessArgs pchFreeArgsArray(pchFreeArgs);
+      tu = clang().parseTranslationUnit(
+               index_,
+               filename.c_str(),
+               pchFreeArgsArray.args(),
+               gsl::narrow_cast<int>(pchFreeArgsArray.argCount()),
+               unsavedFiles().unsavedFilesArray(),
+               unsavedFiles().numUnsavedFiles(),
+               parseTranslationUnitOptions());
+   }
 
    // save and return it if we succeeded
    if (tu != nullptr)

@@ -57,6 +57,13 @@ using namespace boost::placeholders;
 // the methodology used to infer compilation flags has changed.
 #define kCompilationDatabaseVersion 5
 
+// The precompiled header version.
+//
+// Bump this version when the way precompiled headers are built changes
+// (e.g. the options passed to libclang), so that ones built by an older
+// version of RStudio are discarded rather than reused.
+#define kPrecompiledHeaderVersion "2"
+
 namespace rstudio {
 namespace session {
 namespace modules { 
@@ -1807,6 +1814,8 @@ std::vector<std::string> ClangCompilationDatabase::precompiledHeaderArgs(
       return std::vector<std::string>();
    }
 
+   platformDir += "-pch" kPrecompiledHeaderVersion;
+
    // if this path doesn't exist then blow away all precompiled paths
    // and re-create this one. this enforces only storing precompiled headers
    // for the current version of R/Rcpp/pkg -- if we didn't do this then the
@@ -1907,7 +1916,7 @@ std::vector<std::string> ClangCompilationDatabase::precompiledHeaderArgs(
                             gsl::narrow_cast<int>(argsArray.argCount()),
                             nullptr,
                             0,
-                            CXTranslationUnit_ForSerialization);
+                            precompiledHeaderOptions());
 
       if (tu == nullptr)
       {

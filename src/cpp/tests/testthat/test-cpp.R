@@ -106,6 +106,32 @@ test_that("compile_flags.txt paths resolve against its directory", {
     expect_length(messages(), 0L)
 })
 
+test_that("files are parsed with the default precompiled header", {
+    skip_if_not_installed("Rcpp")
+    skip_if_not(.rs.isClangAvailable())
+
+    op <- options(rstudio.libclang.usePrecompiledHeaders = TRUE)
+    on.exit(options(op), add = TRUE)
+
+    dir <- tempfile("cpp-pch-")
+    dir.create(dir)
+    on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+
+    # a file libclang fails to parse reports no diagnostics at all, so ask
+    # for one. R's default standard is C++20 as of R 4.6, where libclang
+    # refuses a precompiled header built with other preprocessor options
+    # than the file including it (#19559)
+    path <- file.path(dir, "parsed.cpp")
+    writeLines(c(
+        "#include <Rcpp.h>",
+        "static_assert(false, \"file was parsed\");"
+    ), path)
+
+    diagnostics <- .rs.invokeRpc("get_cpp_diagnostics", path)
+    messages <- vapply(diagnostics, `[[`, character(1), "message")
+    expect_match(messages, "file was parsed", fixed = TRUE, all = FALSE)
+})
+
 test_that("compile_flags.txt flags are honored with precompiled headers", {
     skip_if_not_installed("Rcpp")
     skip_if_not(.rs.isClangAvailable())

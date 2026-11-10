@@ -34,6 +34,7 @@ namespace core {
 namespace libclang {
 
 unsigned parseTranslationUnitOptions();
+unsigned precompiledHeaderOptions();
 
 struct CompilationDatabase
 {
