@@ -154,6 +154,11 @@ public class AddinsToolbarButton extends ToolbarMenuButton
       style.setMarginLeft(10, Unit.PX);
       style.setMarginRight(10, Unit.PX);
 
+      // Fill the row, rather than the shared search style's fixed 120px
+      Style boxStyle = searchWidget_.getElement().getFirstChildElement().getStyle();
+      boxStyle.setProperty("width", "auto");
+      boxStyle.setMarginRight(0, Unit.PX);
+
       Widget menuWidget = menu_.getWidget();
       FlowPanel panel = new FlowPanel();
       panel.add(searchWidget_);
