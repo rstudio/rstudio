@@ -65,6 +65,18 @@ class TerminalSocketTestDoubles
          Assert.fail("No scheduled task");
       }
 
+      /** The number of timers that have neither run nor been cancelled. */
+      int pending()
+      {
+         int count = 0;
+         for (Task task : tasks)
+         {
+            if (!task.cancelled)
+               count++;
+         }
+         return count;
+      }
+
       final List<Task> tasks = new ArrayList<>();
    }
 

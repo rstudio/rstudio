@@ -215,7 +215,7 @@ public class TerminalSessionSocketTests extends GWTTestCase
                   Socket created = new Socket(url);
                   sockets.add(created);
                   return created;
-               }, clock));
+               }, clock), writeClock);
       }
 
       Process connect(Callback callback)
@@ -241,6 +241,7 @@ public class TerminalSessionSocketTests extends GWTTestCase
 
       final Session session = new Session();
       final Clock clock = new Clock();
+      final Clock writeClock = new Clock();
       final List<Socket> sockets = new ArrayList<>();
       final TerminalSessionSocket socket;
    }
@@ -634,6 +635,58 @@ public class TerminalSessionSocketTests extends GWTTestCase
       assertEquals(1, b.count);
       h.socket.dispatchInput("c", false, new Ack());
       assertEquals(Arrays.asList("a", "b", "c"), process.inputs);
+   }
+
+   // RPC requests have no timeout, so a write whose response never arrives
+   // must not hold later input forever.
+   public void testWriteThatNeverCompletesStopsHoldingInput()
+   {
+      Harness h = new Harness();
+      Process process = h.connect(new Callback());
+      process.mode = ConsoleProcessInfo.CHANNEL_RPC;
+      process.answerWrites = false;
+      Ack a = new Ack();
+      Ack b = new Ack();
+      h.socket.dispatchInput("a", false, a);
+      h.socket.dispatchInput("b", false, b);
+      h.socket.dispatchInput("c", false, new Ack());
+      assertEquals(Arrays.asList("a"), process.inputs);
+
+      h.writeClock.tick();
+      assertEquals(Arrays.asList("a", "bc"), process.inputs);
+
+      // the abandoned write completing late is reported but is not counted
+      // twice: the write now in flight still holds later input
+      ServerRequestCallback<VoidResponse> lateA = process.pendingWrites.remove(0);
+      lateA.onResponseReceived(null);
+      assertEquals(1, a.count);
+      h.socket.dispatchInput("d", false, new Ack());
+      assertEquals(Arrays.asList("a", "bc"), process.inputs);
+
+      process.pendingWrites.remove(0).onResponseReceived(null);
+      assertEquals(1, b.count);
+      assertEquals(Arrays.asList("a", "bc", "d"), process.inputs);
+   }
+
+   public void testCompletedOrDisconnectedWriteLeavesNoTimerBehind()
+   {
+      Harness h = new Harness();
+      Process process = h.connect(new Callback());
+      process.mode = ConsoleProcessInfo.CHANNEL_RPC;
+      process.answerWrites = false;
+      h.socket.dispatchInput("a", false, new Ack());
+      assertEquals(1, h.writeClock.pending());
+      process.pendingWrites.remove(0).onResponseReceived(null);
+      assertEquals(0, h.writeClock.pending());
+
+      h.socket.dispatchInput("b", false, new Ack());
+      assertEquals(1, h.writeClock.pending());
+      process.pendingWrites.remove(0).onError(rpcError());
+      assertEquals(0, h.writeClock.pending());
+
+      h.socket.dispatchInput("c", false, new Ack());
+      h.socket.disconnect(false);
+      assertEquals(0, h.writeClock.pending());
    }
 
    // Writes of a previous connection are not waited for (their completions

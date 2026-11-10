@@ -113,15 +113,22 @@ public class TerminalSessionSocket
                                 int webSocketPingInterval,
                                 int webSocketConnectTimeout)
    {
-      this(session, xterm, webSocketPingInterval, webSocketConnectTimeout, TerminalWebSocket::new);
+      this(session,
+           xterm,
+           webSocketPingInterval,
+           webSocketConnectTimeout,
+           TerminalWebSocket::new,
+           TerminalWebSocket.browserTimers());
    }
 
    TerminalSessionSocket(Session session,
                          Emulator xterm,
                          int webSocketPingInterval,
                          int webSocketConnectTimeout,
-                         TerminalWebSocket.Factory socketFactory)
+                         TerminalWebSocket.Factory socketFactory,
+                         TerminalWebSocket.Scheduler scheduler)
    {
+      scheduler_ = scheduler;
       session_ = session;
       xterm_ = xterm;
       localEcho_ = new TerminalLocalEcho(xterm_);
@@ -315,9 +322,9 @@ public class TerminalSessionSocket
             // This is a deliberate trade of latency for order. Held input
             // waits out the round trip of the write ahead of it, so its echo
             // can take up to two round trips instead of one, and a request
-            // that never completes holds later input until the browser fails
-            // it. The alternative, numbering concurrent writes for the server
-            // to reorder, stalls on a lost request as well and cannot tell a
+            // that never completes holds later input for RPC_WRITE_TIMEOUT_MS.
+            // The alternative, numbering concurrent writes for the server to
+            // reorder, stalls on a lost request as well and cannot tell a
             // late write of a previous connection from a live one.
             pendingInput_.add(pending);
             holdingInput_ = true;
@@ -410,6 +417,8 @@ public class TerminalSessionSocket
       connection_++;
       holdingInput_ = false;
       outstandingWrites_ = 0;
+      cancelWriteWatchdog_.run();
+      cancelWriteWatchdog_ = () -> {};
       connectCallback_ = null;
       closeWebSocket();
       registrations_.removeHandler();
@@ -524,7 +533,26 @@ public class TerminalSessionSocket
    private void writeRpcInput(final PendingInput input)
    {
       final int connection = connection_;
+      final boolean[] abandoned = { false };
       outstandingWrites_++;
+
+      // RPC requests have no timeout of their own, so a write whose response
+      // never arrives would hold all later input. Stop waiting for it after
+      // a while; if it completes later, its callback still runs. Scheduled
+      // before the write, which may complete synchronously.
+      final Runnable cancelWatchdog = scheduler_.schedule(RPC_WRITE_TIMEOUT_MS, () ->
+      {
+         if (connection != connection_ || abandoned[0])
+            return;
+
+         abandoned[0] = true;
+         outstandingWrites_--;
+         diagnosticError(constants_.rpcWriteTimedOutMessage());
+         if (holdingInput_)
+            flushPendingInput(connection);
+      });
+      cancelWriteWatchdog_ = cancelWatchdog;
+
       consoleProcess_.writeStandardInput(
             ShellInput.create(input.text, true /*echo input*/),
             new VoidServerRequestCallback()
@@ -532,7 +560,8 @@ public class TerminalSessionSocket
                @Override
                public void onResponseReceived(VoidResponse response)
                {
-                  if (connection == connection_)
+                  cancelWatchdog.run();
+                  if (connection == connection_ && !abandoned[0])
                      outstandingWrites_--;
                   input.callback.onResponseReceived(response);
                   if (connection == connection_ && holdingInput_)
@@ -542,7 +571,8 @@ public class TerminalSessionSocket
                @Override
                public void onError(ServerError error)
                {
-                  if (connection == connection_)
+                  cancelWatchdog.run();
+                  if (connection == connection_ && !abandoned[0])
                      outstandingWrites_--;
                   input.callback.onError(error);
                   if (connection == connection_ && holdingInput_)
@@ -615,6 +645,7 @@ public class TerminalSessionSocket
    private final Session session_;
    private final Emulator xterm_;
    private final TerminalWebSocket.Factory socketFactory_;
+   private final TerminalWebSocket.Scheduler scheduler_;
    private Process consoleProcess_;
    private ConnectCallback connectCallback_;
    private HandlerRegistration terminalInputHandler_;
@@ -622,9 +653,16 @@ public class TerminalSessionSocket
    private int connection_;
    private boolean holdingInput_;
    private int outstandingWrites_;
+   private Runnable cancelWriteWatchdog_ = () -> {};
    private final List<PendingInput> pendingInput_ = new ArrayList<>();
    private final TerminalLocalEcho localEcho_;
    private final TerminalDiagnostics diagnostic_ = new TerminalDiagnostics();
+
+   // How long held input waits for the write ahead of it. Long enough that a
+   // write abandoned at this point is very unlikely to be overtaken by the
+   // next one; short enough that a lost request does not look like a dead
+   // terminal.
+   static final int RPC_WRITE_TIMEOUT_MS = 5000;
 
    // RegEx to match common password prompts
    private static final String PASSWORD_REGEX = "(?:password:)|(?:passphrase:)";
