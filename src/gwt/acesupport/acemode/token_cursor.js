@@ -638,15 +638,6 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
 
    var contains = Utils.contains;
 
-   // Move the tokne cursor backwards from an open brace over const, noexcept,
-   // for function definitions.
-   //
-   // E.g.
-   //
-   //     int foo(int a) const noexcept(...) {
-   //                    ^~~~~~~~~~~~~~~~~~~~^
-   //
-   // Places the token cursor on the first token following a closing paren.
    // From the last token of a trailing return type, e.g. the 'int' of
    // 'auto f() const -> int', move to the token before its '->'. Stopping at
    // '=' and the token before '->' keep expressions such as 'get()->x = T{1}'
@@ -676,6 +667,15 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
       return true;
    };
 
+   // Move the tokne cursor backwards from an open brace over const, noexcept,
+   // for function definitions.
+   //
+   // E.g.
+   //
+   //     int foo(int a) const noexcept(...) {
+   //                    ^~~~~~~~~~~~~~~~~~~~^
+   //
+   // Places the token cursor on the first token following a closing paren.
    this.bwdOverConstNoexceptDecltype = function() {
 
       var clone = this.cloneCursor();
