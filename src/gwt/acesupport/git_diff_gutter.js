@@ -147,11 +147,12 @@ function isAddition(chunk) {
    return chunk.old.start.row === chunk.old.end.row;
 }
 
-// Whether a change is missing the character highlights a side-by-side view
-// would show: only a coarse one can be (see computeChunks), and the view
-// shows none for a whitespace-insensitive diff.
-function lacksHighlights(chunks, ignoreWhitespace) {
-   if (ignoreWhitespace)
+// Whether a diff has to be run again for a side-by-side view to show its
+// character highlights: only a coarse change can be missing them, and only
+// if the diff was not asked for them (see computeChunks). The view shows
+// none for a whitespace-insensitive diff.
+function needsHighlights(chunks, highlightsRequested, ignoreWhitespace) {
+   if (ignoreWhitespace || highlightsRequested)
       return false;
 
    return chunks.some(function(chunk) { return chunk.isCoarse; });
@@ -201,6 +202,7 @@ var GitDiffGutter = function(editor, strings) {
    this.updatePending = false;
    this.lastDiffMs = 0;
    this.diffFailed = false;
+   this.highlightsRequested = false;
    this.ignoreWhitespace = false;
    this.peek = null;
    this.baseRefresher = null;
@@ -380,12 +382,14 @@ var GitDiffGutter = function(editor, strings) {
       // first; an update then hands it the chunks (see setChunks). Both
       // modes keep the same hunks, but the view also shows character
       // highlights, which a coarse hunk only gets when the diff is run with
-      // the view attached (see computeChunks), so opening on one runs the
-      // diff again. Nothing else needs it, and closing never does. An
-      // update waiting out a slow diff's typing pause would otherwise hand
-      // the view the previous chunks, and its first folds with them.
+      // the view attached (see computeChunks), so opening on one whose diff
+      // ran without a view runs the diff again. Nothing else needs it, and
+      // closing never does: the chunks keep their highlights, so reopening
+      // with no edit in between reuses them. An update waiting out a slow
+      // diff's typing pause would otherwise hand the view the previous
+      // chunks, and its first folds with them.
       view.setBaseLines(this.baseLines);
-      if (opening && lacksHighlights(this.chunks, this.ignoreWhitespace))
+      if (opening && needsHighlights(this.chunks, this.highlightsRequested, this.ignoreWhitespace))
          this.updatePending = true;
 
       if (this.updatePending)
@@ -547,6 +551,10 @@ var GitDiffGutter = function(editor, strings) {
    };
 
    this.computeChunks = function(base, lines) {
+      // (a side-by-side view drops the character ranges of a
+      // whitespace-insensitive diff, which do not fit the text)
+      this.highlightsRequested = !!this.splitView && !this.ignoreWhitespace;
+
       var common = trimCommonLines(base, lines);
       if (common.prefix > 0 || common.suffix > 0)
       {
@@ -573,9 +581,7 @@ var GitDiffGutter = function(editor, strings) {
          var options = {
             maxComputationTimeMs: MAX_COMPUTATION_MS,
             boundedRefinement: true,
-            // (a side-by-side view drops the character ranges of a
-            // whitespace-insensitive diff, which do not fit the text)
-            includeBoundedHighlights: !!this.splitView && !this.ignoreWhitespace
+            includeBoundedHighlights: this.highlightsRequested
          };
          var started = Date.now();
          var chunks = new DiffProvider().compute(base, lines, options);

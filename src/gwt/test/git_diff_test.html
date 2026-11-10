@@ -90,8 +90,16 @@
       check("closing review on a coarse hunk runs no diff", computes, 0);
       review = new SplitView(gutter, document.getElementById("review"));
       review.resize();
-      check("opening review on a coarse hunk runs one diff", computes, 1);
+      check("reopening review on a coarse hunk diffed for review runs no diff", computes, 0);
       check("the reopened review keeps the coarse hunk", geometry(review.chunks), [[0, 800, 0, 800]]);
+      // (a diff run with review closed asks for no highlights)
+      review.dispose();
+      gutter.update();
+      computes = 0;
+      review = new SplitView(gutter, document.getElementById("review"));
+      review.resize();
+      check("opening review on a coarse hunk diffed without it runs one diff", computes, 1);
+      check("the review opened on a coarse hunk keeps it", geometry(review.chunks), [[0, 800, 0, 800]]);
       gutter.setIgnoreWhitespace(true);
       check("a whitespace-insensitive diff requests no highlights", gutter.chunks[0].charChanges == null, true);
       computes = 0;
