@@ -6,6 +6,9 @@ import { Locator, Page, Request, Route, expect } from '@playwright/test';
 import { executeCommand } from '@utils/commands';
 
 export const OPEN_FILE_DIALOG = '.gwt-DialogBox[aria-label="Open File"]';
+// The file (or folder) list and the File name box, in any of the dialogs.
+export const FILE_LIST = '#rstudio_directory_contents';
+export const FILE_NAME = '#file_dialog_name_prompt';
 
 // The RPC the GWT file dialogs list their directory with.
 export const LIST_FILES_RPC = /\/rpc\/list_files(?:\?|$)/;
@@ -20,14 +23,15 @@ function listFilesPath(request: Request): string {
   }
 }
 
-// Holds every list_files RPC until release() is called, so a dialog can be
+// Holds list_files RPCs until release() is called, so a dialog can be
 // driven before its directory listing arrives. cleanup() releases anything
 // still held and removes the route; call it from a finally block.
+// An optional path filter lets other navigations finish while one is held.
 //
 // The hold covers the whole page, so held() also counts other panes'
 // listings; heldPaths() says which directories the held requests list.
 // Requests made after release() pass through and are not counted.
-export async function holdListFiles(page: Page) {
+export async function holdListFiles(page: Page, pathFilter?: (path: string) => boolean) {
   let holding = true;
   let unblock = () => {};
   const released = new Promise<void>((resolve) => (unblock = resolve));
@@ -39,10 +43,11 @@ export async function holdListFiles(page: Page) {
   const paths: string[] = [];
   const continued: Promise<void>[] = [];
   const handler = async (route: Route) => {
-    if (!holding)
+    const path = listFilesPath(route.request());
+    if (!holding || (pathFilter && !pathFilter(path)))
       return route.fallback();
 
-    paths.push(listFilesPath(route.request()));
+    paths.push(path);
     const request = released.then(() => route.continue());
     continued.push(request);
     await request;

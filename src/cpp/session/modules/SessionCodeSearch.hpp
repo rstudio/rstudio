@@ -108,6 +108,10 @@ void searchSource(const std::string& term,
                   std::vector<core::r_util::RSourceItem>* pItems,
                   bool* pMoreAvailable);
 
+// Shared with package diagnostics; the explicit flag avoids querying package
+// metadata recursively while checking source-index eligibility.
+bool isIgnoredDirectory(const core::FilePath& directory, bool isPackageProject);
+
 void addAllProjectSymbols(std::set<std::string>* pSymbols);
 
 core::Error initialize();

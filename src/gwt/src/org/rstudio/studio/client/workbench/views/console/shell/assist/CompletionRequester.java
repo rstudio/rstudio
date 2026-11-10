@@ -891,7 +891,8 @@ public class CompletionRequester
             if (RCompletionType.isFileType(type))
                style = RES.styles().fileIcon();
 
-            SafeHtmlUtil.appendImage(
+            // The item's text names it; an unlabeled icon would only add noise.
+            SafeHtmlUtil.appendPresentationImage(
                   sb,
                   style,
                   getIcon());

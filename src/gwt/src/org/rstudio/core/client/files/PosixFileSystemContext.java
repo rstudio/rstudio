@@ -34,6 +34,12 @@ public abstract class PosixFileSystemContext implements FileSystemContext
       callbacks_ = callbacks;
    }
 
+   public void releaseCallbacks(Callbacks callbacks)
+   {
+      if (callbacks_ == callbacks)
+         callbacks_ = null;
+   }
+
    public String combine(String root, String name)
    {
       if (name == null || name.length() == 0)

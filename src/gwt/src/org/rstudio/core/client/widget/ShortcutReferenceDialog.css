@@ -65,9 +65,13 @@
    font-weight: bold;
 }
 
+/* Contains the absolutely positioned spoken-key text. Without a containing
+   block inside the columns, Safari places it at its single-column offset,
+   leaving blank scrollable space below the columns. */
 .groups kbd
 {
    font-family: inherit;
+   position: relative;
 }
 
 .legend dl

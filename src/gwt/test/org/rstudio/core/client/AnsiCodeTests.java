@@ -249,4 +249,11 @@ public class AnsiCodeTests extends GWTTestCase
       Assert.assertEquals("0;title\nnext", AnsiCode.strip("\033]0;title\nnext"));
       Assert.assertEquals("a\nb", AnsiCode.strip("a\033\nb"));
    }
+
+   public void testStripStatic()
+   {
+      Assert.assertEquals("expected foobar", AnsiCode.stripStatic("expected foo\bbar"));
+      Assert.assertEquals("fineline 2", AnsiCode.stripStatic("fine\fline 2"));
+      Assert.assertEquals("red\nnext", AnsiCode.stripStatic("\033[31mred\033[0m\007\nnext"));
+   }
 }
