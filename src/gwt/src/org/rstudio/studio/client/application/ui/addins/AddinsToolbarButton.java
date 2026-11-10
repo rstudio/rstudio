@@ -146,6 +146,10 @@ public class AddinsToolbarButton extends ToolbarMenuButton
       addSearchHeader();
       initComboboxRole();
 
+      // Name the menu after its button, as in the menu button pattern
+      Roles.getMenuRole().setAriaLabelledbyProperty(menu_.getMenuBarElement(),
+            Id.of(getElement()));
+
       // The menu takes focus whenever it opens, but typing belongs in the search
       // box, which hands the navigation keys to the menu. Redirecting the menu's
       // focus, rather than focusing the search box after opening, doesn't depend

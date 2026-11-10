@@ -236,6 +236,7 @@ test.describe('Addins toolbar menu (#19552)', () => {
     const controls = await search.getAttribute('aria-controls');
     const menu = page.locator(`#${controls}`);
     await expect(menu).toHaveAttribute('role', 'menu');
+    await expect(menu).toHaveAccessibleName('Addins');
 
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('ArrowDown');
