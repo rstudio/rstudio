@@ -19,6 +19,7 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 
+#include <core/StringUtils.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Process.hpp>
@@ -28,10 +29,16 @@
 #include <cctype>
 #include <cstdio>
 #include <cstdlib>
+#include <string>
 #include <utility>
+#include <vector>
 
+#include <boost/algorithm/string/case_conv.hpp>
+#include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/asio/ip/address_v6.hpp>
 
 #include <r/ROptions.hpp>
 #include <r/RSexp.hpp>
@@ -303,6 +310,126 @@ void applySystemCaOption(core::system::Options* pEnvironment,
                         appendNodeOption(nodeOptions, "--use-system-ca"));
 }
 
+namespace {
+
+// Whether every run of percent-escapes in a proxy URL's credentials decodes
+// to well-formed UTF-8. Node hands the credentials to decodeURIComponent(),
+// which throws on anything else.
+bool hasValidPercentEscapes(const std::string& userinfo)
+{
+   std::string decoded;
+   for (std::size_t i = 0; i <= userinfo.size();)
+   {
+      if (i < userinfo.size() && userinfo[i] == '%')
+      {
+         if (i + 2 >= userinfo.size() ||
+             !std::isxdigit(static_cast<unsigned char>(userinfo[i + 1])) ||
+             !std::isxdigit(static_cast<unsigned char>(userinfo[i + 2])))
+         {
+            return false;
+         }
+
+         decoded.push_back(static_cast<char>(std::stoi(userinfo.substr(i + 1, 2), nullptr, 16)));
+         i += 3;
+         continue;
+      }
+
+      // the run of escapes (if any) ends here
+      if (!string_utils::isValidUtf8(decoded))
+         return false;
+      decoded.clear();
+      i += 1;
+   }
+
+   return true;
+}
+
+bool isDottedQuad(const std::vector<std::string>& labels)
+{
+   if (labels.size() != 4)
+      return false;
+
+   for (const std::string& label : labels)
+   {
+      if (label.empty() || label.size() > 3)
+         return false;
+      if (label.find_first_not_of("0123456789") != std::string::npos)
+         return false;
+
+      // a leading zero makes the part octal to Node; not worth supporting
+      if (label.size() > 1 && label[0] == '0')
+         return false;
+      if (std::stoi(label) > 255)
+         return false;
+   }
+
+   return true;
+}
+
+bool isValidProxyHost(const std::string& host)
+{
+   if (host.empty())
+      return false;
+
+   if (host.front() == '[')
+   {
+      // IPv6 literal. Zone identifiers and embedded IPv4 are left out: Node
+      // rejects the former and is stricter than the system parser on the latter.
+      if (host.size() < 3 || host.back() != ']')
+         return false;
+
+      std::string address = host.substr(1, host.size() - 2);
+      if (address.find_first_not_of("0123456789abcdefABCDEF:") != std::string::npos)
+         return false;
+
+      boost::system::error_code ec;
+      boost::asio::ip::make_address_v6(address, ec);
+      return !ec;
+   }
+
+   static const char* const kHostCharacters =
+      "abcdefghijklmnopqrstuvwxyz"
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+      "0123456789-._";
+   if (host.find_first_not_of(kHostCharacters) != std::string::npos)
+      return false;
+
+   // Node's URL parser reads a host whose last label is a number (decimal, or
+   // hex with an 0x prefix) as an IPv4 address, and rejects the URL when it is
+   // not one. It takes more spellings than a plain dotted quad, but those are
+   // not worth the risk of accepting something Node will not.
+   std::vector<std::string> labels;
+   boost::algorithm::split(labels, host, boost::algorithm::is_any_of("."));
+
+   std::string last = labels.back();
+   if (last.empty() && labels.size() > 1)
+      last = labels[labels.size() - 2];
+
+   bool isNumber = false;
+   if (last.size() >= 2 && last[0] == '0' && (last[1] == 'x' || last[1] == 'X'))
+      isNumber = last.find_first_not_of("0123456789abcdefABCDEF", 2) == std::string::npos;
+   else
+      isNumber = !last.empty() && last.find_first_not_of("0123456789") == std::string::npos;
+
+   return !isNumber || isDottedQuad(labels);
+}
+
+bool isValidProxyPort(const std::string& port)
+{
+   if (port.find_first_not_of("0123456789") != std::string::npos)
+      return false;
+
+   // empty (the scheme's default) or zero
+   std::string::size_type first = port.find_first_not_of('0');
+   if (first == std::string::npos)
+      return true;
+
+   std::string digits = port.substr(first);
+   return digits.size() <= 5 && std::stoi(digits) <= 65535;
+}
+
+} // anonymous namespace
+
 bool normalizeProxyUrl(const std::string& value, std::string* pNormalized)
 {
    std::string proxy = boost::algorithm::trim_copy(value);
@@ -329,77 +456,75 @@ bool normalizeProxyUrl(const std::string& value, std::string* pNormalized)
       schemeEnd = 4;
    }
 
-   // Node rejects a URL with no host, or with whitespace anywhere but in the
-   // credentials (which it percent-encodes); anything else (scheme, port,
-   // credentials) is left for Node to interpret as the user wrote it.
-   static const char* const kWhitespace = " \t\r\n";
-   if (proxy.find_first_of(kWhitespace) < schemeEnd)
+   // Node exits during startup on a proxy URL it cannot use, and what it
+   // rejects is open-ended (other schemes, a path or query, a bad port or
+   // host, malformed escapes in the credentials). So accept only the one form
+   // it is known to take,
+   //
+   //    http(s)|socks5 :// [userinfo@] host [:port] [/]
+   //
+   // and let everything else fall back to no proxy.
+   std::string scheme = boost::algorithm::to_lower_copy(proxy.substr(0, schemeEnd));
+   if (scheme != "http" && scheme != "https" && scheme != "socks5")
       return false;
-   std::string::size_type authorityStart = schemeEnd + 3;
-   std::string::size_type authorityEnd = proxy.find_first_of("/?#", authorityStart);
-   std::string::size_type hostStart = authorityStart;
-   std::string::size_type at = proxy.rfind('@', authorityEnd);
-   if (at != std::string::npos && at >= authorityStart)
-      hostStart = at + 1;
-   if (proxy.find_first_of(kWhitespace, hostStart) != std::string::npos)
+
+   std::string authority = proxy.substr(schemeEnd + 3);
+   if (!authority.empty() && authority.back() == '/')
+      authority.pop_back();
+   if (authority.find_first_of("/?#\\") != std::string::npos)
       return false;
-   std::string authority = proxy.substr(hostStart, authorityEnd - hostStart);
-   std::string host = authority.substr(0, authority.find(':'));
-   if (host.empty())
+
+   // Whitespace is fine in the credentials, which Node percent-encodes.
+   std::string hostAndPort = authority;
+   std::string::size_type at = authority.rfind('@');
+   if (at != std::string::npos)
+   {
+      if (!hasValidPercentEscapes(authority.substr(0, at)))
+         return false;
+      hostAndPort = authority.substr(at + 1);
+   }
+
+   // An IPv6 literal carries colons of its own, so the port starts after it.
+   std::string::size_type hostEnd = 0;
+   if (!hostAndPort.empty() && hostAndPort.front() == '[')
+   {
+      hostEnd = hostAndPort.find(']');
+      if (hostEnd == std::string::npos)
+         return false;
+      hostEnd += 1;
+   }
+   else
+   {
+      hostEnd = hostAndPort.find(':');
+      if (hostEnd == std::string::npos)
+         hostEnd = hostAndPort.size();
+   }
+
+   std::string port;
+   if (hostEnd < hostAndPort.size())
+   {
+      if (hostAndPort[hostEnd] != ':')
+         return false;
+      port = hostAndPort.substr(hostEnd + 1);
+   }
+
+   if (!isValidProxyHost(hostAndPort.substr(0, hostEnd)) || !isValidProxyPort(port))
       return false;
 
    *pNormalized = proxy;
    return true;
 }
 
-namespace {
-
-// Whether an environment entry is the named variable, with the platform's
-// rules: Windows names are case-insensitive, so Http_Proxy is read by Node
-// as http_proxy there and must be normalized too.
-bool isEnvironmentVariable(const core::system::Option& variable, const char* name)
-{
-#ifdef _WIN32
-   return boost::algorithm::iequals(variable.first, name);
-#else
-   return variable.first == name;
-#endif
-}
-
-// Node reads the lowercase spelling of a proxy variable first and falls back
-// to the uppercase one only when the lowercase variable is absent; an empty
-// lowercase value counts as present. Returns the name Node will read, or
-// nullptr when neither is set.
-const char* selectProxyVariable(const core::system::Options& environment,
-                                const char* lower,
-                                const char* upper,
-                                std::string* pValue)
-{
-   for (const char* name : { lower, upper })
-   {
-      for (const auto& variable : environment)
-      {
-         if (isEnvironmentVariable(variable, name))
-         {
-            *pValue = variable.second;
-            return name;
-         }
-      }
-   }
-   return nullptr;
-}
-
-} // anonymous namespace
-
 void applyEnvProxyOption(core::system::Options* pEnvironment)
 {
    // NODE_USE_ENV_PROXY=1 makes Node.js 22.21+ route fetch() through
    // http_proxy / https_proxy (https://github.com/nodejs/node/pull/57165).
-   // Node parses those variables during bootstrap and exits on a value
-   // without a scheme, which curl and R accept, so repair the child's copy
-   // first. When a value cannot be repaired, leave proxy support off (also
-   // dropping a flag inherited from the session) rather than take the child
-   // down with it. Values are kept out of the log: they may carry credentials.
+   // Node parses those variables during startup and exits on a value it
+   // cannot use, including one without a scheme, which curl and R accept. So
+   // repair the child's copy first, and when a value cannot be repaired,
+   // leave proxy support off (also dropping a flag inherited from the
+   // session) rather than take the child down with it. Values are kept out of
+   // the log: they may carry credentials.
    static const std::pair<const char*, const char*> kProxyVariables[] = {
       { "http_proxy", "HTTP_PROXY" },
       { "https_proxy", "HTTPS_PROXY" }
@@ -407,24 +532,31 @@ void applyEnvProxyOption(core::system::Options* pEnvironment)
 
    for (const auto& spelling : kProxyVariables)
    {
-      std::string value;
-      const char* name = selectProxyVariable(*pEnvironment, spelling.first, spelling.second, &value);
-      if (name == nullptr || value.empty())
-         continue;
-
-      std::string normalized;
-      if (!normalizeProxyUrl(value, &normalized))
+      // Node prefers the lowercase spelling. fetch() stops at it whenever it
+      // is set, but the http module falls through an empty one to the
+      // uppercase spelling, so that one is read whenever the lowercase value
+      // is (or normalizes to) empty.
+      for (const char* name : { spelling.first, spelling.second })
       {
-         WLOG("Not enabling Node.js proxy support: the {} environment variable "
-              "is not a valid proxy URL.", name);
-         core::system::unsetenv(pEnvironment, "NODE_USE_ENV_PROXY");
-         return;
-      }
+         std::string value = core::system::getenv(*pEnvironment, name);
 
-      if (normalized != value)
-      {
-         DLOG("Normalized the {} environment variable for Node.js.", name);
-         core::system::setenv(pEnvironment, name, normalized);
+         std::string normalized;
+         if (!normalizeProxyUrl(value, &normalized))
+         {
+            WLOG("Not enabling Node.js proxy support: the {} environment variable "
+                 "is not a proxy URL that Node.js accepts.", name);
+            core::system::unsetenv(pEnvironment, "NODE_USE_ENV_PROXY");
+            return;
+         }
+
+         if (normalized != value)
+         {
+            DLOG("Normalized the {} environment variable for Node.js.", name);
+            core::system::setenv(pEnvironment, name, normalized);
+         }
+
+         if (!normalized.empty())
+            break;
       }
    }
 

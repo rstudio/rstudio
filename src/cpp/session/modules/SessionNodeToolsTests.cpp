@@ -206,6 +206,91 @@ TEST(SessionNodeToolsTest, NormalizeProxyUrlRejectsWhitespaceOutsideCredentials)
    EXPECT_FALSE(normalizeProxyUrl("http://user:my password?q@proxy.example.com:8080", &out));
 }
 
+TEST(SessionNodeToolsTest, NormalizeProxyUrlRejectsPathQueryAndFragment)
+{
+   // Node takes a bare trailing slash and nothing more after the authority.
+   std::string out;
+   EXPECT_TRUE(normalizeProxyUrl("proxy.example.com:8080/", &out));
+   EXPECT_EQ(out, "http://proxy.example.com:8080/");
+   EXPECT_FALSE(normalizeProxyUrl("http://proxy.example.com:8080/path", &out));
+   EXPECT_FALSE(normalizeProxyUrl("http://proxy.example.com:8080//", &out));
+   EXPECT_FALSE(normalizeProxyUrl("http://proxy.example.com:8080?x", &out));
+   EXPECT_FALSE(normalizeProxyUrl("http://proxy.example.com:8080#f", &out));
+   EXPECT_FALSE(normalizeProxyUrl("http://proxy.example.com:8080/?x", &out));
+}
+
+TEST(SessionNodeToolsTest, NormalizeProxyUrlChecksPort)
+{
+   std::string out;
+   EXPECT_TRUE(normalizeProxyUrl("http://proxy.example.com:65535", &out));
+   EXPECT_TRUE(normalizeProxyUrl("http://proxy.example.com:00080", &out));
+   EXPECT_TRUE(normalizeProxyUrl("http://proxy.example.com:", &out));
+   EXPECT_FALSE(normalizeProxyUrl("http://proxy.example.com:abc", &out));
+   EXPECT_FALSE(normalizeProxyUrl("http://proxy.example.com:65536", &out));
+   EXPECT_FALSE(normalizeProxyUrl("http://proxy.example.com:99999", &out));
+   EXPECT_FALSE(normalizeProxyUrl("http://proxy.example.com:99999999999999999999", &out));
+   EXPECT_FALSE(normalizeProxyUrl("http://proxy.example.com:80:80", &out));
+   EXPECT_FALSE(normalizeProxyUrl("http://proxy.example.com:-1", &out));
+}
+
+TEST(SessionNodeToolsTest, NormalizeProxyUrlRejectsUnsupportedSchemes)
+{
+   // curl and R take these, but Node exits on any scheme other than http,
+   // https and socks5.
+   std::string out;
+   EXPECT_FALSE(normalizeProxyUrl("socks5h://proxy.example.com:1080", &out));
+   EXPECT_FALSE(normalizeProxyUrl("socks4://proxy.example.com:1080", &out));
+   EXPECT_FALSE(normalizeProxyUrl("ftp://proxy.example.com:1080", &out));
+   EXPECT_FALSE(normalizeProxyUrl("://proxy.example.com:1080", &out));
+}
+
+TEST(SessionNodeToolsTest, NormalizeProxyUrlChecksHost)
+{
+   std::string out;
+   EXPECT_TRUE(normalizeProxyUrl("http://proxy_one.example-corp.com.:8080", &out));
+   EXPECT_TRUE(normalizeProxyUrl("http://10.0.0.1", &out));
+   EXPECT_TRUE(normalizeProxyUrl("http://[::1]:8080", &out));
+   EXPECT_TRUE(normalizeProxyUrl("http://[2001:db8::1]", &out));
+   EXPECT_TRUE(normalizeProxyUrl("[::1]:8080", &out));
+   EXPECT_EQ(out, "http://[::1]:8080");
+
+   EXPECT_FALSE(normalizeProxyUrl("http://pro%xy:8080", &out));
+   EXPECT_FALSE(normalizeProxyUrl("http://pro<xy:8080", &out));
+
+   // a host ending in a number has to be an IPv4 address
+   EXPECT_FALSE(normalizeProxyUrl("http://1.2.3.4.5:8080", &out));
+   EXPECT_FALSE(normalizeProxyUrl("http://1.2.3.999:8080", &out));
+   EXPECT_FALSE(normalizeProxyUrl("http://08.1.1.1:8080", &out));
+   EXPECT_FALSE(normalizeProxyUrl("http://proxy.1:8080", &out));
+   EXPECT_FALSE(normalizeProxyUrl("http://proxy.0x1:8080", &out));
+
+   EXPECT_FALSE(normalizeProxyUrl("http://[::1", &out));
+   EXPECT_FALSE(normalizeProxyUrl("http://[]:8080", &out));
+   EXPECT_FALSE(normalizeProxyUrl("http://[:::]:8080", &out));
+   EXPECT_FALSE(normalizeProxyUrl("http://[::1]8080", &out));
+   EXPECT_FALSE(normalizeProxyUrl("http://[fe80::1%25en0]:8080", &out));
+}
+
+TEST(SessionNodeToolsTest, NormalizeProxyUrlChecksCredentials)
+{
+   std::string out;
+   EXPECT_TRUE(normalizeProxyUrl("http://user:p@ss@proxy.example.com:8080", &out));
+   EXPECT_TRUE(normalizeProxyUrl("http://user:p%2Fss@proxy.example.com:8080", &out));
+   EXPECT_TRUE(normalizeProxyUrl("http://user:%C3%A9%E2%82%AC@proxy.example.com:8080", &out));
+   EXPECT_TRUE(normalizeProxyUrl("http://@proxy.example.com:8080", &out));
+
+   // a raw slash or backslash ends the authority early
+   EXPECT_FALSE(normalizeProxyUrl("http://user:p/ss@proxy.example.com:8080", &out));
+   EXPECT_FALSE(normalizeProxyUrl("http://user:p\\ss@proxy.example.com:8080", &out));
+
+   // Node decodes the credentials and throws on a malformed escape
+   EXPECT_FALSE(normalizeProxyUrl("http://user:p%zz@proxy.example.com:8080", &out));
+   EXPECT_FALSE(normalizeProxyUrl("http://user:p%@proxy.example.com:8080", &out));
+   EXPECT_FALSE(normalizeProxyUrl("http://user:p%4@proxy.example.com:8080", &out));
+   EXPECT_FALSE(normalizeProxyUrl("http://user:%ff@proxy.example.com:8080", &out));
+   EXPECT_FALSE(normalizeProxyUrl("http://user:%C3x%A9@proxy.example.com:8080", &out));
+}
+
 TEST(SessionNodeToolsTest, NormalizeProxyUrlKeepsWhitespaceInCredentials)
 {
    // Node percent-encodes whitespace in the userinfo, so these already work.
@@ -276,6 +361,32 @@ TEST(SessionNodeToolsTest, ApplyEnvProxyOptionDropsInheritedFlagForInvalidValue)
    EXPECT_EQ(core::system::getenv(env2, "NODE_USE_ENV_PROXY"), "");
 }
 
+TEST(SessionNodeToolsTest, ApplyEnvProxyOptionLeavesFlagUnsetForUrlsNodeRejects)
+{
+   // Each of these makes Node 24 exit during startup with the flag on.
+   const char* const values[] = {
+      "http://proxy.example.com:8080/path",
+      "http://proxy.example.com:8080?x",
+      "http://proxy.example.com:abc",
+      "http://proxy.example.com:99999",
+      "http://user:p/ss@proxy:8080",
+      "socks5h://proxy.example.com:1080",
+      "ftp://proxy:1080"
+   };
+
+   for (const char* value : values)
+   {
+      core::system::Options env;
+      core::system::setenv(&env, "NODE_USE_ENV_PROXY", "1");
+      core::system::setenv(&env, "https_proxy", value);
+
+      applyEnvProxyOption(&env);
+
+      EXPECT_EQ(core::system::getenv(env, "NODE_USE_ENV_PROXY"), "") << value;
+      EXPECT_EQ(core::system::getenv(env, "https_proxy"), value);
+   }
+}
+
 // Windows environment names are case-insensitive (core::system::setenv and
 // Node both treat http_proxy and HTTP_PROXY as one variable), so the
 // lowercase-first precedence only exists on POSIX.
@@ -305,18 +416,50 @@ TEST(SessionNodeToolsTest, ApplyEnvProxyOptionHonorsLowercasePrecedence)
    EXPECT_EQ(core::system::getenv(env2, "NODE_USE_ENV_PROXY"), "");
 }
 
-TEST(SessionNodeToolsTest, ApplyEnvProxyOptionEmptyLowercaseHidesUppercase)
+TEST(SessionNodeToolsTest, ApplyEnvProxyOptionEmptyLowercaseFallsBackToUppercase)
 {
-   // An empty lowercase variable is still the one Node reads, so the
-   // uppercase value is never parsed and cannot break startup.
+   // Node's http module reads the uppercase variable when the lowercase one
+   // is empty, so an invalid uppercase value still has to turn the flag off.
    core::system::Options env;
    core::system::setenv(&env, "http_proxy", "");
    core::system::setenv(&env, "HTTP_PROXY", "http://");
 
    applyEnvProxyOption(&env);
 
-   EXPECT_EQ(core::system::getenv(env, "NODE_USE_ENV_PROXY"), "1");
-   EXPECT_EQ(core::system::getenv(env, "HTTP_PROXY"), "http://");
+   EXPECT_EQ(core::system::getenv(env, "NODE_USE_ENV_PROXY"), "");
+
+   core::system::Options env2;
+   core::system::setenv(&env2, "https_proxy", "");
+   core::system::setenv(&env2, "HTTPS_PROXY", "http://proxy.example.com:abc");
+
+   applyEnvProxyOption(&env2);
+
+   EXPECT_EQ(core::system::getenv(env2, "NODE_USE_ENV_PROXY"), "");
+
+   // ... and a repairable one is repaired.
+   core::system::Options env3;
+   core::system::setenv(&env3, "http_proxy", "");
+   core::system::setenv(&env3, "HTTP_PROXY", "proxy.example.com:8080");
+
+   applyEnvProxyOption(&env3);
+
+   EXPECT_EQ(core::system::getenv(env3, "NODE_USE_ENV_PROXY"), "1");
+   EXPECT_EQ(core::system::getenv(env3, "http_proxy"), "");
+   EXPECT_EQ(core::system::getenv(env3, "HTTP_PROXY"), "http://proxy.example.com:8080");
+}
+
+TEST(SessionNodeToolsTest, ApplyEnvProxyOptionBlankLowercaseFallsBackToUppercase)
+{
+   // A blank lowercase value is emptied (fetch() would fail to parse it),
+   // which sends the http module on to the uppercase one.
+   core::system::Options env;
+   core::system::setenv(&env, "http_proxy", "  ");
+   core::system::setenv(&env, "HTTP_PROXY", "http://");
+
+   applyEnvProxyOption(&env);
+
+   EXPECT_EQ(core::system::getenv(env, "NODE_USE_ENV_PROXY"), "");
+   EXPECT_EQ(core::system::getenv(env, "http_proxy"), "");
 }
 
 #endif // !_WIN32
