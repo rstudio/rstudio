@@ -150,9 +150,9 @@ public class AddinsToolbarButton extends ToolbarMenuButton
             Id.of(getElement()));
 
       // The menu takes focus whenever it opens, but typing belongs in the search
-      // box, which hands the navigation keys to the menu. Redirecting the menu's
-      // focus, rather than focusing the search box after opening, doesn't depend
-      // on which runs last; Safari defers the menu's focus.
+      // box, which hands the navigation keys to the menu. GWT focuses the menu from
+      // a setTimeout in WebKit and Chromium; in Safari that ran after the search box
+      // took focus. Redirecting the menu's focus works whichever runs last.
       HTMLElement popupEl = Js.cast(menu_.getElement());
       Object menuEl = menu_.getMenuBarElement();
       popupEl.addEventListener("focus", event ->

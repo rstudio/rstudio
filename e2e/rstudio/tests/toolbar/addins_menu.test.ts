@@ -148,9 +148,9 @@ test.describe('Addins toolbar menu (#19552)', () => {
       [el.selectionStart, el.selectionEnd])).toEqual([0, 4]);
   });
 
-  // The menu focuses itself as it opens. In Safari, GWT's FocusImplSafari defers
-  // that focus with setTimeout, so it could land after the search box took focus.
-  // The fixtures run Chromium, which focuses at once, so replay Safari's deferral.
+  // The menu focuses itself as it opens, from a setTimeout (GWT's FocusImplSafari,
+  // used in WebKit and Chromium). In Safari that landed after the search box took
+  // focus; in Chromium it happened not to, so defer it further to force that order.
   test('opening the menu from the keyboard focuses the search box', async ({
     rstudioPage: page,
   }) => {
