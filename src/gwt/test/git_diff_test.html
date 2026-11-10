@@ -108,6 +108,33 @@
       review.resize();
       check("toggling review on a whitespace-insensitive diff runs no diff", computes, 0);
       gutter.setIgnoreWhitespace(false);
+
+      // A coarse hunk small enough for the highlight budget gets its
+      // character highlights when review opens, and keeps them across a
+      // close and reopen without another diff.
+      review.dispose();
+      original = Array.from({length: 40}, (_, i) => "a" + i + " <- f(0)");
+      modified = Array.from({length: 40}, (_, i) => "b" + i + " <- f(1)");
+      editor.setValue(modified.join("\n"), -1);
+      gutter.setBase(original.join("\n"));
+      await rendered();
+      var highlights = function() { return (gutter.chunks[0].charChanges || []).length; };
+      check("a budgeted coarse hunk is coarse", gutter.chunks[0].isCoarse, true);
+      check("a budgeted coarse hunk has no highlights outside review", highlights(), 0);
+      computes = 0;
+      review = new SplitView(gutter, document.getElementById("review"));
+      review.resize();
+      check("opening review on a budgeted coarse hunk runs one diff", computes, 1);
+      check("opening review gives the coarse hunk highlights", highlights() > 0, true);
+      check("the highlighted hunk keeps its boundaries", geometry(gutter.chunks), [[0, 40, 0, 40]]);
+      var opened = highlights();
+      review.dispose();
+      check("closing review keeps the highlights", highlights(), opened);
+      review = new SplitView(gutter, document.getElementById("review"));
+      review.resize();
+      check("reopening review runs no diff", computes, 1);
+      check("reopening review keeps the highlights", highlights(), opened);
+      check("the reopened review has the highlighted hunk", (review.chunks[0].charChanges || []).length, opened);
       gutter.computeChunks = computeChunks;
 
       original = ["header()", "keep_this_meaningful_statement()", "  keep_indented()", "x".repeat(5000) + "old", "tail()"];
@@ -124,6 +151,26 @@
       gutter.setBase(original.join("\n"));
       check("unequal line counts retain coarse metadata", gutter.chunks[0].isCoarse, true);
       check("clamped selection keeps the destination line end", review.transformPosition({row: 1, column: 2504}, true), {row: 0, column: 5});
+
+      // A folded selection is mirrored in the base, but not one that starts
+      // on an added first line: the base has no line for it to start on.
+      var AceRange = require("ace/range").Range;
+      var baseFolds = function() {
+         return review.baseEditor.session.getAllFolds().map(fold => [fold.start.row, fold.end.row]);
+      };
+      original = ["alpha", "beta", "gamma", "delta"];
+      editor.setValue(["new"].concat(original).join("\n"), -1);
+      gutter.setBase(original.join("\n"));
+      await rendered();
+      editor.session.addFold("...", new AceRange(2, 1, 3, 4));
+      check("a folded selection is mirrored in the base", baseFolds(), [[1, 2]]);
+      editor.session.unfold();
+      editor.session.addFold("...", new AceRange(0, 1, 1, 4));
+      check("a fold from an added first line over one line has no counterpart", baseFolds(), []);
+      editor.session.unfold();
+      editor.session.addFold("...", new AceRange(0, 1, 2, 4));
+      check("a fold from an added first line over two lines has no counterpart", baseFolds(), []);
+      editor.session.unfold();
 
       // A timed-out line alignment comes back as one change over everything
       // with the provider's timeout flag set; the gutter must show nothing
