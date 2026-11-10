@@ -183,15 +183,21 @@
          Date.now = function() { return clock += 1000; };
          editor.setValue(modified.join("\n"), -1);
          gutter.setBase(original.join("\n"));
+         // (the edit's own scheduled update times out as well, leaving
+         // nothing pending)
+         gutter.flushUpdate();
       } finally {
          Date.now = now;
       }
       check("a timed-out line alignment fails the diff", gutter.diffFailed, true);
       check("a timed-out line alignment leaves no chunks", geometry(gutter.chunks), []);
       check("review follows a timed-out alignment", geometry(review.chunks), []);
-      gutter.update();
-      check("the next update recovers from a timeout", gutter.diffFailed, false);
+      review.dispose();
+      review = new SplitView(gutter, document.getElementById("review"));
+      review.resize();
+      check("opening review retries a timed-out diff", gutter.diffFailed, false);
       check("the recovered diff has its hunk", geometry(gutter.chunks), [[0, 100, 0, 100]]);
+      check("review follows the recovered diff", geometry(review.chunks), [[0, 100, 0, 100]]);
    } catch (error) {
       check("integration completes", String(error.stack || error), "no exception");
    } finally {

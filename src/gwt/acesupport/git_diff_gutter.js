@@ -387,9 +387,10 @@ var GitDiffGutter = function(editor, strings) {
       // closing never does: the chunks keep their highlights, so reopening
       // with no edit in between reuses them. An update waiting out a slow
       // diff's typing pause would otherwise hand the view the previous
-      // chunks, and its first folds with them.
+      // chunks, and its first folds with them. A diff that gave up is
+      // tried again too: what stalled it may have passed.
       view.setBaseLines(this.baseLines);
-      if (opening && needsHighlights(this.chunks, this.highlightsRequested, this.ignoreWhitespace))
+      if (opening && (this.diffFailed || needsHighlights(this.chunks, this.highlightsRequested, this.ignoreWhitespace)))
          this.updatePending = true;
 
       if (this.updatePending)
