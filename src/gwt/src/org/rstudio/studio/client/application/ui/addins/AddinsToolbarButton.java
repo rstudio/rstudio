@@ -168,7 +168,8 @@ public class AddinsToolbarButton extends ToolbarMenuButton
       boxStyle.setProperty("width", "auto");
       boxStyle.setMarginRight(0, Unit.PX);
 
-      // Not a credential field; keep 1Password's field icon out of it
+      // Not a credential field. In Safari, 1Password honors this only on the
+      // menu's first opening and shows its field icon on later ones.
       searchWidget_.getInputElement().setAttribute("data-1p-ignore", "true");
 
       Widget menuWidget = menu_.getWidget();
