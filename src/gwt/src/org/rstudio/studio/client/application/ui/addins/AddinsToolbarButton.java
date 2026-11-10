@@ -120,10 +120,7 @@ public class AddinsToolbarButton extends ToolbarMenuButton
          @Override
          public void run()
          {
-            // SearchWidget reports its first key as a change even when the text
-            // is unchanged; rebuilding then would reset the highlight.
-            if (!searchWidget_.getValue().equals(populatedQuery_))
-               populate();
+            applyPendingSearch();
          }
       };
       searchWidget_.addValueChangeHandler(event -> searchValueChangeTimer_.schedule(200));
@@ -182,6 +179,7 @@ public class AddinsToolbarButton extends ToolbarMenuButton
       if (!navigation)
          return;
 
+      applyPendingSearch();
       switch (key)
       {
          case KeyCodes.KEY_UP:
@@ -201,6 +199,17 @@ public class AddinsToolbarButton extends ToolbarMenuButton
             break;
       }
       event.preventDefault();
+   }
+
+   // Rebuilds the menu for the search text now, rather than when the search
+   // timer fires, so a navigation key acts on the list for the text typed so
+   // far. SearchWidget reports its first key as a change even when the text is
+   // unchanged, and rebuilding then would reset the highlight.
+   private void applyPendingSearch()
+   {
+      searchValueChangeTimer_.cancel();
+      if (!searchWidget_.getValue().equals(populatedQuery_))
+         populate();
    }
 
    // Focus stays in the search box while the arrow keys move the highlight, so the

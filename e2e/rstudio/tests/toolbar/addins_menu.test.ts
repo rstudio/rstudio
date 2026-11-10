@@ -118,6 +118,20 @@ test.describe('Addins toolbar menu (#19552)', () => {
     await expect.poll(() => runs).toEqual(['clipr::clipr_result']);
   });
 
+  test('Enter pressed right after typing runs the first match, not the old highlight', async ({
+    rstudioPage: page,
+  }) => {
+    const runs = await captureAddinRuns(page);
+    await openAddinsPopup(page);
+    await page.keyboard.press('Home');
+
+    // Typed and entered within the search box's 200ms rebuild delay. A slow run
+    // that outlasts the delay passes too, without exercising the race.
+    await page.keyboard.type('Output to clipboard');
+    await page.keyboard.press('Enter');
+    await expect.poll(() => runs).toEqual(['clipr::clipr_output']);
+  });
+
   test('closing the menu returns focus to the Addins button', async ({
     rstudioPage: page,
   }) => {
