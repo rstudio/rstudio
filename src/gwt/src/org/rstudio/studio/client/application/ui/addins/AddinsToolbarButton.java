@@ -20,9 +20,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.gwt.aria.client.AutocompleteValue;
+import com.google.gwt.aria.client.ComboboxRole;
+import com.google.gwt.aria.client.ExpandedValue;
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.MapUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -53,6 +59,7 @@ import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuItem;
+import com.google.gwt.user.client.ui.MenuItemSeparator;
 import com.google.inject.Inject;
 
 public class AddinsToolbarButton extends ToolbarMenuButton
@@ -130,6 +137,32 @@ public class AddinsToolbarButton extends ToolbarMenuButton
          }
       });
 
+      initComboboxRole();
+   }
+
+   // Focus stays in the search box while the arrow keys move the highlight, so the
+   // search box, not the menu, has to tell screen readers which add-in is highlighted.
+   private void initComboboxRole()
+   {
+      final Element input = searchWidget_.getInputElement();
+      Element menuEl = menu_.getMenuBarElement();
+      if (StringUtil.isNullOrEmpty(menuEl.getId()))
+         menuEl.setId(DOM.createUniqueId());
+
+      ComboboxRole role = Roles.getComboboxRole();
+      role.set(input);
+      role.setAriaExpandedState(input, ExpandedValue.TRUE);
+      role.setAriaAutocompleteProperty(input, AutocompleteValue.LIST);
+      role.setAriaControlsProperty(input, Id.of(menuEl));
+
+      ((ScrollableToolbarPopupMenu) menu_).addSelectionHandler(event ->
+      {
+         MenuItem item = event.getSelectedItem();
+         if (item == null)
+            role.removeAriaActivedescendantProperty(input);
+         else
+            role.setAriaActivedescendantProperty(input, Id.of(item.getElement()));
+      });
    }
 
    private void populate()
@@ -152,7 +185,8 @@ public class AddinsToolbarButton extends ToolbarMenuButton
          @Override
          public void execute(final String pkg, final List<RAddin> addins)
          {
-            menu_.addSeparator(new CustomMenuItemSeparator()
+            final boolean hasSearch = separatorCount_++ == 0;
+            MenuItemSeparator header = new CustomMenuItemSeparator()
             {
                @Override
                public Element createMainElement()
@@ -160,12 +194,15 @@ public class AddinsToolbarButton extends ToolbarMenuButton
                   Label label = new Label(pkg);
                   label.addStyleName(ThemeStyles.INSTANCE.menuSubheader());
                   label.getElement().getStyle().setPaddingLeft(2, Unit.PX);
-                  if (separatorCount_++ == 0)
+                  if (hasSearch)
                      return createSearchSeparator(label);
                   else
                      return label.getElement();
                }
-            });
+            };
+            if (hasSearch)
+               removeSeparatorRole(header);
+            menu_.addSeparator(header);
             menu_.addSeparator();
 
             addins.sort(new Comparator<RAddin>()
@@ -203,7 +240,7 @@ public class AddinsToolbarButton extends ToolbarMenuButton
 
    private void populateEmptyMenu()
    {
-      menu_.addSeparator(new CustomMenuItemSeparator()
+      MenuItemSeparator header = new CustomMenuItemSeparator()
       {
          @Override
          public Element createMainElement()
@@ -213,7 +250,9 @@ public class AddinsToolbarButton extends ToolbarMenuButton
             label.getElement().getStyle().setPaddingLeft(2, Unit.PX);
             return createSearchSeparator(label);
          }
-      });
+      };
+      removeSeparatorRole(header);
+      menu_.addSeparator(header);
 
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
@@ -284,6 +323,15 @@ public class AddinsToolbarButton extends ToolbarMenuButton
       container.appendChild(labelEl);
       container.appendChild(searchEl);
       return container;
+   }
+
+   // The row holding the search box is a separator only for layout. Its separator role
+   // would expose the search box as disabled, so screen readers would call it unavailable.
+   private void removeSeparatorRole(MenuItemSeparator separator)
+   {
+      Element el = separator.getElement();
+      el.removeAttribute("role");
+      el.removeAttribute("aria-disabled");
    }
 
    private void onSearchValueChange()

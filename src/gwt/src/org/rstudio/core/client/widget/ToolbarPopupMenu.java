@@ -489,6 +489,12 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       return menuBar_.rightImageClicked_;
    }
 
+   // The element with the menu role, which owns the items' ids
+   public Element getMenuBarElement()
+   {
+      return menuBar_.getElement();
+   }
+
    public Element getMenuTableElement()
    {
       Element menuEl = getWidget().getElement();
