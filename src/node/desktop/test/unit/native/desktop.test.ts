@@ -122,7 +122,7 @@ describe('Desktop Native Code', () => {
   // (#19512): BMP and supplementary characters, a REG_EXPAND_SZ value, and a
   // value longer than the first 256-unit buffer. Fixtures are written under
   // HKCU\SOFTWARE\R-core so the real readers run against them, and removed
-  // afterwards, along with any parent key the fixtures had to create.
+  // afterwards, along with any parent key that is left empty.
   describe('win32 registry readers', () => {
     const tag = `RStudioTest-${process.pid}`;
     const rCore = 'HKCU\\SOFTWARE\\R-core';
@@ -132,24 +132,42 @@ describe('Desktop Native Code', () => {
     const expandedPath = `${process.env.SystemDrive}\\R-expand\\é😀`;
 
     const fixtureKeys = [`${rCore}\\R\\${tag}`, `${rCore}\\R\\${tag}-long`, `${rCore}\\${tag}`];
-    // the outermost of HKCU\SOFTWARE\R-core and ...\R-core\R that did not exist
-    // before the fixtures were written; `reg add` creates missing parents
-    let createdParentKey: string | undefined;
+    // `reg add` creates missing parents; innermost first, so that removing an
+    // empty ...\R-core\R can leave R-core empty in turn
+    const parentKeys = [`${rCore}\\R`, rCore];
 
-    function reg(...args: string[]) {
+    // returns a description of the failure, or undefined on success
+    function tryReg(...args: string[]): string | undefined {
       const result = spawnSync('reg.exe', args, { encoding: 'utf8' });
-      assert.equal(result.status, 0, `reg ${args.join(' ')}: ${result.stderr}`);
+      if (result.status === 0) {
+        return undefined;
+      }
+      return `reg ${args.join(' ')}: ${result.stderr}`;
     }
 
-    function regKeyExists(key: string): boolean {
-      return spawnSync('reg.exe', ['query', key], { encoding: 'utf8' }).status === 0;
+    function reg(...args: string[]) {
+      assert.isUndefined(tryReg(...args));
+    }
+
+    // Only a query that succeeds and lists no values or subkeys counts: a
+    // failed query must never let after() delete a real R registration.
+    function regKeyIsEmpty(key: string): boolean {
+      const result = spawnSync('reg.exe', ['query', key], { encoding: 'utf8' });
+      if (result.status !== 0) {
+        return false;
+      }
+      const self = key.replace(/^HKCU\\/, 'HKEY_CURRENT_USER\\').toLowerCase();
+      const entries = result.stdout
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0 && line.toLowerCase() !== self);
+      return entries.length === 0;
     }
 
     before(function () {
       if (process.platform !== 'win32') {
         this.skip();
       }
-      createdParentKey = [rCore, `${rCore}\\R`].find((key) => !regKeyExists(key));
       reg('add', fixtureKeys[0], '/v', 'InstallPath', '/t', 'REG_SZ', '/d', unicodePath, '/f');
       reg('add', fixtureKeys[1], '/v', 'InstallPath', '/t', 'REG_SZ', '/d', longPath, '/f');
       reg('add', fixtureKeys[2], '/v', 'InstallPath', '/t', 'REG_EXPAND_SZ', '/d', expandValue, '/f');
@@ -159,12 +177,25 @@ describe('Desktop Native Code', () => {
       if (process.platform !== 'win32') {
         return;
       }
+
+      // attempt every delete, so one failure does not strand the other keys
+      const failures: string[] = [];
       for (const key of fixtureKeys) {
-        reg('delete', key, '/f');
+        const failure = tryReg('delete', key, '/f');
+        if (failure !== undefined) {
+          failures.push(failure);
+        }
       }
-      if (createdParentKey !== undefined) {
-        reg('delete', createdParentKey, '/f');
+      for (const key of parentKeys) {
+        if (regKeyIsEmpty(key)) {
+          const failure = tryReg('delete', key, '/f');
+          if (failure !== undefined) {
+            failures.push(failure);
+          }
+        }
       }
+
+      assert.isEmpty(failures, failures.join('\n'));
     });
 
     it('enumerates non-ASCII and long InstallPath values intact', () => {

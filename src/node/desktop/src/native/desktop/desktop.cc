@@ -201,11 +201,19 @@ bool expandEnvironmentVariables(const std::wstring& value,
        &buffer[0],
        static_cast<DWORD>(buffer.size()));
 
-   if (!result || result > buffer.size())
+   if (!result)
    {
       DWORD error = ::GetLastError();
       std::string message = getErrorMessage(error);
       DLOG("Error " << error << " expanding environment strings: " << message);
+      return false;
+   }
+
+   // a success that no longer fits (the environment grew between the two
+   // calls) sets no error code
+   if (result > buffer.size())
+   {
+      DLOG("Error expanding environment strings: required size grew from " << buffer.size() << " to " << result);
       return false;
    }
 
@@ -738,6 +746,9 @@ std::string currentCSIDLPersonalHomePathImpl()
                                    SHGFP_TYPE_CURRENT,
                                    buffer);
 
+   if (FAILED(hr))
+      return std::string();
+
    return wideToUtf8(std::wstring(buffer));
 
 #else
@@ -760,7 +771,7 @@ namespace {
 std::string defaultCSIDLPersonalHomePathImpl()
 {
 #ifdef _WIN32
-   wchar_t buffer[MAX_PATH];
+   wchar_t buffer[MAX_PATH] = {};
 
    // query for default and force creation (works around situations
    // where redirected path is not available)
@@ -770,6 +781,9 @@ std::string defaultCSIDLPersonalHomePathImpl()
                                    nullptr,
                                    SHGFP_TYPE_DEFAULT,
                                    buffer);
+
+   if (FAILED(hr))
+      return std::string();
 
    return wideToUtf8(std::wstring(buffer));
 
