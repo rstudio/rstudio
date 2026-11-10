@@ -3,6 +3,8 @@ import { workerRLibsUser } from '@fixtures/r-libs-setup';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { rStringLiteral } from '@utils/r';
+import { isCredentialEnvVar } from '@utils/env';
+import { externalServerUrl } from '@fixtures/server.fixture';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -210,5 +212,49 @@ test.describe('sandbox layout', { tag: ['@server_only'] }, () => {
       rLibsMatches,
       'expected the rsession R_LIBS_USER to match workerRLibsUser() (pre-populated packages would be invisible)',
     ).toBe(true);
+  });
+});
+
+test.describe('IDE environment', () => {
+  // Credential-shaped names the IDE under test sets for itself: every rsession
+  // exports RS_PORT_TOKEN (and Desktop RS_SHARED_SECRET) to its children, and
+  // both launch fixtures set GITHUB_COPILOT_AUTH_TOKEN_ENCRYPTION. A runner
+  // started from an RStudio terminal holds the parent IDE's copies, which
+  // withoutCredentials drops, but R in the IDE under test sees its own values
+  // and would report a leak that didn't happen.
+  const IDE_OWN_NAME = /^RS_|^GITHUB_COPILOT_AUTH_TOKEN_ENCRYPTION$/;
+
+  test('carries none of the runner credentials', async ({ rstudioPage: page }) => {
+    // What the IDE can inherit from the runner differs by mode. A Desktop
+    // launch gets the scrubbed copy of process.env; a spawned rserver's
+    // sessions get only what the --rsession-path wrapper exports (see
+    // writeRsessionWrapper in fixtures/server.fixture.ts), so here this guards
+    // those exports. An external server's sessions have their own environment,
+    // which nothing the runner holds can reach, so there is nothing to check.
+    test.skip(externalServerUrl() !== null, "An external server's sessions do not inherit the runner environment");
+
+    // Non-vacuous on CI, where the runner holds the Posit AI login, the Test
+    // Insights key, and the job's OIDC request token; a plain local shell
+    // usually holds none of them.
+    const names = Object.keys(process.env).filter(
+      (name) => isCredentialEnvVar(name) && process.env[name] && !IDE_OWN_NAME.test(name),
+    );
+    test.skip(names.length === 0, 'No credential-shaped variables are set in the runner environment');
+
+    // One round trip for all of them, asking only which are non-empty: the
+    // names aren't secret, the values are, and printing one would put it into
+    // the console and from there into the report. names = TRUE matters: by
+    // default Sys.getenv() names its result only when asked for more than one
+    // variable, and a single leaked name would otherwise come back as "".
+    const consoleActions = new ConsolePaneActions(page);
+    const probe = `Filter(nzchar, Sys.getenv(c(${names.map(rStringLiteral).join(', ')}), names = TRUE))`;
+    const leaked = await consoleActions.evalRString(`paste(names(${probe}), collapse = ",")`);
+    if (leaked === null) {
+      throw new Error(
+        `Could not read the result of the environment probe; the console said:\n${await consoleActions.lastOutputText()}`,
+      );
+    }
+
+    expect(leaked, "runner credentials reached the IDE's R session (see withoutCredentials in utils/env.ts)").toBe('');
   });
 });

@@ -57,7 +57,9 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
+import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.DefaultSelectionEventManager;
+import com.google.gwt.view.client.DefaultSelectionEventManager.SelectAction;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.ProvidesKey;
@@ -104,10 +106,39 @@ public class FilesList extends Composite
          }
       };
             
-      selectionModel_ = new MultiSelectionModel<>(KEY_PROVIDER);
+      // The ".." row is a navigation row, never a selectable file (#19493).
+      // The selection model refuses it: the event manager below keeps its
+      // shift anchor across listings, so a shift-click range can span from
+      // a row anchored in an earlier listing down through the parent row.
+      selectionModel_ = new MultiSelectionModel<FileSystemItem>(KEY_PROVIDER)
+      {
+         @Override
+         public void setSelected(FileSystemItem item, boolean selected)
+         {
+            if (selected && parentPath_ != null && item == parentPath_)
+               return;
+
+            super.setSelected(item, selected);
+         }
+      };
+
       filesDataGrid_.setSelectionModel(
          selectionModel_,
-         DefaultSelectionEventManager.createCheckboxManager());
+         DefaultSelectionEventManager.createCustomManager(
+            new DefaultSelectionEventManager.CheckboxEventTranslator<FileSystemItem>()
+            {
+               @Override
+               public SelectAction translateSelectionEvent(CellPreviewEvent<FileSystemItem> event)
+               {
+                  // The ".." row has no checkbox, but the grid's keyboard
+                  // handling would still treat Space on it as a selection
+                  // gesture and make it the shift anchor. Ignore it instead.
+                  if (parentPath_ != null && event.getValue() == parentPath_)
+                     return SelectAction.IGNORE;
+
+                  return super.translateSelectionEvent(event);
+               }
+            }));
       filesDataGrid_.setWidth("100%");
 
       filesDataGrid_.getElement().getStyle().setWhiteSpace(WhiteSpace.NOWRAP);

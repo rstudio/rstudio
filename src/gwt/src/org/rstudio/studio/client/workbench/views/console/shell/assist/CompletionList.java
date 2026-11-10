@@ -14,6 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
@@ -24,6 +27,7 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLTable.Cell;
 import com.google.gwt.user.client.ui.HTMLTable.CellFormatter;
 import com.google.gwt.user.client.ui.ScrollPanel;
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.dom.DomUtils;
@@ -31,6 +35,7 @@ import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
+import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 
 class CompletionList<TItem> extends Composite
          implements HasSelectionCommitHandlers<TItem>,
@@ -84,7 +89,8 @@ class CompletionList<TItem> extends Composite
    public CompletionList(TItem[] items,
                          int visibleItems,
                          boolean asHtml,
-                         boolean allowVerticalShrink)
+                         boolean allowVerticalShrink,
+                         String ariaLabel)
    {
       allowVerticalShrink_ = allowVerticalShrink;
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
@@ -99,6 +105,7 @@ class CompletionList<TItem> extends Composite
       grid.addClickHandler(new GridMouseHandler());
       grid.addMouseMoveHandler(new GridMouseHandler());
       grid.setStylePrimaryName(styles_.completionGrid());
+      initAria(grid, ariaLabel);
 
       FontSizer.applyNormalFontSize(grid);
 
@@ -110,6 +117,72 @@ class CompletionList<TItem> extends Composite
       initWidget(scrollPanel_);
       grid_ = grid;
       items_ = items;
+   }
+
+   // Ace's own completion popup uses menu roles in Safari, for VoiceOver;
+   // match it so both popups read the same way there.
+   private static final boolean USE_MENU_ROLES = BrowseCap.isSafari();
+   private static final String ACTIVE_STATE =
+         USE_MENU_ROLES ? "aria-current" : "aria-selected";
+
+   private static void initAria(GridEx grid, String ariaLabel)
+   {
+      Element table = grid.getElement();
+      if (USE_MENU_ROLES)
+         Roles.getMenuRole().set(table);
+      else
+         Roles.getListboxRole().set(table);
+      table.setAttribute("aria-label", ariaLabel);
+
+      for (int i = 0; i < grid.getRowCount(); i++)
+      {
+         Element row = grid.getRowFormatter().getElement(i);
+         if (USE_MENU_ROLES)
+            Roles.getMenuitemRole().set(row);
+         else
+            Roles.getOptionRole().set(row);
+         DomUtils.ensureHasId(row);
+         Roles.getPresentationRole().set(grid.getCellFormatter().getElement(i, 0));
+      }
+
+      // The table's role is overridden, so its row group must not be exposed.
+      if (grid.getRowCount() > 0)
+         Roles.getPresentationRole().set(
+               grid.getRowFormatter().getElement(0).getParentElement());
+   }
+
+   /**
+    * Sets the input that keeps keyboard focus while this list is shown. Its
+    * aria-activedescendant names the selected item while the list is
+    * shown, which is how screen readers learn of the selection. Pass null
+    * to detach the input, e.g. when the list is no longer visible.
+    */
+   public void setInput(InputEditorDisplay input)
+   {
+      if (input_ != null && input_ != input)
+         input_.setAriaActiveDescendant(null);
+      input_ = input;
+      updateActiveDescendant();
+   }
+
+   private void updateActiveDescendant()
+   {
+      if (input_ == null)
+         return;
+
+      String id = null;
+      if (announceable_ && selectedIndex_ >= 0)
+         id = grid_.getRowFormatter().getElement(selectedIndex_).getId();
+      input_.setAriaActiveDescendant(id);
+   }
+
+   @Override
+   protected void onUnload()
+   {
+      announceable_ = false;
+      if (input_ != null)
+         input_.setAriaActiveDescendant(null);
+      super.onUnload();
    }
 
    @Override
@@ -129,6 +202,17 @@ class CompletionList<TItem> extends Composite
       }
       grid_.setWidth("100%");
       selectNext();
+
+      // Popups attach while hidden for positioning (setPopupPositionAndShow).
+      // VoiceOver ignores an active descendant that is hidden when named, and
+      // won't announce it once shown, so name it after the popup is visible.
+      Scheduler.get().scheduleDeferred(() ->
+      {
+         if (!isAttached())
+            return;
+         announceable_ = true;
+         updateActiveDescendant();
+      });
    }
 
    public int getItemCount()
@@ -221,18 +305,26 @@ class CompletionList<TItem> extends Composite
       {
          CellFormatter cf = grid_.getCellFormatter();
          if (selectedIndex_ >= 0)
+         {
             cf.removeStyleName(selectedIndex_, 0, styles_.selected());
+            grid_.getRowFormatter().getElement(selectedIndex_)
+                  .removeAttribute(ACTIVE_STATE);
+         }
 
          selectedIndex_ = index;
 
          if (index >= 0)
          {
             cf.addStyleName(selectedIndex_, 0, styles_.selected());
+            grid_.getRowFormatter().getElement(selectedIndex_)
+                  .setAttribute(ACTIVE_STATE, "true");
             com.google.gwt.dom.client.Element el =
                   DomUtils.getTableCell(grid_.getElement(), index, 0);
             DomUtils.ensureVisibleVert(scrollPanel_.getElement(), el, 2);
             SelectionEvent.fire(this, getSelectedItem());
          }
+
+         updateActiveDescendant();
       }
    }
 
@@ -265,6 +357,8 @@ class CompletionList<TItem> extends Composite
    }
 
    private int selectedIndex_ = -1;
+   private InputEditorDisplay input_;
+   private boolean announceable_;
 
    private final GridEx grid_;
    private final TItem[] items_;

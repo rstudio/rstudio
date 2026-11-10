@@ -437,6 +437,13 @@ export function getDesktopBridge() {
         .catch((error) => reportIpcError('desktopRenderingEngine', error));
     },
 
+    setDefaultApplicationForRFiles: (callback: VoidCallback<Record<string, unknown>>) => {
+      ipcRenderer
+        .invoke('desktop_set_default_application_for_r_files')
+        .then((result) => callback(result))
+        .catch((error) => reportIpcError('setDefaultApplicationForRFiles', error));
+    },
+
     setDesktopRenderingEngine: (engine: string) => {
       ipcRenderer.send('desktop_set_desktop_rendering_engine', engine);
     },

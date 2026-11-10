@@ -29,6 +29,7 @@
 #include "NotebookCache.hpp"
 #include "NotebookAlternateEngines.hpp"
 #include "NotebookChunkOptions.hpp"
+#include "NotebookWorkingDir.hpp"
 
 #include <r/RInterface.hpp>
 #include <r/ROptions.hpp>
@@ -39,6 +40,7 @@
 #include <r/session/RSession.hpp>
 
 #include <core/Exec.hpp>
+#include <core/StringUtils.hpp>
 #include <core/Thread.hpp>
 
 #include <session/SessionModuleContext.hpp>
@@ -425,22 +427,6 @@ private:
       if (label == "setup")
          prepareSetupContext();
 
-      // is there external code for this chunk? if so, replace the chunk's
-      // code with the code from the external file; see:
-      // http://yihui.name/knitr/demo/externalization/
-      if (unit->execScope() == ExecScopeChunk)
-      {
-         std::string external = docQueue->externalChunk(label);
-         if (!external.empty())
-            unit->replaceCode(external);
-      }
-
-      // skip unit if it has no code to execute
-      if (!unit->hasPendingRanges())
-      {
-         return skipUnit();
-      }
-
       // compute engine
       std::string engine = options.getOverlayOption("engine", std::string("r"));
 
@@ -449,19 +435,82 @@ private:
       if (engine == "R")
          engine = "r";
 
+      // look up the working directory of the document as long as we
+      // aren't in an R or Python setup chunk, which always computes paths
+      // relative to the document so that relative paths in the setup chunk,
+      // such as those used in root.dir, have a reliable origin
+      core::FilePath workingDir;
+      if (label != "setup" || (engine != "r" && engine != "python"))
+         workingDir = docQueue->workingDir();
+
+      // is there external code for this chunk? if so, replace the chunk's
+      // code with the code from the external file; see:
+      // http://yihui.name/knitr/demo/externalization/
+      bool codeReplaced = false;
+      if (unit->execScope() == ExecScopeChunk)
+      {
+         std::string external = docQueue->externalChunk(label);
+         if (!external.empty())
+         {
+            unit->replaceCode(external);
+            codeReplaced = true;
+         }
+      }
+
+      // read code from the 'file' chunk option, again only when running the
+      // whole chunk; relative paths resolve against the directory the chunk
+      // runs in, as knitr's do (an unsaved document has none, so use the
+      // current directory)
+      Error codeFileError;
+      if (unit->execScope() == ExecScopeChunk)
+      {
+         FilePath baseDir = chunkWorkingDir(unit->docId(), workingDir);
+         if (baseDir.isEmpty())
+            baseDir = FilePath::safeCurrentPath(module_context::userHomePath());
+         bool replaced = false;
+         codeFileError = unit->replaceCodeFromFileOption(chunkOptions, baseDir, &replaced);
+         codeReplaced = codeReplaced || replaced;
+      }
+
+      // if the file can't be read, fail with an error as knitr does rather
+      // than run the chunk's own code; output written before the chunk's input
+      // reaches R never shows in the chunk, so for R and Python the error is
+      // raised as the chunk's input (the message is converted from the system
+      // encoding, as the legacy Windows session isn't UTF-8)
+      std::string codeFileMessage;
+      if (codeFileError)
+      {
+         std::string path = codeFileError.getProperty("path");
+         codeFileMessage = path.empty()
+            ? codeFileError.getMessage()
+            : "cannot open file '" + path + "': " + string_utils::systemToUtf8(codeFileError.getMessage());
+         std::string escaped = string_utils::singleQuotedStrEscape(codeFileMessage);
+
+         if (engine == "r")
+         {
+            unit->replaceCode("stop('" + escaped + "', call. = FALSE)\n");
+         }
+         else if (engine == "python")
+         {
+            std::string exception = path.empty() ? "ValueError"
+                                  : isFileNotFoundError(codeFileError) ? "FileNotFoundError"
+                                  : "OSError";
+            unit->replaceCode("raise " + exception + "('" + escaped + "')\n");
+         }
+      }
+
+      // skip unit if it has no code to execute (an unreadable file is still
+      // reported below, even if the chunk itself is empty)
+      if (!unit->hasPendingRanges() && !codeFileError)
+      {
+         return skipUnit();
+      }
+
       if (engine == "r" || engine == "python")
       {
          // establish execution context unless we're an inline chunk
          if (unit->execScope() != ExecScopeInline)
          {
-            // look up the working directory of the document as long as we
-            // aren't in the setup chunk, which always computes paths relative
-            // to the document so that relative paths in the setup chunk, such
-            // as those used in root.dir, have a reliable origin
-            core::FilePath workingDir;
-            if (label != "setup")
-               workingDir = docQueue->workingDir();
-
             execContext_ = boost::make_shared<ChunkExecContext>(
                unit->docId(), unit->chunkId(), unit->code(), label, ctx, engine,
                unit->execScope(), workingDir, options,
@@ -479,11 +528,29 @@ private:
          execUnit_ = unit;
          enqueueExecStateChanged(ChunkExecStarted, options.chunkOptions());
       }
+      else if (codeFileError)
+      {
+         // show the error as the chunk's output; other engines produce output
+         // through a separate path, so the error can't be raised as input
+         execUnit_ = unit;
+         enqueueExecStateChanged(ChunkExecStarted, options.chunkOptions());
+
+         Error reportError = reportAlternateEngineChunkError(
+            unit->docId(), unit->chunkId(), label, ctx, unit->code(), codeFileMessage);
+         if (reportError)
+            LOG_ERROR(reportError);
+      }
       else
       {
-         // execute with alternate engine
+         // execute with alternate engine; code from read_chunk() or 'file'
+         // has no fences or option lines to strip, and may contain lines
+         // that look like them (e.g. a heredoc writing markdown), so it is
+         // passed through whole
          std::string innerCode;
-         error = unit->innerCode(&innerCode);
+         if (codeReplaced)
+            innerCode = unit->code();
+         else
+            error = unit->innerCode(&innerCode);
          if (error)
          {
             LOG_ERROR(error);
@@ -497,7 +564,7 @@ private:
             // actually execute the chunk with the alternate engine; store the error separately
             // and log if necessary
             Error execError = executeAlternateEngineChunk(
-               unit->docId(), unit->chunkId(), label, ctx, docQueue->workingDir(),
+               unit->docId(), unit->chunkId(), label, ctx, workingDir,
                engine, innerCode, options, execUnit_->execScope(),
                docQueue->pixelWidth(), docQueue->charWidth());
             if (execError)

@@ -106,6 +106,15 @@
                         "rBinDir": { "type": "string" },
                         "preferR64": { "type": "boolean" }
                     }
+                },
+                "macos": {
+                    "type": "object",
+                    "properties": {
+                        "defaultFileHandlerPrompted": {
+                            "type": "boolean",
+                            "description": "Whether RStudio has already asked macOS to make it the default application for R files."
+                        }
+                    }
                 }
             },
             "default": {
@@ -115,7 +124,10 @@
                     "rBinDir": "",
                     "preferR64": true,
                     "rExecutablePath": ""
-                  }
+                  },
+                "macos": {
+                    "defaultFileHandlerPrompted": false
+                }
             }
         },
         "context_id": {

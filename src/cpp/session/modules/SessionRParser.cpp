@@ -1724,10 +1724,13 @@ void ParseStatus::resolveLookupContext()
    // filesystem access altogether.
    //
    // https://github.com/rstudio/rstudio/issues/19056
-   if (projects::projectContext().isPackageProject())
+   projects::ProjectContext& context = projects::projectContext();
+   FilePath packageDir = context.packageDirectoryInProject();
+   if (!packageDir.isEmpty() && context.isPackageProject() &&
+       (filePath_.isEmpty() || filePath_.isWithin(packageDir)))
    {
       isPackageProject_ = true;
-      packageName_ = projects::projectContext().packageInfo().name();
+      packageName_ = context.packageInfo().name();
    }
 
    if (filePath_.exists())

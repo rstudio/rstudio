@@ -4,7 +4,6 @@
     "buttonCancel": "Cancel",
     "buttonBrowse": "Browse...",
     "buttonDownloadR": "Download R...",
-    "unknownErrorOccurred": "An unknown error occurred.",
     "workingOnIt": "Working on it...",
     "buttonYes": "Yes",
     "buttonNo": "No",
@@ -108,7 +107,15 @@
   },
   "detectRTs": {
     "rNotFound": "R not found",
-    "couldNotLocateAnRInstallationOnTheSystem": "Could not locate an R installation on the system."
+    "couldNotLocateAnRInstallationOnTheSystem": "Could not locate an R installation on the system.",
+    "rFailedToStart": "R failed to start",
+    "rFoundButFailedToStart": "R was found at {{- rPath}} but failed to start.",
+    "noRExecutableAt": "No R executable was found at {{- rPath}}.",
+    "launchError": "Launch error: {{- error}}",
+    "terminatedBySignal": "Terminated by signal: {{signal}}",
+    "exitStatus": "Exit status: {{status}}",
+    "rReported": "R reported:\n{{- output}}",
+    "rProducedNoErrorOutput": "R produced no error output."
   },
   "gwtCallbackTs": {
     "unimplemented": "Unimplemented",
@@ -133,6 +140,12 @@
   },
   "mainWindowTs": {
     "rSessionFailedToStart": "The R session failed to start."
+  },
+  "defaultFileHandlerTs": {
+    "confirmMessage": "Use RStudio to open R files?",
+    "confirmDetail": "R files (.R) currently open in another application, such as Xcode. You can change this later in Tools > Global Options > General > Advanced.",
+    "useRStudio": "Use RStudio",
+    "keepCurrent": "Keep Current Application"
   },
   "updaterTs": {
     "updateNotInstalled": "RStudio {{version}} was not installed.",

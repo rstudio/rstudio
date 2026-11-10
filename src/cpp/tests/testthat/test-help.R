@@ -280,8 +280,7 @@ test_that("custom help descriptions render markdown but not raw HTML", {
     expect_true(grepl("<strong>", .rs.markdownToHTML("**bold**", escapeHTML = TRUE), fixed = TRUE))
 
     # only http, https, ftp, mailto and root-relative targets become links.
-    # A rejected one yields no anchor; sundown emits the original markdown as
-    # text instead, so the target still appears as plain text.
+    # A rejected target must not produce a clickable anchor.
     nonsafe <- .rs.markdownToHTML("[x](relative.html)", escapeHTML = TRUE)
     expect_false(grepl("<a ", nonsafe, fixed = TRUE))
 

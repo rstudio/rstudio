@@ -149,6 +149,7 @@ public class ElementIds
    public final static String FILE_DIALOG_NAME_PROMPT = "file_dialog_name_prompt";
    public final static String WORKBENCH_PANEL = "workbench_panel";
    public final static String WORKBENCH_TAB = "workbench_tab";
+   public final static String APP_ARIA_LIVE_STATUS = "app_aria_live_status";
    public final static String FILE_ACCEPT_BUTTON = "file_accept";
    public final static String FILE_CANCEL_BUTTON = "file_cancel";
    public final static String FILE_NEW_FOLDER_BUTTON = "file_new_folder";

@@ -899,21 +899,13 @@ public class PaneManager
    @Handler
    public void onFocusNextPane()
    {
-      LogicalWindow currentFocus = getActiveLogicalWindow();
-      if (currentFocus == null)
-         return;
-
-      focusAdjacentWindow(currentFocus, false /* before */);
+      focusAdjacentWindow(false /* before */);
    }
 
    @Handler
    public void onFocusPreviousPane()
    {
-      LogicalWindow currentFocus = getActiveLogicalWindow();
-      if (currentFocus == null)
-         return;
-
-      focusAdjacentWindow(currentFocus, true /* before */);
+      focusAdjacentWindow(true /* before */);
    }
 
    @Handler
@@ -1024,14 +1016,13 @@ public class PaneManager
       // if we're the last (!before or first (before) window in the display, wrap around to the
       // front
       if (!before && window == panes.get(lastIndex))
-         return additionalSourceCount_ > 0 ? sourceColumnManager_.getLeftColumnName() :
-            panes.get(0).getNormal().getName();
+         return getFocusCycleEnd(panes, false /* before */);
       else if (before)
       {
          if ((additionalSourceCount_ > 0 &&
             StringUtil.equals(name, sourceColumnManager_.getLeftColumnName())) ||
             (additionalSourceCount_ == 0 && window == panes.get(0)))
-            return panes.get(lastIndex).getNormal().getName();
+            return getFocusCycleEnd(panes, true /* before */);
          else if (window == panes.get(0))
             return sourceColumnManager_.get(1).getName();
       }
@@ -1134,16 +1125,50 @@ public class PaneManager
       }
    }
 
-   private void focusAdjacentWindow(LogicalWindow window, boolean before)
+   /**
+    * Where the focus cycle wraps to, and where it starts when no pane has focus.
+    * Forward, that's the first pane in the cycle, or the leftmost source column
+    * when extra columns are open, since those sit before the first pane.
+    * Backward (before), it's the last pane in the cycle.
+    */
+   private String getFocusCycleEnd(ArrayList<LogicalWindow> panes, boolean before)
    {
-      String adjacent = getAdjacentWindow(window, before);
+      if (before)
+         return panes.get(panes.size() - 1).getNormal().getName();
+      return additionalSourceCount_ > 0 ? sourceColumnManager_.getLeftColumnName() :
+         panes.get(0).getNormal().getName();
+   }
 
-      // TabSet1 and TabSet2 could be empty, if so skip to the next pane
-      while ((StringUtil.equals(UserPrefsAccessor.Panes.QUADRANTS_TABSET1, adjacent) && tabSet1TabPanel_.isEmpty()) ||
-             (StringUtil.equals(UserPrefsAccessor.Panes.QUADRANTS_TABSET2, adjacent) && tabSet2TabPanel_.isEmpty()))
+   private void focusAdjacentWindow(boolean before)
+   {
+      // Focus can be outside every pane, such as on the page body or in the
+      // main toolbar. Enter the cycle at an end.
+      LogicalWindow currentFocus = getActiveLogicalWindow();
+      String adjacent = currentFocus == null ?
+         getFocusCycleEnd(getFocusCycle(), before) :
+         getAdjacentWindow(currentFocus, before);
+
+      while (isEmptyPane(adjacent))
          adjacent = getAdjacentWindow(panesByName_.get(adjacent), before);
 
       focusWindow(adjacent);
+   }
+
+   /**
+    * Whether the focus cycle passes over a pane with nothing to focus. Focusing
+    * an empty main Source pane would open a document (#19193). Extra columns
+    * are empty only while loading, and stepping past one goes by the active
+    * column, which could return that same column forever.
+    */
+   private boolean isEmptyPane(String name)
+   {
+      if (StringUtil.equals(UserPrefsAccessor.Panes.QUADRANTS_TABSET1, name))
+         return tabSet1TabPanel_.isEmpty();
+      if (StringUtil.equals(UserPrefsAccessor.Panes.QUADRANTS_TABSET2, name))
+         return tabSet2TabPanel_.isEmpty();
+      if (StringUtil.equals(SourceColumnManager.MAIN_SOURCE_NAME, name))
+         return sourceColumnManager_.isEmpty(name);
+      return false;
    }
 
    private void swapConsolePane(PaneConfig paneConfig, int consoleTargetIndex)
@@ -3139,6 +3164,7 @@ public class PaneManager
       LogicalWindow logicalWindow =
             new LogicalWindow(frame, new MinimizedWindowFrame(frameName, frameName));
       hookPaneMaximize(frame, logicalWindow);
+      hookMinimizedFocus(logicalWindow);
 
       consoleTabPanel_ = new ConsoleTabPanel(
             frame,
@@ -3171,6 +3197,7 @@ public class PaneManager
       LogicalWindow sourceWindow = new LogicalWindow(
             sourceFrame,
             new MinimizedWindowFrame(frameName, accessibleName));
+      hookMinimizedFocus(sourceWindow);
       // Additional source columns have no maximize gesture. They have no
       // maximize button, no PrimaryWindowFrame title bar, and no
       // ModuleTabLayoutPanel tab bar to double-click. So there is nothing to
@@ -3193,6 +3220,7 @@ public class PaneManager
       final WindowFrame frame = new WindowFrame(persisterName, persisterName, showMaximizeButton, showMinimizeButton, isSidebar);
       final MinimizedModuleTabLayoutPanel minimized = new MinimizedModuleTabLayoutPanel(persisterName);
       final LogicalWindow logicalWindow = new LogicalWindow(frame, minimized);
+      hookMinimizedFocus(logicalWindow);
 
       // Wire sidebar button handlers. The sidebar maximizes by a zoom of its
       // column, not its quadrant. But it can still be the pane-zoomed window,
@@ -3240,6 +3268,7 @@ public class PaneManager
       tabPanel.addSelectionHandler(integerSelectionEvent ->
       {
          int index = integerSelectionEvent.getSelectedItem();
+         minimized.setSelectedIndex(index);
          WorkbenchTab selected = tabPanel.getTab(index);
          lastSelectedTab_ = workbenchTabToTab(selected);
          session_.persistClientState();
@@ -3284,6 +3313,28 @@ public class PaneManager
          minimized);
    }
 
+   /**
+    * A minimized pane's tabs and Restore and Maximize buttons hide the strip
+    * they sit on, and with it the element that had focus, so the browser
+    * would drop focus to the page body. Move focus into the pane instead,
+    * unless focus is still elsewhere: clicking a minimized tab doesn't take it.
+    */
+   private void hookMinimizedFocus(LogicalWindow window)
+   {
+      MinimizedWindowFrame minimized = window.getMinimized();
+      minimized.addWindowStateChangeHandler(event ->
+         Scheduler.get().scheduleDeferred(() ->
+         {
+            // An animated layout also focuses the pane when it ends
+            // (AnimationHelper), unconditionally but through WindowFrame.focus(),
+            // which reaches only CanFocus widgets; most panes have none.
+            Element active = DomUtils.getActiveElement();
+            if (active == null || active == Document.get().getBody() ||
+                minimized.getElement().isOrHasChild(active))
+               focusPane(window);
+         }));
+   }
+
    private Tab workbenchTabToTab(WorkbenchTab tab)
    {
       return wbTabToTab_.get(tab);
@@ -3317,7 +3368,7 @@ public class PaneManager
          if (!getTab(tab).isSuppressed())
             labels.add(getTabLabel(tab));
       }
-      minimized.setTabs(labels.toArray(new String[labels.size()]));
+      minimized.setTabs(labels.toArray(new String[labels.size()]), tabPanel.getSelectedIndex());
    }
 
    private String getTabLabel(Tab tab)
