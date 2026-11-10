@@ -61,6 +61,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuItem;
+import com.google.gwt.user.client.ui.MenuItemSeparator;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -288,14 +289,7 @@ public class AddinsToolbarButton extends ToolbarMenuButton
          @Override
          public void execute(final String pkg, final List<RAddin> addins)
          {
-            menu_.addSeparator(new CustomMenuItemSeparator()
-            {
-               @Override
-               public Element createMainElement()
-               {
-                  return createSubheader(pkg);
-               }
-            });
+            addSubheader(pkg);
             menu_.addSeparator();
 
             addins.sort(new Comparator<RAddin>()
@@ -322,14 +316,7 @@ public class AddinsToolbarButton extends ToolbarMenuButton
 
    private void populateEmptyMenu()
    {
-      menu_.addSeparator(new CustomMenuItemSeparator()
-      {
-         @Override
-         public Element createMainElement()
-         {
-            return createSubheader(constants_.noAddinsFound());
-         }
-      });
+      addSubheader(constants_.noAddinsFound());
    }
 
    private MenuItem menuItem(final RAddin addin)
@@ -379,12 +366,26 @@ public class AddinsToolbarButton extends ToolbarMenuButton
       return organized;
    }
 
-   private Element createSubheader(String text)
+   private void addSubheader(String text)
    {
-      Label label = new Label(text);
-      label.addStyleName(ThemeStyles.INSTANCE.menuSubheader());
-      label.getElement().getStyle().setPaddingLeft(2, Unit.PX);
-      return label.getElement();
+      MenuItemSeparator subheader = new CustomMenuItemSeparator()
+      {
+         @Override
+         public Element createMainElement()
+         {
+            Label label = new Label(text);
+            label.addStyleName(ThemeStyles.INSTANCE.menuSubheader());
+            label.getElement().getStyle().setPaddingLeft(2, Unit.PX);
+            return label.getElement();
+         }
+      };
+
+      // A heading, not a divider: as a separator, screen readers announce it as a
+      // "splitter". The divider below each package heading keeps that role.
+      Element el = subheader.getElement();
+      el.removeAttribute("role");
+      el.removeAttribute("aria-disabled");
+      menu_.addSeparator(subheader);
    }
 
    @Inject

@@ -251,6 +251,10 @@ test.describe('Addins toolbar menu (#19552)', () => {
       .analyze();
     expect(violationSummary(results)).toEqual([]);
 
+    // Package headings are text; screen readers announce a separator as a splitter
+    await expect(menu.getByText('devtools', { exact: true })).toBeVisible();
+    await expect(menu.getByRole('separator').filter({ hasText: /\S/ })).toHaveCount(0);
+
     // With nothing left to highlight, the search box must not name a removed item.
     await search.pressSequentially('zzz-no-such-addin');
     await expect(popup.getByText('No addins found')).toBeVisible();
