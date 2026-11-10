@@ -29,7 +29,7 @@ import i18next from 'i18next';
 import { spawnSync } from 'child_process';
 import { changeLanguage } from './i18n-manager';
 import { randomUUID } from 'crypto';
-import { appState } from './app-state';
+import { appState, hasApplication } from './app-state';
 import { isOzonePlatformChromiumArgument } from './electron-flags';
 
 // work around Electron resolving the application path to 'app.asar'
@@ -512,11 +512,18 @@ export async function createStandaloneErrorDialog(
     dialogContent[process.platform === 'win32' ? 'title' : 'message'] = title;
     dialogContent[process.platform === 'win32' ? 'message' : 'detail'] = message;
 
-    await appState().modalTracker.trackElectronModalAsync(async () =>
-      dialog.showMessageBox(options.window, dialogContent),
-    );
+    const showDialog = async () => dialog.showMessageBox(options.window, dialogContent);
 
-    if (options.shouldCloseWindow) window.close();
+    // startup can fail before the Application singleton (which owns the modal
+    // tracker) exists, e.g. when desktop options cannot be read (#19496); the
+    // dialog is the only feedback the user gets, so show it untracked then
+    if (hasApplication()) {
+      await appState().modalTracker.trackElectronModalAsync(showDialog);
+    } else {
+      await showDialog();
+    }
+
+    if (options.shouldCloseWindow) options.window.close();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('[utils.ts] [createStandaloneErrorDialog] Error when creating Standalone Error Dialog: ', error);

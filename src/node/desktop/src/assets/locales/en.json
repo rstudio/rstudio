@@ -101,7 +101,9 @@
     "newRstudioWindow": "New RStudio Window",
     "stateFolderErrorTitle": "RStudio cannot write to required folders",
     "stateFolderErrorPrefix": "RStudio requires write access to the following folders, but writing to them failed:",
-    "stateFolderErrorSuffix": "RStudio may fail to start or may not work correctly until this is resolved. Please check that these folders have the expected ownership and permissions."
+    "stateFolderErrorSuffix": "RStudio may fail to start or may not work correctly until this is resolved. Please check that these folders have the expected ownership and permissions.",
+    "desktopOptionsResetTitle": "RStudio desktop options were reset",
+    "desktopOptionsResetMessage": "RStudio could not read its desktop options file:\n\n{{configPath}}\n({{reason}})\n\nThe file was moved to:\n\n{{backupPath}}\n\nDesktop options such as the zoom level, window size and fonts have been reset to their defaults."
   },
   "detectRTs": {
     "rNotFound": "R not found",
