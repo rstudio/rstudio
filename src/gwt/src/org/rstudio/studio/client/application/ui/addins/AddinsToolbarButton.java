@@ -170,7 +170,9 @@ public class AddinsToolbarButton extends ToolbarMenuButton
             menu_.activateSelectedItem();
             break;
          case KeyCodes.KEY_TAB:
-            // Leave the default action, so focus moves on as the menu closes
+            // Hiding the menu removes the focused search box, so first put focus
+            // back on this button; the default action then moves on from here.
+            setFocus(true);
             menu_.hide();
             return;
          default:

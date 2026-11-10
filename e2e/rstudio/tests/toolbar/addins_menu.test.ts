@@ -118,6 +118,29 @@ test.describe('Addins toolbar menu (#19552)', () => {
     await expect.poll(() => runs).toEqual(['clipr::clipr_result']);
   });
 
+  test('Tab and Shift+Tab leave the menu as they would leave the Addins button', async ({ rstudioPage: page }) => {
+    const button = page.locator(ADDINS_BUTTON);
+    const focusedId = () => page.evaluate(() => document.activeElement?.id ?? '');
+    await button.focus();
+    await page.keyboard.press('Tab');
+    const next = await focusedId();
+    await button.focus();
+    await page.keyboard.press('Shift+Tab');
+    const previous = await focusedId();
+    expect(next, 'the Addins button needs a focusable neighbor on each side').not.toBe('');
+    expect(previous).not.toBe('');
+
+    const popup = await openAddinsPopup(page);
+    await page.keyboard.press('Tab');
+    await expect(popup).toBeHidden();
+    expect(await focusedId()).toBe(next);
+
+    await openAddinsPopup(page);
+    await page.keyboard.press('Shift+Tab');
+    await expect(popup).toBeHidden();
+    expect(await focusedId()).toBe(previous);
+  });
+
   test('the search box names the highlighted add-in to screen readers', async ({ rstudioPage: page }) => {
     const popup = await openAddinsPopup(page);
     const search = popup.getByRole('combobox', { name: SEARCH_LABEL });
