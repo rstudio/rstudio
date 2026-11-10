@@ -242,7 +242,7 @@ public class AddinsToolbarButton extends ToolbarMenuButton
    private void applyPendingSearch()
    {
       searchValueChangeTimer_.cancel();
-      if (!searchWidget_.getValue().equals(populatedQuery_))
+      if (!searchQuery().equals(populatedQuery_))
       {
          populate();
          menu_.selectFirst();
@@ -276,7 +276,7 @@ public class AddinsToolbarButton extends ToolbarMenuButton
 
    private void populate()
    {
-      populatedQuery_ = searchWidget_.getValue();
+      populatedQuery_ = searchQuery();
       menu_.clearItems();
 
       Map<String, List<RAddin>> addinsByPkg = organizeAddins();
@@ -351,11 +351,18 @@ public class AddinsToolbarButton extends ToolbarMenuButton
       return menuItem;
    }
 
+   // The search text as the filter uses it, so that text which filters the same,
+   // such as a trailing space, doesn't rebuild the menu and reset the highlight
+   private String searchQuery()
+   {
+      return searchWidget_.getValue().toLowerCase().trim();
+   }
+
    private Map<String, List<RAddin>> organizeAddins()
    {
       Map<String, List<RAddin>> organized = new HashMap<>();
 
-      String query = searchWidget_.getValue().toLowerCase().trim();
+      String query = searchQuery();
 
       RAddins addins = manager_.getRAddins();
       for (String key : JsUtil.asIterable(addins.keys()))

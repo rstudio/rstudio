@@ -97,6 +97,24 @@ test.describe('Addins toolbar menu (#19552)', () => {
     });
   });
 
+  test('a space that leaves the search unchanged keeps the highlight', async ({
+    rstudioPage: page,
+  }) => {
+    const popup = await openAddinsPopup(page);
+    const search = popup.getByRole('combobox', { name: SEARCH_LABEL });
+    await search.pressSequentially('test');
+    await expect(highlightedItem(popup)).toHaveText('Run a test file');
+    await page.keyboard.press('ArrowDown');
+    const second = await highlightedItem(popup).textContent();
+    expect(second).not.toBe('Run a test file');
+
+    // "test " filters the same as "test", as when typing a second word
+    await page.keyboard.type(' ');
+    await expectHoldsFor(REBUILD_WINDOW_MS, async () => {
+      expect(await highlightedItem(popup).textContent()).toBe(second);
+    });
+  });
+
   test('Enter runs the highlighted add-in, and a typed space does not', async ({
     rstudioPage: page,
   }) => {
