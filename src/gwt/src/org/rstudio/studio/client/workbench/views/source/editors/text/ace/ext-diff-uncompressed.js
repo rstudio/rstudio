@@ -758,7 +758,7 @@ var BaseDiffView = /** @class */ (function () {
                         result.row = toRange.start.row + pos.row - fromRange.start.row;
                         var maxRow = toRange.end.row;
                         if (toRange.end.column === 0)
-                            maxRow--;
+                            maxRow = Math.max(0, maxRow - 1);
                         if (result.row > maxRow) {
                             result.row = maxRow;
                             result.column = (isOriginal ? this.sessionB : this.sessionA).getLine(maxRow).length;
@@ -786,7 +786,7 @@ var BaseDiffView = /** @class */ (function () {
             else if (chunk[from].start.row <= pos.row) {
                 result.row += chunk[to].start.row - chunk[from].start.row;
                 if (result.row >= chunk[to].end.row) {
-                    result.row = chunk[to].end.row - 1;
+                    result.row = Math.max(0, chunk[to].end.row - 1);
                     result.column = (isOriginal ? this.sessionB : this.sessionA).getLine(result.row).length;
                     ignoreIndent = true;
                 }
@@ -1646,25 +1646,39 @@ function hasSharedLine(original, modified, diff) {
 }
 var BoundedRefinement = /** @class */ (function () {
     function BoundedRefinement(options) {
-        var e_1, _a;
+        var e_1, _a, e_2, _b;
         this.limits = Object.assign({}, defaults);
         if (options !== true && (!options || typeof options !== "object"))
             throw new TypeError("boundedRefinement must be true or a limits object");
         try {
-            for (var _b = __values(Object.keys(defaults)), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var key = _c.value;
+            for (var _c = __values(Object.keys(options)), _d = _c.next(); !_d.done; _d = _c.next()) {
+                var key = _d.value;
+                if (!Object.prototype.hasOwnProperty.call(defaults, key))
+                    throw new TypeError("Unknown boundedRefinement limit: " + key);
+            }
+        }
+        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+        finally {
+            try {
+                if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
+            }
+            finally { if (e_1) throw e_1.error; }
+        }
+        try {
+            for (var _e = __values(Object.keys(defaults)), _f = _e.next(); !_f.done; _f = _e.next()) {
+                var key = _f.value;
                 if (options[key] !== undefined)
                     this.limits[key] = options[key];
                 if (!Number.isSafeInteger(this.limits[key]) || this.limits[key] < 0)
                     throw new RangeError("Invalid boundedRefinement limit: " + key);
             }
         }
-        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+        catch (e_2_1) { e_2 = { error: e_2_1 }; }
         finally {
             try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
             }
-            finally { if (e_1) throw e_1.error; }
+            finally { if (e_2) throw e_2.error; }
         }
         this.canonical = { remaining: this.limits.totalReads, characters: this.limits.totalCharacters };
         this.highlight = { remaining: this.limits.highlightTotalReads, characters: this.limits.highlightTotalCharacters };
@@ -4281,6 +4295,7 @@ var DefaultLinesDiffComputer = /** @class */ (function () {
         var slice1 = new LinesSliceCharSequence(originalLines, rangeMapping.originalRange, considerWhitespaceChanges, readBudget);
         var slice2 = new LinesSliceCharSequence(modifiedLines, rangeMapping.modifiedRange, considerWhitespaceChanges, readBudget);
         var diffResult = slice1.length + slice2.length < 500 ? this.dynamicProgrammingDiffing.compute(slice1, slice2, timeout) : this.myersDiffingAlgorithm.compute(slice1, slice2, timeout, readBudget);
+        slice1.readBudget = slice2.readBudget = undefined;
         var diffs = diffResult.diffs;
         diffs = optimizeSequenceDiffs(slice1, slice2, diffs);
         diffs = extendDiffsToEntireWordIfAppropriate(slice1, slice2, diffs, function (seq, idx) { return seq.findWordContaining(idx); });

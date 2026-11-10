@@ -42984,11 +42984,8 @@ var MAX_CONTEXT_DEPTH = 16;
 function cloneContext(context) {
     if (context == null)
         return {};
-    for (var key in context) {
-        return typeof structuredClone === "function"
-            ? structuredClone(context)
-            : clonePlainContext(context, new Map());
-    }
+    for (var key in context)
+        return clonePlainContext(context, new Map());
     return {};
 }
 function isPlainObject(value) {
@@ -42996,15 +42993,13 @@ function isPlainObject(value) {
     return proto === Object.prototype || proto === null;
 }
 function clonePlainContext(value, copies) {
-    if (typeof value === "function" || typeof value === "symbol")
-        throw new TypeError("Tokenizer contexts must contain plain data");
     if (value == null || typeof value !== "object")
+        return value;
+    if (!Array.isArray(value) && !isPlainObject(value))
         return value;
     if (copies.has(value))
         return copies.get(value);
-    if (!Array.isArray(value) && !isPlainObject(value))
-        throw new TypeError("Tokenizer contexts must contain plain data");
-    var clone = Array.isArray(value) ? new Array(value.length) : {};
+    var clone = Array.isArray(value) ? new Array(value.length) : Object.create(Object.getPrototypeOf(value));
     copies.set(value, clone);
     Object.keys(value).forEach(function (key) {
         Object.defineProperty(clone, key, {
@@ -43028,6 +43023,8 @@ function equalContextValues(lhs, rhs, depth) {
     if (Array.isArray(lhs) && lhs.length !== rhs.length)
         return false;
     if (!Array.isArray(lhs) && (!isPlainObject(lhs) || !isPlainObject(rhs)))
+        return false;
+    if (Object.getPrototypeOf(lhs) !== Object.getPrototypeOf(rhs))
         return false;
     var keys = Object.keys(lhs);
     if (keys.length !== Object.keys(rhs).length)
