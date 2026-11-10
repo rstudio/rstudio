@@ -1,3 +1,4 @@
 node_modules/
 watcher.pid
 watcher.log
+yarn.lock
