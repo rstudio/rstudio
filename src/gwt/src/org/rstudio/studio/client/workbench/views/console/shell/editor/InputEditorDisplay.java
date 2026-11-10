@@ -36,6 +36,13 @@ public interface InputEditorDisplay extends HasAllFocusHandlers,
    Rectangle getBounds();
    void setFocus(boolean focused);
    boolean isFocused();
+
+   /**
+    * Names the element, such as a selected completion, that screen readers
+    * should treat as focused while keyboard focus stays in this input.
+    * @param elementId The element's id, or null to clear.
+    */
+   void setAriaActiveDescendant(String elementId);
    /**
     * @param value New value
     * @return Original value

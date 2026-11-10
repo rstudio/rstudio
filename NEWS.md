@@ -62,6 +62,8 @@
 - ([#19470](https://github.com/rstudio/rstudio/issues/19470)): [Accessibility] Fixed an issue where the Packages pane showed an unlabeled Browse button for packages with no browse URL, such as those installed from a local path. Screen readers now announce the Browse and Remove buttons with the package's name (e.g. "Browse dplyr", "Remove dplyr") instead of the website's URL or a generic "Remove package".
 - ([#19517](https://github.com/rstudio/rstudio/issues/19517)): Fixed an issue where each document save added change-tracking handlers to the editor that were never removed.
 - ([#19380](https://github.com/rstudio/rstudio/issues/19380)): [Accessibility] Fixed an issue where the tabs shown when a pane is minimized were not announced as tabs by screen readers and could not be reached with the keyboard. They can now be focused with Tab, moved between with the arrow keys, and activated with Enter or Space to restore the pane. Restoring or maximizing a minimized pane from the keyboard now moves focus into the pane.
+- ([#6167](https://github.com/rstudio/rstudio/issues/6167)): [Accessibility] Fixed an issue where screen readers didn't announce the code completion popup in the console and in documents such as R, R Markdown, Python, and SQL files. Screen readers now announce the selected completion as you move through the list.
+- ([#6168](https://github.com/rstudio/rstudio/issues/6168)): [Accessibility] Fixed an issue where screen readers didn't announce the console history popup (Ctrl+Up, or Cmd+Up on macOS). Screen readers now announce the selected command as you move through the list.
 
 ### Dependencies
 - ([#19095](https://github.com/rstudio/rstudio/issues/19095)): macOS builds now require C++20; Linux retains its C++17 minimum.
