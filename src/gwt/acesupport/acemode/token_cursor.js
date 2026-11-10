@@ -649,7 +649,7 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
          var value = clone.currentValue();
          if (value === "->")
             break;
-         if (/^[;{}(\]]$/.test(value) || /=$/.test(value))
+         if (/^[;{}(\]]$/.test(value) || /^([-+*\/%&|^]|<<|>>)?=$/.test(value))
             return false;
          if (value === ")" && !clone.bwdToMatchingToken())
             return false;

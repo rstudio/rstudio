@@ -142,6 +142,10 @@ check("functions with trailing return types are labelled",
        "  operator->(): T* [7..7]",
        "  operator->(): T* [8..8]"].join("\n"));
 
+check("comparisons in a trailing return type are not assignments",
+      tree(makeSession("auto g() -> std::enable_if_t<N == 1, int> { return 1; }\n")),
+      "g(): std::enable_if_t<N == 1, int> [0..0]");
+
 check("lambdas with trailing return types are labelled",
       tree(makeSession("auto l = [](int x) -> int { return x; };\n")),
       "lambda (int x) -> int [0..0]");
