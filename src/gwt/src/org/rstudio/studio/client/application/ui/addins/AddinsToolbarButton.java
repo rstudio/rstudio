@@ -172,11 +172,12 @@ public class AddinsToolbarButton extends ToolbarMenuButton
          return;
       }
 
+      // Keys with modifiers, such as Shift+Home, edit the search text instead
       boolean navigation =
             key == KeyCodes.KEY_UP || key == KeyCodes.KEY_DOWN ||
             key == KeyCodes.KEY_HOME || key == KeyCodes.KEY_END ||
             key == KeyCodes.KEY_ENTER;
-      if (!navigation)
+      if (!navigation || event.isAnyModifierKeyDown())
          return;
 
       applyPendingSearch();

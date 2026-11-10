@@ -132,6 +132,17 @@ test.describe('Addins toolbar menu (#19552)', () => {
     await expect.poll(() => runs).toEqual(['clipr::clipr_output']);
   });
 
+  test('Shift+Home selects the search text instead of moving the highlight', async ({
+    rstudioPage: page,
+  }) => {
+    const popup = await openAddinsPopup(page);
+    const search = popup.getByRole('combobox', { name: SEARCH_LABEL });
+    await search.pressSequentially('clip');
+    await page.keyboard.press('Shift+Home');
+    expect(await search.evaluate((el: HTMLInputElement) =>
+      [el.selectionStart, el.selectionEnd])).toEqual([0, 4]);
+  });
+
   test('closing the menu returns focus to the Addins button', async ({
     rstudioPage: page,
   }) => {
