@@ -182,9 +182,6 @@ pipeline {
         dir("package/osx/build/src/cpp") {
           // attempt to run cpp unit tests
           sh "arch -x86_64 ./rstudio-tests"
-          
-          // electron tests not working in CI environment, under investigation
-          // sh "cd ../../../../../src/node/desktop/ && $HOME/.yarn/bin/yarn && $HOME/.yarn/bin/yarn test"
           }
         }
       }
