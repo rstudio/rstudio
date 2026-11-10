@@ -13,6 +13,7 @@
 - ([#19241](https://github.com/rstudio/rstudio/issues/19241)): The Console notice shown at startup when RStudio reduces background file operations for a project can now be turned off with the `show_reduced_file_operations_notice` preference (e.g. from the Command Palette), or for all users by an administrator with `"show_reduced_file_operations_notice": false` in `rstudio-prefs.json`.
 
 ### Fixed
+- ([#17025](https://github.com/rstudio/rstudio/issues/17025)): Posit Assistant and GitHub Copilot no longer exit immediately on startup when `http_proxy` or `https_proxy` is set without a URL scheme (e.g. `proxy.example.com:8080`), a form R accepts.
 - ([#19512](https://github.com/rstudio/rstudio/issues/19512)): Fixed an issue on Windows where an R installation recorded in the registry under a path containing non-ASCII characters was not found at startup or listed in the R version chooser.
 - ([#19218](https://github.com/rstudio/rstudio/issues/19218)): Reduced the time spent computing Git change markers for large replacements, while keeping change boundaries consistent when opening side-by-side review.
 - ([#19496](https://github.com/rstudio/rstudio/issues/19496)): Fixed an issue where RStudio Desktop would not start, and showed no error, when its desktop options file (`config.json` in the user data directory) had been truncated or otherwise corrupted, e.g. by a crash while it was being written. The damaged file is now moved aside, desktop options are reset to their defaults, and RStudio says where the file was moved.

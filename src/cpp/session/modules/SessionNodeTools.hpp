@@ -91,6 +91,39 @@ bool versionSupportsSystemCa(int major, int minor);
 void applySystemCaOption(core::system::Options* pEnvironment,
                          const core::FilePath& nodePath);
 
+/**
+ * Normalize a proxy URL taken from an http_proxy-style environment variable
+ * into a form Node.js accepts. curl, and so R, default a bare "host:port" to
+ * http, but Node requires an explicit scheme and exits during startup
+ * without one, so a missing scheme becomes "http://" and surrounding quotes
+ * and whitespace are dropped.
+ *
+ * Node also exits on a URL it cannot use as a proxy, so only the form it is
+ * known to take is accepted: an http, https or socks5 scheme, optional
+ * credentials, a host name or IP address, an optional port, and at most a
+ * trailing slash. Such a value is otherwise kept as written.
+ *
+ * @param value The raw environment variable value.
+ * @param pNormalized Output: the value to hand to Node (empty when the
+ *   variable was blank, which Node treats as unset).
+ * @return false for anything else, in which case the caller should leave
+ *   Node's proxy support disabled.
+ */
+bool normalizeProxyUrl(const std::string& value, std::string* pNormalized);
+
+/**
+ * Enable Node.js proxy support (NODE_USE_ENV_PROXY=1) for fetch() in a
+ * child-process environment, first normalizing the http_proxy / https_proxy
+ * values Node will read (lowercase, or uppercase when the lowercase one is
+ * empty) so values that R and curl accept do not abort Node at startup.
+ * Leaves the flag unset (and negates a --use-env-proxy inherited through
+ * NODE_OPTIONS), with a logged warning, when one of them cannot be
+ * normalized.
+ *
+ * @param pEnvironment The child-process environment to modify.
+ */
+void applyEnvProxyOption(core::system::Options* pEnvironment);
+
 } // namespace node_tools
 } // namespace modules
 } // namespace session
