@@ -74,11 +74,12 @@ public class MenuSearchHeader
       redirectMenuFocus();
    }
 
-   // The search text, as the menu is filtered by it. Text that filters the same,
-   // such as with a trailing space, doesn't rebuild the menu and reset the highlight.
+   // The search text, as the menu is filtered by it: trimmed and in lower case,
+   // for a match that ignores case. Text that filters the same, such as with a
+   // trailing space or in other case, doesn't rebuild the menu and reset the highlight.
    public String getQuery()
    {
-      return StringUtil.notNull(searchWidget_.getValue()).trim();
+      return StringUtil.notNull(searchWidget_.getValue()).trim().toLowerCase();
    }
 
    // Empties the search box without rebuilding the menu, which is the caller's to do

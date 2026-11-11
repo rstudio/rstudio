@@ -314,8 +314,8 @@ public class BranchToolbarButton extends ToolbarMenuButton
       for (WorktreeInfo worktree : worktrees_)
       {
          if (query.isEmpty() ||
-             worktree.getDisplayName().indexOf(query) != -1 ||
-             worktree.getPath().indexOf(query) != -1)
+             worktree.getDisplayName().toLowerCase().indexOf(query) != -1 ||
+             worktree.getPath().toLowerCase().indexOf(query) != -1)
          {
             worktrees.add(worktree);
          }
@@ -545,7 +545,7 @@ public class BranchToolbarButton extends ToolbarMenuButton
          List<String> filteredBranches = new ArrayList<>();
          List<String> branches = initialBranchMap_.get(key);
          for (String branch : branches)
-            if (branch.indexOf(query) != -1)
+            if (branch.toLowerCase().indexOf(query) != -1)
                filteredBranches.add(branch);
 
          if (!filteredBranches.isEmpty())

@@ -181,6 +181,23 @@ test.describe.serial('Git branch menu (#19555)', () => {
     });
   });
 
+  test('a search ignores case, and changing only its case keeps the highlight', async ({
+    rstudioPage: page,
+  }) => {
+    const popup = await openBranchMenu(page, 'alpha-two');
+    const search = popup.getByRole('combobox', { name: SEARCH_LABEL });
+    await search.pressSequentially('ALPHA');
+    await expect(popup.getByRole('menuitem')).toHaveText(['alpha-one', 'alpha-two']);
+    await page.keyboard.press('ArrowDown');
+    await expect(highlightedItem(popup)).toHaveText('alpha-two');
+
+    // Replaced at once, as by a paste, so no other text is searched in between
+    await search.fill('alpha');
+    await expectHoldsFor(1000, async () => {
+      expect(await highlightedItem(popup).textContent()).toBe('alpha-two');
+    });
+  });
+
   test('the search box names the highlighted branch to screen readers', async ({
     rstudioPage: page,
   }) => {

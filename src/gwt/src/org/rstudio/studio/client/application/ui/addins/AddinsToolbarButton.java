@@ -181,7 +181,7 @@ public class AddinsToolbarButton extends ToolbarMenuButton
    {
       Map<String, List<RAddin>> organized = new HashMap<>();
 
-      String query = search_.getQuery().toLowerCase();
+      String query = search_.getQuery();
 
       RAddins addins = manager_.getRAddins();
       for (String key : JsUtil.asIterable(addins.keys()))
