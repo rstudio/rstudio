@@ -57,6 +57,13 @@ using namespace boost::placeholders;
 // the methodology used to infer compilation flags has changed.
 #define kCompilationDatabaseVersion 5
 
+// The precompiled header version.
+//
+// Bump this version when the way precompiled headers are built changes
+// (e.g. the options passed to libclang), so that ones built by an older
+// version of RStudio are discarded rather than reused.
+#define kPrecompiledHeaderVersion "2"
+
 namespace rstudio {
 namespace session {
 namespace modules { 
@@ -1807,6 +1814,8 @@ std::vector<std::string> ClangCompilationDatabase::precompiledHeaderArgs(
       return std::vector<std::string>();
    }
 
+   platformDir += "-pch" kPrecompiledHeaderVersion;
+
    // if this path doesn't exist then blow away all precompiled paths
    // and re-create this one. this enforces only storing precompiled headers
    // for the current version of R/Rcpp/pkg -- if we didn't do this then the
@@ -1839,7 +1848,34 @@ std::vector<std::string> ClangCompilationDatabase::precompiledHeaderArgs(
    if (!userFlags.empty())
       pchName += userFlagsPchSuffix(userFlags);
    FilePath pchPath = platformPath.completeChildPath(pchName + ".pch");
-   if (forceRebuildPrecompiledHeaders_ || !pchPath.exists())
+
+   // a changed compilation database gets a fresh start
+   if (forceRebuildPrecompiledHeaders_)
+   {
+      rebuiltPrecompiledHeaders_.clear();
+      unusablePrecompiledHeaders_.clear();
+   }
+
+   // libclang couldn't load this PCH for a file parsed with it (say, a header
+   // it was built from has changed since), so the file was parsed without.
+   // Rebuild it, but only once: if libclang rejects the rebuilt one as well,
+   // do without for the rest of the session rather than rebuild it for
+   // every parse.
+   std::string pch = pchPath.getAbsolutePath();
+   bool rejected = takeRejectedPrecompiledHeader(pch);
+   if (rejected && !rebuiltPrecompiledHeaders_.insert(pch).second)
+   {
+      unusablePrecompiledHeaders_.insert(pch);
+
+      Error removeError = pchPath.removeIfExists();
+      if (removeError)
+         LOG_ERROR(removeError);
+   }
+
+   if (unusablePrecompiledHeaders_.count(pch) > 0)
+      return std::vector<std::string>();
+
+   if (forceRebuildPrecompiledHeaders_ || rejected || !pchPath.exists())
    {
       // a forced rebuild (the package's compilation database changed) has
       // to take every variant with it, not just the one requested first
@@ -1907,7 +1943,7 @@ std::vector<std::string> ClangCompilationDatabase::precompiledHeaderArgs(
                             gsl::narrow_cast<int>(argsArray.argCount()),
                             nullptr,
                             0,
-                            CXTranslationUnit_ForSerialization);
+                            precompiledHeaderOptions());
 
       if (tu == nullptr)
       {
