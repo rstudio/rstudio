@@ -196,7 +196,8 @@ public class MenuSearchHeader
       }, true);
    }
 
-   // Page Up, Page Down, and Escape already reach the menu from anywhere
+   // Page Up, Page Down, and Escape already reach the menu from anywhere, ahead
+   // of this handler, so they act on the list as last rebuilt
    private void onSearchKeyDown(KeyDownEvent event)
    {
       int key = event.getNativeKeyCode();
@@ -242,8 +243,8 @@ public class MenuSearchHeader
    }
 
    // Rebuilds the menu for the search text now, rather than when the search
-   // timer fires, so a navigation key acts on the list for the text typed so
-   // far, with its first match highlighted. SearchWidget reports its first key
+   // timer fires, so Up, Down, Home, End, and Enter act on the list for the text
+   // typed so far, with its first match highlighted. SearchWidget reports its first key
    // as a change even when the text is unchanged; that must not reset the highlight.
    private void applyPendingSearch()
    {
