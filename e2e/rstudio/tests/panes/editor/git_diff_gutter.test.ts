@@ -3299,6 +3299,10 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
 
       // and stay so when the editor font grows: the base editor takes the
       // document editor's font rather than Ace's default
+      // (the base pane scrolled last, to its cursor: the document's editor
+      // moves its own offset as its lines grow, which the scroll sync would
+      // take for an echo within the 500 ms; see above)
+      await page.waitForTimeout(600);
       const fontBefore = await fontSize(live);
       await setPref(page, 'font_size_points', 16);
       await expect.poll(() => fontSize(live), { timeout: 10000 }).not.toBe(fontBefore);
