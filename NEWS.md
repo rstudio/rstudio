@@ -13,6 +13,7 @@
 - ([#19241](https://github.com/rstudio/rstudio/issues/19241)): The Console notice shown at startup when RStudio reduces background file operations for a project can now be turned off with the `show_reduced_file_operations_notice` preference (e.g. from the Command Palette), or for all users by an administrator with `"show_reduced_file_operations_notice": false` in `rstudio-prefs.json`.
 
 ### Fixed
+- ([#9477](https://github.com/rstudio/rstudio/issues/9477)): The spelling dictionary archives downloaded when building RStudio and when installing additional languages now have dates in their file names, so a future dictionary update no longer replaces a file that packagers have pinned by checksum.
 - ([#19559](https://github.com/rstudio/rstudio/issues/19559)): Fixed an issue where C/C++ code completion, diagnostics, and navigation stopped working in Rcpp and cpp11 source files compiled as C++20 or newer (the default as of R 4.6), most visibly on Linux. A precompiled header that can't be loaded is now rebuilt, and files are parsed without it in the meantime.
 - ([#17025](https://github.com/rstudio/rstudio/issues/17025)): Posit Assistant and GitHub Copilot no longer exit immediately on startup when `http_proxy` or `https_proxy` is set without a URL scheme (e.g. `proxy.example.com:8080`), a form R accepts.
 - ([#19512](https://github.com/rstudio/rstudio/issues/19512)): Fixed an issue on Windows where an R installation recorded in the registry under a path containing non-ASCII characters was not found at startup or listed in the R version chooser.
