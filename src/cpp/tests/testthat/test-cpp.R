@@ -282,9 +282,12 @@ test_that("problems with compile_flags.txt are reported, not swallowed", {
     expect_match(diagnostics[[1]]$message, "unknown warning option")
     expect_equal(diagnostics[[1]]$position$line, 1)
 
+    # the wording depends on the libclang: libclang 18 on Linux calls this an
+    # "unsupported option", Apple's and newer ones an "unknown argument"
     diagnostics <- lint("--bogus-flag")
     expect_length(diagnostics, 1L)
-    expect_match(diagnostics[[1]]$message, "unknown argument")
+    expect_match(diagnostics[[1]]$message, "unknown argument|unsupported option")
+    expect_match(diagnostics[[1]]$message, "--bogus-flag", fixed = TRUE)
 
     # a bad value is quoted apart from its option, which the parse still survives
     diagnostics <- lint("-fsanitize=bogus")
