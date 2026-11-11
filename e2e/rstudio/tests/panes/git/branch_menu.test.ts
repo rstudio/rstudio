@@ -13,27 +13,16 @@ import type { Locator, Page } from '@playwright/test';
 import { executeInConsoleChecked } from '@pages/console_pane.page';
 import { ruleSetTags, violationSummary } from '@utils/a11y';
 import { executeCommand, openProject } from '@utils/commands';
-import { sleep } from '@utils/constants';
 import { heredoc } from '@utils/heredoc';
 import { closeProjectIfOpen } from '@utils/project';
 import { rPathLiteral } from '@utils/r';
 import { useSuiteSandbox } from '@utils/sandbox';
+import { expectHoldsFor } from '@utils/expect-holds';
 
 // ElementIds.TB_GIT_BRANCH
 const BRANCH_BUTTON = '#rstudio_tb_git_branch';
 const SEARCH_LABEL = 'Search by branch name';
 const PROJECT_NAME = 'BranchMenuDemo';
-
-// Asserts continuously for `durationMs`, failing on the first violation;
-// expect.poll would pass on its first sample.
-async function expectHoldsFor(durationMs: number, assertions: () => Promise<void>): Promise<void> {
-  await assertions();
-  const deadline = Date.now() + durationMs;
-  while (Date.now() < deadline) {
-    await sleep(50);
-    await assertions();
-  }
-}
 
 function branchPopup(page: Page): Locator {
   return page.locator('.popupContent:visible').filter({
