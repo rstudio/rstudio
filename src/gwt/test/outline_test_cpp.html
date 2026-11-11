@@ -120,6 +120,7 @@ check("the scope tree is rebuilt after the edit",
 // A trailing return type names the function and is shown as its return type.
 check("functions with trailing return types are labelled",
       tree(makeSession([
+        "int x;",
         "auto a() -> int { return 1; }",
         "auto b(int x) -> decltype(x) { return x; }",
         "auto c() -> std::pair<int, int> { return {}; }",
@@ -132,18 +133,19 @@ check("functions with trailing return types are labelled",
         "};",
         ""
       ].join("\n"))),
-      ["a(): int [0..0]",
-       "b(int x): decltype(x) [1..1]",
-       "c(): std::pair<int, int> [2..2]",
-       "d(): std::function<void(int)> [3..3]",
-       "e() const noexcept: int& [4..4]",
-       "struct S [5..9]",
-       "  m() const: int [6..6]",
-       "  operator->(): T* [7..7]",
-       "  operator->(): T* [8..8]"].join("\n"));
+      ["a(): int [1..1]",
+       "b(int x): decltype(x) [2..2]",
+       "c(): std::pair<int, int> [3..3]",
+       "d(): std::function<void(int)> [4..4]",
+       "e() const noexcept: int& [5..5]",
+       "struct S [6..10]",
+       "  m() const: int [7..7]",
+       "  operator->(): T* [8..8]",
+       "  operator->(): T* [9..9]"].join("\n"));
 
 check("virt-specifiers after a trailing return type are not part of it",
       tree(makeSession([
+        "int x;",
         "struct S {",
         "  auto size() const -> std::size_t override { return 0; }",
         "  auto f() -> int final { return 1; }",
@@ -151,10 +153,10 @@ check("virt-specifiers after a trailing return type are not part of it",
         "};",
         ""
       ].join("\n"))),
-      ["S [0..4]",
-       "  size() const: std::size_t [1..1]",
-       "  f(): int [2..2]",
-       "  g(): int [3..3]"].join("\n"));
+      ["struct S [1..5]",
+       "  size() const: std::size_t [2..2]",
+       "  f(): int [3..3]",
+       "  g(): int [4..4]"].join("\n"));
 
 // The label keeps what precedes 'auto', as ordinary definitions keep what
 // precedes their name, so 'A::size' and 'B::size' can be told apart.
@@ -186,23 +188,25 @@ check("noexcept with an argument before a trailing return type",
 
 check("a requires-clause after a trailing return type is not part of it",
       tree(makeSession([
+        "int x;",
         "template <class T> auto f(T t) -> int requires std::integral<T> { return 1; }",
         "template <class T> auto g(T t) -> int requires (sizeof(T) > 1) { return 1; }",
         ""
       ].join("\n"))),
-      ["f(T t): <class T> int [0..0]",
-       "g(T t): template <class T> int [1..1]"].join("\n"));
+      ["f(T t): template <class T> int [1..1]",
+       "g(T t): template <class T> int [2..2]"].join("\n"));
 
 check("a function-try-block's 'try' is not part of the return type",
-      tree(makeSession("auto f() -> int try { return 1; } catch (...) { return 0; }\n")),
-      "f(): int [0..0]");
+      tree(makeSession("int x;\nauto f() -> int try { return 1; } catch (...) { return 0; }\n")),
+      "f(): int [1..1]");
 
 check("comparisons in a trailing return type are kept",
-      tree(makeSession("auto g() -> std::enable_if_t<N == 1, int> { return 1; }\n")),
-      "g(): std::enable_if_t<N == 1, int> [0..0]");
+      tree(makeSession("int x;\nauto g() -> std::enable_if_t<N == 1, int> { return 1; }\n")),
+      "g(): std::enable_if_t<N == 1, int> [1..1]");
 
 check("qualified and array trailing return declarations are labelled",
       tree(makeSession([
+        "int x;",
         "auto S::g() -> int { return 1; }",
         "template <typename T> auto S<T>::h() -> int { return 1; }",
         "auto a() -> int (*)[3] { return nullptr; }",
@@ -212,13 +216,13 @@ check("qualified and array trailing return declarations are labelled",
         "auto operator \"\" _u(long double x) -> decltype(x) { return x; }",
         ""
       ].join("\n"))),
-      ["g(): int [0..0]",
-       "h(): template <typename T> int S<T>:: [1..1]",
-       "a(): int (*)[3] [2..2]",
-       "k(): template <typename T> decltype(x) S<std::vector<T>>:: [3..3]",
-       "m(): template <> decltype(x) S<(8 >> 1)>:: [4..4]",
-       "n(): decltype(x) [5..5]",
-       "_u(long double x): decltype(x) operator \"\" [6..6]"].join("\n"));
+      ["g(): int S:: [1..1]",
+       "h(): template <typename T> int S<T>:: [2..2]",
+       "a(): int (*)[3] [3..3]",
+       "k(): template <typename T> decltype(x) S<std::vector<T>>:: [4..4]",
+       "m(): template <> decltype(x) S<(8 >> 1)>:: [5..5]",
+       "n(): decltype(x) [6..6]",
+       "_u(long double x): decltype(x) operator \"\" [7..7]"].join("\n"));
 
 // A '->' in a macro body is not a trailing return type of the code after it.
 check("a macro ending in a trailing return declarator does not capture the next definition",
@@ -235,12 +239,13 @@ check("a macro ending in a trailing return declarator does not capture the next 
       "twice(T t): template <class T> T [4..4]");
 
 check("lambdas with trailing return types are labelled",
-      tree(makeSession("auto l = [](int x) -> int { return x; };\n")),
-      "lambda (int x) -> int [0..0]");
+      tree(makeSession("int x;\nauto l = [](int x) -> int { return x; };\n")),
+      "lambda (int x) -> int [1..1]");
 
 // A '->' in an expression before a brace is not a trailing return type.
 check("member access before a brace does not make a function",
       tree(makeSession([
+        "int x;",
         "void f(P* p) {",
         "  if (p->x) { }",
         "  get()->y = Foo{1};",
@@ -253,9 +258,9 @@ check("member access before a brace does not make a function",
         "}",
         ""
       ].join("\n"))),
-      ["f(P* p) [0..9]",
-       "  lambda () [4..4]",
-       "  lambda () [6..6]"].join("\n"));
+      ["f(P* p): void [1..10]",
+       "  lambda () [5..5]",
+       "  lambda () [7..7]"].join("\n"));
 
 document.getElementById("passed").textContent = passed;
 document.getElementById("failed").textContent = failed;
