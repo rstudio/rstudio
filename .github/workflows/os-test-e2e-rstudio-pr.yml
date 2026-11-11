@@ -70,7 +70,16 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          # Full commit history, for the merge-base below, but almost no file
+          # contents: a sparse checkout makes this a blobless partial clone,
+          # roughly a tenth the size of a full one. The diff below compares
+          # trees, and git fetches on demand any blob it turns out to need
+          # (e.g. for rename detection). Only the local action and the
+          # version/RELEASE file it reads have to be on disk.
           fetch-depth: 0
+          sparse-checkout: |
+            .github
+            version
 
       - name: Resolve daily manifest URL
         id: manifest
