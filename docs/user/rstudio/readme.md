@@ -51,3 +51,13 @@ WARNING: Unknown var version specified in a var shortcode.
 5. Once you have confirmed that the changes are technically accurate and that the rendered output is visually correct, you can either open a Pull Request with your changes or an Issue with the suggested fix.
 
 Thank you for your contribution to open source - it will definitely help future users (and probably you)!
+
+## Images
+
+Screenshots taken on a high-DPI display are often several megabytes each, and every version of an image stays in the repository's history permanently. Before committing new or updated PNGs, optimize them from the root of the repository:
+
+```bash
+scripts/optimize-docs-images.sh docs/user/rstudio/path/to/image.png
+```
+
+The script requires [ImageMagick](https://imagemagick.org) 7. It converts each image to sRGB, caps its width at 2000 pixels, and reduces it to a 256-colour palette unless that would noticeably degrade it. Run it with no arguments to check every PNG in the guide; images that are already optimized are left alone.
