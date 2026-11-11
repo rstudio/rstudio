@@ -686,8 +686,18 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
       return clone.currentValue() === "auto";
    };
 
+   var isPreprocessorRow = function(cursor) {
+      var tokens = cursor.$tokens[cursor.$row] || [];
+      for (var i = 0; i < tokens.length; i++)
+         if (!/^\s*$/.test(tokens[i].value))
+            return tokens[i].type === "keyword.preproc";
+      return false;
+   };
+
    // From the last token of a trailing return type, e.g. the 'int' of
-   // 'auto f() const -> int', move to the token before its '->'.
+   // 'auto f() const -> int', move to the token before its '->'. Stopping at
+   // preprocessor lines keeps '#define API auto api() -> int' from claiming
+   // the next definition's brace.
    var bwdOverTrailingReturnType = function(cursor) {
 
       var clone = cursor.cloneCursor();
@@ -695,7 +705,7 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
          var value = clone.currentValue();
          if (value === "->")
             break;
-         if (contains([";", "{", "}", "("], value))
+         if (contains([";", "{", "}", "("], value) || isPreprocessorRow(clone))
             return false;
          if (value === ")" && !clone.bwdToMatchingToken())
             return false;

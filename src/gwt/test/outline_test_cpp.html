@@ -220,6 +220,20 @@ check("qualified and array trailing return declarations are labelled",
        "n(): decltype(x) [5..5]",
        "_u(long double x): decltype(x) operator \"\" [6..6]"].join("\n"));
 
+// A '->' in a macro body is not a trailing return type of the code after it.
+check("a macro ending in a trailing return declarator does not capture the next definition",
+      tree(makeSession([
+        "int x;",
+        "#define API auto api() -> int",
+        "/* doc */",
+        "template <class T>",
+        "T twice(T t) { return t + t; }",
+        "#define API2 auto api2() -> int",
+        "static int table[] = { 1, 2 };",
+        ""
+      ].join("\n"))),
+      "twice(T t): template <class T> T [4..4]");
+
 check("lambdas with trailing return types are labelled",
       tree(makeSession("auto l = [](int x) -> int { return x; };\n")),
       "lambda (int x) -> int [0..0]");
