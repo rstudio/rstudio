@@ -83,14 +83,10 @@ public class ScrollableToolbarPopupMenu extends ToolbarPopupMenu
          DomUtils.ensureVisibleVert(scrollPanel_.getElement(), topEl, 0);
    }
 
-   private boolean isItemRow(Element rowEl)
+   private static boolean isItemRow(Element rowEl)
    {
-      for (MenuItem item : menuBar_.getMenuItems())
-      {
-         if (item.getElement().getParentElement() == rowEl)
-            return true;
-      }
-      return false;
+      Element cellEl = rowEl.getFirstChildElement();
+      return cellEl != null && cellEl.hasClassName("gwt-MenuItem");
    }
    
    public int getSelectedIndex()
