@@ -2078,6 +2078,11 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
         `,
       );
 
+    // Each step reopens peekmove.R and reads the markers of the rows at its
+    // top. A cursor position saved in the step before would reopen it
+    // scrolled there, or not, depending on whether its save timer beat the
+    // close.
+    await setPref(page, 'restore_source_document_cursor_position', false);
     try {
       // from a change near the top to the deletion of lines 25 to 84
       await rewrite('lines[2] <- "m2 <- 0"; lines <- lines[-(25:84)]');
@@ -2249,6 +2254,7 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
         await expect(base).toHaveCount(0);
       }
       await clearPref(page, 'smooth_scrolling');
+      await clearPref(page, 'restore_source_document_cursor_position');
       await documentCloseAllNoSave(page);
       await executeInConsoleChecked(
         page,
