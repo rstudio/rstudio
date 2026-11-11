@@ -1384,6 +1384,7 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       for (; candidate < session.getLength() && offsetOf(candidate) < height; candidate++) {
          if (shows(candidate))
             return { row: candidate, offset: offsetOf(candidate) };
+         candidate = session.getRowFoldEnd(candidate);
       }
 
       if (candidate < session.getLength())
