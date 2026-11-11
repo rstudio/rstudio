@@ -30,19 +30,12 @@ Napi::Value setDockLabel(const Napi::CallbackInfo& info)
    return Napi::Value();
 }
 
-Napi::Value orderWindowBack(const Napi::CallbackInfo& info)
-{
-   // currently only implemented for macOS in dock_mac.mm
-   return Napi::Boolean::New(info.Env(), false);
-}
-
 } // end namespace dock
 } // end namespace rstudio
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
 
   RS_EXPORT_FUNCTION("setDockLabel", rstudio::dock::setDockLabel);
-  RS_EXPORT_FUNCTION("orderWindowBack", rstudio::dock::orderWindowBack);
 
   return exports;
 

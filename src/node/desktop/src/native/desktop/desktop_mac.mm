@@ -134,5 +134,26 @@ Napi::Value macOSSetDefaultApplicationForFileExtension(const Napi::CallbackInfo&
    return deferred.Promise();
 }
 
+Napi::Value macOSOrderWindowBack(const Napi::CallbackInfo& info)
+{
+   Napi::Env env = info.Env();
+
+   // BrowserWindow.getNativeWindowHandle() is a buffer holding an NSView*
+   if (info.Length() < 1 || !info[0].IsBuffer())
+      return Napi::Boolean::New(env, false);
+
+   Napi::Buffer<uint8_t> handle = info[0].As<Napi::Buffer<uint8_t>>();
+   if (handle.Length() != sizeof(NSView*))
+      return Napi::Boolean::New(env, false);
+
+   NSView* view = *reinterpret_cast<NSView**>(handle.Data());
+   NSWindow* window = [view window];
+   if (window == nil)
+      return Napi::Boolean::New(env, false);
+
+   [window orderBack:nil];
+   return Napi::Boolean::New(env, true);
+}
+
 } // end namespace desktop
 } // end namespace rstudio

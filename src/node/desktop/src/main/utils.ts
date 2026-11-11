@@ -31,7 +31,7 @@ import { changeLanguage } from './i18n-manager';
 import { randomUUID } from 'crypto';
 import { appState, hasApplication } from './app-state';
 import { isOzonePlatformChromiumArgument } from './electron-flags';
-import dock from '../native/dock.node';
+import desktop from '../native/desktop.node';
 
 // work around Electron resolving the application path to 'app.asar'
 const appPath = path.join(path.dirname(app.getAppPath()), 'app');
@@ -79,11 +79,15 @@ export function showWindowForAutomation(window: BrowserWindow): void {
 
   // showInactive() is what tells Electron and the page that the window is
   // visible, but on macOS it also orders the window in front of every other
-  // application. Sending it to the back before the next display pass means it
-  // first appears behind them instead.
+  // application (un-minimizing it first if need be). Sending it to the back
+  // before the next display pass means it first appears behind them instead.
   window.showInactive();
-  if (process.platform === 'darwin' && !window.isMinimized()) {
-    dock.orderWindowBack(window.getNativeWindowHandle());
+  if (process.platform !== 'darwin') {
+    return;
+  }
+
+  if (!desktop.macOSOrderWindowBack(window.getNativeWindowHandle())) {
+    logger().logWarning('Could not order an automation window behind other applications; it stays in front of them');
   }
 }
 
@@ -455,14 +459,21 @@ export function parseFilter(filters: string): FileFilter[] {
 }
 
 export function raiseAndActivateWindow(window: BrowserWindow): void {
-  if (window.isMinimized()) {
-    window.restore();
-  }
   // In automation mode, leave OS focus and the window stacking alone for
   // whatever the user is doing while the tests run.
   if (isAutomated()) {
+    // On macOS restore() orders the window in front of every other
+    // application once it has animated out of the dock, after it was sent to
+    // the back; showInactive() un-minimizes it without that.
+    if (window.isMinimized() && process.platform !== 'darwin') {
+      window.restore();
+    }
     showWindowForAutomation(window);
     return;
+  }
+
+  if (window.isMinimized()) {
+    window.restore();
   }
   window.moveTop();
   window.focus();

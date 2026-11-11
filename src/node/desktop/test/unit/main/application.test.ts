@@ -21,7 +21,7 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 
-import { BrowserWindow, dialog, Menu, MessageBoxOptions } from 'electron';
+import { app as electronApp, BrowserWindow, dialog, Menu, MessageBoxOptions } from 'electron';
 import i18next from 'i18next';
 
 import { createSinonStubInstance, restore, saveAndClear } from '../unit-utils';
@@ -30,6 +30,7 @@ import { ApplicationLaunch } from '../../../src/main/application-launch';
 import { clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
 import { NullLogger, setLogger } from '../../../src/core/logger';
 import { clearCoreSingleton } from '../../../src/core/core-state';
+import * as Utils from '../../../src/main/utils';
 import { randomString } from '../../../src/main/utils';
 import { FilePath } from '../../../src/core/file-path';
 import { kRunDiagnosticsOption } from '../../../src/main/args-manager';
@@ -204,9 +205,10 @@ describe('Application', () => {
   describe('Window creation', () => {
     // stands in for a tracked window; only the methods the tracker and
     // raiseAndActivateWindow() touch are provided
-    function trackedWindow(): { tracked: DesktopBrowserWindow; focus: sinon.SinonStub } {
+    function trackedWindow() {
       const focus = sinon.stub();
       const window = {
+        isVisible: sinon.stub().returns(true),
         isMinimized: sinon.stub().returns(false),
         restore: sinon.stub(),
         moveTop: sinon.stub(),
@@ -214,7 +216,7 @@ describe('Application', () => {
         focus: focus,
         addListener: sinon.stub(),
       };
-      return { tracked: { window } as unknown as DesktopBrowserWindow, focus };
+      return { tracked: { window } as unknown as DesktopBrowserWindow, focus, window };
     }
 
     function pendingSatellite(name: string): PendingWindow {
@@ -252,6 +254,26 @@ describe('Application', () => {
       // a denied request never reaches windowCreated(), so the pending entry
       // must not be left behind for the next unrelated window.open()
       assert.equal(app.pendingWindows.length, 0);
+    });
+
+    // the window is already on screen, wherever the user left it
+    it('denies a satellite whose name is already open without raising that window in automation mode', () => {
+      const app = new Application();
+      const { tracked, window } = trackedWindow();
+      app.windowTracker.addWindow('rstudio_satellite_source', tracked);
+      app.prepareForWindow(pendingSatellite('rstudio_satellite_source'));
+
+      electronApp.commandLine.appendSwitch('automation-agent');
+      try {
+        assert.equal(app.windowOpening('rstudio_satellite_source').action, 'deny');
+      } finally {
+        electronApp.commandLine.removeSwitch('automation-agent');
+      }
+
+      assert.isFalse(window.restore.called);
+      assert.isFalse(window.showInactive.called);
+      assert.isFalse(window.moveTop.called);
+      assert.isFalse(window.focus.called);
     });
 
     it('denies a secondary window whose name is already open and activates that window', () => {
@@ -306,6 +328,28 @@ describe('Application', () => {
 
       assert.equal(result.action, 'allow');
       assert.equal(app.pendingWindows.length, 1);
+    });
+
+    // windowOpening() creates the window hidden during automation runs
+    it('shows a new window without raising it in automation mode', () => {
+      const showWindowForAutomation = sinon.stub(Utils, 'showWindowForAutomation');
+      const app = new Application();
+      const newWindow = new BrowserWindow({ show: false });
+      setApplication(app);
+
+      try {
+        app.windowCreated(newWindow, newWindow.webContents, '_blank');
+        assert.isFalse(showWindowForAutomation.called);
+
+        electronApp.commandLine.appendSwitch('automation-agent');
+        app.windowCreated(newWindow, newWindow.webContents, '_blank');
+        assert.isTrue(showWindowForAutomation.calledOnceWithExactly(newWindow));
+      } finally {
+        electronApp.commandLine.removeSwitch('automation-agent');
+        showWindowForAutomation.restore();
+        newWindow.destroy();
+        clearApplicationSingleton();
+      }
     });
   });
 

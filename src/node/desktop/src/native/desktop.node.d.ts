@@ -124,3 +124,14 @@ export declare function macOSIsDefaultApplicationForFileExtension(extension: str
  * @param extension A file extension, without the leading dot.
  */
 export declare function macOSSetDefaultApplicationForFileExtension(extension: string): Promise<void>;
+
+/**
+ * (macOS only)
+ *
+ * Move a window behind every other window on screen, including those of
+ * other applications, without activating or hiding it.
+ *
+ * @param handle the window's BrowserWindow.getNativeWindowHandle()
+ * @returns whether the window was reordered; always false off macOS
+ */
+export declare function macOSOrderWindowBack(handle: Buffer): boolean;

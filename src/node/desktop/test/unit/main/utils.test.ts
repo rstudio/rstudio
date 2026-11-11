@@ -29,7 +29,7 @@ import { Application } from '../../../src/main/application';
 import * as Utils from '../../../src/main/utils';
 import { userHomePath } from '../../../src/core/user';
 import { FileFilter } from 'electron/main';
-import dock from '../../../src/native/dock.node';
+import desktop from '../../../src/native/desktop.node';
 
 describe('Utils', () => {
   const envVars: Record<string, string> = {
@@ -293,11 +293,13 @@ describe('Utils', () => {
   });
 
   describe('showWindowForAutomation', () => {
+    // as on macOS, showing a minimized window takes it out of the dock at once
     function fakeWindow(state: { visible: boolean; minimized: boolean }) {
+      const isMinimized = sinon.stub().returns(state.minimized);
       return {
         isVisible: sinon.stub().returns(state.visible),
-        isMinimized: sinon.stub().returns(state.minimized),
-        showInactive: sinon.stub(),
+        isMinimized: isMinimized,
+        showInactive: sinon.stub().callsFake(() => isMinimized.returns(false)),
         getNativeWindowHandle: sinon.stub().returns(Buffer.alloc(8)),
       };
     }
@@ -308,7 +310,7 @@ describe('Utils', () => {
 
     // the user may have clicked the window to watch the run
     it('leaves a window that is already on screen alone', () => {
-      const orderWindowBack = sinon.stub(dock, 'orderWindowBack').returns(true);
+      const orderWindowBack = sinon.stub(desktop, 'macOSOrderWindowBack').returns(true);
       const window = fakeWindow({ visible: true, minimized: false });
       Utils.showWindowForAutomation(window as unknown as BrowserWindow);
 
@@ -316,26 +318,100 @@ describe('Utils', () => {
       assert.isFalse(orderWindowBack.called);
     });
 
-    it('shows a hidden window, behind other applications on macOS', () => {
-      const orderWindowBack = sinon.stub(dock, 'orderWindowBack').returns(true);
-      const window = fakeWindow({ visible: false, minimized: false });
-      Utils.showWindowForAutomation(window as unknown as BrowserWindow);
+    for (const state of [
+      { name: 'hidden', visible: false, minimized: false },
+      { name: 'minimized', visible: false, minimized: true },
+    ]) {
+      it(`shows a ${state.name} window, behind other applications on macOS`, () => {
+        const orderWindowBack = sinon.stub(desktop, 'macOSOrderWindowBack').returns(true);
+        const window = fakeWindow(state);
+        Utils.showWindowForAutomation(window as unknown as BrowserWindow);
 
-      assert.isTrue(window.showInactive.calledOnce);
-      assert.strictEqual(orderWindowBack.callCount, process.platform === 'darwin' ? 1 : 0);
-      if (process.platform === 'darwin') {
-        assert.isTrue(orderWindowBack.calledAfter(window.showInactive));
+        assert.isTrue(window.showInactive.calledOnce);
+        assert.strictEqual(orderWindowBack.callCount, process.platform === 'darwin' ? 1 : 0);
+        if (process.platform === 'darwin') {
+          assert.isTrue(orderWindowBack.calledAfter(window.showInactive));
+        }
+      });
+    }
+
+    // otherwise nothing explains why the windows are back in front
+    it('logs a warning when the window could not be ordered back', function () {
+      if (process.platform !== 'darwin') {
+        this.skip();
       }
+
+      const log = new NullLogger();
+      const logWarning = sinon.stub(log, 'logWarning');
+      setLogger(log);
+      sinon.stub(desktop, 'macOSOrderWindowBack').returns(false);
+
+      Utils.showWindowForAutomation(fakeWindow({ visible: false, minimized: false }) as unknown as BrowserWindow);
+      assert.isTrue(logWarning.calledOnce);
+    });
+  });
+
+  describe('raiseAndActivateWindow', () => {
+    function fakeWindow(state: { visible: boolean; minimized: boolean }) {
+      return {
+        isVisible: sinon.stub().returns(state.visible),
+        isMinimized: sinon.stub().returns(state.minimized),
+        restore: sinon.stub(),
+        show: sinon.stub(),
+        showInactive: sinon.stub(),
+        moveTop: sinon.stub(),
+        focus: sinon.stub(),
+        getNativeWindowHandle: sinon.stub().returns(Buffer.alloc(8)),
+      };
+    }
+
+    function raiseInAutomation(window: ReturnType<typeof fakeWindow>): void {
+      app.commandLine.appendSwitch('automation-agent');
+      try {
+        Utils.raiseAndActivateWindow(window as unknown as BrowserWindow);
+      } finally {
+        app.commandLine.removeSwitch('automation-agent');
+      }
+    }
+
+    afterEach(() => {
+      sinon.restore();
     });
 
-    // a minimized window cannot be restacked
-    it('does not reorder a minimized window', () => {
-      const orderWindowBack = sinon.stub(dock, 'orderWindowBack').returns(true);
+    it('restores, raises and focuses the window', () => {
       const window = fakeWindow({ visible: false, minimized: true });
-      Utils.showWindowForAutomation(window as unknown as BrowserWindow);
+      Utils.raiseAndActivateWindow(window as unknown as BrowserWindow);
 
-      assert.isTrue(window.showInactive.calledOnce);
+      assert.isTrue(window.restore.calledOnce);
+      assert.isTrue(window.moveTop.calledOnce);
+      assert.isTrue(window.focus.calledOnce);
+      assert.isFalse(window.showInactive.called);
+    });
+
+    it('leaves a window that is already on screen alone in automation mode', () => {
+      const orderWindowBack = sinon.stub(desktop, 'macOSOrderWindowBack').returns(true);
+      const window = fakeWindow({ visible: true, minimized: false });
+      raiseInAutomation(window);
+
+      assert.isFalse(window.restore.called);
+      assert.isFalse(window.show.called);
+      assert.isFalse(window.showInactive.called);
+      assert.isFalse(window.moveTop.called);
+      assert.isFalse(window.focus.called);
       assert.isFalse(orderWindowBack.called);
+    });
+
+    // on macOS restore() would bring the window in front of other applications
+    it('un-minimizes a window without raising it in automation mode', () => {
+      const orderWindowBack = sinon.stub(desktop, 'macOSOrderWindowBack').returns(true);
+      const window = fakeWindow({ visible: false, minimized: true });
+      raiseInAutomation(window);
+
+      assert.strictEqual(window.restore.callCount, process.platform === 'darwin' ? 0 : 1);
+      assert.isTrue(window.showInactive.calledOnce);
+      assert.strictEqual(orderWindowBack.callCount, process.platform === 'darwin' ? 1 : 0);
+      assert.isFalse(window.moveTop.called);
+      assert.isFalse(window.focus.called);
     });
   });
 });

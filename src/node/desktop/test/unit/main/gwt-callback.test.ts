@@ -258,6 +258,38 @@ describe('DesktopCallback', () => {
     });
   });
 
+  describe('desktop_activate_minimal_window', () => {
+    function namedWindow(name: string) {
+      return { ...fakeBrowserWindow(), webContents: { mainFrame: { name: name } } };
+    }
+
+    it('focuses the named window', () => {
+      const viewer = namedWindow('viewer');
+      sinon.stub(BrowserWindow, 'getAllWindows').returns([viewer as unknown as BrowserWindow]);
+      ipcMain.emit('desktop_activate_minimal_window', {}, 'viewer');
+
+      assert.isTrue(viewer.moveTop.calledOnce);
+      assert.isTrue(viewer.focus.calledOnce);
+    });
+
+    it('leaves a visible window alone in automation mode', () => {
+      const viewer = namedWindow('viewer');
+      sinon.stub(BrowserWindow, 'getAllWindows').returns([viewer as unknown as BrowserWindow]);
+
+      app.commandLine.appendSwitch('automation-agent');
+      try {
+        ipcMain.emit('desktop_activate_minimal_window', {}, 'viewer');
+      } finally {
+        app.commandLine.removeSwitch('automation-agent');
+      }
+
+      assert.isFalse(viewer.focus.called);
+      assert.isFalse(viewer.show.called);
+      assert.isFalse(viewer.showInactive.called);
+      assert.isFalse(viewer.moveTop.called);
+    });
+  });
+
   describe('desktop_bring_main_frame_behind_active', () => {
     // this callback means "make the main window as visible as possible, but leave
     // focus alone"; touching focus at all strands it on the main window under

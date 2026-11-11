@@ -26,6 +26,7 @@ namespace desktop {
 
 Napi::Value macOSIsDefaultApplicationForFileExtension(const Napi::CallbackInfo& info);
 Napi::Value macOSSetDefaultApplicationForFileExtension(const Napi::CallbackInfo& info);
+Napi::Value macOSOrderWindowBack(const Napi::CallbackInfo& info);
 
 } // end namespace desktop
 } // end namespace rstudio
