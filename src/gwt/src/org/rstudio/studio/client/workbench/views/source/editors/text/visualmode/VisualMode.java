@@ -843,9 +843,10 @@ public class VisualMode implements VisualModeEditorSync,
         commands_.vcsShowChangesSideBySide()
       );
       
-      // initially disable code commands (they will be re-enabled later when an
-      // editor has focus)
-      if (isActivated())
+      // Disable code commands until a chunk editor has focus. Leave them alone
+      // while one does: this also runs on each command refresh, e.g. when the
+      // first edit made in a chunk marks the document dirty.
+      if (isActivated() && activeEditor_ == null)
       {
          setCodeCommandsEnabled(false);
       }

@@ -3043,6 +3043,16 @@ public class TextEditingTarget implements
 
    public void insertCode(String source, boolean blockMode)
    {
+      // In visual mode the cursor is in a chunk's own editor. The source
+      // editor is hidden, so an insert there would go unseen and then be
+      // written to the file on the next save.
+      if (isVisualEditorActive() || isVisualModeActivated())
+      {
+         visualMode_.performWithActiveEditor(
+            (display) -> display.insertCode(source, blockMode));
+         return;
+      }
+
       insertCode(activeDisplay(), source, blockMode);
    }
 
