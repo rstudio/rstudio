@@ -1,5 +1,6 @@
 import { expect, type Page, type Request } from '@playwright/test';
 import { ENV_PANEL, ENV_TAB } from '../pages/environment_pane.page';
+import { PlotsPane, PLOTS_TAB } from '../pages/plots_pane.page';
 import { executeCommand } from './commands';
 import { TIMEOUTS } from './constants';
 
@@ -122,6 +123,22 @@ export async function withFilesTabsetTab<T>(
   body: () => Promise<T>,
 ): Promise<T> {
   return withTabsetTab(page, FILES_HOME, tab, select, body);
+}
+
+/**
+ * Run `body` with the Plots pane shown in place of Files. Once an earlier
+ * session in the run has quit, Files lists the ~/.Rhistory it wrote, and that
+ * row's focusable cell has no role (focus-order-semantics). This keeps the
+ * defect out of scans aimed at other panes. initial-state keeps Files shown,
+ * so it reports the defect whenever ~/.Rhistory exists.
+ */
+export async function withPlotsInsteadOfFiles<T>(page: Page, body: () => Promise<T>): Promise<T> {
+  return withFilesTabsetTab(page, PLOTS_TAB,
+    () => executeCommand(page, 'activatePlots'),
+    async () => {
+      await expect(new PlotsPane(page).plotImage).toBeVisible({ timeout: TIMEOUTS.consoleReady });
+      return body();
+    });
 }
 
 /** As `withFilesTabsetTab`, for a tab of the Environment tabset. */

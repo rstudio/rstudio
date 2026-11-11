@@ -16,35 +16,46 @@
 #
 
 #
-# This script creates a directory (hunspell_dictionaries) that contains the 
-# latest hunspell dictionaries (and dic_delta files) from chromium. It also
-# builds two archives (english-dictionaries.zip and all-dictionaries.zip) 
-# that can be used as the basis for rstudio dictionaries. Note that after 
-# this script is run by RStudio we upload the files to S3 for subsequent 
-# download to dependencies/common/hunspell_dictionaries as part of the 
-# install-dependencies script
+# This script clones (or updates) a directory (hunspell_dictionaries) holding
+# the latest hunspell dictionaries (and dic_delta files) from chromium, then
+# builds two archives, core-dictionaries-<date>.zip and
+# all-dictionaries-<date>.zip, in the current directory. To publish them,
+# upload both to the dictionaries/ folder of the rstudio-buildtools S3 bucket
+# (with public-read). Never overwrite an existing object there: packagers pin
+# these archives by checksum, so add a suffix if the name is taken. Then
+# update the dates referenced by dependencies/common/install-dictionaries,
+# dependencies/windows/install-dependencies.cmd, and
+# src/cpp/session/modules/SessionSpelling.R.
 #
 
 set -e
 
 # install dir
-INSTALL_DIR=`pwd`
+INSTALL_DIR=$(pwd)
 
 # get the latest dictionaries and switch to the dictionary directory
 HUNSPELL_DICTIONARIES=hunspell_dictionaries
-svn co https://src.chromium.org/svn/trunk/deps/third_party/hunspell_dictionaries/ $HUNSPELL_DICTIONARIES
+HUNSPELL_DICTIONARIES_REPO=https://chromium.googlesource.com/chromium/deps/hunspell_dictionaries
+if [ -d "$HUNSPELL_DICTIONARIES/.git" ]; then
+   git -C "$HUNSPELL_DICTIONARIES" pull --ff-only
+else
+   git clone --depth 1 "$HUNSPELL_DICTIONARIES_REPO" "$HUNSPELL_DICTIONARIES"
+fi
 cd $HUNSPELL_DICTIONARIES
 
+DICTIONARIES_VERSION=$(date +%Y-%m-%d)
+
+# The ls | grep pipelines below are safe (SC2010) because the Chromium
+# dictionary file names contain no whitespace or other special characters.
+
 # build the core archive
-CORE_DICTIONARIES=core-dictionaries.zip
-rm -f $CORE_DICTIONARIES
-ls | egrep '^(en_US|en_GB|en_CA|en_AU)\..*$' | zip -@ $CORE_DICTIONARIES
+CORE_DICTIONARIES="core-dictionaries-${DICTIONARIES_VERSION}.zip"
+rm -f "$INSTALL_DIR/$CORE_DICTIONARIES"
+# shellcheck disable=SC2010
+ls | grep -E '^(en_US|en_GB|en_CA|en_AU)\..*$' | zip -@ "$INSTALL_DIR/$CORE_DICTIONARIES"
 
 # build the universal archive
-ALL_DICTIONARIES=all-dictionaries.zip
-rm -f $ALL_DICTIONARIES
-ls | egrep '^(bg_BG|ca_ES|cs_CZ|da_DK|de_DE|de_DE_neu|el_GR|en_US|en_GB|en_CA|en_AU|es_ES|fr_FR|hr_HR|hu-HU|id_ID|it_IT|lt_LT|lv_LV|nb_NO|nl_NL|pl_PL|pt_BR|pt_PT|ro_RO|ru_RU|sh|sk_SK|sl_SI|sr|sv_SE|uk_UA|vi_VN)\..*$' | zip -@ $ALL_DICTIONARIES
-
-# return to install dir
-cd $INSTALL_DIR
-
+ALL_DICTIONARIES="all-dictionaries-${DICTIONARIES_VERSION}.zip"
+rm -f "$INSTALL_DIR/$ALL_DICTIONARIES"
+# shellcheck disable=SC2010
+ls | grep -E '^(bg_BG|ca_ES|cs_CZ|da_DK|de_DE|de_DE_neu|el_GR|en_US|en_GB|en_CA|en_AU|es_ES|fr_FR|hr_HR|hu-HU|id_ID|it_IT|lt_LT|lv_LV|nb_NO|nl_NL|pl_PL|pt_BR|pt_PT|ro_RO|ru_RU|sh|sk_SK|sl_SI|sr|sv_SE|uk_UA|vi_VN)\..*$' | zip -@ "$INSTALL_DIR/$ALL_DICTIONARIES"
