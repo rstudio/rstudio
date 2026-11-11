@@ -106,7 +106,7 @@ test_that("compile_flags.txt paths resolve against its directory", {
     expect_length(messages(), 0L)
 })
 
-test_that("files are parsed with the default precompiled header", {
+test_that("C++20 files load their precompiled header, and parse without one libclang rejects", {
     skip_if_not_installed("Rcpp")
     skip_if_not(.rs.isClangAvailable())
 
@@ -117,19 +117,42 @@ test_that("files are parsed with the default precompiled header", {
     dir.create(dir)
     on.exit(unlink(dir, recursive = TRUE), add = TRUE)
 
+    # With modules enabled (C++20 and newer), libclang refuses a precompiled
+    # header built with other preprocessor options than the file including
+    # it (#19559). C++20 is only R's default as of R 4.6, so ask for it. The
+    # header is force-included so that the precompiled header, which is
+    # built with these flags too, depends on a file we can change below.
+    header <- file.path(dir, "extra.h")
+    writeLines("#define EXTRA 1", header)
+    writeLines(c("-std=c++20", "-include", "extra.h"), file.path(dir, "compile_flags.txt"))
+
     # a file libclang fails to parse reports no diagnostics at all, so ask
-    # for one. R's default standard is C++20 as of R 4.6, where libclang
-    # refuses a precompiled header built with other preprocessor options
-    # than the file including it (#19559)
-    path <- file.path(dir, "parsed.cpp")
-    writeLines(c(
+    # for one
+    contents <- c(
         "#include <Rcpp.h>",
         "static_assert(false, \"file was parsed\");"
-    ), path)
+    )
 
+    rejected <- .Call("rs_clangRejectedPrecompiledHeaders", PACKAGE = "(embedding)")
+
+    # parsed, and with the precompiled header rather than around it
+    path <- file.path(dir, "loaded.cpp")
+    writeLines(contents, path)
     diagnostics <- .rs.invokeRpc("get_cpp_diagnostics", path)
     messages <- vapply(diagnostics, `[[`, character(1), "message")
     expect_match(messages, "file was parsed", fixed = TRUE, all = FALSE)
+    expect_setequal(.Call("rs_clangRejectedPrecompiledHeaders", PACKAGE = "(embedding)"), rejected)
+
+    # libclang refuses a precompiled header once a file it was built from
+    # has changed, failing the whole parse; the file is then parsed without
+    Sys.setFileTime(header, Sys.time() + 3600)
+
+    path <- file.path(dir, "rejected.cpp")
+    writeLines(contents, path)
+    diagnostics <- .rs.invokeRpc("get_cpp_diagnostics", path)
+    messages <- vapply(diagnostics, `[[`, character(1), "message")
+    expect_match(messages, "file was parsed", fixed = TRUE, all = FALSE)
+    expect_length(setdiff(.Call("rs_clangRejectedPrecompiledHeaders", PACKAGE = "(embedding)"), rejected), 1L)
 })
 
 test_that("compile_flags.txt flags are honored with precompiled headers", {

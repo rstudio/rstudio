@@ -17,6 +17,8 @@
 #define CORE_LIBCLANG_SOURCE_INDEX_HPP
 
 #include <map>
+#include <set>
+#include <string>
 #include <vector>
 #include <ctime>
 
@@ -35,6 +37,22 @@ namespace libclang {
 
 unsigned parseTranslationUnitOptions();
 unsigned precompiledHeaderOptions();
+
+// Parse a translation unit. libclang fails the whole parse when it can't
+// load a precompiled header named in the arguments (e.g. one built with
+// other options, by another libclang, or from headers changed since), so
+// in that case the file is parsed again without it: slower, but everything
+// still works. Returns null if the file can't be parsed either way.
+CXTranslationUnit parseWithPrecompiledHeaderFallback(
+      CXIndex index,
+      const std::string& filename,
+      const std::vector<std::string>& args,
+      struct CXUnsavedFile* unsavedFiles,
+      unsigned numUnsavedFiles,
+      unsigned options);
+
+// The precompiled headers that had to be parsed around in this session.
+const std::set<std::string>& rejectedPrecompiledHeaders();
 
 struct CompilationDatabase
 {

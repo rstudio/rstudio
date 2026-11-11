@@ -187,6 +187,16 @@ SEXP rs_setClangDiagnostics(SEXP levelSEXP)
    return R_NilValue;
 }
 
+// lets tests tell a file parsed with its precompiled header from one
+// parsed around it, as both report the same diagnostics
+SEXP rs_clangRejectedPrecompiledHeaders()
+{
+   const std::set<std::string>& paths = libclang::rejectedPrecompiledHeaders();
+
+   r::sexp::Protect rProtect;
+   return r::sexp::create(std::vector<std::string>(paths.begin(), paths.end()), &rProtect);
+}
+
 } // anonymous namespace
    
 bool isAvailable()
@@ -199,6 +209,7 @@ Error initialize()
    // register diagnostics functions
    RS_REGISTER_CALL_METHOD(rs_isLibClangAvailable);
    RS_REGISTER_CALL_METHOD(rs_setClangDiagnostics);
+   RS_REGISTER_CALL_METHOD(rs_clangRejectedPrecompiledHeaders);
 
    ExecBlock initBlock;
    using boost::bind;

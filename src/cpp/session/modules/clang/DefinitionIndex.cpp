@@ -16,14 +16,12 @@
 #include "DefinitionIndex.hpp"
 
 #include <deque>
-#include <gsl/gsl-lite.hpp>
 
 #include <shared_core/FilePath.hpp>
 #include <core/DateTime.hpp>
 #include <core/PerformanceTimer.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/libclang/LibClang.hpp>
-#include <core/system/ProcessArgs.hpp>
 #include <session/IncrementalFileChangeHandler.hpp>
 
 #include <session/SessionModuleContext.hpp>
@@ -245,15 +243,11 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
                    1 /* Exclude PCH */,
                    (sourceIndex().verbose() > 0) ? 1 : 0);
 
-         // get args in form clang expects
-         core::system::ProcessArgs argsArray(compileArgs);
-
          // parse the translation unit
-         CXTranslationUnit tu = libclang::clang().parseTranslationUnit(
+         CXTranslationUnit tu = parseWithPrecompiledHeaderFallback(
                                index,
-                               file.c_str(),
-                               argsArray.args(),
-                               gsl::narrow_cast<int>(argsArray.argCount()),
+                               file,
+                               compileArgs,
                                nullptr, 0, // no unsaved files
                                parseTranslationUnitOptions());
 
