@@ -378,8 +378,14 @@ public class BranchToolbarButton extends ToolbarMenuButton
                                       Roles.getMenuitemradioRole(),
                                       worktree.isCurrent(),
                                       command);
+         // the name the item's content gives it, with the group's prefixed
          if (worktree == worktrees.get(0))
-            nameWithGroup(item, WORKTREES, name + " " + path);
+         {
+            String itemName = name + " " + path;
+            if (newSession != null)
+               itemName += " " + constants_.openWorktreeInNewSession();
+            nameWithGroup(item, WORKTREES, itemName);
+         }
          menu.addItem(item);
       }
    }
