@@ -15,10 +15,13 @@
 
 #include <gtest/gtest.h>
 
+#include <boost/scope_exit.hpp>
+
 #include <shared_core/FilePath.hpp>
 #include <shared_core/Hash.hpp>
 #include <core/Algorithm.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/libclang/LibClang.hpp>
 
 #include "CompilationDatabase.hpp"
 
@@ -224,15 +227,15 @@ TEST_F(CompileFlagsTest, SystemIncludeArgsAreSearchedInReportedOrder)
 
    // 'std' stands in for the C++ standard library, whose <stddef.h> wraps
    // the one in 'builtin', the compiler's own headers
-   FilePath std = root_.completeChildPath("std");
-   FilePath builtin = root_.completeChildPath("builtin");
-   std.ensureDirectory();
-   builtin.ensureDirectory();
-   writeStringToFile(std.completeChildPath("stddef.h"), R"(
+   FilePath stdDir = root_.completeChildPath("std");
+   FilePath builtinDir = root_.completeChildPath("builtin");
+   stdDir.ensureDirectory();
+   builtinDir.ensureDirectory();
+   writeStringToFile(stdDir.completeChildPath("stddef.h"), R"(
 #define STD_STDDEF_SEEN 1
 #include_next <stddef.h>
 )");
-   writeStringToFile(builtin.completeChildPath("stddef.h"), R"(
+   writeStringToFile(builtinDir.completeChildPath("stddef.h"), R"(
 #define BUILTIN_STDDEF_SEEN 1
 )");
 
@@ -251,9 +254,9 @@ TEST_F(CompileFlagsTest, SystemIncludeArgsAreSearchedInReportedOrder)
    // directories too, as the standard library's directory is in practice;
    // that is what gets a '-I' for the same directory dropped
    std::vector<std::string> args = {"-nostdinc"};
-   std::vector<std::string> includeArgs = systemIncludeArgs({std.getAbsolutePath(), builtin.getAbsolutePath()});
+   std::vector<std::string> includeArgs = systemIncludeArgs({stdDir.getAbsolutePath(), builtinDir.getAbsolutePath()});
    args.insert(args.end(), includeArgs.begin(), includeArgs.end());
-   args.push_back("-isystem" + std.getAbsolutePath());
+   args.push_back("-isystem" + stdDir.getAbsolutePath());
 
    std::vector<const char*> argv;
    for (const std::string& arg : args)
@@ -269,11 +272,26 @@ TEST_F(CompileFlagsTest, SystemIncludeArgsAreSearchedInReportedOrder)
       0,
       CXTranslationUnit_None);
 
-   ASSERT_NE(tu, nullptr);
-   EXPECT_EQ(lib.getNumDiagnostics(tu), 0u);
+   // runs when an assertion returns early, too
+   BOOST_SCOPE_EXIT(&lib, &index, &tu)
+   {
+      if (tu != nullptr)
+         lib.disposeTranslationUnit(tu);
 
-   lib.disposeTranslationUnit(tu);
-   lib.disposeIndex(index);
+      lib.disposeIndex(index);
+   }
+   BOOST_SCOPE_EXIT_END
+
+   ASSERT_NE(tu, nullptr);
+
+   // list the diagnostics, so that a failure says which '#error' fired (or
+   // what else this libclang had to report)
+   std::string diagnostics;
+   unsigned numDiagnostics = lib.getNumDiagnostics(tu);
+   for (unsigned i = 0; i < numDiagnostics; i++)
+      diagnostics += libclang::Diagnostic(lib.getDiagnostic(tu, i)).format() + "\n";
+
+   EXPECT_EQ(numDiagnostics, 0u) << diagnostics;
 }
 
 } // anonymous namespace
