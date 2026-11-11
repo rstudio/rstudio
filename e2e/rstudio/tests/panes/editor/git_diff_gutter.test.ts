@@ -3356,6 +3356,94 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     }
   });
 
+  test('keeps a line in place, and the sides in step, as padding above it comes and goes (#19579)', async ({
+    rstudioPage: page,
+  }) => {
+    // 60 lines removed near the top: side by side, the document is padded
+    // for them, above the line watched here (near the end of the document,
+    // where the scroll offset left as it was would be past the end once
+    // the padding goes).
+    const padPath = `${projectDir()}/padshift.R`;
+    await executeInConsoleChecked(
+      page,
+      `writeLines(sprintf("p%d <- %d", 1:300, 1:300), ${rPathLiteral(padPath)})`,
+    );
+    await commitAll(page, 'padshift', [padPath]);
+    await executeInConsoleChecked(
+      page,
+      `writeLines(sprintf("p%d <- %d", 1:300, 1:300)[-(20:79)], ${rPathLiteral(padPath)})`,
+    );
+    await openFile(page, padPath);
+    await expect.poll(() => gutterAttached(page), { timeout: 30000 }).toBe(true);
+
+    type PlacedEditor = {
+      renderer: {
+        scroller: HTMLElement;
+        lineHeight: number;
+        textToScreenCoordinates(row: number, column: number): { pageY: number };
+      };
+    };
+    // a row's offset from the top of its view, in lines, once drawn
+    const rowOffset = (view: Locator, row: number) =>
+      view.evaluate(async (el, row) => {
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        const renderer = ((el as AceEditorElement).env?.editor as unknown as PlacedEditor).renderer;
+        const top = renderer.scroller.getBoundingClientRect().top;
+        return Math.round((renderer.textToScreenCoordinates(row, 0).pageY - top) / renderer.lineHeight);
+      }, row);
+    const live = page
+      .locator("[class*='rstudio_source_panel'] .ace_editor:not(.ace_git-diff-base)")
+      .filter({ has: page.locator(`.${GUTTER_ATTACHED}`) });
+    const base = page.locator(BASE_EDITOR);
+    const editor = new AceEditor(page, '');
+    const git = async (args: string) => {
+      await executeInConsoleChecked(
+        page,
+        `if (system2("git", c(${gitC()}, ${args})) != 0) stop("git failed")`,
+        { timeout: 60000 },
+      );
+      await executeCommand(page, 'activateVcs');
+      await executeCommand(page, 'vcsRefresh');
+    };
+
+    // row 232 of the document is row 292 of the base
+    const ROW = 232;
+    const PADDED = ROW + 60;
+    await editor.gotoLine(ROW + 1);
+    await expect.poll(() => rowOffset(live, ROW)).toBeGreaterThan(0);
+    const place = await rowOffset(live, ROW);
+
+    try {
+      // opening pads the document above the line, which stays where it is;
+      // the base pane joins it there
+      await executeCommand(page, 'vcsShowChangesSideBySide');
+      await expect(base).toBeVisible({ timeout: 10000 });
+      await expect.poll(() => screenRows(live, [ROW]), { timeout: 30000 }).toEqual([PADDED]);
+      await expect.poll(() => rowOffset(live, ROW), { timeout: 10000 }).toBe(place);
+      await expect.poll(() => rowOffset(base, PADDED), { timeout: 10000 }).toBe(place);
+
+      // staging the removal takes the padding out
+      await git(`"add", "--", "padshift.R"`);
+      await expect.poll(() => screenRows(live, [ROW]), { timeout: 30000 }).toEqual([ROW]);
+      await expect.poll(() => rowOffset(live, ROW), { timeout: 10000 }).toBe(place);
+      await expect.poll(() => rowOffset(base, ROW), { timeout: 10000 }).toBe(place);
+
+      // and unstaging it puts the padding back
+      await git(`"reset", "-q", "--", "padshift.R"`);
+      await expect.poll(() => screenRows(live, [ROW]), { timeout: 30000 }).toEqual([PADDED]);
+      await expect.poll(() => rowOffset(live, ROW), { timeout: 10000 }).toBe(place);
+      await expect.poll(() => rowOffset(base, PADDED), { timeout: 10000 }).toBe(place);
+    } finally {
+      if ((await base.count()) > 0) {
+        await executeCommand(page, 'removeEditorSplit');
+        await expect(base).toHaveCount(0);
+      }
+      await documentCloseAllNoSave(page);
+      await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(padPath)}))`);
+      await commitAll(page, 'remove padshift', [padPath]);
+    }
+  });
+
   test('disables the commands in visual mode', async ({ rstudioPage: page }) => {
     // the gutter belongs to the source editor, which visual mode hides
     const rmdPath = `${projectDir()}/doc.Rmd`;

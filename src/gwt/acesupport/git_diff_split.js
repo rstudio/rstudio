@@ -212,17 +212,24 @@ PaddingPlan.prototype.sameWidget = function(current, planned) {
           this.sameWidget(current.$oldWidget, planned.$oldWidget);
 };
 
-PaddingPlan.prototype.apply = function(session, planned) {
+// Whether a planned layout differs from the one its session has.
+PaddingPlan.prototype.differs = function(session, planned) {
    var current = session.lineWidgets || [];
    var widgets = planned.lineWidgets;
    var length = Math.max(current.length, widgets.length);
-   var row = 0;
-   while (row < length && this.sameWidget(current[row], widgets[row]))
-      row++;
-   if (row === length)
+   for (var row = 0; row < length; row++) {
+      if (!this.sameWidget(current[row], widgets[row]))
+         return true;
+   }
+   return false;
+};
+
+PaddingPlan.prototype.apply = function(session, planned) {
+   if (!this.differs(session, planned))
       return;
 
    var self = this;
+   var widgets = planned.lineWidgets;
    var restore = function(widget) {
       if (!widget)
          return widget;
@@ -248,6 +255,32 @@ PaddingPlan.prototype.apply = function(session, planned) {
    session.$resetRowCache(0);
    session._emit("changeFold", { data: { start: { row: 0 } } });
 };
+
+// The rows of padding above a line in a planned layout (see PaddingPlan):
+// the line's screen row there, less its screen row with the padding left
+// out. Both go by the document, folds and wrapping as they are now.
+function paddingAbove(planned, row) {
+   if (!planned)
+      return 0;
+
+   var bare = Object.create(planned);
+   bare.lineWidgets = planned.lineWidgets.map(function(widget) {
+      if (!widget || isPadding(widget))
+         return undefined;
+      if (!widget.gitDiffLentRows)
+         return widget;
+
+      var own = Object.assign({}, widget);
+      returnRows(own);
+      return own;
+   });
+
+   [planned, bare].forEach(function(session) {
+      session.$docRowCache = [];
+      session.$screenRowCache = [];
+   });
+   return planned.documentToScreenRow(row, 0) - bare.documentToScreenRow(row, 0);
+}
 
 // Whether two fold lines hold a pair of mirrored folds (see mirrorFold).
 function foldLinesPaired(a, b) {
@@ -290,8 +323,12 @@ var GitDiffSplitView = function(gutter, container, strings) {
    this.foldsStale = true;
    this.hasBase = false;
    this.scrollSynced = false;
+   this.alignedLive = null;
+   this.baseChanged = true;
+   this.liveEdited = false;
 
    this.onBaseFocus = this.onBaseFocus.bind(this);
+   this.onLiveChange = this.onLiveChange.bind(this);
    this.onLiveFocus = this.onLiveFocus.bind(this);
    this.syncFont = this.syncFont.bind(this);
    this.syncMode = this.syncMode.bind(this);
@@ -445,6 +482,7 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
 
    this.attachLiveHandlers = function() {
       var session = this.liveEditor.session;
+      session.on("change", this.onLiveChange);
       session.on("changeMode", this.syncMode);
       session.on("changeTabSize", this.syncTabSize);
       session.on("changeWrapMode", this.syncWrap);
@@ -456,6 +494,7 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
 
    this.detachLiveHandlers = function() {
       var session = this.liveEditor.session;
+      session.off("change", this.onLiveChange);
       session.off("changeMode", this.syncMode);
       session.off("changeTabSize", this.syncTabSize);
       session.off("changeWrapMode", this.syncWrap);
@@ -862,10 +901,63 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
             view.$padWrapDifferences();
          }
          view.$padChanges();
+
+         // (the line to keep in place is picked before the padding moves)
+         var keep = this.baseChanged && !this.liveEdited && plan.differs(this.sessionB, view.sessionB);
+         var anchor = keep ? this.$liveViewAnchor() : null;
          plan.apply(this.sessionA, view.sessionA);
          plan.apply(this.sessionB, view.sessionB);
+         if (anchor)
+            this.$keepLiveView(anchor.row, view.sessionB);
+
+         this.alignedLive = view.sessionB;
+         this.baseChanged = false;
+         this.liveEdited = false;
       } finally {
          this.$aligning = false;
+      }
+   };
+
+   // A new base (a change staged or unstaged; the view opening) brings
+   // padding or takes it away, and above the lines in view that moves them,
+   // the scroll offset being kept in pixels. Ace's renderer makes up for it
+   // only roughly: by document rows rather than screen rows, in its own
+   // pane (the base pane is left behind when it has just scrolled), and not
+   // for a view left past the end of a document grown shorter. So both
+   // panes are scrolled by the rows of padding that came or went above a
+   // line of the document in view (see $liveViewAnchor), which keeps that
+   // line where it is.
+   //
+   // The padding is counted in the layout planned against the one planned
+   // last, not the one the document has: that can be short of its padding
+   // for a moment (the action bar closes as the base changes, with the
+   // padding it had taken on), which the new layout only puts back. An edit
+   // since the last layout moves the rows it was planned for; the view is
+   // left as it is then, as it is when the padding changes for any other
+   // reason (a fold, a widget, the wrapping), where the lines move with
+   // what changed.
+   this.$keepLiveView = function(row, planned) {
+      var rows = paddingAbove(planned, row) - paddingAbove(this.alignedLive, row);
+      if (rows === 0)
+         return;
+
+      // Ace's scroll sync is kept out of it: it passes the document's
+      // offset on to the base pane, but not within half a second of the
+      // base pane scrolling (when it takes the document's scroll for an
+      // echo), and would then pass over the base pane's next scroll
+      // likewise. It is told where the two panes are instead.
+      var lineHeight = this.liveEditor.renderer.layerConfig.lineHeight;
+      var top = Math.max(this.sessionB.getScrollTop() + rows * lineHeight, 0);
+      var syncing = this.$syncScroll;
+      this.$syncScroll = false;
+      try {
+         this.sessionB.setScrollTop(top);
+         if (this.hasBase) {
+            this.sessionA.setScrollTop(top);
+            this.scrollA = this.scrollB = top;
+         }
+      } finally {
+         this.$syncScroll = syncing;
       }
    };
 
@@ -1226,6 +1318,8 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       }
 
       if (session.getValue() !== text) {
+         this.baseChanged = true;
+
          // Replacing the text removes the base's folds, which Ace's fold
          // sync would carry over to their live counterparts; the document
          // keeps its folds, and the base gets them back once the diff
@@ -1327,6 +1421,11 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       this.baseFocusedLast = false;
    };
 
+   // (see $keepLiveView)
+   this.onLiveChange = function() {
+      this.liveEdited = true;
+   };
+
    // Whether the base pane, rather than the document, held the cursor last.
    // The gutter's cursor-driven commands go by this rather than by focus at
    // the time: a command chosen from a menu with the mouse has taken focus
@@ -1408,6 +1507,7 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
    this.dispose = function() {
       var anchor = this.$liveViewAnchor();
       this.disposed = true;
+      this.alignedLive = null;
       this.gutter.setSplitView(null);
       this.detachLiveHandlers();
       this.$untrackFoldOperations.forEach(function(restore) {

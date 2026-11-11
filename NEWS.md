@@ -14,6 +14,7 @@
 
 ### Fixed
 - ([#19578](https://github.com/rstudio/rstudio/issues/19578)): Fixed an issue where turning off Show Changes Side by Side could scroll the editor away from the line being viewed, often to the end of the document, when lines had been removed above it.
+- ([#19579](https://github.com/rstudio/rstudio/issues/19579)): Fixed an issue where Show Changes Side by Side could open with its two sides out of step when lines had been removed above the lines in view, and could scroll away from the line being viewed when a change above it was staged or unstaged.
 - ([#9477](https://github.com/rstudio/rstudio/issues/9477)): The spelling dictionary archives downloaded when building RStudio and when installing additional languages now have dates in their file names, so a future dictionary update no longer replaces a file that packagers have pinned by checksum.
 - ([#19559](https://github.com/rstudio/rstudio/issues/19559)): Fixed an issue where C/C++ code completion, diagnostics, and navigation stopped working in Rcpp and cpp11 source files compiled as C++20 or newer (the default as of R 4.6), most visibly on Linux. A precompiled header that can't be loaded is now rebuilt, and files are parsed without it in the meantime.
 - ([#17025](https://github.com/rstudio/rstudio/issues/17025)): Posit Assistant and GitHub Copilot no longer exit immediately on startup when `http_proxy` or `https_proxy` is set without a URL scheme (e.g. `proxy.example.com:8080`), a form R accepts.

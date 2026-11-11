@@ -31,6 +31,12 @@ function makeView(base, live, chunks) {
    view.chunks = chunks;
    view.gutter = {};
    view.hasBase = true;
+   // (never rendered, so with no place in its view to keep; see closingView)
+   view.liveEditor = {
+      session: view.sessionB,
+      renderer: { layerConfig: { lineHeight: 0 }, $size: { scrollerHeight: 0 } },
+      getCursorPosition: function() { return { row: 0, column: 0 }; }
+   };
    [view.sessionA, view.sessionB].forEach(function(session) {
       session.setUseWorker(false);
       new LineWidgets(session);
@@ -309,6 +315,116 @@ view.sessionB.setScrollTop(1234);
 anchor = close(view);
 check("a view never rendered is left alone", anchor === null &&
    view.sessionB.getScrollTop() === 1234);
+
+// Realigning keeps a line of the live editor where it is in its view, and
+// the base pane at the same offset, as padding comes and goes above it: here
+// with the removal of lines 50 to 149 staged, then unstaged again.
+function scrollBoth(view, top) {
+   view.sessionA.setScrollTop(top);
+   view.sessionB.setScrollTop(top);
+}
+
+function restage(view, base, chunks) {
+   view.sessionA.setValue(base);
+   view.baseChanged = true;
+   view.chunks = chunks;
+   view.align();
+}
+
+function scrolledTo(view, top) {
+   return view.sessionA.getScrollTop() === top && view.sessionB.getScrollTop() === top;
+}
+
+view = closingView(lines(1, 200), middleLive, middle, 0, 100);
+scrollBoth(view, liveTop(view, 80) - 30);
+restage(view, middleLive, []);
+check("a line keeps its place as padding above it goes", scrolledTo(view, 80 * 10 - 30));
+restage(view, lines(1, 200), middle);
+check("a line keeps its place as padding above it comes", scrolledTo(view, 180 * 10 - 30));
+
+// The view opening: no layout yet, and the base pane still at its top.
+view = closingView(lines(1, 200), middleLive, [], 80, 100);
+view.alignedLive = null;
+view.baseChanged = true;
+view.sessionB.setScrollTop(80 * 10 - 30);
+view.chunks = middle;
+view.align();
+check("a line keeps its place as the view opens", scrolledTo(view, 180 * 10 - 30));
+
+// The cursor's line is the one kept, with the padding between it and the
+// top of the view: lines 200 to 249 removed, the view from row 180.
+var lowLive = lines(1, 199) + "\n" + lines(250, 300);
+var low = [chunk(199, 249, 199, 199)];
+view = closingView(lines(1, 300), lowLive, low, 199, 1000);
+scrollBoth(view, 1800);
+restage(view, lowLive, []);
+check("the cursor's line keeps its place as padding in view goes", scrolledTo(view, 1800 - 50 * 10));
+
+// Only the base is padded for an addition, and the scroll is left alone.
+view = closingView("a\nb\nc", "a\nx\ny\nc", [], 0, 100);
+view.sessionB.setScrollTop(5);
+view.chunks = [chunk(1, 2, 1, 3)];
+view.align();
+check("padding in the base alone leaves the scroll alone", view.sessionA.lineWidgets[1].rowCount === 1 &&
+   view.sessionA.getScrollTop() === 0 && view.sessionB.getScrollTop() === 5);
+
+// An edit since the last layout moves the rows it was planned for: the
+// scroll is left alone, and the next layout goes by this one.
+view = closingView(lines(1, 200), middleLive, middle, 0, 100);
+scrollBoth(view, liveTop(view, 80) - 30);
+view.liveEdited = true;
+restage(view, middleLive, []);
+check("an edited document's scroll is left alone", scrolledTo(view, 180 * 10 - 30) && !view.liveEdited);
+restage(view, lines(1, 200), middle);
+check("the layout after an edit is the one gone by next", scrolledTo(view, 280 * 10 - 30));
+
+// A view of padding keeps its place in it. Lines 10 to 19 are removed as
+// well (padded above row 9), and that removal staged, with the view in the
+// middle of the padding for lines 50 to 149 (above row 39).
+var twoLive = lines(1, 9) + "\n" + lines(20, 49) + "\n" + lines(150, 200);
+view = closingView(lines(1, 200), twoLive, [chunk(9, 19, 9, 9), chunk(49, 149, 39, 39)], 0, 100);
+scrollBoth(view, liveTop(view, 39) - 500);
+restage(view, lines(1, 9) + "\n" + lines(20, 200), [chunk(39, 139, 39, 39)]);
+check("a view of padding keeps its place in it as padding above goes",
+   liveTop(view, 39) === 1390 && scrolledTo(view, 1390 - 500));
+
+// With the padding it showed staged away, the view moves up by its rows.
+view = closingView(lines(1, 300), lowLive, low, 0, 100);
+scrollBoth(view, 2200);
+restage(view, lowLive, []);
+check("a view of padding that goes moves up by its rows", scrolledTo(view, 2200 - 50 * 10));
+
+// Padding that changes without a new base (a fold, a widget, the wrapping)
+// leaves the scroll alone.
+view = closingView(lines(1, 200), middleLive, middle, 0, 100);
+scrollBoth(view, liveTop(view, 80) - 30);
+view.chunks = [];
+view.align();
+check("padding that changes with the same base leaves the scroll alone",
+   !view.sessionB.lineWidgets.some(Boolean) && scrolledTo(view, 180 * 10 - 30));
+
+// The action bar takes the padding above the first line on, and leaves none
+// behind as it closes (it does as the base changes) until the next layout
+// puts it back: that is not padding gone and come again. Lines 1 to 100 are
+// removed; in the new base, the last line differs as well.
+var topLive = lines(101, 200);
+view = closingView(lines(1, 200), topLive, [chunk(0, 100, 0, 0)], 0, 100);
+view.baseChanged = true;
+view.alignedLive = null;
+view.$removeLineWidgets(view.sessionB);
+view.align();
+check("the first line keeps its place as padding comes above it", scrolledTo(view, 100 * 10));
+scrollBoth(view, 0);
+peek = { row: 0, rowCount: 1, rowsAbove: 0, fixedWidth: true };
+view.gutter.peek = { widget: peek };
+view.sessionB.widgetManager.addLineWidget(peek);
+view.align();
+check("the action bar takes the padding on", peek.gitDiffLentAbove === 100 && scrolledTo(view, 0));
+view.gutter.peek = null;
+view.sessionB.widgetManager.removeLineWidget(peek);
+restage(view, lines(1, 199) + "\nother", [chunk(0, 100, 0, 0), chunk(199, 200, 99, 100)]);
+check("the action bar closing as the base changes leaves the scroll alone",
+   view.sessionB.lineWidgets[0].rowsAbove === 100 && scrolledTo(view, 0));
 
 document.getElementById("passed").textContent = passed;
 document.getElementById("failed").textContent = failed;
