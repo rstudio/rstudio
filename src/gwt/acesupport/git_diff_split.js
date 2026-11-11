@@ -1354,30 +1354,42 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
    };
 
    // Where a line of the live editor sits in its view: the cursor's, when
-   // on screen, or else the first line that is. The view's top may be all
-   // padding, with no line of its own to keep. A line kept nowhere on
-   // screen (the cursor, with the view all padding) is kept at its edge.
+   // any of it shows, or else the first line that does. The view's top may
+   // be all padding, with no line of its own to keep. Failing both (the
+   // view all padding), the cursor's line is kept at the nearer edge.
    this.$liveViewAnchor = function() {
       var renderer = this.liveEditor.renderer;
       var session = this.liveEditor.session;
-      var config = renderer.layerConfig;
+      var lineHeight = renderer.layerConfig.lineHeight;
       var height = renderer.$size.scrollerHeight;
+
+      // A smooth scroll under way would step on to its padded destination
+      // over the view put back; Ace stops it on its next tick. The session
+      // already holds the destination, and the anchor is taken there.
+      if (renderer.$scrollAnimation)
+         renderer.$stopAnimation = true;
+      var top = session.getScrollTop();
+
       var offsetOf = function(row) {
-         return session.documentToScreenRow(row, 0) * config.lineHeight - session.getScrollTop();
+         return session.documentToScreenRow(row, 0) * lineHeight - top;
       };
-      var onScreen = function(row) {
-         var offset = offsetOf(row);
-         return offset >= 0 && offset + config.lineHeight <= height;
+      var shows = function(row) {
+         var lastScreenRow = session.documentToScreenRow(row, session.getLine(row).length);
+         return offsetOf(row) < height && (lastScreenRow + 1) * lineHeight - top > 0;
       };
 
       var row = this.liveEditor.getCursorPosition().row;
-      for (var candidate = config.firstRow; !onScreen(row) && candidate <= config.lastRow; candidate++) {
-         if (onScreen(candidate))
-            row = candidate;
+      if (shows(row))
+         return { row: row, offset: offsetOf(row) };
+
+      var candidate = session.screenToDocumentRow(Math.floor(Math.max(top, 0) / lineHeight), 0);
+      for (; candidate < session.getLength() && offsetOf(candidate) < height; candidate++) {
+         if (shows(candidate))
+            return { row: candidate, offset: offsetOf(candidate) };
       }
 
-      var offset = Math.min(Math.max(offsetOf(row), 0), Math.max(height - config.lineHeight, 0));
-      return { row: row, offset: offset };
+      var edge = Math.max(height - lineHeight, 0);
+      return { row: row, offset: Math.min(Math.max(offsetOf(row), 0), edge) };
    };
 
    // Taking the padding out leaves the scroll offset as it was, which with
@@ -1386,8 +1398,12 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
    this.$restoreLiveView = function(anchor) {
       var session = this.liveEditor.session;
       var lineHeight = this.liveEditor.renderer.layerConfig.lineHeight;
-      var top = session.documentToScreenRow(anchor.row, 0) * lineHeight - anchor.offset;
-      session.setScrollTop(Math.max(top, 0));
+      var top = Math.max(session.documentToScreenRow(anchor.row, 0) * lineHeight - anchor.offset, 0);
+      session.setScrollTop(top);
+
+      // After a stopped animation the session can hold this offset already,
+      // which makes setScrollTop a no-op; the renderer is told directly.
+      this.liveEditor.renderer.scrollToY(top);
    };
 
    this.dispose = function() {
