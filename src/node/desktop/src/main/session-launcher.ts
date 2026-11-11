@@ -39,7 +39,7 @@ import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { prepareEnvironment } from './detect-r';
 import { EXIT_FAILURE } from './program-status';
 import { waitForUrlWithTimeout } from './url-utils';
-import { createStandaloneErrorDialog, getCurrentlyUniqueFolderName, isAutomated, userLogPath } from './utils';
+import { createStandaloneErrorDialog, getCurrentlyUniqueFolderName, isAutomated, showWindowForAutomation, userLogPath } from './utils';
 import path from 'path';
 import { createSplashScreen } from './splash-screen';
 import { startupCheckpoint } from './startup-timing';
@@ -335,7 +335,9 @@ export class SessionLauncher {
         // In automation mode, surface the window without pulling focus from
         // the test driver.
         if (isAutomated()) {
-          this.mainWindow?.window.showInactive();
+          if (this.mainWindow) {
+            showWindowForAutomation(this.mainWindow.window);
+          }
         } else {
           this.mainWindow?.window.show();
         }
