@@ -66,8 +66,14 @@ async function openBranchMenu(page: Page, currentBranch: string): Promise<string
 
 // Items of the open branch popup; it is the only menu open while the test
 // reads it (the top menubar's entries are menuitems too, but not in a menu).
+// Worktrees are radio items, the current one checked.
 function menuItems(page: Page) {
-  return page.getByRole('menu').getByRole('menuitem');
+  return page.getByRole('menu').locator('[role=menuitem], [role=menuitemradio]');
+}
+
+// The worktree items, as screen readers see them
+function worktreeItems(page: Page, checked: boolean) {
+  return page.getByRole('menu').getByRole('menuitemradio', { checked });
 }
 
 test.describe.serial('Git pane worktrees', () => {
@@ -137,6 +143,11 @@ test.describe.serial('Git pane worktrees', () => {
     expect(items).toContain('extra-local');
     expect(items).not.toContain(LINKED_BRANCH);
 
+    // -- the check mark is hidden from screen readers; the current worktree is
+    //    the checked radio item instead --
+    await expect(worktreeItems(page, true)).toHaveText([new RegExp(`/${PROJECT_NAME}$`)]);
+    await expect(worktreeItems(page, false)).toHaveText([new RegExp(`/${LINKED_WORKTREE}$`)]);
+
     // -- selecting the linked worktree opens it as a project --
     await menuItems(page).filter({ hasText: new RegExp(`/${LINKED_WORKTREE}$`) }).click();
 
@@ -189,6 +200,7 @@ test.describe.serial('Git pane worktrees', () => {
     const itemsAfter = await openBranchMenu(page, LINKED_BRANCH);
     expect(itemsAfter.some((text) => text.startsWith('main') && text.endsWith(`/${PROJECT_NAME}`))).toBe(true);
     expect(itemsAfter).toContain('main (worktree)');
+    await expect(worktreeItems(page, true)).toHaveText([new RegExp(`/${LINKED_WORKTREE}$`)]);
     await page.keyboard.press('Escape');
   });
 

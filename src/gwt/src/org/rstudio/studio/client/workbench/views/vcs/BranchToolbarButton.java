@@ -371,7 +371,13 @@ public class BranchToolbarButton extends ToolbarMenuButton
          Command command = worktree.isCurrent()
                ? () -> {}
                : new SwitchWorktreeCommand(worktree);
-         MenuItem item = new MenuItem(html, true, command);
+         // The check mark is hidden from screen readers, so the current
+         // worktree is the checked one of a radio group
+         MenuItem item = new MenuItem(html,
+                                      true,
+                                      Roles.getMenuitemradioRole(),
+                                      worktree.isCurrent(),
+                                      command);
          if (worktree == worktrees.get(0))
             nameWithGroup(item, WORKTREES, name + " " + path);
          menu.addItem(item);
