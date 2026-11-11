@@ -14,6 +14,7 @@ import { SourcePaneActions } from '@actions/source_pane.actions';
 import { AceEditor } from '@pages/ace_editor.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { executeCommand, isCommandEnabled, saveDocument } from '@utils/commands';
+import { openFile } from '@utils/files';
 import { heredoc } from '@utils/heredoc';
 
 test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
@@ -52,6 +53,16 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
 
   const findReplaceButton = (proseMirror: Locator) =>
     visualEditorPanel(proseMirror).getByRole('button', { name: 'Find/Replace' });
+
+  // Once To Source has fallen back to a new R script, return to the document
+  // it was aimed at and check that nothing was inserted there on the way: the
+  // text at the cursor is still whole, and the document has no unsaved
+  // changes. (Any edit made in the visual editor marks it dirty at once.)
+  const expectDocumentUntouched = async (page: Page, fileName: string, text: string) => {
+    await openFile(page, fileName);
+    await expect(page.locator('.ProseMirror:visible').first().getByText(text, { exact: true })).toBeVisible();
+    expect(await page.evaluate(() => window.rstudio!.documents.active()!.dirty)).toBe(false);
+  };
 
   test('the warn option is preserved when running chunks', async ({ rstudioPage: page }) => {
     const fileName = `quarto_warn_${Date.now()}.qmd`;
@@ -423,8 +434,9 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
 
       // That insert was the document's first edit, and a document becoming
       // dirty refreshes command state. The code commands must survive that
-      // while the chunk has focus: To Source opens a new R script instead
-      // when they are disabled, so a second insert would miss the chunk.
+      // while the chunk has focus, or running code from the chunk would stop
+      // working after its first edit. (To Source itself does not go by them
+      // in visual mode.)
       expect(await isCommandEnabled(page, 'executeCode')).toBe(true);
       await historyRow.click();
       await toSource.click();
@@ -580,6 +592,50 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       // document's own source editor, which never holds just the command.)
       const active = new AceEditor(page, '');
       await expect.poll(() => active.getValue().catch(() => '')).toBe(`${command}\n`);
+
+      await expectDocumentUntouched(page, fileName, 'cell_one');
+    } finally {
+      await sourceActions.closeSourceAndDeleteFile(fileName);
+    }
+  });
+
+  test('History To Source opens an R script rather than replace a selection in visual mode (#19571)', async ({ rstudioPage: page }) => {
+    const stamp = Date.now();
+    const fileName = `quarto_history_selection_${stamp}.qmd`;
+    const command = `history_selection_${stamp} <- 1`;
+    const content = heredoc`
+      ---
+      title: History To Source
+      ---
+
+      Some selected prose.
+    `;
+
+    await consoleActions.executeInConsole(command);
+    await sourceActions.createAndOpenFile(fileName, content);
+    try {
+      await sourceActions.ensureVisualMode();
+      const proseMirror = page.locator('.ProseMirror:visible').first();
+      await expect(proseMirror).toBeVisible({ timeout: 15000 });
+
+      // Select the paragraph's last word. A new chunk replaces the
+      // selection, which would delete the word. (A clicked image is selected
+      // too, as a node, and would be deleted the same way.)
+      await proseMirror.getByText('Some selected prose.').click();
+      await page.keyboard.press('End');
+      for (let i = 0; i < 'prose.'.length; i++)
+        await page.keyboard.press('Shift+ArrowLeft');
+      await expect.poll(() => page.evaluate(() => window.getSelection()?.toString())).toBe('prose.');
+
+      await executeCommand(page, 'activateHistory');
+      const history = page.getByRole('listbox', { name: 'Console History', exact: true });
+      await history.getByText(command, { exact: true }).click();
+      await page.locator("[id^='rstudio_tb_historysendtosource']").click();
+
+      const active = new AceEditor(page, '');
+      await expect.poll(() => active.getValue().catch(() => '')).toBe(`${command}\n`);
+
+      await expectDocumentUntouched(page, fileName, 'Some selected prose.');
     } finally {
       await sourceActions.closeSourceAndDeleteFile(fileName);
     }
