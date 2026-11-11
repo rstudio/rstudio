@@ -3075,6 +3075,12 @@ public class TextEditingTarget implements
       if (!commands_.executeCode().isEnabled())
          return false;
 
+      // The cursor is in the read-only base pane of a side-by-side diff.
+      // Nothing can go there, and the document's own cursor is not where
+      // the user is working.
+      if (cursorInDiffBase())
+         return false;
+
       insertCode(activeDisplay(), source, blockMode);
       return true;
    }
