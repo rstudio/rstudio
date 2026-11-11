@@ -147,6 +147,10 @@ test.describe.serial('Git pane worktrees', () => {
     //    the checked radio item instead --
     await expect(worktreeItems(page, true)).toHaveText([new RegExp(`/${PROJECT_NAME}$`)]);
     await expect(worktreeItems(page, false)).toHaveText([new RegExp(`/${LINKED_WORKTREE}$`)]);
+    // the arrow keys skip the heading, so the first worktree is named with it,
+    // followed by the name its content gives it
+    await expect(worktreeItems(page, true)).toHaveAccessibleName(
+      new RegExp(`^\\(worktrees\\) main .*/${PROJECT_NAME}$`));
 
     // -- selecting the linked worktree opens it as a project --
     await menuItems(page).filter({ hasText: new RegExp(`/${LINKED_WORKTREE}$`) }).click();

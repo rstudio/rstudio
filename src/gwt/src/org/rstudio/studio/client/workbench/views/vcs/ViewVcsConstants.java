@@ -21,7 +21,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
     String switchBranch();
     String searchByBranchName();
     String remoteBranchCaption(String caption);
-    String branchInGroupLabel(String group, String branch);
     String noBranchParentheses();
     String noBranchesAvailableParentheses();
     String localBranchesParentheses();

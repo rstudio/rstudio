@@ -268,7 +268,7 @@ test.describe('Addins toolbar menu (#19552)', () => {
 
     // The arrow keys skip headings, so each package's first add-in names its package
     const item = (name: string) => menu.getByRole('menuitem', { name, exact: true });
-    await expect(item('devtools: Run a test file')).toBeVisible();
+    await expect(item('devtools Run a test file')).toBeVisible();
     await expect(item('Report test coverage for a file')).toBeVisible();
 
     // With nothing left to highlight, the search box must not name a removed item.

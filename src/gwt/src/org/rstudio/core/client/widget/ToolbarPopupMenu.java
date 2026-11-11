@@ -16,6 +16,8 @@ package org.rstudio.core.client.widget;
 
 import java.util.List;
 
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
@@ -302,10 +304,25 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       menuBar_.addSeparator(new MinWidthMenuSeparator(minPx));
    }
 
-   // A heading for the items below it, flush left and with no divider line
-   public void addSubheader(String text)
+   // A heading for the items below it, flush left and with no divider line.
+   // Returns its element, for nameWithSubheader.
+   public Element addSubheader(String text)
    {
-      menuBar_.addSeparator(LabelledMenuSeparator.subheader(text));
+      LabelledMenuSeparator subheader = LabelledMenuSeparator.subheader(text);
+      Element el = subheader.getElement();
+      el.setId(DOM.createUniqueId());
+      menuBar_.addSeparator(subheader);
+      return el;
+   }
+
+   // The arrow keys skip headings, so screen readers would announce a group's
+   // first item without its heading. Names the item with the heading's text
+   // followed by the name its own content gives it.
+   public static void nameWithSubheader(MenuItem item, Element subheader)
+   {
+      Element itemEl = item.getElement();
+      Roles.getMenuitemRole().setAriaLabelledbyProperty(itemEl,
+            Id.of(subheader), Id.of(itemEl));
    }
 
    public int getItemCount()

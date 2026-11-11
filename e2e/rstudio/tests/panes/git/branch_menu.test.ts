@@ -236,9 +236,9 @@ test.describe.serial('Git branch menu (#19555)', () => {
 
     // The arrow keys skip headings, so each group's first item names its group
     const item = (name: string) => menu.getByRole('menuitem', { name, exact: true });
-    await expect(item('(local branches): alpha-one')).toBeVisible();
+    await expect(item('(local branches) alpha-one')).toBeVisible();
     await expect(item('alpha-two')).toBeVisible();
-    await expect(item('(Remote: origin): main')).toBeVisible();
+    await expect(item('(Remote: origin) main')).toBeVisible();
     await expect(item('release')).toBeVisible();
 
     // With nothing left to highlight, the search box must not name a removed item
@@ -254,7 +254,11 @@ test.describe.serial('Git branch menu (#19555)', () => {
     const menu = popup.getByRole('menu');
     const localHeading = menu.getByText('(local branches)', { exact: true });
     const remoteHeading = menu.getByText('(Remote: origin)', { exact: true });
-    const highlightedName = () => highlightedItem(popup).getAttribute('aria-label');
+    const itemId = (name: string) =>
+      menu.getByRole('menuitem', { name, exact: true }).getAttribute('id');
+    const firstRemoteId = await itemId('(Remote: origin) main');
+    const firstLocalId = await itemId('(local branches) alpha-one');
+    const highlightedId = () => highlightedItem(popup).getAttribute('id');
 
     // From the end of the list, both headings have scrolled out of view
     await page.keyboard.press('End');
@@ -263,15 +267,15 @@ test.describe.serial('Git branch menu (#19555)', () => {
     expect(await inScrolledView(remoteHeading)).toBe(false);
 
     // Up through the remote branches, to the first
-    for (let i = 0; i < 25 && await highlightedName() !== '(Remote: origin): main'; i++)
+    for (let i = 0; i < 25 && await highlightedId() !== firstRemoteId; i++)
       await page.keyboard.press('ArrowUp');
-    expect(await highlightedName()).toBe('(Remote: origin): main');
+    expect(await highlightedId()).toBe(firstRemoteId);
     expect(await inScrolledView(remoteHeading)).toBe(true);
 
     // Up through the local branches, to the first
-    for (let i = 0; i < 10 && await highlightedName() !== '(local branches): alpha-one'; i++)
+    for (let i = 0; i < 10 && await highlightedId() !== firstLocalId; i++)
       await page.keyboard.press('ArrowUp');
-    expect(await highlightedName()).toBe('(local branches): alpha-one');
+    expect(await highlightedId()).toBe(firstLocalId);
     expect(await inScrolledView(localHeading)).toBe(true);
   });
 
@@ -281,7 +285,7 @@ test.describe.serial('Git branch menu (#19555)', () => {
     const popup = await openBranchMenu(page, 'alpha-two');
     const menu = popup.getByRole('menu');
     const remoteHeading = menu.getByText('(Remote: origin)', { exact: true });
-    const firstRemote = menu.getByRole('menuitem', { name: '(Remote: origin): main', exact: true });
+    const firstRemote = menu.getByRole('menuitem', { name: '(Remote: origin) main', exact: true });
 
     // Scrolled, as with the mouse wheel, to put the item at the top and its heading out of view
     await firstRemote.evaluate((node) => {
@@ -298,7 +302,7 @@ test.describe.serial('Git branch menu (#19555)', () => {
 
     // Hovering highlights the item; revealing the heading would move it from the pointer
     await firstRemote.hover();
-    await expect(highlightedItem(popup)).toHaveAttribute('aria-label', '(Remote: origin): main');
+    await expect(highlightedItem(popup)).toHaveAccessibleName('(Remote: origin) main');
     await expectHoldsFor(300, async () => {
       expect((await firstRemote.boundingBox())!.y).toBe(before);
     });

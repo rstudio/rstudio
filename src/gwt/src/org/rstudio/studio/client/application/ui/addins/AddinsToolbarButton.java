@@ -20,7 +20,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.MapUtil;
@@ -30,6 +29,7 @@ import org.rstudio.core.client.widget.MenuSearchHeader;
 import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
@@ -118,7 +118,7 @@ public class AddinsToolbarButton extends ToolbarMenuButton
          @Override
          public void execute(final String pkg, final List<RAddin> addins)
          {
-            menu_.addSubheader(pkg);
+            Element heading = menu_.addSubheader(pkg);
             menu_.addSeparator();
 
             addins.sort(new Comparator<RAddin>()
@@ -135,13 +135,8 @@ public class AddinsToolbarButton extends ToolbarMenuButton
                RAddin addin = addins.get(i);
                MenuItem item = menuItem(addin);
 
-               // The arrow keys skip the package heading, so the package's first
-               // add-in names it for screen readers
                if (i == 0)
-               {
-                  Roles.getMenuitemRole().setAriaLabelProperty(item.getElement(),
-                        constants_.addinInPackageLabel(pkg, addin.getName()));
-               }
+                  ToolbarPopupMenu.nameWithSubheader(item, heading);
                menu_.addItem(item);
             }
          }

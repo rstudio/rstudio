@@ -330,7 +330,7 @@ public class BranchToolbarButton extends ToolbarMenuButton
             mainPath = worktree.getPath();
       }
 
-      menu.addSubheader(WORKTREES);
+      Element heading = menu.addSubheader(WORKTREES);
       menu.addSeparator();
 
       for (WorktreeInfo worktree : worktrees)
@@ -382,14 +382,8 @@ public class BranchToolbarButton extends ToolbarMenuButton
                                       Roles.getMenuitemradioRole(),
                                       worktree.isCurrent(),
                                       command);
-         // the name the item's content gives it, with the group's prefixed
          if (worktree == worktrees.get(0))
-         {
-            String itemName = name + " " + path;
-            if (newSession != null)
-               itemName += " " + constants_.openWorktreeInNewSession();
-            nameWithGroup(item, WORKTREES, itemName);
-         }
+            ToolbarPopupMenu.nameWithSubheader(item, heading);
          menu.addItem(item);
       }
    }
@@ -445,7 +439,7 @@ public class BranchToolbarButton extends ToolbarMenuButton
             String heading = caption == LOCAL_BRANCHES
                   ? LOCAL_BRANCHES
                   : constants_.remoteBranchCaption(caption);
-            menu.addSubheader(heading);
+            Element headingEl = menu.addSubheader(heading);
             menu.addSeparator();
 
             // truncate list when we have too many branches
@@ -482,7 +476,7 @@ public class BranchToolbarButton extends ToolbarMenuButton
                }
 
                if (n == 0)
-                  nameWithGroup(item, heading, item.getText());
+                  ToolbarPopupMenu.nameWithSubheader(item, headingEl);
                menu.addItem(item);
 
                // update branch count
@@ -493,14 +487,6 @@ public class BranchToolbarButton extends ToolbarMenuButton
       });
 
       onMenuPopulated(menu);
-   }
-
-   // The arrow keys skip headings, so each group's first item names its group
-   // for screen readers
-   private static void nameWithGroup(MenuItem item, String group, String name)
-   {
-      Roles.getMenuitemRole().setAriaLabelProperty(item.getElement(),
-            constants_.branchInGroupLabel(group, name));
    }
 
    // Holds the width a search filter would otherwise shrink
