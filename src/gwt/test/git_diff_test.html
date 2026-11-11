@@ -240,6 +240,34 @@
       await rendered();
       check("the scrollbar is back", scrollBar.isVisible, true);
       check("the close button is clear of the scrollbar again", closeTakesClicks(), true);
+
+      // In an editor with little room to spare, making room for the
+      // scrollbar wraps the peek's label; the peek is measured again, so
+      // that the lines below it stay below it.
+      var peekWidget = gutter.peek.widget;
+      var label = document.querySelector("#live .ace_git-peek-label");
+      var revertButton = document.querySelector("#live .ace_git-peek-revert");
+      var lineHeight = editor.renderer.layerConfig.lineHeight;
+      var roomKept = function() {
+         return peekWidget.rowCount * lineHeight >= peekWidget.el.offsetHeight;
+      };
+      // (a wrapped label is taller by whole rows, whatever the font)
+      label.style.lineHeight = (3 * lineHeight) + "px";
+      live.style.height = "4000px";
+      editor.resize(true);
+      await rendered();
+      var spare = closeButton.getBoundingClientRect().left - revertButton.getBoundingClientRect().right;
+      live.style.width = (live.offsetWidth - spare + 10) + "px";
+      editor.resize(true);
+      editor.session.widgetManager.onWidgetChanged(peekWidget);
+      await rendered();
+      var labelHeight = label.offsetHeight;
+      check("the narrow peek has room for its label on one line", roomKept(), true);
+      live.style.height = "";
+      editor.resize(true);
+      await rendered();
+      check("the scrollbar wraps the narrow peek's label", label.offsetHeight > labelHeight, true);
+      check("the wrapped peek is measured again", roomKept(), true);
    } catch (error) {
       check("integration completes", String(error.stack || error), "no exception");
    } finally {

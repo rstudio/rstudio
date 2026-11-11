@@ -1119,9 +1119,6 @@ var GitDiffGutter = function(editor, strings) {
       var widget = { row: row, el: el, fixedWidth: true, coverGutter: false };
       this.lineWidgetManager().addLineWidget(widget);
       this.peek = { chunk: chunk, widget: widget, compact: compact, closeButton: closeButton };
-
-      // (before Ace measures the widget: a narrow header can wrap around
-      // the room made for the scrollbar)
       this.clearPeekOfScrollbar();
       return true;
    };
@@ -1152,8 +1149,12 @@ var GitDiffGutter = function(editor, strings) {
       peek.scrollBarCover = cover;
       peek.closeButton.style.marginRight = (cover > 0) ? cover + "px" : "";
 
-      // (the header may wrap differently around the button)
+      // In a narrow editor the label wraps around the button's new place,
+      // and the peek's height follows; Ace measures it again in this frame.
+      // (The action bar has no label to wrap.)
       peek.headerHeight = null;
+      if (!peek.compact)
+         this.editor.session.widgetManager.onWidgetChanged(peek.widget);
    };
 
    this.closePeek = function() {
