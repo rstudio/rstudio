@@ -269,6 +269,35 @@ test.describe.serial('Git branch menu (#19555)', () => {
     expect(await inScrolledView(localHeading)).toBe(true);
   });
 
+  test('hovering a group\'s first branch leaves it under the pointer', async ({
+    rstudioPage: page,
+  }) => {
+    const popup = await openBranchMenu(page, 'alpha-two');
+    const menu = popup.getByRole('menu');
+    const remoteHeading = menu.getByText('(Remote: origin)', { exact: true });
+    const firstRemote = menu.getByRole('menuitem', { name: '(Remote: origin): main', exact: true });
+
+    // Scrolled, as with the mouse wheel, to put the item at the top and its heading out of view
+    await firstRemote.evaluate((node) => {
+      let scroller = node.parentElement;
+      while (scroller && getComputedStyle(scroller).overflowY !== 'auto')
+        scroller = scroller.parentElement;
+      if (!scroller)
+        throw new Error('no scroll panel above the menu item');
+      scroller.scrollTop +=
+        node.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
+    });
+    expect(await inScrolledView(remoteHeading)).toBe(false);
+    const before = (await firstRemote.boundingBox())!.y;
+
+    // Hovering highlights the item; revealing the heading would move it from the pointer
+    await firstRemote.hover();
+    await expect(highlightedItem(popup)).toHaveAttribute('aria-label', '(Remote: origin): main');
+    await expectHoldsFor(300, async () => {
+      expect((await firstRemote.boundingBox())!.y).toBe(before);
+    });
+  });
+
   test('Shift+Home selects the search text instead of moving the highlight', async ({
     rstudioPage: page,
   }) => {
