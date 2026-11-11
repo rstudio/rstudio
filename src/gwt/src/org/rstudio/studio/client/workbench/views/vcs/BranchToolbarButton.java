@@ -233,8 +233,6 @@ public class BranchToolbarButton extends ToolbarMenuButton
    // caller should try again on the next open.
    private boolean rebuildMenu()
    {
-      menu_.clearItems();
-
       BranchesInfo branchInfo = pVcsState_.get().getBranchInfo();
       if (branchInfo == null)
       {
