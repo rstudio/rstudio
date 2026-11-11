@@ -3041,32 +3041,35 @@ public class TextEditingTarget implements
       }
    }
 
+   // Inserts code sent from another pane (e.g. History's To Source) at the
+   // cursor. Returns false if this document can't take it there, leaving the
+   // caller to put it somewhere else.
+   public boolean tryInsertCode(String source, boolean blockMode)
+   {
+      // In visual mode the cursor is in the visual editor. The source editor
+      // is hidden, so an insert there would go unseen and then be written to
+      // the file on the next save.
+      //
+      // The code commands are no guide there: they are enabled only while a
+      // chunk has focus, and the pane the code comes from has taken it. Go by
+      // the kind of document, and let the visual editor say where its cursor
+      // is.
+      if (isVisualEditorActive() || isVisualModeActivated())
+         return fileType_.canExecuteCode() && visualMode_.insertCode(source);
+
+      if (!commands_.executeCode().isEnabled())
+         return false;
+
+      insertCode(activeDisplay(), source, blockMode);
+      return true;
+   }
+
    // Inserts at the cursor of the given editor view, which a caller captures
    // before an asynchronous request so that the result lands in the view the
    // request came from.
    public void insertCode(DocDisplay display, String source, boolean blockMode)
    {
       liveDisplay(display).insertCode(source, blockMode);
-   }
-
-   // Inserts code at the cursor. Returns false if it could not be inserted,
-   // which only the visual editor can report (see VisualMode.insertCode).
-   //
-   // Keep this the last insertCode overload until GWT has the fix for
-   // https://github.com/gwtproject/gwt/issues/10434. Its return type changed
-   // from void, and GWT's unit cache only notices a change to the overload
-   // declared last; otherwise builds that reuse an older unit cache fail in
-   // the callers.
-   public boolean insertCode(String source, boolean blockMode)
-   {
-      // In visual mode the cursor is in the visual editor. The source editor
-      // is hidden, so an insert there would go unseen and then be written to
-      // the file on the next save.
-      if (isVisualEditorActive() || isVisualModeActivated())
-         return visualMode_.insertCode(source);
-
-      insertCode(activeDisplay(), source, blockMode);
-      return true;
    }
 
    // Returns the given editor view, or the active view if the given one is

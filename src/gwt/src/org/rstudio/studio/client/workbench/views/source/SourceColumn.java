@@ -641,19 +641,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       if (!(activeEditor_ instanceof TextEditingTarget))
          return false;
 
-      TextEditingTarget textEditor = (TextEditingTarget) activeEditor_;
-
-      // In visual mode the code commands are enabled only while a chunk has
-      // focus, and the pane the code comes from has taken it. Go by the kind
-      // of document instead, and let the visual editor say where its cursor is.
-      boolean canInsert = textEditor.isVisualModeActivated()
-            ? textEditor.getTextFileType().canExecuteCode()
-            : commands_.executeCode().isEnabled();
-
-      if (!canInsert)
-         return false;
-
-      return textEditor.insertCode(code, isBlock);
+      return ((TextEditingTarget) activeEditor_).tryInsertCode(code, isBlock);
    }
 
    public void incrementNewTabPending()
