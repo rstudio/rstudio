@@ -225,6 +225,8 @@ check("qualified and array trailing return declarations are labelled",
        "_u(long double x): decltype(x) operator \"\" [7..7]"].join("\n"));
 
 // A '->' in a macro body is not a trailing return type of the code after it.
+// The label of 'g' includes the continued macro line, as it does on main: the
+// walk that collects the text before a name only checks a directive's first line.
 check("a macro ending in a trailing return declarator does not capture the next definition",
       tree(makeSession([
         "int x;",
@@ -234,9 +236,16 @@ check("a macro ending in a trailing return declarator does not capture the next 
         "T twice(T t) { return t + t; }",
         "#define API2 auto api2() -> int",
         "static int table[] = { 1, 2 };",
+        "#define API3 auto api3() ->",
+        "int f() { return 1; }",
+        "#define API4 \\",
+        "  auto api4() -> int",
+        "int g() { return 2; }",
         ""
       ].join("\n"))),
-      "twice(T t): template <class T> T [4..4]");
+      ["twice(T t): template <class T> T [4..4]",
+       "f(): int [8..8]",
+       "g(): auto api4() -> int int [11..11]"].join("\n"));
 
 check("lambdas with trailing return types are labelled",
       tree(makeSession("int x;\nauto l = [](int x) -> int { return x; };\n")),

@@ -686,12 +686,24 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
       return clone.currentValue() === "auto";
    };
 
+   var significantTokens = function(tokens) {
+      return (tokens || []).filter(function(token) {
+         return !/^\s*$/.test(token.value);
+      });
+   };
+
+   // Whether the cursor's row is part of a preprocessor directive, including
+   // the rows a directive continues onto after a trailing '\'.
    var isPreprocessorRow = function(cursor) {
-      var tokens = cursor.$tokens[cursor.$row] || [];
-      for (var i = 0; i < tokens.length; i++)
-         if (!/^\s*$/.test(tokens[i].value))
-            return tokens[i].type === "keyword.preproc";
-      return false;
+      var row = cursor.$row;
+      while (row > 0) {
+         var previous = significantTokens(cursor.$tokens[row - 1]);
+         if (previous.length === 0 || previous[previous.length - 1].value !== "\\")
+            break;
+         row--;
+      }
+      var first = significantTokens(cursor.$tokens[row])[0];
+      return first != null && first.type === "keyword.preproc";
    };
 
    // From the last token of a trailing return type, e.g. the 'int' of
@@ -702,10 +714,12 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
 
       var clone = cursor.cloneCursor();
       do {
+         if (isPreprocessorRow(clone))
+            return false;
          var value = clone.currentValue();
          if (value === "->")
             break;
-         if (contains([";", "{", "}", "("], value) || isPreprocessorRow(clone))
+         if (contains([";", "{", "}", "("], value))
             return false;
          if (value === ")" && !clone.bwdToMatchingToken())
             return false;
