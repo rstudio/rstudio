@@ -1848,7 +1848,34 @@ std::vector<std::string> ClangCompilationDatabase::precompiledHeaderArgs(
    if (!userFlags.empty())
       pchName += userFlagsPchSuffix(userFlags);
    FilePath pchPath = platformPath.completeChildPath(pchName + ".pch");
-   if (forceRebuildPrecompiledHeaders_ || !pchPath.exists())
+
+   // a changed compilation database gets a fresh start
+   if (forceRebuildPrecompiledHeaders_)
+   {
+      rebuiltPrecompiledHeaders_.clear();
+      unusablePrecompiledHeaders_.clear();
+   }
+
+   // libclang couldn't load this PCH for a file parsed with it (say, a header
+   // it was built from has changed since), so the file was parsed without.
+   // Rebuild it, but only once: if libclang rejects the rebuilt one as well,
+   // do without for the rest of the session rather than rebuild it for
+   // every parse.
+   std::string pch = pchPath.getAbsolutePath();
+   bool rejected = takeRejectedPrecompiledHeader(pch);
+   if (rejected && !rebuiltPrecompiledHeaders_.insert(pch).second)
+   {
+      unusablePrecompiledHeaders_.insert(pch);
+
+      Error removeError = pchPath.removeIfExists();
+      if (removeError)
+         LOG_ERROR(removeError);
+   }
+
+   if (unusablePrecompiledHeaders_.count(pch) > 0)
+      return std::vector<std::string>();
+
+   if (forceRebuildPrecompiledHeaders_ || rejected || !pchPath.exists())
    {
       // a forced rebuild (the package's compilation database changed) has
       // to take every variant with it, not just the one requested first

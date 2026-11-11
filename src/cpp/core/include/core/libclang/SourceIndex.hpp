@@ -42,7 +42,8 @@ unsigned precompiledHeaderOptions();
 // load a precompiled header named in the arguments (e.g. one built with
 // other options, by another libclang, or from headers changed since), so
 // in that case the file is parsed again without it: slower, but everything
-// still works. Returns null if the file can't be parsed either way.
+// still works, and the header is recorded as rejected. Returns null if the
+// file can't be parsed either way.
 CXTranslationUnit parseWithPrecompiledHeaderFallback(
       CXIndex index,
       const std::string& filename,
@@ -51,8 +52,11 @@ CXTranslationUnit parseWithPrecompiledHeaderFallback(
       unsigned numUnsavedFiles,
       unsigned options);
 
-// The precompiled headers that had to be parsed around in this session.
+// The precompiled headers recorded as rejected. Whoever built one takes it
+// from here to act on that (returning whether it was recorded); one that
+// nobody takes, such as a header named by the user's own flags, stays.
 const std::set<std::string>& rejectedPrecompiledHeaders();
+bool takeRejectedPrecompiledHeader(const std::string& path);
 
 struct CompilationDatabase
 {

@@ -106,7 +106,7 @@ test_that("compile_flags.txt paths resolve against its directory", {
     expect_length(messages(), 0L)
 })
 
-test_that("C++20 files load their precompiled header, and parse without one libclang rejects", {
+test_that("C++20 files load their precompiled header, and one libclang rejects is parsed around and rebuilt", {
     skip_if_not_installed("Rcpp")
     skip_if_not(.rs.isClangAvailable())
 
@@ -152,7 +152,36 @@ test_that("C++20 files load their precompiled header, and parse without one libc
     diagnostics <- .rs.invokeRpc("get_cpp_diagnostics", path)
     messages <- vapply(diagnostics, `[[`, character(1), "message")
     expect_match(messages, "file was parsed", fixed = TRUE, all = FALSE)
-    expect_length(setdiff(.Call("rs_clangRejectedPrecompiledHeaders", PACKAGE = "(embedding)"), rejected), 1L)
+    pch <- setdiff(.Call("rs_clangRejectedPrecompiledHeaders", PACKAGE = "(embedding)"), rejected)
+    expect_length(pch, 1L)
+
+    # the next request for the precompiled header rebuilds it, and it loads
+    path <- file.path(dir, "rebuilt.cpp")
+    writeLines(contents, path)
+    diagnostics <- .rs.invokeRpc("get_cpp_diagnostics", path)
+    messages <- vapply(diagnostics, `[[`, character(1), "message")
+    expect_match(messages, "file was parsed", fixed = TRUE, all = FALSE)
+    expect_setequal(.Call("rs_clangRejectedPrecompiledHeaders", PACKAGE = "(embedding)"), rejected)
+    expect_true(file.exists(pch))
+
+    # but only once: when the rebuilt one is rejected as well, it is dropped
+    # rather than rebuilt for every parse
+    Sys.setFileTime(header, Sys.time() + 7200)
+
+    path <- file.path(dir, "rejected-again.cpp")
+    writeLines(contents, path)
+    diagnostics <- .rs.invokeRpc("get_cpp_diagnostics", path)
+    messages <- vapply(diagnostics, `[[`, character(1), "message")
+    expect_match(messages, "file was parsed", fixed = TRUE, all = FALSE)
+    expect_setequal(setdiff(.Call("rs_clangRejectedPrecompiledHeaders", PACKAGE = "(embedding)"), rejected), pch)
+
+    path <- file.path(dir, "without.cpp")
+    writeLines(contents, path)
+    diagnostics <- .rs.invokeRpc("get_cpp_diagnostics", path)
+    messages <- vapply(diagnostics, `[[`, character(1), "message")
+    expect_match(messages, "file was parsed", fixed = TRUE, all = FALSE)
+    expect_setequal(.Call("rs_clangRejectedPrecompiledHeaders", PACKAGE = "(embedding)"), rejected)
+    expect_false(file.exists(pch))
 })
 
 test_that("compile_flags.txt flags are honored with precompiled headers", {

@@ -148,6 +148,11 @@ const std::set<std::string>& rejectedPrecompiledHeaders()
    return rejectedPrecompiledHeadersImpl();
 }
 
+bool takeRejectedPrecompiledHeader(const std::string& path)
+{
+   return rejectedPrecompiledHeadersImpl().erase(path) > 0;
+}
+
 CXTranslationUnit parseWithPrecompiledHeaderFallback(
       CXIndex index,
       const std::string& filename,
@@ -187,7 +192,8 @@ CXTranslationUnit parseWithPrecompiledHeaderFallback(
    // libclang doesn't say why a parse failed (it reports the same error for
    // a bad flag as for a bad precompiled header), so the header is only
    // known to be at fault once the parse works without it. Every full parse
-   // naming that header ends up here, so say so once per header.
+   // naming that header ends up here until it's taken, so say so only when
+   // it's first recorded.
    if (tu != nullptr)
    {
       for (const std::string& pchPath : pchPaths)
