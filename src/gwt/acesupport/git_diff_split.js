@@ -1353,16 +1353,17 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       this.baseEditor.gotoLine(row + 1, 0, true);
    };
 
-   // Where a line of the live editor sits in its view: the cursor's, when
-   // any of it shows, or else the first line that does. The view's top may
-   // be all padding, with no line of its own to keep. Failing both (the
-   // view all padding), the cursor's line is kept at the nearer edge. An
-   // editor never laid out (a background tab) has no view to keep.
+   // Where a line of the live editor sits in its view, to keep it there: the
+   // cursor's line, when any of it shows, or else the first line that does.
+   // A view that is all padding keeps the line below it at its bottom edge,
+   // or, with no line below, the last line at its top.
    this.$liveViewAnchor = function() {
       var renderer = this.liveEditor.renderer;
       var session = this.liveEditor.session;
       var lineHeight = renderer.layerConfig.lineHeight;
       var height = renderer.$size.scrollerHeight;
+
+      // a view closed before its first render has nothing laid out to keep
       if (!(lineHeight > 0 && height > 0))
          return null;
 
@@ -1385,8 +1386,9 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
             return { row: candidate, offset: offsetOf(candidate) };
       }
 
-      var edge = Math.max(height - lineHeight, 0);
-      return { row: row, offset: Math.min(Math.max(offsetOf(row), 0), edge) };
+      if (candidate < session.getLength())
+         return { row: candidate, offset: Math.max(height - lineHeight, 0) };
+      return { row: session.getLength() - 1, offset: 0 };
    };
 
    // Taking the padding out leaves the scroll offset as it was, which with
