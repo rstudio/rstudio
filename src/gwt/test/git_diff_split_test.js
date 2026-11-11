@@ -280,7 +280,21 @@ view = closingView(lines(1, 200), lines(1, 100), [chunk(100, 200, 100, 100)], 0,
 view.sessionB.setScrollTop(liveTop(view, 99) + 200);
 anchor = close(view);
 check("a view of padding at the end keeps the last line at its top",
-   anchor.row === 99 && anchor.offset === 0);
+   anchor.row === 99 && anchor.offset === 0 && view.sessionB.getScrollTop() === 99 * 10);
+
+// Lines 152 to 171 (rows 151 to 170) removed, padded below row 150, the end
+// of a fold from row 10. The scan meets the fold above the view and steps
+// past it to the line after the padding.
+view = closingView(lines(1, 200), lines(1, 151) + "\n" + lines(172, 200),
+   [chunk(151, 171, 151, 151)], 0, 100);
+[view.sessionA, view.sessionB].forEach(function(session) {
+   session.addFold("...", new Range(10, 3, 150, 3));
+});
+view.align();
+view.sessionB.setScrollTop(liveTop(view, 151) - 60);
+anchor = close(view);
+check("the scan steps past a fold to the line after it", anchor.row === 151 &&
+   anchor.offset === 60 && view.sessionB.getScrollTop() === liveTop(view, 151) - 60);
 
 view = closingView("a\n" + new Array(101).join("x"), "a\n" + new Array(101).join("x"), [], 0, 100);
 wrap(view, 10);
