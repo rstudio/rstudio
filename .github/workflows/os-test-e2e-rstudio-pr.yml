@@ -72,10 +72,10 @@ jobs:
         with:
           # Full commit history, for the merge-base below, but almost no file
           # contents: a sparse checkout makes this a blobless partial clone,
-          # roughly a tenth the size of a full one. The diff below compares
-          # trees, and git fetches on demand any blob it turns out to need
-          # (e.g. for rename detection). Only the local action and the
-          # version/RELEASE file it reads have to be on disk.
+          # roughly a tenth the size of a full one. The diff below runs
+          # without rename detection, so it only compares trees. Only the
+          # local action and the version/RELEASE file it reads have to be
+          # on disk.
           fetch-depth: 0
           sparse-checkout: |
             .github
@@ -91,7 +91,9 @@ jobs:
           MANIFEST_URL: ${{ steps.manifest.outputs.manifest-url }}
         run: |
           BASE=$(git merge-base HEAD origin/${{ github.base_ref }})
-          CHANGED=$(git diff --name-only "$BASE" HEAD)
+          # --no-renames: a rename is otherwise listed under its new path only,
+          # so a file moved out of src/ would not count as a source change.
+          CHANGED=$(git diff --no-renames --name-only "$BASE" HEAD)
           echo "Changed files vs merge base with ${{ github.base_ref }}:"
           echo "$CHANGED"
 
