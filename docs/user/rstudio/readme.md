@@ -60,4 +60,4 @@ Screenshots taken on a high-DPI display are often several megabytes each, and ev
 scripts/optimize-docs-images.sh docs/user/rstudio/path/to/image.png
 ```
 
-The script requires [ImageMagick](https://imagemagick.org) 7. It converts each image to sRGB, caps its width at 2000 pixels, and reduces it to a 256-colour palette unless that would noticeably degrade it. Run it with no arguments to check every PNG in the guide; images that are already optimized are left alone.
+The script requires [ImageMagick](https://imagemagick.org) 7, built with lcms (as most packaged builds are). Screenshots that embed a colour profile also need an sRGB ICC profile to convert to: the script finds the system's on macOS and most Linux distributions, and elsewhere (Windows, for example) `SRGB_PROFILE` has to be set to the path of one. It converts each image to sRGB, caps its width at 2000 pixels, and reduces it to a 256-colour palette unless that would noticeably degrade it. Run it with no arguments to check every PNG in the guide; images that are already optimized are left alone.
