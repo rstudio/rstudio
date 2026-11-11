@@ -3048,8 +3048,17 @@ public class TextEditingTarget implements
       // written to the file on the next save.
       if (isVisualEditorActive() || isVisualModeActivated())
       {
+         // Finding the chunk takes focus to the visual editor. Hand it back,
+         // as an insert in source mode leaves focus alone: a keyboard user
+         // in the History pane goes on to send the next entry.
+         Element focused = DomUtils.getActiveElement();
+
          visualMode_.performWithActiveEditor(
             (display) -> display.insertCode(source, blockMode));
+
+         if (focused != null && focused != DomUtils.getActiveElement())
+            focused.focus();
+
          return;
       }
 

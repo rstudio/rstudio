@@ -558,6 +558,7 @@ public class VisualMode implements VisualModeEditorSync,
          // The find bar can clear activeEditor_ while deliberately leaving
          // chunk commands enabled. A format reload has no chunk to restore,
          // so the active document must revoke those global commands now.
+         cursorInCodeEditor_ = false;
          if (target_.isActiveDocument())
             setCodeCommandsEnabled(false);
       }
@@ -843,10 +844,11 @@ public class VisualMode implements VisualModeEditorSync,
         commands_.vcsShowChangesSideBySide()
       );
       
-      // Disable code commands until a chunk editor has focus. Leave them alone
-      // while one does: this also runs on each command refresh, e.g. when the
-      // first edit made in a chunk marks the document dirty.
-      if (isActivated() && activeEditor_ == null)
+      // Disable code commands unless the cursor is in a chunk editor. Leave
+      // them alone when it is: this also runs on each command refresh, e.g.
+      // when the document is edited or saved, and that must not turn them off
+      // -- whether the chunk still has focus or has lent it to another pane.
+      if (isActivated() && !cursorInCodeEditor_)
       {
          setCodeCommandsEnabled(false);
       }
@@ -856,6 +858,7 @@ public class VisualMode implements VisualModeEditorSync,
    public void unmanageCommands()
    {
       restoreDisabledForVisualMode();
+      cursorInCodeEditor_ = false;
       setCodeCommandsEnabled(true);
    }
    
@@ -960,6 +963,7 @@ public class VisualMode implements VisualModeEditorSync,
       if (editor != null)
       {
          // A code chunk has focus; enable code commands
+         cursorInCodeEditor_ = true;
          setCodeCommandsEnabled(true);
       }
    }
@@ -977,6 +981,7 @@ public class VisualMode implements VisualModeEditorSync,
          return;
 
       setActiveEditor(null);
+      cursorInCodeEditor_ = false;
       if (target_.isActiveDocument())
          setCodeCommandsEnabled(false);
    }
@@ -1923,6 +1928,7 @@ public class VisualMode implements VisualModeEditorSync,
                   // Note that the PanmirrorFocusEvent is fired when selection
                   // exits a code chunk as well as when the entire widget loses
                   // focus.
+                  cursorInCodeEditor_ = false;
                   setCodeCommandsEnabled(false);
                   
                   // Also clear the last focused Ace editor. This is normally
@@ -2216,6 +2222,12 @@ public class VisualMode implements VisualModeEditorSync,
    private SourceServerOperations source_;
    private Session session_;
    private DocDisplay activeEditor_;  // the current embedded editor
+
+   // Whether the visual editor's cursor is in a code editor. Unlike
+   // activeEditor_, which a chunk gives up on blur, this holds while another
+   // pane (a toolbar, the History pane) has focus, and so tells a command
+   // refresh that runs meanwhile to leave the code commands enabled.
+   private boolean cursorInCodeEditor_ = false;
    
    private final TextEditingTarget target_;
    private final TextEditingTarget.Display view_;
