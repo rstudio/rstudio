@@ -1118,8 +1118,42 @@ var GitDiffGutter = function(editor, strings) {
 
       var widget = { row: row, el: el, fixedWidth: true, coverGutter: false };
       this.lineWidgetManager().addLineWidget(widget);
-      this.peek = { chunk: chunk, widget: widget, compact: compact };
+      this.peek = { chunk: chunk, widget: widget, compact: compact, closeButton: closeButton };
+
+      // (before Ace measures the widget: a narrow header can wrap around
+      // the room made for the scrollbar)
+      this.clearPeekOfScrollbar();
       return true;
+   };
+
+   // Ace ends a fixedWidth widget where the room it keeps for the vertical
+   // scrollbar starts, but the scrollbar's element is wider than that room:
+   // by 5px, or by all of its 20px where scrollbars take no room (macOS's
+   // overlay scrollbars). What lies under the element gets no clicks, so
+   // the close button, at the end of the widget, is kept clear of it.
+   //
+   // The scrollbar comes and goes with the document's height, so this runs
+   // on every render (see pinPeek). Measuring there would force a layout;
+   // the element's width is read from the style Ace gave it instead.
+   this.clearPeekOfScrollbar = function() {
+      var peek = this.peek;
+      var scrollBar = this.editor.renderer.scrollBarV;
+
+      var cover = 0;
+      if (scrollBar.isVisible)
+      {
+         var width = parseFloat(scrollBar.element.style.width) || 0;
+         cover = Math.max(0, width - scrollBar.getWidth());
+      }
+
+      if (peek.scrollBarCover === cover)
+         return;
+
+      peek.scrollBarCover = cover;
+      peek.closeButton.style.marginRight = (cover > 0) ? cover + "px" : "";
+
+      // (the header may wrap differently around the button)
+      peek.headerHeight = null;
    };
 
    this.closePeek = function() {
@@ -1169,6 +1203,8 @@ var GitDiffGutter = function(editor, strings) {
       var peek = this.peek;
       if (!peek)
          return;
+
+      this.clearPeekOfScrollbar();
 
       // A peek above its change (where a notebook's output took the row
       // below) or at removed lines has no changed lines to cover -- but for
