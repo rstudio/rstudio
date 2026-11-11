@@ -2,6 +2,7 @@ import { test, expect } from '@fixtures/a11y.fixture';
 import type { Page, Request } from '@playwright/test';
 import type { AxeResults } from 'axe-core';
 import { scanA11y, violationSummary } from '@utils/a11y';
+import { withPlotsInsteadOfFiles } from '@utils/a11y-tabs';
 import { TIMEOUTS } from '@utils/constants';
 
 // Minimizing a pane only schedules a passive save, 5 s out (ClientStateUpdater).
@@ -30,28 +31,33 @@ async function setTabSet1State(page: Page, button: string, state: 'MINIMIZE' | '
 
 /**
  * The initial state with the Environment pane (TabSet1) minimized to its
- * strip of tabs. The minimized state outlives the session, so the pane is
- * restored, and the save waited for, before the assertion.
+ * strip of tabs, and Plots shown in place of Files. The minimized state
+ * outlives the session, so the pane is restored, and the save waited for,
+ * before the assertion.
  */
 test('minimized TabSet1 has no accessibility violations', { tag: ['@a11y', '@server_only'] },
   async ({ a11yPage: page }, testInfo) => {
     const restoreButton = page.getByRole('button', { name: 'Restore TabSet1', exact: true });
-    let results: AxeResults;
-    try {
-      await setTabSet1State(page, 'Minimize TabSet1', 'MINIMIZE');
-      const tablist = page.getByRole('region', { name: 'TabSet1 minimized', exact: true })
-        .getByRole('tablist', { name: 'TabSet1', exact: true });
-      await expect(tablist.getByRole('tab', { name: 'Environment', exact: true }))
-        .toBeVisible({ timeout: TIMEOUTS.consoleReady });
-      results = await scanA11y(page, testInfo);
-    } catch (err) {
-      // Only logged, so a restore problem can't hide the original error.
-      await (async () => {
-        if (await restoreButton.isVisible())
-          await setTabSet1State(page, 'Restore TabSet1', 'NORMAL');
-      })().catch((restoreErr: Error) => console.warn(`TabSet1 not restored: ${restoreErr.message}`));
-      throw err;
-    }
-    await setTabSet1State(page, 'Restore TabSet1', 'NORMAL');
+    const results = await withPlotsInsteadOfFiles(page, async () => {
+      let scanned: AxeResults;
+      try {
+        await setTabSet1State(page, 'Minimize TabSet1', 'MINIMIZE');
+        const tablist = page.getByRole('region', { name: 'TabSet1 minimized', exact: true })
+          .getByRole('tablist', { name: 'TabSet1', exact: true });
+        await expect(tablist.getByRole('tab', { name: 'Environment', exact: true }))
+          .toBeVisible({ timeout: TIMEOUTS.consoleReady });
+        scanned = await scanA11y(page, testInfo);
+      } catch (err) {
+        // Only logged, so a restore problem can't hide the original error.
+        await (async () => {
+          if (await restoreButton.isVisible())
+            await setTabSet1State(page, 'Restore TabSet1', 'NORMAL');
+        })().catch((restoreErr: Error) =>
+          console.warn(`TabSet1 not restored: ${restoreErr.message}`));
+        throw err;
+      }
+      await setTabSet1State(page, 'Restore TabSet1', 'NORMAL');
+      return scanned;
+    });
     expect(violationSummary(results)).toEqual([]);
   });
