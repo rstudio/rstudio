@@ -1356,30 +1356,17 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
    // Where a line of the live editor sits in its view: the cursor's, when
    // any of it shows, or else the first line that does. The view's top may
    // be all padding, with no line of its own to keep. Failing both (the
-   // view all padding), the cursor's line is kept at the nearer edge.
+   // view all padding), the cursor's line is kept at the nearer edge. An
+   // editor never laid out (a background tab) has no view to keep.
    this.$liveViewAnchor = function() {
       var renderer = this.liveEditor.renderer;
       var session = this.liveEditor.session;
       var lineHeight = renderer.layerConfig.lineHeight;
       var height = renderer.$size.scrollerHeight;
+      if (!(lineHeight > 0 && height > 0))
+         return null;
 
-      // A smooth scroll under way in either pane (they scroll as one, by the
-      // same offset) would step on to its padded destination over the view
-      // put back; Ace stops it on its next tick. The anchor is taken at that
-      // destination, as a render between ticks leaves the session holding a
-      // step on the way. One already stopped was overtaken by a newer
-      // scroll, which the session holds.
-      var heading = null;
-      [renderer, this.baseEditor.renderer].forEach(function(paneRenderer) {
-         var animation = paneRenderer.$scrollAnimation;
-         if (!animation || paneRenderer.$stopAnimation)
-            return;
-         paneRenderer.$stopAnimation = true;
-         if (heading === null)
-            heading = animation.to;
-      });
-      var top = heading !== null ? heading : session.getScrollTop();
-
+      var top = session.getScrollTop();
       var offsetOf = function(row) {
          return session.documentToScreenRow(row, 0) * lineHeight - top;
       };
@@ -1406,14 +1393,13 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
    // fewer rows above lands somewhere else (at the end of the document,
    // after a large deletion); the anchored line is put back where it was.
    this.$restoreLiveView = function(anchor) {
+      if (!anchor)
+         return;
+
       var session = this.liveEditor.session;
       var lineHeight = this.liveEditor.renderer.layerConfig.lineHeight;
-      var top = Math.max(session.documentToScreenRow(anchor.row, 0) * lineHeight - anchor.offset, 0);
-      session.setScrollTop(top);
-
-      // After a stopped animation the session can hold this offset already,
-      // which makes setScrollTop a no-op; the renderer is told directly.
-      this.liveEditor.renderer.scrollToY(top);
+      var top = session.documentToScreenRow(anchor.row, 0) * lineHeight - anchor.offset;
+      session.setScrollTop(Math.max(top, 0));
    };
 
    this.dispose = function() {
