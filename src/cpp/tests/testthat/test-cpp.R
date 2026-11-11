@@ -106,6 +106,84 @@ test_that("compile_flags.txt paths resolve against its directory", {
     expect_length(messages(), 0L)
 })
 
+test_that("C++20 files load their precompiled header, and one libclang rejects is parsed around and rebuilt", {
+    skip_if_not_installed("Rcpp")
+    skip_if_not(.rs.isClangAvailable())
+
+    op <- options(rstudio.libclang.usePrecompiledHeaders = TRUE)
+    on.exit(options(op), add = TRUE)
+
+    dir <- tempfile("cpp-pch-")
+    dir.create(dir)
+    on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+
+    # With modules enabled (C++20 and newer), libclang refuses a precompiled
+    # header built with other preprocessor options than the file including
+    # it (#19559). C++20 is only R's default as of R 4.6, so ask for it. The
+    # header is force-included so that the precompiled header, which is
+    # built with these flags too, depends on a file we can change below.
+    header <- file.path(dir, "extra.h")
+    writeLines("#define EXTRA 1", header)
+    writeLines(c("-std=c++20", "-include", "extra.h"), file.path(dir, "compile_flags.txt"))
+
+    # a file libclang fails to parse reports no diagnostics at all, so ask
+    # for one
+    contents <- c(
+        "#include <Rcpp.h>",
+        "static_assert(false, \"file was parsed\");"
+    )
+
+    rejected <- .Call("rs_clangRejectedPrecompiledHeaders", PACKAGE = "(embedding)")
+
+    # parsed, and with the precompiled header rather than around it
+    path <- file.path(dir, "loaded.cpp")
+    writeLines(contents, path)
+    diagnostics <- .rs.invokeRpc("get_cpp_diagnostics", path)
+    messages <- vapply(diagnostics, `[[`, character(1), "message")
+    expect_match(messages, "file was parsed", fixed = TRUE, all = FALSE)
+    expect_setequal(.Call("rs_clangRejectedPrecompiledHeaders", PACKAGE = "(embedding)"), rejected)
+
+    # libclang refuses a precompiled header once a file it was built from
+    # has changed, failing the whole parse; the file is then parsed without
+    Sys.setFileTime(header, Sys.time() + 3600)
+
+    path <- file.path(dir, "rejected.cpp")
+    writeLines(contents, path)
+    diagnostics <- .rs.invokeRpc("get_cpp_diagnostics", path)
+    messages <- vapply(diagnostics, `[[`, character(1), "message")
+    expect_match(messages, "file was parsed", fixed = TRUE, all = FALSE)
+    pch <- setdiff(.Call("rs_clangRejectedPrecompiledHeaders", PACKAGE = "(embedding)"), rejected)
+    expect_length(pch, 1L)
+
+    # the next request for the precompiled header rebuilds it, and it loads
+    path <- file.path(dir, "rebuilt.cpp")
+    writeLines(contents, path)
+    diagnostics <- .rs.invokeRpc("get_cpp_diagnostics", path)
+    messages <- vapply(diagnostics, `[[`, character(1), "message")
+    expect_match(messages, "file was parsed", fixed = TRUE, all = FALSE)
+    expect_setequal(.Call("rs_clangRejectedPrecompiledHeaders", PACKAGE = "(embedding)"), rejected)
+    expect_true(file.exists(pch))
+
+    # but only once: when the rebuilt one is rejected as well, it is dropped
+    # rather than rebuilt for every parse
+    Sys.setFileTime(header, Sys.time() + 7200)
+
+    path <- file.path(dir, "rejected-again.cpp")
+    writeLines(contents, path)
+    diagnostics <- .rs.invokeRpc("get_cpp_diagnostics", path)
+    messages <- vapply(diagnostics, `[[`, character(1), "message")
+    expect_match(messages, "file was parsed", fixed = TRUE, all = FALSE)
+    expect_setequal(setdiff(.Call("rs_clangRejectedPrecompiledHeaders", PACKAGE = "(embedding)"), rejected), pch)
+
+    path <- file.path(dir, "without.cpp")
+    writeLines(contents, path)
+    diagnostics <- .rs.invokeRpc("get_cpp_diagnostics", path)
+    messages <- vapply(diagnostics, `[[`, character(1), "message")
+    expect_match(messages, "file was parsed", fixed = TRUE, all = FALSE)
+    expect_setequal(.Call("rs_clangRejectedPrecompiledHeaders", PACKAGE = "(embedding)"), rejected)
+    expect_false(file.exists(pch))
+})
+
 test_that("compile_flags.txt flags are honored with precompiled headers", {
     skip_if_not_installed("Rcpp")
     skip_if_not(.rs.isClangAvailable())
@@ -204,9 +282,12 @@ test_that("problems with compile_flags.txt are reported, not swallowed", {
     expect_match(diagnostics[[1]]$message, "unknown warning option")
     expect_equal(diagnostics[[1]]$position$line, 1)
 
+    # the wording depends on the libclang: libclang 18 on Linux calls this an
+    # "unsupported option", Apple's and newer ones an "unknown argument"
     diagnostics <- lint("--bogus-flag")
     expect_length(diagnostics, 1L)
-    expect_match(diagnostics[[1]]$message, "unknown argument")
+    expect_match(diagnostics[[1]]$message, "unknown argument|unsupported option")
+    expect_match(diagnostics[[1]]$message, "--bogus-flag", fixed = TRUE)
 
     # a bad value is quoted apart from its option, which the parse still survives
     diagnostics <- lint("-fsanitize=bogus")

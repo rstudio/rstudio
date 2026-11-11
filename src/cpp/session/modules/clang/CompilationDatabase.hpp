@@ -17,6 +17,7 @@
 #define SESSION_MODULES_CLANG_COMPILATION_DATABASE_HPP
 
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -140,6 +141,11 @@ private:
    CompilationConfig packageCompilationConfig_;
    bool usePrecompiledHeaders_;
    bool forceRebuildPrecompiledHeaders_;
+
+   // precompiled headers rebuilt because libclang rejected them, and the
+   // ones it rejected again after that
+   std::set<std::string> rebuiltPrecompiledHeaders_;
+   std::set<std::string> unusablePrecompiledHeaders_;
    bool restoredCompilationConfig_;
 };
 
@@ -154,6 +160,7 @@ std::vector<std::string> readCompileFlags(const core::FilePath& flagsFile);
 std::vector<std::string> resolveCompileFlagPaths(const std::vector<std::string>& flags,
                                                  const core::FilePath& dir);
 std::vector<std::string> compileFlagsForSource(const core::FilePath& srcFile);
+std::vector<std::string> systemIncludeArgs(const std::vector<std::string>& includes);
 void removeOrphanedUserFlagsPchs(const core::FilePath& platformPath,
                                  const std::string& pkgName);
 

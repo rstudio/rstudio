@@ -31,6 +31,7 @@ import { changeLanguage } from './i18n-manager';
 import { randomUUID } from 'crypto';
 import { appState, hasApplication } from './app-state';
 import { isOzonePlatformChromiumArgument } from './electron-flags';
+import desktop from '../native/desktop.node';
 
 // work around Electron resolving the application path to 'app.asar'
 const appPath = path.join(path.dirname(app.getAppPath()), 'app');
@@ -42,12 +43,62 @@ export function getAppPath(): string {
 /**
  * True when rsession is launched with --automation-agent (the flag the
  * Playwright fixture passes). Use this to gate test-only behaviors such as
- * `showInactive` over `show` -- the goal is to keep windows from leaping to
- * the front while leaving the app visible in the dock / Cmd+Tab so the user
- * can still find and focus it manually.
+ * `showWindowForAutomation` over `show` -- the goal is to keep windows from
+ * leaping to the front while leaving the app visible in the dock / Cmd+Tab so
+ * the user can still find and focus it manually.
  */
 export function isAutomated(): boolean {
   return app.commandLine.hasSwitch('automation-agent');
+}
+
+/**
+ * Automation windows sit behind the user's own, and one they clicked to watch
+ * a run and then covered again would otherwise report itself hidden and stop
+ * painting, stalling the tests.
+ */
+export function keepAutomationWindowsRendering(): void {
+  if (!isAutomated()) {
+    return;
+  }
+
+  app.on('web-contents-created', (_event, contents) => {
+    contents.setBackgroundThrottling(false);
+  });
+}
+
+/**
+ * Put a window on screen during an automation run without activating it or
+ * raising it over whatever the user is working in. A window that is already
+ * on screen is left exactly where it is, so the user can click one to watch a
+ * run and it stays put; windows that open while they are watching appear
+ * just underneath it.
+ */
+export function showWindowForAutomation(window: BrowserWindow): void {
+  if (window.isVisible() && !window.isMinimized()) {
+    return;
+  }
+
+  // one of our windows only has focus once the user has clicked it
+  const watched = BrowserWindow.getFocusedWindow();
+
+  // showInactive() is what tells Electron and the page that the window is
+  // visible, but on macOS it also orders the window in front of every other
+  // application (un-minimizing it first if need be). Sending it to the back
+  // before the next display pass means it first appears behind them instead.
+  window.showInactive();
+  if (process.platform !== 'darwin') {
+    return;
+  }
+
+  const handle = window.getNativeWindowHandle();
+  const ordered =
+    watched && watched !== window
+      ? desktop.macOSOrderWindowBelow(handle, watched.getNativeWindowHandle())
+      : desktop.macOSOrderWindowBack(handle);
+
+  if (!ordered) {
+    logger().logWarning('Could not order an automation window behind the others; it stays in front of them');
+  }
 }
 
 export function initializeSharedSecret(): void {
@@ -418,14 +469,21 @@ export function parseFilter(filters: string): FileFilter[] {
 }
 
 export function raiseAndActivateWindow(window: BrowserWindow): void {
+  // In automation mode, leave OS focus and the window stacking alone for
+  // whatever the user is doing while the tests run.
+  if (isAutomated()) {
+    // On macOS restore() orders the window in front of every other
+    // application once it has animated out of the dock, after it was sent to
+    // the back; showInactive() un-minimizes it without that.
+    if (window.isMinimized() && process.platform !== 'darwin') {
+      window.restore();
+    }
+    showWindowForAutomation(window);
+    return;
+  }
+
   if (window.isMinimized()) {
     window.restore();
-  }
-  // In automation mode, surface the window without pulling OS focus away
-  // from whatever the user is doing while the tests run.
-  if (isAutomated()) {
-    window.showInactive();
-    return;
   }
   window.moveTop();
   window.focus();
