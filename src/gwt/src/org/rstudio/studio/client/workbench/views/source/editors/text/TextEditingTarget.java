@@ -3050,12 +3050,27 @@ public class TextEditingTarget implements
       // is hidden, so an insert there would go unseen and then be written to
       // the file on the next save.
       //
-      // The code commands are no guide there: they are enabled only while a
-      // chunk has focus, and the pane the code comes from has taken it. Go by
-      // the kind of document, and let the visual editor say where its cursor
-      // is.
+      // The code commands are no guide there: they are enabled only while
+      // the cursor is in a chunk, and prose can take the code too, as a new
+      // chunk. Go by the kind of document, and let the visual editor say
+      // where its cursor is.
       if (isVisualEditorActive() || isVisualModeActivated())
-         return fileType_.canExecuteCode() && visualMode_.insertCode(source);
+      {
+         if (!fileType_.canExecuteCode())
+            return false;
+
+         // Placing the code takes focus to the visual editor. Hand it back,
+         // as an insert in source mode leaves focus alone: a keyboard user
+         // in the History pane goes on to send the next entry.
+         Element focused = DomUtils.getActiveElement();
+
+         boolean inserted = visualMode_.insertCode(source);
+
+         if (focused != null && focused != DomUtils.getActiveElement())
+            focused.focus();
+
+         return inserted;
+      }
 
       if (!commands_.executeCode().isEnabled())
          return false;
