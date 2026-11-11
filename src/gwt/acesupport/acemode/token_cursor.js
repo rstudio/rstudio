@@ -638,16 +638,116 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
 
    var contains = Utils.contains;
 
-   // Move the tokne cursor backwards from an open brace over const, noexcept,
-   // for function definitions.
+   // With the cursor just before a '->', whether it follows the declarator of
+   // a function, 'auto [S::]f(...) [const] [noexcept[(...)]]', or of a lambda,
+   // '[...](...)'. A trailing return type is valid only there, so this keeps
+   // member access such as 'return get()->n == T{1}' from being read as one.
+   var isTrailingReturnDeclarator = function(cursor) {
+
+      var clone = cursor.cloneCursor();
+      for (;;) {
+         var value = clone.currentValue();
+         if (value === "const" || value === "noexcept") {
+            if (!clone.moveToPreviousToken())
+               return false;
+            continue;
+         }
+         if (value !== ")" || !clone.bwdToMatchingToken() || !clone.moveToPreviousToken())
+            return false;
+         if (clone.currentValue() !== "noexcept")
+            break;
+      }
+
+      if (clone.currentValue() === "]")
+         return true;
+
+      // Walk back over a possibly qualified name, e.g. 'S<std::vector<T>>::f'
+      // or 'operator "" _u', to 'auto'. The tokenizer keeps '>>' as one token,
+      // closing two lists; parenthesized arguments such as '(8 >> 1)' are skipped.
+      var depth = 0;
+      for (;;) {
+         var name = clone.currentValue();
+         if (depth > 0 && name === ")") {
+            if (!clone.bwdToMatchingToken())
+               return false;
+         }
+         else if (name === ">" || name === ">>")
+            depth += name.length;
+         else if (name === "<")
+            depth -= 1;
+         else if (depth > 0 && contains([";", "{", "}"], name))
+            return false;
+         else if (depth === 0 && name !== "::" && name !== "~" && name !== "\"\"" &&
+                  clone.currentType() !== "identifier" && !/^operator/.test(name))
+            break;
+         if (depth < 0 || !clone.moveToPreviousToken())
+            return false;
+      }
+      return clone.currentValue() === "auto";
+   };
+
+   var significantTokens = function(tokens) {
+      return (tokens || []).filter(function(token) {
+         return !/^\s*$/.test(token.value);
+      });
+   };
+
+   // Whether the cursor's row is part of a preprocessor directive, including
+   // the rows a directive continues onto after a trailing '\'.
+   var isPreprocessorRow = function(cursor) {
+      var row = cursor.$row;
+      while (row > 0) {
+         var previous = significantTokens(cursor.$tokens[row - 1]);
+         if (previous.length === 0 || previous[previous.length - 1].value !== "\\")
+            break;
+         row--;
+      }
+      var first = significantTokens(cursor.$tokens[row])[0];
+      return first != null && first.type === "keyword.preproc";
+   };
+
+   // From the last token of a trailing return type, e.g. the 'int' of
+   // 'auto f() const -> int', move to the token before its '->'. Stopping at
+   // preprocessor lines keeps '#define API auto api() -> int' from claiming
+   // the next definition's brace.
+   var bwdOverTrailingReturnType = function(cursor) {
+
+      var clone = cursor.cloneCursor();
+      do {
+         if (isPreprocessorRow(clone))
+            return false;
+         var value = clone.currentValue();
+         if (value === "->")
+            break;
+         if (contains([";", "{", "}", "("], value))
+            return false;
+         if (value === ")" && !clone.bwdToMatchingToken())
+            return false;
+      } while (clone.moveToPreviousToken());
+
+      if (clone.currentValue() !== "->" || !clone.moveToPreviousToken())
+         return false;
+
+      if (!isTrailingReturnDeclarator(clone))
+         return false;
+
+      cursor.$row = clone.$row;
+      cursor.$offset = clone.$offset;
+      return true;
+   };
+
+   // Move the token cursor backwards from an open brace over const, noexcept,
+   // and a trailing return type, for function definitions.
    //
    // E.g.
    //
    //     int foo(int a) const noexcept(...) {
    //                    ^~~~~~~~~~~~~~~~~~~~^
+   //     auto foo(int a) const -> int {
+   //                     ^~~~~~~~~~~~~^
    //
    // Places the token cursor on the first token following a closing paren.
-   this.bwdOverConstNoexceptDecltype = function() {
+   this.bwdOverFunctionQualifiers = function() {
 
       var clone = this.cloneCursor();
       if (clone.currentValue() !== "{") {
@@ -658,21 +758,9 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
       if (!clone.moveToPreviousToken())
          return false;
 
-      // Try moving over a '-> decltype()'
-      var cloneDecltype = clone.cloneCursor();
-      if (cloneDecltype.currentValue() === ")") {
-         if (cloneDecltype.bwdToMatchingToken()) {
-            if (cloneDecltype.moveToPreviousToken()) {
-               if (cloneDecltype.currentValue() === "decltype") {
-                  if (cloneDecltype.moveToPreviousToken()) {
-                     clone.$row = cloneDecltype.$row;
-                     clone.$offset = cloneDecltype.$offset;
-                  }
-               }
-            }
-         }
-      }
-      
+      // Try moving over a trailing return type, e.g. '-> int'
+      bwdOverTrailingReturnType(clone);
+
       // Try moving over a 'noexcept()'.
       var cloneNoexcept = clone.cloneCursor();
       if (cloneNoexcept.currentValue() === ")") {
