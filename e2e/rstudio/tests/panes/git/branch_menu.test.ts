@@ -336,6 +336,35 @@ test.describe.serial('Git branch menu (#19555)', () => {
     await expect(popup.getByRole('menuitem')).toHaveText(['beta']);
   });
 
+  test('a search in the History view\'s branch filter highlights its first match', async ({
+    rstudioPage: page,
+  }) => {
+    test.setTimeout(120_000);
+    const satellitePromise = page.context().waitForEvent('page', { timeout: 60000 });
+    await executeCommand(page, 'vcsShowHistory');
+    const satellite = await satellitePromise;
+    try {
+      // the page event can fire while the window is still on its initial blank
+      // document, so wait for the satellite URL rather than its first load
+      await satellite.waitForURL(/view=review_changes/);
+
+      // The Changes view's branch button shares the name; it is hidden here
+      const button = satellite.getByRole('button', { name: 'Switch branch' }).locator('visible=true');
+      await expect(button).toContainText('alpha-two', { timeout: 60000 });
+      await button.click();
+      const popup = branchPopup(satellite);
+      await expect(popup.getByRole('menuitem').first()).toHaveText('(all branches)', { timeout: 10000 });
+
+      // "(all branches)" is left out of the results, rather than highlighted first
+      await popup.getByRole('combobox', { name: SEARCH_LABEL }).pressSequentially('beta');
+      await expect(highlightedItem(popup)).toHaveText('beta');
+      await satellite.keyboard.press('Enter');
+      await expect(button).toContainText('beta');
+    } finally {
+      await satellite.close().catch(() => {});
+    }
+  });
+
   // axe opens a page of its own to merge its results, which Desktop's CDP
   // connection to Electron refuses (Target.createTarget: Not supported).
   test('the menu has no accessibility violations', { tag: '@server_only' }, async ({

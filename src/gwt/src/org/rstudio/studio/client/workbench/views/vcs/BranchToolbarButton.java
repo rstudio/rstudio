@@ -222,6 +222,12 @@ public class BranchToolbarButton extends ToolbarMenuButton
    {
    }
 
+   // Whether the menu is filtered by a search
+   protected boolean isSearching()
+   {
+      return !search_.getQuery().isEmpty();
+   }
+
    // Returns false when branch information isn't available yet (the menu was
    // opened before the first status refresh completed), in which case the
    // caller should try again on the next open.
