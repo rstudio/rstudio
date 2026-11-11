@@ -135,3 +135,15 @@ export declare function macOSSetDefaultApplicationForFileExtension(extension: st
  * @returns whether the window was reordered; always false off macOS
  */
 export declare function macOSOrderWindowBack(handle: Buffer): boolean;
+
+/**
+ * (macOS only)
+ *
+ * Move a window directly underneath another one, without activating or
+ * hiding it.
+ *
+ * @param handle the BrowserWindow.getNativeWindowHandle() of the window to move
+ * @param other the BrowserWindow.getNativeWindowHandle() of the window to put it under
+ * @returns whether the window was reordered; always false off macOS
+ */
+export declare function macOSOrderWindowBelow(handle: Buffer, other: Buffer): boolean;

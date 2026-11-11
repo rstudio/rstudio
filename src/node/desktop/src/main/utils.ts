@@ -70,12 +70,16 @@ export function keepAutomationWindowsRendering(): void {
  * Put a window on screen during an automation run without activating it or
  * raising it over whatever the user is working in. A window that is already
  * on screen is left exactly where it is, so the user can click one to watch a
- * run and it stays put.
+ * run and it stays put; windows that open while they are watching appear
+ * just underneath it.
  */
 export function showWindowForAutomation(window: BrowserWindow): void {
   if (window.isVisible() && !window.isMinimized()) {
     return;
   }
+
+  // one of our windows only has focus once the user has clicked it
+  const watched = BrowserWindow.getFocusedWindow();
 
   // showInactive() is what tells Electron and the page that the window is
   // visible, but on macOS it also orders the window in front of every other
@@ -86,8 +90,14 @@ export function showWindowForAutomation(window: BrowserWindow): void {
     return;
   }
 
-  if (!desktop.macOSOrderWindowBack(window.getNativeWindowHandle())) {
-    logger().logWarning('Could not order an automation window behind other applications; it stays in front of them');
+  const handle = window.getNativeWindowHandle();
+  const ordered =
+    watched && watched !== window
+      ? desktop.macOSOrderWindowBelow(handle, watched.getNativeWindowHandle())
+      : desktop.macOSOrderWindowBack(handle);
+
+  if (!ordered) {
+    logger().logWarning('Could not order an automation window behind the others; it stays in front of them');
   }
 }
 

@@ -71,6 +71,20 @@ void settleSetDefault(Napi::Env env, Napi::Function, SetDefaultResult* result)
    delete result;
 }
 
+// BrowserWindow.getNativeWindowHandle() is a buffer holding an NSView*
+NSWindow* windowFromHandle(const Napi::Value& value)
+{
+   if (!value.IsBuffer())
+      return nil;
+
+   Napi::Buffer<uint8_t> handle = value.As<Napi::Buffer<uint8_t>>();
+   if (handle.Length() != sizeof(NSView*))
+      return nil;
+
+   NSView* view = *reinterpret_cast<NSView**>(handle.Data());
+   return [view window];
+}
+
 } // end anonymous namespace
 
 Napi::Value macOSIsDefaultApplicationForFileExtension(const Napi::CallbackInfo& info)
@@ -138,20 +152,24 @@ Napi::Value macOSOrderWindowBack(const Napi::CallbackInfo& info)
 {
    Napi::Env env = info.Env();
 
-   // BrowserWindow.getNativeWindowHandle() is a buffer holding an NSView*
-   if (info.Length() < 1 || !info[0].IsBuffer())
-      return Napi::Boolean::New(env, false);
-
-   Napi::Buffer<uint8_t> handle = info[0].As<Napi::Buffer<uint8_t>>();
-   if (handle.Length() != sizeof(NSView*))
-      return Napi::Boolean::New(env, false);
-
-   NSView* view = *reinterpret_cast<NSView**>(handle.Data());
-   NSWindow* window = [view window];
+   NSWindow* window = windowFromHandle(info[0]);
    if (window == nil)
       return Napi::Boolean::New(env, false);
 
    [window orderBack:nil];
+   return Napi::Boolean::New(env, true);
+}
+
+Napi::Value macOSOrderWindowBelow(const Napi::CallbackInfo& info)
+{
+   Napi::Env env = info.Env();
+
+   NSWindow* window = windowFromHandle(info[0]);
+   NSWindow* other = windowFromHandle(info[1]);
+   if (window == nil || other == nil || window == other)
+      return Napi::Boolean::New(env, false);
+
+   [window orderWindow:NSWindowBelow relativeTo:[other windowNumber]];
    return Napi::Boolean::New(env, true);
 }
 

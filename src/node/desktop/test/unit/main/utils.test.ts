@@ -304,6 +304,11 @@ describe('Utils', () => {
       };
     }
 
+    // nothing of ours has focus unless the user clicked it
+    beforeEach(() => {
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(null);
+    });
+
     afterEach(() => {
       sinon.restore();
     });
@@ -334,6 +339,28 @@ describe('Utils', () => {
         }
       });
     }
+
+    // a window that opens while the user is watching should not vanish
+    // behind every other application
+    it('shows a window just under the one the user is watching on macOS', function () {
+      if (process.platform !== 'darwin') {
+        this.skip();
+      }
+
+      const orderWindowBack = sinon.stub(desktop, 'macOSOrderWindowBack').returns(true);
+      const orderWindowBelow = sinon.stub(desktop, 'macOSOrderWindowBelow').returns(true);
+      const watched = fakeWindow({ visible: true, minimized: false });
+      watched.getNativeWindowHandle.returns(Buffer.alloc(8, 1));
+      (BrowserWindow.getFocusedWindow as sinon.SinonStub).returns(watched);
+
+      const window = fakeWindow({ visible: false, minimized: false });
+      Utils.showWindowForAutomation(window as unknown as BrowserWindow);
+
+      assert.isTrue(window.showInactive.calledOnce);
+      assert.isFalse(orderWindowBack.called);
+      assert.isTrue(orderWindowBelow.calledOnceWithExactly(Buffer.alloc(8), Buffer.alloc(8, 1)));
+      assert.isTrue(orderWindowBelow.calledAfter(window.showInactive));
+    });
 
     // otherwise nothing explains why the windows are back in front
     it('logs a warning when the window could not be ordered back', function () {
@@ -373,6 +400,10 @@ describe('Utils', () => {
         app.commandLine.removeSwitch('automation-agent');
       }
     }
+
+    beforeEach(() => {
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(null);
+    });
 
     afterEach(() => {
       sinon.restore();
