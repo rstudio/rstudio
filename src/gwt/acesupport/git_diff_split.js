@@ -212,24 +212,17 @@ PaddingPlan.prototype.sameWidget = function(current, planned) {
           this.sameWidget(current.$oldWidget, planned.$oldWidget);
 };
 
-// Whether a planned layout differs from the one its session has.
-PaddingPlan.prototype.differs = function(session, planned) {
+PaddingPlan.prototype.apply = function(session, planned) {
    var current = session.lineWidgets || [];
    var widgets = planned.lineWidgets;
    var length = Math.max(current.length, widgets.length);
-   for (var row = 0; row < length; row++) {
-      if (!this.sameWidget(current[row], widgets[row]))
-         return true;
-   }
-   return false;
-};
-
-PaddingPlan.prototype.apply = function(session, planned) {
-   if (!this.differs(session, planned))
+   var row = 0;
+   while (row < length && this.sameWidget(current[row], widgets[row]))
+      row++;
+   if (row === length)
       return;
 
    var self = this;
-   var widgets = planned.lineWidgets;
    var restore = function(widget) {
       if (!widget)
          return widget;
@@ -903,8 +896,7 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
          view.$padChanges();
 
          // (the line to keep in place is picked before the padding moves)
-         var keep = this.baseChanged && !this.liveEdited && plan.differs(this.sessionB, view.sessionB);
-         var anchor = keep ? this.$liveViewAnchor() : null;
+         var anchor = this.baseChanged && !this.liveEdited ? this.$liveViewAnchor() : null;
          plan.apply(this.sessionA, view.sessionA);
          plan.apply(this.sessionB, view.sessionB);
          if (anchor)

@@ -426,5 +426,21 @@ restage(view, lines(1, 199) + "\nother", [chunk(0, 100, 0, 0), chunk(199, 200, 9
 check("the action bar closing as the base changes leaves the scroll alone",
    view.sessionB.lineWidgets[0].rowsAbove === 100 && scrolledTo(view, 0));
 
+// The same with the removal staged whole, from lower down: the action bar
+// closes and takes the padding with it, so the document has none left to
+// lose, yet it goes from above the line in view all the same. (The bar's
+// own row goes too, as any widget's would.)
+view = closingView(lines(1, 200), topLive, [chunk(0, 100, 0, 0)], 0, 100);
+peek = { row: 0, rowCount: 1, rowsAbove: 0, fixedWidth: true };
+view.gutter.peek = { widget: peek };
+view.sessionB.widgetManager.addLineWidget(peek);
+view.align();
+scrollBoth(view, liveTop(view, 80) - 30);
+view.gutter.peek = null;
+view.sessionB.widgetManager.removeLineWidget(peek);
+restage(view, topLive, []);
+check("padding the action bar had taken on counts as gone when its change is staged",
+   !view.sessionB.lineWidgets.some(Boolean) && scrolledTo(view, (80 + 100 + 1) * 10 - 30 - 100 * 10));
+
 document.getElementById("passed").textContent = passed;
 document.getElementById("failed").textContent = failed;
