@@ -22,7 +22,6 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Node;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -30,7 +29,6 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.MenuItemSeparator;
@@ -304,26 +302,10 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       menuBar_.addSeparator(new MinWidthMenuSeparator(minPx));
    }
 
-   // A heading for the items below it. It is text, not a divider: as a
-   // separator, screen readers announce it as a "splitter".
+   // A heading for the items below it, flush left and with no divider line
    public void addSubheader(String text)
    {
-      MenuItemSeparator subheader = new CustomMenuItemSeparator()
-      {
-         @Override
-         public Element createMainElement()
-         {
-            Label label = new Label(text);
-            label.addStyleName(ThemeStyles.INSTANCE.menuSubheader());
-            label.getElement().getStyle().setPaddingLeft(2, Unit.PX);
-            return label.getElement();
-         }
-      };
-
-      Element el = subheader.getElement();
-      el.removeAttribute("role");
-      el.removeAttribute("aria-disabled");
-      menuBar_.addSeparator(subheader);
+      menuBar_.addSeparator(LabelledMenuSeparator.subheader(text));
    }
 
    public int getItemCount()
