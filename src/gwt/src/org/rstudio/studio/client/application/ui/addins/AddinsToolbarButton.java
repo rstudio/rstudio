@@ -20,9 +20,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.gwt.aria.client.AutocompleteValue;
+import com.google.gwt.aria.client.ComboboxRole;
+import com.google.gwt.aria.client.ExpandedValue;
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.MapUtil;
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -31,7 +38,6 @@ import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
-import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
@@ -39,21 +45,27 @@ import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuItem;
+import com.google.gwt.user.client.ui.MenuItemSeparator;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+
+import elemental2.dom.HTMLElement;
+import jsinterop.base.Js;
 
 public class AddinsToolbarButton extends ToolbarMenuButton
 {
@@ -75,7 +87,7 @@ public class AddinsToolbarButton extends ToolbarMenuButton
       RStudioGinjector.INSTANCE.injectMembers(this);
 
       ElementIds.assignElementId(this, ElementIds.ADDINS_TOOLBAR_BUTTON);
-      menu_ = getMenu();
+      menu_ = (ScrollableToolbarPopupMenu) getMenu();
 
       menu_.setAutoHideRedundantSeparators(false);
 
@@ -110,30 +122,166 @@ public class AddinsToolbarButton extends ToolbarMenuButton
          @Override
          public void run()
          {
-            onSearchValueChange();
+            applyPendingSearch();
          }
       };
+      searchWidget_.addValueChangeHandler(event -> searchValueChangeTimer_.schedule(200));
+      searchWidget_.addKeyDownHandler(this::onSearchKeyDown);
 
-      searchEl_ = searchWidget_.getElement();
-
-      searchEl_.getStyle().setMarginLeft(10, Unit.PX);
-      searchEl_.getStyle().setMarginRight(10, Unit.PX);
-      searchEl_.getStyle().setMarginTop(-2, Unit.PX);
-
-      DOM.sinkEvents(searchEl_, Event.KEYEVENTS);
-      DOM.setEventListener(searchEl_, new EventListener()
+      // Closing the menu removes the focused search box. Put focus back on this
+      // button rather than leave it on the page body; Tab's default action then
+      // moves on from here.
+      menu_.addCloseHandler(event ->
       {
-         @Override
-         public void onBrowserEvent(Event event)
+         Element focused = DomUtils.getActiveElement();
+         if (focused == null ||
+             focused == Document.get().getBody() ||
+             menu_.getElement().isOrHasChild(focused))
          {
-            searchValueChangeTimer_.schedule(200);
+            setFocus(true);
          }
       });
 
+      addSearchHeader();
+      initComboboxRole();
+
+      // Name the menu after its button, as in the menu button pattern
+      Roles.getMenuRole().setAriaLabelledbyProperty(menu_.getMenuBarElement(),
+            Id.of(getElement()));
+
+      // The menu takes focus whenever it opens, but typing belongs in the search
+      // box, which hands the navigation keys to the menu. GWT focuses the menu from
+      // a setTimeout in WebKit and Chromium; in Safari that ran after the search box
+      // took focus. Redirecting the menu's focus works whichever runs last.
+      HTMLElement popupEl = Js.cast(menu_.getElement());
+      Object menuEl = menu_.getMenuBarElement();
+      popupEl.addEventListener("focus", event ->
+      {
+         if (event.target != menuEl)
+            return;
+
+         // Caught while capturing, so the menu never sees it: its own focus
+         // handling would highlight the first add-in, and screen readers would
+         // then announce that add-in instead of the search box.
+         event.stopPropagation();
+         searchWidget_.getInputElement().focus();
+      }, true);
+   }
+
+   // The search box sits above the menu rather than inside it, since a menu may
+   // contain only items, groups, and separators.
+   private void addSearchHeader()
+   {
+      Style style = searchWidget_.getElement().getStyle();
+      style.setMarginTop(4, Unit.PX);
+      style.setMarginBottom(4, Unit.PX);
+      style.setMarginLeft(10, Unit.PX);
+      style.setMarginRight(10, Unit.PX);
+
+      // Fill the row, rather than the shared search style's fixed 120px
+      Style boxStyle = searchWidget_.getElement().getFirstChildElement().getStyle();
+      boxStyle.setProperty("width", "auto");
+      boxStyle.setMarginRight(0, Unit.PX);
+
+      // Not a credential field. In Safari, 1Password honors this only on the
+      // menu's first opening and shows its field icon on later ones.
+      searchWidget_.getInputElement().setAttribute("data-1p-ignore", "true");
+
+      Widget menuWidget = menu_.getWidget();
+      FlowPanel panel = new FlowPanel();
+      panel.add(searchWidget_);
+      panel.add(menuWidget);
+      menu_.setWidget(panel);
+   }
+
+   // Focus stays in the search box, so it hands the menu's navigation keys to the
+   // menu. Page Up, Page Down, and Escape already reach the menu from anywhere.
+   private void onSearchKeyDown(KeyDownEvent event)
+   {
+      int key = event.getNativeKeyCode();
+      if (key == KeyCodes.KEY_TAB)
+      {
+         menu_.hide();
+         return;
+      }
+
+      // Keys with modifiers, such as Shift+Home, edit the search text instead
+      boolean navigation =
+            key == KeyCodes.KEY_UP || key == KeyCodes.KEY_DOWN ||
+            key == KeyCodes.KEY_HOME || key == KeyCodes.KEY_END ||
+            key == KeyCodes.KEY_ENTER;
+      if (!navigation || event.isAnyModifierKeyDown())
+         return;
+
+      applyPendingSearch();
+      switch (key)
+      {
+         case KeyCodes.KEY_UP:
+            // With nothing highlighted, Up starts from the last add-in, as in the
+            // combobox pattern; the menu itself would start from the first
+            if (menu_.getSelectedIndex() < 0)
+               menu_.selectLast();
+            else
+               menu_.moveSelectionUp();
+            break;
+         case KeyCodes.KEY_DOWN:
+            menu_.moveSelectionDown();
+            break;
+         case KeyCodes.KEY_HOME:
+            menu_.selectFirst();
+            break;
+         case KeyCodes.KEY_END:
+            menu_.selectLast();
+            break;
+         case KeyCodes.KEY_ENTER:
+            menu_.activateSelectedItem();
+            break;
+      }
+      event.preventDefault();
+   }
+
+   // Rebuilds the menu for the search text now, rather than when the search
+   // timer fires, so a navigation key acts on the list for the text typed so
+   // far, with its first match highlighted. SearchWidget reports its first key
+   // as a change even when the text is unchanged; that must not reset the highlight.
+   private void applyPendingSearch()
+   {
+      searchValueChangeTimer_.cancel();
+      if (!searchQuery().equals(populatedQuery_))
+      {
+         populate();
+         menu_.selectFirst();
+      }
+   }
+
+   // Focus stays in the search box while the arrow keys move the highlight, so the
+   // search box, not the menu, has to tell screen readers which add-in is highlighted.
+   private void initComboboxRole()
+   {
+      final Element input = searchWidget_.getInputElement();
+      Element menuEl = menu_.getMenuBarElement();
+      if (StringUtil.isNullOrEmpty(menuEl.getId()))
+         menuEl.setId(DOM.createUniqueId());
+
+      ComboboxRole role = Roles.getComboboxRole();
+      role.set(input);
+      role.setAriaExpandedState(input, ExpandedValue.TRUE);
+      role.setAriaAutocompleteProperty(input, AutocompleteValue.LIST);
+      role.setAriaControlsProperty(input, Id.of(menuEl));
+
+      menu_.addSelectionHandler(event ->
+      {
+         MenuItem item = event.getSelectedItem();
+         if (item == null)
+            role.removeAriaActivedescendantProperty(input);
+         else
+            role.setAriaActivedescendantProperty(input, Id.of(item.getElement()));
+      });
    }
 
    private void populate()
    {
+      populatedQuery_ = searchQuery();
       menu_.clearItems();
 
       Map<String, List<RAddin>> addinsByPkg = organizeAddins();
@@ -146,25 +294,10 @@ public class AddinsToolbarButton extends ToolbarMenuButton
 
       MapUtil.forEach(addinsByPkg, new MapUtil.ForEachCommand<String, List<RAddin>>()
       {
-         private int separatorCount_ = 0;
-
          @Override
          public void execute(final String pkg, final List<RAddin> addins)
          {
-            menu_.addSeparator(new CustomMenuItemSeparator()
-            {
-               @Override
-               public Element createMainElement()
-               {
-                  Label label = new Label(pkg);
-                  label.addStyleName(ThemeStyles.INSTANCE.menuSubheader());
-                  label.getElement().getStyle().setPaddingLeft(2, Unit.PX);
-                  if (separatorCount_++ == 0)
-                     return createSearchSeparator(label);
-                  else
-                     return label.getElement();
-               }
-            });
+            addSubheader(pkg);
             menu_.addSeparator();
 
             addins.sort(new Comparator<RAddin>()
@@ -176,12 +309,22 @@ public class AddinsToolbarButton extends ToolbarMenuButton
                }
             });
 
-            for (RAddin addin : addins)
-               menu_.addItem(menuItem(addin));
+            for (int i = 0; i < addins.size(); i++)
+            {
+               RAddin addin = addins.get(i);
+               MenuItem item = menuItem(addin);
+
+               // The arrow keys skip the package heading, so the package's first
+               // add-in names it for screen readers
+               if (i == 0)
+               {
+                  Roles.getMenuitemRole().setAriaLabelProperty(item.getElement(),
+                        constants_.addinInPackageLabel(pkg, addin.getName()));
+               }
+               menu_.addItem(item);
+            }
          }
       });
-
-      menu_.selectFirst();
 
       Element tableEl = menu_.getMenuTableElement();
       if (tableEl != null)
@@ -189,39 +332,11 @@ public class AddinsToolbarButton extends ToolbarMenuButton
          int menuWidth = Math.max(MIN_WIDTH_PX, menuWidth_);
          tableEl.getStyle().setWidth(menuWidth, Unit.PX);
       }
-
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
-      {
-         @Override
-         public void execute()
-         {
-            searchWidget_.getInputElement().focus();
-         }
-      });
    }
 
    private void populateEmptyMenu()
    {
-      menu_.addSeparator(new CustomMenuItemSeparator()
-      {
-         @Override
-         public Element createMainElement()
-         {
-            Label label = new Label(constants_.noAddinsFound());
-            label.addStyleName(ThemeStyles.INSTANCE.menuSubheader());
-            label.getElement().getStyle().setPaddingLeft(2, Unit.PX);
-            return createSearchSeparator(label);
-         }
-      });
-
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
-      {
-         @Override
-         public void execute()
-         {
-            searchWidget_.getInputElement().focus();
-         }
-      });
+      addSubheader(constants_.noAddinsFound());
    }
 
    private MenuItem menuItem(final RAddin addin)
@@ -241,11 +356,18 @@ public class AddinsToolbarButton extends ToolbarMenuButton
       return menuItem;
    }
 
+   // The search text as the filter uses it, so that text which filters the same,
+   // such as a trailing space, doesn't rebuild the menu and reset the highlight
+   private String searchQuery()
+   {
+      return searchWidget_.getValue().toLowerCase().trim();
+   }
+
    private Map<String, List<RAddin>> organizeAddins()
    {
       Map<String, List<RAddin>> organized = new HashMap<>();
 
-      String query = searchWidget_.getValue().toLowerCase().trim();
+      String query = searchQuery();
 
       RAddins addins = manager_.getRAddins();
       for (String key : JsUtil.asIterable(addins.keys()))
@@ -271,23 +393,26 @@ public class AddinsToolbarButton extends ToolbarMenuButton
       return organized;
    }
 
-   private Element createSearchSeparator(Label label)
+   private void addSubheader(String text)
    {
-      final Element searchEl = searchWidget_.getElement();
-      final Element labelEl = label.getElement();
+      MenuItemSeparator subheader = new CustomMenuItemSeparator()
+      {
+         @Override
+         public Element createMainElement()
+         {
+            Label label = new Label(text);
+            label.addStyleName(ThemeStyles.INSTANCE.menuSubheader());
+            label.getElement().getStyle().setPaddingLeft(2, Unit.PX);
+            return label.getElement();
+         }
+      };
 
-      labelEl.getStyle().setFloat(Style.Float.LEFT);
-      searchEl.getStyle().setFloat(Style.Float.RIGHT);
-
-      Element container = DOM.createDiv();
-      container.appendChild(labelEl);
-      container.appendChild(searchEl);
-      return container;
-   }
-
-   private void onSearchValueChange()
-   {
-      populate();
+      // A heading, not a divider: as a separator, screen readers announce it as a
+      // "splitter". The divider below each package heading keeps that role.
+      Element el = subheader.getElement();
+      el.removeAttribute("role");
+      el.removeAttribute("aria-disabled");
+      menu_.addSeparator(subheader);
    }
 
    @Inject
@@ -298,12 +423,12 @@ public class AddinsToolbarButton extends ToolbarMenuButton
       executor_ = executor;
    }
 
-   private final ToolbarPopupMenu menu_;
+   private final ScrollableToolbarPopupMenu menu_;
    private final SearchWidget searchWidget_;
-   private final Element searchEl_;
    private final Timer searchValueChangeTimer_;
 
    private int menuWidth_ = 0;
+   private String populatedQuery_ = "";
 
    // Injected ----
    private AddinsCommandManager manager_;
