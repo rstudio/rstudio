@@ -1363,14 +1363,22 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       var lineHeight = renderer.layerConfig.lineHeight;
       var height = renderer.$size.scrollerHeight;
 
-      // A smooth scroll under way would step on to its padded destination
-      // over the view put back; Ace stops it on its next tick. The anchor is
-      // taken at that destination (a render between ticks leaves the
-      // session holding a step on the way).
-      var animation = renderer.$scrollAnimation;
-      if (animation)
-         renderer.$stopAnimation = true;
-      var top = animation ? animation.to : session.getScrollTop();
+      // A smooth scroll under way in either pane (they scroll as one, by the
+      // same offset) would step on to its padded destination over the view
+      // put back; Ace stops it on its next tick. The anchor is taken at that
+      // destination, as a render between ticks leaves the session holding a
+      // step on the way. One already stopped was overtaken by a newer
+      // scroll, which the session holds.
+      var heading = null;
+      [renderer, this.baseEditor.renderer].forEach(function(paneRenderer) {
+         var animation = paneRenderer.$scrollAnimation;
+         if (!animation || paneRenderer.$stopAnimation)
+            return;
+         paneRenderer.$stopAnimation = true;
+         if (heading === null)
+            heading = animation.to;
+      });
+      var top = heading !== null ? heading : session.getScrollTop();
 
       var offsetOf = function(row) {
          return session.documentToScreenRow(row, 0) * lineHeight - top;
