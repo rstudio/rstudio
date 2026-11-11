@@ -2208,8 +2208,12 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
           { timeout: 10000 },
         )
         .toBe(true);
+      // Closing the view takes out the padding above the line, and the line
+      // stays in view rather than the view keeping its offset (now past the
+      // end of the document).
       await executeCommand(page, 'removeEditorSplit');
       await expect(base).toHaveCount(0);
+      await expect.poll(() => rowInView(live, 49), { timeout: 10000 }).toBe(true);
       await documentCloseAllNoSave(page);
 
       // Side by side, with the first 100 lines removed and the base pane at

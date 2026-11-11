@@ -1353,7 +1353,45 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       this.baseEditor.gotoLine(row + 1, 0, true);
    };
 
+   // Where a line of the live editor sits in its view: the cursor's, when
+   // on screen, or else the first line that is. The view's top may be all
+   // padding, with no line of its own to keep. A line kept nowhere on
+   // screen (the cursor, with the view all padding) is kept at its edge.
+   this.$liveViewAnchor = function() {
+      var renderer = this.liveEditor.renderer;
+      var session = this.liveEditor.session;
+      var config = renderer.layerConfig;
+      var height = renderer.$size.scrollerHeight;
+      var offsetOf = function(row) {
+         return session.documentToScreenRow(row, 0) * config.lineHeight - session.getScrollTop();
+      };
+      var onScreen = function(row) {
+         var offset = offsetOf(row);
+         return offset >= 0 && offset + config.lineHeight <= height;
+      };
+
+      var row = this.liveEditor.getCursorPosition().row;
+      for (var candidate = config.firstRow; !onScreen(row) && candidate <= config.lastRow; candidate++) {
+         if (onScreen(candidate))
+            row = candidate;
+      }
+
+      var offset = Math.min(Math.max(offsetOf(row), 0), Math.max(height - config.lineHeight, 0));
+      return { row: row, offset: offset };
+   };
+
+   // Taking the padding out leaves the scroll offset as it was, which with
+   // fewer rows above lands somewhere else (at the end of the document,
+   // after a large deletion); the anchored line is put back where it was.
+   this.$restoreLiveView = function(anchor) {
+      var session = this.liveEditor.session;
+      var lineHeight = this.liveEditor.renderer.layerConfig.lineHeight;
+      var top = session.documentToScreenRow(anchor.row, 0) * lineHeight - anchor.offset;
+      session.setScrollTop(Math.max(top, 0));
+   };
+
    this.dispose = function() {
+      var anchor = this.$liveViewAnchor();
       this.disposed = true;
       this.gutter.setSplitView(null);
       this.detachLiveHandlers();
@@ -1365,6 +1403,7 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       // unhooks both editors and restores the live one; the base editor is
       // ours to destroy (destroy() would take the live one with it)
       this.detach();
+      this.$restoreLiveView(anchor);
       this.baseEditor.destroy();
 
       var editorEl = this.baseEditor.container;
