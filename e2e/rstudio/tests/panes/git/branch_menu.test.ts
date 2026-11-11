@@ -59,6 +59,24 @@ function highlightedItem(popup: Locator): Locator {
   return popup.locator('[role=menuitem].gwt-MenuItem-selected');
 }
 
+// Whether `el` lies wholly within the visible part of the menu's scroll panel.
+// Throws if the menu doesn't scroll, since then the check proves nothing.
+async function inScrolledView(el: Locator): Promise<boolean> {
+  return el.evaluate((node) => {
+    const scrolls = (el: Element) =>
+      ['auto', 'scroll'].includes(getComputedStyle(el).overflowY) &&
+      el.scrollHeight > el.clientHeight;
+    let scroller = node.parentElement;
+    while (scroller && !scrolls(scroller))
+      scroller = scroller.parentElement;
+    if (!scroller)
+      throw new Error('the branch menu does not scroll; add branches to the test repo');
+    const r = node.getBoundingClientRect();
+    const c = scroller.getBoundingClientRect();
+    return r.top >= c.top && r.bottom <= c.bottom;
+  });
+}
+
 // Records the branches checked out, letting the checkout itself go through
 function recordCheckouts(page: Page): string[] {
   const checkouts: string[] = [];
@@ -105,7 +123,9 @@ test.describe.serial('Git branch menu (#19555)', () => {
             system2("git", c(${gitC}, "branch", "alpha-two")),
             system2("git", c(${gitC}, "branch", "beta")),
             system2("git", c(${gitC}, "update-ref", "refs/remotes/origin/main", "HEAD")),
-            system2("git", c(${gitC}, "update-ref", "refs/remotes/origin/release", "HEAD"))
+            system2("git", c(${gitC}, "update-ref", "refs/remotes/origin/release", "HEAD")),
+            vapply(sprintf("refs/remotes/origin/topic-%02d", 1:20), function(ref)
+              system2("git", c(${gitC}, "update-ref", ref, "HEAD")), integer(1))
           )
           if (any(s != 0))
             stop("git seed failed (exit status: ", paste(s, collapse = "/"), ")")
@@ -219,6 +239,34 @@ test.describe.serial('Git branch menu (#19555)', () => {
     await search.pressSequentially('zzz-no-such-branch');
     await expect(popup.getByText('(no branches available)')).toBeVisible();
     await expect(search).not.toHaveAttribute('aria-activedescendant');
+  });
+
+  test('moving up to a group\'s first branch scrolls its heading into view', async ({
+    rstudioPage: page,
+  }) => {
+    const popup = await openBranchMenu(page, 'alpha-two');
+    const menu = popup.getByRole('menu');
+    const localHeading = menu.getByText('(local branches)', { exact: true });
+    const remoteHeading = menu.getByText('(Remote: origin)', { exact: true });
+    const highlightedName = () => highlightedItem(popup).getAttribute('aria-label');
+
+    // From the end of the list, both headings have scrolled out of view
+    await page.keyboard.press('End');
+    await expect(highlightedItem(popup)).toHaveText('topic-20');
+    expect(await inScrolledView(localHeading)).toBe(false);
+    expect(await inScrolledView(remoteHeading)).toBe(false);
+
+    // Up through the remote branches, to the first
+    for (let i = 0; i < 25 && await highlightedName() !== '(Remote: origin): main'; i++)
+      await page.keyboard.press('ArrowUp');
+    expect(await highlightedName()).toBe('(Remote: origin): main');
+    expect(await inScrolledView(remoteHeading)).toBe(true);
+
+    // Up through the local branches, to the first
+    for (let i = 0; i < 10 && await highlightedName() !== '(local branches): alpha-one'; i++)
+      await page.keyboard.press('ArrowUp');
+    expect(await highlightedName()).toBe('(local branches): alpha-one');
+    expect(await inScrolledView(localHeading)).toBe(true);
   });
 
   test('Shift+Home selects the search text instead of moving the highlight', async ({
