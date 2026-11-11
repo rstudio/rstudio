@@ -249,9 +249,16 @@ PaddingPlan.prototype.apply = function(session, planned) {
    session._emit("changeFold", { data: { start: { row: 0 } } });
 };
 
-// The rows of padding above a line in a planned layout (see PaddingPlan):
-// the line's screen row there, less its screen row with the padding left
-// out. Both go by the document, folds and wrapping as they are now.
+// Has a planned layout (see PaddingPlan) go by the document, folds and
+// wrapping as they are now, rather than as they were when it was planned.
+function refreshRows(planned) {
+   planned.$docRowCache = [];
+   planned.$screenRowCache = [];
+   return planned;
+}
+
+// The rows of padding above a line in a planned layout: the line's screen
+// row there, less its screen row with the padding left out.
 function paddingAbove(planned, row) {
    if (!planned)
       return 0;
@@ -268,11 +275,7 @@ function paddingAbove(planned, row) {
       return own;
    });
 
-   [planned, bare].forEach(function(session) {
-      session.$docRowCache = [];
-      session.$screenRowCache = [];
-   });
-   return planned.documentToScreenRow(row, 0) - bare.documentToScreenRow(row, 0);
+   return refreshRows(planned).documentToScreenRow(row, 0) - refreshRows(bare).documentToScreenRow(row, 0);
 }
 
 // Whether two fold lines hold a pair of mirrored folds (see mirrorFold).
@@ -895,8 +898,11 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
          }
          view.$padChanges();
 
-         // (the line to keep in place is picked before the padding moves)
-         var anchor = this.baseChanged && !this.liveEdited ? this.$liveViewAnchor() : null;
+         // (the line to keep in place is picked before the padding moves,
+         // by the layout planned last; see $keepLiveView)
+         var anchor = null;
+         if (this.baseChanged && !this.liveEdited)
+            anchor = this.$liveViewAnchor(this.alignedLive && refreshRows(this.alignedLive));
          plan.apply(this.sessionA, view.sessionA);
          plan.apply(this.sessionB, view.sessionB);
          if (anchor)
@@ -920,10 +926,11 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
    // line of the document in view (see $liveViewAnchor), which keeps that
    // line where it is.
    //
-   // The padding is counted in the layout planned against the one planned
-   // last, not the one the document has: that can be short of its padding
-   // for a moment (the action bar closes as the base changes, with the
-   // padding it had taken on), which the new layout only puts back. An edit
+   // The line is found, and the padding counted, in the layout planned
+   // last (against the one planned now), not the one the document has: that
+   // can be short of its padding for a moment (the action bar closes as the
+   // base changes, with the padding it had taken on), with other lines in
+   // view and padding that the new layout only puts back. An edit
    // since the last layout moves the rows it was planned for; the view is
    // left as it is then, as it is when the padding changes for any other
    // reason (a fold, a widget, the wrapping), where the lines move with
@@ -1447,10 +1454,11 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
    // Where a line of the live editor sits in its view, to keep it there: the
    // cursor's line, when any of it shows, or else the first line that does.
    // A view that is all padding keeps the line below it at its bottom edge,
-   // or, with no line below, the last line at its top.
-   this.$liveViewAnchor = function() {
+   // or, with no line below, the last line at its top. The rows are those of
+   // the layout given (see align), or else of the document as it is.
+   this.$liveViewAnchor = function(layout) {
       var renderer = this.liveEditor.renderer;
-      var session = this.liveEditor.session;
+      var session = layout || this.liveEditor.session;
       var lineHeight = renderer.layerConfig.lineHeight;
       var height = renderer.$size.scrollerHeight;
 

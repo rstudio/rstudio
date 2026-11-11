@@ -442,5 +442,30 @@ restage(view, topLive, []);
 check("padding the action bar had taken on counts as gone when its change is staged",
    !view.sessionB.lineWidgets.some(Boolean) && scrolledTo(view, (80 + 100 + 1) * 10 - 30 - 100 * 10));
 
+// The line kept is one that was in view with that padding in place, not one
+// that shows there once the bar has taken it away. Lines 201 to 250 are
+// removed as well (padded above row 100), with rows 60 to 69 in view, above
+// that padding: staging the second removal alone leaves them where they
+// are, and staging both moves the view up by the rows of the first.
+var bothLive = lines(101, 200) + "\n" + lines(251, 300);
+var both = [chunk(0, 100, 0, 0), chunk(200, 250, 100, 100)];
+[
+   { label: "below the view", base: lines(1, 200) + "\n" + lines(251, 300), chunks: [chunk(0, 100, 0, 0)], rows: 0 },
+   { label: "above and below it", base: bothLive, chunks: [], rows: 100 }
+].forEach(function(staged) {
+   view = closingView(lines(1, 300), bothLive, both, 0, 100);
+   peek = { row: 0, rowCount: 1, rowsAbove: 0, fixedWidth: true };
+   view.gutter.peek = { widget: peek };
+   view.sessionB.widgetManager.addLineWidget(peek);
+   view.align();
+   var top = liveTop(view, 60);
+   scrollBoth(view, top);
+   view.gutter.peek = null;
+   view.sessionB.widgetManager.removeLineWidget(peek);
+   restage(view, staged.base, staged.chunks);
+   check("with the action bar closing, padding staged away " + staged.label + " counts from the lines in view",
+      top === (60 + 100 + 1) * 10 && scrolledTo(view, top - staged.rows * 10));
+});
+
 document.getElementById("passed").textContent = passed;
 document.getElementById("failed").textContent = failed;
