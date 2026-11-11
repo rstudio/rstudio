@@ -910,12 +910,14 @@ public class VisualMode implements VisualModeEditorSync,
     *
     * @param code The code to insert.
     * @return Whether the code was inserted. It is not while the editor is
-    *    being rebuilt, or when the cursor is somewhere a chunk can't go (e.g.
-    *    in a table, or in a document without code chunks).
+    *    being loaded or rebuilt, or when the cursor is somewhere a chunk
+    *    can't go (e.g. in a table, or in a document without code chunks).
     */
    public boolean insertCode(String code)
    {
-      if (panmirror_ == null)
+      // A document still loading from source is about to be replaced, which
+      // would discard the insert.
+      if (panmirror_ == null || isLoading_ || loadingFromSource_)
          return false;
 
       // The pane the code came from holds focus. Returning it to the editing
@@ -931,7 +933,10 @@ public class VisualMode implements VisualModeEditorSync,
       if (!panmirror_.isCommandEnabled(PanmirrorCommands.RCodeChunk))
          return false;
 
-      panmirror_.insertChunk("{r}\n" + StringUtil.chomp(code), 0, 0);
+      // End on an empty line, which is where the new chunk leaves the cursor,
+      // so that code inserted next starts on a line of its own.
+      String body = code.endsWith("\n") ? code : code + "\n";
+      panmirror_.insertChunk("{r}\n" + body, 0, 0);
       return true;
    }
 

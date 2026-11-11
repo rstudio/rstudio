@@ -466,21 +466,29 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
 
       await executeCommand(page, 'activateHistory');
       const history = page.getByRole('listbox', { name: 'Console History', exact: true });
-      await history.getByText(command, { exact: true }).click();
-      await page.locator("[id^='rstudio_tb_historysendtosource']").click();
+      const historyRow = history.getByText(command, { exact: true });
+      const toSource = page.locator("[id^='rstudio_tb_historysendtosource']");
+      await historyRow.click();
+      await toSource.click();
 
       // The command arrives as a new R chunk in this document. Before the
       // fix it opened a new R script, which hides this editor, so the lookup
       // throws until the chunk exists.
       const inserted = AceEditor.visualModeChunk(page, command, proseMirror);
-      await expect.poll(() => inserted.getValue().catch(() => '')).toBe(`{r}\n${command}`);
+      await expect.poll(() => inserted.getValue().catch(() => '')).toBe(`{r}\n${command}\n`);
+
+      // The cursor is left on the chunk's empty last line, so a second
+      // command follows the first rather than running into it.
+      await historyRow.click();
+      await toSource.click();
+      await expect.poll(() => inserted.getValue()).toBe(`{r}\n${command}\n${command}\n`);
 
       // Saving brings the document's source up to date: the chunk is fenced
       // and sits between the paragraph and the existing chunk.
       await saveDocument(page);
       const source = new AceEditor(page, '');
       await expect.poll(() => source.getValue()).toContain(
-        `Some prose.\n\n${fence}{r}\n${command}\n${fence}\n\n${fence}{r alpha}`);
+        `Some prose.\n\n${fence}{r}\n${command}\n${command}\n\n${fence}\n\n${fence}{r alpha}`);
     } finally {
       await sourceActions.closeSourceAndDeleteFile(fileName);
     }
@@ -533,6 +541,45 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       await page.locator("[id^='rstudio_tb_historysendtosource']").click();
 
       await expect.poll(() => chunk.getValue().catch(() => '')).toContain(`y <- 2\n${command}\nx <- 1`);
+    } finally {
+      await sourceActions.closeSourceAndDeleteFile(fileName);
+    }
+  });
+
+  test('History To Source opens an R script where a chunk cannot go in visual mode (#19571)', async ({ rstudioPage: page }) => {
+    const stamp = Date.now();
+    const fileName = `quarto_history_table_${stamp}.qmd`;
+    const command = `history_table_${stamp} <- 1`;
+    const content = heredoc`
+      ---
+      title: History To Source
+      ---
+
+      | Name     | Value |
+      |----------|-------|
+      | cell_one | 2     |
+    `;
+
+    await consoleActions.executeInConsole(command);
+    await sourceActions.createAndOpenFile(fileName, content);
+    try {
+      await sourceActions.ensureVisualMode();
+      const proseMirror = page.locator('.ProseMirror:visible').first();
+      await expect(proseMirror).toBeVisible({ timeout: 15000 });
+
+      // A table cell can hold neither a chunk editor nor a new chunk.
+      await proseMirror.getByText('cell_one').click();
+
+      await executeCommand(page, 'activateHistory');
+      const history = page.getByRole('listbox', { name: 'Console History', exact: true });
+      await history.getByText(command, { exact: true }).click();
+      await page.locator("[id^='rstudio_tb_historysendtosource']").click();
+
+      // The command is not dropped: it goes to a new R script, which becomes
+      // the active document. (Until then the active editor is this
+      // document's own source editor, which never holds just the command.)
+      const active = new AceEditor(page, '');
+      await expect.poll(() => active.getValue().catch(() => '')).toBe(`${command}\n`);
     } finally {
       await sourceActions.closeSourceAndDeleteFile(fileName);
     }
