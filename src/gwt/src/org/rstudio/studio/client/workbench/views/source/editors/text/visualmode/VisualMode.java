@@ -905,6 +905,37 @@ public class VisualMode implements VisualModeEditorSync,
    }
 
    /**
+    * Inserts code at the visual editor's cursor: into the code editor holding
+    * it, or else as a new R chunk at that position.
+    *
+    * @param code The code to insert.
+    * @return Whether the code was inserted. It is not while the editor is
+    *    being rebuilt, or when the cursor is somewhere a chunk can't go (e.g.
+    *    in a table, or in a document without code chunks).
+    */
+   public boolean insertCode(String code)
+   {
+      if (panmirror_ == null)
+         return false;
+
+      // The pane the code came from holds focus. Returning it to the editing
+      // surface restores the cursor and, in a code editor, activeEditor_.
+      panmirror_.focus();
+
+      if (activeEditor_ != null)
+      {
+         activeEditor_.insertCode(code, true);
+         return true;
+      }
+
+      if (!panmirror_.isCommandEnabled(PanmirrorCommands.RCodeChunk))
+         return false;
+
+      panmirror_.insertChunk("{r}\n" + StringUtil.chomp(code), 0, 0);
+      return true;
+   }
+
+   /**
     * Perform a command with the visual editor's search selection after
     * restoring its editing surface. Preserve a live browser selection first:
     * after moving from a chunk into prose, Panmirror's tracked selection can

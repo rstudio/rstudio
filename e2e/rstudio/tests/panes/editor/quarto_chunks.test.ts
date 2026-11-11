@@ -435,6 +435,109 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
     }
   });
 
+  test('History To Source inserts a new chunk at a prose cursor in visual mode (#19571)', async ({ rstudioPage: page }) => {
+    const stamp = Date.now();
+    const fileName = `quarto_history_prose_${stamp}.qmd`;
+    const command = `history_prose_${stamp} <- 1`;
+    const fence = '```';
+    const content = heredoc`
+      ---
+      title: History To Source
+      ---
+
+      Some prose.
+
+      ${fence}{r alpha}
+      x <- 1
+      ${fence}
+    `;
+
+    await consoleActions.executeInConsole(command);
+    await sourceActions.createAndOpenFile(fileName, content);
+    try {
+      await sourceActions.ensureVisualMode();
+      const proseMirror = page.locator('.ProseMirror:visible').first();
+      await expect(proseMirror).toBeVisible({ timeout: 15000 });
+
+      // Cursor at the end of the paragraph, so the chunk follows it rather
+      // than splitting it.
+      await proseMirror.getByText('Some prose.').click();
+      await page.keyboard.press('End');
+
+      await executeCommand(page, 'activateHistory');
+      const history = page.getByRole('listbox', { name: 'Console History', exact: true });
+      await history.getByText(command, { exact: true }).click();
+      await page.locator("[id^='rstudio_tb_historysendtosource']").click();
+
+      // The command arrives as a new R chunk in this document. Before the
+      // fix it opened a new R script, which hides this editor, so the lookup
+      // throws until the chunk exists.
+      const inserted = AceEditor.visualModeChunk(page, command, proseMirror);
+      await expect.poll(() => inserted.getValue().catch(() => '')).toBe(`{r}\n${command}`);
+
+      // Saving brings the document's source up to date: the chunk is fenced
+      // and sits between the paragraph and the existing chunk.
+      await saveDocument(page);
+      const source = new AceEditor(page, '');
+      await expect.poll(() => source.getValue()).toContain(
+        `Some prose.\n\n${fence}{r}\n${command}\n${fence}\n\n${fence}{r alpha}`);
+    } finally {
+      await sourceActions.closeSourceAndDeleteFile(fileName);
+    }
+  });
+
+  test('History To Source reaches the chunk after a save made from the History pane (#19571)', async ({ rstudioPage: page }) => {
+    const stamp = Date.now();
+    const fileName = `quarto_history_saved_${stamp}.qmd`;
+    const command = `history_saved_${stamp} <- 1`;
+    const fence = '```';
+    const content = heredoc`
+      ---
+      title: History To Source
+      ---
+
+      Some prose.
+
+      ${fence}{r alpha}
+      x <- 1
+      ${fence}
+    `;
+
+    await consoleActions.executeInConsole(command);
+    await sourceActions.createAndOpenFile(fileName, content);
+    try {
+      await sourceActions.ensureVisualMode();
+      const proseMirror = page.locator('.ProseMirror:visible').first();
+      await expect(proseMirror).toBeVisible({ timeout: 15000 });
+
+      // Edit the chunk, so there is something to save.
+      const chunk = AceEditor.visualModeChunk(page, '{r alpha}', proseMirror);
+      await focusChunk(page, proseMirror, '{r alpha}');
+      await chunk.gotoLine(2, 0);
+      await page.keyboard.type('y <- 2');
+      await page.keyboard.press('Enter');
+      await expect.poll(() => chunk.getValue()).toContain('y <- 2\nx <- 1');
+
+      await executeCommand(page, 'activateHistory');
+      const history = page.getByRole('listbox', { name: 'Console History', exact: true });
+      await history.getByText(command, { exact: true }).click();
+
+      // Save from the keyboard, with focus still in the History pane. The
+      // document going clean refreshes command state while no chunk has
+      // focus, which disables the code commands. To Source used to read that
+      // as "this document can't take code" and open a new R script. (If this
+      // stops holding, the scenario needs another trigger to stay covered.)
+      await page.keyboard.press('ControlOrMeta+s');
+      await expect.poll(() => isCommandEnabled(page, 'executeCode')).toBe(false);
+
+      await page.locator("[id^='rstudio_tb_historysendtosource']").click();
+
+      await expect.poll(() => chunk.getValue().catch(() => '')).toContain(`y <- 2\n${command}\nx <- 1`);
+    } finally {
+      await sourceActions.closeSourceAndDeleteFile(fileName);
+    }
+  });
+
   test('format reload disables blurred chunk commands (#16540)', async ({ rstudioPage: page }) => {
     const sourceFile = `quarto_format_reload_source_${Date.now()}.R`;
     const visualFile = `quarto_format_reload_commands_${Date.now()}.qmd`;

@@ -3041,19 +3041,18 @@ public class TextEditingTarget implements
       }
    }
 
-   public void insertCode(String source, boolean blockMode)
+   // Inserts code at the cursor. Returns false if it could not be inserted,
+   // which only the visual editor can report (see VisualMode.insertCode).
+   public boolean insertCode(String source, boolean blockMode)
    {
-      // In visual mode the cursor is in a chunk's own editor. The source
-      // editor is hidden, so an insert there would go unseen and then be
-      // written to the file on the next save.
+      // In visual mode the cursor is in the visual editor. The source editor
+      // is hidden, so an insert there would go unseen and then be written to
+      // the file on the next save.
       if (isVisualEditorActive() || isVisualModeActivated())
-      {
-         visualMode_.performWithActiveEditor(
-            (display) -> display.insertCode(source, blockMode));
-         return;
-      }
+         return visualMode_.insertCode(source);
 
       insertCode(activeDisplay(), source, blockMode);
+      return true;
    }
 
    // Inserts at the cursor of the given editor view, which a caller captures
