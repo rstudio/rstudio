@@ -84,8 +84,10 @@ public class MenuSearchHeader
    // Empties the search box without rebuilding the menu, which is the caller's to do
    public void clear()
    {
+      // Fired, so that SearchWidget forgets the old text; otherwise typing it
+      // again isn't reported as a change
+      searchWidget_.setValue("", true);
       searchTimer_.cancel();
-      searchWidget_.setValue("");
       searchedQuery_ = "";
    }
 

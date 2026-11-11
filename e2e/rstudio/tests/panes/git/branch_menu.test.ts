@@ -320,6 +320,22 @@ test.describe.serial('Git branch menu (#19555)', () => {
       document.activeElement === (window as Marked).__pwNext)).toBe(true);
   });
 
+  test('retyping a search after reopening the menu filters again', async ({
+    rstudioPage: page,
+  }) => {
+    // A one-letter search, since typing a longer one reports each prefix as a change
+    let popup = await openBranchMenu(page, 'alpha-two');
+    await popup.getByRole('combobox', { name: SEARCH_LABEL }).pressSequentially('b');
+    await expect(popup.getByRole('menuitem')).toHaveText(['beta']);
+    await page.keyboard.press('Escape');
+
+    popup = await openBranchMenu(page, 'alpha-two');
+    const search = popup.getByRole('combobox', { name: SEARCH_LABEL });
+    await expect(search).toHaveValue('');
+    await search.pressSequentially('b');
+    await expect(popup.getByRole('menuitem')).toHaveText(['beta']);
+  });
+
   // axe opens a page of its own to merge its results, which Desktop's CDP
   // connection to Electron refuses (Target.createTarget: Not supported).
   test('the menu has no accessibility violations', { tag: '@server_only' }, async ({
