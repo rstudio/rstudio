@@ -78,6 +78,7 @@
 - ([#19552](https://github.com/rstudio/rstudio/issues/19552)): [Accessibility] Fixed an issue where the highlighted item in the Addins toolbar menu jumped back to the first add-in shortly after being moved with the arrow keys, Home, End, Page Up, or Page Down. Typing a space in the menu's search box no longer runs the highlighted add-in, and screen readers now announce the highlighted add-in.
 - ([#19401](https://github.com/rstudio/rstudio/issues/19401)): [Accessibility] Fixed an issue where menus, trees, toolbar buttons, document outlines, and the `manipulate()` slider each contained a hidden text field that assistive technologies could still reach.
 - ([#19532](https://github.com/rstudio/rstudio/issues/19532)): [Accessibility] Fixed an issue where screen readers didn't announce the code completion popup in C and C++ files. Screen readers now announce the selected completion as you move through the list.
+- ([#19555](https://github.com/rstudio/rstudio/issues/19555)): [Accessibility] Fixed an issue where typing a space in the search box of the Git pane's branch menu checked out the highlighted branch. Screen readers now announce the search box as enabled and announce the highlighted branch.
 
 ### Dependencies
 - ([#18904](https://github.com/rstudio/rstudio/issues/18904)): Replaced the built-in Sundown Markdown renderer with cmark-gfm for Markdown previews, help descriptions, tutorials, and R Presentations. Rendering now follows CommonMark rules, with GFM tables, strikethrough, and autolinks; RStudio superscripts and MathJax support are retained.
