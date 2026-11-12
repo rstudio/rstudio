@@ -14,9 +14,6 @@
  */
 package org.rstudio.studio.client.projects.model;
 
-import java.util.Arrays;
-import java.util.List;
-
 import org.rstudio.core.client.StringUtil;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -35,13 +32,12 @@ public class ProjectTemplateDescription extends JavaScriptObject
    public native final String getPageCaption()      /*-{ return this["caption"]; }-*/;
    public native final JsArrayString getOpenFiles() /*-{ return this["open_files"]; }-*/;
    
-   // These templates (registered by addKnownProjectTemplates() in
-   // SessionProjectTemplate.cpp) pass the project directory name to their
-   // skeleton function as the package name
-   public final boolean createsPackage()
-   {
-      return PACKAGE_TEMPLATES.contains(getPackage() + "::" + getBinding());
-   }
+   // Whether the template uses the project directory name as an R package
+   // name; set by the session for the package templates it registers
+   public native final boolean createsPackage()
+   /*-{
+      return this["creates_package"] === true;
+   }-*/;
 
    public final ImageResource getIcon()      { return getIconImpl("icon"); }
    public final ImageResource getIconLarge() { return getIconImpl("icon_large"); }
@@ -61,10 +57,4 @@ public class ProjectTemplateDescription extends JavaScriptObject
    }
    
    private native final String getIconData(String field) /*-{ return this[field]; }-*/;
-
-   private static final List<String> PACKAGE_TEMPLATES = Arrays.asList(
-         "devtools::create",
-         "Rcpp::Rcpp.package.skeleton",
-         "RcppArmadillo::RcppArmadillo.package.skeleton",
-         "RcppEigen::RcppEigen.package.skeleton");
 }

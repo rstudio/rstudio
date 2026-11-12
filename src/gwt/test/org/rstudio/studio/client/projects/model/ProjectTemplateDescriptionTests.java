@@ -25,31 +25,26 @@ public class ProjectTemplateDescriptionTests extends GWTTestCase
       return "org.rstudio.studio.RStudioTests";
    }
 
-   public void testPackageSkeletonTemplatesCreatePackages()
+   public void testCreatesPackageWhenSessionSetsFlag()
    {
-      assertTrue(description("Rcpp", "Rcpp.package.skeleton").createsPackage());
-      assertTrue(description("RcppArmadillo", "RcppArmadillo.package.skeleton").createsPackage());
-      assertTrue(description("RcppEigen", "RcppEigen.package.skeleton").createsPackage());
-      assertTrue(description("devtools", "create").createsPackage());
+      assertTrue(description(", \"creates_package\": true").createsPackage());
    }
 
-   public void testOtherTemplatesDoNotCreatePackages()
+   public void testDoesNotCreatePackageWhenFlagIsFalse()
    {
-      assertFalse(description("bookdown", "bookdown_skeleton").createsPackage());
-      assertFalse(description("(local)", "create").createsPackage());
+      assertFalse(description(", \"creates_package\": false").createsPackage());
    }
 
-   // a package and binding must both match, not just one of them
-   public void testPackageAndBindingMustMatchTogether()
+   // templates from other packages' DCF files never carry the flag
+   public void testDoesNotCreatePackageWhenFlagIsMissing()
    {
-      assertFalse(description("Rcpp", "Rcpp.plugin.maker").createsPackage());
-      assertFalse(description("mypkg", "Rcpp.package.skeleton").createsPackage());
+      assertFalse(description("").createsPackage());
    }
 
-   private static ProjectTemplateDescription description(String pkg, String binding)
+   private static ProjectTemplateDescription description(String extraFields)
    {
       return JsonUtils.safeEval(
-            "{\"package\": \"" + pkg + "\", \"binding\": \"" + binding + "\"," +
-            " \"title\": \"Test\"}");
+            "{\"package\": \"Rcpp\", \"binding\": \"Rcpp.package.skeleton\"," +
+            " \"title\": \"Test\"" + extraFields + "}");
    }
 }
