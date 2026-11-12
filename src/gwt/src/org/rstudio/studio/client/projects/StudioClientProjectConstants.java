@@ -30,7 +30,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String cloneSVNRepoLabel();
     String cloneGitRepoLabel();
     String vcsCloneFailMessage();
-    String invalidPackageMessage(String packageName);
     String invalidPackageName(String packageName);
     String creatingProjectLabel();
     String projectFailedMessage();
