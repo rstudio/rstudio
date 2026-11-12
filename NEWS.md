@@ -14,6 +14,7 @@
 - ([#19555](https://github.com/rstudio/rstudio/issues/19555)): The branch filter in the History view of the Review Changes window now has a search box, and searches in the Git branch menus now ignore case.
 
 ### Fixed
+- ([#12235](https://github.com/rstudio/rstudio/issues/12235)): Fixed an issue where RStudio Desktop took about 4 seconds longer to start a second session (e.g. with Session > New Session) than the first. The "Initializing R" page now shows its text right away instead of only the R logo, and the "Cannot Connect to R" and "Error Starting R" pages no longer have a blank Retry button, blank headings, or a missing exit code.
 - ([#19566](https://github.com/rstudio/rstudio/issues/19566)): Fixed an issue where To Source in the History pane appeared to do nothing when the document was in the visual editor with the cursor in a code chunk. The commands were inserted out of sight, elsewhere in the document, and written to the file on the next save; they are now inserted into the chunk.
 - ([#19578](https://github.com/rstudio/rstudio/issues/19578)): Fixed an issue where turning off Show Changes Side by Side could scroll the editor away from the line being viewed, often to the end of the document, when lines had been removed above it.
 - ([#19580](https://github.com/rstudio/rstudio/issues/19580)): RStudio no longer warns that R 4.6.2 is newer than the maximum version of R it was tested with.
