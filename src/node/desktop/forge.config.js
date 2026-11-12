@@ -82,6 +82,21 @@ const config = {
       ProductName: "RStudio",
     },
     extendInfo: './Info.plist',
+
+    // macOS 26 and newer take the app icon from this asset catalog (compiled
+    // from RStudio.icon by scripts/compile-app-icon.sh, and named by
+    // CFBundleIconName in Info.plist), not from RStudio.icns. Given only the
+    // .icns, macOS 27 redraws it with its own glass effects. The catalog also
+    // holds bitmap renditions of the icon that macOS 13-15 may draw in place
+    // of RStudio.icns; they differ from it only in edge anti-aliasing.
+    //
+    // The packager compiles a .icon itself when it finds one at the `icon`
+    // path above with the extension swapped (resources/icons/RStudio.icon),
+    // once per architecture, which breaks the universal merge. Keep the .icon
+    // in macos-app-icon/ rather than at that path.
+    extraResource: process.platform === 'darwin'
+      ? ['./resources/icons/macos-app-icon/Assets.car']
+      : [],
   },
 };
 
