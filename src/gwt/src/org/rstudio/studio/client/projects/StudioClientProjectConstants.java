@@ -90,7 +90,7 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String typeLabel();
     String packageNameLabel();
     String rcppPackageOption();
-    String validateAsyncMessage(String packageName);
+    String invalidPackageMessage(String packageName);
     String fileAlreadyExistsMessage(String path);
     String directoryAlreadyExistsMessage(String path);
     String pleaseEnterDirectoryNameMessage();

@@ -386,7 +386,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
          globalDisplay_.showMessage(
                MessageDialog.WARNING,
                constants_.errorCaption(),
-               constants_.validateAsyncMessage(packageName),
+               constants_.invalidPackageMessage(packageName),
                txtProjectName_);
          onValidated.execute(false);
          return;

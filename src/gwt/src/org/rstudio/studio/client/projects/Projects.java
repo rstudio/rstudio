@@ -557,7 +557,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
                if (!PACKAGE_NAME_PATTERN.test(packageName))
                {
                   indicator.onError(
-                        constants_.validateAsyncMessage(packageName)
+                        constants_.invalidPackageMessage(packageName)
                         );
                   notifyTutorialCreateNewResult(newProject, false,
                         constants_.invalidPackageName(packageName));
