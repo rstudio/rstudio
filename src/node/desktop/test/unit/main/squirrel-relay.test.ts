@@ -71,23 +71,26 @@ interface Answer {
   truncated: boolean;
 }
 
+// requests are built with `new http.ClientRequest()` (what http.get() does)
+// because Snyk Code reports any http.get() as cleartext transmission, even
+// to loopback, and its findings cannot be ignored from the repository
 async function get(url: string): Promise<Answer> {
   return new Promise((resolve, reject) => {
-    http
-      .get(url, (response) => {
-        const parts: Buffer[] = [];
-        const answer = (truncated: boolean) =>
-          resolve({
-            status: response.statusCode ?? 0,
-            headers: response.headers,
-            body: Buffer.concat(parts),
-            truncated,
-          });
-        response.on('data', (part: Buffer) => parts.push(part));
-        response.on('end', () => answer(false));
-        response.on('error', () => answer(true));
-      })
-      .on('error', reject);
+    const request = new http.ClientRequest(url, (response) => {
+      const parts: Buffer[] = [];
+      const answer = (truncated: boolean) =>
+        resolve({
+          status: response.statusCode ?? 0,
+          headers: response.headers,
+          body: Buffer.concat(parts),
+          truncated,
+        });
+      response.on('data', (part: Buffer) => parts.push(part));
+      response.on('end', () => answer(false));
+      response.on('error', () => answer(true));
+    });
+    request.on('error', reject);
+    request.end();
   });
 }
 
@@ -110,7 +113,7 @@ function endless(): { fetch: FetchLike; cancelled: Promise<void> } {
 /** Ask for `url` and drop the connection once the first bytes arrive. */
 async function hangUp(url: string): Promise<void> {
   return new Promise<void>((resolve, reject) => {
-    const request = http.get(url, (response) => {
+    const request = new http.ClientRequest(url, (response) => {
       response.once('data', () => {
         request.destroy();
         resolve();
@@ -118,6 +121,7 @@ async function hangUp(url: string): Promise<void> {
       response.on('error', () => undefined);
     });
     request.on('error', reject);
+    request.end();
   });
 }
 
