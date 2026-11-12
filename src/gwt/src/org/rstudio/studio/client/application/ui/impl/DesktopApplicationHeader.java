@@ -678,9 +678,10 @@ public class DesktopApplicationHeader implements ApplicationHeader,
    private void downloadUpdate(String version)
    {
       // a check during a download may offer an update again; the desktop
-      // ignores a repeat request (but for telling its percentage again) and
-      // reports one for another build as a failure, so keep a single
-      // indicator
+      // ignores a repeat request and reports one for another build as a
+      // failure, so keep a single indicator. Either way it tells the
+      // in-flight build's percentage again, which puts back an indicator
+      // for that build should the refusal take this one down
       dismissUpdateProgress();
 
       updateProgress_ = globalDisplay_.showPercentProgress(constants_.downloadingUpdateMessage(version));
@@ -700,9 +701,17 @@ public class DesktopApplicationHeader implements ApplicationHeader,
 
    private void onUpdateDownloadProgress(DesktopUpdateDownloadProgressEvent event)
    {
-      // the indicator may be gone, or showing another build whose request
-      // the desktop is about to refuse
-      if (updateProgress_ != null && event.getVersion().equals(updateProgressVersion_))
+      // the desktop reports only the build it is downloading, so with no
+      // indicator up (a refused request for another build took it down, or
+      // the page reloaded) show one for it; one showing another build is
+      // for a request the desktop is about to refuse
+      if (updateProgress_ == null)
+      {
+         updateProgress_ = globalDisplay_.showPercentProgress(constants_.downloadingUpdateMessage(event.getVersion()));
+         updateProgressVersion_ = event.getVersion();
+      }
+
+      if (event.getVersion().equals(updateProgressVersion_))
          updateProgress_.setPercent(event.getPercent());
    }
 

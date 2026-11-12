@@ -378,6 +378,24 @@ describe('updater', () => {
     assert.deepEqual(host.lastNotification(), ['onUpdateDownloaded', A]);
   });
 
+  it('tells the running build its percentage again after refusing another, so GWT can show it', async () => {
+    const { host, updater } = setup('darwin');
+    await offer(updater, host, A);
+    await offer(updater, host, B);
+    void updater.downloadUpdate(A);
+    await flush();
+
+    host.downloads[0].onProgress(0.42);
+    const before = host.notifications.length;
+    await updater.downloadUpdate(B);
+
+    const told = host.notifications.slice(before);
+    assert.equal(told.length, 2);
+    assert.equal(told[0][0], 'onUpdateDownloadFailed');
+    assert.deepEqual(told[1], ['onUpdateDownloadProgress', A, 42]);
+    assert.equal(host.downloads.length, 1);
+  });
+
   for (const platform of ['darwin', 'win32'] as const) {
     it(`tells GWT each new percentage of a download on ${platform}`, async () => {
       const { host, updater } = setup(platform);

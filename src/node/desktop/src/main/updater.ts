@@ -336,16 +336,18 @@ export class Updater {
       return;
     }
     if (this.activeDownload) {
-      // a repeat request for the download in progress is harmless, though
-      // GWT shows a new indicator for it, which needs the percentage again;
-      // one for another build (a check completed meanwhile) is reported
-      // rather than dropped, since GWT now shows progress for that build
+      // a repeat request for the download in progress is harmless; one for
+      // another build (a check completed meanwhile) is reported rather than
+      // dropped, since GWT now shows progress for that build. Either way GWT
+      // has replaced its indicator (and takes it down with the refusal), so
+      // it needs the in-flight build's percentage again to show one for it
       if (this.activeDownload.version !== entry.version) {
         this.notifyFailed(
           `RStudio ${this.activeDownload.version} is still being downloaded; wait for it to finish before downloading another update.`,
         );
-      } else if (this.reportedPercent >= 0) {
-        this.host.notify('onUpdateDownloadProgress', entry.version, this.reportedPercent);
+      }
+      if (this.reportedPercent >= 0) {
+        this.host.notify('onUpdateDownloadProgress', this.activeDownload.version, this.reportedPercent);
       }
       return;
     }
