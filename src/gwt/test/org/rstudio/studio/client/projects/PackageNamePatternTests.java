@@ -16,8 +16,9 @@ package org.rstudio.studio.client.projects;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
-// Names R's package.skeleton() accepts and rejects; the wizard must agree
-// with it, or invalid names fail only after the wizard has closed
+// The wizard must reject every name R's package.skeleton() rejects, or the
+// name fails only after the wizard has closed. It is stricter than R in one
+// way: R accepts non-ASCII letters in UTF-8 locales, the wizard does not.
 public class PackageNamePatternTests extends GWTTestCase
 {
    @Override
@@ -61,6 +62,11 @@ public class PackageNamePatternTests extends GWTTestCase
    {
       assertInvalid("");
       assertInvalid("my pkg");
+   }
+
+   public void testRejectsNonAsciiLetters()
+   {
+      assertInvalid("pk\u00e9");
    }
 
    private static void assertValid(String name)
