@@ -566,10 +566,6 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_set_enable_accessibility', enable);
     },
 
-    setEnableSplashScreen: (enable: boolean) => {
-      ipcRenderer.send('desktop_set_enable_splash_screen', enable);
-    },
-
     setAutohideMenubar: (enable: boolean) => {
       ipcRenderer.send('desktop_set_autohide_menubar', enable);
     },
@@ -810,10 +806,6 @@ export function getDesktopBridge() {
         .invoke('desktop_startup_error_info', varName)
         .then((info) => callback(info))
         .catch((error) => reportIpcError('getStartupErrorInfo', error));
-    },
-
-    showSplashScreen: () => {
-      ipcRenderer.send('desktop_show_splash_screen');
     },
 
     getPathForFile: (file: File) => {

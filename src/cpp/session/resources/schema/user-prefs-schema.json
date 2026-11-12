@@ -1473,12 +1473,6 @@
             "title": "Clang verbosity level (0 - 2)",
             "description": "The verbosity level to use with Clang (0 - 2)"
         },
-        "enable_splash_screen": {
-            "type": "boolean",
-            "default": true,
-            "title": "Show splash screen when RStudio is starting",
-            "description": "Whether to show the splash screen when RStudio is starting."
-        },
         "default_r_version": {
             "type": "object",
             "properties": {

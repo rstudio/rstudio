@@ -474,7 +474,6 @@
    activateHelp = "activateHelp",
    layoutZoomHelp = "layoutZoomHelp",
    showAboutDialog = "showAboutDialog",
-   showSplashScreen = "showSplashScreen",
    copyRStudioVersion = "copyRStudioVersion",
    showLicenseDialog = "showLicenseDialog",
    checkForUpdates = "checkForUpdates",

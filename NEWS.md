@@ -86,6 +86,9 @@
 - ([#19532](https://github.com/rstudio/rstudio/issues/19532)): [Accessibility] Fixed an issue where screen readers didn't announce the code completion popup in C and C++ files. Screen readers now announce the selected completion as you move through the list.
 - ([#19555](https://github.com/rstudio/rstudio/issues/19555)): [Accessibility] Fixed an issue where typing a space in the search box of the Git pane's branch menu checked out the highlighted branch. Screen readers now announce the search box as enabled, the highlighted branch, and which worktree is current. The branch filter in a Review Changes window opened on History now shows the current branch.
 
+### Deprecated / Removed
+- ([#19608](https://github.com/rstudio/rstudio/issues/19608)): Removed the startup splash screen from RStudio Desktop, along with its "Show splash screen when RStudio is starting" preference, the Show Splash Screen command, the `RS_NO_SPLASH` environment variable, and the `--startup-delay` command-line switch. With faster startup ([#12235](https://github.com/rstudio/rstudio/issues/12235)), it is no longer needed.
+
 ### Dependencies
 - ([#18904](https://github.com/rstudio/rstudio/issues/18904)): Replaced the built-in Sundown Markdown renderer with cmark-gfm for Markdown previews, help descriptions, tutorials, and R Presentations. Rendering now follows CommonMark rules, with GFM tables, strikethrough, and autolinks; RStudio superscripts and MathJax support are retained.
 - ([#19095](https://github.com/rstudio/rstudio/issues/19095)): macOS builds now require C++20; Linux retains its C++17 minimum.
