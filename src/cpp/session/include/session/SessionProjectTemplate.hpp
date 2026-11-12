@@ -56,10 +56,6 @@ struct ProjectTemplateWidgetDescription
    core::json::Value toJson() const;
 };
 
-core::Error fromJson(
-      const core::json::Object& object,
-      ProjectTemplateWidgetDescription* pDescription);
-
 struct ProjectTemplateDescription
 {
    // COPYING: copyable members
@@ -79,10 +75,6 @@ struct ProjectTemplateDescription
    
    core::json::Value toJson() const;
 };
-
-core::Error fromJson(
-      const core::json::Object&,
-      ProjectTemplateDescription* pDescription);
 
 core::Error initialize();
 

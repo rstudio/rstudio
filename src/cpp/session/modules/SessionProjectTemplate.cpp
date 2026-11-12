@@ -152,28 +152,6 @@ Error emptyField(const std::string& field,
 
 } // end namespace errors
 
-Error fromJson(
-      const json::Object& object,
-      ProjectTemplateWidgetDescription* pDescription)
-{
-   ProjectTemplateWidgetDescription description;
-
-   core::Error error = core::json::readObject(
-            object,
-            "parameter", description.parameter,
-            "type",      description.type,
-            "label",     description.label,
-            "default",   description.defaultValue,
-            "position",  description.position,
-            "fields",    description.fields);
-
-   if (error)
-      return error;
-   
-   *pDescription = description;
-   return Success();
-}
-
 json::Value ProjectTemplateWidgetDescription::toJson() const
 {
    core::json::Object object;
@@ -186,51 +164,6 @@ json::Value ProjectTemplateWidgetDescription::toJson() const
    object["fields"]    = core::json::toJsonArray(fields);
 
    return std::move(object);
-}
-
-Error fromJson(
-      const json::Object& object,
-      ProjectTemplateDescription* pDescription)
-{
-   Error error;
-   ProjectTemplateDescription description;
-
-   error = json::readObject(
-            object,
-            "package",    description.package,
-            "binding",    description.binding,
-            "title",      description.title,
-            "subtitle",   description.subtitle,
-            "caption",    description.caption,
-            "icon",       description.icon,
-            "open_files", description.openFiles);
-   
-   if (error)
-      return error;
-   
-   json::Array array;
-   error = json::readObject(object, "widgets", array);
-   if (error)
-      return error;
-   
-   for (const json::Value& value : array)
-   {
-      if (!json::isType<json::Object>(value))
-         return json::errors::typeMismatch(
-                  value,
-                  json::Type::OBJECT,
-                  ERROR_LOCATION);
-      
-      ProjectTemplateWidgetDescription widget;
-      error = fromJson(value.getObject(), &widget);
-      if (error)
-         return error;
-      
-      description.widgets.push_back(widget);
-   }
-   
-   *pDescription = description;
-   return Success();
 }
 
 json::Value ProjectTemplateDescription::toJson() const
