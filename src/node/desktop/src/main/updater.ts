@@ -17,9 +17,7 @@ import { spawn } from 'child_process';
 import { app, autoUpdater, dialog, net } from 'electron';
 import { existsSync } from 'fs';
 import { rm } from 'fs/promises';
-import http from 'http';
 import i18next from 'i18next';
-import { AddressInfo } from 'net';
 import path from 'path';
 import { getenv } from '../core/environment';
 import { safeError } from '../core/err';
@@ -44,11 +42,11 @@ import {
   PlatformKeys,
   platformKeys,
   releaseIndexUrl,
-  squirrelFeedDocument,
   UpdateChannel,
   updateIndexUrl,
 } from './update-feed';
 import { execFileRunner, otherInstanceCount } from './running-instances';
+import { SquirrelRelay, startSquirrelRelay } from './squirrel-relay';
 import { isAdministrator } from './windows-administrator';
 import {
   installerSignature,
@@ -78,9 +76,11 @@ const kLaunchEnvironment: NodeJS.ProcessEnv = { ...process.env };
  *      update itself.
  *   2. The user accepts; GWT calls `downloadUpdate()`. macOS hands Electron's
  *      autoUpdater (Squirrel.Mac) a feed served from a loopback listener,
- *      and Squirrel verifies the download and the new bundle's code
- *      signature. Windows downloads the NSIS installer and checks its SHA-256
- *      against the API.
+ *      which also relays the build so its progress can be counted, and
+ *      Squirrel verifies the download and the new bundle's code signature.
+ *      Windows downloads the NSIS installer and checks its SHA-256 against
+ *      the API. Either way GWT hears each new percentage
+ *      (`desktopHooks.onUpdateDownloadProgress`).
  *   3. We call back into GWT (`desktopHooks.onUpdateDownloaded`), which offers
  *      a restart. If accepted, GWT asks `canInstallUpdate(version)` (the
  *      version must be the one downloaded, on Windows its staged installer
@@ -156,7 +156,7 @@ export type InstallAnswer = InstallBlocker | 'superseded';
 /** Why an accepted update was not installed at the quit: a blocker, or the installer would not start. */
 export type InstallFailure = Exclude<InstallBlocker, ''> | 'launch-failed';
 
-export type UpdateHook = 'onUpdateDownloaded' | 'onUpdateDownloadFailed';
+export type UpdateHook = 'onUpdateDownloaded' | 'onUpdateDownloadFailed' | 'onUpdateDownloadProgress';
 
 /**
  * Everything the updater does outside its own state: the API, the process
@@ -181,7 +181,7 @@ export interface UpdaterHost {
   /** where relaunch-project markers live */
   markerDir(): string;
   /** have Squirrel.Mac download and verify `entry`; resolves once it is staged */
-  squirrelDownload(entry: BuildArtifact, notesUrl: string): Promise<void>;
+  squirrelDownload(entry: BuildArtifact, notesUrl: string, onProgress: (fraction: number) => void): Promise<void>;
   squirrelInstall(version: string): void;
   /** download and verify a Windows installer; resolves to the staged file */
   stageInstaller(entry: BuildArtifact, onProgress: (fraction: number) => void): Promise<string>;
@@ -191,7 +191,7 @@ export interface UpdaterHost {
   /** start the Windows installer; false when it would not start */
   launchInstaller(file: string, mode: WindowsInstallMode): Promise<boolean>;
   /** call a desktopHooks function in the GWT client */
-  notify(hook: UpdateHook, arg: string): void;
+  notify(hook: UpdateHook, ...args: (string | number)[]): void;
   setProgress(value: number): void;
   /** tell the user, as the window quits, that the accepted update was not installed */
   warnNotInstalled(version: string, reason: InstallFailure): void;
@@ -222,6 +222,8 @@ export class Updater {
   /** every update offered to the user this session, by version; a dialog may outlive later checks */
   private offers = new Map<string, AvailableUpdate>();
   private activeDownload: BuildArtifact | null = null;
+  /** the percentage GWT last heard for the download in flight; -1 before the first */
+  private reportedPercent = -1;
   private downloadedVersion: string | null = null;
   private staged: StagedInstaller | null = null;
   private windowsInstallMode: WindowsInstallMode | null = null;
@@ -334,13 +336,16 @@ export class Updater {
       return;
     }
     if (this.activeDownload) {
-      // a repeat request for the download in progress is harmless; one for
-      // another build (a check completed meanwhile) is reported rather than
-      // dropped, since GWT now shows progress for that build
+      // a repeat request for the download in progress is harmless, though
+      // GWT shows a new indicator for it, which needs the percentage again;
+      // one for another build (a check completed meanwhile) is reported
+      // rather than dropped, since GWT now shows progress for that build
       if (this.activeDownload.version !== entry.version) {
         this.notifyFailed(
           `RStudio ${this.activeDownload.version} is still being downloaded; wait for it to finish before downloading another update.`,
         );
+      } else if (this.reportedPercent >= 0) {
+        this.host.notify('onUpdateDownloadProgress', entry.version, this.reportedPercent);
       }
       return;
     }
@@ -348,6 +353,8 @@ export class Updater {
     // taken before anything is awaited, so overlapping requests cannot both
     // start
     this.activeDownload = entry;
+    this.reportedPercent = -1;
+    const onProgress = (fraction: number) => this.onDownloadProgress(entry, fraction);
     try {
       if (this.downloadedVersion === entry.version) {
         // the staged Windows installer lives on disk, where it may have been
@@ -363,9 +370,9 @@ export class Updater {
 
       this.host.setProgress(2); // > 1 shows an indeterminate dock / taskbar bar
       if (this.host.platform === 'darwin') {
-        await this.host.squirrelDownload(entry, offer.notesUrl);
+        await this.host.squirrelDownload(entry, offer.notesUrl, onProgress);
       } else if (this.host.platform === 'win32') {
-        const file = await this.host.stageInstaller(entry, (fraction) => this.host.setProgress(fraction));
+        const file = await this.host.stageInstaller(entry, onProgress);
         this.staged = { file, entry, stamp: null };
       } else {
         throw new Error('in-app updates are not supported on this platform');
@@ -739,6 +746,24 @@ export class Updater {
     return installationKey(this.host.execPath, this.host.platform);
   }
 
+  private onDownloadProgress(entry: BuildArtifact, fraction: number): void {
+    // a download that has ended may still deliver what was in flight
+    if (this.activeDownload !== entry) {
+      return;
+    }
+
+    const known = Math.max(0, Math.min(1, fraction));
+    this.host.setProgress(known);
+
+    // GWT shows whole percentages, and a download arrives in thousands of
+    // chunks, so it hears only the changes
+    const percent = Math.floor(known * 100);
+    if (percent !== this.reportedPercent) {
+      this.reportedPercent = percent;
+      this.host.notify('onUpdateDownloadProgress', entry.version, percent);
+    }
+  }
+
   private onDownloaded(version: string): void {
     this.activeDownload = null;
     this.downloadedVersion = version;
@@ -779,14 +804,17 @@ export function installerEnvironment(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv 
 
 /** The updater's surroundings in the running application. */
 export function electronUpdaterHost(mainWindow: MainWindow): UpdaterHost {
-  let squirrelServer: http.Server | null = null;
+  /** the listener Squirrel is downloading from, until that download settles */
+  let squirrelRelay: SquirrelRelay | null = null;
   /** the version quitAndInstall() was asked to install, until it has */
   let squirrelInstalling: string | null = null;
 
-  const closeSquirrelServer = () => {
-    squirrelServer?.close();
-    squirrelServer = null;
+  const closeSquirrelRelay = () => {
+    squirrelRelay?.close();
+    squirrelRelay = null;
   };
+
+  const fetchArtifact = async (url: string, signal?: AbortSignal) => net.fetch(url, { cache: 'no-store', signal });
 
   const failureMessage = (reason: InstallFailure): string => {
     switch (reason) {
@@ -831,31 +859,6 @@ export function electronUpdaterHost(mainWindow: MainWindow): UpdaterHost {
     });
   }
 
-  // Squirrel.Mac wants its own feed format from an update server, and
-  // downloads whatever that feed names, so serve it a one-entry document for
-  // the build already chosen from a loopback listener
-  const startSquirrelServer = async (document: string): Promise<string> => {
-    closeSquirrelServer();
-    return new Promise((resolve, reject) => {
-      // plain http is fine here: the listener is loopback-only and the
-      // document it serves names an https download url
-      const server = new http.Server();
-      server.on('request', (_request, response) => {
-        response.writeHead(200, {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-store',
-        });
-        response.end(document);
-      });
-      server.on('error', reject);
-      server.listen(0, '127.0.0.1', () => {
-        const { port } = server.address() as AddressInfo;
-        squirrelServer = server;
-        resolve(`http://127.0.0.1:${port}/releases.json`);
-      });
-    });
-  };
-
   return {
     platform: process.platform,
     arch: process.arch,
@@ -895,30 +898,44 @@ export function electronUpdaterHost(mainWindow: MainWindow): UpdaterHost {
       return defaultMarkerDir();
     },
 
-    async squirrelDownload(entry: BuildArtifact, notesUrl: string): Promise<void> {
+    async squirrelDownload(
+      entry: BuildArtifact,
+      notesUrl: string,
+      onProgress: (fraction: number) => void,
+    ): Promise<void> {
       return new Promise((resolve, reject) => {
+        // the relay and Squirrel both report a download the relay cut short;
+        // the first to do so settles it
+        let settled = false;
         const settle = (outcome: () => void) => {
+          if (settled) {
+            return;
+          }
+          settled = true;
+
           autoUpdater.off('update-downloaded', onDownloaded);
           autoUpdater.off('update-not-available', onNotAvailable);
           autoUpdater.off('error', onError);
-          closeSquirrelServer();
+          closeSquirrelRelay();
           outcome();
         };
         const onDownloaded = () => settle(resolve);
         const onNotAvailable = () => settle(() => reject(new Error('The update server did not offer an update.')));
         const onError = (error: Error) => settle(() => reject(error));
 
-        startSquirrelServer(squirrelFeedDocument(entry, notesUrl))
-          .then((feedUrl) => {
+        closeSquirrelRelay();
+        startSquirrelRelay(entry, notesUrl, fetchArtifact, onProgress, onError)
+          .then((relay) => {
+            squirrelRelay = relay;
             autoUpdater.on('update-downloaded', onDownloaded);
             autoUpdater.on('update-not-available', onNotAvailable);
             autoUpdater.on('error', onError);
             try {
-              autoUpdater.setFeedURL({ url: feedUrl, serverType: 'default' });
+              autoUpdater.setFeedURL({ url: relay.feedUrl, serverType: 'default' });
               autoUpdater.checkForUpdates();
             } catch (error: unknown) {
               // thrown rather than reported, e.g. an unsigned build's "Could
-              // not get code signature"; the listeners and server go too
+              // not get code signature"; the listeners and relay go too
               settle(() => reject(safeError(error)));
             }
           })
@@ -932,8 +949,7 @@ export function electronUpdaterHost(mainWindow: MainWindow): UpdaterHost {
     },
 
     async stageInstaller(entry: BuildArtifact, onProgress: (fraction: number) => void): Promise<string> {
-      const fetch = async (url: string, signal?: AbortSignal) => net.fetch(url, { cache: 'no-store', signal });
-      const file = await stageInstaller(this.stagingDir(), entry, fetch, onProgress);
+      const file = await stageInstaller(this.stagingDir(), entry, fetchArtifact, onProgress);
 
       // the checksum only proves the file is what the API named; the
       // installer runs silently (no UAC prompt for a per-user install), so
@@ -991,9 +1007,10 @@ export function electronUpdaterHost(mainWindow: MainWindow): UpdaterHost {
       });
     },
 
-    notify(hook: UpdateHook, arg: string): void {
+    notify(hook: UpdateHook, ...args: (string | number)[]): void {
+      const call = `${hook}(${args.map((arg) => JSON.stringify(arg)).join(', ')})`;
       mainWindow
-        .executeJavaScript(`window.desktopHooks && window.desktopHooks.${hook}(${JSON.stringify(arg)})`)
+        .executeJavaScript(`window.desktopHooks && window.desktopHooks.${call}`)
         .catch((error: unknown) => logger().logError(safeError(error)));
     },
 

@@ -98,7 +98,7 @@ class FakeHost implements UpdaterHost {
   verifications = 0;
   /** what fileStamp() answers per file; a file without one is gone */
   stamps = new Map<string, FileStamp>();
-  downloads: { entry: BuildArtifact; done: Deferred<boolean> }[] = [];
+  downloads: { entry: BuildArtifact; done: Deferred<boolean>; onProgress: (fraction: number) => void }[] = [];
   installs = 0;
   installedVersions: string[] = [];
   onInstall: () => void = () => undefined;
@@ -106,7 +106,9 @@ class FakeHost implements UpdaterHost {
   /** what launchInstaller() answers, once `launchGate` (if set) resolves */
   launches = true;
   launchGate: Deferred<boolean> | null = null;
-  notifications: [UpdateHook, string][] = [];
+  notifications: [UpdateHook, ...(string | number)[]][] = [];
+  /** what the dock / taskbar progress bar was set to */
+  progress: number[] = [];
   warnings: [string, InstallFailure][] = [];
 
   constructor(
@@ -154,8 +156,12 @@ class FakeHost implements UpdaterHost {
     return path.join(this.dir, 'markers');
   }
 
-  async squirrelDownload(entry: BuildArtifact): Promise<void> {
-    await this.download(entry).promise;
+  async squirrelDownload(
+    entry: BuildArtifact,
+    _notesUrl: string,
+    onProgress: (fraction: number) => void,
+  ): Promise<void> {
+    await this.download(entry, onProgress).promise;
   }
 
   squirrelInstall(version: string): void {
@@ -164,8 +170,8 @@ class FakeHost implements UpdaterHost {
     this.onInstall();
   }
 
-  async stageInstaller(entry: BuildArtifact): Promise<string> {
-    await this.download(entry).promise;
+  async stageInstaller(entry: BuildArtifact, onProgress: (fraction: number) => void): Promise<string> {
+    await this.download(entry, onProgress).promise;
     const file = path.join(this.stagingDir(), entry.filename);
     this.stamps.set(file, { size: 100, mtimeMs: 1 });
     return file;
@@ -188,12 +194,12 @@ class FakeHost implements UpdaterHost {
     return this.launches;
   }
 
-  notify(hook: UpdateHook, arg: string): void {
-    this.notifications.push([hook, arg]);
+  notify(hook: UpdateHook, ...args: (string | number)[]): void {
+    this.notifications.push([hook, ...args]);
   }
 
-  setProgress(): void {
-    // the fake has no window
+  setProgress(value: number): void {
+    this.progress.push(value);
   }
 
   warnNotInstalled(version: string, reason: InstallFailure): void {
@@ -206,13 +212,13 @@ class FakeHost implements UpdaterHost {
     await flush();
   }
 
-  lastNotification(): [UpdateHook, string] | undefined {
+  lastNotification(): [UpdateHook, ...(string | number)[]] | undefined {
     return this.notifications[this.notifications.length - 1];
   }
 
-  private download(entry: BuildArtifact): Deferred<boolean> {
+  private download(entry: BuildArtifact, onProgress: (fraction: number) => void): Deferred<boolean> {
     const done = deferred<boolean>();
-    this.downloads.push({ entry, done });
+    this.downloads.push({ entry, done, onProgress });
     return done;
   }
 }
@@ -370,6 +376,88 @@ describe('updater', () => {
     await downloadingA;
     assert.equal(host.downloads.length, 1);
     assert.deepEqual(host.lastNotification(), ['onUpdateDownloaded', A]);
+  });
+
+  for (const platform of ['darwin', 'win32'] as const) {
+    it(`tells GWT each new percentage of a download on ${platform}`, async () => {
+      const { host, updater } = setup(platform);
+      await offer(updater, host, A);
+      const downloading = updater.downloadUpdate(A);
+      await flush();
+
+      // chunks arrive far more often than the percentage changes
+      const { onProgress } = host.downloads[0];
+      for (const fraction of [0, 0.004, 0.009, 0.01, 0.017, 0.5, 0.5, 1]) {
+        onProgress(fraction);
+      }
+      assert.deepEqual(host.notifications, [
+        ['onUpdateDownloadProgress', A, 0],
+        ['onUpdateDownloadProgress', A, 1],
+        ['onUpdateDownloadProgress', A, 50],
+        ['onUpdateDownloadProgress', A, 100],
+      ]);
+
+      // the dock / taskbar bar follows every chunk, after its indeterminate start
+      assert.deepEqual(host.progress, [2, 0, 0.004, 0.009, 0.01, 0.017, 0.5, 0.5, 1]);
+
+      await host.finishDownload();
+      await downloading;
+      assert.deepEqual(host.lastNotification(), ['onUpdateDownloaded', A]);
+    });
+  }
+
+  it('keeps a percentage within 0 to 100 when the size the server gave is wrong', async () => {
+    const { host, updater } = setup('win32');
+    await offer(updater, host, A);
+    void updater.downloadUpdate(A);
+    await flush();
+
+    host.downloads[0].onProgress(1.5);
+    assert.deepEqual(host.lastNotification(), ['onUpdateDownloadProgress', A, 100]);
+    assert.equal(host.progress[host.progress.length - 1], 1); // not the indeterminate bar
+  });
+
+  it('repeats the percentage for a repeat request, whose indicator in GWT is new', async () => {
+    const { host, updater } = setup('darwin');
+    await offer(updater, host, A);
+    void updater.downloadUpdate(A);
+    await flush();
+
+    // nothing to repeat before the download has reported anything
+    await updater.downloadUpdate(A);
+    assert.deepEqual(host.notifications, []);
+
+    host.downloads[0].onProgress(0.42);
+    await updater.downloadUpdate(A);
+    assert.deepEqual(host.notifications, [
+      ['onUpdateDownloadProgress', A, 42],
+      ['onUpdateDownloadProgress', A, 42],
+    ]);
+    assert.equal(host.downloads.length, 1);
+  });
+
+  it('ignores progress from a download that has ended, and starts the next from nothing', async () => {
+    const { host, updater } = setup('darwin');
+    await offer(updater, host, A);
+    const downloading = updater.downloadUpdate(A);
+    await flush();
+    host.downloads[0].onProgress(0.42);
+
+    await host.finishDownload();
+    await downloading;
+    const settled = host.notifications.length;
+    const bar = host.progress.length;
+
+    host.downloads[0].onProgress(0.9);
+    assert.equal(host.notifications.length, settled);
+    assert.equal(host.progress.length, bar); // the bar stays cleared
+
+    // another build: its first report is told even though it repeats A's last
+    await offer(updater, host, B);
+    void updater.downloadUpdate(B);
+    await flush();
+    host.downloads[1].onProgress(0.42);
+    assert.deepEqual(host.lastNotification(), ['onUpdateDownloadProgress', B, 42]);
   });
 
   it('treats a ready dialog for a build that is no longer the downloaded one as missing', async () => {

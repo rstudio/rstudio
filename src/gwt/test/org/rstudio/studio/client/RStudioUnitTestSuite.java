@@ -40,6 +40,7 @@ import org.rstudio.core.client.widget.LayoutGridTests;
 import org.rstudio.core.client.widget.MiniPopupPanelTests;
 import org.rstudio.core.client.widget.ModalDialogTrackerTests;
 import org.rstudio.core.client.widget.RowTableTests;
+import org.rstudio.core.client.widget.SlideLabelTests;
 import org.rstudio.core.client.widget.WidgetListBoxTests;
 import org.rstudio.studio.client.application.ApplicationUtilsTests;
 import org.rstudio.studio.client.application.ui.WarningBarListTests;
@@ -107,6 +108,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(WidgetListBoxTests.class);
       suite.addTestSuite(FastSelectTableTests.class);
       suite.addTestSuite(RowTableTests.class);
+      suite.addTestSuite(SlideLabelTests.class);
       suite.addTestSuite(BinarySplitLayoutPanelTests.class);
       suite.addTestSuite(StatusBarWidgetTests.class);
       suite.addTestSuite(AnsiCodeTests.class);
