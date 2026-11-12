@@ -14,6 +14,7 @@
 - ([#19555](https://github.com/rstudio/rstudio/issues/19555)): The branch filter in the History view of the Review Changes window now has a search box, and searches in the Git branch menus now ignore case.
 
 ### Fixed
+- ([#19590](https://github.com/rstudio/rstudio/issues/19590)): The New Project wizard now rejects an invalid package name (e.g. `test-cpp`) for the R Package using Rcpp, RcppArmadillo, RcppEigen, and devtools project types, instead of failing to create the project with an error such as "Malformed package name". The R Package project type also now rejects names R does not allow, such as `x` and `pkg.`.
 - ([#19571](https://github.com/rstudio/rstudio/issues/19571)): Fixed an issue where To Source in the History pane could open a new R script instead of inserting into a document open in the visual editor. With the cursor outside a code chunk, the commands are now inserted as a new R code chunk at the cursor.
 - ([#19566](https://github.com/rstudio/rstudio/issues/19566)): Fixed an issue where To Source in the History pane appeared to do nothing when the document was in the visual editor with the cursor in a code chunk. The commands were inserted out of sight, elsewhere in the document, and written to the file on the next save; they are now inserted into the chunk.
 - ([#19578](https://github.com/rstudio/rstudio/issues/19578)): Fixed an issue where turning off Show Changes Side by Side could scroll the editor away from the line being viewed, often to the end of the document, when lines had been removed above it.

@@ -270,6 +270,9 @@ public class Wizard<I,T> extends ModalDialog<T>
          {
             Debug.logException(e);
             validating_ = false;
+            // without this, ModalDialog stays mid-validation and ignores
+            // every later click on the OK button
+            onValidated.execute(false);
          }
       }
       else

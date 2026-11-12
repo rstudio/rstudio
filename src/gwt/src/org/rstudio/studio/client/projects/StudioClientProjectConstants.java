@@ -30,7 +30,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String cloneSVNRepoLabel();
     String cloneGitRepoLabel();
     String vcsCloneFailMessage();
-    String invalidPackageMessage(String packageName);
     String invalidPackageName(String packageName);
     String creatingProjectLabel();
     String projectFailedMessage();
@@ -91,7 +90,7 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String typeLabel();
     String packageNameLabel();
     String rcppPackageOption();
-    String validateAsyncMessage(String packageName);
+    String invalidPackageMessage(String packageName);
     String fileAlreadyExistsMessage(String path);
     String directoryAlreadyExistsMessage(String path);
     String pleaseEnterDirectoryNameMessage();
