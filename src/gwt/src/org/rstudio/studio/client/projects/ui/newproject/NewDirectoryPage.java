@@ -337,6 +337,13 @@ public class NewDirectoryPage extends NewProjectWizardPage
    protected void validateAsync(final NewProjectResult input,
                                 final OperationWithInput<Boolean> onValidated)
    {
+      // an empty name or parent directory yields null input
+      if (!validate(input))
+      {
+         onValidated.execute(false);
+         return;
+      }
+
       String packageName = getProjectName();
       if (createsPackage() && !Projects.PACKAGE_NAME_PATTERN.test(packageName))
       {
