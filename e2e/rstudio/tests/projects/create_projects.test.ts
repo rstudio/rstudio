@@ -1,11 +1,11 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { TIMEOUTS } from '@utils/constants';
 import { executeInConsole, waitForConsoleIdle, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
-import { installDepIfPrompted } from '@pages/modals.page';
+import { installDepIfPrompted, dismissBlockingModals, CONFIRM_BTN, CANCEL_BTN } from '@pages/modals.page';
 import { SourcePane } from '@pages/source_pane.page';
 import { useSuiteSandbox, SANDBOX_DIR_PREFIX } from '@utils/sandbox';
 import { setPref, resetSourcePaneState } from '@utils/commands';
-import type { Page } from 'playwright';
+import type { Locator, Page } from 'playwright';
 
 // -- Selectors ----------------------------------------------------------------
 
@@ -15,6 +15,7 @@ const NEW_DIRECTORY_OPTION = '#rstudio_label_new_directory_wizard_page';
 const CREATE_PROJECT_BTN = '#rstudio_label_create_project_wizard_confirm';
 const PROJECT_MENU = '#rstudio_project_menubutton_toolbar';
 const CLOSE_PROJECT_MENU_ITEM = '#rstudio_label_close_project_command';
+const MESSAGE_DIALOG = '[role="alertdialog"]';
 
 // -- Project type configs -----------------------------------------------------
 
@@ -74,6 +75,13 @@ const QUARTO_WEBSITE: ProjectType = {
 };
 
 const ALL_TYPES = [NEW_PROJECT, R_PACKAGE, SHINY_APP, QUARTO_PROJECT, QUARTO_WEBSITE];
+
+// Only used for name validation, which runs on the client before the
+// template's skeleton function, so Rcpp needn't be installed.
+const RCPP_PACKAGE = {
+  wizardPageId: '#rstudio_label_r_package_using_rcpp_wizard_page',
+  dirInputId: '#rstudio_r_package_using_rcpp_directory_name',
+};
 
 // -- Helpers ------------------------------------------------------------------
 
@@ -176,6 +184,54 @@ async function openNewProjectWizard(page: Page): Promise<void> {
   // cold Windows CI runner it has been observed taking ~57s, so give it a
   // generous budget.
   await expect(page.locator(WIZARD_DIALOG)).toBeVisible({ timeout: 90000 });
+}
+
+// Opens the wizard on a New Directory page and returns its name input.
+async function openNewDirectoryPage(
+  page: Page,
+  type: { wizardPageId: string; dirInputId: string },
+): Promise<Locator> {
+  await openNewProjectWizard(page);
+  const dialog = page.locator(WIZARD_DIALOG);
+
+  const newDir = dialog.locator(NEW_DIRECTORY_OPTION);
+  await expect(newDir).toBeVisible({ timeout: 5000 });
+  await newDir.click();
+
+  const wizardPage = dialog.locator(type.wizardPageId);
+  await expect(wizardPage).toBeVisible({ timeout: 15000 });
+  await wizardPage.click();
+
+  const dirInput = dialog.locator(type.dirInputId);
+  await expect(dirInput).toBeVisible({ timeout: 5000 });
+  await dirInput.click();
+  return dirInput;
+}
+
+// Clicks Create Project, expects a message dialog containing `text`, and
+// dismisses it. The wizard must still be open afterwards.
+async function createExpectingMessage(page: Page, text: string): Promise<void> {
+  const createBtn = page.locator(CREATE_PROJECT_BTN);
+  await expect(createBtn).toBeEnabled({ timeout: 30000 });
+  await createBtn.click();
+
+  const message = page.locator(MESSAGE_DIALOG);
+  await expect(message).toContainText(text, { timeout: 10000 });
+  await message.locator(CONFIRM_BTN).click();
+  await expect(message).toBeHidden({ timeout: 5000 });
+  await expect(page.locator(WIZARD_DIALOG)).toBeVisible();
+}
+
+async function cancelWizardIfOpen(page: Page): Promise<void> {
+  const message = page.locator(MESSAGE_DIALOG);
+  if (await message.isVisible()) {
+    await message.locator(CONFIRM_BTN).click();
+  }
+  const dialog = page.locator(WIZARD_DIALOG);
+  if (await dialog.isVisible()) {
+    await dialog.locator(CANCEL_BTN).click();
+    await expect(dialog).toBeHidden({ timeout: 5000 });
+  }
 }
 
 async function createProjectInNewDir(
@@ -412,5 +468,94 @@ test.describe.serial('Create Projects in New Directory', () => {
     await closeCurrentProject(page);
     await cleanupProject(page, currentProjectDir);
     currentProjectDir = '';
+  });
+});
+
+// -- Directory name validation (#19590) ---------------------------------------
+// None of these create a project: each name is rejected in the wizard. They
+// live outside the serial group so a failed project creation doesn't skip them.
+
+test.describe('New Project wizard directory name validation', () => {
+  // A failed test above can leave the wizard open over the page.
+  test.beforeEach(async ({ rstudioPage: page }) => {
+    await dismissBlockingModals(page);
+  });
+
+  test('R Package rejects an invalid package name', async ({ rstudioPage: page }) => {
+    try {
+      const dirInput = await openNewDirectoryPage(page, R_PACKAGE);
+      await dirInput.pressSequentially('test-pkg');
+      await createExpectingMessage(page, "Invalid package name 'test-pkg'");
+      await expect(dirInput).toBeFocused();
+      await expect(dirInput).toHaveAttribute('aria-invalid', 'true');
+    } finally {
+      await cancelWizardIfOpen(page);
+    }
+  });
+
+  // 'x' can still be typed into a valid name, so only Create Project marks it
+  // invalid; moving the cursor afterwards must not clear that.
+  test('a name rejected by Create Project stays marked while the cursor moves', async ({ rstudioPage: page }) => {
+    try {
+      const dirInput = await openNewDirectoryPage(page, R_PACKAGE);
+      await dirInput.pressSequentially('x');
+      await createExpectingMessage(page, "Invalid package name 'x'");
+      await expect(dirInput).toHaveAttribute('aria-invalid', 'true');
+      await dirInput.press('ArrowLeft');
+      await dirInput.press('ArrowRight');
+      // The keystroke check is deferred, so sample past when it would run
+      // rather than reading the attribute once.
+      const deadline = Date.now() + 1000;
+      while (Date.now() < deadline) {
+        expect(await dirInput.getAttribute('aria-invalid')).toBe('true');
+        await page.waitForTimeout(50);
+      }
+      // a real edit is still checked: 'xy' can become valid
+      await dirInput.pressSequentially('y');
+      await expect(dirInput).not.toHaveAttribute('aria-invalid', /.*/);
+    } finally {
+      await cancelWizardIfOpen(page);
+    }
+  });
+
+  test('R Package using Rcpp rejects an invalid package name', async ({ rstudioPage: page }) => {
+    try {
+      const dirInput = await openNewDirectoryPage(page, RCPP_PACKAGE);
+      await dirInput.pressSequentially('test-cpp');
+      await createExpectingMessage(page, "Invalid package name 'test-cpp'");
+    } finally {
+      await cancelWizardIfOpen(page);
+    }
+  });
+
+  // Each check first makes the name invalid, so the following assertion waits
+  // for the keystroke handler to clear aria-invalid rather than passing before
+  // it has run.
+  test('package name is marked invalid only once typing cannot fix it', async ({ rstudioPage: page }) => {
+    try {
+      const dirInput = await openNewDirectoryPage(page, RCPP_PACKAGE);
+      for (const prefix of ['m', 'my.']) {
+        await dirInput.fill('');
+        await dirInput.pressSequentially(`${prefix}-`);
+        await expect(dirInput).toHaveAttribute('aria-invalid', 'true');
+        await dirInput.press('Backspace');
+        await expect(dirInput).toHaveValue(prefix);
+        await expect(dirInput).not.toHaveAttribute('aria-invalid', /.*/);
+      }
+    } finally {
+      await cancelWizardIfOpen(page);
+    }
+  });
+
+  // An empty name used to throw in validation and leave the wizard ignoring
+  // every later Create Project click; a second click must still respond.
+  test('New Project reports an empty directory name on every attempt', async ({ rstudioPage: page }) => {
+    try {
+      await openNewDirectoryPage(page, NEW_PROJECT);
+      await createExpectingMessage(page, 'You must specify a name for the new project directory');
+      await createExpectingMessage(page, 'You must specify a name for the new project directory');
+    } finally {
+      await cancelWizardIfOpen(page);
+    }
   });
 });

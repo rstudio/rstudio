@@ -1529,6 +1529,51 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     }
   });
 
+  test('History To Source opens an R script when the base version holds the cursor (#19571)', async ({
+    rstudioPage: page,
+  }) => {
+    // Unique, so the History row matches nothing else.
+    const command = `history_diff_base_${Date.now()} <- 1`;
+    await new ConsolePaneActions(page).executeInConsole(command);
+
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+    await executeCommand(page, 'vcsShowChangesSideBySide');
+    const base = page.locator(BASE_EDITOR);
+    const live = liveEditors(page, 'a2 <- 1.5');
+    await expect(base).toBeVisible({ timeout: 10000 });
+
+    try {
+      const focusIn = (view: Locator) => view.evaluate((el) => el.contains(document.activeElement));
+      await live.locator('.ace_content').click({ force: true });
+      await expect.poll(() => focusIn(live)).toBe(true);
+      const editor = new AceEditor(page, '');
+      const original = await editor.getValue();
+
+      await executeCommand(page, 'focusOtherEditorSplit');
+      await expect.poll(() => focusIn(base)).toBe(true);
+
+      // The base pane is read-only, and the document's own cursor is not
+      // where the user is working, so the document declines the code. It is
+      // not dropped: it goes to a new R script, which becomes the active
+      // document.
+      await executeCommand(page, 'activateHistory');
+      const history = page.getByRole('listbox', { name: 'Console History', exact: true });
+      await history.getByText(command, { exact: true }).click();
+      await page.locator("[id^='rstudio_tb_historysendtosource']").click();
+      await expect.poll(() => editor.getValue().catch(() => '')).toBe(`${command}\n`);
+
+      // Back in the document, nothing was inserted.
+      await executeCommand(page, 'previousTab');
+      await expect.poll(() => focusIn(base), { timeout: 10000 }).toBe(true);
+      expect(await editor.getValue()).toBe(original);
+    } finally {
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+      await documentCloseAllNoSave(page);
+    }
+  });
+
   test('gives way to a regular split, and closes with the markers', async ({ rstudioPage: page }) => {
     await openFile(page, scriptPath());
     await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
@@ -2078,6 +2123,11 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
         `,
       );
 
+    // Each step reopens peekmove.R and reads the markers of the rows at its
+    // top. A cursor position saved in the step before would reopen it
+    // scrolled there, or not, depending on whether its save timer beat the
+    // close.
+    await setPref(page, 'restore_source_document_cursor_position', false);
     try {
       // from a change near the top to the deletion of lines 25 to 84
       await rewrite('lines[2] <- "m2 <- 0"; lines <- lines[-(25:84)]');
@@ -2208,8 +2258,12 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
           { timeout: 10000 },
         )
         .toBe(true);
+      // Closing the view takes out the padding above the line, and the line
+      // stays in view rather than the view keeping its offset (now past the
+      // end of the document).
       await executeCommand(page, 'removeEditorSplit');
       await expect(base).toHaveCount(0);
+      await expect.poll(() => rowInView(live, 49), { timeout: 10000 }).toBe(true);
       await documentCloseAllNoSave(page);
 
       // Side by side, with the first 100 lines removed and the base pane at
@@ -2245,6 +2299,7 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
         await expect(base).toHaveCount(0);
       }
       await clearPref(page, 'smooth_scrolling');
+      await clearPref(page, 'restore_source_document_cursor_position');
       await documentCloseAllNoSave(page);
       await executeInConsoleChecked(
         page,
