@@ -15,7 +15,6 @@
 
 import { changeLanguage, initI18n } from '../../main/i18n-manager';
 import i18next from 'i18next';
-import { checkForNewLanguage } from '../utils';
 
 const loadPageLocalization = () => {
   initI18n();
@@ -75,17 +74,7 @@ const loadPageLocalization = () => {
   };
 
   window.addEventListener('load', () => {
-    checkForNewLanguage()
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .then(async (newLanguage: any) =>
-        changeLanguage('' + newLanguage).then(() => {
-          updateLabels();
-        }),
-      )
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .catch((err: any) => {
-        console.error('An error happened when trying to fetch a new locale: ', err);
-      });
+    void changeLanguage(window.desktopLanguage).then(updateLabels);
   });
 };
 

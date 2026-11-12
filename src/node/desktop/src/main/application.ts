@@ -13,7 +13,7 @@
  *
  */
 
-import { app, BrowserWindow, dialog, Event, Menu, screen, WebContents } from 'electron';
+import { app, BrowserWindow, dialog, Event, Menu, screen, session, WebContents } from 'electron';
 import i18next from 'i18next';
 import path from 'path';
 import { getenv, setenv } from '../core/environment';
@@ -60,6 +60,7 @@ import { WindowTracker } from './window-tracker';
 import { configureSatelliteWindow, configureSecondaryWindow } from './window-utils';
 import { Client, Server } from 'net-ipc';
 import { LoggerCallback } from './logger-callback';
+import { registerLanguageChannel, trackLocaleCookie } from './page-language';
 import { checkDirectoryWritable, UserDirIssue, Xdg } from '../core/xdg';
 import { ModalDialogTracker } from './modal-dialog-tracker';
 import LogOptions from './log-options';
@@ -424,6 +425,10 @@ export class Application implements AppState {
 
     // provide logging capabiity to renderer and preload
     this.loggerCallback = new LoggerCallback();
+
+    // settle the UI language before any of the desktop's own pages (choose R, loading) loads
+    registerLanguageChannel();
+    await trackLocaleCookie(session.defaultSession);
 
     // Prevent app from terminating when last window closes during startup; this can cause
     // app to exit after Choose R dialog closes but before the license dialog shows. Also
