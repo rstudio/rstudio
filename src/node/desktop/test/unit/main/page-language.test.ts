@@ -88,9 +88,10 @@ describe('page-language', () => {
   });
 
   it('keeps the current language when the cookie store cannot be read', async () => {
+    await changeLanguage('fr');
     const s = freshSession();
     sinon.stub(s.cookies, 'get').rejects(new Error('cookie store unavailable'));
     await trackLocaleCookie(s);
-    assert.strictEqual(languageSeenByPages(), 'en');
+    assert.strictEqual(languageSeenByPages(), 'fr');
   });
 });

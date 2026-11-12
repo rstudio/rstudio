@@ -49,7 +49,12 @@ describe('ChooseR', () => {
     try {
       assert.strictEqual(i18next.resolvedLanguage, 'fr');
     } finally {
+      // the dialog's 'closed' handler uses the application singleton, which afterEach clears
+      const closed = new Promise((resolve) => chooser.once('closed', resolve));
       chooser.destroy();
+      await closed;
+      delete globals.CHOOSE_R_WEBPACK_ENTRY;
+      delete globals.CHOOSE_R_PRELOAD_WEBPACK_ENTRY;
       await changeLanguage('en');
     }
   });
