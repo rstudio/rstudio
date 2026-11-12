@@ -17,6 +17,7 @@ import { describe } from 'mocha';
 import { assert } from 'chai';
 import sinon from 'sinon';
 import { EventEmitter } from 'events';
+import { BrowserWindow } from 'electron';
 import { mkdtempSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
@@ -34,6 +35,8 @@ import { GwtCallback } from '../../../src/main/gwt-callback';
 import * as DetectR from '../../../src/main/detect-r';
 import * as DesktopOptions from '../../../src/main/preferences/electron-desktop-options';
 import { DesktopOptionsImpl } from '../../../src/main/preferences/electron-desktop-options';
+import { StartupSplash } from '../../../src/main/splash-screen';
+import * as Utils from '../../../src/main/utils';
 
 function getNewLauncher(): SessionLauncher {
   return new SessionLauncher(new FilePath(), new FilePath(), new FilePath(), new ApplicationLaunch(), null);
@@ -141,6 +144,77 @@ describe('SessionLauncher', () => {
 
       assert.isNotNull(error);
       assert.isTrue(mainWindow.workbenchInitialized);
+    });
+  });
+
+  describe('startup splash', () => {
+    const kDelayMs = 500;
+    const kLingerMs = 1300;
+
+    interface FakeSplashWindow {
+      show: sinon.SinonStub;
+      showInactive: sinon.SinonStub;
+      destroy: sinon.SinonStub;
+      isDestroyed: sinon.SinonStub;
+    }
+
+    let clock: sinon.SinonFakeTimers;
+    let splashWindow: FakeSplashWindow;
+    let launcher: SessionLauncher;
+
+    // a launcher whose splash screen is up, on a fake window
+    beforeEach(() => {
+      clock = sinon.useFakeTimers();
+      splashWindow = {
+        show: sinon.stub(),
+        showInactive: sinon.stub(),
+        destroy: sinon.stub(),
+        isDestroyed: sinon.stub().returns(false),
+      };
+
+      const splash = new StartupSplash(kDelayMs, kLingerMs, () => splashWindow as unknown as BrowserWindow);
+      launcher = getNewLauncher();
+      (launcher as unknown as { splash: StartupSplash }).splash = splash;
+      splash.schedule();
+      clock.tick(kDelayMs);
+      assert.isTrue(splashWindow.show.calledOnce);
+    });
+
+    afterEach(() => {
+      clock.restore();
+      sinon.restore();
+    });
+
+    it('closes once the workbench is ready, without waiting out the linger', () => {
+      const gwtCallback = new EventEmitter();
+      appState().gwtCallback = gwtCallback as unknown as GwtCallback;
+
+      launcher.onMainWindowShown();
+      clock.tick(100);
+      assert.isFalse(splashWindow.destroy.called);
+
+      gwtCallback.emit(GwtCallback.WORKBENCH_INITIALIZED);
+      assert.isTrue(splashWindow.destroy.calledOnce);
+    });
+
+    it('closes after the linger when the workbench is slow to be ready', () => {
+      appState().gwtCallback = new EventEmitter() as unknown as GwtCallback;
+
+      launcher.onMainWindowShown();
+      clock.tick(kLingerMs);
+      assert.isTrue(splashWindow.destroy.calledOnce);
+    });
+
+    it('closes before reporting a launch error', () => {
+      // never settles, so the launch error does not go on to exit the app
+      const pending = new Promise<void>(() => undefined);
+      const errorDialog = sinon.stub(Utils, 'createStandaloneErrorDialog').returns(pending);
+
+      launcher.onLaunchError('the session failed to start');
+
+      assert.isTrue(splashWindow.destroy.calledOnce);
+      assert.isTrue(errorDialog.calledOnce);
+      assert.isTrue(splashWindow.destroy.calledBefore(errorDialog));
     });
   });
 

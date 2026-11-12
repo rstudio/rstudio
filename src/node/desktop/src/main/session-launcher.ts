@@ -347,12 +347,7 @@ export class SessionLauncher {
           this.mainWindow?.window.show();
         }
         startupCheckpoint('window-shown');
-
-        // a splash screen that has yet to appear is skipped from here on; one
-        // that is up stays a little longer, so it doesn't flash by unread, but
-        // no longer than the workbench takes to be ready
-        this.splash.onMainWindowShown();
-        appState().gwtCallback?.once(GwtCallback.WORKBENCH_INITIALIZED, () => this.splash.close());
+        this.onMainWindowShown();
       });
       appState().activation().setMainWindow(this.mainWindow.window);
       this.appLaunch.activateWindow();
@@ -694,6 +689,16 @@ export class SessionLauncher {
   }
 
   /**
+   * The main window is on screen. A splash screen that has yet to appear is
+   * skipped from here on; one that is up stays a little longer, so it doesn't
+   * flash by unread, but no longer than the workbench takes to be ready.
+   */
+  onMainWindowShown(): void {
+    this.splash.onMainWindowShown();
+    appState().gwtCallback?.once(GwtCallback.WORKBENCH_INITIALIZED, () => this.splash.close());
+  }
+
+  /**
    * Takes the startup splash screen down, if it is still up -- ahead of a
    * dialog, say, that it would otherwise be left sitting behind.
    */
@@ -868,6 +873,9 @@ export class SessionLauncher {
   }
 
   onLaunchError(message: string): void {
+    // the splash is always on top, so the error dialog would open behind it
+    this.splash.close();
+
     const exitFn = () => {
       if (this.mainWindow) {
         this.mainWindow.window.close();
