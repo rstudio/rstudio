@@ -1355,10 +1355,10 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
 
    // Where a line of the live editor sits in its view, to keep it there: the
    // cursor's line, when any of it shows, or else the first line that does.
-   // A view inside a line widget other than padding (chunk output) keeps that
-   // widget's line where it was. A view that is all padding keeps the line
-   // below it at its bottom edge, or, with no line below, the last line at
-   // its top.
+   // A view inside a line widget that stays after the close (chunk output,
+   // not padding or the action bar) keeps that widget's line where it was.
+   // A view that is all padding keeps the line below it at its bottom edge,
+   // or, with no line below, the last line at its top.
    this.$liveViewAnchor = function() {
       var renderer = this.liveEditor.renderer;
       var session = this.liveEditor.session;
@@ -1391,7 +1391,7 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       }
 
       var widget = session.lineWidgets && session.lineWidgets[first];
-      if (widget && !isPadding(widget))
+      if (widget && !isPadding(widget) && !this.$isPeek(widget))
          return { row: first, offset: offsetOf(first) };
 
       if (candidate < session.getLength())

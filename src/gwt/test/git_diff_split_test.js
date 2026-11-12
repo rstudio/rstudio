@@ -318,6 +318,18 @@ anchor = close(view);
 check("a view inside output at the end keeps its place", anchor.row === 99 &&
    anchor.offset === -210 && view.sessionB.getScrollTop() === 1200);
 
+// The action bar goes as the view closes, so a view inside the padding it
+// borrows (lines 51 to 150 removed at the end) is a view of padding.
+view = closingView(lines(1, 150), lines(1, 50), [chunk(50, 150, 50, 50)], 0, 100);
+peek = { row: 49, rowCount: 1, rowsAbove: 0, fixedWidth: true };
+view.gutter.peek = { widget: peek };
+view.sessionB.widgetManager.addLineWidget(peek);
+view.align();
+view.sessionB.setScrollTop(liveTop(view, 49) + 300);
+anchor = close(view);
+check("a view inside the action bar's borrowed rows is padding", peek.gitDiffLentRows === 0 &&
+   anchor.row === 49 && anchor.offset === 0 && view.sessionB.getScrollTop() === 49 * 10);
+
 view = closingView("a\n" + new Array(101).join("x"), "a\n" + new Array(101).join("x"), [], 0, 100);
 wrap(view, 10);
 view.sessionB.setScrollTop(50);
