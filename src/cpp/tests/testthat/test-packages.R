@@ -431,9 +431,11 @@ test_that(".rs.checkOpenMPRuntimes is quiet when disabled", {
 })
 
 test_that("package_skeleton rejects invalid package names before creating anything", {
+   root <- tempfile()
+   on.exit(unlink(root, recursive = TRUE), add = TRUE)
    for (name in c("test-cpp", "my_pkg", "1pkg", "pkg.", "x"))
    {
-      dir <- file.path(tempfile(), name)
+      dir <- file.path(root, name)
       result <- .rs.rpc.package_skeleton(name, dir, list(), FALSE)
       expect_match(result$message, "Invalid package name", info = name)
       expect_false(file.exists(dir), info = name)
