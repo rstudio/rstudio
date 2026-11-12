@@ -218,6 +218,7 @@ var GitDiffGutter = function(editor, strings) {
    this.onGutterMouseDown = this.onGutterMouseDown.bind(this);
    this.onGutterClick = this.onGutterClick.bind(this);
    this.pinPeek = this.pinPeek.bind(this);
+   this.fitPeek = this.fitPeek.bind(this);
 
    // reachable from the editor for automation and debugging
    editor.gitDiffGutter = this;
@@ -227,6 +228,11 @@ var GitDiffGutter = function(editor, strings) {
    this.resetGutterPadding();
    gutter.on("afterRender", this.onAfterRender);
    editor.renderer.on("afterRender", this.pinPeek);
+
+   // (capturing, so that it runs ahead of the widget manager's measureWidgets
+   // however late the manager is attached: see fitPeek)
+   editor.renderer.on("beforeRender", this.fitPeek, true);
+
    editor.on("change", this.onChange);
    editor.on("changeSelection", this.onCursorActivity);
    editor.on("focus", this.onCursorActivity);
@@ -1116,10 +1122,72 @@ var GitDiffGutter = function(editor, strings) {
          el.appendChild(lines);
       }
 
+      // (the room for the scrollbar is made before Ace first measures the
+      // widget, so that its measurement holds; see fitPeek)
+      var cover = this.scrollBarCover();
+      closeButton.style.marginRight = (cover > 0) ? cover + "px" : "";
+
       var widget = { row: row, el: el, fixedWidth: true, coverGutter: false };
       this.lineWidgetManager().addLineWidget(widget);
-      this.peek = { chunk: chunk, widget: widget, compact: compact };
+      this.peek = {
+         chunk: chunk,
+         widget: widget,
+         compact: compact,
+         closeButton: closeButton,
+         scrollBarCover: cover,
+         scrollerWidth: this.editor.renderer.$size.scrollerWidth
+      };
       return true;
+   };
+
+   // Ace ends a fixedWidth widget where the room it keeps for the vertical
+   // scrollbar starts, but the scrollbar's element is wider than that room:
+   // by 5px, or by all of its 20px where scrollbars take no room (macOS's
+   // overlay scrollbars). What lies under the element gets no clicks, so
+   // the close button, at the end of the widget, is kept clear of it.
+   //
+   // This runs on every render (see fitPeek); measuring there would force a
+   // layout, so the element's width is read from the style Ace gave it.
+   this.scrollBarCover = function() {
+      var scrollBar = this.editor.renderer.scrollBarV;
+      if (!scrollBar.isVisible)
+         return 0;
+
+      var width = parseFloat(scrollBar.element.style.width) || 0;
+      return Math.max(0, width - scrollBar.getWidth());
+   };
+
+   // Keeps the peek's close button clear of the scrollbar, which comes and
+   // goes with the document's height, and has the peek measured again when
+   // the room its label has changes: the label wraps in a narrow editor, and
+   // the peek's height follows. That room changes with the editor's width
+   // (a pane resized, the gutter's width changed) and with the scrollbar's
+   // cover.
+   //
+   // This runs before each render, ahead of the widget manager's
+   // measureWidgets, which then measures the peek in the same render; and
+   // again after it (see pinPeek), for a scrollbar or gutter that changed
+   // during the render, after measureWidgets: that peek is measured in the
+   // next frame, so one frame shows it at its old height. (The action bar has
+   // no label to wrap, and the rows it takes on from the side-by-side view's
+   // padding would go if Ace measured it again.)
+   this.fitPeek = function() {
+      var peek = this.peek;
+      if (!peek)
+         return;
+
+      var cover = this.scrollBarCover();
+      var width = this.editor.renderer.$size.scrollerWidth;
+      if (peek.scrollBarCover === cover && peek.scrollerWidth === width)
+         return;
+
+      peek.scrollBarCover = cover;
+      peek.scrollerWidth = width;
+      peek.closeButton.style.marginRight = (cover > 0) ? cover + "px" : "";
+
+      peek.headerHeight = null;
+      if (!peek.compact)
+         this.editor.session.widgetManager.onWidgetChanged(peek.widget);
    };
 
    this.closePeek = function() {
@@ -1170,6 +1238,8 @@ var GitDiffGutter = function(editor, strings) {
       if (!peek)
          return;
 
+      this.fitPeek();
+
       // A peek above its change (where a notebook's output took the row
       // below) or at removed lines has no changed lines to cover -- but for
       // the side-by-side action bar of a deletion below the line after it
@@ -1217,18 +1287,13 @@ var GitDiffGutter = function(editor, strings) {
       {
          // This runs on every render, just after Ace has written the
          // widgets' styles, where measuring would force a layout each
-         // frame; the header's height holds while the width it has (the
-         // scroller's, short of the gutter: its label may wrap in a narrow
-         // one) and the line height (its font) do, so it is measured once
-         // per pair.
-         var width = this.editor.renderer.$size.scrollerWidth;
-         if (peek.headerHeight == null ||
-             peek.headerWidth !== width ||
-             peek.headerLineHeight !== lineHeight)
+         // frame; the header's height holds while the room its label has
+         // (fitPeek drops the height when that changes) and the line height
+         // (its font) do, so it is measured once per pair.
+         if (peek.headerHeight == null || peek.headerLineHeight !== lineHeight)
          {
             var header = el.firstChild;
             peek.headerHeight = el.clientTop + header.offsetTop + header.offsetHeight;
-            peek.headerWidth = width;
             peek.headerLineHeight = lineHeight;
          }
          height = peek.headerHeight;
@@ -1333,6 +1398,7 @@ var GitDiffGutter = function(editor, strings) {
       this.closePeek();
       this.editor.commands.removeCommand("closeGitPeek");
       this.editor.renderer.off("afterRender", this.pinPeek);
+      this.editor.renderer.off("beforeRender", this.fitPeek);
       this.editor.off("change", this.onChange);
       this.editor.off("changeSelection", this.onCursorActivity);
       this.editor.off("focus", this.onCursorActivity);
