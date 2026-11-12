@@ -112,8 +112,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
       ElementIds.assignElementId(txtProjectName_,
          ElementIds.idWithPrefix(getTitle(), ElementIds.NEW_PROJECT_DIRECTORY));
       txtProjectName_.addKeyDownHandler(event ->
-         Scheduler.get().scheduleDeferred(() -> markPackageNameInvalid(
-            createsPackage() && !isPackageNamePrefix(getProjectName()))));
+         Scheduler.get().scheduleDeferred(this::onProjectNameKeyDown));
 
       // create the dir name label
       dirNameLabel_ = new FormLabel(getDirNameLabel(), txtProjectName_);
@@ -338,6 +337,18 @@ public class NewDirectoryPage extends NewProjectWizardPage
       return false;
    }
 
+   // Rechecks only when the text changed, so moving the cursor doesn't clear
+   // the invalid state Create Project set for a name like 'x'
+   private void onProjectNameKeyDown()
+   {
+      String name = getProjectName();
+      if (name.equals(checkedProjectName_))
+         return;
+
+      checkedProjectName_ = name;
+      markPackageNameInvalid(createsPackage() && !isPackageNamePrefix(name));
+   }
+
    private static boolean isPackageNamePrefix(String name)
    {
       return name.isEmpty() || Projects.PACKAGE_NAME_PREFIX_PATTERN.test(name);
@@ -370,6 +381,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
       String packageName = getProjectName();
       if (createsPackage() && !Projects.PACKAGE_NAME_PATTERN.test(packageName))
       {
+         checkedProjectName_ = packageName;
          markPackageNameInvalid(true);
          globalDisplay_.showMessage(
                MessageDialog.WARNING,
@@ -462,6 +474,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
 
    protected FormLabel dirNameLabel_;
    protected TextBox txtProjectName_;
+   private String checkedProjectName_ = "";
    protected CheckBox chkGitInit_;
    protected CheckBox chkRenvInit_;
    

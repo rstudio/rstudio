@@ -484,6 +484,31 @@ test.describe.serial('Create Projects in New Directory', () => {
     }
   });
 
+  // 'x' can still be typed into a valid name, so only Create Project marks it
+  // invalid; moving the cursor afterwards must not clear that.
+  test('a name rejected by Create Project stays marked while the cursor moves', async ({ rstudioPage: page }) => {
+    try {
+      const dirInput = await openNewDirectoryPage(page, R_PACKAGE);
+      await dirInput.pressSequentially('x');
+      await createExpectingMessage(page, "Invalid package name 'x'");
+      await expect(dirInput).toHaveAttribute('aria-invalid', 'true');
+      await dirInput.press('ArrowLeft');
+      await dirInput.press('ArrowRight');
+      // The keystroke check is deferred, so sample past when it would run
+      // rather than reading the attribute once.
+      const deadline = Date.now() + 1000;
+      while (Date.now() < deadline) {
+        expect(await dirInput.getAttribute('aria-invalid')).toBe('true');
+        await page.waitForTimeout(50);
+      }
+      // a real edit is still checked: 'xy' can become valid
+      await dirInput.pressSequentially('y');
+      await expect(dirInput).not.toHaveAttribute('aria-invalid', /.*/);
+    } finally {
+      await cancelWizardIfOpen(page);
+    }
+  });
+
   test('R Package using Rcpp rejects an invalid package name', async ({ rstudioPage: page }) => {
     try {
       const dirInput = await openNewDirectoryPage(page, RCPP_PACKAGE);
