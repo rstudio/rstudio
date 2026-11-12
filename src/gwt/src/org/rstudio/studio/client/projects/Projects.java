@@ -1296,6 +1296,6 @@ public class Projects implements OpenProjectFileEvent.Handler,
    // This string cannot be localized, currently, because it is hardcoded as "none" in the C++ code
    // #define kProjectNone           "none"
    public static final String NONE = "none"; // constants_.noneLabel();
-   public static final Pattern PACKAGE_NAME_PATTERN = Pattern.create("^[a-zA-Z][a-zA-Z0-9.]*$", "");
+   public static final Pattern PACKAGE_NAME_PATTERN = Pattern.create("^[a-zA-Z][a-zA-Z0-9.]*[a-zA-Z0-9]$", "");
 
 }

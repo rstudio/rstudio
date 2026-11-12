@@ -55,7 +55,9 @@ import org.rstudio.studio.client.common.r.RTokenizerTests;
 import org.rstudio.studio.client.common.rstudioapi.model.ChoiceListDialogTests;
 import org.rstudio.studio.client.common.shell.ConsoleErrorTrackerTests;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerItemCodecTests;
+import org.rstudio.studio.client.projects.PackageNamePatternTests;
 import org.rstudio.studio.client.projects.model.ProjectMRUEntryTests;
+import org.rstudio.studio.client.projects.model.ProjectTemplateDescriptionTests;
 import org.rstudio.studio.client.projects.model.ProjectTemplateWidgetTests;
 import org.rstudio.studio.client.rsconnect.ui.EnvironmentVariablesDialogTests;
 import org.rstudio.studio.client.server.ServerErrorCauseTests;
@@ -121,6 +123,8 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(EnvironmentVariablesDialogTests.class);
       suite.addTestSuite(ChoiceListDialogTests.class);
       suite.addTestSuite(ProjectTemplateWidgetTests.class);
+      suite.addTestSuite(ProjectTemplateDescriptionTests.class);
+      suite.addTestSuite(PackageNamePatternTests.class);
       suite.addTestSuite(TextCursorTests.class);
       suite.addTestSuite(SessionScopeTests.class);
       suite.addTestSuite(SessionTests.class);

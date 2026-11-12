@@ -326,11 +326,29 @@ public class NewDirectoryPage extends NewProjectWizardPage
       return txtProjectName_.getText().trim();
    }
    
+   // Whether the directory name becomes an R package name, and so must be
+   // a valid one
+   protected boolean createsPackage()
+   {
+      return false;
+   }
+
    @Override
    protected void validateAsync(final NewProjectResult input,
                                 final OperationWithInput<Boolean> onValidated)
    {
-      
+      String packageName = getProjectName();
+      if (createsPackage() && !Projects.PACKAGE_NAME_PATTERN.test(packageName))
+      {
+         globalDisplay_.showMessage(
+               MessageDialog.WARNING,
+               constants_.errorCaption(),
+               constants_.validateAsyncMessage(packageName),
+               txtProjectName_);
+         onValidated.execute(false);
+         return;
+      }
+
       final FileSystemItem projFile = FileSystemItem.createFile(input.getProjectFile());
       final FileSystemItem projDir = projFile.getParentPath();
       server_.stat(projDir.getPath(), new ServerRequestCallback<FileSystemItem>()

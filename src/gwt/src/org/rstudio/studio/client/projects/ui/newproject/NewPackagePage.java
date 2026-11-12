@@ -18,15 +18,12 @@ import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
-import org.rstudio.core.client.widget.MessageDialog;
-import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
-import org.rstudio.studio.client.projects.model.NewProjectResult;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -152,22 +149,9 @@ public class NewPackagePage extends NewDirectoryPage
    }
    
    @Override
-   protected void validateAsync(final NewProjectResult input,
-                                final OperationWithInput<Boolean> onValidated)
+   protected boolean createsPackage()
    {
-      // validate package name first
-      String packageName = txtProjectName_.getText().trim();
-      if (!isPackageNameValid(packageName))
-      {
-         globalDisplay_.showMessage(
-               MessageDialog.WARNING,
-               constants_.errorCaption(),
-               constants_.validateAsyncMessage(packageName));
-         onValidated.execute(false);
-         return;
-      }
-
-      super.validateAsync(input, onValidated);
+      return true;
    }
 
    private SelectWidget listProjectType_;
