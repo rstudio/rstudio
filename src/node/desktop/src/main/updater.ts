@@ -46,7 +46,7 @@ import {
   updateIndexUrl,
 } from './update-feed';
 import { execFileRunner, otherInstanceCount } from './running-instances';
-import { SquirrelRelay, startSquirrelRelay } from './squirrel-relay';
+import { downloadWithSquirrel } from './squirrel-relay';
 import { isAdministrator } from './windows-administrator';
 import {
   installerSignature,
@@ -804,15 +804,8 @@ export function installerEnvironment(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv 
 
 /** The updater's surroundings in the running application. */
 export function electronUpdaterHost(mainWindow: MainWindow): UpdaterHost {
-  /** the listener Squirrel is downloading from, until that download settles */
-  let squirrelRelay: SquirrelRelay | null = null;
   /** the version quitAndInstall() was asked to install, until it has */
   let squirrelInstalling: string | null = null;
-
-  const closeSquirrelRelay = () => {
-    squirrelRelay?.close();
-    squirrelRelay = null;
-  };
 
   const fetchArtifact = async (url: string, signal?: AbortSignal) => net.fetch(url, { cache: 'no-store', signal });
 
@@ -903,44 +896,7 @@ export function electronUpdaterHost(mainWindow: MainWindow): UpdaterHost {
       notesUrl: string,
       onProgress: (fraction: number) => void,
     ): Promise<void> {
-      return new Promise((resolve, reject) => {
-        // the relay and Squirrel both report a download the relay cut short;
-        // the first to do so settles it
-        let settled = false;
-        const settle = (outcome: () => void) => {
-          if (settled) {
-            return;
-          }
-          settled = true;
-
-          autoUpdater.off('update-downloaded', onDownloaded);
-          autoUpdater.off('update-not-available', onNotAvailable);
-          autoUpdater.off('error', onError);
-          closeSquirrelRelay();
-          outcome();
-        };
-        const onDownloaded = () => settle(resolve);
-        const onNotAvailable = () => settle(() => reject(new Error('The update server did not offer an update.')));
-        const onError = (error: Error) => settle(() => reject(error));
-
-        closeSquirrelRelay();
-        startSquirrelRelay(entry, notesUrl, fetchArtifact, onProgress, onError)
-          .then((relay) => {
-            squirrelRelay = relay;
-            autoUpdater.on('update-downloaded', onDownloaded);
-            autoUpdater.on('update-not-available', onNotAvailable);
-            autoUpdater.on('error', onError);
-            try {
-              autoUpdater.setFeedURL({ url: relay.feedUrl, serverType: 'default' });
-              autoUpdater.checkForUpdates();
-            } catch (error: unknown) {
-              // thrown rather than reported, e.g. an unsigned build's "Could
-              // not get code signature"; the listeners and relay go too
-              settle(() => reject(safeError(error)));
-            }
-          })
-          .catch(reject);
-      });
+      return downloadWithSquirrel(autoUpdater, entry, notesUrl, fetchArtifact, onProgress);
     },
 
     squirrelInstall(version: string): void {

@@ -14,7 +14,10 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.StyleInjector;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.ui.RootPanel;
 
 public class SlideLabelTests extends GWTTestCase
 {
@@ -65,6 +68,31 @@ public class SlideLabelTests extends GWTTestCase
       assertEquals("100%", label.percentSizer_.getInnerText());
    }
 
+   public void testValueTakesNoRoomOfItsOwn()
+   {
+      // the test browser lays nothing out, so this checks what keeps the
+      // width fixed rather than the width: the sizer holds its room while
+      // unseen, and the value is drawn over it, out of the flow
+      SlideLabel.ensureStylesInjected();
+      StyleInjector.flush(); // otherwise injected at the end of the event loop
+      SlideLabel label = new SlideLabel(true);
+      RootPanel.get().add(label);
+      try
+      {
+         label.reservePercent();
+         label.setPercent(42);
+
+         assertEquals("hidden", computedStyle(label.percentSizer_, "visibility"));
+         assertEquals("inline", computedStyle(label.percentSizer_, "display"));
+         assertEquals("absolute", computedStyle(label.percent_, "position"));
+         assertEquals("relative", computedStyle(label.percent_.getParentElement(), "position"));
+      }
+      finally
+      {
+         label.removeFromParent();
+      }
+   }
+
    public void testSetPercentKeepsToWhatTheSizerHolds()
    {
       SlideLabel label = new SlideLabel(true);
@@ -78,4 +106,8 @@ public class SlideLabelTests extends GWTTestCase
       assertEquals("0%", label.percent_.getInnerText());
       assertEquals("0", label.innerTable_.getAttribute("aria-valuenow"));
    }
+
+   private static native String computedStyle(Element element, String property) /*-{
+      return element.ownerDocument.defaultView.getComputedStyle(element, null).getPropertyValue(property);
+   }-*/;
 }

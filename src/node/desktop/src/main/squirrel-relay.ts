@@ -28,8 +28,63 @@ import { BuildArtifact, squirrelFeedDocument } from './update-feed';
 // progress event), so the feed names the listener itself, which relays the
 // build from the builds site and counts the bytes as they pass. Squirrel
 // still checks what arrives against the feed's checksum and size, and the
-// new bundle's code signature. Nothing here touches Electron: the fetch is
-// injected, so the relay is unit-tested with real requests.
+// new bundle's code signature. Nothing here touches Electron: the fetch and
+// the autoUpdater are injected, so the relay, and how its reports and
+// Squirrel's settle a download, are unit-tested with real requests.
+
+/** The part of Electron's autoUpdater (Squirrel.Mac) a download uses. */
+export interface SquirrelUpdater extends NodeJS.EventEmitter {
+  setFeedURL(options: { url: string; serverType: 'default' }): void;
+  checkForUpdates(): void;
+}
+
+/**
+ * Have Squirrel download and verify `entry`, through a relay of its own;
+ * resolves once Squirrel has staged it. `onProgress` hears the fraction
+ * downloaded so far. The relay and Squirrel both report a download the relay
+ * cut short, and the first report settles it: the relay's says why. Either
+ * way the relay and this download's listeners are gone once it has settled,
+ * so a later report (Squirrel's of the same failure, say) cannot touch the
+ * next download.
+ */
+export async function downloadWithSquirrel(
+  updater: SquirrelUpdater,
+  entry: BuildArtifact,
+  notesUrl: string,
+  fetch: FetchLike,
+  onProgress: (fraction: number) => void,
+  idleTimeoutMs = kDownloadIdleTimeoutMs,
+): Promise<void> {
+  // a promise settles once, so whichever report comes first decides
+  let succeed!: () => void;
+  let fail!: (error: Error) => void;
+  const outcome = new Promise<void>((resolve, reject) => {
+    succeed = () => resolve();
+    fail = reject;
+  });
+  const onNotAvailable = () => fail(new Error('The update server did not offer an update.'));
+
+  const relay = await startSquirrelRelay(entry, notesUrl, fetch, onProgress, fail, idleTimeoutMs);
+  updater.on('update-downloaded', succeed);
+  updater.on('update-not-available', onNotAvailable);
+  updater.on('error', fail);
+  try {
+    try {
+      updater.setFeedURL({ url: relay.feedUrl, serverType: 'default' });
+      updater.checkForUpdates();
+    } catch (error: unknown) {
+      // thrown rather than reported, e.g. an unsigned build's "Could not get
+      // code signature"
+      fail(safeError(error));
+    }
+    await outcome;
+  } finally {
+    updater.off('update-downloaded', succeed);
+    updater.off('update-not-available', onNotAvailable);
+    updater.off('error', fail);
+    relay.close();
+  }
+}
 
 export interface SquirrelRelay {
   /** what autoUpdater.setFeedURL() is given */
