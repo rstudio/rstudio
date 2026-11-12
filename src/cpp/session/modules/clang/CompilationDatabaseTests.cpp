@@ -15,10 +15,13 @@
 
 #include <gtest/gtest.h>
 
+#include <boost/scope_exit.hpp>
+
 #include <shared_core/FilePath.hpp>
 #include <shared_core/Hash.hpp>
 #include <core/Algorithm.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/libclang/LibClang.hpp>
 
 #include "CompilationDatabase.hpp"
 
@@ -214,6 +217,81 @@ TEST_F(CompileFlagsTest, RemovesUserFlagsPchOnceItsFlagsFileIsGone)
    EXPECT_FALSE(platform.completeChildPath(variant + ".cpp").exists());
    EXPECT_TRUE(platform.completeChildPath("Rcpp-std=gnu++17.pch").exists());
    EXPECT_TRUE(platform.completeChildPath("Rcpp-std=gnu++17.cpp").exists());
+}
+
+TEST_F(CompileFlagsTest, SystemIncludeArgsAreSearchedInReportedOrder)
+{
+   core::libclang::LibClang& lib = core::libclang::clang();
+   if (!lib.isLoaded())
+      GTEST_SKIP() << "libclang is not available";
+
+   // 'std' stands in for the C++ standard library, whose <stddef.h> wraps
+   // the one in 'builtin', the compiler's own headers
+   FilePath stdDir = root_.completeChildPath("std");
+   FilePath builtinDir = root_.completeChildPath("builtin");
+   stdDir.ensureDirectory();
+   builtinDir.ensureDirectory();
+   writeStringToFile(stdDir.completeChildPath("stddef.h"), R"(
+#define STD_STDDEF_SEEN 1
+#include_next <stddef.h>
+)");
+   writeStringToFile(builtinDir.completeChildPath("stddef.h"), R"(
+#define BUILTIN_STDDEF_SEEN 1
+)");
+
+   FilePath source = root_.completeChildPath("probe.c");
+   writeStringToFile(source, R"(
+#include <stddef.h>
+#ifndef STD_STDDEF_SEEN
+#error builtin stddef.h was found ahead of the standard library one
+#endif
+#ifndef BUILTIN_STDDEF_SEEN
+#error builtin stddef.h was not found
+#endif
+)");
+
+   // the trailing '-isystem' makes 'std' one of libclang's system
+   // directories too, as the standard library's directory is in practice;
+   // that is what gets a '-I' for the same directory dropped
+   std::vector<std::string> args = {"-nostdinc"};
+   std::vector<std::string> includeArgs = systemIncludeArgs({stdDir.getAbsolutePath(), builtinDir.getAbsolutePath()});
+   args.insert(args.end(), includeArgs.begin(), includeArgs.end());
+   args.push_back("-isystem" + stdDir.getAbsolutePath());
+
+   std::vector<const char*> argv;
+   for (const std::string& arg : args)
+      argv.push_back(arg.c_str());
+
+   CXIndex index = lib.createIndex(0, 0);
+   CXTranslationUnit tu = lib.parseTranslationUnit(
+      index,
+      source.getAbsolutePath().c_str(),
+      argv.data(),
+      static_cast<int>(argv.size()),
+      nullptr,
+      0,
+      CXTranslationUnit_None);
+
+   // runs when an assertion returns early, too
+   BOOST_SCOPE_EXIT(&lib, &index, &tu)
+   {
+      if (tu != nullptr)
+         lib.disposeTranslationUnit(tu);
+
+      lib.disposeIndex(index);
+   }
+   BOOST_SCOPE_EXIT_END
+
+   ASSERT_NE(tu, nullptr);
+
+   // list the diagnostics, so that a failure says which '#error' fired (or
+   // what else this libclang had to report)
+   std::string diagnostics;
+   unsigned numDiagnostics = lib.getNumDiagnostics(tu);
+   for (unsigned i = 0; i < numDiagnostics; i++)
+      diagnostics += libclang::Diagnostic(lib.getDiagnostic(tu, i)).format() + "\n";
+
+   EXPECT_EQ(numDiagnostics, 0u) << diagnostics;
 }
 
 } // anonymous namespace

@@ -49,6 +49,8 @@ import {
   initializeLang,
   initializeSharedSecret,
   isAutomated,
+  keepAutomationWindowsRendering,
+  showWindowForAutomation,
   loadRWebsite,
   raiseAndActivateWindow,
   removeStaleOptionsLockfile,
@@ -246,6 +248,8 @@ export class Application implements AppState {
     } else {
       this.createMessageClient();
     }
+
+    keepAutomationWindowsRendering();
 
     app.on('second-instance', (_event, argv) => {
       logger().logDebug(`second-instance event: ARGS ${argv}`);
@@ -638,7 +642,7 @@ export class Application implements AppState {
     // windowOpening() created the window hidden; surface it without pulling
     // OS focus away from whatever the user is doing while the tests run.
     if (isAutomated()) {
-      newWindow.showInactive();
+      showWindowForAutomation(newWindow);
     }
   }
 
