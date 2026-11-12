@@ -115,6 +115,9 @@ function formatSelectedVersionForUi(rBinDir: string) {
 /** How long setPendingRVersion() lets the chosen R take to describe itself. */
 const kPendingRVersionTimeoutMs = 30000;
 
+/** The files a GTK file manager (Nautilus, Nemo, Caja, Thunar) copied or cut. */
+const kGnomeCopiedFilesFormat = 'electron application/osclipboard;format="x-special/gnome-copied-files"';
+
 /**
  * This is the main-process side of the GwtCallbacks; dispatched from renderer processes
  * via the ContextBridge.
@@ -425,8 +428,16 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_get_clipboard_uris', async () => {
+      // On Linux, Chromium 148+ reads the URI list through the XDG file
+      // transfer portal when the file manager offers it, and the list comes
+      // back empty when the portal lookup fails. GTK file managers also publish
+      // their own list ("copy" or "cut", then one URI per line), so use that.
+      const uriList = await readClipboardType(['text/uri-list', kGnomeCopiedFilesFormat], async (blob, mimeType) => {
+        const text = await blob.text();
+        return mimeType === kGnomeCopiedFilesFormat ? text.split('\n').slice(1).join('\n') : text;
+      });
+
       // if we don't have a URI list, nothing to do
-      const uriList = await readClipboardType('text/uri-list', async (blob) => blob.text());
       if (uriList === undefined) {
         return [];
       }

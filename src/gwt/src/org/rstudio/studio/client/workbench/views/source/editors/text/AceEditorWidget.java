@@ -543,64 +543,86 @@ public class AceEditorWidget extends Composite
    {
       ClipboardEvent clipboardEvent = Js.cast(event);
       elemental2.core.JsArray<String> types = clipboardEvent.clipboardData.types;
-      if (types.length == 1 && types.getAt(0) == "Files")
+      if (types.length != 1)
+         return;
+
+      if (StringUtil.equals(types.getAt(0), "Files"))
       {
          FileList fileList = clipboardEvent.clipboardData.files;
          if (fileList.length == 0)
             return;
-         
+
          event.stopPropagation();
          event.preventDefault();
-         
+
          JsVectorString allFiles = JsVectorString.createVector();
          for (int i = 0; i < fileList.length; i++)
          {
             File file = Js.cast(fileList.getAt(i));
             allFiles.push(normalizeSlashes(Desktop.getFrame().getPathForFile(file)));
          }
-         
-         String mode = editor_.getSession().getMode().getLanguageMode(editor_.getCursorPosition());
-         if (!StringUtil.equals(mode, "R"))
-         {
-            String code = allFiles.join("\n");
-            editor_.insert(code);
-            return;
-         }
-         
-         filesServer_.makeProjectRelative(allFiles.cast(), new ServerRequestCallback<JsArrayString>()
-         {
-            @Override
-            public void onResponseReceived(JsArrayString response)
-            {
-               JsVectorString allFiles = response.cast();
-               
-               if (allFiles.size() == 1)
-               {
-                  String code = formatDesktopPath(allFiles.get(0));
-                  editor_.insert(code);
-                  return;
-               }
-               
-               String currentLine =
-                     editor_.getSession().getLine(editor_.getCursorPosition().getRow());
 
-               String indent = StringUtil.getIndent(currentLine);
-               String tab = editor_.getSession().getTabString();
-               for (int i = 0; i < allFiles.size(); i++)
-                  allFiles.set(i, indent + tab + formatDesktopPath(allFiles.get(i)));
-
-               String code = "c(\n" + allFiles.join(",\n") + "\n" + indent + ")";
-               editor_.insert(code);
-            }
-
-            @Override
-            public void onError(ServerError error)
-            {
-               Debug.logError(error);
-            }
-         });
-         
+         insertDesktopPaths(allFiles);
       }
+      else if (StringUtil.equals(types.getAt(0), "text/uri-list") &&
+               StringUtil.isNullOrEmpty(clipboardEvent.clipboardData.getData("text/uri-list")))
+      {
+         // Chromium saw copied files but couldn't read them. On Linux this
+         // happens when its XDG file transfer portal lookup fails; the desktop
+         // process can still read the file manager's own list.
+         event.stopPropagation();
+         event.preventDefault();
+
+         Desktop.getFrame().getClipboardUris(uris ->
+         {
+            if (uris != null && uris.length() > 0)
+               insertDesktopPaths(uris.cast());
+         });
+      }
+   }
+
+   private void insertDesktopPaths(JsVectorString allFiles)
+   {
+      String mode = editor_.getSession().getMode().getLanguageMode(editor_.getCursorPosition());
+      if (!StringUtil.equals(mode, "R"))
+      {
+         String code = allFiles.join("\n");
+         editor_.insert(code);
+         return;
+      }
+
+      filesServer_.makeProjectRelative(allFiles.cast(), new ServerRequestCallback<JsArrayString>()
+      {
+         @Override
+         public void onResponseReceived(JsArrayString response)
+         {
+            JsVectorString allFiles = response.cast();
+
+            if (allFiles.size() == 1)
+            {
+               String code = formatDesktopPath(allFiles.get(0));
+               editor_.insert(code);
+               return;
+            }
+
+            String currentLine =
+                  editor_.getSession().getLine(editor_.getCursorPosition().getRow());
+
+            String indent = StringUtil.getIndent(currentLine);
+            String tab = editor_.getSession().getTabString();
+            for (int i = 0; i < allFiles.size(); i++)
+               allFiles.set(i, indent + tab + formatDesktopPath(allFiles.get(i)));
+
+            String code = "c(\n" + allFiles.join(",\n") + "\n" + indent + ")";
+            editor_.insert(code);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+         }
+      });
    }
 
    // When the 'keyBinding' field is initialized (the field holding all keyboard

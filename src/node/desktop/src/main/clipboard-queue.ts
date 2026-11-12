@@ -54,25 +54,31 @@ export async function readClipboardText(source: Electron.Clipboard = clipboard):
 }
 
 /**
- * Read and decode the clipboard entry of the given MIME type once pending
- * writes finish; undefined when there is no such entry or it is empty.
+ * Read and decode a clipboard entry once pending writes finish. Given several
+ * MIME types, the first one with a non-empty entry is decoded; undefined when
+ * none has one.
  */
 export async function readClipboardType<T>(
-  mimeType: string,
-  decode: (blob: Blob) => Promise<T>,
+  mimeTypes: string | string[],
+  decode: (blob: Blob, mimeType: string) => Promise<T>,
 ): Promise<T | undefined> {
   await pendingWrites;
   try {
     const items = await clipboard.read();
-    const item = items.find((candidate) => candidate.types.includes(mimeType));
-    if (!item) {
-      return undefined;
+    for (const mimeType of typeof mimeTypes === 'string' ? [mimeTypes] : mimeTypes) {
+      const item = items.find((candidate) => candidate.types.includes(mimeType));
+      if (!item) {
+        continue;
+      }
+      // Electron resolves an empty Blob, rather than rejecting, when it can't
+      // convert the platform data (e.g. a clipboard bitmap that fails to encode
+      // as PNG)
+      const blob = (await item.getType(mimeType)) as Blob;
+      if (blob.size > 0) {
+        return await decode(blob, mimeType);
+      }
     }
-    // Electron resolves an empty Blob, rather than rejecting, when it can't
-    // convert the platform data (e.g. a clipboard bitmap that fails to encode
-    // as PNG)
-    const blob = (await item.getType(mimeType)) as Blob;
-    return blob.size > 0 ? await decode(blob) : undefined;
+    return undefined;
   } catch (error: unknown) {
     logger().logError(error);
     return undefined;
