@@ -14,7 +14,9 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
+import com.google.gwt.aria.client.InvalidValue;
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 
@@ -109,6 +111,9 @@ public class NewDirectoryPage extends NewProjectWizardPage
       Roles.getTextboxRole().setAriaRequiredProperty(txtProjectName_.getElement(), true);
       ElementIds.assignElementId(txtProjectName_,
          ElementIds.idWithPrefix(getTitle(), ElementIds.NEW_PROJECT_DIRECTORY));
+      txtProjectName_.addKeyDownHandler(event ->
+         Scheduler.get().scheduleDeferred(() -> markPackageNameInvalid(
+            createsPackage() && !isPackageNamePrefix(getProjectName()))));
 
       // create the dir name label
       dirNameLabel_ = new FormLabel(getDirNameLabel(), txtProjectName_);
@@ -333,6 +338,24 @@ public class NewDirectoryPage extends NewProjectWizardPage
       return false;
    }
 
+   private static boolean isPackageNamePrefix(String name)
+   {
+      return name.isEmpty() || Projects.PACKAGE_NAME_PREFIX_PATTERN.test(name);
+   }
+
+   // aria-invalid conveys the same state as the background color to
+   // assistive technology
+   private void markPackageNameInvalid(boolean invalid)
+   {
+      txtProjectName_.setStyleName(
+            NewProjectResources.INSTANCE.styles().invalidPkgName(), invalid);
+      if (invalid)
+         Roles.getTextboxRole().setAriaInvalidState(
+               txtProjectName_.getElement(), InvalidValue.TRUE);
+      else
+         Roles.getTextboxRole().removeAriaInvalidState(txtProjectName_.getElement());
+   }
+
    @Override
    protected void validateAsync(final NewProjectResult input,
                                 final OperationWithInput<Boolean> onValidated)
@@ -347,6 +370,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
       String packageName = getProjectName();
       if (createsPackage() && !Projects.PACKAGE_NAME_PATTERN.test(packageName))
       {
+         markPackageNameInvalid(true);
          globalDisplay_.showMessage(
                MessageDialog.WARNING,
                constants_.errorCaption(),

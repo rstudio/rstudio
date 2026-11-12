@@ -20,18 +20,13 @@ import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 
 
@@ -46,25 +41,6 @@ public class NewPackagePage extends NewDirectoryPage
             new ImageResource2x(NewProjectResources.INSTANCE.packageIconLarge2x()));
       
       RStudioGinjector.INSTANCE.injectMembers(this);
-      styles_ = NewProjectResources.INSTANCE.styles();
-      
-      txtProjectName_.addKeyDownHandler(new KeyDownHandler()
-      {
-         @Override
-         public void onKeyDown(KeyDownEvent event)
-         {
-            Scheduler.get().scheduleDeferred(new ScheduledCommand()
-            {
-               
-               @Override
-               public void execute()
-               {
-                  validatePackageName();
-               }
-            });
-         }
-      });
-      
    }
    
    protected boolean getOptionsSideBySide()
@@ -132,22 +108,6 @@ public class NewPackagePage extends NewDirectoryPage
             JsUtil.toJsArrayString(listCodeFiles_.getCodeFiles()));
    }
    
-   private void validatePackageName()
-   {
-      String packageName = txtProjectName_.getText().trim();
-      
-      // Don't validate if the name is empty
-      if (packageName.isEmpty() || isPackageNameValid(packageName))
-         txtProjectName_.removeStyleName(styles_.invalidPkgName());
-      else
-         txtProjectName_.addStyleName(styles_.invalidPkgName());
-   }
-   
-   private boolean isPackageNameValid(String packageName)
-   {
-      return Projects.PACKAGE_NAME_PATTERN.test(packageName);
-   }
-   
    @Override
    protected boolean createsPackage()
    {
@@ -156,7 +116,6 @@ public class NewPackagePage extends NewDirectoryPage
 
    private SelectWidget listProjectType_;
    private CodeFilesList listCodeFiles_;
-   private final NewProjectResources.Styles styles_;
    
    // Injected ----
    private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);

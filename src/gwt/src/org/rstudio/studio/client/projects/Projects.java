@@ -1297,5 +1297,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
    // #define kProjectNone           "none"
    public static final String NONE = "none"; // constants_.noneLabel();
    public static final Pattern PACKAGE_NAME_PATTERN = Pattern.create("^[a-zA-Z][a-zA-Z0-9.]*[a-zA-Z0-9]$", "");
+   // a name partway through being typed that can still become valid
+   public static final Pattern PACKAGE_NAME_PREFIX_PATTERN = Pattern.create("^[a-zA-Z][a-zA-Z0-9.]*$", "");
 
 }

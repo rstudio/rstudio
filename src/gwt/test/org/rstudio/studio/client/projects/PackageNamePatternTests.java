@@ -69,6 +69,16 @@ public class PackageNamePatternTests extends GWTTestCase
       assertInvalid("pk\u00e9");
    }
 
+   // the as-you-type check accepts a name that typing can still make valid
+   public void testPrefixAcceptsNamesStillBeingTyped()
+   {
+      assertTrue(Projects.PACKAGE_NAME_PREFIX_PATTERN.test("m"));
+      assertTrue(Projects.PACKAGE_NAME_PREFIX_PATTERN.test("my."));
+      assertFalse(Projects.PACKAGE_NAME_PREFIX_PATTERN.test("m-"));
+      assertFalse(Projects.PACKAGE_NAME_PREFIX_PATTERN.test("1"));
+      assertFalse(Projects.PACKAGE_NAME_PREFIX_PATTERN.test("my_"));
+   }
+
    private static void assertValid(String name)
    {
       assertTrue(name, Projects.PACKAGE_NAME_PATTERN.test(name));
