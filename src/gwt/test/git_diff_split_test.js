@@ -222,5 +222,127 @@ check("failed planning leaves the applied layout intact", view.sessionA.lineWidg
    view.sessionA.$docRowCache === cacheBefore && peek.rowCount === 3 && peek.gitDiffLentRows === 2);
 check("failed planning clears the alignment guard", !view.$aligning);
 
+// Closing the view keeps a line of the live editor where it was in the view
+// (see $liveViewAnchor). A 100-row view of 10px lines over a document with
+// lines 50 to 149 (rows 49 to 148) removed, padded for them above row 49.
+function lines(from, to) {
+   var result = [];
+   for (var i = from; i <= to; i++)
+      result.push("m" + i);
+   return result.join("\n");
+}
+
+function closingView(base, live, chunks, cursorRow, height) {
+   var view = makeView(base, live, chunks);
+   view.liveEditor = {
+      session: view.sessionB,
+      renderer: { layerConfig: { lineHeight: 10 }, $size: { scrollerHeight: height } },
+      getCursorPosition: function() { return { row: cursorRow, column: 0 }; }
+   };
+   view.align();
+   return view;
+}
+
+function liveTop(view, row) {
+   return view.sessionB.documentToScreenRow(row, 0) * 10;
+}
+
+function close(view) {
+   var anchor = view.$liveViewAnchor();
+   view.$removeLineWidgets(view.sessionA);
+   view.$removeLineWidgets(view.sessionB);
+   view.$restoreLiveView(anchor);
+   return anchor;
+}
+
+var middle = [chunk(49, 149, 49, 49)];
+var middleLive = lines(1, 49) + "\n" + lines(150, 200);
+
+view = closingView(lines(1, 200), middleLive, middle, 49, 100);
+view.sessionB.setScrollTop(liveTop(view, 49) - 50);
+var anchor = close(view);
+check("the cursor's line keeps its place", anchor.row === 49 && anchor.offset === 50 &&
+   view.sessionB.getScrollTop() === 49 * 10 - 50);
+
+view = closingView(lines(1, 200), middleLive, middle, 0, 100);
+view.sessionB.setScrollTop(liveTop(view, 49) - 50);
+anchor = close(view);
+check("without the cursor, the first line shown keeps its place", anchor.row === 49 &&
+   anchor.offset === 50 && view.sessionB.getScrollTop() === 49 * 10 - 50);
+
+view = closingView(lines(1, 200), middleLive, middle, 0, 100);
+view.sessionB.setScrollTop(liveTop(view, 49) - 500);
+anchor = close(view);
+check("a view of padding keeps the line below it at its bottom", anchor.row === 49 &&
+   anchor.offset === 90 && view.sessionB.getScrollTop() === 49 * 10 - 90);
+
+view = closingView(lines(1, 200), lines(1, 100), [chunk(100, 200, 100, 100)], 0, 100);
+view.sessionB.setScrollTop(liveTop(view, 99) + 200);
+anchor = close(view);
+check("a view of padding at the end keeps the last line at its top",
+   anchor.row === 99 && anchor.offset === 0 && view.sessionB.getScrollTop() === 99 * 10);
+
+// Lines 152 to 171 (rows 151 to 170) removed, padded below row 150, the end
+// of a fold from row 10. The scan meets the fold above the view and steps
+// past it to the line after the padding.
+view = closingView(lines(1, 200), lines(1, 151) + "\n" + lines(172, 200),
+   [chunk(151, 171, 151, 151)], 0, 100);
+[view.sessionA, view.sessionB].forEach(function(session) {
+   session.addFold("...", new Range(10, 3, 150, 3));
+});
+view.align();
+view.sessionB.setScrollTop(liveTop(view, 151) - 60);
+anchor = close(view);
+check("the scan steps past a fold to the line after it", anchor.row === 151 &&
+   anchor.offset === 60 && view.sessionB.getScrollTop() === liveTop(view, 151) - 60);
+
+// A view inside chunk output, which stays after the close, is not padding:
+// the scroll is left where it was. 50 rows of output below row 49 fill
+// screen rows 50 to 99, and below row 99 fill rows 100 to 149.
+function outputView(row) {
+   view = closingView(lines(1, 100), lines(1, 100), [], 0, 100);
+   view.sessionB.widgetManager.addLineWidget({ row: row, rowCount: 50, rowsAbove: 0 });
+   view.align();
+   return view;
+}
+
+view = outputView(49);
+view.sessionB.setScrollTop(600);
+anchor = close(view);
+check("a view inside output keeps its place", anchor.row === 49 &&
+   anchor.offset === -110 && view.sessionB.getScrollTop() === 600);
+
+view = outputView(99);
+view.sessionB.setScrollTop(1200);
+anchor = close(view);
+check("a view inside output at the end keeps its place", anchor.row === 99 &&
+   anchor.offset === -210 && view.sessionB.getScrollTop() === 1200);
+
+// The action bar goes as the view closes, so a view inside the padding it
+// borrows (lines 51 to 150 removed at the end) is a view of padding.
+view = closingView(lines(1, 150), lines(1, 50), [chunk(50, 150, 50, 50)], 0, 100);
+peek = { row: 49, rowCount: 1, rowsAbove: 0, fixedWidth: true };
+view.gutter.peek = { widget: peek };
+view.sessionB.widgetManager.addLineWidget(peek);
+view.align();
+view.sessionB.setScrollTop(liveTop(view, 49) + 300);
+anchor = close(view);
+check("a view inside the action bar's borrowed rows is padding", peek.gitDiffLentRows === 0 &&
+   anchor.row === 49 && anchor.offset === 0 && view.sessionB.getScrollTop() === 49 * 10);
+
+view = closingView("a\n" + new Array(101).join("x"), "a\n" + new Array(101).join("x"), [], 0, 100);
+wrap(view, 10);
+view.sessionB.setScrollTop(50);
+anchor = close(view);
+check("a wrapped line that starts above the view keeps its place", anchor.row === 1 &&
+   anchor.offset === -40 && view.sessionB.getScrollTop() === 50);
+
+view = closingView(lines(1, 200), middleLive, middle, 49, 100);
+view.liveEditor.renderer.layerConfig.lineHeight = 0;
+view.sessionB.setScrollTop(1234);
+anchor = close(view);
+check("a view never rendered is left alone", anchor === null &&
+   view.sessionB.getScrollTop() === 1234);
+
 document.getElementById("passed").textContent = passed;
 document.getElementById("failed").textContent = failed;
