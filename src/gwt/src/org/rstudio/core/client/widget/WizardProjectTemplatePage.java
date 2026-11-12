@@ -53,6 +53,12 @@ public class WizardProjectTemplatePage extends NewDirectoryPage
    }
    
    @Override
+   protected boolean createsPackage()
+   {
+      return description_.createsPackage();
+   }
+
+   @Override
    protected ProjectTemplateOptions getProjectTemplateOptions()
    {
       return ProjectTemplateOptions.create(
