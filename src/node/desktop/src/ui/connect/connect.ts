@@ -1,4 +1,3 @@
-/* eslint-disable indent */
 /*
  * connect.ts
  *
@@ -33,7 +32,6 @@ const loadPageLocalization = () => {
       'runRguiRAppOrRInATerminalToEnsure',
       'furtherTroubleshootingHelpCanBeFound',
       'troubleshootingRstudioStartup',
-      'retry_url',
       'warning',
       'rLogo',
     ].map((id) => 'i18n-' + id);
@@ -47,13 +45,10 @@ const loadPageLocalization = () => {
 
         elements.forEach((element) => {
           switch (reducedId) {
-            case 'retry_url':
-              (document.getElementById('retry_url') as HTMLElement).innerHTML = i18next.t('uiFolder.retry');
-              break;
             case 'ifYouveCustomizedRSessionCreation':
-              // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-              (element.innerHTML = i18next.t('uiFolder.' + reducedId)),
-                { rProfileFileExtension: '<samp>~/.Rprofile</samp>),' };
+              element.innerHTML = i18next.t('uiFolder.' + reducedId, {
+                rProfileFileExtension: '<samp>~/.Rprofile</samp>',
+              });
               break;
             default:
               element.innerHTML = i18next.t('uiFolder.' + reducedId);
@@ -61,6 +56,9 @@ const loadPageLocalization = () => {
           }
         });
       });
+
+      // the Retry link keeps the id that connect.html's script uses to set its URL
+      (document.getElementById('retry_url') as HTMLElement).textContent = i18next.t('uiFolder.retry');
     } catch (err) {
       console.log('Error occurred when loading i18n: ', err);
     }

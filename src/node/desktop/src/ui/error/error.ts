@@ -27,7 +27,12 @@ const loadPageLocalization = () => {
       'sessionPath',
       'rSessionFailedToStart',
       'rstudioVersion',
+      'errorMessage',
+      'processOutput',
+      'rSessionExitedWithCode',
+      'errors',
       'output',
+      'recentLog',
       'nextSteps',
       'rCanFailToStartupForManyReasons',
       'investigateAnyErrorsAbove',
@@ -57,6 +62,11 @@ const loadPageLocalization = () => {
             case 'rSessionExitedWithCode':
               element.innerHTML = i18next.t('uiFolder.' + reducedId, {
                 exitCode: '<strong><span id="exit_code"></span></strong>',
+              });
+              // the span only exists from here on, so fill it here rather than on page load
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (window as any).desktop.getStartupErrorInfo('!exit_code', (exitCode: string) => {
+                (document.getElementById('exit_code') as HTMLElement).textContent = exitCode;
               });
               break;
             case 'copyProblemReport':

@@ -84,7 +84,7 @@
     "theRSessionIsTakingAnUnusuallyLongTimeToStart": "La session R prend un temps anormalement long pour démarrer, peut-être en raison de la lenteur des opérations dans les scripts de démarrage ou de l'accès lent au lecteur réseau.",
     "rstudioIsUnableToCommunicateWithR": "RStudio est incapable de communiquer avec R sur un port du réseau local, peut-être à cause de restrictions du pare-feu ou d'un logiciel anti-virus.",
     "pleaseTryTheFollowing": "Veuillez essayer ce qui suit :",
-    "ifYouveCustomizedRSessionCreation": "Si vous avez personnalisé la création de session R en créant un profil R (par exemple, situé à {{- rProfileFileExtension}}, envisagez de le supprimer temporairement.",
+    "ifYouveCustomizedRSessionCreation": "Si vous avez personnalisé la création de session R en créant un profil R (par exemple, situé à {{- rProfileFileExtension}}), envisagez de le supprimer temporairement.",
     "ifYouAreUsingAFirewallOrAntivirus": "Si vous utilisez un pare-feu ou un logiciel antivirus qui surveille l'accès aux ports du réseau local, ajoutez une exclusion pour les exécutables RStudio et rsession.",
     "runRguiRAppOrRInATerminalToEnsure": "Exécutez RGui, R.app, ou R dans un terminal pour vous assurer que R lui-même démarre correctement.",
     "retry": "Réessayer",
