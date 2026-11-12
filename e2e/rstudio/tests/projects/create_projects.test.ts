@@ -1,7 +1,7 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { TIMEOUTS } from '@utils/constants';
 import { executeInConsole, waitForConsoleIdle, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
-import { installDepIfPrompted, CONFIRM_BTN, CANCEL_BTN } from '@pages/modals.page';
+import { installDepIfPrompted, dismissBlockingModals, CONFIRM_BTN, CANCEL_BTN } from '@pages/modals.page';
 import { SourcePane } from '@pages/source_pane.page';
 import { useSuiteSandbox, SANDBOX_DIR_PREFIX } from '@utils/sandbox';
 import { setPref, resetSourcePaneState } from '@utils/commands';
@@ -469,8 +469,17 @@ test.describe.serial('Create Projects in New Directory', () => {
     await cleanupProject(page, currentProjectDir);
     currentProjectDir = '';
   });
-  // -- Directory name validation (#19590) ------------------------------------
-  // None of these create a project: each name is rejected in the wizard.
+});
+
+// -- Directory name validation (#19590) ---------------------------------------
+// None of these create a project: each name is rejected in the wizard. They
+// live outside the serial group so a failed project creation doesn't skip them.
+
+test.describe('New Project wizard directory name validation', () => {
+  // A failed test above can leave the wizard open over the page.
+  test.beforeEach(async ({ rstudioPage: page }) => {
+    await dismissBlockingModals(page);
+  });
 
   test('R Package rejects an invalid package name', async ({ rstudioPage: page }) => {
     try {
