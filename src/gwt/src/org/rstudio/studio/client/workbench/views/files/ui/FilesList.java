@@ -691,9 +691,15 @@ public class FilesList extends Composite
          return;
 
       state_ = newState;
+
+      // The name column takes the width the other columns leave. The widths
+      // below are recomputed a frame after the pane resizes, so a name column
+      // sized in pixels would leave the table wider than a pane that had just
+      // narrowed, and the grid would flash a horizontal scrollbar (#19593).
+      filesDataGrid_.setColumnWidth(nameColumn_, "auto");
+
       if (state_ == STATE_LARGE)
       {
-         filesDataGrid_.setColumnWidth(nameColumn_, "auto");
          filesDataGrid_.setColumnWidth(sizeColumn_, SIZE_COLUMN_WIDTH_PIXELS, Unit.PX);
          filesDataGrid_.setColumnWidth(modifiedColumn_, MODIFIED_COLUMN_WIDTH_PIXELS, Unit.PX);
          return;
@@ -712,22 +718,16 @@ public class FilesList extends Composite
       {
          filesDataGrid_.setColumnWidth(sizeColumn_, 0, Unit.PX);
          filesDataGrid_.setColumnWidth(modifiedColumn_, 0, Unit.PX);
-
-         // Adjust the name column width
-         int nameWidth = width - CHECK_COLUMN_WIDTH_PIXELS - ICON_COLUMN_WIDTH_PIXELS;
-         filesDataGrid_.setColumnWidth(nameColumn_, nameWidth < 0 ? 0 : nameWidth, Unit.PX);
       }
       else if (leftoverWidth < SIZE_COLUMN_WIDTH_PIXELS)
       {
          filesDataGrid_.setColumnWidth(sizeColumn_, leftoverWidth, Unit.PX);
          filesDataGrid_.setColumnWidth(modifiedColumn_, 0, Unit.PX);
-         filesDataGrid_.setColumnWidth(nameColumn_, MINIMUM_NAME_COLUMN_WIDTH_PIXELS, Unit.PX);
       }
       else if (leftoverWidth < SIZE_COLUMN_WIDTH_PIXELS + MODIFIED_COLUMN_WIDTH_PIXELS)
       {
          filesDataGrid_.setColumnWidth(sizeColumn_, SIZE_COLUMN_WIDTH_PIXELS, Unit.PX);
          filesDataGrid_.setColumnWidth(modifiedColumn_, leftoverWidth - SIZE_COLUMN_WIDTH_PIXELS, Unit.PX);
-         filesDataGrid_.setColumnWidth(nameColumn_, MINIMUM_NAME_COLUMN_WIDTH_PIXELS, Unit.PX);
       }
 
    }
