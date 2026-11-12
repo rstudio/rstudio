@@ -28,6 +28,17 @@ Getting the Code
 RStudio is licensed under the AGPLv3, the terms of which are included in
 the file COPYING. You can find our source code repository on GitHub at [https://github.com/rstudio/rstudio](https://github.com/rstudio/rstudio).
 
+The repository's history is large -- a full clone downloads several hundred
+megabytes, much of it old binary files. A partial clone is a fraction of that
+size and still has the complete commit history; git downloads the contents of
+older files only when a command needs them:
+
+    git clone --filter=blob:none https://github.com/rstudio/rstudio
+
+To also keep the history of ordinary source files local, so that `git blame`
+and `git log -S` rarely need the network, while still skipping large binaries,
+use `--filter=blob:limit=1m` instead.
+
 Documentation
 -----------------------------------------------------------------------------
 

@@ -848,10 +848,16 @@ Handle registerMonitor(const FilePath& filePath,
       }
    }
 
-   // schedule with the run loop
+   // schedule with the run loop. deprecated since macOS 13 in favor of
+   // FSEventStreamSetDispatchQueue, but that delivers callbacks on a GCD
+   // thread, while this monitor relies on callbacks, rescan timers, and
+   // (un)registration all running on the file monitor thread's run loop
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
    ::FSEventStreamScheduleWithRunLoop(pContext->streamRef,
                                       ::CFRunLoopGetCurrent(),
                                       kCFRunLoopDefaultMode);
+#pragma clang diagnostic pop
 
    // start the event stream (check for errors and release if necessary
    if (!::FSEventStreamStart(pContext->streamRef))

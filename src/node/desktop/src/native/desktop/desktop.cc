@@ -1103,6 +1103,16 @@ Napi::Value macOSSetDefaultApplicationForFileExtension(const Napi::CallbackInfo&
    return deferred.Promise();
 }
 
+Napi::Value macOSOrderWindowBack(const Napi::CallbackInfo& info)
+{
+   return Napi::Boolean::New(info.Env(), false);
+}
+
+Napi::Value macOSOrderWindowBelow(const Napi::CallbackInfo& info)
+{
+   return Napi::Boolean::New(info.Env(), false);
+}
+
 #endif
 
 } // end namespace desktop
@@ -1133,6 +1143,8 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
    RS_EXPORT_FUNCTION("macOSListFonts", rstudio::desktop::macOSListFonts);
    RS_EXPORT_FUNCTION("macOSIsDefaultApplicationForFileExtension", rstudio::desktop::macOSIsDefaultApplicationForFileExtension);
    RS_EXPORT_FUNCTION("macOSSetDefaultApplicationForFileExtension", rstudio::desktop::macOSSetDefaultApplicationForFileExtension);
+   RS_EXPORT_FUNCTION("macOSOrderWindowBack", rstudio::desktop::macOSOrderWindowBack);
+   RS_EXPORT_FUNCTION("macOSOrderWindowBelow", rstudio::desktop::macOSOrderWindowBelow);
 
    return exports;
 

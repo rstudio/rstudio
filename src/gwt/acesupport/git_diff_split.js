@@ -1353,7 +1353,67 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       this.baseEditor.gotoLine(row + 1, 0, true);
    };
 
+   // Where a line of the live editor sits in its view, to keep it there: the
+   // cursor's line, when any of it shows, or else the first line that does.
+   // A view inside a line widget that stays after the close (chunk output,
+   // not padding or the action bar) keeps that widget's line where it was.
+   // A view that is all padding keeps the line below it at its bottom edge,
+   // or, with no line below, the last line at its top.
+   this.$liveViewAnchor = function() {
+      var renderer = this.liveEditor.renderer;
+      var session = this.liveEditor.session;
+      var lineHeight = renderer.layerConfig.lineHeight;
+      var height = renderer.$size.scrollerHeight;
+
+      // a view closed before its first render has nothing laid out to keep
+      if (!(lineHeight > 0 && height > 0))
+         return null;
+
+      var top = session.getScrollTop();
+      var offsetOf = function(row) {
+         return session.documentToScreenRow(row, 0) * lineHeight - top;
+      };
+      var shows = function(row) {
+         var lastScreenRow = session.documentToScreenRow(row, session.getLine(row).length);
+         return offsetOf(row) < height && (lastScreenRow + 1) * lineHeight - top > 0;
+      };
+
+      var row = this.liveEditor.getCursorPosition().row;
+      if (shows(row))
+         return { row: row, offset: offsetOf(row) };
+
+      var first = session.screenToDocumentRow(Math.floor(Math.max(top, 0) / lineHeight), 0);
+      var candidate = first;
+      for (; candidate < session.getLength() && offsetOf(candidate) < height; candidate++) {
+         if (shows(candidate))
+            return { row: candidate, offset: offsetOf(candidate) };
+         candidate = session.getRowFoldEnd(candidate);
+      }
+
+      var widget = session.lineWidgets && session.lineWidgets[first];
+      if (widget && !isPadding(widget) && !this.$isPeek(widget))
+         return { row: first, offset: offsetOf(first) };
+
+      if (candidate < session.getLength())
+         return { row: candidate, offset: Math.max(height - lineHeight, 0) };
+      return { row: session.getLength() - 1, offset: 0 };
+   };
+
+   // Taking the padding out leaves the scroll offset as it was, which with
+   // fewer rows above lands somewhere else (at the end of the document,
+   // after a large deletion); the anchored line is put back where it was.
+   this.$restoreLiveView = function(anchor) {
+      if (!anchor)
+         return;
+
+      var session = this.liveEditor.session;
+      var lineHeight = this.liveEditor.renderer.layerConfig.lineHeight;
+      var top = session.documentToScreenRow(anchor.row, 0) * lineHeight - anchor.offset;
+      session.setScrollTop(Math.max(top, 0));
+   };
+
    this.dispose = function() {
+      var anchor = this.$liveViewAnchor();
       this.disposed = true;
       this.gutter.setSplitView(null);
       this.detachLiveHandlers();
@@ -1365,6 +1425,7 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       // unhooks both editors and restores the live one; the base editor is
       // ours to destroy (destroy() would take the live one with it)
       this.detach();
+      this.$restoreLiveView(anchor);
       this.baseEditor.destroy();
 
       var editorEl = this.baseEditor.container;

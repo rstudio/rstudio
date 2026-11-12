@@ -160,6 +160,7 @@ std::vector<std::string> readCompileFlags(const core::FilePath& flagsFile);
 std::vector<std::string> resolveCompileFlagPaths(const std::vector<std::string>& flags,
                                                  const core::FilePath& dir);
 std::vector<std::string> compileFlagsForSource(const core::FilePath& srcFile);
+std::vector<std::string> systemIncludeArgs(const std::vector<std::string>& includes);
 void removeOrphanedUserFlagsPchs(const core::FilePath& platformPath,
                                  const std::string& pkgName);
 
