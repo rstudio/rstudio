@@ -4,6 +4,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { sleep, TIMEOUTS } from '@utils/constants';
 import { executeCommand, isCommandChecked, resetLayoutZoom } from '@utils/commands';
+import { expectHoldsFor } from '@utils/expect-holds';
 import { PLOTS_TAB } from '@pages/plots_pane.page';
 import { VIEWER_MAXIMIZE_R, VIEWER_TAB } from '@pages/viewer_pane.page';
 import { focusConsole } from '@pages/console_pane.page';
@@ -87,21 +88,6 @@ async function waitForStableWidth(
     { timeout, intervals: [50, 100, 150] },
   ).toBe(true);
   return prev;
-}
-
-// Asserts continuously for `durationMs`, failing on the first violation.
-// expect.poll cannot express "must not happen": it returns on its first passing
-// sample, and here the good state is also the starting state. The window starts
-// after the first sample, which is a locator read and can be slow.
-async function expectHoldsFor(durationMs: number, assertions: () => Promise<void>): Promise<void> {
-  await assertions();
-  const deadline = Date.now() + durationMs;
-  for (;;) {
-    if (Date.now() >= deadline)
-      return;
-    await sleep(50);
-    await assertions();
-  }
 }
 
 async function elementExists(page: Page, selector: string): Promise<boolean> {

@@ -145,6 +145,13 @@ public class GitHistoryStrategy implements HistoryStrategy
    {
       addDataDisplay(dataDisplay);
       refreshCount();
+
+      // Only the Changes view asks for the repository status, so a window that
+      // opens on History has none, and its branch filter shows no branch until
+      // the Changes view has been shown
+      GitState state = pVcsState_.get();
+      if (state.getBranchInfo() == null)
+         state.refresh();
    }
 
    @Override
