@@ -429,3 +429,21 @@ test_that(".rs.checkOpenMPRuntimes is quiet when disabled", {
    on.exit(options(op), add = TRUE)
    expect_silent(expect_false(.rs.checkOpenMPRuntimes("data.table")))
 })
+
+test_that("package_skeleton rejects invalid package names before creating anything", {
+   for (name in c("test-cpp", "my_pkg", "1pkg", "pkg.", "x"))
+   {
+      dir <- file.path(tempfile(), name)
+      result <- .rs.rpc.package_skeleton(name, dir, list(), FALSE)
+      expect_match(result$message, "Invalid package name", info = name)
+      expect_false(file.exists(dir), info = name)
+   }
+})
+
+test_that("package_skeleton accepts a valid package name", {
+   dir <- file.path(tempfile(), "my.pkg2")
+   on.exit(unlink(dirname(dir), recursive = TRUE), add = TRUE)
+   result <- .rs.rpc.package_skeleton("my.pkg2", dir, list(), FALSE)
+   expect_null(result$message)
+   expect_true(file.exists(file.path(dir, "DESCRIPTION")))
+})

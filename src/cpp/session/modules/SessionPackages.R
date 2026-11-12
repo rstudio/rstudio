@@ -594,7 +594,8 @@
    
    ## Validate the package name -- note that we validate this upstream
    ## but it is sensible to validate it once more here
-   if (!grepl("^[[:alpha:]][[:alnum:].]*", packageName))
+   pattern <- sprintf("^%s$", .standard_regexps()$valid_package_name)
+   if (!grepl(pattern, packageName))
       return(.rs.error(
          "Invalid package name: the package name must start ",
          "with a letter and follow with only alphanumeric characters"))
