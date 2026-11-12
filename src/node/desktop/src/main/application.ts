@@ -391,6 +391,11 @@ export class Application implements AppState {
     }
     this.initializeInstance();
 
+    // the desktop's own pages (choose R, loading) need the UI language; read it while the
+    // rest of startup runs, and wait for it after R detection
+    registerLanguageChannel();
+    const languageReady = trackLocaleCookie(session.defaultSession);
+
     // prepare application for launch
     this.appLaunch = ApplicationLaunch.init();
 
@@ -426,10 +431,6 @@ export class Application implements AppState {
     // provide logging capabiity to renderer and preload
     this.loggerCallback = new LoggerCallback();
 
-    // settle the UI language before any of the desktop's own pages (choose R, loading) loads
-    registerLanguageChannel();
-    await trackLocaleCookie(session.defaultSession);
-
     // Prevent app from terminating when last window closes during startup; this can cause
     // app to exit after Choose R dialog closes but before the license dialog shows. Also
     // happens after the Manage License dialog (w/o Choose R being involved) if there is no
@@ -449,6 +450,7 @@ export class Application implements AppState {
     if (process.platform !== 'win32' || !rChooserLikely()) {
       await rDetectionReady();
     }
+    await languageReady;
     startupCheckpoint('r-query-ready');
 
     // on Windows, ask the user what version of R they'd like to use
