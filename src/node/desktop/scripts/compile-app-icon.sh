@@ -33,7 +33,18 @@ then
    export DEVELOPER_DIR="/Applications/Xcode.app/Contents/Developer"
 fi
 
+# Older actool versions reject a .icon with an error that doesn't mention the
+# version, so check it up front.
+ACTOOL_VERSION="$(xcrun actool --version | plutil -extract 'com\.apple\.actool\.version.short-bundle-version' raw -o - - 2> /dev/null || true)"
+ACTOOL_MAJOR="${ACTOOL_VERSION%%.*}"
+if ! [[ "${ACTOOL_MAJOR}" =~ ^[0-9]+$ ]] || (( ACTOOL_MAJOR < 26 ))
+then
+   echo "error: compiling RStudio.icon requires actool from Xcode 26 or newer (found: ${ACTOOL_VERSION:-none})" >&2
+   exit 1
+fi
+
 OUTPUT_DIR="$(mktemp -d -t compile-app-icon)"
+trap 'rm -rf "${OUTPUT_DIR}"' EXIT
 
 # --app-icon names the icon inside the catalog; CFBundleIconName in
 # Info.plist.in must match it.
