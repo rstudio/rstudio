@@ -16,7 +16,7 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 import { saveAndClear, restore } from '../unit-utils';
-import { app, BrowserWindow, dialog } from 'electron';
+import { app, BrowserWindow, dialog, shell } from 'electron';
 import sinon from 'sinon';
 
 import { FilePath } from '../../../src/core/file-path';
@@ -289,6 +289,33 @@ describe('Utils', () => {
       } finally {
         app.commandLine.removeSwitch('automation-agent');
       }
+    });
+  });
+
+  describe('openExternalUrl', () => {
+    afterEach(() => {
+      sinon.restore();
+    });
+
+    it('opens the URL in the browser outside automation', async () => {
+      const openExternal = sinon.stub(shell, 'openExternal').resolves();
+
+      await Utils.openExternalUrl('https://example.com/notes');
+
+      assert.isTrue(openExternal.calledOnceWithExactly('https://example.com/notes'));
+    });
+
+    it('opens nothing during an automation run', async () => {
+      const openExternal = sinon.stub(shell, 'openExternal').resolves();
+
+      app.commandLine.appendSwitch('automation-agent');
+      try {
+        await Utils.openExternalUrl('https://example.com/notes');
+      } finally {
+        app.commandLine.removeSwitch('automation-agent');
+      }
+
+      assert.isTrue(openExternal.notCalled);
     });
   });
 

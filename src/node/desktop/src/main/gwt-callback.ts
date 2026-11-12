@@ -67,6 +67,7 @@ import {
   parseFilter,
   handleLocaleCookies,
   isAutomated,
+  openExternalUrl,
   showWindowForAutomation,
   resolveAliasedPath,
   raiseAndActivateWindow,
@@ -243,11 +244,12 @@ export class GwtCallback extends EventEmitter {
     ipcMain.on('desktop_browse_url', (event, url: string) => {
       // shell.openExternal() seems unreliable on Windows
       // https://github.com/electron/electron/issues/31347
-      if (process.platform === 'win32' && url.startsWith('file:///')) {
+      // (an automation run opens nothing; openExternalUrl logs the URL)
+      if (process.platform === 'win32' && url.startsWith('file:///') && !isAutomated()) {
         const path = decodeURI(url).substring('file:///'.length).replaceAll('/', '\\');
         desktop.openExternal(path);
       } else {
-        void shell.openExternal(url);
+        void openExternalUrl(url);
       }
     });
 

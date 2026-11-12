@@ -67,6 +67,21 @@ export function keepAutomationWindowsRendering(): void {
 }
 
 /**
+ * Open a URL in the user's default browser, except during an automation run,
+ * where it is only logged. The browser would come up over the user's own
+ * windows, and on the macOS CI runners the IDE window stops painting for
+ * 10s or more after it does, which times out the next test's actions.
+ */
+export async function openExternalUrl(url: string): Promise<void> {
+  if (isAutomated()) {
+    logger().logDebug(`Automation run: not opening ${url} in the browser`);
+    return;
+  }
+
+  return shell.openExternal(url);
+}
+
+/**
  * Put a window on screen during an automation run without activating it or
  * raising it over whatever the user is working in. A window that is already
  * on screen is left exactly where it is, so the user can click one to watch a
@@ -761,5 +776,5 @@ export function removeTrailingSlashes(str: string): string {
  */
 export function loadRWebsite() {
   const rProjectUrl = 'https://www.rstudio.org/links/r-project';
-  void shell.openExternal(rProjectUrl);
+  void openExternalUrl(rProjectUrl);
 }
