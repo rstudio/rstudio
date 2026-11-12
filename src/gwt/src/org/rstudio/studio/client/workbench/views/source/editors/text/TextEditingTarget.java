@@ -3043,6 +3043,25 @@ public class TextEditingTarget implements
 
    public void insertCode(String source, boolean blockMode)
    {
+      // In visual mode the cursor is in a chunk's own editor. The source
+      // editor is hidden, so an insert there would go unseen and then be
+      // written to the file on the next save.
+      if (isVisualEditorActive() || isVisualModeActivated())
+      {
+         // Finding the chunk takes focus to the visual editor. Hand it back,
+         // as an insert in source mode leaves focus alone: a keyboard user
+         // in the History pane goes on to send the next entry.
+         Element focused = DomUtils.getActiveElement();
+
+         visualMode_.performWithActiveEditor(
+            (display) -> display.insertCode(source, blockMode));
+
+         if (focused != null && focused != DomUtils.getActiveElement())
+            focused.focus();
+
+         return;
+      }
+
       insertCode(activeDisplay(), source, blockMode);
    }
 

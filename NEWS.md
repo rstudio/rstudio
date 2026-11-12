@@ -15,6 +15,7 @@
 
 ### Fixed
 - ([#19590](https://github.com/rstudio/rstudio/issues/19590)): The New Project wizard now rejects an invalid package name (e.g. `test-cpp`) for the R Package using Rcpp, RcppArmadillo, RcppEigen, and devtools project types, instead of failing to create the project with an error such as "Malformed package name". The R Package project type also now rejects names R does not allow, such as `x` and `pkg.`.
+- ([#19566](https://github.com/rstudio/rstudio/issues/19566)): Fixed an issue where To Source in the History pane appeared to do nothing when the document was in the visual editor with the cursor in a code chunk. The commands were inserted out of sight, elsewhere in the document, and written to the file on the next save; they are now inserted into the chunk.
 - ([#19578](https://github.com/rstudio/rstudio/issues/19578)): Fixed an issue where turning off Show Changes Side by Side could scroll the editor away from the line being viewed, often to the end of the document, when lines had been removed above it.
 - ([#19580](https://github.com/rstudio/rstudio/issues/19580)): RStudio no longer warns that R 4.6.2 is newer than the maximum version of R it was tested with.
 - ([#9477](https://github.com/rstudio/rstudio/issues/9477)): The spelling dictionary archives downloaded when building RStudio and when installing additional languages now have dates in their file names, so a future dictionary update no longer replaces a file that packagers have pinned by checksum.
