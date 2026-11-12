@@ -35,6 +35,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.LauncherServerEvent;
 import org.rstudio.studio.client.application.events.DesktopMouseNavigateEvent;
+import org.rstudio.studio.client.application.events.DesktopUpdateDownloadProgressEvent;
 import org.rstudio.studio.client.application.events.DesktopUpdateDownloadedEvent;
 import org.rstudio.studio.client.application.events.SaveActionChangedEvent;
 import org.rstudio.studio.client.application.events.SuicideEvent;
@@ -303,6 +304,11 @@ public class DesktopHooks
    void onUpdateDownloadFailed(String message)
    {
       events_.fireEvent(DesktopUpdateDownloadedEvent.failed(message));
+   }
+
+   void onUpdateDownloadProgress(String version, int percent)
+   {
+      events_.fireEvent(new DesktopUpdateDownloadProgressEvent(version, percent));
    }
    
    void onUrlsDropped(String droppedUrls)

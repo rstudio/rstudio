@@ -10,6 +10,9 @@
     #editors { display: flex; width: 1000px; }
     #live, #review { position: relative; width: 500px; height: 280px; }
     .ace_git-diff-base { position: absolute; inset: 0; }
+    /* the peek header's layout, from themeStyles.css: the close button at its end */
+    .ace_git-peek-header { display: flex; padding: 2px 8px; }
+    .ace_git-peek-close { margin-left: auto; }
   </style>
 </head>
 <body>
@@ -33,6 +36,11 @@
    }
    function rendered() {
       return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+   }
+   // (resolves just after a render Ace scheduled before the call, in the
+   // same frame: rAF callbacks run in the order they were requested)
+   function frame() {
+      return new Promise(resolve => requestAnimationFrame(resolve));
    }
    var editor, gutter, review;
    try {
@@ -198,6 +206,134 @@
       check("opening review retries a timed-out diff", gutter.diffFailed, false);
       check("the recovered diff has its hunk", geometry(gutter.chunks), [[0, 100, 0, 100]]);
       check("review follows the recovered diff", geometry(review.chunks), [[0, 100, 0, 100]]);
+
+      // The vertical scrollbar's element lies over the end of the peek where
+      // scrollbars take no room (as in this runner's headless chromium, and
+      // with macOS's overlay scrollbars), and would take the clicks meant
+      // for the close button there (#19576).
+      var live = document.getElementById("live");
+      var scrollBar = editor.renderer.scrollBarV;
+      var closeButton;
+      var closeTakesClicks = function() {
+         var rect = closeButton.getBoundingClientRect();
+         var hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+         return hit === closeButton;
+      };
+      var closeClearOfScrollBar = function() {
+         return closeButton.getBoundingClientRect().right <= scrollBar.element.getBoundingClientRect().left;
+      };
+
+      // Side by side, the bar of a deletion at the end of the document takes
+      // on the padding standing in for the removed lines, there being no
+      // line below it to hold that; making room for the scrollbar must not
+      // hand the bar back to Ace to measure, which would drop the padding.
+      original = Array.from({length: 100}, (_, i) => "line" + i);
+      modified = original.slice(0, 97);
+      editor.setValue(modified.join("\n"), -1);
+      gutter.setBase(original.join("\n"));
+      editor.gotoLine(97);
+      check("the action bar opens in a document that scrolls", gutter.showChangeAtCursor(), true);
+      await rendered();
+      var bar = gutter.peek.widget;
+      var level = function() {
+         return review.baseEditor.session.getScreenLength() === editor.session.getScreenLength();
+      };
+      closeButton = document.querySelector("#live .ace_git-peek-close");
+      check("the action bar is compact", gutter.peek.compact, true);
+      check("the action bar takes on the padding", bar.gitDiffLentRows, 3);
+      check("the sides are level with the action bar open", level(), true);
+      check("the action bar's scrollbar shows", scrollBar.isVisible, true);
+      check("the action bar's close button is clear of the scrollbar", closeClearOfScrollBar(), true);
+      check("the action bar's close button takes clicks", closeTakesClicks(), true);
+      var barRows = bar.rowCount;
+      live.style.height = "4000px";
+      editor.resize(true);
+      await rendered();
+      check("the action bar's close button is back at its end", closeButton.style.marginRight, "");
+      live.style.height = "";
+      editor.resize(true);
+      // (back at the end of the document, where the bar is: the taller
+      // editor had nothing to scroll)
+      editor.session.setScrollTop(1e6);
+      await rendered();
+      check("the action bar's close button is clear of the scrollbar again", closeClearOfScrollBar(), true);
+      check("the action bar's close button takes clicks again", closeTakesClicks(), true);
+      check("the action bar keeps the padding", bar.rowCount, barRows);
+      check("the sides stay level", level(), true);
+
+      review.dispose();
+      review = null;
+      original = Array.from({length: 100}, (_, i) => "line" + i);
+      modified = original.slice();
+      modified[1] = "changed";
+      editor.setValue(modified.join("\n"), -1);
+      gutter.setBase(original.join("\n"));
+      editor.gotoLine(2);
+      check("peek opens in a document that scrolls", gutter.showChangeAtCursor(), true);
+      await rendered();
+      closeButton = document.querySelector("#live .ace_git-peek-close");
+      check("the document's scrollbar shows", scrollBar.isVisible, true);
+      check("the close button is clear of the scrollbar", closeClearOfScrollBar(), true);
+      check("the close button takes clicks", closeTakesClicks(), true);
+
+      // The room made for the scrollbar goes when the scrollbar does.
+      live.style.height = "4000px";
+      editor.resize(true);
+      await rendered();
+      check("the taller editor has no scrollbar", scrollBar.isVisible, false);
+      check("the close button is back at the end of the peek", closeButton.style.marginRight, "");
+      live.style.height = "";
+      editor.resize(true);
+      await rendered();
+      check("the scrollbar is back", scrollBar.isVisible, true);
+      check("the close button is clear of the scrollbar again", closeTakesClicks(), true);
+
+      // In an editor with little room to spare, making room for the
+      // scrollbar wraps the peek's label, as does narrowing the editor; the
+      // peek is measured again either way, so that the lines below it stay
+      // below it.
+      var peekWidget = gutter.peek.widget;
+      var label = document.querySelector("#live .ace_git-peek-label");
+      var revertButton = document.querySelector("#live .ace_git-peek-revert");
+      var lineHeight = editor.renderer.layerConfig.lineHeight;
+      var measured = function() {
+         return peekWidget.rowCount === Math.ceil(peekWidget.el.offsetHeight / lineHeight);
+      };
+      // (a wrapped label is taller by whole rows, whatever the font)
+      label.style.lineHeight = (3 * lineHeight) + "px";
+      live.style.height = "4000px";
+      editor.resize(true);
+      await rendered();
+      var labelHeight = label.offsetHeight;
+      var spare = closeButton.getBoundingClientRect().left - revertButton.getBoundingClientRect().right;
+      live.style.width = (live.offsetWidth - spare + 10) + "px";
+      editor.resize(true);
+      await rendered();
+      check("the narrow peek has its label on one line", label.offsetHeight, labelHeight);
+      check("the narrow peek is measured", measured(), true);
+      live.style.height = "";
+      editor.resize(true);
+      await rendered();
+      check("the scrollbar wraps the narrow peek's label", label.offsetHeight > labelHeight, true);
+      check("the peek wrapped by the scrollbar is measured again", measured(), true);
+
+      // (a resize by the render loop, as a pane's splitter makes, measures
+      // the peek in the render that lays it out)
+      live.style.width = (live.offsetWidth + 40) + "px";
+      editor.resize();
+      await frame();
+      check("a wider editor unwraps the peek's label", label.offsetHeight, labelHeight);
+      check("the peek unwrapped by the editor's width is measured again", measured(), true);
+      live.style.width = (live.offsetWidth - 40) + "px";
+      editor.resize();
+      await frame();
+      check("a narrower editor wraps the peek's label", label.offsetHeight > labelHeight, true);
+      check("the peek wrapped by the editor's width is measured again", measured(), true);
+
+      label.style.lineHeight = "";
+      live.style.width = "";
+      editor.resize(true);
+      await rendered();
    } catch (error) {
       check("integration completes", String(error.stack || error), "no exception");
    } finally {
