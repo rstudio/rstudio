@@ -14,6 +14,7 @@
 - ([#19555](https://github.com/rstudio/rstudio/issues/19555)): The branch filter in the History view of the Review Changes window now has a search box, and searches in the Git branch menus now ignore case.
 
 ### Fixed
+- ([#19578](https://github.com/rstudio/rstudio/issues/19578)): Fixed an issue where turning off Show Changes Side by Side could scroll the editor away from the line being viewed, often to the end of the document, when lines had been removed above it.
 - ([#19580](https://github.com/rstudio/rstudio/issues/19580)): RStudio no longer warns that R 4.6.2 is newer than the maximum version of R it was tested with.
 - ([#9477](https://github.com/rstudio/rstudio/issues/9477)): The spelling dictionary archives downloaded when building RStudio and when installing additional languages now have dates in their file names, so a future dictionary update no longer replaces a file that packagers have pinned by checksum.
 - ([#19559](https://github.com/rstudio/rstudio/issues/19559)): Fixed an issue where C/C++ code completion, diagnostics, and navigation stopped working in Rcpp and cpp11 source files compiled as C++20 or newer (the default as of R 4.6), most visibly on Linux. A precompiled header that can't be loaded is now rebuilt, and files are parsed without it in the meantime.
