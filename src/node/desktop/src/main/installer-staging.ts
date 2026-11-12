@@ -17,13 +17,14 @@ import { createHash } from 'crypto';
 import { createReadStream, createWriteStream } from 'fs';
 import { mkdir, readdir, rename, rm, stat } from 'fs/promises';
 import path from 'path';
-import { Readable } from 'stream';
+import { Readable, Writable } from 'stream';
 import { pipeline } from 'stream/promises';
 import { BuildArtifact, installerVersion, isUpdateAvailable } from './update-feed';
 
-// Staging of the Windows installer the updater downloads. Nothing here
-// touches Electron: the fetch is injected, so the download, verification,
-// reuse and pruning rules are unit-tested against real files.
+// Staging of the Windows installer the updater downloads, and the download
+// itself, which the macOS relay shares. Nothing here touches Electron: the
+// fetch is injected, so the download, verification, reuse and pruning rules
+// are unit-tested against real files.
 
 /** The part of fetch() these functions use; Electron's net.fetch satisfies it. */
 export type FetchLike = (
@@ -109,7 +110,7 @@ export async function stageInstaller(
 
   const partial = `${target}.${process.pid}.part`;
   try {
-    await download(entry, partial, fetch, onProgress, idleTimeoutMs);
+    await downloadArtifact(entry, () => createWriteStream(partial), fetch, onProgress, idleTimeoutMs);
     if (!(await verifyInstaller(partial, entry))) {
       throw new Error('the downloaded installer did not match the checksum and size published for this release');
     }
@@ -120,12 +121,18 @@ export async function stageInstaller(
   return target;
 }
 
-async function download(
+/**
+ * Download `entry` into the stream `sink` opens, reporting the fraction that
+ * has arrived. `sink` is asked once the response is known to be good, and is
+ * told the size of the body (0 when neither the response nor the API says).
+ * Rejects, with the stream destroyed, when the download fails or stalls.
+ */
+export async function downloadArtifact(
   entry: BuildArtifact,
-  file: string,
+  sink: (total: number) => Writable,
   fetch: FetchLike,
   onProgress: (fraction: number) => void,
-  idleTimeoutMs: number,
+  idleTimeoutMs = kDownloadIdleTimeoutMs,
 ): Promise<void> {
   // the response headers, then every chunk of the body, must arrive within
   // the idle timeout of the previous one; the stream is torn down otherwise
@@ -165,7 +172,7 @@ async function download(
         onProgress(received / total);
       }
     });
-    await pipeline(source, createWriteStream(file));
+    await pipeline(source, sink(total));
   } finally {
     disarm();
   }

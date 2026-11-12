@@ -41,6 +41,7 @@ import org.rstudio.studio.client.application.DesktopInfo;
 import org.rstudio.studio.client.application.IgnoredUpdates;
 import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.events.DesktopMouseNavigateEvent;
+import org.rstudio.studio.client.application.events.DesktopUpdateDownloadProgressEvent;
 import org.rstudio.studio.client.application.events.DesktopUpdateDownloadedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
@@ -49,7 +50,6 @@ import org.rstudio.studio.client.application.ui.ApplicationHeader;
 import org.rstudio.studio.client.application.ui.GlobalToolbar;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.projects.Projects;
-import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.debugging.ErrorManager;
 import org.rstudio.studio.client.events.EditEvent;
 import org.rstudio.studio.client.server.ServerError;
@@ -177,6 +177,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
       });
 
       events.addHandler(DesktopUpdateDownloadedEvent.TYPE, this::onUpdateDownloaded);
+      events.addHandler(DesktopUpdateDownloadProgressEvent.TYPE, this::onUpdateDownloadProgress);
 
       toolbar_ = new GlobalToolbar(commands, events, pCodeSearch, pUIPrefs_.get(), trustPresenter);
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
@@ -566,18 +567,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
             // DesktopUpdateDownloadedEvent when the restart can be offered
             buttonLabels.add(constants_.installAndRestartButtonLabel());
             elementIds.add(ElementIds.DIALOG_YES_BUTTON);
-            buttonOperations.add(() ->
-            {
-               // a check during a download may offer an update again; the
-               // desktop ignores a repeat request and reports one for another
-               // build as a failure, so keep a single indicator
-               if (updateProgress_ != null)
-                  updateProgress_.dismiss();
-
-               updateProgress_ = new GlobalProgressDelayer(globalDisplay_, 0,
-                     constants_.downloadingUpdateMessage(updateVersion));
-               Desktop.getFrame().downloadUpdate(updateVersion);
-            });
+            buttonOperations.add(() -> downloadUpdate(updateVersion));
          }
          else
          {
@@ -681,13 +671,53 @@ public class DesktopApplicationHeader implements ApplicationHeader,
       }
    }
 
-   private void onUpdateDownloaded(DesktopUpdateDownloadedEvent event)
+   /**
+    * Have the desktop frame download `version`, showing how far along it is
+    * until DesktopUpdateDownloadedEvent says how that went.
+    */
+   private void downloadUpdate(String version)
+   {
+      // a check during a download may offer an update again; the desktop
+      // ignores a repeat request and reports one for another build as a
+      // failure, so keep a single indicator. Either way it tells the
+      // in-flight build's percentage again, which puts back an indicator
+      // for that build should the refusal take this one down
+      dismissUpdateProgress();
+
+      updateProgress_ = globalDisplay_.showPercentProgress(constants_.downloadingUpdateMessage(version));
+      updateProgressVersion_ = version;
+      Desktop.getFrame().downloadUpdate(version);
+   }
+
+   private void dismissUpdateProgress()
    {
       if (updateProgress_ != null)
       {
          updateProgress_.dismiss();
          updateProgress_ = null;
+         updateProgressVersion_ = null;
       }
+   }
+
+   private void onUpdateDownloadProgress(DesktopUpdateDownloadProgressEvent event)
+   {
+      // the desktop reports only the build it is downloading, so with no
+      // indicator up (a refused request for another build took it down, or
+      // the page reloaded) show one for it; one showing another build is
+      // for a request the desktop is about to refuse
+      if (updateProgress_ == null)
+      {
+         updateProgress_ = globalDisplay_.showPercentProgress(constants_.downloadingUpdateMessage(event.getVersion()));
+         updateProgressVersion_ = event.getVersion();
+      }
+
+      if (event.getVersion().equals(updateProgressVersion_))
+         updateProgress_.setPercent(event.getPercent());
+   }
+
+   private void onUpdateDownloaded(DesktopUpdateDownloadedEvent event)
+   {
+      dismissUpdateProgress();
 
       if (!event.succeeded())
       {
@@ -809,12 +839,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
       // dialog follows
       if (blocker == "missing")
       {
-         if (updateProgress_ != null)
-            updateProgress_.dismiss();
-
-         updateProgress_ = new GlobalProgressDelayer(globalDisplay_, 0,
-               constants_.downloadingUpdateMessage(version));
-         Desktop.getFrame().downloadUpdate(version);
+         downloadUpdate(version);
          return;
       }
 
@@ -1025,7 +1050,9 @@ public class DesktopApplicationHeader implements ApplicationHeader,
    Provider<UserPrefs> pUIPrefs_;
    private ApplicationServerOperations server_;
    private IgnoredUpdatesStateValue ignoredUpdatesState_;
-   private GlobalProgressDelayer updateProgress_;
+   private GlobalDisplay.PercentProgress updateProgress_;
+   /** the build updateProgress_ is shown for */
+   private String updateProgressVersion_;
    private ApplicationQuit appQuit_;
    private WebApplicationHeaderOverlay overlay_;
    private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
