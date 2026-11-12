@@ -20,7 +20,8 @@ import { describe } from 'mocha';
 import sinon from 'sinon';
 
 import { changeLanguage, initI18n } from '../../../src/main/i18n-manager';
-import { kGetLanguageChannel, registerLanguageChannel, trackLocaleCookie } from '../../../src/main/page-language';
+import { kGetLanguageChannel } from '../../../src/core/desktop-language';
+import { registerLanguageChannel, trackLocaleCookie } from '../../../src/main/page-language';
 
 const kCookieUrl = 'http://127.0.0.1/';
 

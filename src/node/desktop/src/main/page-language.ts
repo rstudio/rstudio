@@ -16,13 +16,12 @@
 import { ipcMain, Session } from 'electron';
 import i18next from 'i18next';
 
+import { kGetLanguageChannel } from '../core/desktop-language';
 import { logger } from '../core/logger';
 import { changeLanguage } from './i18n-manager';
 
 // the GWT client stores the user's UI language preference in this cookie
 const kLocaleCookie = 'LOCALE';
-
-export const kGetLanguageChannel = 'desktop_get_language';
 
 /**
  * Keeps the main process's UI language in step with the LOCALE cookie. Resolves once the

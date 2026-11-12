@@ -15,10 +15,19 @@
 
 import { contextBridge, ipcRenderer } from 'electron';
 
+import { kGetLanguageChannel } from '../core/desktop-language';
+
+declare global {
+  interface Window {
+    // set by exposeDesktopLanguage() below, in the preload of each desktop page
+    desktopLanguage: string;
+  }
+}
+
 /**
  * Exposes the UI language as `window.desktopLanguage`. Preload runs on every page load, so
  * each page sees the language in effect when it loaded.
  */
 export function exposeDesktopLanguage(): void {
-  contextBridge.exposeInMainWorld('desktopLanguage', ipcRenderer.sendSync('desktop_get_language'));
+  contextBridge.exposeInMainWorld('desktopLanguage', ipcRenderer.sendSync(kGetLanguageChannel));
 }

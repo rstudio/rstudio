@@ -15,13 +15,6 @@
 
 /****** NOTE: This code cannot use node.js. It is invoked from the renderer process. ******/
 
-declare global {
-  interface Window {
-    // the UI language, set by the page's preload (see renderer/language-bridge.ts)
-    desktopLanguage: string;
-  }
-}
-
 /**
  * Removes duplicate separators from a path, given a separator for search.
  *
