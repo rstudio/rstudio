@@ -21,6 +21,7 @@ import {
   BrowserWindow,
   clipboard,
   ClipboardItem,
+  dialog,
   ipcMain,
   IpcMainInvokeEvent,
   nativeImage,
@@ -39,6 +40,7 @@ import { Application } from '../../../src/main/application';
 import { GwtCallback, PendingQuit } from '../../../src/main/gwt-callback';
 import * as DetectR from '../../../src/main/detect-r';
 import { MainWindow } from '../../../src/main/main-window';
+import { SessionLauncher } from '../../../src/main/session-launcher';
 import desktop from '../../../src/native/desktop.node';
 
 function fakeBrowserWindow(state?: { visible?: boolean; minimized?: boolean; destroyed?: boolean }) {
@@ -228,6 +230,29 @@ describe('DesktopCallback', () => {
       } finally {
         app.commandLine.removeSwitch('automation-agent');
       }
+    });
+  });
+
+  describe('desktop_show_message_box', () => {
+    // with nothing focused the dialog has no parent, and macOS then runs it
+    // synchronously: a splash still up would stay behind it until dismissed
+    it('takes the splash screen down before showing the dialog', async () => {
+      const closeSplash = sinon.stub();
+      mainWindow.sessionLauncher = { closeSplash } as unknown as SessionLauncher;
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(null);
+      const showMessageBox = (sinon.stub(dialog, 'showMessageBox') as sinon.SinonStub).resolves({ response: 0 });
+
+      setApplication(new Application());
+      try {
+        await invoke('desktop_show_message_box', 4, 'Update Available', 'A new version', 'Install|Later', 0, 1);
+      } finally {
+        clearApplicationSingleton();
+        mainWindow.sessionLauncher = undefined;
+      }
+
+      assert.isTrue(closeSplash.calledOnce);
+      assert.isTrue(showMessageBox.calledOnce);
+      assert.isTrue(closeSplash.calledBefore(showMessageBox));
     });
   });
 

@@ -14,7 +14,7 @@
  */
 
 import { ChildProcess, spawn } from 'child_process';
-import { app, BrowserWindow } from 'electron';
+import { app } from 'electron';
 import fs, { rmSync } from 'fs';
 
 import { getenv, setenv, unsetenv } from '../core/environment';
@@ -41,7 +41,7 @@ import { EXIT_FAILURE } from './program-status';
 import { waitForUrlWithTimeout } from './url-utils';
 import { createStandaloneErrorDialog, getCurrentlyUniqueFolderName, isAutomated, showWindowForAutomation, userLogPath } from './utils';
 import path from 'path';
-import { createSplashScreen } from './splash-screen';
+import { StartupSplash } from './splash-screen';
 import { startupCheckpoint } from './startup-timing';
 import { readMachoArchitectures } from '../core/macho';
 import {
@@ -58,6 +58,12 @@ import { probeUrl } from './url-utils';
 // plugin that tells the Electron app where to look for the Webpack-bundled app code (depending on
 // whether you're running in development or production).
 declare const ERROR_WINDOW_WEBPACK_ENTRY: string;
+
+// How long a launch gets to put the main window on screen before the splash
+// screen appears instead, and how long a splash that did appear stays up after
+// the main window shows.
+const kSplashDelayMs = 500;
+const kSplashLingerMs = 1300;
 
 export interface LaunchContext {
   host: string;
@@ -207,10 +213,9 @@ export class SessionLauncher {
   sessionStdout: string[] = [];
   sessionStderr: string[] = [];
   private nextSessionUrl?: string;
-  private splash: BrowserWindow | undefined;
+  private splash: StartupSplash;
   private showSplash = process.env.NODE_ENV !== 'TEST';
   private splashDelay: number;
-  private splashLinger: number;
 
   // the session binary each launch starts from; the build matching the R in
   // use is picked from it per launch, as switching R can call for another
@@ -230,8 +235,9 @@ export class SessionLauncher {
     private windowAllClosedHandler: (() => void) | null,
   ) {
     this.baseSessionPath = sessionPath;
-    this.splashDelay = process.env.RS_SPLASH_DELAY ? parseInt(process.env.RS_SPLASH_DELAY) : 100;
-    this.splashLinger = process.env.RS_SPLASH_LINGER ? parseInt(process.env.RS_SPLASH_LINGER) : 1300;
+    this.splashDelay = process.env.RS_SPLASH_DELAY ? parseInt(process.env.RS_SPLASH_DELAY) : kSplashDelayMs;
+    const splashLinger = process.env.RS_SPLASH_LINGER ? parseInt(process.env.RS_SPLASH_LINGER) : kSplashLingerMs;
+    this.splash = new StartupSplash(this.splashDelay, splashLinger);
     if (process.env.RS_NO_SPLASH) {
       this.showSplash = false;
     }
@@ -331,7 +337,6 @@ export class SessionLauncher {
         if (appState().startupDelayMs > 0) {
           await setTimeoutPromise(appState().startupDelayMs);
         }
-        this.showSplash = false;
         // In automation mode, surface the window without pulling focus from
         // the test driver.
         if (isAutomated()) {
@@ -343,15 +348,11 @@ export class SessionLauncher {
         }
         startupCheckpoint('window-shown');
 
-        // if the splash screen displayed, keep it visible for another brief period to
-        // reduce cases where it flashes and hides without being readable
-        if (this.splash) {
-          setTimeoutPromise(this.splashLinger)
-            .then(() => {
-              this.splash?.close();
-            })
-            .catch((err) => logger().logError(err));
-        }
+        // a splash screen that has yet to appear is skipped from here on; one
+        // that is up stays a little longer, so it doesn't flash by unread, but
+        // no longer than the workbench takes to be ready
+        this.splash.onMainWindowShown();
+        appState().gwtCallback?.once(GwtCallback.WORKBENCH_INITIALIZED, () => this.splash.close());
       });
       appState().activation().setMainWindow(this.mainWindow.window);
       this.appLaunch.activateWindow();
@@ -692,24 +693,20 @@ export class SessionLauncher {
     }
   }
 
+  /**
+   * Takes the startup splash screen down, if it is still up -- ahead of a
+   * dialog, say, that it would otherwise be left sitting behind.
+   */
+  closeSplash(): void {
+    this.splash.close();
+  }
+
   private async onLaunchFirstSession(): Promise<void> {
     const showSplash = this.splashDelay > 0
       && this.showSplash
       && ElectronDesktopOptions().enableSplashScreen();
     if (showSplash) {
-      setTimeoutPromise(this.splashDelay)
-        .then(() => {
-          if (this.showSplash) {
-            this.splash = createSplashScreen();
-            if (isAutomated()) {
-              this.splash.showInactive();
-            } else {
-              this.splash.show();
-            }
-            startupCheckpoint('splash-shown');
-          }
-        })
-        .catch((err) => logger().logError(err));
+      this.splash.schedule();
     }
 
     const error = await this.launchFirst();

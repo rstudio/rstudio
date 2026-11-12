@@ -780,6 +780,12 @@ export class GwtCallback extends EventEmitter {
           };
         }
 
+        // A splash screen still up has nothing left to cover for, and would sit
+        // behind the dialog -- for as long as the dialog is open when it has no
+        // parent, as macOS then runs it synchronously and the splash's own
+        // timer cannot fire.
+        this.mainWindow.sessionLauncher?.closeSplash();
+
         const focusedWindow = this.dialogParentWindow();
         if (focusedWindow) {
           return appState().modalTracker.trackElectronModalAsync(async () =>
