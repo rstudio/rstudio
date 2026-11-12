@@ -638,15 +638,10 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
    public boolean insertCode(String code, boolean isBlock)
    {
-      if (activeEditor_ != null &&
-          activeEditor_ instanceof TextEditingTarget &&
-          commands_.executeCode().isEnabled())
-      {
-         TextEditingTarget textEditor = (TextEditingTarget) activeEditor_;
-         textEditor.insertCode(code, isBlock);
-         return true;
-      }
-      return false;
+      if (!(activeEditor_ instanceof TextEditingTarget))
+         return false;
+
+      return ((TextEditingTarget) activeEditor_).tryInsertCode(code, isBlock);
    }
 
    public void incrementNewTabPending()
