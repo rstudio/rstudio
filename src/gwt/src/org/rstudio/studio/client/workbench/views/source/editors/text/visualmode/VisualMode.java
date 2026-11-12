@@ -47,6 +47,7 @@ import org.rstudio.studio.client.panmirror.PanmirrorCode;
 import org.rstudio.studio.client.panmirror.PanmirrorContext;
 import org.rstudio.studio.client.panmirror.PanmirrorKeybindings;
 import org.rstudio.studio.client.panmirror.PanmirrorOptions;
+import org.rstudio.studio.client.panmirror.PanmirrorSelection;
 import org.rstudio.studio.client.panmirror.PanmirrorSetMarkdownResult;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommands;
@@ -905,6 +906,51 @@ public class VisualMode implements VisualModeEditorSync,
 
       if (activeEditor_ != null)
          command.execute(activeEditor_);
+   }
+
+   /**
+    * Inserts code at the visual editor's cursor: into the code editor holding
+    * it, or else as a new R chunk at that position.
+    *
+    * @param code The code to insert.
+    * @return Whether the code was inserted. It is not while the editor is
+    *    being loaded, rebuilt or switched back to source, when the cursor is
+    *    somewhere a chunk can't go (e.g. in a table, or in a document without
+    *    code chunks), or when a new chunk would replace a selection.
+    */
+   public boolean insertCode(String code)
+   {
+      // A document still loading from source is about to be replaced, which
+      // would discard the insert. So would one on its way back to source
+      // mode: it is no longer activated, and what the source editor gets has
+      // already been read from it.
+      if (panmirror_ == null || !isActivated() || isLoading_ || loadingFromSource_)
+         return false;
+
+      // The pane the code came from holds focus. Returning it to the editing
+      // surface restores the cursor and, in a code editor, activeEditor_.
+      panmirror_.focus();
+
+      if (activeEditor_ != null)
+      {
+         activeEditor_.insertCode(code, true);
+         return true;
+      }
+
+      if (!panmirror_.isCommandEnabled(PanmirrorCommands.RCodeChunk))
+         return false;
+
+      // A new chunk replaces the selection, which may be a node (an image
+      // that was clicked, say) as well as text. Only a bare cursor is safe.
+      PanmirrorSelection selection = panmirror_.getSelection();
+      if (selection.from != selection.to)
+         return false;
+
+      // End on an empty line, which is where the new chunk leaves the cursor,
+      // so that code inserted next starts on a line of its own.
+      String body = code.endsWith("\n") ? code : code + "\n";
+      panmirror_.insertChunk("{r}\n" + body, 0, 0);
+      return true;
    }
 
    /**
