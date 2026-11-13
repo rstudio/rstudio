@@ -1255,6 +1255,13 @@ void startup(const std::string& firstProjectPath)
       }
    }
 
+   if (s_projectContext.hasProject())
+   {
+      Error error = overlay::ensureProjectIdForPath(s_projectContext.directory());
+      if (error)
+         LOG_ERROR(error);
+   }
+
    core::FilePath sessionTmpDir(core::system::getenv(kSessionTmpDirEnvVar));
    core::FilePath ctxFile = sessionTmpDir.completeChildPath(system::username() + "-d.ctx");
 
