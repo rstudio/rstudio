@@ -52,19 +52,14 @@ public:
       const char* current = std::setlocale(LC_CTYPE, nullptr);
       previous_ = current != nullptr ? current : "C";
 
-      bool set = false;
       for (const char* name : { ".1252", "en_US.UTF-8" })
       {
          if (std::setlocale(LC_CTYPE, name) != nullptr)
-         {
-            set = true;
-            break;
-         }
+            return;
       }
 
 #ifndef __linux__
-      if (!set)
-         ADD_FAILURE() << "Could not set LC_CTYPE to .1252 or en_US.UTF-8";
+      ADD_FAILURE() << "Could not set LC_CTYPE to .1252 or en_US.UTF-8";
 #endif
    }
 
