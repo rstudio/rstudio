@@ -17,7 +17,7 @@ import fs, { existsSync } from 'fs';
 import os from 'os';
 import path from 'path';
 import { sep } from 'path';
-import { app, BrowserWindow, Cookie, dialog, FileFilter, MessageBoxOptions, shell, WebContents } from 'electron';
+import { app, BrowserWindow, dialog, FileFilter, MessageBoxOptions, shell, WebContents } from 'electron';
 
 import { Xdg } from '../core/xdg';
 import { getenv, setenv } from '../core/environment';
@@ -27,7 +27,6 @@ import { userHomePath } from '../core/user';
 
 import i18next from 'i18next';
 import { spawnSync } from 'child_process';
-import { changeLanguage } from './i18n-manager';
 import { randomUUID } from 'crypto';
 import { appState, hasApplication } from './app-state';
 import { isOzonePlatformChromiumArgument } from './electron-flags';
@@ -587,47 +586,6 @@ export async function createStandaloneErrorDialog(
     console.error('[utils.ts] [createStandaloneErrorDialog] Error when creating Standalone Error Dialog: ', error);
   }
 }
-
-export const handleLocaleCookies = async (window: BrowserWindow, isMainWindow = false) => {
-  const updateLocaleFromCookie = async (cookie: Electron.Cookie, window: BrowserWindow) => {
-    const localeCookieName = 'LOCALE';
-
-    if (cookie.name == localeCookieName) {
-      const localeLastTimeSetStorageItemKey = 'LAST_TIME';
-
-      const newLanguage = cookie.value;
-
-      const jsSetLocaleScript = `
-          window.localStorage.setItem('${localeCookieName}', '${newLanguage}');
-          window.localStorage.setItem('${localeLastTimeSetStorageItemKey}', '${new Date().getTime()}');
-      `;
-
-      await window.webContents.executeJavaScript(jsSetLocaleScript);
-
-      await changeLanguage(newLanguage);
-    }
-  };
-
-  if (isMainWindow) {
-    window.webContents.session.cookies.on('changed', async (_, cookie) => {
-      await updateLocaleFromCookie(cookie, window);
-    });
-  }
-
-  await window.webContents.session.cookies
-    .get({})
-    .then(async (cookies: Cookie[]) => {
-      if (cookies.length === 0) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await updateLocaleFromCookie({ name: 'LOCALE', value: 'en' } as any, window);
-      } else {
-        cookies.forEach(async (cookie) => {
-          await updateLocaleFromCookie(cookie, window);
-        });
-      }
-    })
-    .catch((err) => logger().logError(err));
-};
 
 export function registerWebContentsDebugHandlers(webContents: WebContents) {
   // add debug handlers for all of the various navigation and load events

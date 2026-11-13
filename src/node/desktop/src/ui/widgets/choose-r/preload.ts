@@ -14,6 +14,7 @@
  */
 import { contextBridge, ipcRenderer } from 'electron';
 import { getDesktopLoggerBridge } from '../../../renderer/logger-bridge';
+import { exposeDesktopLanguage } from '../../../renderer/language-bridge';
 import { normalizeSeparatorsNative, kWindowsRExe } from '../../utils';
 
 export interface CallbackData {
@@ -34,6 +35,7 @@ export interface Callbacks {
 
 // this needs to be done in the preload of any widget wanting to use logging
 contextBridge.exposeInMainWorld('desktopLogger', getDesktopLoggerBridge());
+exposeDesktopLanguage();
 
 ipcRenderer.on('css', (_event, data) => {
   const styleEl = document.createElement('style');

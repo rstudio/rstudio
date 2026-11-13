@@ -219,7 +219,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
    
    void setEnableAccessibility(boolean enable);
    void setDisableRendererAccessibility(boolean disable);
-   void setEnableSplashScreen(boolean enable);
 
    void setAutohideMenubar(boolean enable);
 
@@ -287,8 +286,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void getProxyPortNumber(CommandWithArg<Double> callback);
 
    void signOut();
-
-   void showSplashScreen();
 
    String getPathForFile(File file);
 }

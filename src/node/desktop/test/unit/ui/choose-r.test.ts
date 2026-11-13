@@ -23,7 +23,9 @@ import { join } from 'path';
 
 import { Application } from '../../../src/main/application';
 import { clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
-import { checkValid } from '../../../src/ui/widgets/choose-r';
+import { changeLanguage, initI18n } from '../../../src/main/i18n-manager';
+import { checkValid, ChooseRModalWindow } from '../../../src/ui/widgets/choose-r';
+import i18next from 'i18next';
 
 describe('ChooseR', () => {
   beforeEach(() => {
@@ -33,6 +35,28 @@ describe('ChooseR', () => {
   afterEach(() => {
     sinon.restore();
     clearApplicationSingleton();
+  });
+
+  it('keeps the current UI language when the chooser opens', async () => {
+    // webpack defines these in real builds; the constructor only passes them along
+    const globals = globalThis as unknown as Record<string, string>;
+    globals.CHOOSE_R_WEBPACK_ENTRY = 'about:blank';
+    globals.CHOOSE_R_PRELOAD_WEBPACK_ENTRY = '';
+
+    initI18n();
+    await changeLanguage('fr');
+    const chooser = new ChooseRModalWindow([]);
+    try {
+      assert.strictEqual(i18next.resolvedLanguage, 'fr');
+    } finally {
+      // the dialog's 'closed' handler uses the application singleton, which afterEach clears
+      const closed = new Promise<void>((resolve) => chooser.once('closed', () => resolve()));
+      chooser.destroy();
+      await closed;
+      delete globals.CHOOSE_R_WEBPACK_ENTRY;
+      delete globals.CHOOSE_R_PRELOAD_WEBPACK_ENTRY;
+      await changeLanguage('en');
+    }
   });
 
   it('tells the user what a chosen R that fails to start reported', function () {

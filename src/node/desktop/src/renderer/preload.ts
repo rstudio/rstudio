@@ -21,6 +21,7 @@ import { getMenuBridge } from './menu-bridge';
 import { getDesktopBridge } from './desktop-bridge';
 import { firstStartingWith } from '../core/array-utils';
 import { getDesktopLoggerBridge, logString } from './logger-bridge';
+import { exposeDesktopLanguage } from './language-bridge';
 
 /**
  * The preload script is run in the renderer before our GWT code and enables
@@ -37,6 +38,7 @@ import { getDesktopLoggerBridge, logString } from './logger-bridge';
  */
 
 contextBridge.exposeInMainWorld('desktopLogger', getDesktopLoggerBridge());
+exposeDesktopLanguage();
 
 const apiKeys = removeDups(firstStartingWith(process.argv, '--api-keys=').split('|'));
 let desktopApiConnected = false;
