@@ -96,15 +96,6 @@ public class RCompletionToolTip extends CppCompletionToolTip
       return false;
    }
 
-   public void resolvePositionAndShow(String signature,
-                                      Rectangle rectangle)
-   {
-      resolvePositionAndShow(
-            signature,
-            rectangle.getLeft(),
-            (rectangle.getTop() + rectangle.getBottom()) / 2);
-   }
-
    public void resolvePositionAndShow(String signature)
    {
       setCursorAnchor();
@@ -146,8 +137,7 @@ public class RCompletionToolTip extends CppCompletionToolTip
    }
 
    public void resolvePositionAndShow(String signature,
-                                      int left,
-                                      int top)
+                                      Rectangle line)
    {
       signature = truncateSignature(signature);
       if (signature != null)
@@ -155,10 +145,10 @@ public class RCompletionToolTip extends CppCompletionToolTip
 
       // resolve the tooltip width (allow the left bounds to be
       // nudged if the tooltip would be too large to fit)
-      left = resolveWidth(left, signature);
+      int left = resolveWidth(line.getLeft(), signature);
 
       // show the tooltip
-      resolvePositionRelativeTo(left, top);
+      resolvePositionRelativeTo(left, line);
       setVisible(true);
       show();
 
@@ -212,15 +202,22 @@ public class RCompletionToolTip extends CppCompletionToolTip
    }
 
    private void resolvePositionRelativeTo(final int left,
-                                          final int top)
+                                          final Rectangle line)
    {
       final Rectangle viewport = docDisplay_.getViewportBounds();
+
+      // The bounds can be shorter than the line (see AceEditor.getPositionBounds),
+      // so measure below the line from its top and full height.
+      final int middle = (line.getTop() + line.getBottom()) / 2;
+      final int lineBottom =
+            line.getTop() + (int) Math.ceil(docDisplay_.getLineHeight());
+
       setPopupPositionAndShow((int offsetWidth, int offsetHeight) ->
       {
          // Prefer above the line, but not over the editor's toolbar or
          // tabs, nor off the window.
-         int topAbove = top - offsetHeight - GAP - PopupPositioner.LINE_CLEARANCE;
-         int topBelow = top + GAP;
+         int topAbove = middle - offsetHeight - GAP - PopupPositioner.LINE_CLEARANCE;
+         int topBelow = lineBottom + GAP;
          boolean below = PopupPositioner.placeBelow(
                topAbove,
                topBelow + offsetHeight,
