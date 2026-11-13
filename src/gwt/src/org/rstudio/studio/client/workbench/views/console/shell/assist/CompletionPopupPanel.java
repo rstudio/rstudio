@@ -475,6 +475,9 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    
    private void registerNativeFocusHandler()
    {
+      // show() also runs to refresh a popup that is already showing, so
+      // replace any listener it added before rather than stacking another.
+      unregisterNativeHandler();
       focusHandler_ = registerNativeFocusHandlerImpl();
    }
    
