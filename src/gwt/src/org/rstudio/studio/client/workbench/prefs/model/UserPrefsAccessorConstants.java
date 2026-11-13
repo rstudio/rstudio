@@ -1820,14 +1820,6 @@ public interface UserPrefsAccessorConstants extends Constants {
    String clangVerboseDescription();
 
    /**
-    * Whether to show the splash screen when RStudio is starting.
-    */
-   @DefaultStringValue("Show splash screen when RStudio is starting")
-   String enableSplashScreenTitle();
-   @DefaultStringValue("Whether to show the splash screen when RStudio is starting.")
-   String enableSplashScreenDescription();
-
-   /**
     * The R version to use by default.
     */
    @DefaultStringValue("")

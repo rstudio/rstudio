@@ -173,6 +173,24 @@ public abstract class GlobalDisplay extends MessageDisplay
     */
    public abstract Command showProgress(String message);
 
+   /** A progress message that says how far along its work is. */
+   public interface PercentProgress
+   {
+      /**
+       * @param percent How far along the work is, from 0 to 100.
+       */
+      void setPercent(int percent);
+
+      void dismiss();
+   }
+
+   /**
+    * Shows a non-modal progress message for work that reports how far along
+    * it is. The message has room for the percentage from the start, so it
+    * keeps its size as the percentage changes.
+    */
+   public abstract PercentProgress showPercentProgress(String message);
+
    public abstract void showLicenseWarningBar(boolean severe, String message);
    public abstract void showWarningBar(boolean severe, String message);
    public abstract void showWarningBar(boolean severe, String message, String actionLabel, Command action);

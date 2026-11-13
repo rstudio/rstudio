@@ -123,6 +123,13 @@ public class DummyGlobalDisplay extends GlobalDisplay
     }
 
     @Override
+    public PercentProgress showPercentProgress(String message)
+    {
+
+        return null;
+    }
+
+    @Override
     public void showLicenseWarningBar(boolean severe, String message)
     {
 

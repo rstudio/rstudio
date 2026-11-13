@@ -36,7 +36,6 @@ namespace prefs {
 #define kViewWindowBounds "windowBounds"
 #define kViewAccessibility "accessibility"
 #define kViewDisableRendererAccessibility "disableRendererAccessibility"
-#define kViewEnableSplashScreen "enableSplashScreen"
 #define kRenderer "renderer"
 #define kRendererEngine "engine"
 #define kRendererUseGpuExclusionList "useGpuExclusionList"

@@ -240,6 +240,26 @@ public class DefaultGlobalDisplay extends GlobalDisplay
       return SlideLabel.show(message, false, true, RootLayoutPanel.get());
    }
 
+   @Override
+   public PercentProgress showPercentProgress(String message)
+   {
+      final SlideLabel label = SlideLabel.showWithPercent(message, RootLayoutPanel.get());
+      return new PercentProgress()
+      {
+         @Override
+         public void setPercent(int percent)
+         {
+            label.setPercent(percent);
+         }
+
+         @Override
+         public void dismiss()
+         {
+            RootLayoutPanel.get().remove(label);
+         }
+      };
+   }
+
    public void showLicenseWarningBar(boolean severe, String message)
    {
       view_.get().showLicenseWarning(severe, message);
