@@ -28,13 +28,14 @@ import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 
 public class SVNStatusRenderer implements SafeHtmlRenderer<String>
 {
+   // Icons shared with Git are loaded from the Git images, so the two can't drift apart.
    interface StatusResources extends ClientBundle
    {
-      @Source("images/statusAdded_2x.png")
+      @Source("../git/images/statusAdded_2x.png")
       ImageResource statusAdded2x();
       @Source("images/statusConflicted_2x.png")
       ImageResource statusConflicted2x();
-      @Source("images/statusDeleted_2x.png")
+      @Source("../git/images/statusDeleted_2x.png")
       ImageResource statusDeleted2x();
       @Source("images/statusExternal_2x.png")
       ImageResource statusExternal2x();
@@ -44,13 +45,13 @@ public class SVNStatusRenderer implements SafeHtmlRenderer<String>
       ImageResource statusMissing2x();
 //      @Source("images/statusMerged")
 //      ImageResource statusMerged();
-      @Source("images/statusModified_2x.png")
+      @Source("../git/images/statusModified_2x.png")
       ImageResource statusModified2x();
-      @Source("images/statusNone_2x.png")
+      @Source("../git/images/statusNone_2x.png")
       ImageResource statusNone2x();
       @Source("images/statusObstructed_2x.png")
       ImageResource statusObstructed2x();
-      @Source("images/statusUnversioned_2x.png")
+      @Source("../git/images/statusUntracked_2x.png")
       ImageResource statusUnversioned2x();
    }
 
