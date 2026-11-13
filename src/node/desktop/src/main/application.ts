@@ -34,6 +34,7 @@ import {
   showRNotFoundError,
 } from './detect-r';
 import { GwtCallback } from './gwt-callback';
+import { prepareInstanceSessionData, removeExitedInstanceSessionData } from './instance-session-data';
 import { PendingWindow } from './pending-window';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { exitFailure, exitSuccess, ProgramStatus, run } from './program-status';
@@ -41,6 +42,7 @@ import { registerProcessDiagnostics } from './process-diagnostics';
 import { SatelliteWindow } from './satellite-window';
 import { SecondaryWindow } from './secondary-window';
 import { SessionLauncher } from './session-launcher';
+import { shareBootstrapCookies } from './shared-cookies';
 import { startupCheckpoint } from './startup-timing';
 import {
   augmentCommandLineArguments,
@@ -111,6 +113,8 @@ export class Application implements AppState {
   sessionLauncher?: SessionLauncher;
   private activationInst?: DesktopActivation;
   private scratchPath?: FilePath;
+  private sharedSessionData = true;
+  private instanceLockTaken = false;
 
   argsManager = new ArgsManager();
 
@@ -146,6 +150,16 @@ export class Application implements AppState {
     }
 
     initializeSharedSecret();
+
+    // On macOS, an instance that fails to take the lock before NSApplication starts launching
+    // doesn't get 'ready' until it's activated (by a click on its Dock icon, say). Elsewhere,
+    // 'will-finish-launching' comes with 'ready', too late to move the session data.
+    if (process.platform === 'darwin') {
+      app.once('will-finish-launching', () => this.initializeInstanceLock());
+    } else {
+      this.initializeInstanceLock();
+    }
+
     this.registerAppEvents();
 
     // allow users to supply extra command-line arguments for Chromium
@@ -223,16 +237,20 @@ export class Application implements AppState {
       .catch((error: unknown) => logger().logError(error));
   }
 
-  private shouldInstanceOpen() {
-    // check if this is the primary instance
-    // projects always open in a new instance
-    // files prefer to reuse the primary instance
-    const hasInstanceLock = app.requestSingleInstanceLock();
+  /**
+   * Whether this launch only hands its files to the primary instance and exits: projects always
+   * open in a new instance, and files prefer to reuse the primary instance.
+   */
+  private forwardsToPrimary(hasInstanceLock: boolean): boolean {
     const hasProjectToOpen = this.argsManager.getProjectFileArg() ?? getenv('RS_INITIAL_PROJECT');
     const hasFileToOpen = this.argsManager.getFileArgs().length > 0;
 
     logger().logDebug(`instance lock: ${hasInstanceLock}, project: ${hasProjectToOpen}, file: ${hasFileToOpen}`);
-    if (!hasInstanceLock && !(hasProjectToOpen.length > 0) && hasFileToOpen) {
+    return !hasInstanceLock && !(hasProjectToOpen.length > 0) && hasFileToOpen;
+  }
+
+  private shouldInstanceOpen() {
+    if (this.forwardsToPrimary(app.hasSingleInstanceLock())) {
       logger().logDebug('No instance lock - exiting');
       return false;
     }
@@ -250,6 +268,32 @@ export class Application implements AppState {
     }
 
     keepAutomationWindowsRendering();
+  }
+
+  /**
+   * Takes the instance lock, which decides where Chromium keeps this instance's storage; that
+   * can only be changed before the app is ready. The listener for files forwarded by later
+   * launches goes in with the lock, as they can arrive from then on.
+   */
+  private initializeInstanceLock(canMoveSessionData = true) {
+    this.instanceLockTaken = true;
+    const userData = app.getPath('userData');
+    const hasInstanceLock = app.requestSingleInstanceLock();
+
+    // a launch that only hands its files to the primary instance never opens a window, so it
+    // has no use for storage of its own
+    if (!hasInstanceLock && canMoveSessionData && !this.forwardsToPrimary(hasInstanceLock)) {
+      const sessionData = prepareInstanceSessionData(userData);
+      if (sessionData) {
+        logger().logDebug(`Another instance is running; using session data folder ${sessionData}`);
+        app.setPath('sessionData', sessionData);
+        this.sharedSessionData = false;
+      }
+    }
+
+    getEventBus().once('main-window-loaded', () => {
+      removeExitedInstanceSessionData(userData).catch((error: unknown) => logger().logError(error));
+    });
 
     app.on('second-instance', (_event, argv) => {
       logger().logDebug(`second-instance event: ARGS ${argv}`);
@@ -262,6 +306,19 @@ export class Application implements AppState {
       this.argsManager.setUnswitchedArgs(argv.slice(1));
       if (this.argsManager.getProjectFileArg() === undefined) this.argsManager.handleAfterSessionLaunchCommands();
     });
+  }
+
+  /**
+   * Takes the instance lock if that didn't happen before the app was ready, as it wouldn't if
+   * awaited work before beforeAppReady() let 'will-finish-launching' fire before its handler was
+   * registered. Without the lock, a launch with a file would exit without handing it over. The
+   * session data can no longer move, so this instance keeps the shared storage.
+   */
+  private ensureInstanceLock() {
+    if (!this.instanceLockTaken) {
+      logger().logWarning('The instance lock was not taken before the app was ready; taking it now');
+      this.initializeInstanceLock(false);
+    }
   }
 
   // listens for messages from the server
@@ -385,15 +442,20 @@ export class Application implements AppState {
    * Invoked when Electron app is 'ready'
    */
   async run(): Promise<ProgramStatus> {
+    this.ensureInstanceLock();
     if (!this.shouldInstanceOpen()) {
       return exitSuccess();
     }
     this.initializeInstance();
 
     // the desktop's own pages (choose R, loading) need the UI language; read it while the
-    // rest of startup runs, and wait for it after R detection
+    // rest of startup runs, and wait for it after R detection. It's one of the cookies an
+    // instance with its own session data starts from, so those come first
     registerLanguageChannel();
-    const languageReady = trackLocaleCookie(session.defaultSession);
+    const sharedCookiesDir = path.join(app.getPath('userData'), 'shared-cookies');
+    const languageReady = shareBootstrapCookies(session.defaultSession, sharedCookiesDir, this.sharedSessionData).then(
+      async () => trackLocaleCookie(session.defaultSession),
+    );
 
     // prepare application for launch
     this.appLaunch = ApplicationLaunch.init();
