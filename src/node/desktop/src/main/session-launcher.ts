@@ -14,7 +14,7 @@
  */
 
 import { ChildProcess, spawn } from 'child_process';
-import { app, BrowserWindow } from 'electron';
+import { app } from 'electron';
 import fs, { rmSync } from 'fs';
 
 import { getenv, setenv, unsetenv } from '../core/environment';
@@ -41,7 +41,6 @@ import { EXIT_FAILURE } from './program-status';
 import { waitForUrlWithTimeout } from './url-utils';
 import { createStandaloneErrorDialog, getCurrentlyUniqueFolderName, isAutomated, showWindowForAutomation, userLogPath } from './utils';
 import path from 'path';
-import { createSplashScreen } from './splash-screen';
 import { startupCheckpoint } from './startup-timing';
 import { readMachoArchitectures } from '../core/macho';
 import {
@@ -207,10 +206,6 @@ export class SessionLauncher {
   sessionStdout: string[] = [];
   sessionStderr: string[] = [];
   private nextSessionUrl?: string;
-  private splash: BrowserWindow | undefined;
-  private showSplash = process.env.NODE_ENV !== 'TEST';
-  private splashDelay: number;
-  private splashLinger: number;
 
   // the session binary each launch starts from; the build matching the R in
   // use is picked from it per launch, as switching R can call for another
@@ -230,16 +225,6 @@ export class SessionLauncher {
     private windowAllClosedHandler: (() => void) | null,
   ) {
     this.baseSessionPath = sessionPath;
-    this.splashDelay = process.env.RS_SPLASH_DELAY ? parseInt(process.env.RS_SPLASH_DELAY) : 100;
-    this.splashLinger = process.env.RS_SPLASH_LINGER ? parseInt(process.env.RS_SPLASH_LINGER) : 1300;
-    if (process.env.RS_NO_SPLASH) {
-      this.showSplash = false;
-    }
-
-    // don't show splash screen if started using --run-diagnostics
-    if (appState().runDiagnostics) {
-      this.showSplash = false;
-    }
   }
 
   launchFirstSession(installPath: FilePath, devMode: boolean): void {
@@ -322,16 +307,12 @@ export class SessionLauncher {
     // show the window (but don't if we are doing a --run-diagnostics)
     if (!appState().runDiagnostics) {
       // Originally used 'ready-to-show' here, but we've been getting reports of the
-      // splash screen never closing and the main window never showing, and issues such
-      // as https://github.com/electron/electron/issues/40273 indicate that `ready-to-show`
+      // main window never showing, and issues such as
+      // https://github.com/electron/electron/issues/40273 indicate that `ready-to-show`
       // may not be reliable, especially if the user switches focus between different
       // windows/apps while starting up.
-      this.mainWindow.window.webContents.once('did-finish-load', async () => {
+      this.mainWindow.window.webContents.once('did-finish-load', () => {
         startupCheckpoint('did-finish-load');
-        if (appState().startupDelayMs > 0) {
-          await setTimeoutPromise(appState().startupDelayMs);
-        }
-        this.showSplash = false;
         // In automation mode, surface the window without pulling focus from
         // the test driver.
         if (isAutomated()) {
@@ -342,16 +323,6 @@ export class SessionLauncher {
           this.mainWindow?.window.show();
         }
         startupCheckpoint('window-shown');
-
-        // if the splash screen displayed, keep it visible for another brief period to
-        // reduce cases where it flashes and hides without being readable
-        if (this.splash) {
-          setTimeoutPromise(this.splashLinger)
-            .then(() => {
-              this.splash?.close();
-            })
-            .catch((err) => logger().logError(err));
-        }
       });
       appState().activation().setMainWindow(this.mainWindow.window);
       this.appLaunch.activateWindow();
@@ -693,25 +664,6 @@ export class SessionLauncher {
   }
 
   private async onLaunchFirstSession(): Promise<void> {
-    const showSplash = this.splashDelay > 0
-      && this.showSplash
-      && ElectronDesktopOptions().enableSplashScreen();
-    if (showSplash) {
-      setTimeoutPromise(this.splashDelay)
-        .then(() => {
-          if (this.showSplash) {
-            this.splash = createSplashScreen();
-            if (isAutomated()) {
-              this.splash.showInactive();
-            } else {
-              this.splash.show();
-            }
-            startupCheckpoint('splash-shown');
-          }
-        })
-        .catch((err) => logger().logError(err));
-    }
-
     const error = await this.launchFirst();
     if (error) {
       logger().logError(error);

@@ -104,7 +104,6 @@ export class Application implements AppState {
   loggerCallback?: LoggerCallback;
   sessionStartDelaySeconds = 0;
   sessionEarlyExitCode = 0;
-  startupDelayMs = 0;
   pendingWindows = new Array<PendingWindow>();
   server?: Server;
   client?: Client;
@@ -464,8 +463,7 @@ export class Application implements AppState {
 
     // Prevent app from terminating when last window closes during startup; this can cause
     // app to exit after Choose R dialog closes but before the license dialog shows. Also
-    // happens after the Manage License dialog (w/o Choose R being involved) if there is no
-    // splash screen to keep the app alive.
+    // happens after the Manage License dialog (w/o Choose R being involved).
     // https://github.com/rstudio/rstudio-pro/issues/6062
 
     const windowAllClosedHandler = () => {

@@ -211,10 +211,6 @@ configure_file(
    ${CMAKE_CURRENT_SOURCE_DIR}/src/main/build-info.ts.in
    ${ELECTRON_BINARY_DIR}/src/main/build-info.ts)
 
-configure_file(
-   ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/splash/splash_unversioned.html.in
-   ${ELECTRON_BINARY_DIR}/src/ui/splash/splash.html)
-
 if (APPLE)
    # configure Info.plist
    configure_file(

@@ -69,7 +69,6 @@ import { getenv } from '../core/environment';
 import { safeError } from '../core/err';
 import { userHomePathString } from '../core/user';
 import { buildInfo } from './build-info';
-import { showPersistentSplashScreen } from './splash-screen';
 import { harvestRendererTiming, startupCheckpoint } from './startup-timing';
 
 /**
@@ -977,10 +976,6 @@ export class GwtCallback extends EventEmitter {
       ElectronDesktopOptions().setAccessibility(enable);
     });
 
-    ipcMain.on('desktop_set_enable_splash_screen', (_event, enable) => {
-      ElectronDesktopOptions().setEnableSplashScreen(enable);
-    });
-
     ipcMain.on('desktop_set_autohide_menubar', (_event, autohide: boolean) => {
       this.mainWindow.window.setAutoHideMenuBar(autohide);
       this.mainWindow.window.setMenuBarVisibility(!autohide);
@@ -1208,10 +1203,6 @@ export class GwtCallback extends EventEmitter {
         this.addRVersionTooNewError();
       }
       return resolveTemplateVar(varName, this.errorPageData);
-    });
-
-    ipcMain.on('desktop_show_splash_screen', () => {
-      showPersistentSplashScreen();
     });
   }
 
