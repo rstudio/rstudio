@@ -107,6 +107,9 @@ function formatSelectedVersionForUi(rBinDir: string) {
 /** How long setPendingRVersion() lets the chosen R take to describe itself. */
 const kPendingRVersionTimeoutMs = 30000;
 
+/** The files a GTK file manager (Nautilus, Nemo, Caja, Thunar) copied or cut. */
+const kGnomeCopiedFilesFormat = 'electron application/osclipboard;format="x-special/gnome-copied-files"';
+
 /**
  * This is the main-process side of the GwtCallbacks; dispatched from renderer processes
  * via the ContextBridge.
@@ -417,14 +420,22 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_get_clipboard_uris', async () => {
+      // On Linux, Chromium 148+ reads the URI list through the XDG file
+      // transfer portal when the file manager offers it, and the list comes
+      // back empty when the portal lookup fails. GTK file managers also publish
+      // their own list ("copy" or "cut", then one URI per line), so use that.
+      // Entries in a URI list are CRLF-separated per RFC 2483.
+      const lines = await readClipboardType(['text/uri-list', kGnomeCopiedFilesFormat], async (blob, mimeType) => {
+        const entries = (await blob.text()).split(/\r?\n/);
+        return mimeType === kGnomeCopiedFilesFormat ? entries.slice(1) : entries;
+      });
+
       // if we don't have a URI list, nothing to do
-      const uriList = await readClipboardType('text/uri-list', async (blob) => blob.text());
-      if (uriList === undefined) {
+      if (lines === undefined) {
         return [];
       }
 
-      // return uri list as array; entries are CRLF-separated per RFC 2483
-      const parts = uriList.split(/\r?\n/).filter((x) => x.length > 0);
+      const parts = lines.filter((x) => x.length > 0);
 
       // Electron only puts percent-encoded file:// URIs here; decode them to
       // filesystem paths, with the forward slashes the visual editor expects
@@ -447,7 +458,7 @@ export class GwtCallback extends EventEmitter {
     // return the path to that file.
     ipcMain.handle('desktop_get_clipboard_image', async () => {
       // if we don't have any image, bail
-      const pngData = await readClipboardType('image/png', async (blob) => Buffer.from(await blob.arrayBuffer()));
+      const pngData = await readClipboardType(['image/png'], async (blob) => Buffer.from(await blob.arrayBuffer()));
       if (!pngData) {
         return '';
       }
