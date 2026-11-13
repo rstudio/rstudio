@@ -32,6 +32,7 @@ import { MenuCallback } from './menu-callback';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { RCommandEvaluator } from './r-command-evaluator';
 import { SessionLauncher } from './session-launcher';
+import { kWebDialogCookie } from './shared-cookies';
 import { startupCheckpoint } from './startup-timing';
 import { waitForUrlWithTimeout } from './url-utils';
 import { isAutomated, openExternalUrl, registerWebContentsDebugHandlers } from './utils';
@@ -72,7 +73,7 @@ async function preSeedAutomationCookies(targetUrl: string): Promise<void> {
   try {
     await session.defaultSession.cookies.set({
       url: targetUrl,
-      name: 'WEBDIALOG',
+      name: kWebDialogCookie,
       value: '1',
       expirationDate: new Date(Date.UTC(5000, 11, 31)).getTime() / 1000,
     });

@@ -23,7 +23,7 @@ import { FilePath } from '../core/file-path';
 import { readStringArrayFromFile } from '../core/file-serializer';
 import { logger, levelToCppLevel } from '../core/logger';
 import { kRStudioInitialProject } from '../core/r-user-data';
-import { generateShortenedUuid, localPeer } from '../core/system';
+import { generateShortenedUuid, kLocalSessionHost, localPeer } from '../core/system';
 
 import i18next from 'i18next';
 import { setTimeoutPromise, sleepPromise } from '../core/wait-utils';
@@ -199,7 +199,7 @@ export function launchFailedDetail(abendMessage: string | null, stateDirIssues: 
 }
 
 export class SessionLauncher {
-  host = '127.0.0.1';
+  host = kLocalSessionHost;
   sessionProcess?: ChildProcess;
   mainWindow?: MainWindow;
   static launcherToken = generateShortenedUuid();
