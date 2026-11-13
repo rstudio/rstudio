@@ -180,6 +180,67 @@ test_that("chat.downloadPackage raises a short transfer timeout and restores it"
    })
 })
 
+# A zip holding one file, a.txt, containing "ok" (made with tar -a, stored).
+writeTinyZip <- function(path) {
+   hex <- paste0(
+      "504b03040a0008000000c07b6d5d00000000000000000000000005002000612e7478",
+      "7475780b00010400000000040000000055540d00075881f76a5881f76a5881f76a6f",
+      "6b504b070847dddc790200000002000000504b01020a030a0008000000c07b6d5d47",
+      "dddc790200000002000000050018000000000000000000b68100000000612e747874",
+      "75780b00010400000000040000000055540500015881f76a504b0506000000000100",
+      "01004b000000550000000000"
+   )
+   bytes <- substring(hex, seq(1, nchar(hex), 2), seq(2, nchar(hex), 2))
+   writeBin(as.raw(strtoi(bytes, 16L)), path)
+}
+
+writeCorruptZip <- function(path) {
+   writeBin(charToRaw("not a zip file"), path)
+}
+
+test_that("chat.extractPackage reports no reason when the extraction succeeds", {
+   zipfile <- tempfile(fileext = ".zip")
+   exdir <- tempfile()
+   writeTinyZip(zipfile)
+
+   expect_identical(.rs.chat.extractPackage(zipfile, exdir), "")
+   expect_identical(readLines(file.path(exdir, "a.txt"), warn = FALSE), "ok")
+})
+
+test_that("chat.extractPackage reports a failure that unzip only warns about", {
+   # unzip() warns and returns normally when it cannot open or write the archive,
+   # so an install that only checked for an error would go on to publish it.
+   zipfile <- tempfile(fileext = ".zip")
+   writeCorruptZip(zipfile)
+
+   reason <- suppressWarnings(.rs.chat.extractPackage(zipfile, tempfile()))
+   expect_match(reason, "error 1 in extracting from zip file", fixed = TRUE)
+})
+
+test_that("chat.extractPackage reports an unzip error", {
+   fn <- .rs.chat.extractPackage
+   env <- new.env(parent = environment(fn))
+   env$unzip <- function(zipfile, exdir, ...) stop("'exdir' does not exist")
+   environment(fn) <- env
+
+   expect_identical(fn(tempfile(), tempfile()), "'exdir' does not exist")
+})
+
+test_that("chat.extractPackage reports a warning promoted to an error only once", {
+   zipfile <- tempfile(fileext = ".zip")
+   writeCorruptZip(zipfile)
+
+   withr::with_options(list(warn = 2), {
+      reason <- .rs.chat.extractPackage(zipfile, tempfile())
+   })
+
+   expect_match(reason, "error 1 in extracting from zip file", fixed = TRUE)
+   expect_identical(
+      lengths(regmatches(reason, gregexpr("error 1", reason, fixed = TRUE))),
+      1L
+   )
+})
+
 test_that("chat.safeEval returns value and visibility with no conditions", {
    result <- .rs.chat.safeEval(quote(42))
    # a plain list, not a condition: the C++ dispatch discriminates on class

@@ -299,7 +299,6 @@ using chat_installation::systemStorageDir;
 using chat_installation::runsUserSlot;
 using chat_installation::userInstallWouldBeSelected;
 using chat_installation::verifyDeclaredIdentity;
-using chat_installation::verifyExtracted;
 using chat_installation::getInstalledVersion;
 using chat_installation::getInstalledProtocolVersion;
 
@@ -4411,20 +4410,19 @@ Error installPackage(const FilePath& packagePath,
    // FilePath strings are UTF-8, but addParam() marks them native. Under R < 4.2
    // on Windows, native is the system code page, so a non-ASCII path (a user
    // name such as José) would name a different directory in R than here.
-   r::exec::RFunction unzipFunc("unzip");
-   unzipFunc.addUtf8Param("zipfile", packagePath);
-   unzipFunc.addUtf8Param("exdir", stagingDir);
-
-   error = unzipFunc.call();
+   // callUtf8 for the same reason as in downloadPackage().
+   std::string reason;
+   error = r::exec::RFunction(".rs.chat.extractPackage")
+         .addUtf8Param("zipfile", packagePath)
+         .addUtf8Param("exdir", stagingDir)
+         .callUtf8(&reason);
+   if (!error && !reason.empty())
+      error = systemError(boost::system::errc::io_error, reason, ERROR_LOCATION);
    if (error)
    {
-      WLOG("Failed to extract package: {}", error.getMessage());
+      WLOG("Failed to extract package: {}", core::errorDescription(error));
       return discardStaging(error);
    }
-
-   error = verifyExtracted(stagingDir);
-   if (error)
-      return discardStaging(error);
 
    // The archive was SHA-256 checked against the manifest entry chosen for
    // this protocol, so a package declaring something else is mis-published

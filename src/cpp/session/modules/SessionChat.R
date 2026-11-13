@@ -1245,3 +1245,35 @@ delayedAssign(
 
    paste(c(reason, warningText), collapse = "; ")
 })
+
+#' Extract the Posit Assistant package, reporting why a failure happened.
+#'
+#' unzip() reports most failures -- a zip it cannot open, an entry it cannot
+#' write -- as a warning ("error 1 in extracting from zip file") and returns
+#' normally, so a partial extraction would otherwise reach the install checks
+#' as if it had succeeded. Any warning or error therefore fails the extraction.
+#' As in chat.downloadPackage, the warnings are collected but not muffled.
+#'
+#' @param zipfile The downloaded package.
+#' @param exdir The staging directory to extract the package into.
+#' @return "" if the extraction succeeded, otherwise the reason it failed.
+.rs.addFunction("chat.extractPackage", function(zipfile, exdir)
+{
+   warningText <- character()
+
+   result <- withCallingHandlers(
+      tryCatch(unzip(zipfile, exdir = exdir), error = function(e) e),
+      warning = function(w)
+      {
+         warningText <<- c(warningText, conditionMessage(w))
+      }
+   )
+
+   reason <- if (inherits(result, "error")) conditionMessage(result)
+
+   # Under options(warn = 2) the collected warning is the error just reported.
+   if (length(reason))
+      warningText <- warningText[!vapply(warningText, grepl, logical(1), x = reason, fixed = TRUE)]
+
+   paste(c(reason, warningText), collapse = "; ")
+})
