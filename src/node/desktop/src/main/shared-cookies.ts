@@ -18,39 +18,38 @@ import { mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'fs';
 import path from 'path';
 import { safeError } from '../core/err';
 import { logger } from '../core/logger';
+import { kLocalSessionHost } from '../core/system';
+
+export const kLocaleCookie = 'LOCALE';
+export const kWebDialogCookie = 'WEBDIALOG';
 
 // The GWT bootstrap reads these cookies to pick the build to load (UI language, web dialogs),
 // and the client reloads the page when they don't match the user's preferences. An instance
 // with its own session data (see instance-session-data.ts) starts without them, so every
 // instance records them when they change, and such an instance starts from the record. Each
 // cookie has a file of its own, so instances changing different cookies never undo each other.
-const kSharedCookieNames = ['LOCALE', 'WEBDIALOG'];
+const kSharedCookieNames = [kLocaleCookie, kWebDialogCookie];
+
+// only the desktop's own sessions' cookies are shared; other hosts (a remote server in Desktop
+// Pro, say) have their own
+const kSessionUrl = `http://${kLocalSessionHost}/`;
 
 interface SharedCookie {
-  name: string;
   value: string;
-  domain: string;
-  path: string;
-  hostOnly?: boolean;
-  secure?: boolean;
   expirationDate?: number;
 }
 
-function toShared(cookie: Cookie): SharedCookie {
-  const { name, value, domain = '', path = '/', hostOnly, secure, expirationDate } = cookie;
-  return { name, value, domain, path, hostOnly, secure, expirationDate };
+function isShared(cookie: Cookie): boolean {
+  return kSharedCookieNames.includes(cookie.name) && cookie.domain === kLocalSessionHost && cookie.path === '/';
 }
 
-function isSharedCookie(value: unknown, name: string): value is SharedCookie {
+function isSharedCookie(value: unknown): value is SharedCookie {
   if (typeof value !== 'object' || value === null) {
     return false;
   }
   const cookie = value as SharedCookie;
   return (
-    cookie.name === name &&
     typeof cookie.value === 'string' &&
-    typeof cookie.domain === 'string' &&
-    typeof cookie.path === 'string' &&
     (cookie.expirationDate === undefined || typeof cookie.expirationDate === 'number')
   );
 }
@@ -73,18 +72,19 @@ function readCookie(dir: string, name: string): SharedCookie | undefined {
 
   try {
     const parsed: unknown = JSON.parse(content);
-    if (isSharedCookie(parsed, name)) {
+    if (isSharedCookie(parsed)) {
       return parsed;
     }
   } catch {
-    // reported below, like any other content that isn't the cookie
+    // reported below, like any other content that isn't a cookie
   }
   logger().logWarning(`Ignoring malformed shared cookie in ${file}`);
   return undefined;
 }
 
-function recordCookie(dir: string, name: string, cookie: SharedCookie | undefined): void {
+function recordCookie(dir: string, name: string, cookie: Cookie | undefined): void {
   const file = cookieFile(dir, name);
+  const temp = `${file}.${process.pid}.tmp`;
   try {
     if (cookie === undefined) {
       rmSync(file, { force: true });
@@ -92,20 +92,24 @@ function recordCookie(dir: string, name: string, cookie: SharedCookie | undefine
     }
     // instances read this while others write it, so replace it whole
     mkdirSync(dir, { recursive: true });
-    const temp = `${file}.${process.pid}.tmp`;
-    writeFileSync(temp, JSON.stringify(cookie));
+    const shared: SharedCookie = { value: cookie.value, expirationDate: cookie.expirationDate };
+    writeFileSync(temp, JSON.stringify(shared));
     renameSync(temp, file);
   } catch (error: unknown) {
+    rmSync(temp, { force: true });
     logger().logWarning(`Unable to record shared cookie in ${file}: ${safeError(error).message}`);
   }
 }
 
 async function recordAll(session: Session, dir: string): Promise<void> {
   try {
-    const cookies = await session.cookies.get({});
+    const cookies = await session.cookies.get({ url: kSessionUrl });
     for (const name of kSharedCookieNames) {
-      const cookie = cookies.find((candidate) => candidate.name === name);
-      recordCookie(dir, name, cookie && toShared(cookie));
+      recordCookie(
+        dir,
+        name,
+        cookies.find((cookie) => cookie.name === name && isShared(cookie)),
+      );
     }
   } catch (error: unknown) {
     logger().logError(error);
@@ -118,18 +122,8 @@ async function restore(session: Session, dir: string): Promise<void> {
     if (cookie === undefined) {
       continue;
     }
-    const host = cookie.domain.replace(/^\./, '');
     try {
-      await session.cookies.set({
-        url: `${cookie.secure ? 'https' : 'http'}://${host}${cookie.path}`,
-        name: cookie.name,
-        value: cookie.value,
-        // a host-only cookie is set by leaving out the domain
-        domain: cookie.hostOnly ? undefined : cookie.domain,
-        path: cookie.path,
-        secure: cookie.secure,
-        expirationDate: cookie.expirationDate,
-      });
+      await session.cookies.set({ url: kSessionUrl, name, ...cookie });
     } catch (error: unknown) {
       logger().logError(error);
     }
@@ -146,8 +140,8 @@ export async function shareBootstrapCookies(session: Session, dir: string, share
 
   session.cookies.on('changed', (_event, cookie, cause, removed) => {
     // overwriting a cookie reports its removal, then the new one
-    if (kSharedCookieNames.includes(cookie.name) && !(removed && cause === 'overwrite')) {
-      recordCookie(dir, cookie.name, removed ? undefined : toShared(cookie));
+    if (isShared(cookie) && !(removed && cause === 'overwrite')) {
+      recordCookie(dir, cookie.name, removed ? undefined : cookie);
     }
   });
 }
