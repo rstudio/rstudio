@@ -320,10 +320,10 @@ set(RSTUDIO_R_MINOR_VERSION_REQUIRED 6)
 set(RSTUDIO_R_PATCH_VERSION_REQUIRED 0)
 
 # maximum supported R version
-set(RSTUDIO_R_VERSION_MAXIMUM "4.6.1")
+set(RSTUDIO_R_VERSION_MAXIMUM "4.6.2")
 set(RSTUDIO_R_MAJOR_VERSION_MAXIMUM 4)
 set(RSTUDIO_R_MINOR_VERSION_MAXIMUM 6)
-set(RSTUDIO_R_PATCH_VERSION_MAXIMUM 1)
+set(RSTUDIO_R_PATCH_VERSION_MAXIMUM 2)
 
 # allow opting out of version checking (for building on older distros)
 if(NOT DEFINED RSTUDIO_VERIFY_R_VERSION)
@@ -338,10 +338,10 @@ endif()
 set(PANDOC_VERSION "3.2" CACHE INTERNAL "Pandoc version")
 
 # node version used for building product components
-set(RSTUDIO_NODE_VERSION "24.22.1" CACHE INTERNAL "Node version for building")
+set(RSTUDIO_NODE_VERSION "24.22.3" CACHE INTERNAL "Node version for building")
 
 # node version installed with the product
-set(RSTUDIO_INSTALLED_NODE_VERSION "24.22.1" CACHE INTERNAL "Node version installed with product")
+set(RSTUDIO_INSTALLED_NODE_VERSION "24.22.3" CACHE INTERNAL "Node version installed with product")
 
 # quarto support
 

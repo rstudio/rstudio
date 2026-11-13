@@ -14,6 +14,8 @@ import { SourcePaneActions } from '@actions/source_pane.actions';
 import { AceEditor } from '@pages/ace_editor.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { executeCommand, isCommandEnabled, saveDocument } from '@utils/commands';
+import { openFile } from '@utils/files';
+import { heredoc } from '@utils/heredoc';
 
 test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
   useSuiteSandbox();
@@ -51,6 +53,16 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
 
   const findReplaceButton = (proseMirror: Locator) =>
     visualEditorPanel(proseMirror).getByRole('button', { name: 'Find/Replace' });
+
+  // Once To Source has fallen back to a new R script, return to the document
+  // it was aimed at and check that nothing was inserted there on the way: the
+  // text at the cursor is still whole, and the document has no unsaved
+  // changes. (Any edit made in the visual editor marks it dirty at once.)
+  const expectDocumentUntouched = async (page: Page, fileName: string, text: string) => {
+    await openFile(page, fileName);
+    await expect(page.locator('.ProseMirror:visible').first().getByText(text, { exact: true })).toBeVisible();
+    expect(await page.evaluate(() => window.rstudio!.documents.active()!.dirty)).toBe(false);
+  };
 
   test('the warn option is preserved when running chunks', async ({ rstudioPage: page }) => {
     const fileName = `quarto_warn_${Date.now()}.qmd`;
@@ -372,6 +384,285 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       // Close the tab rather than toggling back to source mode: toggling
       // leaves the chunks' Ace editors mounted, which makes the source-mode
       // editor locators ambiguous for later tests in the shared IDE.
+      await sourceActions.closeSourceAndDeleteFile(fileName);
+    }
+  });
+
+  test('History To Source inserts into the focused chunk in visual mode (#19566)', async ({ rstudioPage: page }) => {
+    const stamp = Date.now();
+    const fileName = `quarto_history_to_source_${stamp}.qmd`;
+    // Unique, so the History rows and the inserted text match nothing else.
+    const first = `history_to_source_a_${stamp} <- 1`;
+    const second = `history_to_source_b_${stamp} <- 2`;
+    // heredoc reads its template raw, so an escaped backtick would keep its
+    // backslash; interpolate the fence instead.
+    const fence = '```';
+    const content = heredoc`
+      ---
+      title: History To Source
+      ---
+
+      Some prose.
+
+      ${fence}{r alpha}
+      x <- 1
+      ${fence}
+    `;
+
+    await consoleActions.executeInConsole(first);
+    await consoleActions.executeInConsole(second);
+    await sourceActions.createAndOpenFile(fileName, content);
+    try {
+      await sourceActions.ensureVisualMode();
+      const proseMirror = page.locator('.ProseMirror:visible').first();
+      await expect(proseMirror).toBeVisible({ timeout: 15000 });
+
+      // Cursor at the start of the chunk's code, below its header line.
+      const chunk = AceEditor.visualModeChunk(page, '{r alpha}', proseMirror);
+      await focusChunk(page, proseMirror, '{r alpha}');
+      await chunk.gotoLine(2, 0);
+
+      // Real clicks on two rows, as in the report: selecting a History row
+      // takes focus out of the chunk, so the insert has to find its way back
+      // to it rather than land in the document's hidden source editor.
+      await executeCommand(page, 'activateHistory');
+      const history = page.getByRole('listbox', { name: 'Console History', exact: true });
+      const firstRow = history.getByText(first, { exact: true });
+      const toSource = page.locator("[id^='rstudio_tb_historysendtosource']");
+      await firstRow.click();
+      await history.getByText(second, { exact: true }).click({ modifiers: ['Shift'] });
+      await toSource.click();
+
+      await expect.poll(() => chunk.getValue()).toContain(`${first}\n${second}\nx <- 1`);
+
+      // That insert was the document's first edit, and a document becoming
+      // dirty refreshes command state. The code commands must survive that,
+      // or running code from the chunk would stop working after its first
+      // edit. (To Source itself does not go by them in visual mode.)
+      expect(await isCommandEnabled(page, 'executeCode')).toBe(true);
+      await firstRow.click();
+      await toSource.click();
+
+      await expect.poll(() => chunk.getValue()).toContain(`${first}\n${second}\n${first}\nx <- 1`);
+
+      // The report's damage was to the file: the commands went into the
+      // hidden source editor, above the YAML header, and were saved from
+      // there. The saved source holds them in the chunk and nowhere else.
+      await saveDocument(page);
+      const source = new AceEditor(page, '');
+      const expected = content.replace('x <- 1', `${first}\n${second}\n${first}\nx <- 1`);
+      await expect.poll(async () => (await source.getValue()).trim()).toBe(expected.trim());
+    } finally {
+      await sourceActions.closeSourceAndDeleteFile(fileName);
+    }
+  });
+
+  test('History To Source leaves keyboard focus in the History pane in visual mode (#19566)', async ({ rstudioPage: page }) => {
+    const stamp = Date.now();
+    const fileName = `quarto_history_keyboard_${stamp}.qmd`;
+    const first = `history_keyboard_a_${stamp} <- 1`;
+    const second = `history_keyboard_b_${stamp} <- 2`;
+    const fence = '```';
+    const content = heredoc`
+      ---
+      title: History To Source
+      ---
+
+      Some prose.
+
+      ${fence}{r alpha}
+      x <- 1
+      ${fence}
+    `;
+
+    await consoleActions.executeInConsole(first);
+    await consoleActions.executeInConsole(second);
+    await sourceActions.createAndOpenFile(fileName, content);
+    try {
+      await sourceActions.ensureVisualMode();
+      const proseMirror = page.locator('.ProseMirror:visible').first();
+      await expect(proseMirror).toBeVisible({ timeout: 15000 });
+
+      const chunk = AceEditor.visualModeChunk(page, '{r alpha}', proseMirror);
+      await focusChunk(page, proseMirror, '{r alpha}');
+      await chunk.gotoLine(2, 0);
+
+      // Shift+Enter in the History list is To Source. Focus has to come back
+      // to the list afterwards, as it stays there in source mode: the insert
+      // borrows it to find the chunk, and a keyboard user's next key would
+      // otherwise edit the chunk.
+      await executeCommand(page, 'activateHistory');
+      const history = page.getByRole('listbox', { name: 'Console History', exact: true });
+      await history.getByText(second, { exact: true }).click();
+      await expect(history).toBeFocused();
+      await page.keyboard.press('Shift+Enter');
+
+      await expect.poll(() => chunk.getValue()).toContain(`${second}\nx <- 1`);
+      await expect(history).toBeFocused();
+
+      // Save from the keyboard, with focus still in the History pane. The
+      // document going clean refreshes command state while no chunk has
+      // focus; the cursor is still in the chunk, so the code commands stay
+      // enabled, and To Source goes on reaching it.
+      await page.keyboard.press('ControlOrMeta+s');
+      await page.waitForFunction(() => {
+        const doc = window.rstudio?.documents.active() ?? null;
+        return doc !== null && !doc.dirty;
+      });
+      expect(await isCommandEnabled(page, 'executeCode')).toBe(true);
+
+      // On to the previous entry, from the keyboard alone.
+      await page.keyboard.press('ArrowUp');
+      await page.keyboard.press('Shift+Enter');
+
+      await expect.poll(() => chunk.getValue()).toContain(`${second}\n${first}\nx <- 1`);
+      await expect(history).toBeFocused();
+    } finally {
+      await sourceActions.closeSourceAndDeleteFile(fileName);
+    }
+  });
+
+  test('History To Source inserts a new chunk at a prose cursor in visual mode (#19571)', async ({ rstudioPage: page }) => {
+    const stamp = Date.now();
+    const fileName = `quarto_history_prose_${stamp}.qmd`;
+    const command = `history_prose_${stamp} <- 1`;
+    const fence = '```';
+    const content = heredoc`
+      ---
+      title: History To Source
+      ---
+
+      Some prose.
+
+      ${fence}{r alpha}
+      x <- 1
+      ${fence}
+    `;
+
+    await consoleActions.executeInConsole(command);
+    await sourceActions.createAndOpenFile(fileName, content);
+    try {
+      await sourceActions.ensureVisualMode();
+      const proseMirror = page.locator('.ProseMirror:visible').first();
+      await expect(proseMirror).toBeVisible({ timeout: 15000 });
+
+      // Cursor at the end of the paragraph, so the chunk follows it rather
+      // than splitting it.
+      await proseMirror.getByText('Some prose.').click();
+      await page.keyboard.press('End');
+
+      await executeCommand(page, 'activateHistory');
+      const history = page.getByRole('listbox', { name: 'Console History', exact: true });
+      const historyRow = history.getByText(command, { exact: true });
+      const toSource = page.locator("[id^='rstudio_tb_historysendtosource']");
+      // From the keyboard the first time (Shift+Enter is To Source), so that
+      // focus can be seen to come back to the History list afterwards.
+      await historyRow.click();
+      await page.keyboard.press('Shift+Enter');
+
+      // The command arrives as a new R chunk in this document. Before the
+      // fix it opened a new R script, which hides this editor, so the lookup
+      // throws until the chunk exists.
+      const inserted = AceEditor.visualModeChunk(page, command, proseMirror);
+      await expect.poll(() => inserted.getValue().catch(() => '')).toBe(`{r}\n${command}\n`);
+      await expect(history).toBeFocused();
+
+      // The cursor is left on the chunk's empty last line, so a second
+      // command follows the first rather than running into it.
+      await historyRow.click();
+      await toSource.click();
+      await expect.poll(() => inserted.getValue()).toBe(`{r}\n${command}\n${command}\n`);
+
+      // Saving brings the document's source up to date: the chunk is fenced
+      // and sits between the paragraph and the existing chunk.
+      await saveDocument(page);
+      const source = new AceEditor(page, '');
+      await expect.poll(() => source.getValue()).toContain(
+        `Some prose.\n\n${fence}{r}\n${command}\n${command}\n\n${fence}\n\n${fence}{r alpha}`);
+    } finally {
+      await sourceActions.closeSourceAndDeleteFile(fileName);
+    }
+  });
+
+  test('History To Source opens an R script where a chunk cannot go in visual mode (#19571)', async ({ rstudioPage: page }) => {
+    const stamp = Date.now();
+    const fileName = `quarto_history_table_${stamp}.qmd`;
+    const command = `history_table_${stamp} <- 1`;
+    const content = heredoc`
+      ---
+      title: History To Source
+      ---
+
+      | Name     | Value |
+      |----------|-------|
+      | cell_one | 2     |
+    `;
+
+    await consoleActions.executeInConsole(command);
+    await sourceActions.createAndOpenFile(fileName, content);
+    try {
+      await sourceActions.ensureVisualMode();
+      const proseMirror = page.locator('.ProseMirror:visible').first();
+      await expect(proseMirror).toBeVisible({ timeout: 15000 });
+
+      // A table cell can hold neither a chunk editor nor a new chunk.
+      await proseMirror.getByText('cell_one').click();
+
+      await executeCommand(page, 'activateHistory');
+      const history = page.getByRole('listbox', { name: 'Console History', exact: true });
+      await history.getByText(command, { exact: true }).click();
+      await page.locator("[id^='rstudio_tb_historysendtosource']").click();
+
+      // The command is not dropped: it goes to a new R script, which becomes
+      // the active document. (Until then the active editor is this
+      // document's own source editor, which never holds just the command.)
+      const active = new AceEditor(page, '');
+      await expect.poll(() => active.getValue().catch(() => '')).toBe(`${command}\n`);
+
+      await expectDocumentUntouched(page, fileName, 'cell_one');
+    } finally {
+      await sourceActions.closeSourceAndDeleteFile(fileName);
+    }
+  });
+
+  test('History To Source opens an R script rather than replace a selection in visual mode (#19571)', async ({ rstudioPage: page }) => {
+    const stamp = Date.now();
+    const fileName = `quarto_history_selection_${stamp}.qmd`;
+    const command = `history_selection_${stamp} <- 1`;
+    const content = heredoc`
+      ---
+      title: History To Source
+      ---
+
+      Some selected prose.
+    `;
+
+    await consoleActions.executeInConsole(command);
+    await sourceActions.createAndOpenFile(fileName, content);
+    try {
+      await sourceActions.ensureVisualMode();
+      const proseMirror = page.locator('.ProseMirror:visible').first();
+      await expect(proseMirror).toBeVisible({ timeout: 15000 });
+
+      // Select the paragraph's last word. A new chunk replaces the
+      // selection, which would delete the word. (A clicked image is selected
+      // too, as a node, and would be deleted the same way.)
+      await proseMirror.getByText('Some selected prose.').click();
+      await page.keyboard.press('End');
+      for (let i = 0; i < 'prose.'.length; i++)
+        await page.keyboard.press('Shift+ArrowLeft');
+      await expect.poll(() => page.evaluate(() => window.getSelection()?.toString())).toBe('prose.');
+
+      await executeCommand(page, 'activateHistory');
+      const history = page.getByRole('listbox', { name: 'Console History', exact: true });
+      await history.getByText(command, { exact: true }).click();
+      await page.locator("[id^='rstudio_tb_historysendtosource']").click();
+
+      const active = new AceEditor(page, '');
+      await expect.poll(() => active.getValue().catch(() => '')).toBe(`${command}\n`);
+
+      await expectDocumentUntouched(page, fileName, 'Some selected prose.');
+    } finally {
       await sourceActions.closeSourceAndDeleteFile(fileName);
     }
   });

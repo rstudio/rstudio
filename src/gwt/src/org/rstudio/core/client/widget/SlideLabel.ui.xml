@@ -18,6 +18,12 @@
                   <td valign="middle">
                      <div class="{res.style.content}" ui:field="content_" />
                   </td>
+                  <td valign="middle" class="{res.style.percentColumn}" ui:field="percentColumn_">
+                     <div class="{res.style.percent}">
+                        <span class="{res.style.percentSizer}" ui:field="percentSizer_" aria-hidden="true" />
+                        <span class="{res.style.percentValue}" ui:field="percent_" />
+                     </div>
+                  </td>
                   <td class="{res.style.cancelColumn}">
                      <rs:SmallButton styleName="{res.style.cancelButton}" ui:field="cancel_" text="Cancel"><ui:attribute
                              name="text" key="cancelText"/> </rs:SmallButton>

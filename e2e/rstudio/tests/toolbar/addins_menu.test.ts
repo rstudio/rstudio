@@ -10,7 +10,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import type { Locator, Page } from '@playwright/test';
 
 import { ruleSetTags, violationSummary } from '@utils/a11y';
-import { sleep } from '@utils/constants';
+import { expectHoldsFor } from '@utils/expect-holds';
 
 const ADDINS_BUTTON = '#rstudio_addins_toolbar_button';
 const SEARCH_LABEL = 'Search for addins';
@@ -20,17 +20,6 @@ const REBUILD_WINDOW_MS = 1000;
 
 // devtools, in required-packages.txt, provides five.
 const MIN_ADDINS = 3;
-
-// Asserts continuously for `durationMs`, failing on the first violation;
-// expect.poll would pass on its first sample, before any rebuild.
-async function expectHoldsFor(durationMs: number, assertions: () => Promise<void>): Promise<void> {
-  await assertions();
-  const deadline = Date.now() + durationMs;
-  while (Date.now() < deadline) {
-    await sleep(50);
-    await assertions();
-  }
-}
 
 // The popup holding the search box and the menu. The search text outlives the
 // popup, so clear what an earlier test typed. The add-in registry is filled in
@@ -279,7 +268,7 @@ test.describe('Addins toolbar menu (#19552)', () => {
 
     // The arrow keys skip headings, so each package's first add-in names its package
     const item = (name: string) => menu.getByRole('menuitem', { name, exact: true });
-    await expect(item('devtools: Run a test file')).toBeVisible();
+    await expect(item('devtools Run a test file')).toBeVisible();
     await expect(item('Report test coverage for a file')).toBeVisible();
 
     // With nothing left to highlight, the search box must not name a removed item.

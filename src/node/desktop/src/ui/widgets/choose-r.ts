@@ -18,7 +18,6 @@ import { detectREnvironment, findDefault32Bit, findDefault64Bit, isValidInstalla
 import { logger } from '../../core/logger';
 import { ModalDialog } from '../modal-dialog';
 
-import { initI18n } from '../../main/i18n-manager';
 import i18next, { t } from 'i18next';
 import { CallbackData } from './choose-r/preload';
 import { ElectronDesktopOptions, fixWindowsRExecutablePath } from '../../main/preferences/electron-desktop-options';
@@ -76,8 +75,6 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
     super(CHOOSE_R_WEBPACK_ENTRY, CHOOSE_R_PRELOAD_WEBPACK_ENTRY, parentWindow);
 
     this.rInstalls = rInstalls;
-
-    initI18n();
   }
 
   async maybeResolve(resolve: (data: CallbackData) => void, data: CallbackData) {

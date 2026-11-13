@@ -156,10 +156,6 @@ public class UserStateAccessor extends Prefs
          return this && typeof this.disableRendererAccessibility === "boolean" ? this.disableRendererAccessibility : false;
       }-*/;
 
-      public final native boolean getEnableSplashScreen() /*-{
-         return this && typeof this.enableSplashScreen === "boolean" ? this.enableSplashScreen : true;
-      }-*/;
-
    }
 
    /**

@@ -1,7 +1,7 @@
 /*
- * CustomMenuItemSeparator.java
+ * desktop-language.ts
  *
- * Copyright (C) 2022 by Posit Software, PBC
+ * Copyright (C) 2026 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant
  * to the terms of a commercial license agreement with Posit Software, then
@@ -12,19 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.core.client.widget;
 
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.client.ui.MenuItemSeparator;
-
-public abstract class CustomMenuItemSeparator extends MenuItemSeparator
-{
-   public abstract Element createMainElement();
-   
-   public CustomMenuItemSeparator()
-   {
-      getElement().removeAllChildren();
-      getElement().appendChild(createMainElement());
-   }
-   
-}
+// Synchronous IPC channel through which preloads ask the main process for the UI language.
+// Kept free of dependencies so both main/page-language.ts and the preloads can import it.
+export const kGetLanguageChannel = 'desktop_get_language';

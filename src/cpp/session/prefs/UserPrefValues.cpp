@@ -2845,19 +2845,6 @@ core::Error UserPrefValues::setClangVerbose(int val)
 }
 
 /**
- * Whether to show the splash screen when RStudio is starting.
- */
-bool UserPrefValues::enableSplashScreen()
-{
-   return readPref<bool>("enable_splash_screen");
-}
-
-core::Error UserPrefValues::setEnableSplashScreen(bool val)
-{
-   return writePref("enable_splash_screen", val);
-}
-
-/**
  * The R version to use by default.
  */
 core::json::Object UserPrefValues::defaultRVersion()
@@ -4299,7 +4286,6 @@ std::vector<std::string> UserPrefValues::allKeys()
       kLatexShellEscape,
       kRestoreProjectRVersion,
       kClangVerbose,
-      kEnableSplashScreen,
       kDefaultRVersion,
       kDataViewerMaxColumns,
       kDataViewerMaxCellSize,

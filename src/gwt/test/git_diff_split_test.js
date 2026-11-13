@@ -302,6 +302,40 @@ anchor = close(view);
 check("the scan steps past a fold to the line after it", anchor.row === 151 &&
    anchor.offset === 60 && view.sessionB.getScrollTop() === liveTop(view, 151) - 60);
 
+// A view inside chunk output, which stays after the close, is not padding:
+// the scroll is left where it was. 50 rows of output below row 49 fill
+// screen rows 50 to 99, and below row 99 fill rows 100 to 149.
+function outputView(row) {
+   view = closingView(lines(1, 100), lines(1, 100), [], 0, 100);
+   view.sessionB.widgetManager.addLineWidget({ row: row, rowCount: 50, rowsAbove: 0 });
+   view.align();
+   return view;
+}
+
+view = outputView(49);
+view.sessionB.setScrollTop(600);
+anchor = close(view);
+check("a view inside output keeps its place", anchor.row === 49 &&
+   anchor.offset === -110 && view.sessionB.getScrollTop() === 600);
+
+view = outputView(99);
+view.sessionB.setScrollTop(1200);
+anchor = close(view);
+check("a view inside output at the end keeps its place", anchor.row === 99 &&
+   anchor.offset === -210 && view.sessionB.getScrollTop() === 1200);
+
+// The action bar goes as the view closes, so a view inside the padding it
+// borrows (lines 51 to 150 removed at the end) is a view of padding.
+view = closingView(lines(1, 150), lines(1, 50), [chunk(50, 150, 50, 50)], 0, 100);
+peek = { row: 49, rowCount: 1, rowsAbove: 0, fixedWidth: true };
+view.gutter.peek = { widget: peek };
+view.sessionB.widgetManager.addLineWidget(peek);
+view.align();
+view.sessionB.setScrollTop(liveTop(view, 49) + 300);
+anchor = close(view);
+check("a view inside the action bar's borrowed rows is padding", peek.gitDiffLentRows === 0 &&
+   anchor.row === 49 && anchor.offset === 0 && view.sessionB.getScrollTop() === 49 * 10);
+
 view = closingView("a\n" + new Array(101).join("x"), "a\n" + new Array(101).join("x"), [], 0, 100);
 wrap(view, 10);
 view.sessionB.setScrollTop(50);

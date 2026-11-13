@@ -1473,6 +1473,8 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
 
    // Where a line of the live editor sits in its view, to keep it there: the
    // cursor's line, when any of it shows, or else the first line that does.
+   // A view inside a line widget that stays after the close (chunk output,
+   // not padding or the action bar) keeps that widget's line where it was.
    // A view that is all padding keeps the line below it at its bottom edge,
    // or, with no line below, the last line at its top. The rows are those of
    // the layout given (see align), or else of the document as it is.
@@ -1499,12 +1501,17 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       if (shows(row))
          return { row: row, offset: offsetOf(row) };
 
-      var candidate = session.screenToDocumentRow(Math.floor(Math.max(top, 0) / lineHeight), 0);
+      var first = session.screenToDocumentRow(Math.floor(Math.max(top, 0) / lineHeight), 0);
+      var candidate = first;
       for (; candidate < session.getLength() && offsetOf(candidate) < height; candidate++) {
          if (shows(candidate))
             return { row: candidate, offset: offsetOf(candidate) };
          candidate = session.getRowFoldEnd(candidate);
       }
+
+      var widget = session.lineWidgets && session.lineWidgets[first];
+      if (widget && !isPadding(widget) && !this.$isPeek(widget))
+         return { row: first, offset: offsetOf(first) };
 
       if (candidate < session.getLength())
          return { row: candidate, offset: Math.max(height - lineHeight, 0) };

@@ -3041,9 +3041,48 @@ public class TextEditingTarget implements
       }
    }
 
-   public void insertCode(String source, boolean blockMode)
+   // Inserts code sent from another pane (e.g. History's To Source) at the
+   // cursor. Returns false if this document can't take it there, leaving the
+   // caller to put it somewhere else.
+   public boolean tryInsertCode(String source, boolean blockMode)
    {
+      // In visual mode the cursor is in the visual editor. The source editor
+      // is hidden, so an insert there would go unseen and then be written to
+      // the file on the next save.
+      //
+      // The code commands are no guide there: they are enabled only while
+      // the cursor is in a chunk, and prose can take the code too, as a new
+      // chunk. Go by the kind of document, and let the visual editor say
+      // where its cursor is.
+      if (isVisualEditorActive() || isVisualModeActivated())
+      {
+         if (!fileType_.canExecuteCode())
+            return false;
+
+         // Placing the code takes focus to the visual editor. Hand it back,
+         // as an insert in source mode leaves focus alone: a keyboard user
+         // in the History pane goes on to send the next entry.
+         Element focused = DomUtils.getActiveElement();
+
+         boolean inserted = visualMode_.insertCode(source);
+
+         if (focused != null && focused != DomUtils.getActiveElement())
+            focused.focus();
+
+         return inserted;
+      }
+
+      if (!commands_.executeCode().isEnabled())
+         return false;
+
+      // The cursor is in the read-only base pane of a side-by-side diff.
+      // Nothing can go there, and the document's own cursor is not where
+      // the user is working.
+      if (cursorInDiffBase())
+         return false;
+
       insertCode(activeDisplay(), source, blockMode);
+      return true;
    }
 
    // Inserts at the cursor of the given editor view, which a caller captures
