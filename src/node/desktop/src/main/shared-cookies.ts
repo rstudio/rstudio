@@ -30,8 +30,7 @@ export const kWebDialogCookie = 'WEBDIALOG';
 // cookie has a file of its own, so instances changing different cookies never undo each other.
 const kSharedCookieNames = [kLocaleCookie, kWebDialogCookie];
 
-// only the desktop's own sessions' cookies are shared; other hosts (a remote server in Desktop
-// Pro, say) have their own
+// only the desktop's own sessions' cookies are shared, not those of other hosts
 const kSessionUrl = `http://${kLocalSessionHost}/`;
 
 interface SharedCookie {

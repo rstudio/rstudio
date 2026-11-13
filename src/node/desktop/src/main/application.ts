@@ -150,7 +150,14 @@ export class Application implements AppState {
 
     initializeSharedSecret();
 
-    this.initializeInstanceLock();
+    // On macOS, an instance that fails to take the lock before NSApplication starts launching
+    // doesn't get 'ready' until it's activated (by a click on its Dock icon, say). Elsewhere,
+    // 'will-finish-launching' comes with 'ready', too late to move the session data.
+    if (process.platform === 'darwin') {
+      app.once('will-finish-launching', () => this.initializeInstanceLock());
+    } else {
+      this.initializeInstanceLock();
+    }
 
     this.registerAppEvents();
 
