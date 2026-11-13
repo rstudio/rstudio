@@ -85,7 +85,7 @@ std::string declaredProtocol(const core::FilePath& installDir);
  * @param expectedVersion The version the manifest entry promised.
  * @param expectedProtocol The protocol the manifest entry was chosen for.
  * @return Success, or an invalid_argument error naming both identities, or
- *         naming the directory when it has no package.json.
+ *         saying package.json is missing and naming the requested identity.
  */
 core::Error verifyDeclaredIdentity(const core::FilePath& installDir,
                                    const std::string& expectedVersion,
