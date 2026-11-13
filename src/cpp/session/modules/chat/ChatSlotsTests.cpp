@@ -16,6 +16,7 @@
 #include "ChatSlots.hpp"
 
 #include <algorithm>
+#include <clocale>
 #include <cstdio>
 #include <string>
 #include <vector>
@@ -36,6 +37,34 @@ namespace {
 
 const char* const kServerScript = "dist/server/main.js";
 const char* const kIndexHtml = "dist/client/index.html";
+const char* const kHostname = "test-host";
+
+// Sets LC_CTYPE for one test and restores it afterwards. The old sanitizer let
+// a byte above 0x7F through only in a locale whose isalnum() accepts it:
+// Windows code-page locales and macOS UTF-8 locales. glibc's accepts none, so
+// on Linux the tests using this pass with or without the fix.
+class ScopedHighByteCType
+{
+public:
+   ScopedHighByteCType()
+   {
+      const char* current = std::setlocale(LC_CTYPE, nullptr);
+      previous_ = current != nullptr ? current : "C";
+      for (const char* name : { ".1252", "en_US.UTF-8" })
+      {
+         if (std::setlocale(LC_CTYPE, name) != nullptr)
+            break;
+      }
+   }
+
+   ~ScopedHighByteCType()
+   {
+      std::setlocale(LC_CTYPE, previous_.c_str());
+   }
+
+private:
+   std::string previous_;
+};
 
 class ChatSlots : public testing::Test
 {
@@ -329,7 +358,7 @@ TEST_F(ChatSlots, FindsNothingBeforeTheFirstInstall)
 TEST_F(ChatSlots, PreparesAnEmptyStagingDirectory)
 {
    FilePath stagingDir;
-   ASSERT_FALSE(prepareStagingDir(versionsDir_, &stagingDir));
+   ASSERT_FALSE(prepareStagingDir(versionsDir_, kHostname, &stagingDir));
 
    EXPECT_TRUE(stagingDir.isDirectory());
    EXPECT_TRUE(stagingDir.getParent().isEquivalentTo(versionsDir_));
@@ -339,13 +368,41 @@ TEST_F(ChatSlots, PreparesAnEmptyStagingDirectory)
    EXPECT_TRUE(children.empty());
 }
 
+TEST_F(ChatSlots, NamesStagingInAsciiForAUtf8Hostname)
+{
+   // "jose-MacBook" with an accented e, as UTF-8. macOS kept the accent's lead
+   // byte, and APFS refused the invalid UTF-8 name with EILSEQ.
+   ScopedHighByteCType ctype;
+
+   FilePath stagingDir;
+   ASSERT_FALSE(prepareStagingDir(versionsDir_, "jos\xC3\xA9-MacBook", &stagingDir));
+
+   EXPECT_TRUE(stagingDir.isDirectory());
+   EXPECT_EQ(0u, stagingDir.getFilename().find(".tmp-jos__-MacBook-"))
+      << stagingDir.getFilename();
+}
+
+TEST_F(ChatSlots, NamesStagingInAsciiForACodePageHostname)
+{
+   // "jose-PC" with an accented e, in code page 1252 as Windows gethostname()
+   // returns it under R < 4.2.
+   ScopedHighByteCType ctype;
+
+   FilePath stagingDir;
+   ASSERT_FALSE(prepareStagingDir(versionsDir_, "jos\xE9-PC", &stagingDir));
+
+   EXPECT_TRUE(stagingDir.isDirectory());
+   EXPECT_EQ(0u, stagingDir.getFilename().find(".tmp-jos_-PC-"))
+      << stagingDir.getFilename();
+}
+
 TEST_F(ChatSlots, AStagedInstallIsNotResolvableBeforeItIsPublished)
 {
    // Enters through the code that names the staging directory rather than a
    // hand-built name, so the name and the rule that hides it cannot drift
    // apart and make a half-extracted tree resolvable.
    FilePath stagingDir;
-   ASSERT_FALSE(prepareStagingDir(versionsDir_, &stagingDir));
+   ASSERT_FALSE(prepareStagingDir(versionsDir_, kHostname, &stagingDir));
    makeSlot(stagingDir, "1.1.0", "11.0");
 
    ASSERT_TRUE(verifySlot(stagingDir));
@@ -357,11 +414,11 @@ TEST_F(ChatSlots, DoesNotDisturbAnotherSessionsStagedInstall)
    // Two sessions sharing an NFS home once computed the same staging path, so
    // the second one's prepare deleted the first one's half-extracted tree.
    FilePath first;
-   ASSERT_FALSE(prepareStagingDir(versionsDir_, &first));
+   ASSERT_FALSE(prepareStagingDir(versionsDir_, kHostname, &first));
    makeSlot(first, "1.1.0", "11.0");
 
    FilePath second;
-   ASSERT_FALSE(prepareStagingDir(versionsDir_, &second));
+   ASSERT_FALSE(prepareStagingDir(versionsDir_, kHostname, &second));
 
    EXPECT_FALSE(second.isEquivalentTo(first));
    EXPECT_TRUE(first.completeChildPath(kServerScript).exists());
@@ -376,7 +433,7 @@ TEST_F(ChatSlots, CreatesTheVersionsDirectoryOnFirstUse)
    ASSERT_FALSE(versionsDir_.remove());
 
    FilePath stagingDir;
-   ASSERT_FALSE(prepareStagingDir(versionsDir_, &stagingDir));
+   ASSERT_FALSE(prepareStagingDir(versionsDir_, kHostname, &stagingDir));
    EXPECT_TRUE(versionsDir_.isDirectory());
 }
 
@@ -387,7 +444,7 @@ TEST_F(ChatSlots, CreatesTheVersionsDirectoryOnFirstUse)
 TEST_F(ChatSlots, PublishesAStagedInstallUnderItsVersion)
 {
    FilePath stagingDir;
-   ASSERT_FALSE(prepareStagingDir(versionsDir_, &stagingDir));
+   ASSERT_FALSE(prepareStagingDir(versionsDir_, kHostname, &stagingDir));
    makeSlot(stagingDir, "1.1.0", "11.0");
 
    FilePath slotDir;

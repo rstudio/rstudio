@@ -19,7 +19,6 @@
 #include "ChatInstallation.hpp"
 #include "ChatLogging.hpp"
 
-#include <cctype>
 #include <chrono>
 #include <thread>
 
@@ -93,14 +92,18 @@ const std::string::size_type kMaxHostnameLength = 32;
 // are extracting. Host and pid carry no correctness weight
 // here -- they are in the name so a later cleanup pass can tell whose
 // abandoned extraction it is looking at.
-std::string stagingDirName()
+std::string stagingDirName(const std::string& host)
 {
-   std::string hostname =
-      core::system::getHostname().substr(0, kMaxHostnameLength);
+   std::string hostname = host.substr(0, kMaxHostnameLength);
 
+   // ASCII by explicit range, not std::isalnum(): in macOS UTF-8 and Windows
+   // code-page locales isalnum() accepts some bytes above 0x7F, which left an
+   // invalid UTF-8 name that APFS refuses and R < 4.2 on Windows misreads.
    for (char& c : hostname)
    {
-      if (!std::isalnum(static_cast<unsigned char>(c)) && c != '-' && c != '.')
+      bool keep = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+                  (c >= '0' && c <= '9') || c == '-' || c == '.';
+      if (!keep)
          c = '_';
    }
 
@@ -289,9 +292,11 @@ std::vector<SlotInfo> verifiedSlots(const FilePath& slotsDir,
    return found;
 }
 
-Error prepareStagingDir(const FilePath& slotsDir, FilePath* pStagingDir)
+Error prepareStagingDir(const FilePath& slotsDir,
+                        const std::string& hostname,
+                        FilePath* pStagingDir)
 {
-   FilePath stagingDir = slotsDir.completeChildPath(stagingDirName());
+   FilePath stagingDir = slotsDir.completeChildPath(stagingDirName(hostname));
 
    Error error = stagingDir.ensureDirectory();
    if (error)
