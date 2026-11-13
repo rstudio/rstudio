@@ -42,7 +42,8 @@ const char* const kHostname = "test-host";
 // Sets LC_CTYPE for one test and restores it afterwards. The old sanitizer let
 // a byte above 0x7F through only in a locale whose isalnum() accepts it:
 // Windows code-page locales and macOS UTF-8 locales. glibc's accepts none, so
-// on Linux the tests using this pass with or without the fix.
+// on Linux the tests using this pass with or without the fix. Elsewhere the test
+// fails if neither locale can be set, since it would otherwise pass vacuously.
 class ScopedHighByteCType
 {
 public:
@@ -50,11 +51,21 @@ public:
    {
       const char* current = std::setlocale(LC_CTYPE, nullptr);
       previous_ = current != nullptr ? current : "C";
+
+      bool set = false;
       for (const char* name : { ".1252", "en_US.UTF-8" })
       {
          if (std::setlocale(LC_CTYPE, name) != nullptr)
+         {
+            set = true;
             break;
+         }
       }
+
+#ifndef __linux__
+      if (!set)
+         ADD_FAILURE() << "Could not set LC_CTYPE to .1252 or en_US.UTF-8";
+#endif
    }
 
    ~ScopedHighByteCType()
