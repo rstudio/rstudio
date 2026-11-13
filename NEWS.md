@@ -11,6 +11,7 @@
 - ([#19555](https://github.com/rstudio/rstudio/issues/19555)): The branch filter in the History view of the Review Changes window now has a search box, and searches in the Git branch menus now ignore case.
 
 ### Fixed
+- ([#19593](https://github.com/rstudio/rstudio/issues/19593)): Fixed an issue where a horizontal scrollbar flickered below the file list while a narrow Files pane was being made narrower.
 - ([#19579](https://github.com/rstudio/rstudio/issues/19579)): Fixed an issue where Show Changes Side by Side could open with its two sides out of step when lines had been removed above the lines in view, and could scroll away from the line being viewed when a change above it was staged or unstaged.
 - ([#4572](https://github.com/rstudio/rstudio/issues/4572)): Fixed an issue on Linux desktop where pasting a file copied in a file manager such as Nautilus or Nemo inserted nothing into the editor, the Console, or the visual editor, instead of the file's path. This was a regression in RStudio 2026.08.
 - ([#12235](https://github.com/rstudio/rstudio/issues/12235)): Fixed an issue where RStudio Desktop took about 4 seconds longer to start a second session (e.g. with Session > New Session) than the first. The "Initializing R" page now shows its text right away instead of only the R logo, and the "Cannot Connect to R" and "Error Starting R" pages no longer have a blank Retry button, blank headings, or a missing exit code.
