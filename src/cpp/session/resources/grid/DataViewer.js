@@ -424,6 +424,12 @@ var avgCharWidthCache = 0;
 // the next onActivate re-measures.
 var needsAutoSize = false;
 
+// Watches a viewport left unsized by a hidden-tab autoSize, and runs
+// onActivate once it has layout. Hosts that never send onActivate (SQL
+// Results) rely on it: showing their tab gives the viewport a height without
+// resizing the frame's window, so no resize event fires either.
+var hiddenViewportObserver = null;
+
 // Set when autoSizeColumns was asked to run while a header editor (a filter
 // popup or a focused inline text-filter input) was open. Rebuilding the header
 // row destroys that editor mid-edit, so the rebuild is deferred and flushed
@@ -2774,6 +2780,27 @@ var flushDeferredHeaderRebuild = function() {
    }, 0);
 };
 
+var watchHiddenViewport = function() {
+   if (!domViewport || typeof ResizeObserver === "undefined")
+      return;
+
+   if (!hiddenViewportObserver) {
+      hiddenViewportObserver = new ResizeObserver(function() {
+         // the first callback reports the collapsed size observed from
+         if (!domViewport || domViewport.offsetHeight === 0)
+            return;
+
+         // stop observing before laying out, so the work below cannot
+         // queue another notification
+         hiddenViewportObserver.disconnect();
+         if (needsAutoSize)
+            window.onActivate();
+      });
+   }
+
+   hiddenViewportObserver.observe(domViewport);
+};
+
 var autoSizeColumns = function() {
    var thead = domThead;
    // Widths are computed from columnOrder + data (below), so headers need not
@@ -2788,6 +2815,7 @@ var autoSizeColumns = function() {
    var viewport = domViewport;
    if (viewport && viewport.offsetHeight === 0) {
       needsAutoSize = true;
+      watchHiddenViewport();
       return;
    }
 
@@ -8191,6 +8219,8 @@ var destroyGrid = function() {
    // document, and the anchor element on body).
    stopAutoScroll();
    window.removeEventListener("resize", onResize);
+   if (hiddenViewportObserver)
+      hiddenViewportObserver.disconnect();
    if (pendingScrollbarRaf) {
       cancelAnimationFrame(pendingScrollbarRaf);
       pendingScrollbarRaf = 0;

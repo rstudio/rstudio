@@ -31,6 +31,8 @@
 #include "NotebookChunkOptions.hpp"
 #include "NotebookWorkingDir.hpp"
 
+#include "../../SessionConsoleInput.hpp"
+
 #include <r/RInterface.hpp>
 #include <r/ROptions.hpp>
 #include <r/session/RSession.hpp>
@@ -118,8 +120,26 @@ public:
       // waits for the next console command. A retry on idle would run a chunk
       // the client has dropped on an interrupt meanwhile, since that drop
       // does not reach the server yet (#19257)
-      if (!module_context::isPythonReplActive() && !r::session::isAtTopLevel())
+      //
+      // R is never at top level inside the reticulate REPL, which is
+      // nonetheless only ready for a chunk's code while it waits for input.
+      // It counts as active from before its first prompt (as when the client
+      // starts it right before running a Python chunk) and while it runs a
+      // command; code sent then can still be on its way when that prompt
+      // fires, and the prompt would be taken for the chunk finishing. As for
+      // R above, an input handler's own console read (readline() in a later
+      // callback) marks input executing until the handler returns, and the
+      // prompt restored then does not notify modules: a chunk that arrives
+      // meanwhile waits for the next console command.
+      if (module_context::isPythonReplActive())
+      {
+         if (console_input::executing())
+            return Success();
+      }
+      else if (!r::session::isAtTopLevel())
+      {
          return Success();
+      }
 
       // if we have a currently executing unit, execute it; otherwise, pop the
       // next unit off the stack

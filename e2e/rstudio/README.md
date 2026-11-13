@@ -284,7 +284,7 @@ The unified fixture (`rstudio.fixture.ts`) reads the per-project `mode` option (
 
 Both fixtures dismiss leftover save dialogs from previous runs.
 
-`--automation-agent` is the flag that makes the IDE testable: rsession's `ApplicationAutomation` only installs `window.rstudio` (the command, preference, and document bridge driven from `@utils/commands`) when this is set. The Desktop fixture polls for `window.rstudio.ready === true` rather than a fixed sleep, which transparently rides out the splash screen and (in GWT super dev mode) the transient "Compiling RStudio" page.
+`--automation-agent` is the flag that makes the IDE testable: rsession's `ApplicationAutomation` only installs `window.rstudio` (the command, preference, and document bridge driven from `@utils/commands`) when this is set. The Desktop fixture polls for `window.rstudio.ready === true` rather than a fixed sleep, which transparently rides out the loading page and (in GWT super dev mode) the transient "Compiling RStudio" page.
 
 In CI mode, `globalSetup` does a warmup launch+shutdown of Desktop RStudio before any worker starts, so the first real test doesn't pay the cold-cache GWT-ready cost. This adds one extra launch to a CI run; set `PW_WARMUP_LAUNCH=0` to opt out, or `PW_WARMUP_LAUNCH=1` to force-enable it locally. Skipped for Server mode regardless.
 

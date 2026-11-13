@@ -63,13 +63,21 @@ import {
   ElectronDesktopOptions,
   fixWindowsRExecutablePath,
 } from './preferences/electron-desktop-options';
-import { parseFilter, isAutomated, showWindowForAutomation, resolveAliasedPath, raiseAndActivateWindow } from './utils';
+import {
+  parseFilter,
+  isAutomated,
+  openExternalPath,
+  openExternalUrl,
+  openFileUrlWithWindowsShell,
+  showWindowForAutomation,
+  resolveAliasedPath,
+  raiseAndActivateWindow,
+} from './utils';
 import { activateWindow, focusedWebContents } from './window-utils';
 import { getenv } from '../core/environment';
 import { safeError } from '../core/err';
 import { userHomePathString } from '../core/user';
 import { buildInfo } from './build-info';
-import { showPersistentSplashScreen } from './splash-screen';
 import { harvestRendererTiming, startupCheckpoint } from './startup-timing';
 
 /**
@@ -107,6 +115,9 @@ function formatSelectedVersionForUi(rBinDir: string) {
 
 /** How long setPendingRVersion() lets the chosen R take to describe itself. */
 const kPendingRVersionTimeoutMs = 30000;
+
+/** The files a GTK file manager (Nautilus, Nemo, Caja, Thunar) copied or cut. */
+const kGnomeCopiedFilesFormat = 'electron application/osclipboard;format="x-special/gnome-copied-files"';
 
 /**
  * This is the main-process side of the GwtCallbacks; dispatched from renderer processes
@@ -234,13 +245,10 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_browse_url', (event, url: string) => {
-      // shell.openExternal() seems unreliable on Windows
-      // https://github.com/electron/electron/issues/31347
       if (process.platform === 'win32' && url.startsWith('file:///')) {
-        const path = decodeURI(url).substring('file:///'.length).replaceAll('/', '\\');
-        desktop.openExternal(path);
+        openFileUrlWithWindowsShell(url);
       } else {
-        void shell.openExternal(url);
+        void openExternalUrl(url);
       }
     });
 
@@ -418,14 +426,22 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_get_clipboard_uris', async () => {
+      // On Linux, Chromium 148+ reads the URI list through the XDG file
+      // transfer portal when the file manager offers it, and the list comes
+      // back empty when the portal lookup fails. GTK file managers also publish
+      // their own list ("copy" or "cut", then one URI per line), so use that.
+      // Entries in a URI list are CRLF-separated per RFC 2483.
+      const lines = await readClipboardType(['text/uri-list', kGnomeCopiedFilesFormat], async (blob, mimeType) => {
+        const entries = (await blob.text()).split(/\r?\n/);
+        return mimeType === kGnomeCopiedFilesFormat ? entries.slice(1) : entries;
+      });
+
       // if we don't have a URI list, nothing to do
-      const uriList = await readClipboardType('text/uri-list', async (blob) => blob.text());
-      if (uriList === undefined) {
+      if (lines === undefined) {
         return [];
       }
 
-      // return uri list as array; entries are CRLF-separated per RFC 2483
-      const parts = uriList.split(/\r?\n/).filter((x) => x.length > 0);
+      const parts = lines.filter((x) => x.length > 0);
 
       // Electron only puts percent-encoded file:// URIs here; decode them to
       // filesystem paths, with the forward slashes the visual editor expects
@@ -448,7 +464,7 @@ export class GwtCallback extends EventEmitter {
     // return the path to that file.
     ipcMain.handle('desktop_get_clipboard_image', async () => {
       // if we don't have any image, bail
-      const pngData = await readClipboardType('image/png', async (blob) => Buffer.from(await blob.arrayBuffer()));
+      const pngData = await readClipboardType(['image/png'], async (blob) => Buffer.from(await blob.arrayBuffer()));
       if (!pngData) {
         return '';
       }
@@ -513,14 +529,14 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_show_folder', (event, path: string) => {
-      shell.openPath(resolveAliasedPath(normalizeSeparatorsNative(path))).catch((value) => {
+      openExternalPath(resolveAliasedPath(normalizeSeparatorsNative(path))).catch((value) => {
         console.log('error:', value);
         logger().logErrorMessage(value);
       });
     });
 
     function showFileInSystemViewer(file: string) {
-      shell.openPath(resolveAliasedPath(normalizeSeparatorsNative(file))).catch((value) => {
+      openExternalPath(resolveAliasedPath(normalizeSeparatorsNative(file))).catch((value) => {
         console.log('error:', value);
         logger().logErrorMessage(value);
       });
@@ -977,10 +993,6 @@ export class GwtCallback extends EventEmitter {
       ElectronDesktopOptions().setAccessibility(enable);
     });
 
-    ipcMain.on('desktop_set_enable_splash_screen', (_event, enable) => {
-      ElectronDesktopOptions().setEnableSplashScreen(enable);
-    });
-
     ipcMain.on('desktop_set_autohide_menubar', (_event, autohide: boolean) => {
       this.mainWindow.window.setAutoHideMenuBar(autohide);
       this.mainWindow.window.setMenuBarVisibility(!autohide);
@@ -1208,10 +1220,6 @@ export class GwtCallback extends EventEmitter {
         this.addRVersionTooNewError();
       }
       return resolveTemplateVar(varName, this.errorPageData);
-    });
-
-    ipcMain.on('desktop_show_splash_screen', () => {
-      showPersistentSplashScreen();
     });
   }
 
