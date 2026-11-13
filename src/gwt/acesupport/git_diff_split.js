@@ -258,24 +258,14 @@ function refreshRows(planned) {
 }
 
 // The rows of padding above a line in a planned layout: the line's screen
-// row there, less its screen row with the padding left out.
+// row there, less its screen row with the padding left out (as a plan
+// starts out; see PaddingPlan).
 function paddingAbove(planned, row) {
    if (!planned)
       return 0;
 
-   var bare = Object.create(planned);
-   bare.lineWidgets = planned.lineWidgets.map(function(widget) {
-      if (!widget || isPadding(widget))
-         return undefined;
-      if (!widget.gitDiffLentRows)
-         return widget;
-
-      var own = Object.assign({}, widget);
-      returnRows(own);
-      return own;
-   });
-
-   return refreshRows(planned).documentToScreenRow(row, 0) - refreshRows(bare).documentToScreenRow(row, 0);
+   var bare = new PaddingPlan().copySession(planned);
+   return refreshRows(planned).documentToScreenRow(row, 0) - bare.documentToScreenRow(row, 0);
 }
 
 // Whether two fold lines hold a pair of mirrored folds (see mirrorFold).
