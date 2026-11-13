@@ -128,6 +128,21 @@ public class CompletionPopupPanelTests extends GWTTestCase
       assertNull(showRecording(line).kept);
    }
 
+   public void testListAfterMessageKeepsMessageSide()
+   {
+      // A list shown above the line is dismissed, then "No matches" opens
+      // below it; the list that replaces the message keeps the message's
+      // side, not the dismissed list's.
+      panel_ = new CompletionPopupPanel(null);
+      showRecording(new Rectangle(10, 2000, 8, 13));
+      panel_.hide();
+      Rectangle line = new Rectangle(10, 0, 8, 13);
+      panel_.showErrorMessage(
+            "(No matches)",
+            new PopupPositioner(line, panel_, false, new Rectangle(0, 0, 800, 3000)));
+      assertEquals(Boolean.TRUE, showRecording(line).kept);
+   }
+
    public void testRefreshSwitchesSideWhenItNoLongerFits()
    {
       show(new Rectangle(10, 2000, 8, 13));

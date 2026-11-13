@@ -185,14 +185,12 @@ public class CompletionPopupPanel extends ThemedPopupPanel
 
       if (positioner != null)
       {
-         placedBelow_ = positioner.isPlacedBelow();
          boolean wantBottomUp = !preferBottom && !placedBelow_;
          if (wantBottomUp != bottomUp)
          {
             bottomUp = wantBottomUp;
             setCompletionList(values, truncated, bottomUp, numVisibleItems);
             show(callback);
-            placedBelow_ = positioner.isPlacedBelow();
          }
       }
 
@@ -265,6 +263,12 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          setPopupPositionAndShow(callback);
       else
          show();
+
+      // Track every placement, of messages as well as lists, so a list that
+      // replaces what is showing keeps its side (see showCompletionValues).
+      placedBelow_ = callback instanceof PopupPositioner
+            ? ((PopupPositioner) callback).isPlacedBelow()
+            : null;
 
 
       // Fudge the completion width when the scrollbar is visible. This has
@@ -579,8 +583,8 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    private VerticalPanel container_;
    private final Label truncated_;
    private JavaScriptObject focusHandler_;
-   // The side of the cursor the list was last shown on (below, or not), or
-   // null if it was since placed offscreen.
+   // The side of the cursor the popup was last shown on (below, or not),
+   // or null if unknown or it was since placed offscreen.
    private Boolean placedBelow_;
    private ShortcutManager.Handle handle_;
    private HandlerRegistration windowBlurHandler_;
