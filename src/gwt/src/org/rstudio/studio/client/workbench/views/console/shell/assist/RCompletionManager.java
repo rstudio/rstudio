@@ -1929,7 +1929,10 @@ public class RCompletionManager implements CompletionManager
             popup_.showCompletionValues(
                   results,
                   new PopupPositioner(
-                        rect, popup_, preferBottom, input_.getViewportBounds()),
+                        rect,
+                        popup_,
+                        preferBottom,
+                        preferBottom ? null : input_.getViewportBounds()),
                   false);
          }
       }

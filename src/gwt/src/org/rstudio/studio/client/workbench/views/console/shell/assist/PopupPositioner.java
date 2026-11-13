@@ -42,7 +42,8 @@ public class PopupPositioner implements PositionCallback
     *    fits there, rather than above.
     * @param viewport The page region the editor's text shows in, or null.
     *    A popup that prefers the top goes above only if it fits inside this
-    *    region, so it doesn't cover the editor's toolbar or tabs.
+    *    region (or doesn't fit below), so it doesn't cover the editor's
+    *    toolbar or tabs. Only used when not preferring the bottom.
     */
    public PopupPositioner(Rectangle cursorBounds,
                           CompletionPopupDisplay popup,
@@ -69,14 +70,15 @@ public class PopupPositioner implements PositionCallback
          return;
       }
 
-      int windowTop = Window.getScrollTop();
-      int aboveLimit = viewport_ == null
-            ? windowTop
-            : Math.max(windowTop, viewport_.getTop());
-      int belowLimit = windowTop + Window.getClientHeight();
+      Rectangle window = new Rectangle(
+            Window.getScrollLeft(),
+            Window.getScrollTop(),
+            Window.getClientWidth(),
+            Window.getClientHeight());
+      int viewportTop = viewport_ == null ? window.getTop() : viewport_.getTop();
 
       placedBelow_ = isPlacedBelow(
-            popupHeight, cursorBounds_, preferBottom_, aboveLimit, belowLimit);
+            popupHeight, cursorBounds_, preferBottom_, viewportTop, window);
 
       int top = placedBelow_
             ? cursorBounds_.getBottom() + GAP
@@ -87,19 +89,26 @@ public class PopupPositioner implements PositionCallback
    }
 
    /**
-    * Whether a popup of the given height goes below the cursor: on its
-    * preferred side when it fits between the cursor and that side's limit,
-    * otherwise on the other side.
+    * Whether a popup of the given height goes below the cursor. Preferring
+    * the bottom, it goes there if it fits in the window. Preferring the top,
+    * it goes there if it fits below the viewport's top; failing that, it
+    * goes to whichever side fits in the window, and below if neither does.
     */
    static boolean isPlacedBelow(int popupHeight,
                                 Rectangle cursorBounds,
                                 boolean preferBottom,
-                                int aboveLimit,
-                                int belowLimit)
+                                int viewportTop,
+                                Rectangle window)
    {
+      int top = topAbove(popupHeight, cursorBounds);
+      boolean fitsBelow =
+            cursorBounds.getBottom() + GAP + popupHeight < window.getBottom();
+
       if (preferBottom)
-         return cursorBounds.getBottom() + GAP + popupHeight < belowLimit;
-      return topAbove(popupHeight, cursorBounds) < aboveLimit;
+         return fitsBelow;
+      if (top >= Math.max(viewportTop, window.getTop()))
+         return false;
+      return fitsBelow || top < window.getTop();
    }
 
    // Measured up from the bounds' bottom, as the bounds can be shorter

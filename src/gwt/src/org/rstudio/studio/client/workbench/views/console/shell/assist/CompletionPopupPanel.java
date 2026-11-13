@@ -158,43 +158,47 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       PopupPositioner positioner = callback instanceof PopupPositioner
             ? (PopupPositioner) callback
             : null;
-      boolean isShowingOnBottom =
+      boolean preferBottom =
             positioner != null && positioner.getPreferBottom();
 
-      setCompletionList(values, truncated, isShowingOnBottom);
+      // Since completion popups are usually displayed from the Source pane,
+      // if we're trying to display completions on top of the cursor location,
+      // we'll have relatively less space available. In that case, try to display
+      // fewer items, so we can fit the visible space. The count stays the same
+      // if the popup ends up below, so it keeps the height it was placed with.
+      int numVisibleItems = preferBottom ? 9 : 6;
+
+      boolean bottomUp = !preferBottom;
+      setCompletionList(values, truncated, bottomUp, numVisibleItems);
       show(callback);
 
       // Showing on top is only a preference: when the list doesn't fit above
       // the line, the positioner puts it below, so lay it out top-down.
-      if (positioner != null && !isShowingOnBottom && positioner.isPlacedBelow())
+      if (bottomUp && positioner != null && positioner.isPlacedBelow())
       {
-         isShowingOnBottom = true;
-         setCompletionList(values, truncated, true);
+         bottomUp = false;
+         setCompletionList(values, truncated, bottomUp, numVisibleItems);
          show(callback);
       }
 
-      if (!isShowingOnBottom)
+      if (bottomUp)
          selectLast();
    }
 
    private void setCompletionList(QualifiedName[] values,
                                   boolean truncated,
-                                  boolean isShowingOnBottom)
+                                  boolean bottomUp,
+                                  int numVisibleItems)
    {
-      // If we're going to display completions on top, then reverse
-      // the completion list, so the first value sits next to the cursor.
-      if (!isShowingOnBottom)
+      // Above the cursor, reverse the completion list, so the first value
+      // sits next to the cursor.
+      if (bottomUp)
       {
          List<QualifiedName> names = new ArrayList<>(Arrays.asList(values));
          Collections.reverse(names);
          values = names.toArray(new QualifiedName[0]);
       }
 
-      // Since completion popups are usually displayed from the Source pane,
-      // if we're trying to display completions on top of the cursor location,
-      // we'll have relatively less space available. In that case, try to display
-      // fewer items, so we can fit the visible space.
-      int numVisibleItems = isShowingOnBottom ? 9 : 6;
       CompletionList<QualifiedName> list = new CompletionList<>(
             values, numVisibleItems, true, true, constants_.completionsListLabel());
       list.setInput(input_);

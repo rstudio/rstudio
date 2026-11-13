@@ -30,20 +30,20 @@ public class PopupPositionerTests extends GWTTestCase
    // text area starts at 113, below the tab bar and editor toolbar.
    private static final Rectangle LINE_ONE = new Rectangle(100, 113, 8, 17);
    private static final int EDITOR_TOP = 113;
-   private static final int WINDOW_BOTTOM = 900;
+   private static final Rectangle WINDOW = new Rectangle(0, 0, 1400, 900);
 
    public void testPreferTopGoesAboveWhenItFitsInEditor()
    {
       Rectangle line = new Rectangle(100, 400, 8, 17);
       assertFalse(PopupPositioner.isPlacedBelow(
-            100, line, false, EDITOR_TOP, WINDOW_BOTTOM));
+            100, line, false, EDITOR_TOP, WINDOW));
    }
 
    public void testPreferTopGoesBelowOnFirstLine()
    {
       // #19614: there is no room above line 1 inside the editor.
       assertTrue(PopupPositioner.isPlacedBelow(
-            68, LINE_ONE, false, EDITOR_TOP, WINDOW_BOTTOM));
+            68, LINE_ONE, false, EDITOR_TOP, WINDOW));
    }
 
    public void testPreferTopGoesBelowRatherThanCoverToolbar()
@@ -51,7 +51,7 @@ public class PopupPositionerTests extends GWTTestCase
       // There is room above the line in the window, but not in the editor.
       Rectangle line = new Rectangle(100, 150, 8, 17);
       assertTrue(PopupPositioner.isPlacedBelow(
-            68, line, false, EDITOR_TOP, WINDOW_BOTTOM));
+            68, line, false, EDITOR_TOP, WINDOW));
    }
 
    public void testPreferTopUsesExactFitAbove()
@@ -60,20 +60,30 @@ public class PopupPositionerTests extends GWTTestCase
       // by 25px above the bounds' bottom.
       Rectangle line = new Rectangle(100, EDITOR_TOP + 68 + 25 - 17, 8, 17);
       assertFalse(PopupPositioner.isPlacedBelow(
-            68, line, false, EDITOR_TOP, WINDOW_BOTTOM));
+            68, line, false, EDITOR_TOP, WINDOW));
    }
 
-   public void testPreferTopGoesBelowEvenWhenBelowOverflows()
+   public void testPreferTopGoesAboveToolbarRatherThanOffWindow()
+   {
+      // A short editor low in the window: no room above the line in the
+      // editor, nor below it in the window, so use the room above in the
+      // window rather than run off its bottom.
+      Rectangle line = new Rectangle(100, 718, 8, 17);
+      assertFalse(PopupPositioner.isPlacedBelow(
+            200, line, false, 700, WINDOW));
+   }
+
+   public void testPreferTopGoesBelowWhenNeitherSideFits()
    {
       Rectangle line = new Rectangle(100, 150, 8, 17);
       assertTrue(PopupPositioner.isPlacedBelow(
-            2000, line, false, EDITOR_TOP, WINDOW_BOTTOM));
+            2000, line, false, EDITOR_TOP, WINDOW));
    }
 
    public void testPreferBottomGoesBelowWhenItFits()
    {
       assertTrue(PopupPositioner.isPlacedBelow(
-            200, LINE_ONE, true, EDITOR_TOP, WINDOW_BOTTOM));
+            200, LINE_ONE, true, EDITOR_TOP, WINDOW));
    }
 
    public void testPreferBottomGoesAboveWhenBelowOverflows()
@@ -82,6 +92,6 @@ public class PopupPositionerTests extends GWTTestCase
       // above even when that overflows the top, as it always has.
       Rectangle line = new Rectangle(100, 870, 8, 17);
       assertFalse(PopupPositioner.isPlacedBelow(
-            2000, line, true, EDITOR_TOP, WINDOW_BOTTOM));
+            2000, line, true, EDITOR_TOP, WINDOW));
    }
 }
