@@ -34,7 +34,7 @@ import {
   showRNotFoundError,
 } from './detect-r';
 import { GwtCallback } from './gwt-callback';
-import { instanceSessionDataPath } from './instance-session-data';
+import { prepareInstanceSessionData, removeExitedInstanceSessionData } from './instance-session-data';
 import { PendingWindow } from './pending-window';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { exitFailure, exitSuccess, ProgramStatus, run } from './program-status';
@@ -151,14 +151,7 @@ export class Application implements AppState {
 
     initializeSharedSecret();
 
-    // the instance lock decides where Chromium keeps this instance's storage, which can only
-    // be changed before the app is ready
-    const sessionData = instanceSessionDataPath(app.getPath('userData'), app.requestSingleInstanceLock());
-    if (sessionData) {
-      logger().logDebug(`Another instance is running; using session data folder ${sessionData}`);
-      app.setPath('sessionData', sessionData);
-      this.sharedSessionData = false;
-    }
+    this.initializeInstanceLock();
 
     this.registerAppEvents();
 
@@ -264,6 +257,27 @@ export class Application implements AppState {
     }
 
     keepAutomationWindowsRendering();
+  }
+
+  /**
+   * Takes the instance lock, which decides where Chromium keeps this instance's storage; that
+   * can only be changed before the app is ready. The listener for files forwarded by later
+   * launches goes in with the lock, as they can arrive from then on.
+   */
+  private initializeInstanceLock() {
+    const userData = app.getPath('userData');
+    if (!app.requestSingleInstanceLock()) {
+      const sessionData = prepareInstanceSessionData(userData);
+      if (sessionData) {
+        logger().logDebug(`Another instance is running; using session data folder ${sessionData}`);
+        app.setPath('sessionData', sessionData);
+        this.sharedSessionData = false;
+      }
+    }
+
+    getEventBus().once('main-window-loaded', () => {
+      removeExitedInstanceSessionData(userData).catch((error: unknown) => logger().logError(error));
+    });
 
     app.on('second-instance', (_event, argv) => {
       logger().logDebug(`second-instance event: ARGS ${argv}`);

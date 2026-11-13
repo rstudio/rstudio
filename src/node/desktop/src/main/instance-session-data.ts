@@ -13,7 +13,7 @@
  *
  */
 
-import { readdirSync, rmSync } from 'fs';
+import fs from 'fs';
 import path from 'path';
 import { safeError } from '../core/err';
 import { logger } from '../core/logger';
@@ -38,10 +38,35 @@ export function isProcessRunning(pid: number): boolean {
   }
 }
 
-function removeStaleFolders(root: string, isRunning: (pid: number) => boolean): void {
+/**
+ * Creates an empty session data folder for this (secondary) instance and returns its path, or
+ * undefined if it can't, in which case the instance keeps the shared storage.
+ */
+export function prepareInstanceSessionData(userData: string, pid: number = process.pid): string | undefined {
+  const dir = path.join(userData, kInstanceSessionDataDir, String(pid));
+  try {
+    // an exited instance with the same pid may have left its storage here
+    fs.rmSync(dir, { recursive: true, force: true });
+    fs.mkdirSync(dir, { recursive: true });
+    return dir;
+  } catch (error: unknown) {
+    logger().logErrorMessage(`Unable to create session data folder ${dir}: ${safeError(error).message}`);
+    return undefined;
+  }
+}
+
+/**
+ * Removes the session data folders of instances that have exited. They can hold a whole
+ * Chromium profile, so this runs asynchronously, once startup is over.
+ */
+export async function removeExitedInstanceSessionData(
+  userData: string,
+  isRunning: (pid: number) => boolean = isProcessRunning,
+): Promise<void> {
+  const root = path.join(userData, kInstanceSessionDataDir);
   let entries;
   try {
-    entries = readdirSync(root, { withFileTypes: true });
+    entries = await fs.promises.readdir(root, { withFileTypes: true });
   } catch (error: unknown) {
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
       logger().logError(error);
@@ -55,25 +80,10 @@ function removeStaleFolders(root: string, isRunning: (pid: number) => boolean): 
     }
     const dir = path.join(root, entry.name);
     try {
-      rmSync(dir, { recursive: true, force: true });
+      await fs.promises.rm(dir, { recursive: true, force: true });
     } catch (error: unknown) {
       // a later launch tries again
       logger().logWarning(`Unable to remove session data of exited instance ${dir}: ${safeError(error).message}`);
     }
   }
-}
-
-/**
- * The session data folder this instance should use instead of the shared one, or undefined
- * for the primary instance. Also removes folders left by instances that have exited.
- */
-export function instanceSessionDataPath(
-  userData: string,
-  primary: boolean,
-  pid: number = process.pid,
-  isRunning: (pid: number) => boolean = isProcessRunning,
-): string | undefined {
-  const root = path.join(userData, kInstanceSessionDataDir);
-  removeStaleFolders(root, isRunning);
-  return primary ? undefined : path.join(root, String(pid));
 }
