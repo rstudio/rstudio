@@ -425,9 +425,9 @@ var avgCharWidthCache = 0;
 var needsAutoSize = false;
 
 // Watches a viewport left unsized by a hidden-tab autoSize, and runs
-// onActivate once it has layout. Hosts with no tab of their own (SQL Results)
-// never send onActivate, and showing their tab gives the viewport a height
-// without resizing the frame's window, so no resize event fires either.
+// onActivate once it has layout. Hosts that never send onActivate (SQL
+// Results) rely on it: showing their tab gives the viewport a height without
+// resizing the frame's window, so no resize event fires either.
 var hiddenViewportObserver = null;
 
 // Set when autoSizeColumns was asked to run while a header editor (a filter
