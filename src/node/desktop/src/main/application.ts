@@ -236,16 +236,20 @@ export class Application implements AppState {
       .catch((error: unknown) => logger().logError(error));
   }
 
-  private shouldInstanceOpen() {
-    // check if this is the primary instance
-    // projects always open in a new instance
-    // files prefer to reuse the primary instance
-    const hasInstanceLock = app.hasSingleInstanceLock();
+  /**
+   * Whether this launch only hands its files to the primary instance and exits: projects always
+   * open in a new instance, and files prefer to reuse the primary instance.
+   */
+  private forwardsToPrimary(hasInstanceLock: boolean): boolean {
     const hasProjectToOpen = this.argsManager.getProjectFileArg() ?? getenv('RS_INITIAL_PROJECT');
     const hasFileToOpen = this.argsManager.getFileArgs().length > 0;
 
     logger().logDebug(`instance lock: ${hasInstanceLock}, project: ${hasProjectToOpen}, file: ${hasFileToOpen}`);
-    if (!hasInstanceLock && !(hasProjectToOpen.length > 0) && hasFileToOpen) {
+    return !hasInstanceLock && !(hasProjectToOpen.length > 0) && hasFileToOpen;
+  }
+
+  private shouldInstanceOpen() {
+    if (this.forwardsToPrimary(app.hasSingleInstanceLock())) {
       logger().logDebug('No instance lock - exiting');
       return false;
     }
@@ -272,7 +276,11 @@ export class Application implements AppState {
    */
   private initializeInstanceLock() {
     const userData = app.getPath('userData');
-    if (!app.requestSingleInstanceLock()) {
+    const hasInstanceLock = app.requestSingleInstanceLock();
+
+    // a launch that only hands its files to the primary instance never opens a window, so it
+    // has no use for storage of its own
+    if (!hasInstanceLock && !this.forwardsToPrimary(hasInstanceLock)) {
       const sessionData = prepareInstanceSessionData(userData);
       if (sessionData) {
         logger().logDebug(`Another instance is running; using session data folder ${sessionData}`);

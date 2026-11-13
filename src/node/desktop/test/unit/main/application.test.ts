@@ -192,6 +192,57 @@ describe('Application', () => {
     });
   });
 
+  describe('Instance lock', () => {
+    const env: Record<string, string> = { RS_INITIAL_PROJECT: '' };
+    let userData: string;
+    let application: Application;
+    let requestLock: sinon.SinonStub;
+    let setPath: sinon.SinonStub;
+
+    beforeEach(() => {
+      saveAndClear(env);
+      userData = fs.mkdtempSync(path.join(os.tmpdir(), 'rstudio-instance-lock-test-'));
+      const getPath = sinon.stub(electronApp, 'getPath').callThrough();
+      getPath.withArgs('userData').returns(userData);
+      requestLock = sinon.stub(electronApp, 'requestSingleInstanceLock').returns(false);
+      setPath = sinon.stub(electronApp, 'setPath');
+      // keep the second-instance listener off the test runner's app
+      sinon.stub(electronApp, 'on').returnsThis();
+      application = new Application();
+      setApplication(application);
+    });
+
+    afterEach(() => {
+      sinon.restore();
+      clearApplicationSingleton();
+      restore(env);
+      fs.rmSync(userData, { recursive: true, force: true });
+    });
+
+    const sessionDataRoot = () => path.join(userData, 'instance-session-data');
+
+    it('gives a secondary instance session data of its own', () => {
+      application['initializeInstanceLock']();
+      assert.isTrue(setPath.calledOnceWithExactly('sessionData', path.join(sessionDataRoot(), String(process.pid))));
+    });
+
+    it('keeps the primary instance on the shared session data', () => {
+      requestLock.returns(true);
+      application['initializeInstanceLock']();
+      assert.isTrue(setPath.notCalled);
+    });
+
+    it('creates no session data for a launch that hands its file to the primary instance', () => {
+      const file = path.join(userData, 'analysis.R');
+      fs.writeFileSync(file, '');
+      application.argsManager.setUnswitchedArgs([file]);
+
+      application['initializeInstanceLock']();
+      assert.isTrue(setPath.notCalled);
+      assert.isFalse(fs.existsSync(sessionDataRoot()));
+    });
+  });
+
   describe('Command line switches', () => {
     it('run-diagnostics sets diag mode and continues', () => {
       const app = new Application();
