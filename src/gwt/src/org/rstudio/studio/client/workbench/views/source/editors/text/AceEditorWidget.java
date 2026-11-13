@@ -541,6 +541,10 @@ public class AceEditorWidget extends Composite
    
    private void onDesktopPaste(NativeEvent event)
    {
+      // Ace's own paste honors read-only mode, but editor_.insert() doesn't
+      if (editor_.getReadOnly())
+         return;
+
       ClipboardEvent clipboardEvent = Js.cast(event);
       elemental2.core.JsArray<String> types = clipboardEvent.clipboardData.types;
       if (types.length != 1)
@@ -575,8 +579,13 @@ public class AceEditorWidget extends Composite
 
          Desktop.getFrame().getClipboardUris(uris ->
          {
-            if (uris != null && uris.length() > 0)
-               insertDesktopPaths(uris.cast());
+            if (uris == null || uris.length() == 0)
+            {
+               Debug.log("Paste: the clipboard has copied files, but the desktop process found no paths");
+               return;
+            }
+
+            insertDesktopPaths(uris.cast());
          });
       }
    }
