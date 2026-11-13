@@ -66,6 +66,10 @@ echo "Extracting ${FILE} to ${COPILOT_SUBDIR}"
 extract "${FILE}"
 rm -f "${FILE}"
 
+# Some upstream releases ship owner-only (0600) files, which the
+# packaging step (run as another user) and end users can't read
+chmod -R a+rX .
+
 # Validate that the installation succeeded
 if check_copilot_installed; then
   exit 0
