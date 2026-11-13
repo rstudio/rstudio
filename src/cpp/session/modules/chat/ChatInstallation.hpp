@@ -76,18 +76,6 @@ std::string declaredVersion(const core::FilePath& installDir);
 std::string declaredProtocol(const core::FilePath& installDir);
 
 /**
- * Checks that extraction put anything in a directory. R's unzip() returns
- * normally when it reads exdir as a different path and extracts there, so
- * without this check the empty directory would be reported as a package that
- * declares a blank version.
- *
- * @param extractDir The directory the package was extracted into.
- * @return Success, or a no_such_file_or_directory error naming the directory
- *         when it is empty; the error reading it when it can't be listed.
- */
-core::Error verifyExtracted(const core::FilePath& extractDir);
-
-/**
  * Checks that an extracted package declares the version and protocol it was
  * downloaded as. A package that declares neither file, or other values, is a
  * mis-published one: installing it would select a slot for a protocol another
@@ -96,7 +84,8 @@ core::Error verifyExtracted(const core::FilePath& extractDir);
  * @param installDir The directory holding the extracted package.
  * @param expectedVersion The version the manifest entry promised.
  * @param expectedProtocol The protocol the manifest entry was chosen for.
- * @return Success, or an invalid_argument error naming both identities.
+ * @return Success, or an invalid_argument error naming both identities, or
+ *         naming the directory when it has no package.json.
  */
 core::Error verifyDeclaredIdentity(const core::FilePath& installDir,
                                    const std::string& expectedVersion,

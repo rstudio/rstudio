@@ -109,26 +109,21 @@ std::string declaredProtocol(const core::FilePath& installDir)
    return readJsonStringField(installDir, kProtocolVersionFileName, "protocol");
 }
 
-core::Error verifyExtracted(const core::FilePath& extractDir)
-{
-   std::vector<core::FilePath> children;
-   core::Error error = extractDir.getChildren(children);
-   if (error)
-      return error;
-   if (!children.empty())
-      return core::Success();
-
-   return core::systemError(
-      boost::system::errc::no_such_file_or_directory,
-      fmt::format("Extracting the package wrote no files to {}",
-                  extractDir.getAbsolutePath()),
-      ERROR_LOCATION);
-}
-
 core::Error verifyDeclaredIdentity(const core::FilePath& installDir,
                                    const std::string& expectedVersion,
                                    const std::string& expectedProtocol)
 {
+   // Without package.json there is no declaration to compare, only a blank
+   // version; naming the directory points at where extraction went wrong.
+   if (!installDir.completeChildPath(kPackageJsonFileName).isRegularFile())
+   {
+      return core::systemError(
+         boost::system::errc::invalid_argument,
+         fmt::format("Downloaded package has no {} in {}",
+                     kPackageJsonFileName, installDir.getAbsolutePath()),
+         ERROR_LOCATION);
+   }
+
    // A package without protocol.json fails here too: backfilling this build's
    // protocol would make the check pass by construction.
    std::string version = declaredVersion(installDir);

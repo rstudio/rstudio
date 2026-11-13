@@ -258,29 +258,16 @@ TEST_F(ChatInstallationIdentity, RejectsAPackageWithoutPackageJson)
    Error error = verifyDeclaredIdentity(dir_, "1.2.0", kProtocolVersion);
    ASSERT_TRUE(error);
    EXPECT_EQ(error.getCode(), boost::system::errc::invalid_argument);
-}
-
-// ============================================================================
-// verifyExtracted
-// ============================================================================
-
-TEST_F(ChatInstallationIdentity, VerifyExtractedAcceptsAPopulatedDirectory)
-{
-   stageInstallation(dir_, "1.2.0", "11.0");
-   EXPECT_FALSE(verifyExtracted(dir_));
-}
-
-TEST_F(ChatInstallationIdentity, VerifyExtractedRejectsAnEmptyDirectoryByName)
-{
-   Error error = verifyExtracted(dir_);
-   ASSERT_TRUE(error);
-   EXPECT_EQ(error.getCode(), boost::system::errc::no_such_file_or_directory);
+   EXPECT_NE(errorDescription(error).find(kPackageJsonFileName), std::string::npos);
    EXPECT_NE(errorDescription(error).find(dir_.getAbsolutePath()), std::string::npos);
 }
 
-TEST_F(ChatInstallationIdentity, VerifyExtractedRejectsAMissingDirectory)
+TEST_F(ChatInstallationIdentity, RejectsAnEmptyDirectoryByName)
 {
-   EXPECT_TRUE(verifyExtracted(dir_.completeChildPath("missing")));
+   // What an extraction into some other directory leaves behind (#19625).
+   Error error = verifyDeclaredIdentity(dir_, "1.2.0", kProtocolVersion);
+   ASSERT_TRUE(error);
+   EXPECT_NE(errorDescription(error).find(dir_.getAbsolutePath()), std::string::npos);
 }
 
 // ============================================================================
