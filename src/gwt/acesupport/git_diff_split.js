@@ -1509,8 +1509,10 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
          candidate = session.getRowFoldEnd(candidate);
       }
 
+      // (in a planned layout the action bar is a copy, and has often closed
+      // since; it is known there by the rows it borrowed, as only it borrows)
       var widget = session.lineWidgets && session.lineWidgets[first];
-      if (widget && !isPadding(widget) && !this.$isPeek(widget))
+      if (widget && !isPadding(widget) && !this.$isPeek(widget) && !widget.gitDiffLentRows)
          return { row: first, offset: offsetOf(first) };
 
       if (candidate < session.getLength())

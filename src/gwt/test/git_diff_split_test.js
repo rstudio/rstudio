@@ -501,5 +501,24 @@ var both = [chunk(0, 100, 0, 0), chunk(200, 250, 100, 100)];
       top === (60 + 100 + 1) * 10 && scrolledTo(view, top - staged.rows * 10));
 });
 
+// A view inside the padding the action bar borrowed below its line is a view
+// of padding, as it is when the view closes. Lines 301 to 400 are removed
+// above a line with chunk output, which can't take the padding, and staged:
+// the bar closes, and the view moves up by their rows.
+var barLive = lines(1, 300) + "\n" + lines(401, 500);
+view = closingView(lines(1, 500), barLive, [chunk(300, 400, 300, 300)], 0, 100);
+view.sessionB.widgetManager.addLineWidget({ row: 300, rowCount: 5, rowsAbove: 0 });
+peek = { row: 299, rowCount: 1, rowsAbove: 0, fixedWidth: true };
+view.gutter.peek = { widget: peek };
+view.sessionB.widgetManager.addLineWidget(peek);
+view.align();
+var barTop = liveTop(view, 300) - 700;
+scrollBoth(view, barTop);
+view.gutter.peek = null;
+view.sessionB.widgetManager.removeLineWidget(peek);
+restage(view, barLive, []);
+check("a view inside padding the action bar borrowed moves up by its rows as it is staged",
+   peek.gitDiffLentRows === 100 && barTop === (300 + 101) * 10 - 700 && scrolledTo(view, barTop - 100 * 10));
+
 document.getElementById("passed").textContent = passed;
 document.getElementById("failed").textContent = failed;
