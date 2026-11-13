@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.studio.client.workbench.views.source.editors.text.r.RCompletionToolTip;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
@@ -95,14 +96,12 @@ public class PopupPositionerTests extends GWTTestCase
             2000, line, true, EDITOR_TOP, WINDOW));
    }
 
-   // A signature tooltip, 47px tall and 8px from its line, measured above from
-   // the middle of the cursor's bounds and below from the line's full height.
+   // A signature tooltip, 47px tall and 8px from its line, beside a line
+   // whose bounds are 80% of its height, as AceEditor.getPositionBounds gives.
    private static int tooltipTop(int lineTop, int lineHeight)
    {
-      int boundsHeight = (int) (lineHeight * 0.8);
-      int middle = lineTop + boundsHeight / 2;
-      Rectangle anchors = new Rectangle(
-            100, middle, 8, lineTop + lineHeight - middle);
+      Rectangle bounds = new Rectangle(100, lineTop, 8, (int) (lineHeight * 0.8));
+      Rectangle anchors = RCompletionToolTip.getAnchors(bounds, lineHeight);
       return PopupPositioner.getTopPreferringAbove(
             47, anchors, 8, EDITOR_TOP, WINDOW);
    }

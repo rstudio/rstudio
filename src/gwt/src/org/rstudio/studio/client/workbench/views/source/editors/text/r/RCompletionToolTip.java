@@ -205,15 +205,7 @@ public class RCompletionToolTip extends CppCompletionToolTip
                                           final Rectangle line)
    {
       final int viewportTop = docDisplay_.getViewportBounds().getTop();
-
-      // Above, measure from the middle of the bounds; below, from the line's
-      // full height, as the bounds can be shorter than the line (see
-      // AceEditor.getPositionBounds).
-      int middle = (line.getTop() + line.getBottom()) / 2;
-      int lineBottom =
-            line.getTop() + (int) Math.ceil(docDisplay_.getLineHeight());
-      final Rectangle anchors = new Rectangle(
-            line.getLeft(), middle, line.getWidth(), lineBottom - middle);
+      final Rectangle anchors = getAnchors(line, docDisplay_.getLineHeight());
 
       // Prefer above the line, but not over the editor's toolbar or
       // tabs, nor off the window.
@@ -224,6 +216,20 @@ public class RCompletionToolTip extends CppCompletionToolTip
                PopupPositioner.getTopPreferringAbove(
                      offsetHeight, anchors, GAP, viewportTop));
       });
+   }
+
+   /**
+    * The anchors a tooltip is placed from beside a line (see
+    * PopupPositioner.getTopPreferringAbove): above, the middle of the
+    * line's bounds; below, the bottom of the whole line, as the bounds can
+    * be shorter than the line (see AceEditor.getPositionBounds).
+    */
+   public static Rectangle getAnchors(Rectangle line, double lineHeight)
+   {
+      int middle = (line.getTop() + line.getBottom()) / 2;
+      int lineBottom = line.getTop() + (int) Math.ceil(lineHeight);
+      return new Rectangle(
+            line.getLeft(), middle, line.getWidth(), lineBottom - middle);
    }
 
    private void setAnchor(Position start, Position end)
