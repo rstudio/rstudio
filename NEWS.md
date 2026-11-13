@@ -12,6 +12,9 @@
 
 ### Fixed
 - ([#19614](https://github.com/rstudio/rstudio/issues/19614)): Fixed an issue where, with an AI assistant selected (Posit AI, the default, or GitHub Copilot), the code completion popup and function signature tooltip on the first lines of the Source editor opened above the line, over the editor toolbar and tabs, the popup sometimes with its top cut off by the edge of the window. They now open below the line when they don't fit above it within the editor, the popup with the best match first.
+- ([#19593](https://github.com/rstudio/rstudio/issues/19593)): Fixed an issue where a horizontal scrollbar flickered below the file list while a narrow Files pane was being made narrower.
+- ([#19579](https://github.com/rstudio/rstudio/issues/19579)): Fixed an issue where Show Changes Side by Side could open with its two sides out of step when lines had been removed above the lines in view, and could scroll away from the line being viewed when a change above it was staged or unstaged.
+- ([#4572](https://github.com/rstudio/rstudio/issues/4572)): Fixed an issue on Linux desktop where pasting a file copied in a file manager such as Nautilus or Nemo inserted nothing into the editor, the Console, or the visual editor, instead of the file's path. This was a regression in RStudio 2026.08.
 - ([#12235](https://github.com/rstudio/rstudio/issues/12235)): Fixed an issue where RStudio Desktop took about 4 seconds longer to start a second session (e.g. with Session > New Session) than the first. The "Initializing R" page now shows its text right away instead of only the R logo, and the "Cannot Connect to R" and "Error Starting R" pages no longer have a blank Retry button, blank headings, or a missing exit code.
 - ([#19576](https://github.com/rstudio/rstudio/issues/19576)): Fixed an issue where the close button of a Git change opened from the editor gutter could not be clicked in a document long enough to scroll when scrollbars take up no room (as macOS's overlay scrollbars do): the editor's scrollbar area covered it.
 - ([#19590](https://github.com/rstudio/rstudio/issues/19590)): The New Project wizard now rejects an invalid package name (e.g. `test-cpp`) for the R Package using Rcpp, RcppArmadillo, RcppEigen, and devtools project types, instead of failing to create the project with an error such as "Malformed package name". The R Package project type also now rejects names R does not allow, such as `x` and `pkg.`.
@@ -86,6 +89,7 @@
 - ([#19401](https://github.com/rstudio/rstudio/issues/19401)): [Accessibility] Fixed an issue where menus, trees, toolbar buttons, document outlines, and the `manipulate()` slider each contained a hidden text field that assistive technologies could still reach.
 - ([#19532](https://github.com/rstudio/rstudio/issues/19532)): [Accessibility] Fixed an issue where screen readers didn't announce the code completion popup in C and C++ files. Screen readers now announce the selected completion as you move through the list.
 - ([#19555](https://github.com/rstudio/rstudio/issues/19555)): [Accessibility] Fixed an issue where typing a space in the search box of the Git pane's branch menu checked out the highlighted branch. Screen readers now announce the search box as enabled, the highlighted branch, and which worktree is current. The branch filter in a Review Changes window opened on History now shows the current branch.
+- ([#19611](https://github.com/rstudio/rstudio/issues/19611)): [Accessibility] Fixed an issue where the letters on the untracked (`?`), added, copied, and unmerged Git status icons, and on the unversioned, added, and external SVN status icons, were hard to read, especially with a dark theme. These icons now use a dark letter instead of a white one. The `R` on the renamed icon is also slightly larger, to match the other letters.
 
 ### Deprecated / Removed
 - ([#19608](https://github.com/rstudio/rstudio/issues/19608)): Removed the startup splash screen from RStudio Desktop, along with its "Show splash screen when RStudio is starting" preference, the Show Splash Screen command, the `RS_NO_SPLASH` environment variable, and the `--startup-delay` command-line switch. With faster startup ([#12235](https://github.com/rstudio/rstudio/issues/12235)), it is no longer needed.
@@ -93,6 +97,7 @@
 ### Dependencies
 - ([#18904](https://github.com/rstudio/rstudio/issues/18904)): Replaced the built-in Sundown Markdown renderer with cmark-gfm for Markdown previews, help descriptions, tutorials, and R Presentations. Rendering now follows CommonMark rules, with GFM tables, strikethrough, and autolinks; RStudio superscripts and MathJax support are retained.
 - ([#19095](https://github.com/rstudio/rstudio/issues/19095)): macOS builds now require C++20; Linux retains its C++17 minimum.
+- Copilot Language Server 1.570.0
 - Node.js 24.22.3 (GitHub Copilot, Posit Assistant)
 - Quarto 1.11.9
 - Electron 44.11.3

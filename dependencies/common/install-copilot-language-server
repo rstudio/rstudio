@@ -21,7 +21,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 section "Installing Copilot Language Server"
 
 # version to download
-COPILOT_VERSION="1.555.7"
+COPILOT_VERSION="1.570.0"
 
 # Function to check if Copilot language server is already installed with correct version
 check_copilot_installed() {
@@ -65,6 +65,10 @@ download "${COPILOT_URL_BASE}/${FILE}" "${FILE}"
 echo "Extracting ${FILE} to ${COPILOT_SUBDIR}"
 extract "${FILE}"
 rm -f "${FILE}"
+
+# Some upstream releases ship owner-only (0600) files, which the
+# packaging step (run as another user) and end users can't read
+chmod -R a+rX .
 
 # Validate that the installation succeeded
 if check_copilot_installed; then

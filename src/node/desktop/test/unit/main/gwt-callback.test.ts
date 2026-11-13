@@ -656,6 +656,47 @@ describe('DesktopCallback', () => {
       ]);
     });
 
+    // On Linux, Chromium 148+ reads the URI list through the XDG file transfer
+    // portal when a file manager offers it, and hands back an empty list when
+    // the portal lookup fails. The file manager's own list still names the files.
+    it('desktop_get_clipboard_uris falls back to the copied-files list', async () => {
+      const files = ['plain.txt', 'with space.txt'].map((name) => path.join(tempDir, name));
+      const uris = files.map((file) => pathToFileURL(file).href);
+      const data: Record<string, string> = {
+        'text/uri-list': '',
+        'electron application/osclipboard;format="x-special/gnome-copied-files"': ['cut', ...uris].join('\n'),
+      };
+      const item = {
+        types: Object.keys(data),
+        getType: sinon.stub().callsFake(async (type: string) => new Blob([data[type]])),
+      };
+      sinon.stub(clipboard, 'read').resolves([item as unknown as ClipboardItem]);
+
+      const expected = process.platform === 'win32' ? files.map((file) => file.replace(/\\/g, '/')) : files;
+      assert.deepEqual(await invoke('desktop_get_clipboard_uris'), expected);
+    });
+
+    it('desktop_get_clipboard_uris prefers a non-empty URI list to the copied-files list', async () => {
+      const [fromUriList, fromCopiedFiles] = ['uri-list.txt', 'copied-files.txt'].map((name) =>
+        path.join(tempDir, name),
+      );
+      const data: Record<string, string> = {
+        'text/uri-list': pathToFileURL(fromUriList).href,
+        'electron application/osclipboard;format="x-special/gnome-copied-files"': [
+          'copy',
+          pathToFileURL(fromCopiedFiles).href,
+        ].join('\n'),
+      };
+      const item = {
+        types: Object.keys(data),
+        getType: sinon.stub().callsFake(async (type: string) => new Blob([data[type]])),
+      };
+      sinon.stub(clipboard, 'read').resolves([item as unknown as ClipboardItem]);
+
+      const expected = process.platform === 'win32' ? fromUriList.replace(/\\/g, '/') : fromUriList;
+      assert.deepEqual(await invoke('desktop_get_clipboard_uris'), [expected]);
+    });
+
     // the renderer never calls back on a rejected IPC call, so every failed
     // read has to come back as an empty result instead
     it('desktop_get_clipboard_text treats a failed read as empty', async () => {
