@@ -27,7 +27,6 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
-import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.events.ReticulateEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -46,6 +45,7 @@ import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.DataResource;
+import com.google.gwt.resources.client.DataResource.MimeType;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -100,16 +100,11 @@ public class ConsoleInterpreterVersion
          setRVersionLabel();
       });
       
-      rLogo_ = createLogo(
-            StandardIcons.INSTANCE.rLogoSvg(),
-            StandardIcons.INSTANCE.rLogoDarkSvg(),
-            RES.styles().iconR(),
-            isTabbedView);
+      rLogo_ = createLogo(RES.styles().iconR(), ElementIds.CONSOLE_INTERPRETER_R_LOGO, isTabbedView);
       
       pythonLogo_ = createLogo(
-            StandardIcons.INSTANCE.pythonLogoSvg(),
-            null,
             RES.styles().iconPython(),
+            ElementIds.CONSOLE_INTERPRETER_PYTHON_LOGO,
             isTabbedView);
       
       logoContainer_ = new FlowPanel(SpanElement.TAG);
@@ -193,28 +188,26 @@ public class ConsoleInterpreterVersion
       }
    }
 
-   // darkResource, when non-null, replaces resource while a dark theme is active
-   private Widget createLogo(DataResource resource,
-                             DataResource darkResource,
-                             String languageClass,
+   private Widget createLogo(String languageClass,
+                             String elementId,
                              boolean isTabbedView)
    {
       HorizontalPanel panel = new HorizontalPanel();
-
-      Image logo = createLogoImage(resource, languageClass, isTabbedView);
+      
+      // The logo is a CSS background image so the stylesheet can pick the
+      // variant for the current theme. As with an <img>, the SVG is its own
+      // document, so its internal ids can't collide with others in the page
+      // (the console title exists in two variants, so inlining would duplicate
+      // them). Being empty, the element is already hidden from screen readers.
+      FlowPanel logo = new FlowPanel();
+      logo.addStyleName(RES.styles().icon());
+      logo.addStyleName(isTabbedView
+            ? RES.styles().iconTabbed()
+            : RES.styles().iconUntabbed());
+      logo.addStyleName(languageClass);
+      ElementIds.assignElementId(logo, elementId + (isTabbedView ? "_tabbed" : ""));
       panel.add(logo);
-
-      // Both variants stay in the DOM and CSS shows the one for the current
-      // theme, so switching themes needs no handler here.
-      if (darkResource != null)
-      {
-         logo.addStyleName(RES.styles().iconLightThemeOnly());
-
-         Image darkLogo = createLogoImage(darkResource, languageClass, isTabbedView);
-         darkLogo.addStyleName(RES.styles().iconDarkThemeOnly());
-         panel.add(darkLogo);
-      }
-
+      
       // this control is not operable via keyboard or screen reader, so for now we'll just hide it
       // from screen readers altogether instead of having an unlabeled image
       Image downArrow = new DecorativeImage(
@@ -223,27 +216,8 @@ public class ConsoleInterpreterVersion
       downArrow.addStyleName(RES.styles().iconDownArrow());
       downArrow.getElement().setAttribute("draggable", "false");
       panel.add(downArrow);
-
+      
       return panel;
-   }
-
-   private Image createLogoImage(DataResource resource,
-                                 String languageClass,
-                                 boolean isTabbedView)
-   {
-      // An <img> rather than inline SVG gives each logo its own document, so the
-      // SVGs' internal ids can't collide with others in the page (the console
-      // title exists in two variants, so inlining would duplicate them).
-      Image logo = new DecorativeImage(resource.getSafeUri());
-      // GWT's setDraggable(DRAGGABLE_FALSE) sets "true"; see DocTabLayoutPanel
-      logo.getElement().setAttribute("draggable", "false");
-      logo.addStyleName(RES.styles().icon());
-      logo.addStyleName(isTabbedView
-            ? RES.styles().iconTabbed()
-            : RES.styles().iconUntabbed());
-      logo.addStyleName(languageClass);
-
-      return logo;
    }
    
    public void adaptToR()
@@ -371,8 +345,6 @@ public class ConsoleInterpreterVersion
       
       String iconR();
       String iconPython();
-      String iconLightThemeOnly();
-      String iconDarkThemeOnly();
       
       String label();
       String labelTabbed();
@@ -383,6 +355,19 @@ public class ConsoleInterpreterVersion
    {
       @Source("ConsoleInterpreterVersion.css")
       Styles styles();
+
+      @Source("org/rstudio/studio/client/common/icons/r_logo.svg")
+      @MimeType("image/svg+xml")
+      DataResource rLogo();
+
+      // recolored for contrast against the dark-theme toolbar
+      @Source("org/rstudio/studio/client/common/icons/r_logo_dark.svg")
+      @MimeType("image/svg+xml")
+      DataResource rLogoDark();
+
+      @Source("org/rstudio/studio/client/common/icons/python_logo.svg")
+      @MimeType("image/svg+xml")
+      DataResource pythonLogo();
    }
 
    private static Resources RES = GWT.create(Resources.class);

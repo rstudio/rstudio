@@ -6,6 +6,10 @@
 @external rstudio-themes-dark;
 @external rstudio-console-header-layout;
 
+@url R_LOGO rLogo;
+@url R_LOGO_DARK rLogoDark;
+@url PYTHON_LOGO pythonLogo;
+
 .container {
    display: inline-block;
    cursor: pointer;
@@ -27,6 +31,10 @@
    margin-right: 4px;
    margin-top: -3px;
    vertical-align: top;
+   /* the logo fills the content box, as it did as an <img> */
+   background-origin: content-box;
+   background-repeat: no-repeat;
+   background-size: 100% 100%;
 }
 
 .iconTabbed {
@@ -57,12 +65,20 @@
    width: 17px;
    height: 17px;
    padding: 2px;
+   background-image: R_LOGO;
+}
+
+/* The dark variant carries its own colors, so unlike the Python logo it
+   takes no brightness filter. */
+.rstudio-themes-dark .iconR {
+   background-image: R_LOGO_DARK;
 }
 
 .iconPython {
    width: 16px;
    height: 16px;
    padding: 2px;
+   background-image: PYTHON_LOGO;
 }
 
 .rstudio-themes-default .iconPython {
@@ -71,17 +87,6 @@
 
 .rstudio-themes-dark .iconPython {
    filter: brightness(1.25);
-}
-
-/* Logos with a dark-theme variant show exactly one of the pair. The variant
-   carries its own colors, so it takes no brightness filter. */
-.icon.iconDarkThemeOnly,
-.rstudio-themes-dark .icon.iconLightThemeOnly {
-   display: none;
-}
-
-.rstudio-themes-dark .icon.iconDarkThemeOnly {
-   display: inline-block;
 }
 
 
