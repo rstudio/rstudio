@@ -136,10 +136,16 @@ describe('shared-cookies', () => {
     assert.deepEqual(await cookieValues(await secondary()), { WEBDIALOG: '1' });
   });
 
-  it('records the new value when a cookie is changed', async () => {
+  it('records the new value when a cookie is changed, without removing the record first', async () => {
     const primary = await primaryWith({ LOCALE: 'fr' });
+    const rm = sinon.spy(fs, 'rmSync');
+
     await setCookie(primary, 'LOCALE', 'de');
     await waitForRecord({ LOCALE: 'de' });
+
+    // a secondary instance starting in between would otherwise find no record
+    const recordFile = path.join(recordDir, 'LOCALE.json');
+    assert.isFalse(rm.calledWith(recordFile));
   });
 
   it('leaves cookies of other hosts out', async () => {
