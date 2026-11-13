@@ -73,12 +73,15 @@
    filter: brightness(1.25);
 }
 
-.rstudio-themes-default .iconR {
-   
+/* Logos with a dark-theme variant show exactly one of the pair. The variant
+   carries its own colors, so it takes no brightness filter. */
+.icon.iconDarkThemeOnly,
+.rstudio-themes-dark .icon.iconLightThemeOnly {
+   display: none;
 }
 
-.rstudio-themes-dark .iconR {
-   filter: brightness(1.25);
+.rstudio-themes-dark .icon.iconDarkThemeOnly {
+   display: inline-block;
 }
 
 

@@ -28,6 +28,11 @@ public interface StandardIcons extends ClientBundle
    @MimeType("image/svg+xml")
    DataResource rLogoSvg();
    
+   // recolored for contrast against the dark-theme toolbar
+   @Source("r_logo_dark.svg")
+   @MimeType("image/svg+xml")
+   DataResource rLogoDarkSvg();
+
    @Source("python_logo.svg")
    @MimeType("image/svg+xml")
    DataResource pythonLogoSvg();

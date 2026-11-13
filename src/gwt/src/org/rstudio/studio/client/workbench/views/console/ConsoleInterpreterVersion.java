@@ -100,9 +100,16 @@ public class ConsoleInterpreterVersion
          setRVersionLabel();
       });
       
-      rLogo_ = createLogo(StandardIcons.INSTANCE.rLogoSvg(), RES.styles().iconR(), isTabbedView);
+      rLogo_ = createLogo(
+            StandardIcons.INSTANCE.rLogoSvg(),
+            StandardIcons.INSTANCE.rLogoDarkSvg(),
+            RES.styles().iconR(),
+            isTabbedView);
       
-      pythonLogo_ = createLogo(StandardIcons.INSTANCE.pythonLogoSvg(), RES.styles().iconPython(),
+      pythonLogo_ = createLogo(
+            StandardIcons.INSTANCE.pythonLogoSvg(),
+            null,
+            RES.styles().iconPython(),
             isTabbedView);
       
       logoContainer_ = new FlowPanel(SpanElement.TAG);
@@ -186,12 +193,44 @@ public class ConsoleInterpreterVersion
       }
    }
 
+   // darkResource, when non-null, replaces resource while a dark theme is active
    private Widget createLogo(DataResource resource,
-                           String languageClass,
-                           boolean isTabbedView)
+                             DataResource darkResource,
+                             String languageClass,
+                             boolean isTabbedView)
    {
       HorizontalPanel panel = new HorizontalPanel();
-      
+
+      Image logo = createLogoImage(resource, languageClass, isTabbedView);
+      panel.add(logo);
+
+      // Both variants stay in the DOM and CSS shows the one for the current
+      // theme, so switching themes needs no handler here.
+      if (darkResource != null)
+      {
+         logo.addStyleName(RES.styles().iconLightThemeOnly());
+
+         Image darkLogo = createLogoImage(darkResource, languageClass, isTabbedView);
+         darkLogo.addStyleName(RES.styles().iconDarkThemeOnly());
+         panel.add(darkLogo);
+      }
+
+      // this control is not operable via keyboard or screen reader, so for now we'll just hide it
+      // from screen readers altogether instead of having an unlabeled image
+      Image downArrow = new DecorativeImage(
+            new ImageResource2x(ThemeResources.INSTANCE.menuDownArrow2x()));
+      downArrow.getElement().addClassName("rstudio-themes-inverts");
+      downArrow.addStyleName(RES.styles().iconDownArrow());
+      downArrow.getElement().setAttribute("draggable", "false");
+      panel.add(downArrow);
+
+      return panel;
+   }
+
+   private Image createLogoImage(DataResource resource,
+                                 String languageClass,
+                                 boolean isTabbedView)
+   {
       // An <img> rather than inline SVG gives each logo its own document, so the
       // SVGs' internal ids can't collide with others in the page (the console
       // title exists in two variants, so inlining would duplicate them).
@@ -203,19 +242,8 @@ public class ConsoleInterpreterVersion
             ? RES.styles().iconTabbed()
             : RES.styles().iconUntabbed());
       logo.addStyleName(languageClass);
-      
-      panel.add(logo);
-      
-      // this control is not operable via keyboard or screen reader, so for now we'll just hide it
-      // from screen readers altogether instead of having an unlabeled image
-      Image downArrow = new DecorativeImage(
-            new ImageResource2x(ThemeResources.INSTANCE.menuDownArrow2x()));
-      downArrow.getElement().addClassName("rstudio-themes-inverts");
-      downArrow.addStyleName(RES.styles().iconDownArrow());
-      downArrow.getElement().setAttribute("draggable", "false");
-      panel.add(downArrow);
-      
-      return panel;
+
+      return logo;
    }
    
    public void adaptToR()
@@ -343,6 +371,8 @@ public class ConsoleInterpreterVersion
       
       String iconR();
       String iconPython();
+      String iconLightThemeOnly();
+      String iconDarkThemeOnly();
       
       String label();
       String labelTabbed();
