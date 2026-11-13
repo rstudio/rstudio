@@ -42,6 +42,7 @@ import { registerProcessDiagnostics } from './process-diagnostics';
 import { SatelliteWindow } from './satellite-window';
 import { SecondaryWindow } from './secondary-window';
 import { SessionLauncher } from './session-launcher';
+import { shareBootstrapCookies } from './shared-cookies';
 import { startupCheckpoint } from './startup-timing';
 import {
   augmentCommandLineArguments,
@@ -113,6 +114,7 @@ export class Application implements AppState {
   sessionLauncher?: SessionLauncher;
   private activationInst?: DesktopActivation;
   private scratchPath?: FilePath;
+  private sharedSessionData = true;
 
   argsManager = new ArgsManager();
 
@@ -155,6 +157,7 @@ export class Application implements AppState {
     if (sessionData) {
       logger().logDebug(`Another instance is running; using session data folder ${sessionData}`);
       app.setPath('sessionData', sessionData);
+      this.sharedSessionData = false;
     }
 
     this.registerAppEvents();
@@ -402,9 +405,13 @@ export class Application implements AppState {
     this.initializeInstance();
 
     // the desktop's own pages (choose R, loading) need the UI language; read it while the
-    // rest of startup runs, and wait for it after R detection
+    // rest of startup runs, and wait for it after R detection. It's one of the cookies an
+    // instance with its own session data starts from, so those come first
     registerLanguageChannel();
-    const languageReady = trackLocaleCookie(session.defaultSession);
+    const sharedCookiesFile = path.join(app.getPath('userData'), 'shared-cookies.json');
+    const languageReady = shareBootstrapCookies(session.defaultSession, sharedCookiesFile, this.sharedSessionData).then(
+      async () => trackLocaleCookie(session.defaultSession),
+    );
 
     // prepare application for launch
     this.appLaunch = ApplicationLaunch.init();
