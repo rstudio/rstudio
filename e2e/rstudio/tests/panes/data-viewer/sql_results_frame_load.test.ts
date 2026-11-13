@@ -16,10 +16,16 @@
 //
 // The tests hold the frame's DataViewer.js while previews arrive, then let it
 // through and check what the pane pushed into the frame.
+//
+// A loaded frame takes a preview at once, even while the SQL Results tab is
+// behind another one: the tab is brought forward only after the push. The
+// grid then has no layout to size its columns against, and has to finish
+// sizing once its tab is shown.
 
 import type { Frame, Page, Route } from 'playwright';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
+import { executeCommand } from '@utils/commands';
 import { TIMEOUTS } from '@utils/constants';
 
 // The SQL Results frame (GridViewerFrame, data_source=data) and its script.
@@ -111,8 +117,12 @@ async function reloadAndWait(page: Page): Promise<void> {
 // The pane title is set right before the preview is pushed into the frame,
 // in the same call, so once it shows the push has been made.
 async function preview(page: Page, title: string, cell: string): Promise<void> {
+  await previewFrame(page, title, `data.frame(value = "${cell}")`);
+}
+
+async function previewFrame(page: Page, title: string, frame: string): Promise<void> {
   await new ConsolePaneActions(page).executeInConsole(
-    `.rs.previewDataFrame(data.frame(value = "${cell}"), "${title}")`,
+    `.rs.previewDataFrame(${frame}, "${title}")`,
     { wait: true },
   );
   await expect(page.getByText(title, { exact: true })).toBeVisible({ timeout: TIMEOUTS.fileOpen });
@@ -243,6 +253,30 @@ test.describe('SQL Results grid viewer load - #19480', () => {
       await expect(results.getByText('reload_cell_19480')).toBeVisible({ timeout: TIMEOUTS.fileOpen });
     } finally {
       await closeMarkersTab(page);
+      await closeResultsTab(page);
+    }
+  });
+
+  test('a preview into a SQL Results tab behind the Console shows its rows', async ({
+    rstudioPage: page,
+  }) => {
+    try {
+      await preview(page, 'front_19480', 'front_cell_19480');
+      const results = page.frameLocator(RESULTS_FRAME);
+      await expect(results.getByText('front_cell_19480')).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+
+      // The grid viewer is loaded; put the Console in front of it.
+      await executeCommand(page, 'activateConsole');
+      await expect(page.locator(RESULTS_FRAME)).toBeHidden();
+
+      await previewFrame(
+        page,
+        'behind_19480',
+        'data.frame(id = 1:3, name = c("a_19480", "b_19480", "behind_cell_19480"), amount = c(1.5, 2.5, 3.5))',
+      );
+      await expect(results.getByText('behind_cell_19480')).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      await expect(results.getByRole('columnheader', { name: /amount/ })).toBeVisible();
+    } finally {
       await closeResultsTab(page);
     }
   });

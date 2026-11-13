@@ -63,7 +63,16 @@ import {
   ElectronDesktopOptions,
   fixWindowsRExecutablePath,
 } from './preferences/electron-desktop-options';
-import { parseFilter, isAutomated, showWindowForAutomation, resolveAliasedPath, raiseAndActivateWindow } from './utils';
+import {
+  parseFilter,
+  isAutomated,
+  openExternalPath,
+  openExternalUrl,
+  openFileUrlWithWindowsShell,
+  showWindowForAutomation,
+  resolveAliasedPath,
+  raiseAndActivateWindow,
+} from './utils';
 import { activateWindow, focusedWebContents } from './window-utils';
 import { getenv } from '../core/environment';
 import { safeError } from '../core/err';
@@ -236,13 +245,10 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_browse_url', (event, url: string) => {
-      // shell.openExternal() seems unreliable on Windows
-      // https://github.com/electron/electron/issues/31347
       if (process.platform === 'win32' && url.startsWith('file:///')) {
-        const path = decodeURI(url).substring('file:///'.length).replaceAll('/', '\\');
-        desktop.openExternal(path);
+        openFileUrlWithWindowsShell(url);
       } else {
-        void shell.openExternal(url);
+        void openExternalUrl(url);
       }
     });
 
@@ -523,14 +529,14 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_show_folder', (event, path: string) => {
-      shell.openPath(resolveAliasedPath(normalizeSeparatorsNative(path))).catch((value) => {
+      openExternalPath(resolveAliasedPath(normalizeSeparatorsNative(path))).catch((value) => {
         console.log('error:', value);
         logger().logErrorMessage(value);
       });
     });
 
     function showFileInSystemViewer(file: string) {
-      shell.openPath(resolveAliasedPath(normalizeSeparatorsNative(file))).catch((value) => {
+      openExternalPath(resolveAliasedPath(normalizeSeparatorsNative(file))).catch((value) => {
         console.log('error:', value);
         logger().logErrorMessage(value);
       });
