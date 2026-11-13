@@ -15,7 +15,7 @@
 
 import { assert } from 'chai';
 import { session, Session } from 'electron';
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'fs';
 import { describe } from 'mocha';
 import os from 'os';
 import path from 'path';
@@ -39,11 +39,11 @@ async function cookieValues(s: Session): Promise<Record<string, string>> {
 
 describe('shared-cookies', () => {
   let dir: string;
-  let file: string;
+  let recordDir: string;
 
   beforeEach(() => {
     dir = mkdtempSync(path.join(os.tmpdir(), 'rstudio-shared-cookies-'));
-    file = path.join(dir, 'shared-cookies.json');
+    recordDir = path.join(dir, 'shared-cookies');
   });
 
   afterEach(() => {
@@ -51,19 +51,27 @@ describe('shared-cookies', () => {
   });
 
   function recordedNames(): string[] {
-    return (JSON.parse(readFileSync(file, 'utf8')) as { name: string }[]).map((cookie) => cookie.name);
+    if (!existsSync(recordDir)) {
+      return [];
+    }
+    return readdirSync(recordDir).map((entry) => path.basename(entry, '.json'));
+  }
+
+  function writeRecord(name: string, content: string): void {
+    mkdirSync(recordDir, { recursive: true });
+    writeFileSync(path.join(recordDir, `${name}.json`), content);
   }
 
   // the record is written after cookie change events, which arrive asynchronously
   async function waitForRecord(predicate: (names: string[]) => boolean): Promise<void> {
     const deadline = Date.now() + 5000;
     while (Date.now() < deadline) {
-      if (existsSync(file) && predicate(recordedNames())) {
+      if (predicate(recordedNames())) {
         return;
       }
       await new Promise((resolve) => setTimeout(resolve, 20));
     }
-    assert.fail(`the recorded cookies never matched; last: ${existsSync(file) ? readFileSync(file, 'utf8') : 'none'}`);
+    assert.fail(`the recorded cookies never matched; last: ${recordedNames().join(', ')}`);
   }
 
   async function primaryWith(cookies: Record<string, string>): Promise<Session> {
@@ -71,7 +79,7 @@ describe('shared-cookies', () => {
     for (const [name, value] of Object.entries(cookies)) {
       await s.cookies.set({ url: kSessionUrl, name, value, expirationDate: kExpiry });
     }
-    await shareBootstrapCookies(s, file, true);
+    await shareBootstrapCookies(s, recordDir, true);
     return s;
   }
 
@@ -79,7 +87,7 @@ describe('shared-cookies', () => {
     const primary = await primaryWith({ LOCALE: 'fr', WEBDIALOG: '1', other: 'x' });
 
     const secondary = freshSession();
-    await shareBootstrapCookies(secondary, file, false);
+    await shareBootstrapCookies(secondary, recordDir, false);
     assert.deepEqual(await cookieValues(secondary), { LOCALE: 'fr', WEBDIALOG: '1' });
 
     // Chromium caps the requested expiry, so compare with what the primary instance stored
@@ -93,7 +101,7 @@ describe('shared-cookies', () => {
   it('records a change made later in any instance', async () => {
     const primary = await primaryWith({ LOCALE: 'fr' });
     const secondary = freshSession();
-    await shareBootstrapCookies(secondary, file, false);
+    await shareBootstrapCookies(secondary, recordDir, false);
 
     await secondary.cookies.set({ url: kSessionUrl, name: 'WEBDIALOG', value: '1', expirationDate: kExpiry });
     await waitForRecord((names) => names.includes('WEBDIALOG'));
@@ -102,27 +110,29 @@ describe('shared-cookies', () => {
     await waitForRecord((names) => !names.includes('LOCALE'));
 
     const third = freshSession();
-    await shareBootstrapCookies(third, file, false);
+    await shareBootstrapCookies(third, recordDir, false);
     assert.deepEqual(await cookieValues(third), { WEBDIALOG: '1' });
   });
 
   it('records that the primary instance has none of the cookies', async () => {
-    writeFileSync(file, JSON.stringify([{ name: 'LOCALE', value: 'fr', domain: '127.0.0.1', path: '/' }]));
+    writeRecord('LOCALE', JSON.stringify({ name: 'LOCALE', value: 'fr', domain: '127.0.0.1', path: '/' }));
     await primaryWith({});
     assert.deepEqual(recordedNames(), []);
   });
 
   it('starts a secondary instance without the cookies when none were recorded', async () => {
     const secondary = freshSession();
-    await shareBootstrapCookies(secondary, file, false);
+    await shareBootstrapCookies(secondary, recordDir, false);
     assert.deepEqual(await cookieValues(secondary), {});
   });
 
   it('ignores a malformed record', async () => {
-    for (const content of ['not json', '{"name":"LOCALE"}', '[{"name":"LOCALE","value":3}]']) {
-      writeFileSync(file, content);
+    const cookie = { name: 'LOCALE', value: 'fr', domain: '127.0.0.1', path: '/' };
+    const malformed = ['not json', '[]', { ...cookie, value: 3 }, { ...cookie, name: 'WEBDIALOG' }];
+    for (const content of malformed.map((entry) => (typeof entry === 'string' ? entry : JSON.stringify(entry)))) {
+      writeRecord('LOCALE', content);
       const secondary = freshSession();
-      await shareBootstrapCookies(secondary, file, false);
+      await shareBootstrapCookies(secondary, recordDir, false);
       assert.deepEqual(await cookieValues(secondary), {}, content);
     }
   });

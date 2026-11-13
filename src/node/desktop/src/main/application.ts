@@ -408,8 +408,8 @@ export class Application implements AppState {
     // rest of startup runs, and wait for it after R detection. It's one of the cookies an
     // instance with its own session data starts from, so those come first
     registerLanguageChannel();
-    const sharedCookiesFile = path.join(app.getPath('userData'), 'shared-cookies.json');
-    const languageReady = shareBootstrapCookies(session.defaultSession, sharedCookiesFile, this.sharedSessionData).then(
+    const sharedCookiesDir = path.join(app.getPath('userData'), 'shared-cookies');
+    const languageReady = shareBootstrapCookies(session.defaultSession, sharedCookiesDir, this.sharedSessionData).then(
       async () => trackLocaleCookie(session.defaultSession),
     );
 
