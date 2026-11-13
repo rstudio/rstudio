@@ -1,0 +1,87 @@
+/*
+ * PopupPositionerTests.java
+ *
+ * Copyright (C) 2026 by Posit Software, PBC
+ *
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+package org.rstudio.studio.client.workbench.views.console.shell.assist;
+
+import org.rstudio.core.client.Rectangle;
+
+import com.google.gwt.junit.client.GWTTestCase;
+
+public class PopupPositionerTests extends GWTTestCase
+{
+   @Override
+   public String getModuleName()
+   {
+      return "org.rstudio.studio.RStudioTests";
+   }
+
+   // A line whose top is at y = 113, like line 1 of a Source editor whose
+   // text area starts at 113, below the tab bar and editor toolbar.
+   private static final Rectangle LINE_ONE = new Rectangle(100, 113, 8, 17);
+   private static final int EDITOR_TOP = 113;
+   private static final int WINDOW_BOTTOM = 900;
+
+   public void testPreferTopGoesAboveWhenItFitsInEditor()
+   {
+      Rectangle line = new Rectangle(100, 400, 8, 17);
+      assertFalse(PopupPositioner.isPlacedBelow(
+            100, line, false, EDITOR_TOP, WINDOW_BOTTOM));
+   }
+
+   public void testPreferTopGoesBelowOnFirstLine()
+   {
+      // #19614: there is no room above line 1 inside the editor.
+      assertTrue(PopupPositioner.isPlacedBelow(
+            68, LINE_ONE, false, EDITOR_TOP, WINDOW_BOTTOM));
+   }
+
+   public void testPreferTopGoesBelowRatherThanCoverToolbar()
+   {
+      // There is room above the line in the window, but not in the editor.
+      Rectangle line = new Rectangle(100, 150, 8, 17);
+      assertTrue(PopupPositioner.isPlacedBelow(
+            68, line, false, EDITOR_TOP, WINDOW_BOTTOM));
+   }
+
+   public void testPreferTopUsesExactFitAbove()
+   {
+      // The popup's top lands exactly on the editor's: it clears the line
+      // by 25px above the bounds' bottom.
+      Rectangle line = new Rectangle(100, EDITOR_TOP + 68 + 25 - 17, 8, 17);
+      assertFalse(PopupPositioner.isPlacedBelow(
+            68, line, false, EDITOR_TOP, WINDOW_BOTTOM));
+   }
+
+   public void testPreferTopGoesBelowEvenWhenBelowOverflows()
+   {
+      Rectangle line = new Rectangle(100, 150, 8, 17);
+      assertTrue(PopupPositioner.isPlacedBelow(
+            2000, line, false, EDITOR_TOP, WINDOW_BOTTOM));
+   }
+
+   public void testPreferBottomGoesBelowWhenItFits()
+   {
+      assertTrue(PopupPositioner.isPlacedBelow(
+            200, LINE_ONE, true, EDITOR_TOP, WINDOW_BOTTOM));
+   }
+
+   public void testPreferBottomGoesAboveWhenBelowOverflows()
+   {
+      // The console input sits at the bottom of the window; its popup goes
+      // above even when that overflows the top, as it always has.
+      Rectangle line = new Rectangle(100, 870, 8, 17);
+      assertFalse(PopupPositioner.isPlacedBelow(
+            2000, line, true, EDITOR_TOP, WINDOW_BOTTOM));
+   }
+}

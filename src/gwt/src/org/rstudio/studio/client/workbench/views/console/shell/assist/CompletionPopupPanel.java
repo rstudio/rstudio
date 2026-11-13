@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -153,23 +154,42 @@ public class CompletionPopupPanel extends ThemedPopupPanel
                                     boolean truncated)
    {
       registerIgnoredKeys();
-      
-      // If we're going to display completions on top, then reverse
-      // the completion list, and select the last values instead of the first.
-      boolean isShowingOnBottom = false;
-      if (callback instanceof PopupPositioner)
+
+      PopupPositioner positioner = callback instanceof PopupPositioner
+            ? (PopupPositioner) callback
+            : null;
+      boolean isShowingOnBottom =
+            positioner != null && positioner.getPreferBottom();
+
+      setCompletionList(values, truncated, isShowingOnBottom);
+      show(callback);
+
+      // Showing on top is only a preference: when the list doesn't fit above
+      // the line, the positioner puts it below, so lay it out top-down.
+      if (positioner != null && !isShowingOnBottom && positioner.isPlacedBelow())
       {
-         PopupPositioner positioner = (PopupPositioner) callback;
-         isShowingOnBottom = positioner.getPreferBottom();
+         isShowingOnBottom = true;
+         setCompletionList(values, truncated, true);
+         show(callback);
       }
-      
+
+      if (!isShowingOnBottom)
+         selectLast();
+   }
+
+   private void setCompletionList(QualifiedName[] values,
+                                  boolean truncated,
+                                  boolean isShowingOnBottom)
+   {
+      // If we're going to display completions on top, then reverse
+      // the completion list, so the first value sits next to the cursor.
       if (!isShowingOnBottom)
       {
-         List<QualifiedName> names = Arrays.asList(values);
+         List<QualifiedName> names = new ArrayList<>(Arrays.asList(values));
          Collections.reverse(names);
          values = names.toArray(new QualifiedName[0]);
       }
-      
+
       // Since completion popups are usually displayed from the Source pane,
       // if we're trying to display completions on top of the cursor location,
       // we'll have relatively less space available. In that case, try to display
@@ -204,11 +224,6 @@ public class CompletionPopupPanel extends ThemedPopupPanel
 
       setWidget(container_);
       ElementIds.assignElementId(list_.getElement(), ElementIds.POPUP_COMPLETIONS);
-
-      show(callback);
-      
-      if (!isShowingOnBottom)
-         selectLast();
    }
 
    public boolean hasCompletions()

@@ -34,6 +34,13 @@ public interface InputEditorDisplay extends HasAllFocusHandlers,
    Rectangle getCursorBounds();
    Rectangle getPositionBounds(InputEditorPosition position);
    Rectangle getBounds();
+
+   /**
+    * The page region this editor's lines show in: the nearest scrolling
+    * ancestor (e.g. a visual mode document holding a code chunk), or else
+    * the editor itself.
+    */
+   Rectangle getViewportBounds();
    void setFocus(boolean focused);
    boolean isFocused();
 

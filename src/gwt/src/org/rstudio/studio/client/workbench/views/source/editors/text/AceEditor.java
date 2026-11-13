@@ -2460,6 +2460,27 @@ public class AceEditor implements DocDisplay
             widget_.getOffsetHeight());
    }
 
+   @Override
+   public Rectangle getViewportBounds()
+   {
+      Element body = Document.get().getBody();
+      for (Element el = widget_.getElement().getParentElement();
+           el != null && el != body;
+           el = el.getParentElement())
+      {
+         String overflow = DomUtils.getComputedStyles(el).getOverflowY();
+         if ("auto".equals(overflow) || "scroll".equals(overflow))
+         {
+            return new Rectangle(
+                  el.getAbsoluteLeft(),
+                  el.getAbsoluteTop(),
+                  el.getOffsetWidth(),
+                  el.getOffsetHeight());
+         }
+      }
+      return getBounds();
+   }
+
    public void setFocus(boolean focused)
    {
       if (focused)
