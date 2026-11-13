@@ -299,6 +299,7 @@ using chat_installation::systemStorageDir;
 using chat_installation::runsUserSlot;
 using chat_installation::userInstallWouldBeSelected;
 using chat_installation::verifyDeclaredIdentity;
+using chat_installation::verifyExtracted;
 using chat_installation::getInstalledVersion;
 using chat_installation::getInstalledProtocolVersion;
 
@@ -4420,6 +4421,10 @@ Error installPackage(const FilePath& packagePath,
       WLOG("Failed to extract package: {}", error.getMessage());
       return discardStaging(error);
    }
+
+   error = verifyExtracted(stagingDir);
+   if (error)
+      return discardStaging(error);
 
    // The archive was SHA-256 checked against the manifest entry chosen for
    // this protocol, so a package declaring something else is mis-published

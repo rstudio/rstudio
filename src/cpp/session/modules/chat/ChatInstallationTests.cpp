@@ -261,6 +261,29 @@ TEST_F(ChatInstallationIdentity, RejectsAPackageWithoutPackageJson)
 }
 
 // ============================================================================
+// verifyExtracted
+// ============================================================================
+
+TEST_F(ChatInstallationIdentity, VerifyExtractedAcceptsAPopulatedDirectory)
+{
+   stageInstallation(dir_, "1.2.0", "11.0");
+   EXPECT_FALSE(verifyExtracted(dir_));
+}
+
+TEST_F(ChatInstallationIdentity, VerifyExtractedRejectsAnEmptyDirectoryByName)
+{
+   Error error = verifyExtracted(dir_);
+   ASSERT_TRUE(error);
+   EXPECT_EQ(error.getCode(), boost::system::errc::no_such_file_or_directory);
+   EXPECT_NE(errorDescription(error).find(dir_.getAbsolutePath()), std::string::npos);
+}
+
+TEST_F(ChatInstallationIdentity, VerifyExtractedRejectsAMissingDirectory)
+{
+   EXPECT_TRUE(verifyExtracted(dir_.completeChildPath("missing")));
+}
+
+// ============================================================================
 // System storage directory
 // ============================================================================
 

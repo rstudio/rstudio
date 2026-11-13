@@ -109,6 +109,22 @@ std::string declaredProtocol(const core::FilePath& installDir)
    return readJsonStringField(installDir, kProtocolVersionFileName, "protocol");
 }
 
+core::Error verifyExtracted(const core::FilePath& extractDir)
+{
+   std::vector<core::FilePath> children;
+   core::Error error = extractDir.getChildren(children);
+   if (error)
+      return error;
+   if (!children.empty())
+      return core::Success();
+
+   return core::systemError(
+      boost::system::errc::no_such_file_or_directory,
+      fmt::format("Extracting the package wrote no files to {}",
+                  extractDir.getAbsolutePath()),
+      ERROR_LOCATION);
+}
+
 core::Error verifyDeclaredIdentity(const core::FilePath& installDir,
                                    const std::string& expectedVersion,
                                    const std::string& expectedProtocol)
