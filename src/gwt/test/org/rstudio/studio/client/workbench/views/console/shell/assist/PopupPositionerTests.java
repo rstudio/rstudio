@@ -18,6 +18,7 @@ import org.rstudio.core.client.Rectangle;
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.RCompletionToolTip;
 
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.Window;
 
 public class PopupPositionerTests extends GWTTestCase
 {
@@ -119,6 +120,41 @@ public class PopupPositionerTests extends GWTTestCase
       Rectangle line = new Rectangle(100, EDITOR_TOP + 5 * 17, 8, 13);
       assertTrue(PopupPositioner.fitsOnSide(false, 52, line, EDITOR_TOP, WINDOW));
       assertFalse(PopupPositioner.fitsOnSide(false, 140, line, EDITOR_TOP, WINDOW));
+   }
+
+   // Where setPosition puts a 52px popup beside the line, with the side
+   // to keep (null for none), within a viewport starting at the page top.
+   private static boolean placedBelow(Rectangle line,
+                                      boolean preferBottom,
+                                      Boolean keepBelow)
+   {
+      PopupPositioner positioner = new PopupPositioner(
+            line,
+            new CompletionPopupPanel(null),
+            preferBottom,
+            new Rectangle(0, 0, 800, 3000));
+      positioner.setKeepSide(keepBelow);
+      positioner.setPosition(200, 52);
+      return positioner.isPlacedBelow();
+   }
+
+   public void testKeptSideBelowWinsOverFreshChoice()
+   {
+      // A source popup that opened below a line keeps that side as its list
+      // narrows, though a fresh popup of the new height would go above.
+      Rectangle line = new Rectangle(10, 100, 8, 13);
+      assertFalse(placedBelow(line, false, null));
+      assertTrue(placedBelow(line, false, true));
+   }
+
+   public void testKeptSideAboveWinsOverFreshChoice()
+   {
+      // A console popup that opened above the input keeps that side as its
+      // list narrows, though a fresh popup of the new height would go below.
+      int windowBottom = Window.getScrollTop() + Window.getClientHeight();
+      Rectangle line = new Rectangle(10, windowBottom - 80, 8, 13);
+      assertTrue(placedBelow(line, true, null));
+      assertFalse(placedBelow(line, true, false));
    }
 
    public void testTooltipGoesAboveWhenItFitsInEditor()
