@@ -105,6 +105,13 @@ async function restoreLayout(
   home: SplitterPosition,
   dir: string,
 ): Promise<void> {
+  // the probe is still running if the test failed before it was stopped
+  await page.evaluate(() => {
+    const probe = (window as ProbeWindow).__pwFilesOverflow;
+    if (probe)
+      probe.running = false;
+  });
+
   await page.mouse.up();
   const narrowed = await splitterCenter(page);
   await page.mouse.move(narrowed.x, narrowed.y);
