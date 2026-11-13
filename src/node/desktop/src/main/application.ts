@@ -13,7 +13,7 @@
  *
  */
 
-import { app, BrowserWindow, dialog, Event, Menu, screen, WebContents } from 'electron';
+import { app, BrowserWindow, dialog, Event, Menu, screen, session, WebContents } from 'electron';
 import i18next from 'i18next';
 import path from 'path';
 import { getenv, setenv } from '../core/environment';
@@ -60,6 +60,7 @@ import { WindowTracker } from './window-tracker';
 import { configureSatelliteWindow, configureSecondaryWindow } from './window-utils';
 import { Client, Server } from 'net-ipc';
 import { LoggerCallback } from './logger-callback';
+import { registerLanguageChannel, trackLocaleCookie } from './page-language';
 import { checkDirectoryWritable, UserDirIssue, Xdg } from '../core/xdg';
 import { ModalDialogTracker } from './modal-dialog-tracker';
 import LogOptions from './log-options';
@@ -390,6 +391,11 @@ export class Application implements AppState {
     }
     this.initializeInstance();
 
+    // the desktop's own pages (choose R, loading) need the UI language; read it while the
+    // rest of startup runs, and wait for it after R detection
+    registerLanguageChannel();
+    const languageReady = trackLocaleCookie(session.defaultSession);
+
     // prepare application for launch
     this.appLaunch = ApplicationLaunch.init();
 
@@ -444,6 +450,7 @@ export class Application implements AppState {
     if (process.platform !== 'win32' || !rChooserLikely()) {
       await rDetectionReady();
     }
+    await languageReady;
     startupCheckpoint('r-query-ready');
 
     // on Windows, ask the user what version of R they'd like to use

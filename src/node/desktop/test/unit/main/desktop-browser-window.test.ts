@@ -42,7 +42,7 @@ if (!isWindowsDocker()) {
     });
 
     it('construction creates a hidden BrowserWindow', () => {
-      const win = new DesktopBrowserWindow({ name: '_blank', skipLocaleDetection: true });
+      const win = new DesktopBrowserWindow({ name: '_blank' });
       assert.isObject(win);
       assert.isObject(win.window);
       assert.isFalse(win.window.isVisible());
@@ -51,7 +51,6 @@ if (!isWindowsDocker()) {
     it('construction creates the BrowserWindow at the requested size', () => {
       const win = new DesktopBrowserWindow({
         name: '_blank',
-        skipLocaleDetection: true,
         initialSize: { width: 1000, height: 600 },
       });
       assert.deepEqual(win.window.getSize(), [1000, 600]);
@@ -63,7 +62,7 @@ if (!isWindowsDocker()) {
       });
 
       function emitUnmaximize(): sinon.SinonStub {
-        const win = new DesktopBrowserWindow({ name: '_blank', skipLocaleDetection: true });
+        const win = new DesktopBrowserWindow({ name: '_blank' });
         const reposition = sinon.stub(win, 'positionAndEnsureVisibleDebounced');
         win.window.emit('unmaximize');
         return reposition;
@@ -112,7 +111,7 @@ if (!isWindowsDocker()) {
         sinon.stub(screen, 'getPrimaryDisplay').returns(display);
         const getAllDisplays = sinon.stub(screen, 'getAllDisplays').returns(new Array(displays).fill(display));
 
-        const win = new DesktopBrowserWindow({ name: '_blank', skipLocaleDetection: true });
+        const win = new DesktopBrowserWindow({ name: '_blank' });
         sinon.stub(win.window, 'isMaximized').returns(maximized);
         sinon.stub(win.window, 'isFullScreen').returns(fullscreen);
         sinon.stub(win.window, 'getBounds').returns({ x: 0, y: 0, width, height });
@@ -188,7 +187,7 @@ if (!isWindowsDocker()) {
 
       it('cancels a pending check when the window closes', () => {
         useWayland();
-        const win = new DesktopBrowserWindow({ name: '_blank', skipLocaleDetection: true });
+        const win = new DesktopBrowserWindow({ name: '_blank' });
         const recover = sinon.spy(win, 'recoverCollapsedMaximizedWindow');
         win.window.emit('resize');
         win.window.destroy();
@@ -198,7 +197,7 @@ if (!isWindowsDocker()) {
 
       it('does nothing for a destroyed window', () => {
         useWayland();
-        const win = new DesktopBrowserWindow({ name: '_blank', skipLocaleDetection: true });
+        const win = new DesktopBrowserWindow({ name: '_blank' });
         const getBounds = sinon.stub(win.window, 'getBounds');
         win.window.destroy();
         win.recoverCollapsedMaximizedWindow();
@@ -224,7 +223,6 @@ if (!isWindowsDocker()) {
     it('allows navigation to presentation url', () => {
       const win = new DesktopBrowserWindow({
         name: '_blank',
-        skipLocaleDetection: true,
         baseUrl: baseUrl,
         allowExternalNavigate: false,
       });
@@ -238,7 +236,6 @@ if (!isWindowsDocker()) {
     it('allows navigation to tutorial url', () => {
       const win = new DesktopBrowserWindow({
         name: '_blank',
-        skipLocaleDetection: true,
         baseUrl: baseUrl,
         allowExternalNavigate: false,
       });
@@ -252,7 +249,6 @@ if (!isWindowsDocker()) {
     it('allows navigation to viewer url', () => {
       const win = new DesktopBrowserWindow({
         name: '_blank',
-        skipLocaleDetection: true,
         baseUrl: baseUrl,
         allowExternalNavigate: false,
       });
@@ -266,7 +262,6 @@ if (!isWindowsDocker()) {
     it('allows navigation to Shiny dialog url', () => {
       const win = new DesktopBrowserWindow({
         name: '_blank',
-        skipLocaleDetection: true,
         baseUrl: baseUrl,
         allowExternalNavigate: false,
       });
@@ -280,7 +275,6 @@ if (!isWindowsDocker()) {
     it('isSafeHost detects unsafe host that looks safe', () => {
       const win = new DesktopBrowserWindow({
         name: '_blank',
-        skipLocaleDetection: true,
         baseUrl: baseUrl,
         allowExternalNavigate: false,
       });
@@ -314,7 +308,7 @@ if (!isWindowsDocker()) {
 
       it('forces close when user chooses to leave', () => {
         const showMessageBox = sinon.stub(dialog, 'showMessageBoxSync').returns(0);
-        const win = new DesktopBrowserWindow({ name: '_blank', skipLocaleDetection: true });
+        const win = new DesktopBrowserWindow({ name: '_blank' });
 
         assert.isTrue(emitWillPreventUnload(win));
         assert.isTrue(showMessageBox.calledOnce);
@@ -322,7 +316,7 @@ if (!isWindowsDocker()) {
 
       it('cancels close when user chooses to stay', () => {
         const showMessageBox = sinon.stub(dialog, 'showMessageBoxSync').returns(1);
-        const win = new DesktopBrowserWindow({ name: '_blank', skipLocaleDetection: true });
+        const win = new DesktopBrowserWindow({ name: '_blank' });
 
         assert.isFalse(emitWillPreventUnload(win));
         assert.isTrue(showMessageBox.calledOnce);
@@ -332,7 +326,7 @@ if (!isWindowsDocker()) {
         const showMessageBox = sinon.stub(dialog, 'showMessageBoxSync');
         setVars({ RSTUDIO_DESKTOP_IGNORE_BEFOREUNLOAD: '1' });
         try {
-          const win = new DesktopBrowserWindow({ name: '_blank', skipLocaleDetection: true });
+          const win = new DesktopBrowserWindow({ name: '_blank' });
 
           assert.isTrue(emitWillPreventUnload(win));
           assert.isTrue(showMessageBox.notCalled);
@@ -345,7 +339,6 @@ if (!isWindowsDocker()) {
     it('set viewer URL checks for local URL', () => {
       const win = new DesktopBrowserWindow({
         name: '_blank',
-        skipLocaleDetection: true,
         baseUrl:  baseUrl,
         allowExternalNavigate: false,
       });

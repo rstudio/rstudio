@@ -63,14 +63,7 @@ import {
   ElectronDesktopOptions,
   fixWindowsRExecutablePath,
 } from './preferences/electron-desktop-options';
-import {
-  parseFilter,
-  handleLocaleCookies,
-  isAutomated,
-  showWindowForAutomation,
-  resolveAliasedPath,
-  raiseAndActivateWindow,
-} from './utils';
+import { parseFilter, isAutomated, showWindowForAutomation, resolveAliasedPath, raiseAndActivateWindow } from './utils';
 import { activateWindow, focusedWebContents } from './window-utils';
 import { getenv } from '../core/environment';
 import { safeError } from '../core/err';
@@ -595,7 +588,6 @@ export class GwtCallback extends EventEmitter {
 
       // ask the user what version of R they'd like to use
       const chooseRDialog = new ChooseRModalWindow(rInstalls, mainWindow.window);
-      void handleLocaleCookies(chooseRDialog);
 
       const [data, error] = await chooseRDialog.showModal();
       if (error) {
