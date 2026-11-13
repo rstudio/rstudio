@@ -14,7 +14,7 @@
  */
 
 import { ChildProcess } from 'child_process';
-import { BrowserWindow, dialog, session, shell } from 'electron';
+import { BrowserWindow, dialog, session } from 'electron';
 
 import { Err, safeError } from '../core/err';
 import { logger } from '../core/logger';
@@ -34,7 +34,7 @@ import { RCommandEvaluator } from './r-command-evaluator';
 import { SessionLauncher } from './session-launcher';
 import { startupCheckpoint } from './startup-timing';
 import { waitForUrlWithTimeout } from './url-utils';
-import { isAutomated, registerWebContentsDebugHandlers } from './utils';
+import { isAutomated, openExternalUrl, registerWebContentsDebugHandlers } from './utils';
 
 export function closeAllSatellites(mainWindow: BrowserWindow): void {
   const topLevels = BrowserWindow.getAllWindows();
@@ -158,7 +158,7 @@ export class MainWindow extends GwtWindow {
       // the url from the iframe src
       if (details.resourceType === 'subFrame' && details.frame?.url && !this.allowNavigation(details.url)) {
         // Open the page externally
-        shell.openExternal(details.url).catch((error) => {
+        openExternalUrl(details.url).catch((error) => {
           logger().logError(error);
         });
         // Re-direct the iframe back to the source URL (bleh)

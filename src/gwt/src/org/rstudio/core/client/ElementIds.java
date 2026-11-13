@@ -128,6 +128,8 @@ public class ElementIds
    public final static String CONSOLE_INPUT = "console_input";
    public final static String CONSOLE_OUTPUT = "console_output";
    public final static String CONSOLE_INTERPRETER_VERSION = "console_interpreter_version";
+   public final static String CONSOLE_INTERPRETER_R_LOGO = "console_interpreter_r_logo";
+   public final static String CONSOLE_INTERPRETER_PYTHON_LOGO = "console_interpreter_python_logo";
    public final static String DEPLOY_CONTENT = "deploy_content";
    public final static String FIND_REPLACE_BAR = "find_replace_bar";
    public final static String HELP_FRAME = "help_frame";
