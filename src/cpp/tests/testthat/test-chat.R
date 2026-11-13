@@ -96,6 +96,16 @@ test_that("chat.downloadPackage reports no reason when the download succeeds", {
    expect_identical(reason, "")
 })
 
+test_that("chat.downloadPackage ignores a warning from a download that succeeded", {
+   # e.g. R >= 4.2 warns that method = "wininet" is deprecated on every download.
+   reason <- suppressWarnings(downloadPackageWith(function(url, destfile, ...) {
+      warning("the 'wininet' method is deprecated for http:// and https:// URLs")
+      writeLines("package", destfile)
+      0L
+   }))
+   expect_identical(reason, "")
+})
+
 test_that("chat.downloadPackage reports a failure that download.file only warns about", {
    # download.file()'s libcurl and internal methods can return a non-zero status
    # with only a warning rather than erroring. Ignoring the status lets a

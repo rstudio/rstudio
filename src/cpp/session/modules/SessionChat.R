@@ -1188,6 +1188,42 @@ delayedAssign(
    )
 })
 
+#' Evaluate an expression, returning why it failed.
+#'
+#' download.file() and unzip() put the reason for a failure in a warning, and
+#' unzip() often reports a failure only as a warning. So collect the warnings
+#' along with any error and return them together. The warnings are collected
+#' but not muffled, so they still reach the console.
+#'
+#' @param expr The expression to evaluate.
+#' @param warningsFail Whether a warning alone means the expression failed.
+#'   When FALSE, warnings are reported only alongside an error.
+#' @return "" if the expression succeeded, otherwise the error message and
+#'   the warnings, joined with "; ".
+.rs.addFunction("chat.failureReason", function(expr, warningsFail)
+{
+   warningText <- character()
+
+   result <- withCallingHandlers(
+      tryCatch({ expr; NULL }, error = function(e) e),
+      warning = function(w)
+      {
+         warningText <<- c(warningText, conditionMessage(w))
+      }
+   )
+
+   if (!inherits(result, "error"))
+      return(if (warningsFail) paste(warningText, collapse = "; ") else "")
+
+   reason <- conditionMessage(result)
+
+   # Under options(warn = 2) the collected warning is the error just reported,
+   # so drop any warning text the reason already carries.
+   warningText <- warningText[!vapply(warningText, grepl, logical(1), x = reason, fixed = TRUE)]
+
+   paste(c(reason, warningText), collapse = "; ")
+})
+
 #' Download the Posit Assistant package, reporting why a failure happened.
 #'
 #' download.file() puts the reason a transfer failed in a warning ("status was
@@ -1197,10 +1233,9 @@ delayedAssign(
 #' ("download had nonzero exit status"), where curl and wget stop(). So collect
 #' the warnings, check the status, and return both to the caller: a truncated
 #' download that reaches the SHA-256 check would otherwise be reported as an
-#' integrity failure rather than as the dropped connection it is.
-#'
-#' The warnings are collected but not muffled, so they still reach the console as
-#' they do for any other download.
+#' integrity failure rather than as the dropped connection it is. A warning
+#' from a download that succeeded (such as a deprecated method) is not a
+#' failure.
 #'
 #' The method is left to whatever the user/admin configured via
 #' options(download.file.method) (corporate proxies often set method = "curl"
@@ -1217,33 +1252,13 @@ delayedAssign(
    op <- options(timeout = max(60L, getOption("timeout", default = 60L)))
    on.exit(options(op), add = TRUE)
 
-   warningText <- character()
-
    # quiet = FALSE so the transfer's progress reaches the console; mode = "wb"
    # because the package is a zip file.
-   status <- withCallingHandlers(
-      tryCatch(
-         download.file(url, destfile = destfile, quiet = FALSE, mode = "wb"),
-         error = function(e) e
-      ),
-      warning = function(w)
-      {
-         warningText <<- c(warningText, conditionMessage(w))
-      }
-   )
-
-   reason <- if (inherits(status, "error"))
-      conditionMessage(status)
-   else if (!isTRUE(status == 0))
-      paste("download.file failed, status", status)
-   else
-      return("")
-
-   # Under options(warn = 2) the collected warning is the error just reported,
-   # so drop any warning text the reason already carries.
-   warningText <- warningText[!vapply(warningText, grepl, logical(1), x = reason, fixed = TRUE)]
-
-   paste(c(reason, warningText), collapse = "; ")
+   .rs.chat.failureReason(warningsFail = FALSE, {
+      status <- download.file(url, destfile = destfile, quiet = FALSE, mode = "wb")
+      if (!isTRUE(status == 0))
+         stop(paste("download.file failed, status", status), call. = FALSE)
+   })
 })
 
 #' Extract the Posit Assistant package, reporting why a failure happened.
@@ -1252,28 +1267,11 @@ delayedAssign(
 #' write -- as a warning ("error 1 in extracting from zip file") and returns
 #' normally, so a partial extraction would otherwise reach the install checks
 #' as if it had succeeded. Any warning or error therefore fails the extraction.
-#' As in chat.downloadPackage, the warnings are collected but not muffled.
 #'
 #' @param zipfile The downloaded package.
 #' @param exdir The staging directory to extract the package into.
 #' @return "" if the extraction succeeded, otherwise the reason it failed.
 .rs.addFunction("chat.extractPackage", function(zipfile, exdir)
 {
-   warningText <- character()
-
-   result <- withCallingHandlers(
-      tryCatch(unzip(zipfile, exdir = exdir), error = function(e) e),
-      warning = function(w)
-      {
-         warningText <<- c(warningText, conditionMessage(w))
-      }
-   )
-
-   reason <- if (inherits(result, "error")) conditionMessage(result)
-
-   # Under options(warn = 2) the collected warning is the error just reported.
-   if (length(reason))
-      warningText <- warningText[!vapply(warningText, grepl, logical(1), x = reason, fixed = TRUE)]
-
-   paste(c(reason, warningText), collapse = "; ")
+   .rs.chat.failureReason(unzip(zipfile, exdir = exdir), warningsFail = TRUE)
 })
