@@ -106,6 +106,21 @@ public class PopupPositionerTests extends GWTTestCase
             47, anchors, 8, EDITOR_TOP, WINDOW);
    }
 
+   public void testFitsBelowWithinWindow()
+   {
+      Rectangle line = new Rectangle(100, 700, 8, 17);
+      assertTrue(PopupPositioner.fitsOnSide(true, 150, line, EDITOR_TOP, WINDOW));
+      assertFalse(PopupPositioner.fitsOnSide(true, 200, line, EDITOR_TOP, WINDOW));
+   }
+
+   public void testFitsAboveWithinEditor()
+   {
+      // Line 6: 2 rows (about 52px) fit above it in the editor; 6 don't.
+      Rectangle line = new Rectangle(100, EDITOR_TOP + 5 * 17, 8, 13);
+      assertTrue(PopupPositioner.fitsOnSide(false, 52, line, EDITOR_TOP, WINDOW));
+      assertFalse(PopupPositioner.fitsOnSide(false, 140, line, EDITOR_TOP, WINDOW));
+   }
+
    public void testTooltipGoesAboveWhenItFitsInEditor()
    {
       // Line 10: as before, 28px above the middle of the line's bounds.

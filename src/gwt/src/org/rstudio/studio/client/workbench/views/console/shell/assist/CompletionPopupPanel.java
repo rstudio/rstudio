@@ -117,6 +117,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       // An offscreen list stays attached; stop announcing its selection.
       if (list_ != null)
          list_.setInput(null);
+      placedBelow_ = null;
       setPopupPosition(-10000, -10000);
       help_.setPopupPosition(-10000, -10000);
    }
@@ -161,6 +162,13 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       boolean preferBottom =
             positioner != null && positioner.getPreferBottom();
 
+      // Refreshed as the user types, a showing popup stays on its side of
+      // the line while it fits there, rather than jumping across the line
+      // as its list narrows.
+      Boolean keepBelow = positioner != null && isShowing() ? placedBelow_ : null;
+      if (keepBelow != null)
+         positioner.setKeepSide(keepBelow);
+
       // Since completion popups are usually displayed from the Source pane,
       // if we're trying to display completions on top of the cursor location,
       // we'll have relatively less space available. In that case, try to display
@@ -168,17 +176,24 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       // if the popup ends up below, so it keeps the height it was placed with.
       int numVisibleItems = preferBottom ? 9 : 6;
 
-      boolean bottomUp = !preferBottom;
+      // A list that prefers the top runs bottom-up when shown above the
+      // line, so its best match sits next to the line. Guess the side from
+      // the preference and the side kept, and rebuild if the guess is wrong.
+      boolean bottomUp = !preferBottom && !Boolean.TRUE.equals(keepBelow);
       setCompletionList(values, truncated, bottomUp, numVisibleItems);
       show(callback);
 
-      // Showing on top is only a preference: when the list doesn't fit above
-      // the line, the positioner puts it below, so lay it out top-down.
-      if (bottomUp && positioner != null && positioner.isPlacedBelow())
+      if (positioner != null)
       {
-         bottomUp = false;
-         setCompletionList(values, truncated, bottomUp, numVisibleItems);
-         show(callback);
+         placedBelow_ = positioner.isPlacedBelow();
+         boolean wantBottomUp = !preferBottom && !placedBelow_;
+         if (wantBottomUp != bottomUp)
+         {
+            bottomUp = wantBottomUp;
+            setCompletionList(values, truncated, bottomUp, numVisibleItems);
+            show(callback);
+            placedBelow_ = positioner.isPlacedBelow();
+         }
       }
 
       if (bottomUp)
@@ -564,6 +579,9 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    private VerticalPanel container_;
    private final Label truncated_;
    private JavaScriptObject focusHandler_;
+   // The side of the cursor the list was last shown on (below, or not), or
+   // null if it was since placed offscreen.
+   private Boolean placedBelow_;
    private ShortcutManager.Handle handle_;
    private HandlerRegistration windowBlurHandler_;
    private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);

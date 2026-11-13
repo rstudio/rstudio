@@ -62,6 +62,16 @@ public class PopupPositioner implements PositionCallback
       this(cursorBounds, popup, true, null);
    }
 
+   /**
+    * Keeps the popup on the given side of the cursor (below, or not) while
+    * it fits there, so a showing popup doesn't jump across the line as its
+    * list narrows. Null, the default, chooses a side afresh.
+    */
+   public void setKeepSide(Boolean below)
+   {
+      keepBelow_ = below;
+   }
+
    public void setPosition(int popupWidth, int popupHeight)
    {
       if (cursorBounds_ == null)
@@ -73,8 +83,16 @@ public class PopupPositioner implements PositionCallback
       Rectangle window = getWindowBounds();
       int viewportTop = viewport_ == null ? window.getTop() : viewport_.getTop();
 
-      placedBelow_ = isPlacedBelow(
-            popupHeight, cursorBounds_, preferBottom_, viewportTop, window);
+      if (keepBelow_ != null && fitsOnSide(
+            keepBelow_, popupHeight, cursorBounds_, viewportTop, window))
+      {
+         placedBelow_ = keepBelow_;
+      }
+      else
+      {
+         placedBelow_ = isPlacedBelow(
+               popupHeight, cursorBounds_, preferBottom_, viewportTop, window);
+      }
 
       int top = placedBelow_
             ? cursorBounds_.getBottom() + GAP
@@ -100,6 +118,22 @@ public class PopupPositioner implements PositionCallback
             preferBottom,
             viewportTop,
             window);
+   }
+
+   /**
+    * Whether a popup of the given height fits on the given side of the
+    * cursor: below, within the window; above, below the viewport's top.
+    */
+   static boolean fitsOnSide(boolean below,
+                             int popupHeight,
+                             Rectangle cursorBounds,
+                             int viewportTop,
+                             Rectangle window)
+   {
+      if (below)
+         return cursorBounds.getBottom() + GAP + popupHeight < window.getBottom();
+      int top = topAbove(popupHeight, cursorBounds.getBottom(), GAP);
+      return top >= Math.max(viewportTop, window.getTop());
    }
 
    /**
@@ -244,6 +278,7 @@ public class PopupPositioner implements PositionCallback
    private final CompletionPopupDisplay popup_;
    private final boolean preferBottom_;
    private final Rectangle viewport_;
+   private Boolean keepBelow_;
    private boolean placedBelow_;
 
    // Space between the cursor's line and the popup.

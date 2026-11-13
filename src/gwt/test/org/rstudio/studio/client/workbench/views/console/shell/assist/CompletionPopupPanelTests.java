@@ -43,12 +43,14 @@ public class CompletionPopupPanelTests extends GWTTestCase
       };
    }
 
+   // Shows the completions, refreshing the panel if it is already showing.
    private void show(Rectangle line)
    {
       // Prefers the top, as when an AI assistant is enabled, within an
       // editor whose text area starts at the top of the page.
       Rectangle viewport = new Rectangle(0, 0, 800, 3000);
-      panel_ = new CompletionPopupPanel(null);
+      if (panel_ == null)
+         panel_ = new CompletionPopupPanel(null);
       panel_.showCompletionValues(
             completions(),
             new PopupPositioner(line, panel_, false, viewport),
@@ -75,6 +77,65 @@ public class CompletionPopupPanelTests extends GWTTestCase
       QualifiedName[] items = panel_.getItems();
       assertTrue(panel_.getPopupTop() < line.getTop());
       assertEquals("library", items[items.length - 1].name);
+      assertEquals("library", panel_.getSelectedValue().name);
+   }
+
+   // Records the side the panel asks it to keep.
+   private static class RecordingPositioner extends PopupPositioner
+   {
+      RecordingPositioner(Rectangle line, CompletionPopupDisplay popup)
+      {
+         super(line, popup, false, new Rectangle(0, 0, 800, 3000));
+      }
+
+      @Override
+      public void setKeepSide(Boolean below)
+      {
+         kept = below;
+         super.setKeepSide(below);
+      }
+
+      Boolean kept;
+   }
+
+   private RecordingPositioner showRecording(Rectangle line)
+   {
+      RecordingPositioner positioner = new RecordingPositioner(line, panel_);
+      panel_.showCompletionValues(completions(), positioner, false);
+      return positioner;
+   }
+
+   public void testRefreshKeepsSide()
+   {
+      // Opened with no room above, the popup goes below; refreshed while
+      // showing, it asks to stay there.
+      Rectangle line = new Rectangle(10, 0, 8, 13);
+      panel_ = new CompletionPopupPanel(null);
+      assertNull(showRecording(line).kept);
+      assertEquals(Boolean.TRUE, showRecording(line).kept);
+   }
+
+   public void testReopenedPopupChoosesSideAfresh()
+   {
+      Rectangle line = new Rectangle(10, 0, 8, 13);
+      panel_ = new CompletionPopupPanel(null);
+      showRecording(line);
+      panel_.hide();
+      assertNull(showRecording(line).kept);
+
+      // An offscreen popup is still attached, but no longer has a side.
+      panel_.placeOffscreen();
+      assertNull(showRecording(line).kept);
+   }
+
+   public void testRefreshSwitchesSideWhenItNoLongerFits()
+   {
+      show(new Rectangle(10, 2000, 8, 13));
+      Rectangle line = new Rectangle(10, 0, 8, 13);
+      show(line);
+
+      assertTrue(panel_.getPopupTop() > line.getBottom());
+      assertEquals("library", panel_.getItems()[0].name);
       assertEquals("library", panel_.getSelectedValue().name);
    }
 
