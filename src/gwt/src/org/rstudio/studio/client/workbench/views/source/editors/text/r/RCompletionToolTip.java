@@ -204,30 +204,25 @@ public class RCompletionToolTip extends CppCompletionToolTip
    private void resolvePositionRelativeTo(final int left,
                                           final Rectangle line)
    {
-      final Rectangle viewport = docDisplay_.getViewportBounds();
+      final int viewportTop = docDisplay_.getViewportBounds().getTop();
 
-      // The bounds can be shorter than the line (see AceEditor.getPositionBounds),
-      // so measure below the line from its top and full height.
-      final int middle = (line.getTop() + line.getBottom()) / 2;
-      final int lineBottom =
+      // Above, measure from the middle of the bounds; below, from the line's
+      // full height, as the bounds can be shorter than the line (see
+      // AceEditor.getPositionBounds).
+      int middle = (line.getTop() + line.getBottom()) / 2;
+      int lineBottom =
             line.getTop() + (int) Math.ceil(docDisplay_.getLineHeight());
+      final Rectangle anchors = new Rectangle(
+            line.getLeft(), middle, line.getWidth(), lineBottom - middle);
 
+      // Prefer above the line, but not over the editor's toolbar or
+      // tabs, nor off the window.
       setPopupPositionAndShow((int offsetWidth, int offsetHeight) ->
       {
-         // Prefer above the line, but not over the editor's toolbar or
-         // tabs, nor off the window.
-         int topAbove = middle - offsetHeight - GAP - PopupPositioner.LINE_CLEARANCE;
-         int topBelow = lineBottom + GAP;
-         boolean below = PopupPositioner.placeBelow(
-               topAbove,
-               topBelow + offsetHeight,
-               false,
-               viewport.getTop(),
-               PopupPositioner.getWindowBounds());
-
          setPopupPosition(
                PopupPositioner.constrainLeft(offsetWidth, left, GAP),
-               below ? topBelow : topAbove);
+               PopupPositioner.getTopPreferringAbove(
+                     offsetHeight, anchors, GAP, viewportTop));
       });
    }
 

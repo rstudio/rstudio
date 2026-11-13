@@ -78,7 +78,7 @@ public class PopupPositioner implements PositionCallback
 
       int top = placedBelow_
             ? cursorBounds_.getBottom() + GAP
-            : topAbove(popupHeight, cursorBounds_);
+            : topAbove(popupHeight, cursorBounds_.getBottom(), GAP);
       int left = constrainLeft(popupWidth, cursorBounds_.getLeft(), GAP);
 
       popup_.setPopupPosition(left, top);
@@ -95,7 +95,7 @@ public class PopupPositioner implements PositionCallback
                                 Rectangle window)
    {
       return placeBelow(
-            topAbove(popupHeight, cursorBounds),
+            topAbove(popupHeight, cursorBounds.getBottom(), GAP),
             cursorBounds.getBottom() + GAP + popupHeight,
             preferBottom,
             viewportTop,
@@ -110,11 +110,11 @@ public class PopupPositioner implements PositionCallback
     * editor's text; failing that, it goes to whichever side fits in the
     * window, and below if neither does.
     */
-   public static boolean placeBelow(int topAbove,
-                                    int bottomBelow,
-                                    boolean preferBottom,
-                                    int viewportTop,
-                                    Rectangle window)
+   private static boolean placeBelow(int topAbove,
+                                     int bottomBelow,
+                                     boolean preferBottom,
+                                     int viewportTop,
+                                     Rectangle window)
    {
       boolean fitsBelow = bottomBelow < window.getBottom();
       if (preferBottom)
@@ -124,7 +124,35 @@ public class PopupPositioner implements PositionCallback
       return fitsBelow || topAbove < window.getTop();
    }
 
-   public static Rectangle getWindowBounds()
+   /**
+    * The top of a popup of the given height beside a line, preferring above
+    * it (see placeBelow). Above, it ends gap plus room for the line above
+    * anchors' top; below, it starts gap below anchors' bottom. Callers pick
+    * anchors that suit their line bounds.
+    */
+   public static int getTopPreferringAbove(int popupHeight,
+                                           Rectangle anchors,
+                                           int gap,
+                                           int viewportTop)
+   {
+      return getTopPreferringAbove(
+            popupHeight, anchors, gap, viewportTop, getWindowBounds());
+   }
+
+   static int getTopPreferringAbove(int popupHeight,
+                                    Rectangle anchors,
+                                    int gap,
+                                    int viewportTop,
+                                    Rectangle window)
+   {
+      int topAbove = topAbove(popupHeight, anchors.getTop(), gap);
+      int topBelow = anchors.getBottom() + gap;
+      boolean below = placeBelow(
+            topAbove, topBelow + popupHeight, false, viewportTop, window);
+      return below ? topBelow : topAbove;
+   }
+
+   private static Rectangle getWindowBounds()
    {
       return new Rectangle(
             Window.getScrollLeft(),
@@ -133,11 +161,12 @@ public class PopupPositioner implements PositionCallback
             Window.getClientHeight());
    }
 
-   // Measured up from the bounds' bottom, as the bounds can be shorter
-   // than the line (see AceEditor.getPositionBounds).
-   private static int topAbove(int popupHeight, Rectangle cursorBounds)
+   // The top of a popup above a line, placed from an anchor such as the
+   // bottom of the cursor's bounds, which can be shorter than the line
+   // (see AceEditor.getPositionBounds).
+   private static int topAbove(int popupHeight, int anchor, int gap)
    {
-      return cursorBounds.getBottom() - LINE_CLEARANCE - GAP - popupHeight;
+      return anchor - LINE_CLEARANCE - gap - popupHeight;
    }
 
    /**
@@ -158,7 +187,7 @@ public class PopupPositioner implements PositionCallback
                                               int pageY,
                                               int fudgeFactor)
    {
-      int topAbove = pageY - height - fudgeFactor - LINE_CLEARANCE;
+      int topAbove = topAbove(height, pageY, fudgeFactor);
       int topBelow = pageY + fudgeFactor;
       Rectangle window = getWindowBounds();
       boolean below = placeBelow(
@@ -221,6 +250,6 @@ public class PopupPositioner implements PositionCallback
    private static final int GAP = 5;
    // Extra room left between a popup above its line and the anchor it is
    // placed from, the bottom (or for a tooltip, the middle) of that line.
-   public static final int LINE_CLEARANCE = 20;
+   private static final int LINE_CLEARANCE = 20;
    
 }

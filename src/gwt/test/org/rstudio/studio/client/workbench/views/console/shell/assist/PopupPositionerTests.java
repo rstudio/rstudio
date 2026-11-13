@@ -94,4 +94,36 @@ public class PopupPositionerTests extends GWTTestCase
       assertFalse(PopupPositioner.isPlacedBelow(
             2000, line, true, EDITOR_TOP, WINDOW));
    }
+
+   // A signature tooltip, 47px tall and 8px from its line, measured above from
+   // the middle of the cursor's bounds and below from the line's full height.
+   private static int tooltipTop(int lineTop, int lineHeight)
+   {
+      int boundsHeight = (int) (lineHeight * 0.8);
+      int middle = lineTop + boundsHeight / 2;
+      Rectangle anchors = new Rectangle(
+            100, middle, 8, lineTop + lineHeight - middle);
+      return PopupPositioner.getTopPreferringAbove(
+            47, anchors, 8, EDITOR_TOP, WINDOW);
+   }
+
+   public void testTooltipGoesAboveWhenItFitsInEditor()
+   {
+      // Line 10: as before, 28px above the middle of the line's bounds.
+      int lineTop = EDITOR_TOP + 9 * 17;
+      int middle = lineTop + 13 / 2;
+      assertEquals(middle - 28 - 47, tooltipTop(lineTop, 17));
+   }
+
+   public void testTooltipGoesBelowWholeLineOnFirstLine()
+   {
+      // #19614: 8px below the line, not 8px below its middle.
+      assertEquals(EDITOR_TOP + 17 + 8, tooltipTop(EDITOR_TOP, 17));
+   }
+
+   public void testTooltipClearsTallLine()
+   {
+      // A 20pt font: the bounds' middle is 14px into a 37px line.
+      assertEquals(EDITOR_TOP + 37 + 8, tooltipTop(EDITOR_TOP, 37));
+   }
 }
