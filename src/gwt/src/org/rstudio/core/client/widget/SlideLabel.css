@@ -27,6 +27,28 @@
    display: inline-block;
 }
 
+.percentColumn {
+   padding-left: 6px;
+   display: none;
+}
+
+/* The sizer holds the widest percentage and the value is drawn over it, so
+   the label keeps its width while the percentage changes. */
+.percent {
+   position: relative;
+   white-space: nowrap;
+}
+
+.percentSizer {
+   visibility: hidden;
+}
+
+.percentValue {
+   position: absolute;
+   top: 0;
+   right: 0;
+}
+
 .cancelColumn {
    padding-left: 6px;
 }

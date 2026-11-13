@@ -216,12 +216,9 @@ public class GeneralPreferencesPane extends PreferencesPane
          basic.add(autohideMenubar);
       }
 
-      CheckBox enableSplashScreen = checkboxPref(prefs_.enableSplashScreen());
-      CheckBox enableMouseWheelZoom = checkboxPref(prefs_.enableMousewheelZoom());
       if (BrowseCap.isElectron())
       {
-         basic.add(enableSplashScreen);
-         basic.add(enableMouseWheelZoom);
+         basic.add(checkboxPref(prefs_.enableMousewheelZoom()));
       }
 
       basic.add(checkboxPref(prefs_.mousewheelChangesEditorTab()));

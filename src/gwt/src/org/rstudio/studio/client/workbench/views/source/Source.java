@@ -2390,8 +2390,10 @@ public class Source implements InsertSourceEvent.Handler,
          {
             public void onSuccess(EditingTarget arg)
             {
-               ((TextEditingTarget)arg).insertCode(event.getCode(),
-                                                   event.isBlock());
+               TextEditingTarget target = (TextEditingTarget) arg;
+               target.insertCode(target.activeDisplay(),
+                                 event.getCode(),
+                                 event.isBlock());
             }
          });
       }

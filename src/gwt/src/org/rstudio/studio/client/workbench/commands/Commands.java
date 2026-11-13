@@ -549,7 +549,6 @@ public abstract class
    public abstract AppCommand activateHelp();
    public abstract AppCommand layoutZoomHelp();
    public abstract AppCommand showAboutDialog();
-   public abstract AppCommand showSplashScreen();
    public abstract AppCommand copyRStudioVersion();
    public abstract AppCommand showTrustRequestDialog();
    public abstract AppCommand showLicenseDialog();

@@ -34,6 +34,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.presentation2.model.PresentationEditorLocation;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
+import org.rstudio.studio.client.panmirror.command.PanmirrorCommandUI;
 import org.rstudio.studio.client.panmirror.command.PanmirrorMenuItem;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbar;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbarCommands;
@@ -486,6 +487,14 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    public boolean execCommand(String id)
    {
       return commands_.exec(id);
+   }
+
+   // Whether the command exists in this editor's format and applies at the
+   // current selection.
+   public boolean isCommandEnabled(String id)
+   {
+      PanmirrorCommandUI command = commands_.get(id);
+      return command != null && command.isEnabled();
    }
    
    public void navigate(String type, String location, boolean recordCurrent)

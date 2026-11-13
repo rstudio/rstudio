@@ -64,6 +64,7 @@
 #include <session/SessionScopes.hpp>
 #include <session/SessionSuspend.hpp>
 #include <session/projects/SessionProjects.hpp>
+#include <session/projects/SessionProjectsOverlay.hpp>
 #include <session/prefs/UserPrefs.hpp>
 
 #ifdef RSTUDIO_SERVER
@@ -1278,6 +1279,12 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                      // extract the directory (aliased)
                      FilePath projFile = module_context::resolveAliasedPath(switchToProject);
                      std::string projDir = createAliasedPath(projFile.getParent());
+
+                     Error error =
+                        projects::overlay::ensureProjectIdForPath(projFile.getParent());
+                     if (error)
+                        LOG_ERROR(error);
+
                      scope = r_util::SessionScope::fromProject(
                               projDir,
                               options().sessionScope().id(),

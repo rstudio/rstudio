@@ -1,7 +1,7 @@
 /*
- * splash.ts
+ * desktop-language.ts
  *
- * Copyright (C) 2022 by Posit Software, PBC
+ * Copyright (C) 2026 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant
  * to the terms of a commercial license agreement with Posit Software, then
@@ -12,4 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-// empty but required for plugin-webpack in forge.config.js
+
+// Synchronous IPC channel through which preloads ask the main process for the UI language.
+// Kept free of dependencies so both main/page-language.ts and the preloads can import it.
+export const kGetLanguageChannel = 'desktop_get_language';
