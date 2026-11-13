@@ -677,7 +677,9 @@ describe('DesktopCallback', () => {
     });
 
     it('desktop_get_clipboard_uris prefers a non-empty URI list to the copied-files list', async () => {
-      const [fromUriList, fromCopiedFiles] = ['uri-list.txt', 'copied-files.txt'].map((name) => path.join(tempDir, name));
+      const [fromUriList, fromCopiedFiles] = ['uri-list.txt', 'copied-files.txt'].map((name) =>
+        path.join(tempDir, name),
+      );
       const data: Record<string, string> = {
         'text/uri-list': pathToFileURL(fromUriList).href,
         'electron application/osclipboard;format="x-special/gnome-copied-files"': [

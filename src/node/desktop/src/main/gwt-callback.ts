@@ -466,7 +466,7 @@ export class GwtCallback extends EventEmitter {
     // return the path to that file.
     ipcMain.handle('desktop_get_clipboard_image', async () => {
       // if we don't have any image, bail
-      const pngData = await readClipboardType(['image/png'],async (blob) => Buffer.from(await blob.arrayBuffer()));
+      const pngData = await readClipboardType(['image/png'], async (blob) => Buffer.from(await blob.arrayBuffer()));
       if (!pngData) {
         return '';
       }
