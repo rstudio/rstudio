@@ -241,6 +241,18 @@ describe('Application', () => {
       assert.isTrue(setPath.notCalled);
       assert.isFalse(fs.existsSync(sessionDataRoot()));
     });
+
+    it('takes the lock at startup if that did not happen earlier, keeping the shared session data', () => {
+      application['ensureInstanceLock']();
+      assert.isTrue(requestLock.calledOnce);
+      assert.isTrue(setPath.notCalled);
+    });
+
+    it('does not take the lock again at startup', () => {
+      application['initializeInstanceLock']();
+      application['ensureInstanceLock']();
+      assert.isTrue(requestLock.calledOnce);
+    });
   });
 
   describe('Command line switches', () => {

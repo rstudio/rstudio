@@ -114,6 +114,7 @@ export class Application implements AppState {
   private activationInst?: DesktopActivation;
   private scratchPath?: FilePath;
   private sharedSessionData = true;
+  private instanceLockTaken = false;
 
   argsManager = new ArgsManager();
 
@@ -274,13 +275,14 @@ export class Application implements AppState {
    * can only be changed before the app is ready. The listener for files forwarded by later
    * launches goes in with the lock, as they can arrive from then on.
    */
-  private initializeInstanceLock() {
+  private initializeInstanceLock(canMoveSessionData = true) {
+    this.instanceLockTaken = true;
     const userData = app.getPath('userData');
     const hasInstanceLock = app.requestSingleInstanceLock();
 
     // a launch that only hands its files to the primary instance never opens a window, so it
     // has no use for storage of its own
-    if (!hasInstanceLock && !this.forwardsToPrimary(hasInstanceLock)) {
+    if (!hasInstanceLock && canMoveSessionData && !this.forwardsToPrimary(hasInstanceLock)) {
       const sessionData = prepareInstanceSessionData(userData);
       if (sessionData) {
         logger().logDebug(`Another instance is running; using session data folder ${sessionData}`);
@@ -304,6 +306,19 @@ export class Application implements AppState {
       this.argsManager.setUnswitchedArgs(argv.slice(1));
       if (this.argsManager.getProjectFileArg() === undefined) this.argsManager.handleAfterSessionLaunchCommands();
     });
+  }
+
+  /**
+   * Takes the instance lock if that didn't happen before the app was ready, as it wouldn't if
+   * awaited work before beforeAppReady() let 'will-finish-launching' fire before its handler was
+   * registered. Without the lock, a launch with a file would exit without handing it over. The
+   * session data can no longer move, so this instance keeps the shared storage.
+   */
+  private ensureInstanceLock() {
+    if (!this.instanceLockTaken) {
+      logger().logWarning('The instance lock was not taken before the app was ready; taking it now');
+      this.initializeInstanceLock(false);
+    }
   }
 
   // listens for messages from the server
@@ -427,6 +442,7 @@ export class Application implements AppState {
    * Invoked when Electron app is 'ready'
    */
   async run(): Promise<ProgramStatus> {
+    this.ensureInstanceLock();
     if (!this.shouldInstanceOpen()) {
       return exitSuccess();
     }
