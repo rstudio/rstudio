@@ -34,6 +34,7 @@ import {
   showRNotFoundError,
 } from './detect-r';
 import { GwtCallback } from './gwt-callback';
+import { instanceSessionDataPath } from './instance-session-data';
 import { PendingWindow } from './pending-window';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { exitFailure, exitSuccess, ProgramStatus, run } from './program-status';
@@ -147,6 +148,15 @@ export class Application implements AppState {
     }
 
     initializeSharedSecret();
+
+    // the instance lock decides where Chromium keeps this instance's storage, which can only
+    // be changed before the app is ready
+    const sessionData = instanceSessionDataPath(app.getPath('userData'), app.requestSingleInstanceLock());
+    if (sessionData) {
+      logger().logDebug(`Another instance is running; using session data folder ${sessionData}`);
+      app.setPath('sessionData', sessionData);
+    }
+
     this.registerAppEvents();
 
     // allow users to supply extra command-line arguments for Chromium
@@ -228,7 +238,7 @@ export class Application implements AppState {
     // check if this is the primary instance
     // projects always open in a new instance
     // files prefer to reuse the primary instance
-    const hasInstanceLock = app.requestSingleInstanceLock();
+    const hasInstanceLock = app.hasSingleInstanceLock();
     const hasProjectToOpen = this.argsManager.getProjectFileArg() ?? getenv('RS_INITIAL_PROJECT');
     const hasFileToOpen = this.argsManager.getFileArgs().length > 0;
 
