@@ -312,7 +312,9 @@ var GitDiffSplitView = function(gutter, container, strings) {
    this.alignedLive = null;
    this.baseChanged = true;
    this.liveEdited = false;
+   this.baseRowsReplaced = false;
 
+   this.onBaseBeforeRender = this.onBaseBeforeRender.bind(this);
    this.onBaseFocus = this.onBaseFocus.bind(this);
    this.onLiveChange = this.onLiveChange.bind(this);
    this.onLiveFocus = this.onLiveFocus.bind(this);
@@ -367,6 +369,7 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       editor.setShowPrintMargin(false);
       editor.setOption("useResizeObserver", false);
       editor.on("focus", this.onBaseFocus);
+      editor.renderer.on("beforeRender", this.onBaseBeforeRender);
 
       // The label of the read-only base, for assistive technology: on the
       // input itself, as the IDE labels its editors, and as the prefix Ace
@@ -914,7 +917,8 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
    // for a view left past the end of a document grown shorter. So both
    // panes are scrolled by the rows of padding that came or went above a
    // line of the document in view (see $liveViewAnchor), which keeps that
-   // line where it is.
+   // line where it is. (Ace's own correction in the base pane, which would
+   // go by the base's rows, is kept out; see onBaseBeforeRender.)
    //
    // The line is found, and the padding counted, in the layout planned
    // last (against the one planned now), not the one the document has: that
@@ -948,6 +952,31 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       } finally {
          this.$syncScroll = syncing;
       }
+   };
+
+   // Ace's renderer keeps the line at the top of a view in place when the
+   // rows above it change and the screen row it starts on does not
+   // ($renderChanges in ace-uncompressed.js): it scrolls by the difference
+   // in rows. In the base pane that is wrong for a new base, whose rows the
+   // padding lines up with the document's afresh. An addition staged turns
+   // the base pane's padding for it into lines of its own, on the same
+   // screen rows, and Ace would scroll the base pane by their number,
+   // leaving the document behind, or taking it along through the scroll
+   // sync. The base pane's offset, kept with the document's (see
+   // $keepLiveView), is the one wanted; so the first layout after a new
+   // base is not compared with the one before.
+   this.onBaseBeforeRender = function(changes) {
+      var renderer = this.baseEditor.renderer;
+      var relayout = renderer.CHANGE_FULL | renderer.CHANGE_SIZE | renderer.CHANGE_TEXT |
+         renderer.CHANGE_LINES | renderer.CHANGE_SCROLL | renderer.CHANGE_H_SCROLL;
+      if (!this.baseRowsReplaced || !(changes & relayout))
+         return;
+
+      this.baseRowsReplaced = false;
+
+      // (on a copy, which the layout replaces: Ace's layers keep the one
+      // they were drawn with; no screen row is -1)
+      renderer.layerConfig = Object.assign({}, renderer.layerConfig, { firstRowScreen: -1 });
    };
 
    // Pads the base below the row that corresponds to each of the document's
@@ -1308,6 +1337,7 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
 
       if (session.getValue() !== text) {
          this.baseChanged = true;
+         this.baseRowsReplaced = true;
 
          // Replacing the text removes the base's folds, which Ace's fold
          // sync would carry over to their live counterparts; the document
