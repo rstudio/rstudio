@@ -21,7 +21,6 @@ import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositioner;
-import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositioner.Coordinates;
 import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
@@ -215,20 +214,23 @@ public class RCompletionToolTip extends CppCompletionToolTip
    private void resolvePositionRelativeTo(final int left,
                                           final int top)
    {
-      setPopupPositionAndShow(new PositionCallback()
+      final Rectangle viewport = docDisplay_.getViewportBounds();
+      setPopupPositionAndShow((int offsetWidth, int offsetHeight) ->
       {
-         @Override
-         public void setPosition(int offsetWidth, int offsetHeight)
-         {
-            Coordinates position = PopupPositioner.getPopupPosition(
-                  offsetWidth,
-                  offsetHeight,
-                  left,
-                  top,
-                  8,
-                  false);
-            setPopupPosition(position.getLeft(), position.getTop());
-         }
+         // Prefer above the line, but not over the editor's toolbar or
+         // tabs, nor off the window.
+         int topAbove = top - offsetHeight - GAP - PopupPositioner.LINE_CLEARANCE;
+         int topBelow = top + GAP;
+         boolean below = PopupPositioner.placeBelow(
+               topAbove,
+               topBelow + offsetHeight,
+               false,
+               viewport.getTop(),
+               PopupPositioner.getWindowBounds());
+
+         setPopupPosition(
+               PopupPositioner.constrainLeft(offsetWidth, left, GAP),
+               below ? topBelow : topAbove);
       });
    }
 
@@ -323,4 +325,7 @@ public class RCompletionToolTip extends CppCompletionToolTip
    private HandlerRegistration nativePreviewReg_;
    private AnchoredSelection anchor_;
    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
+
+   // Space between the line and the tooltip.
+   private static final int GAP = 8;
 }
