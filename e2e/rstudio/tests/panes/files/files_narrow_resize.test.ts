@@ -18,12 +18,14 @@ import { executeCommand } from '@utils/commands';
 const FILES_PANEL = '#rstudio_workbench_panel_files';
 const MIDDLE_COLUMN_SPLITTER = '#rstudio_middle_column_splitter';
 
-// FilesList.BOUNDARY_WIDTH_PIXELS: below this the columns are sized in pixels.
-const PIXEL_SIZED_BELOW = 500;
+// FilesList.BOUNDARY_WIDTH_PIXELS: below this the Size and Modified widths are
+// recomputed on every resize.
+const BOUNDARY_WIDTH = 500;
 
-// Where the drag ends. Narrow enough that the Modified column is gone and the
-// Size column has started to shrink, so every pixel-sized layout is crossed.
-const NARROW_WIDTH = 300;
+// Where the drag ends. Below 260px (the Name column's 204px minimum, plus the
+// check and icon columns) the Size and Modified columns are both gone, so the
+// drag crosses every layout FilesList computes below the boundary.
+const NARROW_WIDTH = 220;
 
 // The drag moves the splitter this far per mouse event, as a real drag does.
 const DRAG_STEP = 3;
@@ -78,7 +80,13 @@ async function stopOverflowProbe(page: Page): Promise<FrameSample[]> {
   });
 }
 
-async function splitterCenter(page: Page): Promise<{ left: number; x: number; y: number }> {
+interface SplitterPosition {
+  left: number;
+  x: number;
+  y: number;
+}
+
+async function splitterCenter(page: Page): Promise<SplitterPosition> {
   const box = await page.locator(MIDDLE_COLUMN_SPLITTER).boundingBox();
   if (!box)
     throw new Error('Middle column splitter has no bounding box; is it rendered?');
@@ -87,6 +95,29 @@ async function splitterCenter(page: Page): Promise<{ left: number; x: number; y:
 
 async function filesPanelWidth(page: Page): Promise<number> {
   return (await page.locator(FILES_PANEL).boundingBox())?.width ?? 0;
+}
+
+// A custom layout outlives the test, so put the splitter back, and leave the
+// Files pane on the home folder.
+async function restoreLayout(
+  page: Page,
+  consoleActions: ConsolePaneActions,
+  home: SplitterPosition,
+  dir: string,
+): Promise<void> {
+  await page.mouse.up();
+  const narrowed = await splitterCenter(page);
+  await page.mouse.move(narrowed.x, narrowed.y);
+  await page.mouse.down();
+  await page.mouse.move(home.x, home.y, { steps: 10 });
+  await page.mouse.up();
+  await expect.poll(async () => Math.abs((await splitterCenter(page)).left - home.left))
+    .toBeLessThanOrEqual(2);
+
+  await consoleActions.executeInConsole(
+    `unlink(${dir}, recursive = TRUE); .rs.api.filesPaneNavigate(path.expand("~"))`,
+    { wait: true },
+  );
 }
 
 test.describe('Files pane narrow resize (#19593)', () => {
@@ -128,29 +159,22 @@ test.describe('Files pane narrow resize (#19593)', () => {
       const frames = await stopOverflowProbe(page);
 
       // The samples only mean something if the drag narrowed the pane step by
-      // step through the widths where the columns are sized in pixels.
+      // step through the widths where the column widths are recomputed.
       const narrowing = frames.filter((frame, i) =>
-        i > 0 && frame.width < frames[i - 1].width && frame.width < PIXEL_SIZED_BELOW);
+        i > 0 && frame.width < frames[i - 1].width && frame.width < BOUNDARY_WIDTH);
       expect(narrowing.length, 'frames in which the pane got narrower').toBeGreaterThan(10);
       expect(Math.min(...frames.map((frame) => frame.width))).toBeLessThanOrEqual(NARROW_WIDTH + 2);
 
       const overflowing = frames.filter((frame) => frame.overflow > 0.5);
       expect(overflowing, 'frames in which the table of files was wider than the pane').toEqual([]);
-    } finally {
-      // A custom layout outlives the test, so put the splitter back.
-      await page.mouse.up();
-      const narrowed = await splitterCenter(page);
-      await page.mouse.move(narrowed.x, narrowed.y);
-      await page.mouse.down();
-      await page.mouse.move(home.x, home.y, { steps: 10 });
-      await page.mouse.up();
-      await expect.poll(async () => Math.abs((await splitterCenter(page)).left - home.left))
-        .toBeLessThanOrEqual(2);
-
-      await consoleActions.executeInConsole(
-        `unlink(${dir}, recursive = TRUE); .rs.api.filesPaneNavigate(path.expand("~"))`,
-        { wait: true },
-      );
+    } catch (err) {
+      // Cleanup can fail for the reason the test did (a wedged session, say).
+      // Log that, so the test's own error is the one reported.
+      await restoreLayout(page, consoleActions, home, dir)
+        .catch((cleanupErr) => console.warn('files_narrow_resize cleanup failed:', cleanupErr));
+      throw err;
     }
+
+    await restoreLayout(page, consoleActions, home, dir);
   });
 });
