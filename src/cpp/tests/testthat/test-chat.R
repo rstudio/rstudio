@@ -217,6 +217,17 @@ test_that("chat.extractPackage reports a failure that unzip only warns about", {
    expect_match(reason, "error 1 in extracting from zip file", fixed = TRUE)
 })
 
+test_that("chat.extractPackage leaves unzip warnings visible to the caller", {
+   zipfile <- tempfile(fileext = ".zip")
+   writeCorruptZip(zipfile)
+
+   expect_warning(
+      .rs.chat.extractPackage(zipfile, tempfile()),
+      "error 1 in extracting from zip file",
+      fixed = TRUE
+   )
+})
+
 test_that("chat.extractPackage reports an unzip error", {
    fn <- .rs.chat.extractPackage
    env <- new.env(parent = environment(fn))
