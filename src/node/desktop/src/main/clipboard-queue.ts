@@ -54,18 +54,18 @@ export async function readClipboardText(source: Electron.Clipboard = clipboard):
 }
 
 /**
- * Read and decode a clipboard entry once pending writes finish. Given several
- * MIME types, the first one with a non-empty entry is decoded; undefined when
- * none has one.
+ * Read and decode a clipboard entry once pending writes finish. The MIME types
+ * are in preference order: the first one with a non-empty entry is decoded;
+ * undefined when none has one.
  */
 export async function readClipboardType<T>(
-  mimeTypes: string | string[],
+  mimeTypes: string[],
   decode: (blob: Blob, mimeType: string) => Promise<T>,
 ): Promise<T | undefined> {
   await pendingWrites;
   try {
     const items = await clipboard.read();
-    for (const mimeType of typeof mimeTypes === 'string' ? [mimeTypes] : mimeTypes) {
+    for (const mimeType of mimeTypes) {
       const item = items.find((candidate) => candidate.types.includes(mimeType));
       if (!item) {
         continue;
