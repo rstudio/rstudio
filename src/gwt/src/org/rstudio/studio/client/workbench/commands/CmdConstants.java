@@ -4320,10 +4320,6 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Python") // $NON-NLS-1$
     String consoleActivatePythonMenuLabel();
     
-    // showSplashScreen
-    @DefaultStringValue("Show Splash Screen") // $NON-NLS-1$
-    String showSplashScreenLabel();
-    
     // copyRStudioVersion
     @DefaultStringValue("Copy RStudio Version") // $NON-NLS-1$
     String copyRStudioVersionLabel();

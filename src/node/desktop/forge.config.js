@@ -57,11 +57,6 @@ const config = {
               },
               name: 'choose_r',
             },
-            {
-              html: './src/ui/splash/splash.html',
-              js: './src/ui/splash/splash.ts',
-              name: 'splash',
-            },
           ],
         },
       }
