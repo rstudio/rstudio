@@ -15,7 +15,7 @@
 
 import { assert } from 'chai';
 import { session, Session } from 'electron';
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'fs';
+import fs, { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'fs';
 import { describe } from 'mocha';
 import os from 'os';
 import path from 'path';
@@ -215,5 +215,22 @@ describe('shared-cookies', () => {
     await waitForRecord({ WEBDIALOG: '1' });
 
     assert.sameMembers(recordEntries(), ['LOCALE.json', 'WEBDIALOG.json']);
+  });
+
+  it('keeps going when a record and its temporary file can be neither replaced nor removed', async () => {
+    const primary = await primaryWith({});
+    const denied = (): never => {
+      throw Object.assign(new Error('access denied'), { code: 'EACCES' });
+    };
+    sinon.stub(fs, 'renameSync').callsFake(denied);
+    const rm = sinon.stub(fs, 'rmSync').callsFake(denied);
+
+    // a throw here would escape the cookie change listener and fail the test
+    await setCookie(primary, 'LOCALE', 'fr');
+    const deadline = Date.now() + 5000;
+    while (!rm.called && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    assert.match(String(rm.firstCall.args[0]), /LOCALE\.json\.\d+\.tmp$/);
   });
 });

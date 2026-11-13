@@ -14,7 +14,7 @@
  */
 
 import { Cookie, Session } from 'electron';
-import { mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'fs';
+import fs from 'fs';
 import path from 'path';
 import { safeError } from '../core/err';
 import { logger } from '../core/logger';
@@ -62,7 +62,7 @@ function readCookie(dir: string, name: string): SharedCookie | undefined {
   const file = cookieFile(dir, name);
   let content;
   try {
-    content = readFileSync(file, 'utf8');
+    content = fs.readFileSync(file, 'utf8');
   } catch (error: unknown) {
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
       logger().logError(error);
@@ -87,17 +87,26 @@ function recordCookie(dir: string, name: string, cookie: Cookie | undefined): vo
   const temp = `${file}.${process.pid}.tmp`;
   try {
     if (cookie === undefined) {
-      rmSync(file, { force: true });
+      fs.rmSync(file, { force: true });
       return;
     }
     // instances read this while others write it, so replace it whole
-    mkdirSync(dir, { recursive: true });
+    fs.mkdirSync(dir, { recursive: true });
     const shared: SharedCookie = { value: cookie.value, expirationDate: cookie.expirationDate };
-    writeFileSync(temp, JSON.stringify(shared));
-    renameSync(temp, file);
+    fs.writeFileSync(temp, JSON.stringify(shared));
+    fs.renameSync(temp, file);
   } catch (error: unknown) {
-    rmSync(temp, { force: true });
     logger().logWarning(`Unable to record shared cookie in ${file}: ${safeError(error).message}`);
+    removeTemporaryFile(temp);
+  }
+}
+
+// this runs in a cookie change listener, so it must not throw
+function removeTemporaryFile(temp: string): void {
+  try {
+    fs.rmSync(temp, { force: true });
+  } catch (error: unknown) {
+    logger().logWarning(`Unable to remove ${temp}: ${safeError(error).message}`);
   }
 }
 
