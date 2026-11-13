@@ -66,18 +66,58 @@ export function keepAutomationWindowsRendering(): void {
 }
 
 /**
- * Open a URL in the user's default browser, except during an automation run,
- * where it is only logged. The browser would come up over the user's own
- * windows, and on the macOS CI runners the IDE window stops painting for
- * 10s or more after it does, which times out the next test's actions.
+ * Whether an automation run should skip opening `target` outside the IDE; it
+ * is only logged then. The browser, or a file's app, would come up over the
+ * user's own windows, and on the macOS CI runners the IDE window stops
+ * painting for 10s or more after it does, which times out the next test's
+ * actions.
+ */
+function automationSkipsOpen(target: string): boolean {
+  if (!isAutomated()) {
+    return false;
+  }
+
+  logger().logDebug(`Automation run: not opening ${target} outside the IDE`);
+  return true;
+}
+
+/**
+ * Open a URL in the user's default browser (not during an automation run;
+ * see automationSkipsOpen).
  */
 export async function openExternalUrl(url: string): Promise<void> {
-  if (isAutomated()) {
-    logger().logDebug(`Automation run: not opening ${url} in the browser`);
+  if (automationSkipsOpen(url)) {
     return;
   }
 
   return shell.openExternal(url);
+}
+
+/**
+ * Open a file in the app registered for it, or a folder in the file manager
+ * (not during an automation run; see automationSkipsOpen). Resolves to an
+ * error message, empty on success, as shell.openPath() does.
+ */
+export async function openExternalPath(path: string): Promise<string> {
+  if (automationSkipsOpen(path)) {
+    return '';
+  }
+
+  return shell.openPath(path);
+}
+
+/**
+ * Open a file:/// URL with the Windows shell, since shell.openExternal() seems
+ * unreliable for them there: https://github.com/electron/electron/issues/31347
+ * (not during an automation run; see automationSkipsOpen).
+ */
+export function openFileUrlWithWindowsShell(url: string): void {
+  if (automationSkipsOpen(url)) {
+    return;
+  }
+
+  const path = decodeURI(url).substring('file:///'.length).replaceAll('/', '\\');
+  desktop.openExternal(path);
 }
 
 /**

@@ -66,7 +66,9 @@ import {
 import {
   parseFilter,
   isAutomated,
+  openExternalPath,
   openExternalUrl,
+  openFileUrlWithWindowsShell,
   showWindowForAutomation,
   resolveAliasedPath,
   raiseAndActivateWindow,
@@ -243,12 +245,8 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_browse_url', (event, url: string) => {
-      // shell.openExternal() seems unreliable on Windows
-      // https://github.com/electron/electron/issues/31347
-      // (an automation run opens nothing; openExternalUrl logs the URL)
-      if (process.platform === 'win32' && url.startsWith('file:///') && !isAutomated()) {
-        const path = decodeURI(url).substring('file:///'.length).replaceAll('/', '\\');
-        desktop.openExternal(path);
+      if (process.platform === 'win32' && url.startsWith('file:///')) {
+        openFileUrlWithWindowsShell(url);
       } else {
         void openExternalUrl(url);
       }
@@ -531,14 +529,14 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_show_folder', (event, path: string) => {
-      shell.openPath(resolveAliasedPath(normalizeSeparatorsNative(path))).catch((value) => {
+      openExternalPath(resolveAliasedPath(normalizeSeparatorsNative(path))).catch((value) => {
         console.log('error:', value);
         logger().logErrorMessage(value);
       });
     });
 
     function showFileInSystemViewer(file: string) {
-      shell.openPath(resolveAliasedPath(normalizeSeparatorsNative(file))).catch((value) => {
+      openExternalPath(resolveAliasedPath(normalizeSeparatorsNative(file))).catch((value) => {
         console.log('error:', value);
         logger().logErrorMessage(value);
       });

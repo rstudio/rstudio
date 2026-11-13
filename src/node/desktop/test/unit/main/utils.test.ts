@@ -319,6 +319,60 @@ describe('Utils', () => {
     });
   });
 
+  describe('openExternalPath', () => {
+    afterEach(() => {
+      sinon.restore();
+    });
+
+    it('opens the path in its app outside automation', async () => {
+      const openPath = sinon.stub(shell, 'openPath').resolves('');
+
+      await Utils.openExternalPath('/tmp/report.pdf');
+
+      assert.isTrue(openPath.calledOnceWithExactly('/tmp/report.pdf'));
+    });
+
+    it('opens nothing during an automation run', async () => {
+      const openPath = sinon.stub(shell, 'openPath').resolves('');
+
+      app.commandLine.appendSwitch('automation-agent');
+      try {
+        assert.strictEqual(await Utils.openExternalPath('/tmp/report.pdf'), '');
+      } finally {
+        app.commandLine.removeSwitch('automation-agent');
+      }
+
+      assert.isTrue(openPath.notCalled);
+    });
+  });
+
+  describe('openFileUrlWithWindowsShell', () => {
+    afterEach(() => {
+      sinon.restore();
+    });
+
+    it('hands the Windows path to the shell outside automation', () => {
+      const openExternal = sinon.stub(desktop, 'openExternal');
+
+      Utils.openFileUrlWithWindowsShell('file:///C:/Users/me/My%20Report.html');
+
+      assert.isTrue(openExternal.calledOnceWithExactly('C:\\Users\\me\\My Report.html'));
+    });
+
+    it('opens nothing during an automation run', () => {
+      const openExternal = sinon.stub(desktop, 'openExternal');
+
+      app.commandLine.appendSwitch('automation-agent');
+      try {
+        Utils.openFileUrlWithWindowsShell('file:///C:/Users/me/report.html');
+      } finally {
+        app.commandLine.removeSwitch('automation-agent');
+      }
+
+      assert.isTrue(openExternal.notCalled);
+    });
+  });
+
   describe('showWindowForAutomation', () => {
     // as on macOS, showing a minimized window takes it out of the dock at once
     function fakeWindow(state: { visible: boolean; minimized: boolean }) {
