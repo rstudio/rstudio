@@ -113,6 +113,19 @@ core::Error verifyDeclaredIdentity(const core::FilePath& installDir,
                                    const std::string& expectedVersion,
                                    const std::string& expectedProtocol)
 {
+   // Without package.json there is no declaration to compare, so say the file
+   // is missing rather than report a blank version. The directory isn't named:
+   // the caller discards it on failure.
+   if (!installDir.completeChildPath(kPackageJsonFileName).isRegularFile())
+   {
+      return core::systemError(
+         boost::system::errc::invalid_argument,
+         fmt::format("Downloaded package has no {}; version '{}' for protocol "
+                     "'{}' was requested",
+                     kPackageJsonFileName, expectedVersion, expectedProtocol),
+         ERROR_LOCATION);
+   }
+
    // A package without protocol.json fails here too: backfilling this build's
    // protocol would make the check pass by construction.
    std::string version = declaredVersion(installDir);

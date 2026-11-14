@@ -4308,6 +4308,20 @@ bool isVersionDowngrade(
    return available < installed;
 }
 
+// Calls one of the .rs.chat helpers built on .rs.chat.failureReason, which
+// return "" on success or the reason the operation failed.
+// callUtf8 because the reason is an R condition message, which on a localized
+// non-UTF-8 session carries native-encoded bytes that the install status
+// response (JSON) requires as UTF-8.
+Error callReportingFailure(r::exec::RFunction& function)
+{
+   std::string reason;
+   Error error = function.callUtf8(&reason);
+   if (!error && !reason.empty())
+      error = systemError(boost::system::errc::io_error, reason, ERROR_LOCATION);
+   return error;
+}
+
 // Download package to temp directory
 Error downloadPackage(const std::string& url, const FilePath& destPath)
 {
@@ -4327,25 +4341,16 @@ Error downloadPackage(const std::string& url, const FilePath& destPath)
    // a non-zero return status, so the helper folds the warnings and the status
    // into the reason it returns ("" when the download succeeded). The helper also
    // owns the transfer timeout and leaves the download method to the user/admin's
-   // download.file.* options.
-   // callUtf8 because the reason is an R condition message, which on a localized
-   // non-UTF-8 session carries native-encoded bytes that the install status
-   // response (JSON) requires as UTF-8.
-   std::string reason;
-   Error error = r::exec::RFunction(".rs.chat.downloadPackage")
-         .addParam("url", url)
-         .addParam("destfile", destPath.getAbsolutePath())
-         .callUtf8(&reason);
+   // download.file.* options. destfile goes in as UTF-8 for the same reason as
+   // the paths in installPackage().
+   r::exec::RFunction download(".rs.chat.downloadPackage");
+   download.addParam("url", url);
+   download.addUtf8Param("destfile", destPath);
+   Error error = callReportingFailure(download);
    if (error)
    {
-      WLOG("Failed to download package: {}", error.getMessage());
+      WLOG("Failed to download package: {}", core::errorDescription(error));
       return error;
-   }
-
-   if (!reason.empty())
-   {
-      WLOG("Failed to download package: {}", reason);
-      return systemError(boost::system::errc::io_error, reason, ERROR_LOCATION);
    }
 
    // Verify file exists and has content
@@ -4407,14 +4412,16 @@ Error installPackage(const FilePath& packagePath,
    DLOG("Extracting package {} to {}",
         packagePath.getAbsolutePath(), stagingDir.getAbsolutePath());
 
-   r::exec::RFunction unzipFunc("unzip");
-   unzipFunc.addParam("zipfile", packagePath.getAbsolutePath());
-   unzipFunc.addParam("exdir", stagingDir.getAbsolutePath());
-
-   error = unzipFunc.call();
+   // FilePath strings are UTF-8, but addParam() marks them native. Under R < 4.2
+   // on Windows, native is the system code page, so a non-ASCII path (a user
+   // name such as José) would name a different directory in R than here.
+   r::exec::RFunction extract(".rs.chat.extractPackage");
+   extract.addUtf8Param("zipfile", packagePath);
+   extract.addUtf8Param("exdir", stagingDir);
+   error = callReportingFailure(extract);
    if (error)
    {
-      WLOG("Failed to extract package: {}", error.getMessage());
+      WLOG("Failed to extract package: {}", core::errorDescription(error));
       return discardStaging(error);
    }
 
