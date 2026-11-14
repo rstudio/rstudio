@@ -88,9 +88,9 @@ const kLaunchEnvironment: NodeJS.ProcessEnv = { ...process.env };
  *      its save prompts, then calls `installUpdate(version, project)`, which
  *      checks again and records the install, and quits as usual;
  *      `applyPendingUpdate()` then runs as the main window quits: Squirrel
- *      swaps the bundle and relaunches, or the installer runs silently
- *      (`/S /update`) and relaunches RStudio when it is done. The relaunch
- *      reopens the remembered project.
+ *      swaps the bundle and relaunches, or the installer runs unattended
+ *      (`/S /update`), showing only its progress, and relaunches RStudio
+ *      when it is done. The relaunch reopens the remembered project.
  *
  * One update is in flight at a time, and every step names its version: a
  * check may complete while a download runs or a ready dialog is open, and
@@ -910,7 +910,7 @@ export function electronUpdaterHost(mainWindow: MainWindow): UpdaterHost {
       const file = await stageInstaller(this.stagingDir(), entry, fetchArtifact, onProgress);
 
       // the checksum only proves the file is what the API named; the
-      // installer runs silently (no UAC prompt for a per-user install), so
+      // installer runs unattended (no UAC prompt for a per-user install), so
       // it must also be what Posit signed. Checked once per download: later
       // checks compare the file against this very checksum.
       const signature = await installerSignature(file, execFileRunner(kSignatureCheckTimeoutMs));
@@ -945,6 +945,8 @@ export function electronUpdaterHost(mainWindow: MainWindow): UpdaterHost {
         logger().logErrorMessage(`${file} is gone; not installing`);
         return false;
       }
+      // /S asks for no questions, not for no window: given /update, the
+      // installer still shows its progress page (see NSIS.template.in).
       // spawn() reports a refusal (a policy blocking the executable, say)
       // through 'error' rather than by throwing
       return new Promise((resolve) => {
