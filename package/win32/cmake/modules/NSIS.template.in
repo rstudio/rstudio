@@ -269,6 +269,12 @@ FunctionEnd
 
 ;--------------------------------
 ;Pages
+  ;
+  ; RSTUDIO CHANGE - an in-app update (/update) shows the progress page and
+  ; nothing else: SkipPageForUpdate skips the other pages, and NsisMultiUser
+  ; skips its install-mode page itself (see the end of .onInit)
+  ;
+  !define MUI_PAGE_CUSTOMFUNCTION_PRE SkipPageForUpdate
   !insertmacro MUI_PAGE_WELCOME
   !insertmacro MULTIUSER_PAGE_INSTALLMODE
 
@@ -277,9 +283,12 @@ FunctionEnd
   ;
   ;!insertmacro MUI_PAGE_LICENSE "@CPACK_RESOURCE_FILE_LICENSE@"
 
+  !define MUI_PAGE_CUSTOMFUNCTION_PRE SkipPageForUpdate
   !insertmacro MUI_PAGE_DIRECTORY
 
+  !define MUI_PAGE_CUSTOMFUNCTION_SHOW ShowUpdateProgress
   !insertmacro MUI_PAGE_INSTFILES
+  !define MUI_PAGE_CUSTOMFUNCTION_PRE SkipPageForUpdate
   !insertmacro MUI_PAGE_FINISH
 
   !insertmacro MULTIUSER_UNPAGE_INSTALLMODE
@@ -693,17 +702,37 @@ Function RelaunchAfterFailedUpdate
   ; extraction error) the installation needs repairing, as it does when the
   ; relaunch itself fails. --after-failed-update lets that RStudio reopen
   ; the project remembered for the update (see args-manager.ts)
+  ;
+  ; The messages are topmost: the outer instance has no window of its own,
+  ; and by the time the elevated one has failed and closed, another
+  ; application is active and would cover them.
   ${If} $UpdateInstallBegun = 0
   ${AndIf} $UpdateExeDir != ""
   ${AndIf} ${FileExists} "$UpdateExeDir\rstudio.exe"
-    MessageBox MB_OK|MB_ICONEXCLAMATION "The update could not be installed. @CPACK_PACKAGE_NAME@ will reopen on the version you had; choose Help > Check for Updates to try again, or run the installer yourself."
+    MessageBox MB_OK|MB_ICONEXCLAMATION|MB_TOPMOST|MB_SETFOREGROUND "The update could not be installed. @CPACK_PACKAGE_NAME@ will reopen on the version you had; choose Help > Check for Updates to try again, or run the installer yourself."
     ClearErrors
     Exec '"$UpdateExeDir\rstudio.exe" --after-failed-update'
     ${IfNot} ${Errors}
       Return
     ${EndIf}
   ${EndIf}
-  MessageBox MB_OK|MB_ICONEXCLAMATION "The update could not be installed, and the previous version of @CPACK_PACKAGE_NAME@ could not be started. Please run the @CPACK_PACKAGE_NAME@ installer to repair the installation."
+  MessageBox MB_OK|MB_ICONEXCLAMATION|MB_TOPMOST|MB_SETFOREGROUND "The update could not be installed, and the previous version of @CPACK_PACKAGE_NAME@ could not be started. Please run the @CPACK_PACKAGE_NAME@ installer to repair the installation."
+FunctionEnd
+
+;--------------------------------
+; RSTUDIO CHANGE - what an in-app update (/update) shows. RStudio is closed
+; for as long as its files are being replaced, which takes a minute or more,
+; so the progress page is shown, and only that page (see the end of .onInit).
+Function SkipPageForUpdate
+  ${If} $UpdateMode = 1
+    Abort
+  ${EndIf}
+FunctionEnd
+
+Function ShowUpdateProgress
+  ${If} $UpdateMode = 1
+    !insertmacro MUI_HEADER_TEXT "Updating @CPACK_PACKAGE_NAME@" "@CPACK_PACKAGE_NAME@ will reopen when the update has been installed."
+  ${EndIf}
 FunctionEnd
 
 Function .onInstFailed
@@ -761,7 +790,7 @@ Function .onInit
         ; shown despite /S: the user accepted an update and RStudio has
         ; closed its window, so they must hear why nothing happens
         ${nsProcess::Unload}
-        MessageBox MB_OK|MB_ICONEXCLAMATION "@CPACK_PACKAGE_NAME@ is still running, so the update was not installed. Once it has exited, start it and choose Help > Check for Updates to try again."
+        MessageBox MB_OK|MB_ICONEXCLAMATION|MB_TOPMOST|MB_SETFOREGROUND "@CPACK_PACKAGE_NAME@ is still running, so the update was not installed. Once it has exited, start it and choose Help > Check for Updates to try again."
         Abort
       ${EndIf}
     ${Else}
@@ -883,5 +912,16 @@ Function .onInit
 
   ; Component status (uses SHCTX set by MULTIUSER_INIT)
   !insertmacro SectionList "InitSection"
+
+  ;
+  ; RSTUDIO CHANGE - an in-app update stops being silent here, so that its
+  ; progress page is shown (see ShowUpdateProgress). Everything above ran
+  ; silently, as the updater asked with /S: NsisMultiUser took the install
+  ; mode from the command line and will skip its install-mode page for it,
+  ; and would have quit on an error rather than left it for that page.
+  ;
+  ${If} $UpdateMode = 1
+    SetSilent normal
+  ${EndIf}
 
 FunctionEnd

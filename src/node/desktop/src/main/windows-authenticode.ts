@@ -18,7 +18,7 @@ import { CommandRunner } from './running-instances';
 // The Authenticode check on a downloaded Windows installer. Its SHA-256 only
 // proves it is the file the builds site's API named, and the API (or the
 // pipeline that publishes to it) could be made to name any executable; the
-// installer then runs silently, without a UAC prompt for a per-user install.
+// installer then runs unattended, without a UAC prompt for a per-user install.
 // So before it is run it must carry a valid signature from Posit's
 // certificate, as Squirrel.Mac checks the new bundle's signature on macOS.
 // Windows has no command-line tool for this short of PowerShell's
