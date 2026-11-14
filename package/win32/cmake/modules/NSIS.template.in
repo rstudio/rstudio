@@ -271,10 +271,11 @@ FunctionEnd
 ;Pages
   ;
   ; RSTUDIO CHANGE - an in-app update (/update) shows the progress page and
-  ; nothing else: SkipPageForUpdate skips the other pages, and NsisMultiUser
-  ; skips its install-mode page itself (see the end of .onInit)
+  ; nothing else: SkipWelcomePage and SkipPageForUpdate skip the other pages,
+  ; and NsisMultiUser skips its install-mode page itself (see the end of
+  ; .onInit)
   ;
-  !define MUI_PAGE_CUSTOMFUNCTION_PRE SkipPageForUpdate
+  !define MUI_PAGE_CUSTOMFUNCTION_PRE SkipWelcomePage
   !insertmacro MUI_PAGE_WELCOME
   !insertmacro MULTIUSER_PAGE_INSTALLMODE
 
@@ -725,6 +726,16 @@ FunctionEnd
 ; so the progress page is shown, and only that page (see the end of .onInit).
 Function SkipPageForUpdate
   ${If} $UpdateMode = 1
+    Abort
+  ${EndIf}
+FunctionEnd
+
+; The Welcome page is also skipped where NsisMultiUser asks for the pages
+; before its own to be hidden: in the elevated instance it starts from the
+; install-mode page, which would otherwise begin again at Welcome.
+Function SkipWelcomePage
+  ${If} $UpdateMode = 1
+  ${OrIf} $InstallShowPagesBeforeComponents = 0
     Abort
   ${EndIf}
 FunctionEnd
