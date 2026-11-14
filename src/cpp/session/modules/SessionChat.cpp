@@ -4382,7 +4382,8 @@ Error installPackage(const FilePath& packagePath,
    }
 
    FilePath stagingDir;
-   error = chat_slots::prepareStagingDir(slotsDir, &stagingDir);
+   error = chat_slots::prepareStagingDir(
+      slotsDir, core::system::getHostname(), &stagingDir);
    if (error)
    {
       WLOG("Failed to create staging directory: {}", error.getMessage());
