@@ -14,7 +14,9 @@
  */
 package org.rstudio.core.client.dom;
 
+import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.PreElement;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -29,6 +31,62 @@ public class DomUtilsTests extends GWTTestCase
       return "org.rstudio.studio.RStudioTests";
    }
    
+   // Nests divs with the given overflow-y values, outermost first, in the
+   // page, and returns the innermost.
+   private static Element nest(String... overflows)
+   {
+      Element parent = Document.get().getBody();
+      for (String overflow : overflows)
+      {
+         DivElement div = Document.get().createDivElement();
+         div.getStyle().setProperty("overflowY", overflow);
+         parent.appendChild(div);
+         parent = div;
+      }
+      return parent;
+   }
+
+   public void testFindScrollingAncestorSkipsClippingAncestors()
+   {
+      Element inner = nest("auto", "hidden", "visible", "hidden");
+      Element scroller = inner.getParentElement().getParentElement().getParentElement();
+      Assert.assertEquals(scroller, DomUtils.findScrollingAncestor(inner));
+      scroller.removeFromParent();
+   }
+
+   public void testFindScrollingAncestorAcceptsScroll()
+   {
+      Element inner = nest("scroll", "visible");
+      Element scroller = inner.getParentElement();
+      Assert.assertEquals(scroller, DomUtils.findScrollingAncestor(inner));
+      scroller.removeFromParent();
+   }
+
+   public void testFindScrollingAncestorIgnoresElementItself()
+   {
+      Element inner = nest("hidden", "auto");
+      Assert.assertNull(DomUtils.findScrollingAncestor(inner));
+      inner.getParentElement().removeFromParent();
+   }
+
+   public void testFindScrollingAncestorIgnoresPage()
+   {
+      // A scrolling page doesn't count: the viewport is then the editor.
+      Element body = Document.get().getBody();
+      String saved = body.getStyle().getProperty("overflowY");
+      body.getStyle().setProperty("overflowY", "auto");
+      Element inner = nest("hidden");
+      try
+      {
+         Assert.assertNull(DomUtils.findScrollingAncestor(inner));
+      }
+      finally
+      {
+         body.getStyle().setProperty("overflowY", saved);
+         inner.removeFromParent();
+      }
+   }
+
    public void testCountLinesRecursive()
    {
       PreElement pre = Document.get().createPreElement();

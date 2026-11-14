@@ -12,6 +12,7 @@
 
 ### Fixed
 - ([#19624](https://github.com/rstudio/rstudio/issues/19624)): Fixed an issue where installing or updating Posit Assistant failed when the computer's hostname contained a non-ASCII character such as an accented letter. On macOS the error was "Illegal byte sequence"; on Windows with R 4.1 or earlier, it said the downloaded package declared a blank version.
+- ([#19614](https://github.com/rstudio/rstudio/issues/19614)): Fixed an issue where, with an AI assistant selected (Posit AI, the default, or GitHub Copilot), the code completion popup and function signature tooltip on the first lines of the Source editor opened above the line, over the editor toolbar and tabs, the popup sometimes with its top cut off by the edge of the window. They now open below the line when they don't fit above it within the editor, the popup with the best match first.
 - ([#19620](https://github.com/rstudio/rstudio/issues/19620)): The R logo in the Console header is now easier to see with dark themes: the R is a lighter blue, and a gap separates it from the ring.
 - ([#19593](https://github.com/rstudio/rstudio/issues/19593)): Fixed an issue where a horizontal scrollbar flickered below the file list while a narrow Files pane was being made narrower.
 - ([#19579](https://github.com/rstudio/rstudio/issues/19579)): Fixed an issue where Show Changes Side by Side could open with its two sides out of step when lines had been removed above the lines in view, and could scroll away from the line being viewed when a change above it was staged or unstaged.

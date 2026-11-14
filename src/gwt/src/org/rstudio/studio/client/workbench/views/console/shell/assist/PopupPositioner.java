@@ -37,19 +37,39 @@ public class PopupPositioner implements PositionCallback
       private final int top_;
    }
    
+   /**
+    * @param preferBottom Whether the popup goes below the cursor when it
+    *    fits there, rather than above.
+    * @param viewport The page region the editor's text shows in, or null.
+    *    A popup that prefers the top goes above only if it fits inside this
+    *    region (or doesn't fit below), so it doesn't cover the editor's
+    *    toolbar or tabs. Only used when not preferring the bottom.
+    */
    public PopupPositioner(Rectangle cursorBounds,
                           CompletionPopupDisplay popup,
-                          boolean preferBottom)
+                          boolean preferBottom,
+                          Rectangle viewport)
    {
       cursorBounds_ = cursorBounds;
       popup_ = popup;
       preferBottom_ = preferBottom;
+      viewport_ = viewport;
    }
-   
+
    public PopupPositioner(Rectangle cursorBounds,
                           CompletionPopupDisplay popup)
    {
-      this(cursorBounds, popup, true);
+      this(cursorBounds, popup, true, null);
+   }
+
+   /**
+    * Keeps the popup on the given side of the cursor (below, or not) while
+    * it fits there, so a showing popup doesn't jump across the line as its
+    * list narrows. Null, the default, chooses a side afresh.
+    */
+   public void setKeepSide(Boolean below)
+   {
+      keepBelow_ = below;
    }
 
    public void setPosition(int popupWidth, int popupHeight)
@@ -59,97 +79,196 @@ public class PopupPositioner implements PositionCallback
          assert false : "Positioning popup but no cursor bounds available";
          return;
       }
-      
-      Coordinates coords = getPopupPosition(
-            popupWidth,
-            popupHeight,
-            cursorBounds_.getLeft(),
-            cursorBounds_.getBottom(),
-            5,
-            preferBottom_);
-      
-      popup_.setPopupPosition(coords.getLeft(), coords.getTop());
+
+      Rectangle window = getWindowBounds();
+      int viewportTop = viewport_ == null ? window.getTop() : viewport_.getTop();
+
+      if (keepBelow_ != null && fitsOnSide(
+            keepBelow_, popupHeight, cursorBounds_, viewportTop, window))
+      {
+         placedBelow_ = keepBelow_;
+      }
+      else
+      {
+         placedBelow_ = isPlacedBelow(
+               popupHeight, cursorBounds_, preferBottom_, viewportTop, window);
+      }
+
+      int top = placedBelow_
+            ? cursorBounds_.getBottom() + GAP
+            : topAbove(popupHeight, cursorBounds_.getBottom(), GAP);
+      int left = constrainLeft(popupWidth, cursorBounds_.getLeft(), GAP);
+
+      popup_.setPopupPosition(left, top);
    }
-   
+
+   /**
+    * Whether a popup of the given height goes below the cursor; see
+    * placeBelow.
+    */
+   static boolean isPlacedBelow(int popupHeight,
+                                Rectangle cursorBounds,
+                                boolean preferBottom,
+                                int viewportTop,
+                                Rectangle window)
+   {
+      return placeBelow(
+            topAbove(popupHeight, cursorBounds.getBottom(), GAP),
+            cursorBounds.getBottom() + GAP + popupHeight,
+            preferBottom,
+            viewportTop,
+            window);
+   }
+
+   /**
+    * Whether a popup of the given height fits on the given side of the
+    * cursor: below, within the window; above, below the viewport's top.
+    */
+   static boolean fitsOnSide(boolean below,
+                             int popupHeight,
+                             Rectangle cursorBounds,
+                             int viewportTop,
+                             Rectangle window)
+   {
+      if (below)
+         return cursorBounds.getBottom() + GAP + popupHeight < window.getBottom();
+      int top = topAbove(popupHeight, cursorBounds.getBottom(), GAP);
+      return top >= Math.max(viewportTop, window.getTop());
+   }
+
+   /**
+    * Whether a popup goes below its line rather than above, given where its
+    * top would be above the line and its bottom below it. Preferring the
+    * bottom, it goes there if it fits in the window. Preferring the top, it
+    * goes there if it fits below the viewport's top, such as the top of an
+    * editor's text; failing that, it goes to whichever side fits in the
+    * window, and below if neither does.
+    */
+   private static boolean placeBelow(int topAbove,
+                                     int bottomBelow,
+                                     boolean preferBottom,
+                                     int viewportTop,
+                                     Rectangle window)
+   {
+      boolean fitsBelow = bottomBelow < window.getBottom();
+      if (preferBottom)
+         return fitsBelow;
+      if (topAbove >= Math.max(viewportTop, window.getTop()))
+         return false;
+      return fitsBelow || topAbove < window.getTop();
+   }
+
+   /**
+    * The top of a popup of the given height beside a line, preferring above
+    * it (see placeBelow). Above, it ends gap plus room for the line above
+    * anchors' top; below, it starts gap below anchors' bottom. Callers pick
+    * anchors that suit their line bounds.
+    */
+   public static int getTopPreferringAbove(int popupHeight,
+                                           Rectangle anchors,
+                                           int gap,
+                                           int viewportTop)
+   {
+      return getTopPreferringAbove(
+            popupHeight, anchors, gap, viewportTop, getWindowBounds());
+   }
+
+   static int getTopPreferringAbove(int popupHeight,
+                                    Rectangle anchors,
+                                    int gap,
+                                    int viewportTop,
+                                    Rectangle window)
+   {
+      int topAbove = topAbove(popupHeight, anchors.getTop(), gap);
+      int topBelow = anchors.getBottom() + gap;
+      boolean below = placeBelow(
+            topAbove, topBelow + popupHeight, false, viewportTop, window);
+      return below ? topBelow : topAbove;
+   }
+
+   private static Rectangle getWindowBounds()
+   {
+      return new Rectangle(
+            Window.getScrollLeft(),
+            Window.getScrollTop(),
+            Window.getClientWidth(),
+            Window.getClientHeight());
+   }
+
+   // The top of a popup above a line, placed from an anchor such as the
+   // bottom of the cursor's bounds, which can be shorter than the line
+   // (see AceEditor.getPositionBounds).
+   private static int topAbove(int popupHeight, int anchor, int gap)
+   {
+      return anchor - LINE_CLEARANCE - gap - popupHeight;
+   }
+
+   /**
+    * Whether the last call to setPosition put the popup below the cursor.
+    */
+   public boolean isPlacedBelow()
+   {
+      return placedBelow_;
+   }
+
+   /**
+    * Positions a popup below the point (pageX, pageY), the bottom of what it
+    * belongs to, or above it if it doesn't fit below in the window.
+    */
    public static Coordinates getPopupPosition(int width,
                                               int height,
                                               int pageX,
                                               int pageY,
-                                              int fudgeFactor,
-                                              boolean preferBottom)
+                                              int fudgeFactor)
    {
-      int windowTop = Window.getScrollTop();
-      int windowLeft = Window.getScrollLeft();
-      int windowRight = windowLeft + Window.getClientWidth();
-      int windowBottom = windowTop + Window.getClientHeight();
-      
-      // Check to see if the popup would overflow to the right.
-      // If so, nudge the coordinates left to prevent this.
+      int topAbove = topAbove(height, pageY, fudgeFactor);
+      int topBelow = pageY + fudgeFactor;
+      Rectangle window = getWindowBounds();
+      boolean below = placeBelow(
+            topAbove, topBelow + height, true, window.getTop(), window);
+
+      return new Coordinates(
+            constrainLeft(width, pageX, fudgeFactor),
+            below ? topBelow : topAbove);
+   }
+
+   /**
+    * The left edge for a popup at pageX, nudged left if the popup would
+    * overflow the window on the right.
+    */
+   public static int constrainLeft(int width, int pageX, int fudgeFactor)
+   {
+      int windowRight = Window.getScrollLeft() + Window.getClientWidth();
       int horizontalOverflow = pageX + width - windowRight;
       if (horizontalOverflow > fudgeFactor)
-      {
-         pageX = Math.max(
-               fudgeFactor + 10,
-               pageX - horizontalOverflow);
-      }
-      
-      // Compute the vertical position. Normally we want the
-      // completion popup to appear below the rectangle, but
-      // we may need to position it above (e.g. R completions
-      // in the console).
-      if (preferBottom)
-      {
-         boolean showOnBottom = pageY + height + fudgeFactor < windowBottom;
-         pageY = showOnBottom
-               ? pageY + fudgeFactor
-               : pageY - height - fudgeFactor - 20;
-      }
-      else
-      {
-         boolean showOnTop = pageY - height - fudgeFactor > 0;
-         pageY = showOnTop
-               ? pageY - height - fudgeFactor - 20
-               : pageY + fudgeFactor;
-      }
-      
-      return new Coordinates(pageX, pageY);
+         pageX = Math.max(fudgeFactor + 10, pageX - horizontalOverflow);
+      return pageX;
    }
-   
+
    public static void setPopupPosition(PopupPanel panel,
                                        int pageX,
                                        int pageY)
    {
-      setPopupPosition(panel, pageX, pageY, 0, true);
+      setPopupPosition(panel, pageX, pageY, 0);
    }
-   
-   
+
    public static void setPopupPosition(PopupPanel panel,
                                        int pageX,
                                        int pageY,
                                        int fudgeFactor)
-   {
-      setPopupPosition(panel, pageX, pageY, fudgeFactor, true);
-   }
-   
-   public static void setPopupPosition(PopupPanel panel,
-                                       int pageX,
-                                       int pageY,
-                                       int fudgeFactor,
-                                       boolean preferBottom)
    {
       Coordinates transformed = getPopupPosition(
             panel.getOffsetWidth(),
             panel.getOffsetHeight(),
             pageX,
             pageY,
-            fudgeFactor,
-            preferBottom);
-      
+            fudgeFactor);
+
       panel.setPopupPosition(
             transformed.getLeft(),
             transformed.getTop());
    }
-   
+
    public boolean getPreferBottom()
    {
       return preferBottom_;
@@ -158,5 +277,14 @@ public class PopupPositioner implements PositionCallback
    private final Rectangle cursorBounds_;
    private final CompletionPopupDisplay popup_;
    private final boolean preferBottom_;
+   private final Rectangle viewport_;
+   private Boolean keepBelow_;
+   private boolean placedBelow_;
+
+   // Space between the cursor's line and the popup.
+   private static final int GAP = 5;
+   // Extra room left between a popup above its line and the anchor it is
+   // placed from, the bottom (or for a tooltip, the middle) of that line.
+   private static final int LINE_CLEARANCE = 20;
    
 }
