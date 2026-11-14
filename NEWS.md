@@ -11,6 +11,7 @@
 - ([#19555](https://github.com/rstudio/rstudio/issues/19555)): The branch filter in the History view of the Review Changes window now has a search box, and searches in the Git branch menus now ignore case.
 
 ### Fixed
+- ([#19614](https://github.com/rstudio/rstudio/issues/19614)): Fixed an issue where, with an AI assistant selected (Posit AI, the default, or GitHub Copilot), the code completion popup and function signature tooltip on the first lines of the Source editor opened above the line, over the editor toolbar and tabs, the popup sometimes with its top cut off by the edge of the window. They now open below the line when they don't fit above it within the editor, the popup with the best match first.
 - ([#19620](https://github.com/rstudio/rstudio/issues/19620)): The R logo in the Console header is now easier to see with dark themes: the R is a lighter blue, and a gap separates it from the ring.
 - ([#19593](https://github.com/rstudio/rstudio/issues/19593)): Fixed an issue where a horizontal scrollbar flickered below the file list while a narrow Files pane was being made narrower.
 - ([#19579](https://github.com/rstudio/rstudio/issues/19579)): Fixed an issue where Show Changes Side by Side could open with its two sides out of step when lines had been removed above the lines in view, and could scroll away from the line being viewed when a change above it was staged or unstaged.
