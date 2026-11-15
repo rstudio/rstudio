@@ -484,8 +484,20 @@ SectionEnd
 Section "-Core installation"
   ;Use the entire tree produced by the INSTALL target.  Keep the
   ;list of directories here in sync with the RMDir commands below.
+  ClearErrors
   SetOutPath "$INSTDIR"
   @CPACK_NSIS_FULL_INSTALL@
+
+  ;
+  ; RSTUDIO CHANGE - Ignore on the file-error dialog skips a file that cannot
+  ; be written (as /S always does: it is NSIS's silent default), leaving only
+  ; the error flag. An update must not then relaunch RStudio on a mix of old
+  ; and new files, so it fails instead, as it does on Abort.
+  ;
+  ${If} $UpdateMode = 1
+  ${AndIf} ${Errors}
+    Abort "Some files could not be replaced."
+  ${EndIf}
 
   ;Store installation folder
   WriteRegStr SHCTX "Software\@CPACK_PACKAGE_VENDOR@\@CPACK_PACKAGE_INSTALL_REGISTRY_KEY@" "" $INSTDIR
@@ -730,9 +742,10 @@ Function SkipPageForUpdate
   ${EndIf}
 FunctionEnd
 
-; The Welcome page is also skipped where NsisMultiUser asks for the pages
+; The Welcome page is also skipped wherever NsisMultiUser asks for the pages
 ; before its own to be hidden: in the elevated instance it starts from the
-; install-mode page, which would otherwise begin again at Welcome.
+; install-mode page, which would otherwise begin again at Welcome, and after
+; an invalid command line, which that page reports before quitting.
 Function SkipWelcomePage
   ${If} $UpdateMode = 1
   ${OrIf} $InstallShowPagesBeforeComponents = 0
