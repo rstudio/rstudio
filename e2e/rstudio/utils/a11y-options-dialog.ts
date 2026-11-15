@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page, type TestInfo } from '@playwright/test';
+import { APPEARANCE_PREVIEW } from '../pages/global_options.page';
 import { declareStates, scanA11y, violationSummary } from './a11y';
 import { TIMEOUTS } from './constants';
 import { trackRpcs, type RpcTracker } from './rpc';
@@ -65,10 +66,25 @@ async function listStates(dialog: Locator): Promise<OptionsState[]> {
   return states;
 }
 
-/** Wait for the dialog's frames (e.g. Appearance's editor preview) to finish loading. */
+/** Wait for the dialog's frames to finish loading. */
 async function waitForFrames(dialog: Locator): Promise<void> {
   await expect.poll(() => dialog.evaluate((el) =>
     [...el.querySelectorAll('iframe')].every((f) => f.contentDocument?.readyState === 'complete')),
+  { timeout: TIMEOUTS.fileOpen }).toBe(true);
+}
+
+/**
+ * Wait for a shown editor theme preview (Appearance) to render. Its frame
+ * loads Ace only once it is complete, then adds the theme as a stylesheet.
+ */
+async function waitForEditorPreview(dialog: Locator): Promise<void> {
+  const preview = dialog.locator(`${APPEARANCE_PREVIEW}:visible`);
+  if (await preview.count() === 0)
+    return;
+  const frame = preview.contentFrame();
+  await expect(frame.locator('.ace_editor .ace_line').first()).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+  await expect.poll(() => frame.locator('body').evaluate((body) =>
+    [...body.ownerDocument.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')].every((l) => l.sheet !== null)),
   { timeout: TIMEOUTS.fileOpen }).toBe(true);
 }
 
@@ -91,8 +107,12 @@ async function scanStates(
         await selectTab(dialog, state.tabId);
       await rpcs.idle(DATA_TIMEOUT);
       await waitForFrames(dialog);
+      await waitForEditorPreview(dialog);
       violations.set(state.name, violationSummary(await scanA11y(page, testInfo, state.name)));
     });
+    // The reporter prints nothing between tests, and CI's heartbeat wrapper
+    // ends a run that is silent for 5 minutes, which a slow dialog can outlast.
+    console.log(`[a11y] scanned ${state.name} (${violations.size}/${states.length})`);
   }
   return violations;
 }
