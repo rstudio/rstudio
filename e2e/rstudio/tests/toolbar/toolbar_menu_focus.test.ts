@@ -39,6 +39,25 @@ async function escapeReturnsFocusCollapsed(page: Page, button: string): Promise<
   await expect(target).not.toHaveAttribute('aria-expanded', 'true');
 }
 
+// Click the Console while the button's menu is open: the click takes focus, and
+// the button must not take it back. Whether the Console keeps focus afterwards
+// isn't checked, since Posit Assistant can take focus on its own.
+async function clickConsoleLeavesButtonUnfocused(page: Page, button: string): Promise<void> {
+  const input = page.locator(CONSOLE_INPUT);
+  await input.evaluate((el) => el.addEventListener('focus', () => {
+    el.dataset.pwFocused = 'true';
+  }, { once: true }));
+  await input.click({ force: true });
+
+  await expect(input, 'the click must land on the Console')
+    .toHaveAttribute('data-pw-focused', 'true');
+  await expect(page.locator(button)).not.toHaveAttribute('aria-expanded', 'true');
+  await expectHoldsFor(RESTORE_WINDOW_MS, async () => {
+    await expect(page.locator(button), 'the button must not take focus back')
+      .not.toBeFocused();
+  });
+}
+
 test.describe('Toolbar menu button focus (#19634)', () => {
   test.afterEach(async ({ rstudioPage: page }) => {
     await page.keyboard.press('Escape');
@@ -96,18 +115,13 @@ test.describe('Toolbar menu button focus (#19634)', () => {
     await expect(page.locator(NEW_FILE_BUTTON)).toBeFocused();
   });
 
-  test('clicking another input while the menu is open keeps focus there', async ({
+  test('clicking the Console while the menu is open leaves the button unfocused', async ({
     rstudioPage: page,
   }) => {
     // Not New File: in a small Desktop window its tall menu can cover the Console
     // input, and the forced click would land on a menu item instead.
     await openMenuFromKeyboard(page, PANE_LAYOUT_BUTTON);
-    await page.locator(CONSOLE_INPUT).click({ force: true });
-    await expect(page.locator(PANE_LAYOUT_BUTTON)).not.toHaveAttribute('aria-expanded', 'true');
-
-    await expectHoldsFor(RESTORE_WINDOW_MS, async () => {
-      await expect(page.locator(CONSOLE_INPUT)).toBeFocused();
-    });
+    await clickConsoleLeavesButtonUnfocused(page, PANE_LAYOUT_BUTTON);
   });
 
   test.describe('Help pane topic title', () => {
@@ -121,17 +135,11 @@ test.describe('Toolbar menu button focus (#19634)', () => {
       await escapeReturnsFocusCollapsed(page, HELP_TITLE_BUTTON);
     });
 
-    test('clicking another input while the menu is open keeps focus there', async ({
+    test('clicking the Console while the menu is open leaves the button unfocused', async ({
       rstudioPage: page,
     }) => {
       await openMenuFromKeyboard(page, HELP_TITLE_BUTTON);
-      await page.locator(CONSOLE_INPUT).click({ force: true });
-      await expect(page.locator(HELP_TITLE_BUTTON))
-        .not.toHaveAttribute('aria-expanded', 'true');
-
-      await expectHoldsFor(RESTORE_WINDOW_MS, async () => {
-        await expect(page.locator(CONSOLE_INPUT)).toBeFocused();
-      });
+      await clickConsoleLeavesButtonUnfocused(page, HELP_TITLE_BUTTON);
     });
   });
 });
