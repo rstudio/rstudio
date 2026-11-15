@@ -19,7 +19,6 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -33,7 +32,6 @@ import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConst
 
 import org.rstudio.core.client.SeparatorManager;
 import org.rstudio.core.client.a11y.A11y;
-import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -137,17 +135,8 @@ public class Toolbar extends ResizeComposite implements HasResizeHandlers
          {
             removeStyleName(styles_.toolbarButtonPushed());
             Scheduler.get().scheduleDeferred(() -> setMenuShowing(false));
-
-            // As in ToolbarMenuButton: return focus that fell to <body> now,
-            // before a chosen item's command runs, so the command can move it on.
-            Element active = DomUtils.getActiveElement();
-            if (!popupPanelCloseEvent.isAutoClosed() &&
-                (active == null ||
-                 active == Document.get().getBody() ||
-                 menuSource_.getMenu().getElement().isOrHasChild(active)))
-            {
+            if (ToolbarPopupMenu.focusLostOnClose(popupPanelCloseEvent))
                setFocus(true);
-            }
          });
          addKeyPressHandler(event ->
          {
