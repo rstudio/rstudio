@@ -10,6 +10,8 @@ import { createSandbox } from '@utils/sandbox';
 const PROJECT_OPTIONS_DIALOG = '[role="dialog"][aria-label="Project Options"]';
 // The first Recent Projects entry, enabled while the list has one.
 const FIRST_RECENT_PROJECT = 'projectMru0';
+// Creating and opening the project, then closing it: two session switches.
+const PROJECT_BUDGET = 120_000;
 
 /**
  * Close the project, so the next session doesn't reopen it, and clear the
@@ -30,8 +32,8 @@ async function restoreNoProject(page: Page, recentWasEmpty: boolean): Promise<vo
   cleared.catch(() => {});
   await executeCommand(page, 'clearRecentProjects');
   await cleared;
-  await expect.poll(() => isCommandEnabled(page, FIRST_RECENT_PROJECT), { timeout: TIMEOUTS.action })
-    .toBe(false);
+  await expect.poll(() => isCommandEnabled(page, FIRST_RECENT_PROJECT),
+    { timeout: TIMEOUTS.action }).toBe(false);
 }
 
 /**
@@ -41,6 +43,7 @@ async function restoreNoProject(page: Page, recentWasEmpty: boolean): Promise<vo
  */
 test('project options dialog has no accessibility violations', { tag: ['@a11y', '@server_only'] },
   async ({ a11yPage: page }, testInfo) => {
+    test.setTimeout(testInfo.timeout + PROJECT_BUDGET);
     const recentWasEmpty = !await isCommandEnabled(page, FIRST_RECENT_PROJECT);
     let violations: Map<string, string[]>;
     try {

@@ -1,14 +1,15 @@
 import { expect, test, type Locator, type Page, type TestInfo } from '@playwright/test';
-import { APPEARANCE_PREVIEW } from '../pages/global_options.page';
+import { APPEARANCE_PREVIEW, OPTIONS_CANCEL } from '../pages/global_options.page';
 import { declareStates, scanA11y, violationSummary } from './a11y';
 import { TIMEOUTS } from './constants';
 import { trackRpcs, type RpcTracker } from './rpc';
 
 // The options dialogs' pane chooser (SectionChooser) is their only vertical tablist.
 const SECTION_TABS = '[role="tablist"][aria-orientation="vertical"] [role="tab"]';
-const CANCEL = '#rstudio_dlg_cancel';
 // For the data every pane fetches when the dialog opens.
 const DATA_TIMEOUT = 60_000;
+// Opening the dialog, and selecting each pane once to list the states.
+const LISTING_BUDGET = 60_000;
 // Selecting, settling, the screenshot and the axe run, for one state.
 const STATE_BUDGET = 30_000;
 
@@ -24,7 +25,7 @@ export function stateSlug(label: string): string {
   return label.toLowerCase().replace(/\+/g, 'p').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
-/** Select the tab with id `id` -- a pane in the chooser, or a tab inside a pane -- and return its panel. */
+/** Select tab `id` -- a pane in the chooser, or a tab inside a pane -- and return its panel. */
 async function selectTab(dialog: Locator, id: string): Promise<Locator> {
   const tab = dialog.locator(`[id="${id}"]`);
   await tab.click({ timeout: TIMEOUTS.action });
@@ -54,9 +55,11 @@ async function listStates(dialog: Locator): Promise<OptionsState[]> {
     const panel = await selectTab(dialog, sectionId);
     const tabs: OptionsState[] = [];
     for (const tab of await panel.locator('[role="tab"]').all()) {
-      const tabId = await tab.getAttribute('id');
-      if (!await tab.isVisible() || !tabId)
+      if (!await tab.isVisible())
         continue;
+      const tabId = await tab.getAttribute('id');
+      if (!tabId)
+        throw new Error(`Tab "${await tab.innerText()}" of options pane ${sectionId} has no id`);
       tabs.push({ name: `${sectionName}-${stateSlug(await tab.innerText())}`, sectionId, tabId });
     }
     states.push(...(tabs.length > 0 ? tabs : [{ name: sectionName, sectionId }]));
@@ -82,9 +85,11 @@ async function waitForEditorPreview(dialog: Locator): Promise<void> {
   if (await preview.count() === 0)
     return;
   const frame = preview.contentFrame();
-  await expect(frame.locator('.ace_editor .ace_line').first()).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+  await expect(frame.locator('.ace_editor .ace_line').first())
+    .toBeVisible({ timeout: TIMEOUTS.fileOpen });
   await expect.poll(() => frame.locator('body').evaluate((body) =>
-    [...body.ownerDocument.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')].every((l) => l.sheet !== null)),
+    [...body.ownerDocument.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')]
+      .every((l) => l.sheet !== null)),
   { timeout: TIMEOUTS.fileOpen }).toBe(true);
 }
 
@@ -118,7 +123,7 @@ async function scanStates(
 }
 
 async function cancelDialog(dialog: Locator): Promise<void> {
-  await dialog.locator(CANCEL).click({ timeout: TIMEOUTS.action });
+  await dialog.locator(OPTIONS_CANCEL).click({ timeout: TIMEOUTS.action });
   await expect(dialog).toHaveCount(0, { timeout: TIMEOUTS.action });
 }
 
@@ -135,6 +140,7 @@ export async function scanOptionsDialog(
   open: () => Promise<void>,
 ): Promise<Map<string, string[]>> {
   const dialog = page.locator(dialogSelector);
+  test.setTimeout(testInfo.timeout + DATA_TIMEOUT + LISTING_BUDGET);
   // Started before the dialog opens, which is when its panes fetch their data.
   const rpcs = trackRpcs(page);
   let violations: Map<string, string[]>;
@@ -145,7 +151,8 @@ export async function scanOptionsDialog(
     // Logged only, so a close problem can't hide the original error.
     if (await dialog.count() > 0) {
       await cancelDialog(dialog)
-        .catch((closeErr: Error) => console.warn(`Options dialog not closed: ${closeErr.message}`));
+        .catch((closeErr: Error) =>
+          console.warn(`Options dialog not closed: ${closeErr.message}`));
     }
     throw err;
   } finally {
