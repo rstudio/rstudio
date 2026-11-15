@@ -191,13 +191,15 @@ test.describe('declareStates', () => {
       '<p>No problems here.</p></main></body></html>');
     await scanA11y(page, info, 'clean');
 
+    // Only image-alt is checked: other rule sets (PW_A11Y_*) can add rules
+    // that both pages fail, and image-alt is Level A, so every rule set has it.
     const scans = readStateScans(dir);
-    expect(scans.map((s) => [s.state, s.results?.violations.map((v) => v.id), s.screenshot !== undefined]))
-      .toEqual([
-        ['global-options-clean', [], true],
-        ['global-options-never-reached', undefined, false],
-        ['global-options-with-image', ['image-alt'], true],
-      ]);
+    const hasImageAlt = (s: StateScan) => s.results?.violations.some((v) => v.id === 'image-alt');
+    expect(scans.map((s) => [s.state, hasImageAlt(s), s.screenshot !== undefined])).toEqual([
+      ['global-options-clean', false, true],
+      ['global-options-never-reached', undefined, false],
+      ['global-options-with-image', true, true],
+    ]);
   });
 
   test('scanA11y refuses a sub-state that was not declared', async ({}, testInfo) => {
