@@ -153,19 +153,37 @@ const SUB_STATE_NAME = /^[a-z0-9]+(-[a-z0-9]+)*$/;
  */
 export function declareStates(testInfo: TestInfo, subStates: string[]): void {
   if (subStates.length === 0)
-    throw new Error('declareStates: no sub-states given; a test that scans one state needs no declaration');
+    throw new Error('declareStates: no sub-states given; a single-state test needs no declaration');
   const bad = subStates.filter((s) => !SUB_STATE_NAME.test(s));
-  if (bad.length > 0)
-    throw new Error(`declareStates: invalid sub-state name(s) ${JSON.stringify(bad)}; use lowercase words joined by -`);
+  if (bad.length > 0) {
+    throw new Error(`declareStates: invalid sub-state name(s) ${JSON.stringify(bad)}; ` +
+      'use lowercase words joined by -');
+  }
   const dupes = subStates.filter((s, i) => subStates.indexOf(s) !== i);
   if (dupes.length > 0)
     throw new Error(`declareStates: sub-state(s) ${JSON.stringify(dupes)} declared more than once`);
   const parent = a11yStateName(testInfo.file);
   for (const sub of subStates) {
     fs.mkdirSync(testInfo.outputPath(sub), { recursive: true });
-    fs.writeFileSync(testInfo.outputPath(sub, STATE_MARKER), JSON.stringify({ state: `${parent}-${sub}` }));
+    const marker = JSON.stringify({ state: `${parent}-${sub}` });
+    fs.writeFileSync(testInfo.outputPath(sub, STATE_MARKER), marker);
   }
   fs.rmSync(testInfo.outputPath(STATE_MARKER), { force: true });
+}
+
+/**
+ * Where a scan of `subState` (or of the test's one state) writes its files.
+ * The directory must be marked, or the report would never read them.
+ */
+function scanOutput(testInfo: TestInfo, subState: string | undefined): (file: string) => string {
+  if (subState === undefined) {
+    if (!fs.existsSync(testInfo.outputPath(STATE_MARKER)))
+      throw new Error('scanA11y: the test declared sub-states; pass the one being scanned');
+    return (file) => testInfo.outputPath(file);
+  }
+  if (!SUB_STATE_NAME.test(subState) || !fs.existsSync(testInfo.outputPath(subState, STATE_MARKER)))
+    throw new Error(`scanA11y: sub-state "${subState}" was not declared; call declareStates first`);
+  return (file) => testInfo.outputPath(subState, file);
 }
 
 /**
@@ -175,25 +193,28 @@ export function declareStates(testInfo: TestInfo, subStates: string[]): void {
  * output dir, or to `subState`'s subdirectory (see declareStates), where CI's
  * merge job reads them for the cross-state report.
  */
-export async function scanA11y(page: Page, testInfo: TestInfo, subState?: string): Promise<AxeResults> {
-  const out = (file: string) => (subState ? testInfo.outputPath(subState, file) : testInfo.outputPath(file));
-  if (subState !== undefined && !fs.existsSync(out(STATE_MARKER)))
-    throw new Error(`scanA11y: sub-state "${subState}" was not declared; call declareStates first`);
-  const attachment = (file: string) => (subState ? `${subState}/${file}` : file);
+export async function scanA11y(
+  page: Page,
+  testInfo: TestInfo,
+  subState?: string,
+): Promise<AxeResults> {
+  const out = scanOutput(testInfo, subState);
+  const attachment = (file: string) => (subState === undefined ? file : `${subState}/${file}`);
   const selected = ruleSetFromEnv();
   const ruleSet = ruleSetLabel(selected);
 
   const screenshot = out(SCREENSHOT_FILE);
   await page.screenshot({ path: screenshot });
-  await testInfo.attach(attachment(SCREENSHOT_FILE), { path: screenshot, contentType: 'image/png' });
+  await testInfo.attach(attachment(SCREENSHOT_FILE),
+    { path: screenshot, contentType: 'image/png' });
 
   const results = await runAxe(page, selected);
 
   if (!testInfo.annotations.some((a) => a.type === 'a11y-rules'))
     testInfo.annotations.push({ type: 'a11y-rules', description: ruleSet });
-  const incomplete = String(results.incomplete.length);
-  testInfo.annotations.push(
-    { type: 'a11y-incomplete', description: subState ? `${subState}: ${incomplete}` : incomplete });
+  const count = String(results.incomplete.length);
+  const incomplete = subState === undefined ? count : `${subState}: ${count}`;
+  testInfo.annotations.push({ type: 'a11y-incomplete', description: incomplete });
 
   const json = out(RESULTS_FILE);
   fs.writeFileSync(json, JSON.stringify({
@@ -209,6 +230,7 @@ export async function scanA11y(page: Page, testInfo: TestInfo, subState?: string
 
   const text = out('axe-violations.txt');
   fs.writeFileSync(text, formatViolations(results));
-  await testInfo.attach(attachment('axe-violations.txt'), { path: text, contentType: 'text/plain' });
+  await testInfo.attach(attachment('axe-violations.txt'),
+    { path: text, contentType: 'text/plain' });
   return results;
 }

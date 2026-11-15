@@ -157,7 +157,8 @@ test.describe('declareStates', () => {
     } as unknown as TestInfo;
   }
 
-  test('replaces the test\'s marker with one per sub-state, each not yet scanned', async ({}, testInfo) => {
+  test('replaces the test\'s marker with one per sub-state, each not yet scanned',
+    async ({}, testInfo) => {
     const dir = testInfo.outputPath('state-test');
     declareStates(stateTest(dir), ['code-display', 'git-svn']);
     expect(fs.existsSync(path.join(dir, STATE_MARKER))).toBe(false);
@@ -169,7 +170,8 @@ test.describe('declareStates', () => {
 
   for (const [what, subStates, message] of [
     ['no sub-states', [], /no sub-states/],
-    ['a name that is not lowercase words joined by -', ['code display'], /invalid sub-state name.*"code display"/],
+    ['a name that is not lowercase words joined by -', ['code display'],
+      /invalid sub-state name.*"code display"/],
     ['an empty name', [''], /invalid sub-state name/],
     ['a duplicate', ['console', 'console'], /"console"\] declared more than once/],
   ] as const) {
@@ -180,15 +182,17 @@ test.describe('declareStates', () => {
     });
   }
 
-  test('scanA11y keeps each sub-state\'s results apart; one never scanned stays unscanned', async ({ page }, testInfo) => {
+  test('scanA11y keeps each sub-state\'s results apart; one never scanned stays unscanned',
+    async ({ page }, testInfo) => {
     const dir = testInfo.outputPath('state-test');
     const info = Object.assign(stateTest(dir), { annotations: [], attach: async () => {} });
     declareStates(info, ['with-image', 'clean', 'never-reached']);
-    await page.setContent('<!doctype html><html lang="en"><head><title>t</title></head><body><main>' +
-      '<img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" width="20" height="20"></main></body></html>');
+    const html = (body: string) => '<!doctype html><html lang="en"><head><title>t</title></head>' +
+      `<body><main>${body}</main></body></html>`;
+    await page.setContent(html(
+      '<img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" width="20" height="20">'));
     await scanA11y(page, info, 'with-image');
-    await page.setContent('<!doctype html><html lang="en"><head><title>t</title></head><body><main>' +
-      '<p>No problems here.</p></main></body></html>');
+    await page.setContent(html('<p>No problems here.</p>'));
     await scanA11y(page, info, 'clean');
 
     // Only image-alt is checked: other rule sets (PW_A11Y_*) can add rules
@@ -206,6 +210,13 @@ test.describe('declareStates', () => {
     const info = stateTest(testInfo.outputPath('state-test'));
     declareStates(info, ['console']);
     await expect(scanA11y({} as Page, info, 'python')).rejects.toThrow(/"python" was not declared/);
+    await expect(scanA11y({} as Page, info, '')).rejects.toThrow(/"" was not declared/);
+  });
+
+  test('scanA11y refuses no sub-state once sub-states are declared', async ({}, testInfo) => {
+    const info = stateTest(testInfo.outputPath('state-test'));
+    declareStates(info, ['console']);
+    await expect(scanA11y({} as Page, info)).rejects.toThrow(/pass the one being scanned/);
   });
 });
 
