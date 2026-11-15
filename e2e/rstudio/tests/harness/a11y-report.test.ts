@@ -180,6 +180,26 @@ test.describe('declareStates', () => {
     });
   }
 
+  test('scanA11y keeps each sub-state\'s results apart; one never scanned stays unscanned', async ({ page }, testInfo) => {
+    const dir = testInfo.outputPath('state-test');
+    const info = Object.assign(stateTest(dir), { annotations: [], attach: async () => {} });
+    declareStates(info, ['with-image', 'clean', 'never-reached']);
+    await page.setContent('<!doctype html><html lang="en"><head><title>t</title></head><body><main>' +
+      '<img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" width="20" height="20"></main></body></html>');
+    await scanA11y(page, info, 'with-image');
+    await page.setContent('<!doctype html><html lang="en"><head><title>t</title></head><body><main>' +
+      '<p>No problems here.</p></main></body></html>');
+    await scanA11y(page, info, 'clean');
+
+    const scans = readStateScans(dir);
+    expect(scans.map((s) => [s.state, s.results?.violations.map((v) => v.id), s.screenshot !== undefined]))
+      .toEqual([
+        ['global-options-clean', [], true],
+        ['global-options-never-reached', undefined, false],
+        ['global-options-with-image', ['image-alt'], true],
+      ]);
+  });
+
   test('scanA11y refuses a sub-state that was not declared', async ({}, testInfo) => {
     const info = stateTest(testInfo.outputPath('state-test'));
     declareStates(info, ['console']);
