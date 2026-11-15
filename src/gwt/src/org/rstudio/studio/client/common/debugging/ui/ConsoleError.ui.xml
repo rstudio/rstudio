@@ -31,6 +31,10 @@
       font-size: 80%;
       opacity: 0.50;
       cursor: pointer;
+      /* Opacity below 1 lifts an element into its own paint layer; positioning keeps
+         both links in that layer on hover, so where their boxes overlap the topmost
+         one doesn't flip with each hover change and flicker. */
+      position: relative;
    }
    
    .errorCommandText:hover {
