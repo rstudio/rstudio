@@ -28,9 +28,13 @@ async function openMenuFromKeyboard(page: Page, button: string): Promise<void> {
 // so a screen reader doesn't announce it as expanded.
 async function escapeReturnsFocusCollapsed(page: Page, button: string): Promise<void> {
   const target = page.locator(button);
-  await target.evaluate((el) => el.addEventListener('focus', () => {
-    el.dataset.pwExpandedOnFocus = String(el.getAttribute('aria-expanded'));
-  }, { once: true }));
+  // The page outlives each test, so clear a marker an earlier test left.
+  await target.evaluate((el) => {
+    delete el.dataset.pwExpandedOnFocus;
+    el.addEventListener('focus', () => {
+      el.dataset.pwExpandedOnFocus = String(el.getAttribute('aria-expanded'));
+    }, { once: true });
+  });
   await page.keyboard.press('Escape');
 
   await expect(target).toBeFocused();
@@ -44,9 +48,12 @@ async function escapeReturnsFocusCollapsed(page: Page, button: string): Promise<
 // isn't checked, since Posit Assistant can take focus on its own.
 async function clickConsoleLeavesButtonUnfocused(page: Page, button: string): Promise<void> {
   const input = page.locator(CONSOLE_INPUT);
-  await input.evaluate((el) => el.addEventListener('focus', () => {
-    el.dataset.pwFocused = 'true';
-  }, { once: true }));
+  await input.evaluate((el) => {
+    delete el.dataset.pwFocused;
+    el.addEventListener('focus', () => {
+      el.dataset.pwFocused = 'true';
+    }, { once: true });
+  });
   await input.click({ force: true });
 
   await expect(input, 'the click must land on the Console')
