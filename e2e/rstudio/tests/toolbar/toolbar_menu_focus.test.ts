@@ -56,8 +56,11 @@ test.describe('Toolbar menu button focus (#19634)', () => {
   test('clicking another input while the menu is open keeps focus there', async ({
     rstudioPage: page,
   }) => {
-    await openMenuFromKeyboard(page, NEW_FILE_BUTTON);
+    // Not New File: in a small Desktop window its tall menu can cover the Console
+    // input, and the forced click would land on a menu item instead.
+    await openMenuFromKeyboard(page, PANE_LAYOUT_BUTTON);
     await page.locator(CONSOLE_INPUT).click({ force: true });
+    await expect(page.locator(PANE_LAYOUT_BUTTON)).not.toHaveAttribute('aria-expanded', 'true');
 
     await expectHoldsFor(RESTORE_WINDOW_MS, async () => {
       await expect(page.locator(CONSOLE_INPUT)).toBeFocused();
