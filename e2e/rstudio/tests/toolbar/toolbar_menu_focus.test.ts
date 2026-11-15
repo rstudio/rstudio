@@ -1,13 +1,7 @@
-// Toolbar menu buttons: where focus goes when the menu closes (#19634).
-//
-// Escape used to leave focus on <body>. It now returns to the menu button as the
-// menu closes, before a chosen item's command runs, so the command can still move
-// focus on, and a dialog it opens returns focus to the button. A click into
-// another input keeps focus there.
-//
-// The Help pane's topic title is the other kind of toolbar menu button
-// (Toolbar.ToolbarPopupButton). It used to take focus back after every close,
-// including from a click into another input.
+// Where focus goes when a toolbar menu closes (#19634), for both kinds of
+// toolbar menu button: ToolbarMenuButton (New File, Workspace Panes) and
+// Toolbar.ToolbarPopupButton (the Help pane's topic title). Escape or a chosen
+// item returns focus to the button; a command or click that moves focus keeps it.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import type { Page } from '@playwright/test';
