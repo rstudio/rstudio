@@ -1,0 +1,66 @@
+// Toolbar menu buttons: where focus goes when the menu closes (#19634).
+//
+// Escape used to leave focus on <body>. It now returns to the menu button, but
+// only when nothing else took focus, so a command that opens an editor, or a
+// click into another input, keeps it.
+
+import { test, expect } from '@fixtures/rstudio.fixture';
+import type { Page } from '@playwright/test';
+
+import { CONSOLE_INPUT } from '@pages/console_pane.page';
+import { expectHoldsFor } from '@utils/expect-holds';
+
+const NEW_FILE_BUTTON = '#rstudio_new_file_menubutton';
+const PANE_LAYOUT_BUTTON = '#rstudio_panelayout_menubutton';
+
+// Outlasts the close handler's deferred focus restore several times over.
+const RESTORE_WINDOW_MS = 500;
+
+async function openMenuFromKeyboard(page: Page, button: string): Promise<void> {
+  await page.locator(button).focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator(button)).toHaveAttribute('aria-expanded', 'true');
+}
+
+test.describe('Toolbar menu button focus (#19634)', () => {
+  test.afterEach(async ({ rstudioPage: page }) => {
+    await page.keyboard.press('Escape');
+  });
+
+  for (const [name, button] of [
+    ['New File', NEW_FILE_BUTTON],
+    ['Workspace Panes', PANE_LAYOUT_BUTTON],
+  ]) {
+    test(`Escape returns focus to the ${name} button`, async ({ rstudioPage: page }) => {
+      await openMenuFromKeyboard(page, button);
+      await page.keyboard.press('Escape');
+
+      await expect(page.locator(button)).not.toHaveAttribute('aria-expanded', 'true');
+      await expect(page.locator(button)).toBeFocused();
+    });
+  }
+
+  test('a chosen item that moves focus keeps it', async ({ rstudioPage: page }) => {
+    await openMenuFromKeyboard(page, NEW_FILE_BUTTON);
+    await page.getByRole('menuitem', { name: /^R Script/ }).click();
+
+    const editorInput = page.locator('#rstudio_Source_pane .ace_text-input:focus');
+    await expect(editorInput).toHaveCount(1);
+    await expectHoldsFor(RESTORE_WINDOW_MS, async () => {
+      await expect(page.locator(NEW_FILE_BUTTON), 'the button must not take focus back')
+        .not.toBeFocused();
+      await expect(editorInput).toHaveCount(1);
+    });
+  });
+
+  test('clicking another input while the menu is open keeps focus there', async ({
+    rstudioPage: page,
+  }) => {
+    await openMenuFromKeyboard(page, NEW_FILE_BUTTON);
+    await page.locator(CONSOLE_INPUT).click({ force: true });
+
+    await expectHoldsFor(RESTORE_WINDOW_MS, async () => {
+      await expect(page.locator(CONSOLE_INPUT)).toBeFocused();
+    });
+  });
+});
