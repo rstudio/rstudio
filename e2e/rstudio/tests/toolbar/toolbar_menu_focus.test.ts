@@ -73,6 +73,24 @@ test.describe('Toolbar menu button focus (#19634)', () => {
     });
   });
 
+  test('choosing an item with Enter keeps the menu closed', async ({ rstudioPage: page }) => {
+    await openMenuFromKeyboard(page, NEW_FILE_BUTTON);
+    const selected = page.locator('.gwt-MenuBar-vertical .gwt-MenuItem-selected');
+    await page.keyboard.press('Home');
+    await expect(selected).toHaveText(/^R Script/);
+    await page.keyboard.press('Enter');
+
+    // Focus is back on the button while Enter is still being handled; that Enter
+    // must not reach the button and reopen the menu.
+    const editorInput = page.locator('#rstudio_Source_pane .ace_text-input:focus');
+    await expect(editorInput).toHaveCount(1);
+    await expectHoldsFor(RESTORE_WINDOW_MS, async () => {
+      await expect(page.locator(NEW_FILE_BUTTON)).not.toHaveAttribute('aria-expanded', 'true');
+      await expect(selected).toHaveCount(0);
+      await expect(editorInput).toHaveCount(1);
+    });
+  });
+
   test('closing a dialog opened from a chosen item returns focus to the button', async ({
     rstudioPage: page,
   }) => {
