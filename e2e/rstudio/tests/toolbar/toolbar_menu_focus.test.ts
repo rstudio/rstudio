@@ -4,6 +4,10 @@
 // menu closes, before a chosen item's command runs, so the command can still move
 // focus on, and a dialog it opens returns focus to the button. A click into
 // another input keeps focus there.
+//
+// The Help pane's topic title is the other kind of toolbar menu button
+// (Toolbar.ToolbarPopupButton). It used to take focus back after every close,
+// including from a click into another input.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import type { Page } from '@playwright/test';
@@ -14,8 +18,10 @@ import { expectHoldsFor } from '@utils/expect-holds';
 
 const NEW_FILE_BUTTON = '#rstudio_new_file_menubutton';
 const PANE_LAYOUT_BUTTON = '#rstudio_panelayout_menubutton';
+const HELP_TAB = '#rstudio_workbench_tab_help';
+const HELP_TITLE_BUTTON = '#rstudio_workbench_panel_help [aria-haspopup="true"]';
 
-// Outlasts the close handler's deferred focus restore several times over.
+// Outlasts the deferred work after a menu closes several times over.
 const RESTORE_WINDOW_MS = 500;
 
 async function openMenuFromKeyboard(page: Page, button: string): Promise<void> {
@@ -77,6 +83,35 @@ test.describe('Toolbar menu button focus (#19634)', () => {
 
     await expectHoldsFor(RESTORE_WINDOW_MS, async () => {
       await expect(page.locator(CONSOLE_INPUT)).toBeFocused();
+    });
+  });
+
+  test.describe('Help pane topic title', () => {
+    test.beforeEach(async ({ rstudioPage: page }) => {
+      await page.locator(HELP_TAB).click();
+      await expect(page.locator(HELP_TITLE_BUTTON)).toBeVisible();
+    });
+
+    test('Escape returns focus to the title button', async ({ rstudioPage: page }) => {
+      await openMenuFromKeyboard(page, HELP_TITLE_BUTTON);
+      await page.keyboard.press('Escape');
+
+      await expect(page.locator(HELP_TITLE_BUTTON))
+        .not.toHaveAttribute('aria-expanded', 'true');
+      await expect(page.locator(HELP_TITLE_BUTTON)).toBeFocused();
+    });
+
+    test('clicking another input while the menu is open keeps focus there', async ({
+      rstudioPage: page,
+    }) => {
+      await openMenuFromKeyboard(page, HELP_TITLE_BUTTON);
+      await page.locator(CONSOLE_INPUT).click({ force: true });
+      await expect(page.locator(HELP_TITLE_BUTTON))
+        .not.toHaveAttribute('aria-expanded', 'true');
+
+      await expectHoldsFor(RESTORE_WINDOW_MS, async () => {
+        await expect(page.locator(CONSOLE_INPUT)).toBeFocused();
+      });
     });
   });
 });
