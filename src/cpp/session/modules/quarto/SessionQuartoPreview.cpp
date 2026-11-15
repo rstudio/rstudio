@@ -147,7 +147,7 @@ public:
       Error error = r::exec::RFunction(".rs.quarto.renderPreview",
          safe_convert::numberToString(controlPort()),
          renderToken_,
-         previewTarget().getAbsolutePath(),
+         previewTarget(),
          format).call(&result, &rProtect);
       if (error || r::sexp::inherits(result, "error"))
       {

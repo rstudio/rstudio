@@ -43,12 +43,12 @@ int s_buildWidth = -1;
 
 Error saveOptions(const FilePath& filePath)
 {
-   return exec::RFunction(".rs.saveOptions", filePath.getAbsolutePath()).call();
+   return exec::RFunction(".rs.saveOptions", filePath).call();
 }
    
 Error restoreOptions(const FilePath& filePath)
 {
-   return exec::RFunction(".rs.restoreOptions", filePath.getAbsolutePath()).call();
+   return exec::RFunction(".rs.restoreOptions", filePath).call();
 }
    
 const int kDefaultWidth = 80;

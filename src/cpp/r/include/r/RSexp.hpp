@@ -179,6 +179,7 @@ SEXP create(const core::json::Value& value, Protect* pProtect);
 SEXP create(const YAML::Node& node, Protect* pProtect);
 SEXP create(const char* value, Protect* pProtect);
 SEXP create(const std::string& value, Protect* pProtect);
+SEXP create(const core::FilePath& value, Protect* pProtect);
 SEXP create(int value, Protect* pProtect);
 SEXP create(double value, Protect* pProtect);
 SEXP create(bool value, Protect* pProtect);

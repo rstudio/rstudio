@@ -455,7 +455,7 @@ SEXP rs_rstudioCitation()
    SEXP citationSEXP;
    r::sexp::Protect rProtect;
    Error error = r::exec::RFunction("utils:::readCitationFile",
-                                    citationPath.getAbsolutePath())
+                                    citationPath)
                                                    .call(&citationSEXP,
                                                          &rProtect);
 
@@ -2372,7 +2372,8 @@ SEXP rs_sourceModule(SEXP moduleSEXP)
    // r::exec::error longjmps, so nothing with a destructor may be live
    std::string message;
    {
-      Error error = sourceModuleRFile(r::sexp::asString(moduleSEXP));
+      // the path came from sourceModuleRFileOnDemand(), marked as UTF-8
+      Error error = sourceModuleRFile(r::sexp::asUtf8String(moduleSEXP));
       if (error)
          message = error.getSummary();
    }
@@ -2387,7 +2388,7 @@ Error sourceModuleRFileOnDemand(const std::string& rSourceFile)
 {
    FilePath modulesPath = session::options().modulesRSourcePath();
    FilePath srcPath = modulesPath.completePath(rSourceFile);
-   return r::exec::RFunction(".rs.addLazyModule", srcPath.getAbsolutePath()).call();
+   return r::exec::RFunction(".rs.addLazyModule", srcPath).call();
 }
 
 Error sourceModuleRFileWithResult(const std::string& rSourceFile,

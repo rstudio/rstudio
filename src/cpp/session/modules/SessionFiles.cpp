@@ -925,8 +925,8 @@ Error completeUpload(const core::json::JsonRpcRequest& request,
       {
          // expand the archive
          r::exec::RFunction unzip("unzip");
-         unzip.addParam("zipfile", uploadedTempFilePath.getAbsolutePath());
-         unzip.addParam("exdir", targetDirectoryPath.getAbsolutePath());
+         unzip.addParam("zipfile", uploadedTempFilePath);
+         unzip.addParam("exdir", targetDirectoryPath);
          Error unzipError = unzip.call();
          if (unzipError)
          {
@@ -1579,8 +1579,8 @@ void handleMultipleFileExportRequest(const http::Request& request,
    // create the zip file
    FilePath tempZipFilePath = module_context::tempFile("export", "zip");
    Error error = r::exec::RFunction(".rs.createZipFile",
-                                    tempZipFilePath.getAbsolutePath(),
-                                    parentPath.getAbsolutePath(),
+                                    tempZipFilePath,
+                                    parentPath,
                                     files).call();
    if (error)
    {

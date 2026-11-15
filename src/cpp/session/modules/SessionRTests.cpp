@@ -259,6 +259,30 @@ TEST(SessionRTest, PreservedSEXPMovedFromIsEmpty) {
    EXPECT_EQ(R_NilValue, constructed.get());
 }
 
+TEST(SessionRTest, FilePathParamsReachRAsUtf8) {
+   // a FilePath holds UTF-8; marked native instead, a non-ASCII path names a
+   // different file wherever the native encoding is not UTF-8 (e.g. Windows
+   // with R < 4.2), as when an uploaded zip was expanded with unzip() (#19627)
+   FilePath path("/tmp/test-\xc3\xa9");
+
+   std::string encoding;
+   Error error = r::exec::RFunction("base:::Encoding", path).call(&encoding);
+   ASSERT_FALSE(error);
+   EXPECT_EQ("UTF-8", encoding);
+
+   encoding.clear();
+   error = r::exec::RFunction("base:::Encoding")
+         .addParam("x", path)
+         .call(&encoding);
+   ASSERT_FALSE(error);
+   EXPECT_EQ("UTF-8", encoding);
+
+   std::string roundTrip;
+   error = r::exec::RFunction("base:::identity", path).callUtf8(&roundTrip);
+   ASSERT_FALSE(error);
+   EXPECT_EQ(path.getAbsolutePath(), roundTrip);
+}
+
 #ifdef _WIN32
 
 TEST(SessionRTest, SynchronizeLocaleRepairsAClobberedLocale) {

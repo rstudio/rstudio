@@ -141,7 +141,7 @@ void checkProjectRVersion(bool refreshInstalled)
 
    json::Value resultJson;
    Error error = r::exec::RFunction(".rs.projectRVersionCheck")
-         .addParam("project", projects::projectContext().directory().getAbsolutePath())
+         .addParam("project", projects::projectContext().directory())
          .addParam("projectVersion", projectVersion)
          .addParam("minimum", RSTUDIO_R_VERSION_REQUIRED)
          .addParam("renvActive", module_context::isRenvActive())

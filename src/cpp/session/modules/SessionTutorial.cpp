@@ -104,7 +104,7 @@ private:
       SEXP tutorialsSEXP;
       
       Error error = r::exec::RFunction(".rs.tutorial.findTutorials")
-            .addParam(resourcePath.getAbsolutePath())
+            .addParam(resourcePath)
             .call(&tutorialsSEXP, &protect);
       
       if (error)
@@ -398,7 +398,7 @@ void onSuspend(const r::session::RSuspendOptions& suspendOptions,
                Settings* pSettings)
 {
    Error error = r::exec::RFunction(".rs.tutorial.onSuspend")
-         .addParam(tutorialResourcePath("tutorial-state").getAbsolutePath())
+         .addParam(tutorialResourcePath("tutorial-state"))
          .call();
    
    if (error)
@@ -408,7 +408,7 @@ void onSuspend(const r::session::RSuspendOptions& suspendOptions,
 void onResume(const Settings& settings)
 {
    Error error = r::exec::RFunction(".rs.tutorial.onResume")
-         .addParam(tutorialResourcePath("tutorial-state").getAbsolutePath())
+         .addParam(tutorialResourcePath("tutorial-state"))
          .call();
    
    if (error)

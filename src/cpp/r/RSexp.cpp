@@ -1426,7 +1426,15 @@ SEXP create(const std::string& value, Protect* pProtect)
    SET_STRING_ELT(valueSEXP, 0, charSEXP);
    return valueSEXP;
 }
-   
+
+// unlike std::string, a FilePath's path is always UTF-8, so mark it as such.
+// marked native, R would misread a non-ASCII path wherever the native encoding
+// is not UTF-8 (e.g. Windows with R < 4.2) and name a different file
+SEXP create(const FilePath& value, Protect* pProtect)
+{
+   return createUtf8(value, pProtect);
+}
+
 SEXP create(int value, Protect* pProtect)
 {
    SEXP valueSEXP;
