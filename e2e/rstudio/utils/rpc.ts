@@ -1,4 +1,4 @@
-import { errors, type Page, type Request, type Response } from '@playwright/test';
+import { errors, expect, type Page, type Request, type Response } from '@playwright/test';
 import { TIMEOUTS } from '@utils/constants';
 import { DeadlineError, withDeadline } from '@utils/deadline';
 
@@ -96,4 +96,66 @@ export function waitForRpcResponse(
       return body;
     })
     .finally(() => page.off('response', onResponse));
+}
+
+const RPC_METHOD = /\/rpc\/([A-Za-z0-9_]+)(?:\?|$)/;
+
+/** Tracks the RPCs the page sends from now on; see `trackRpcs`. */
+export interface RpcTracker {
+  /** Resolves once every tracked RPC has been answered, async completions included. */
+  idle(timeout: number): Promise<void>;
+  stop(): void;
+}
+
+/**
+ * Track every RPC the page sends from now on until each is answered: by its
+ * response or, for one acknowledged with an asyncHandle, by its
+ * async_completion event. Error answers count as answered.
+ */
+export function trackRpcs(page: Page): RpcTracker {
+  const pending = new Map<Request, string>();
+  const awaitingCompletion = new Map<string, string>();
+  const completed = new Set<string>();
+
+  const onRequest = (request: Request): void => {
+    const method = RPC_METHOD.exec(request.url())?.[1];
+    if (method)
+      pending.set(request, method);
+  };
+  const onDone = (request: Request): void => {
+    pending.delete(request);
+  };
+  const onResponse = async (response: Response): Promise<void> => {
+    for (const { handle } of await asyncCompletions(response)) {
+      if (!awaitingCompletion.delete(handle))
+        completed.add(handle);
+    }
+    const method = pending.get(response.request());
+    if (method === undefined)
+      return;
+    const body = (await response.json().catch(() => null)) as { asyncHandle?: unknown } | null;
+    const handle = body?.asyncHandle;
+    if (typeof handle === 'string' && !completed.delete(handle))
+      awaitingCompletion.set(handle, method);
+    pending.delete(response.request());
+  };
+  page.on('request', onRequest);
+  page.on('response', onResponse);
+  page.on('requestfailed', onDone);
+
+  return {
+    async idle(timeout: number): Promise<void> {
+      const unanswered = () => [...pending.values(), ...awaitingCompletion.values()];
+      try {
+        await expect.poll(() => unanswered().length, { timeout }).toBe(0);
+      } catch {
+        throw new Error(`RPCs still unanswered after ${timeout}ms: ${unanswered().join(', ')}`);
+      }
+    },
+    stop(): void {
+      page.off('request', onRequest);
+      page.off('response', onResponse);
+      page.off('requestfailed', onDone);
+    },
+  };
 }
