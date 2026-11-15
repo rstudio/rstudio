@@ -128,18 +128,20 @@ public class ToolbarMenuButton extends ToolbarButton
       popupMenu.addCloseHandler(popupPanelCloseEvent ->
       {
          removeStyleName(styles_.toolbarButtonPushed());
-         boolean autoClosed = popupPanelCloseEvent.isAutoClosed();
-         Scheduler.get().scheduleDeferred(() ->
-         {
-            setMenuShowing(false);
+         Scheduler.get().scheduleDeferred(() -> setMenuShowing(false));
 
-            // Escape or a chosen item closed the menu. If neither the item's
-            // command nor anything else took focus, it fell to <body> when
-            // the menu detached; return it to this button (APG menu button).
-            Element active = DomUtils.getActiveElement();
-            if (!autoClosed && (active == null || active == Document.get().getBody()))
-               setFocus(true);
-         });
+         // Escape or a chosen item closed the menu, and focus fell to <body>
+         // with it; return focus to this button (APG menu button). Doing it now,
+         // before a chosen item's command runs, lets that command move focus on
+         // and lets a dialog it opens return focus here when it closes.
+         Element active = DomUtils.getActiveElement();
+         if (!popupPanelCloseEvent.isAutoClosed() &&
+             (active == null ||
+              active == Document.get().getBody() ||
+              popupMenu.getElement().isOrHasChild(active)))
+         {
+            setFocus(true);
+         }
       });
       addKeyPressHandler(event ->
       {

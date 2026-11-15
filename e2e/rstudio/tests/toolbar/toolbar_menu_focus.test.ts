@@ -1,13 +1,15 @@
 // Toolbar menu buttons: where focus goes when the menu closes (#19634).
 //
-// Escape used to leave focus on <body>. It now returns to the menu button, but
-// only when nothing else took focus, so a command that opens an editor, or a
-// click into another input, keeps it.
+// Escape used to leave focus on <body>. It now returns to the menu button as the
+// menu closes, before a chosen item's command runs, so the command can still move
+// focus on, and a dialog it opens returns focus to the button. A click into
+// another input keeps focus there.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import type { Page } from '@playwright/test';
 
 import { CONSOLE_INPUT } from '@pages/console_pane.page';
+import { CANCEL_BTN } from '@pages/modals.page';
 import { expectHoldsFor } from '@utils/expect-holds';
 
 const NEW_FILE_BUTTON = '#rstudio_new_file_menubutton';
@@ -51,6 +53,17 @@ test.describe('Toolbar menu button focus (#19634)', () => {
         .not.toBeFocused();
       await expect(editorInput).toHaveCount(1);
     });
+  });
+
+  test('closing a dialog opened from a chosen item returns focus to the button', async ({
+    rstudioPage: page,
+  }) => {
+    await openMenuFromKeyboard(page, NEW_FILE_BUTTON);
+    await page.getByRole('menuitem', { name: /^R Documentation/ }).click();
+    await page.locator(CANCEL_BTN).click();
+
+    await expect(page.locator(CANCEL_BTN)).toHaveCount(0);
+    await expect(page.locator(NEW_FILE_BUTTON)).toBeFocused();
   });
 
   test('clicking another input while the menu is open keeps focus there', async ({
