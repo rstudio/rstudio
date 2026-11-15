@@ -125,7 +125,10 @@ public class ToolbarMenuButton extends ToolbarButton
       popupMenu.addCloseHandler(popupPanelCloseEvent ->
       {
          removeStyleName(styles_.toolbarButtonPushed());
-         Scheduler.get().scheduleDeferred(() -> setMenuShowing(false));
+         // Not expanded before focus may return below; menuShowing_ stays set
+         // until a mousedown on this button that closed the menu has seen it.
+         A11y.setARIANotExpanded(getElement());
+         Scheduler.get().scheduleDeferred(() -> menuShowing_ = false);
          if (ToolbarPopupMenu.focusLostOnClose(popupPanelCloseEvent))
             setFocus(true);
       });

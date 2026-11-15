@@ -30,6 +30,21 @@ async function openMenuFromKeyboard(page: Page, button: string): Promise<void> {
   await expect(page.locator(button)).toHaveAttribute('aria-expanded', 'true');
 }
 
+// Escape, then check focus came back to the button already marked not expanded,
+// so a screen reader doesn't announce it as expanded.
+async function escapeReturnsFocusCollapsed(page: Page, button: string): Promise<void> {
+  const target = page.locator(button);
+  await target.evaluate((el) => el.addEventListener('focus', () => {
+    el.dataset.pwExpandedOnFocus = String(el.getAttribute('aria-expanded'));
+  }, { once: true }));
+  await page.keyboard.press('Escape');
+
+  await expect(target).toBeFocused();
+  await expect(target).toHaveAttribute('data-pw-expanded-on-focus', /.*/);
+  expect(await target.getAttribute('data-pw-expanded-on-focus')).not.toBe('true');
+  await expect(target).not.toHaveAttribute('aria-expanded', 'true');
+}
+
 test.describe('Toolbar menu button focus (#19634)', () => {
   test.afterEach(async ({ rstudioPage: page }) => {
     await page.keyboard.press('Escape');
@@ -41,10 +56,7 @@ test.describe('Toolbar menu button focus (#19634)', () => {
   ]) {
     test(`Escape returns focus to the ${name} button`, async ({ rstudioPage: page }) => {
       await openMenuFromKeyboard(page, button);
-      await page.keyboard.press('Escape');
-
-      await expect(page.locator(button)).not.toHaveAttribute('aria-expanded', 'true');
-      await expect(page.locator(button)).toBeFocused();
+      await escapeReturnsFocusCollapsed(page, button);
     });
   }
 
@@ -94,11 +106,7 @@ test.describe('Toolbar menu button focus (#19634)', () => {
 
     test('Escape returns focus to the title button', async ({ rstudioPage: page }) => {
       await openMenuFromKeyboard(page, HELP_TITLE_BUTTON);
-      await page.keyboard.press('Escape');
-
-      await expect(page.locator(HELP_TITLE_BUTTON))
-        .not.toHaveAttribute('aria-expanded', 'true');
-      await expect(page.locator(HELP_TITLE_BUTTON)).toBeFocused();
+      await escapeReturnsFocusCollapsed(page, HELP_TITLE_BUTTON);
     });
 
     test('clicking another input while the menu is open keeps focus there', async ({
