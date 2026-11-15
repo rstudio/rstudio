@@ -17,6 +17,8 @@ package org.rstudio.core.client.widget;
 import com.google.gwt.aria.client.ExpandedValue;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.resources.client.ImageResource;
@@ -24,6 +26,7 @@ import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.command.ImageResourceProvider;
 import org.rstudio.core.client.command.SimpleImageResourceProvider;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
@@ -125,7 +128,18 @@ public class ToolbarMenuButton extends ToolbarButton
       popupMenu.addCloseHandler(popupPanelCloseEvent ->
       {
          removeStyleName(styles_.toolbarButtonPushed());
-         Scheduler.get().scheduleDeferred(() -> setMenuShowing(false));
+         boolean autoClosed = popupPanelCloseEvent.isAutoClosed();
+         Scheduler.get().scheduleDeferred(() ->
+         {
+            setMenuShowing(false);
+
+            // Escape or a chosen item closed the menu. If neither the item's
+            // command nor anything else took focus, it fell to <body> when
+            // the menu detached; return it to this button (APG menu button).
+            Element active = DomUtils.getActiveElement();
+            if (!autoClosed && (active == null || active == Document.get().getBody()))
+               setFocus(true);
+         });
       });
       addKeyPressHandler(event ->
       {
