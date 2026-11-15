@@ -141,28 +141,61 @@ export function writeStateMarker(testInfo: TestInfo): void {
   fs.writeFileSync(testInfo.outputPath(STATE_MARKER), JSON.stringify({ state: a11yStateName(testInfo.file) }));
 }
 
+// Sub-state names become directory names and HTML ids in the report.
+const SUB_STATE_NAME = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+
+/**
+ * Turn a test that scans one state into one that scans several: each
+ * sub-state gets its own output subdirectory, marked as the state
+ * "<file state>-<sub-state>", in place of the fixture's marker. Declare every
+ * sub-state before scanning any, so one the test never reaches is reported
+ * as not scanned rather than missing.
+ */
+export function declareStates(testInfo: TestInfo, subStates: string[]): void {
+  if (subStates.length === 0)
+    throw new Error('declareStates: no sub-states given; a test that scans one state needs no declaration');
+  const bad = subStates.filter((s) => !SUB_STATE_NAME.test(s));
+  if (bad.length > 0)
+    throw new Error(`declareStates: invalid sub-state name(s) ${JSON.stringify(bad)}; use lowercase words joined by -`);
+  const dupes = subStates.filter((s, i) => subStates.indexOf(s) !== i);
+  if (dupes.length > 0)
+    throw new Error(`declareStates: sub-state(s) ${JSON.stringify(dupes)} declared more than once`);
+  const parent = a11yStateName(testInfo.file);
+  for (const sub of subStates) {
+    fs.mkdirSync(testInfo.outputPath(sub), { recursive: true });
+    fs.writeFileSync(testInfo.outputPath(sub, STATE_MARKER), JSON.stringify({ state: `${parent}-${sub}` }));
+  }
+  fs.rmSync(testInfo.outputPath(STATE_MARKER), { force: true });
+}
+
 /**
  * Scan the page as it is now and report the results on the test: a
  * screenshot of what was scanned, rule-set and incomplete-count annotations,
  * the raw results, and a readable violations list. Files go to the test's
- * output dir, where CI's merge job reads them for the cross-state report.
+ * output dir, or to `subState`'s subdirectory (see declareStates), where CI's
+ * merge job reads them for the cross-state report.
  */
-export async function scanA11y(page: Page, testInfo: TestInfo): Promise<AxeResults> {
+export async function scanA11y(page: Page, testInfo: TestInfo, subState?: string): Promise<AxeResults> {
+  const out = (file: string) => (subState ? testInfo.outputPath(subState, file) : testInfo.outputPath(file));
+  if (subState !== undefined && !fs.existsSync(out(STATE_MARKER)))
+    throw new Error(`scanA11y: sub-state "${subState}" was not declared; call declareStates first`);
+  const attachment = (file: string) => (subState ? `${subState}/${file}` : file);
   const selected = ruleSetFromEnv();
   const ruleSet = ruleSetLabel(selected);
 
-  const screenshot = testInfo.outputPath(SCREENSHOT_FILE);
+  const screenshot = out(SCREENSHOT_FILE);
   await page.screenshot({ path: screenshot });
-  await testInfo.attach(SCREENSHOT_FILE, { path: screenshot, contentType: 'image/png' });
+  await testInfo.attach(attachment(SCREENSHOT_FILE), { path: screenshot, contentType: 'image/png' });
 
   const results = await runAxe(page, selected);
 
+  if (!testInfo.annotations.some((a) => a.type === 'a11y-rules'))
+    testInfo.annotations.push({ type: 'a11y-rules', description: ruleSet });
+  const incomplete = String(results.incomplete.length);
   testInfo.annotations.push(
-    { type: 'a11y-rules', description: ruleSet },
-    { type: 'a11y-incomplete', description: String(results.incomplete.length) },
-  );
+    { type: 'a11y-incomplete', description: subState ? `${subState}: ${incomplete}` : incomplete });
 
-  const json = testInfo.outputPath(RESULTS_FILE);
+  const json = out(RESULTS_FILE);
   fs.writeFileSync(json, JSON.stringify({
     ruleSet,
     url: results.url,
@@ -172,10 +205,10 @@ export async function scanA11y(page: Page, testInfo: TestInfo): Promise<AxeResul
     violations: results.violations,
     incomplete: results.incomplete,
   }, null, 2));
-  await testInfo.attach(RESULTS_FILE, { path: json, contentType: 'application/json' });
+  await testInfo.attach(attachment(RESULTS_FILE), { path: json, contentType: 'application/json' });
 
-  const text = testInfo.outputPath('axe-violations.txt');
+  const text = out('axe-violations.txt');
   fs.writeFileSync(text, formatViolations(results));
-  await testInfo.attach('axe-violations.txt', { path: text, contentType: 'text/plain' });
+  await testInfo.attach(attachment('axe-violations.txt'), { path: text, contentType: 'text/plain' });
   return results;
 }

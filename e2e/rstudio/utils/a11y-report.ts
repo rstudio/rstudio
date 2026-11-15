@@ -87,7 +87,8 @@ export function readStateScans(root: string): StateScan[] {
     const other = byState.get(scan.state);
     if (other) {
       throw new Error(`Two tests scanned state "${scan.state}" (${path.dirname(other)} and ` +
-        `${path.dirname(marker)}). A state is named after its test file; keep one state test per file.`);
+        `${path.dirname(marker)}). A state is named after its test file, plus any sub-state from declareStates; ` +
+        'keep one state test per file.');
     }
     byState.set(scan.state, marker);
     scans.push(scan);

@@ -1,12 +1,14 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page, type TestInfo } from '@playwright/test';
 import * as fs from 'fs';
 import type { AxeResults, NodeResult, Result } from 'axe-core';
 import * as path from 'path';
 import {
   a11yStateName,
+  declareStates,
   formatViolations,
   RESULTS_FILE,
   ruleSetLabel,
+  scanA11y,
   SCREENSHOT_FILE,
   STATE_MARKER,
   violationSummary,
@@ -141,6 +143,47 @@ test.describe('ruleSetLabel', () => {
 test.describe('a11yStateName', () => {
   test('is the test file name without its .test.ts suffix', () => {
     expect(a11yStateName('/repo/e2e/rstudio/tests/a11y/packages-pane.test.ts')).toBe('packages-pane');
+  });
+});
+
+test.describe('declareStates', () => {
+  /** A state test's TestInfo, as far as declareStates and scanA11y use it, writing under `dir`. */
+  function stateTest(dir: string): TestInfo {
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, STATE_MARKER), JSON.stringify({ state: 'global-options' }));
+    return {
+      file: '/repo/e2e/rstudio/tests/a11y/global-options.test.ts',
+      outputPath: (...parts: string[]) => path.join(dir, ...parts),
+    } as unknown as TestInfo;
+  }
+
+  test('replaces the test\'s marker with one per sub-state, each not yet scanned', async ({}, testInfo) => {
+    const dir = testInfo.outputPath('state-test');
+    declareStates(stateTest(dir), ['code-display', 'git-svn']);
+    expect(fs.existsSync(path.join(dir, STATE_MARKER))).toBe(false);
+    expect(readStateScans(dir)).toEqual([
+      { state: 'global-options-code-display' },
+      { state: 'global-options-git-svn' },
+    ]);
+  });
+
+  for (const [what, subStates, message] of [
+    ['no sub-states', [], /no sub-states/],
+    ['a name that is not lowercase words joined by -', ['code display'], /invalid sub-state name.*"code display"/],
+    ['an empty name', [''], /invalid sub-state name/],
+    ['a duplicate', ['console', 'console'], /"console"\] declared more than once/],
+  ] as const) {
+    test(`rejects ${what}, leaving the test's marker`, async ({}, testInfo) => {
+      const dir = testInfo.outputPath('state-test');
+      expect(() => declareStates(stateTest(dir), [...subStates])).toThrow(message);
+      expect(readStateScans(dir)).toEqual([{ state: 'global-options' }]);
+    });
+  }
+
+  test('scanA11y refuses a sub-state that was not declared', async ({}, testInfo) => {
+    const info = stateTest(testInfo.outputPath('state-test'));
+    declareStates(info, ['console']);
+    await expect(scanA11y({} as Page, info, 'python')).rejects.toThrow(/"python" was not declared/);
   });
 });
 
