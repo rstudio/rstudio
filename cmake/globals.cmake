@@ -167,22 +167,34 @@ if(RSTUDIO_USE_CCACHE AND
 
    # ccache and sccache both work as compiler launchers ("<tool> <compiler>
    # <args>"); prefer ccache, fall back to sccache (ccache is listed first in the
-   # loop, and we break on the first match). Validate each via --version with an
-   # anchored "^<name>" match: this rejects a 'ccache' that is really a symlink to
-   # sccache (its --version reports "sccache ...", and sccache invoked under the
-   # name 'ccache' misparses cmake's -E probes and breaks the build). When that
-   # happens we fall through and find the genuine sccache by its own name.
+   # loop, and we break on the first match).
+   #
+   # A 'ccache' that is really sccache must be rejected without running it:
+   # sccache treats its invoked name as the compiler to wrap, so it breaks the
+   # build as a launcher, and its 'ccache --version' fails or (with no real
+   # ccache later on PATH) recurses into itself and never returns, leaving a
+   # detached sccache server behind either way. Skip one that resolves to
+   # sccache; validate the rest via --version with an anchored "^<name>" match,
+   # under a TIMEOUT for copies or hard links the name check misses. Either way
+   # we fall through and find the genuine sccache by its own name.
    set(RSTUDIO_COMPILER_CACHE "")
 
    foreach(_cache_name ccache sccache)
       string(TOUPPER "${_cache_name}" _cache_var)
       find_program(${_cache_var}_EXECUTABLE NAMES ${_cache_name} HINTS "${RSTUDIO_HOMEBREW_BIN}")
       if(${_cache_var}_EXECUTABLE)
+         get_filename_component(_cache_real_path "${${_cache_var}_EXECUTABLE}" REALPATH)
+         get_filename_component(_cache_real_name "${_cache_real_path}" NAME_WE)
+         if(_cache_name STREQUAL "ccache" AND _cache_real_name STREQUAL "sccache")
+            continue()
+         endif()
+
          execute_process(
             COMMAND "${${_cache_var}_EXECUTABLE}" --version
             OUTPUT_VARIABLE RSTUDIO_CACHE_VERSION
             ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE
-            RESULT_VARIABLE RSTUDIO_CACHE_RESULT)
+            RESULT_VARIABLE RSTUDIO_CACHE_RESULT
+            TIMEOUT 5)
          if(RSTUDIO_CACHE_RESULT EQUAL 0 AND RSTUDIO_CACHE_VERSION MATCHES "^${_cache_name}")
             set(RSTUDIO_COMPILER_CACHE "${${_cache_var}_EXECUTABLE}")
             set(RSTUDIO_COMPILER_CACHE_NAME "${_cache_name}")
