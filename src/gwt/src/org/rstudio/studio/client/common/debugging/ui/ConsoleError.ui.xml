@@ -35,8 +35,6 @@
          an inline-block with its own line-height keeps each link's hit area to its row. */
       display: inline-block;
       line-height: normal;
-      overflow: hidden;
-      vertical-align: middle;
       /* Opacity below 1 moves a link to a higher paint layer; where the two links meet,
          hover would swap which is on top and flicker. Positioning pins that order. */
       position: relative;
