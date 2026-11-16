@@ -25,6 +25,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -34,6 +35,7 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.MenuItemSeparator;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.ElementIds;
@@ -335,6 +337,21 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    public void focus()
    {
       menuBar_.focus();
+   }
+
+   // Whether Escape or a chosen item closed the menu, with focus falling to
+   // <body> as it detached; the opening button should then take focus back (APG
+   // menu button). Check in the close handler, before a chosen item's command
+   // runs, so the command can move focus on and a dialog it opens returns it.
+   public static boolean focusLostOnClose(CloseEvent<PopupPanel> event)
+   {
+      if (event.isAutoClosed())
+         return false;
+
+      Element active = DomUtils.getActiveElement();
+      return active == null ||
+             active == Document.get().getBody() ||
+             event.getTarget().getElement().isOrHasChild(active);
    }
 
    public void setAutoHideRedundantSeparators(boolean value)
