@@ -11,6 +11,7 @@
 - ([#19555](https://github.com/rstudio/rstudio/issues/19555)): The branch filter in the History view of the Review Changes window now has a search box, and searches in the Git branch menus now ignore case.
 
 ### Fixed
+- ([#10086](https://github.com/rstudio/rstudio/issues/10086)): Fixed an issue where moving the mouse between the "Show Traceback" and "Rerun with Debug" links on a Console error made them flicker.
 - ([#19631](https://github.com/rstudio/rstudio/issues/19631)): Fixed an issue where the RStudio Desktop installer on Windows showed its Welcome page a second time after the User Account Control prompt when installing for all users.
 - ([#19624](https://github.com/rstudio/rstudio/issues/19624)): Fixed an issue where installing or updating Posit Assistant failed when the computer's hostname contained a non-ASCII character such as an accented letter. On macOS the error was "Illegal byte sequence"; on Windows with R 4.1 or earlier, it said the downloaded package declared a blank version.
 - ([#19614](https://github.com/rstudio/rstudio/issues/19614)): Fixed an issue where, with an AI assistant selected (Posit AI, the default, or GitHub Copilot), the code completion popup and function signature tooltip on the first lines of the Source editor opened above the line, over the editor toolbar and tabs, the popup sometimes with its top cut off by the edge of the window. They now open below the line when they don't fit above it within the editor, the popup with the best match first.
