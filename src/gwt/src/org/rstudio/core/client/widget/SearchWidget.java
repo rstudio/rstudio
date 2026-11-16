@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 import org.rstudio.core.client.CoreClientConstants;
@@ -139,6 +140,7 @@ public class SearchWidget extends Composite implements SearchDisplay
       @Override
       public void requestSuggestions(Request request, Callback callback)
       {
+         callback.onSuggestionsReady(request, new Response(new ArrayList<>()));
       }
    }
 
@@ -181,7 +183,7 @@ public class SearchWidget extends Composite implements SearchDisplay
       suggestBox_ = new FocusSuggestBox(oracle, textBox, suggestDisplay);
       if (oracle instanceof NoSuggestionsOracle)
       {
-         // Undo the combobox attributes SuggestBox gives every box
+         // Undo the combobox attributes SuggestBox gives a box that uses its default display
          Element input = textBox.getElement();
          input.removeAttribute("role");
          input.removeAttribute("aria-autocomplete");
