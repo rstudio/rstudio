@@ -601,7 +601,13 @@
       </java-compile>
    </target>
 
-   <target name="unittest" description="Runs JUnit unit tests" depends="build-unittests">
+   <!-- The test classes to run, by fully qualified name (several separated by
+        spaces); e.g. ant unittest -Dtest.classes=org.rstudio.core.client.widget.RowTableTests.
+        A class run alone loads a fresh module, so it may pass or fail where the
+        suite, which shares one module across classes, does not. -->
+   <property name="test.classes" value="org.rstudio.studio.client.RStudioUnitTestSuite"/>
+
+   <target name="unittest" description="Runs JUnit unit tests (-Dtest.classes=... for specific classes)" depends="build-unittests">
       <java failonerror="true" fork="true" classname="org.junit.runner.JUnitCore">
          <classpath>
             <pathelement location="${test.dir}"/>
@@ -612,7 +618,7 @@
          <!-- The default 1-minute wait for HtmlUnit to contact JUnitShell is too short on
               loaded CI agents; one timeout fails every remaining test in the suite. -->
          <jvmarg value="-Dgwt.args=-sourceLevel ${javac.version} -testBeginTimeout 3"/>
-         <arg value="org.rstudio.studio.client.RStudioUnitTestSuite"/>
+         <arg line="${test.classes}"/>
      </java>
    </target>
 

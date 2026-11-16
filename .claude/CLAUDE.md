@@ -360,6 +360,15 @@ where `--scope` takes more than one scope -- `--scope core,rsession` -- and
 
     cd src/gwt && ant unittest
 
+To run specific test classes instead of the whole suite, name them (fully qualified,
+space-separated) with `test.classes`:
+
+    cd src/gwt && ant unittest -Dtest.classes=org.rstudio.core.client.widget.RowTableTests
+
+A class run alone gets a fresh GWT module, while the suite shares one module across all
+classes. So a class can pass in the suite yet fail alone (or the reverse) when it depends on
+state an earlier class left behind, e.g. Ace having been loaded.
+
 The standalone HTML test pages in `src/gwt/test/` (autoindent, highlight) are exercised in headless chromium via:
 
     cd src/gwt && ant testpage
