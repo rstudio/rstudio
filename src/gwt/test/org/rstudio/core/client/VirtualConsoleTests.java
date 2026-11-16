@@ -1415,8 +1415,9 @@ public class VirtualConsoleTests extends GWTTestCase
    {
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
-      vc.submit("\033[31mred\033[38;3mplain");
-      Assert.assertEquals("<span class=\"xtermColor1\">red</span><span>plain</span>", ele.getInnerHTML());
+      // dropped without touching the styles in effect
+      vc.submit("\033[31mred\033[38;3m still red");
+      Assert.assertEquals("<span class=\"xtermColor1\">red still red</span>", ele.getInnerHTML());
    }
 
    public void testUnsupportedCsiDoesNotHoldBackOutput()
@@ -2598,6 +2599,26 @@ public class VirtualConsoleTests extends GWTTestCase
       vc.submit("after\n");
 
       Assert.assertEquals("message", lastGroup(ele).getInnerText());
+      Assert.assertEquals("message\nstrayafter\n", vc.toString());
+      assertNewlinesMatchDom(ele, vc);
+   }
+
+   public void testHeldBackTextAfterGroupFlushedOnClassChange()
+   {
+      // the same when output of another class triggers the flush: the
+      // held-back text gets its own range after the group, in its own class
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033G3;message\n\033g", "err");
+      vc.submit("\033]stray", "err");
+      vc.submit("after\n", "out");
+
+      Element group = lastGroup(ele);
+      Assert.assertEquals("message", group.getInnerText());
+
+      Element stray = group.getNextSiblingElement();
+      Assert.assertEquals("stray", stray.getInnerText());
+      Assert.assertTrue(stray.hasClassName("err"));
       Assert.assertEquals("message\nstrayafter\n", vc.toString());
       assertNewlinesMatchDom(ele, vc);
    }
