@@ -14,6 +14,11 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
+import com.google.gwt.aria.client.AutocompleteValue;
+import com.google.gwt.aria.client.ComboboxRole;
+import com.google.gwt.aria.client.ExpandedValue;
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -28,15 +33,16 @@ import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.BaseMenuBar;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -49,15 +55,6 @@ import java.util.ArrayList;
 public class TabOverflowPopupPanel extends ThemedPopupPanel
       implements ValueChangeHandler<String>
 {
-   private class DocsOracle extends SuggestOracle
-   {
-      @Override
-      public void requestSuggestions(Request request, Callback callback)
-      {
-         
-      }
-   }
-
    private class MenuKeyHandler implements KeyDownHandler
    {
       public MenuKeyHandler(BaseMenuBar menu)
@@ -117,7 +114,7 @@ public class TabOverflowPopupPanel extends ThemedPopupPanel
 
       DockPanel dockPanel = new DockPanel();
 
-      search_ = new SearchWidget(constants_.searchTabs(), new DocsOracle());
+      search_ = new SearchWidget(constants_.searchTabs());
       search_.addValueChangeHandler(this);
 
       search_.getElement().getStyle().setMarginRight(0, Unit.PX);
@@ -128,6 +125,7 @@ public class TabOverflowPopupPanel extends ThemedPopupPanel
       menu_.setWidth("100%");
       dockPanel.add(menu_, DockPanel.CENTER);
       setWidget(dockPanel);
+      initComboboxRole();
 
       setStylePrimaryName(ThemeStyles.INSTANCE.tabOverflowPopup());
 
@@ -201,6 +199,36 @@ public class TabOverflowPopupPanel extends ThemedPopupPanel
    {
       String value = event.getValue();
       menu_.filter(value);
+
+      // Don't leave the highlight, and so the active descendant, on a hidden item
+      MenuItem selected = menu_.getSelectedItem();
+      if (selected != null && !selected.isVisible())
+         menu_.selectItem(null);
+   }
+
+   // Focus stays in the search box while the arrow keys move the highlight, so the
+   // search box, not the menu, has to tell screen readers which tab is highlighted.
+   private void initComboboxRole()
+   {
+      final Element input = search_.getInputElement();
+      Element menuEl = menu_.getElement();
+      if (StringUtil.isNullOrEmpty(menuEl.getId()))
+         menuEl.setId(DOM.createUniqueId());
+
+      ComboboxRole role = Roles.getComboboxRole();
+      role.set(input);
+      role.setAriaExpandedState(input, ExpandedValue.TRUE);
+      role.setAriaAutocompleteProperty(input, AutocompleteValue.LIST);
+      role.setAriaControlsProperty(input, Id.of(menuEl));
+
+      menu_.addSelectionHandler(event ->
+      {
+         MenuItem item = event.getSelectedItem();
+         if (item == null)
+            role.removeAriaActivedescendantProperty(input);
+         else
+            role.setAriaActivedescendantProperty(input, Id.of(item.getElement()));
+      });
    }
 
    public void resetDocTabs(String activeId,

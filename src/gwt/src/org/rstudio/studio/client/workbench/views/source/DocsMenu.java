@@ -16,6 +16,10 @@ package org.rstudio.studio.client.workbench.views.source;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.FontStyle;
+import com.google.gwt.event.logical.shared.HasSelectionHandlers;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.PopupPanel;
@@ -36,12 +40,26 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DocsMenu extends AppMenuBar
+public class DocsMenu extends AppMenuBar implements HasSelectionHandlers<MenuItem>
 {
    public DocsMenu()
    {
       super(true);
       RStudioGinjector.INSTANCE.injectMembers(this);
+   }
+
+   // Fired as the highlight moves, whether by the arrow keys or the mouse
+   @Override
+   public HandlerRegistration addSelectionHandler(SelectionHandler<MenuItem> handler)
+   {
+      return addHandler(handler, SelectionEvent.getType());
+   }
+
+   @Override
+   public void selectItem(MenuItem item)
+   {
+      super.selectItem(item);
+      SelectionEvent.fire(this, item);
    }
 
    @Inject
