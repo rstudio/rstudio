@@ -441,8 +441,10 @@ public class BaseMenuBar extends MenuBar
    @Override
    public void selectItem(MenuItem item)
    {
+      MenuItem previous = getSelectedItem();
       super.selectItem(item);
-      SelectionEvent.fire(this, item);
+      if (getSelectedItem() != previous)
+         SelectionEvent.fire(this, item);
    }
 
    public void selectItem(int index)

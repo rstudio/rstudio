@@ -26,6 +26,7 @@ import org.rstudio.core.client.VirtualConsoleTests;
 import org.rstudio.core.client.cellview.ImageButtonColumnTests;
 import org.rstudio.core.client.cellview.TriStateCheckboxCellTests;
 import org.rstudio.core.client.command.AppCommandMenuImageTests;
+import org.rstudio.core.client.command.BaseMenuBarTests;
 import org.rstudio.core.client.command.EmbeddedKeyRoutingTests;
 import org.rstudio.core.client.command.KeyMapDispatchTests;
 import org.rstudio.core.client.dom.DomUtilsTests;
@@ -106,6 +107,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(DebouncedCommandTests.class);
       suite.addTestSuite(EmbeddedKeyRoutingTests.class);
       suite.addTestSuite(KeyMapDispatchTests.class);
+      suite.addTestSuite(BaseMenuBarTests.class);
       suite.addTestSuite(DomUtilsTests.class);
       suite.addTestSuite(MiniPopupPanelTests.class);
       suite.addTestSuite(PopupPositionerTests.class);
