@@ -211,14 +211,18 @@ fi
 githubUrl="https://api.github.com/repos/rstudio/latest-builds/contents/content/$product/$flower/$build/$version_stem.md"
 curlOutFname="curl.out"
 
-# PUT the build file, setting httpCode. A 422 means the file already exists -- a
-# re-publish, or an earlier attempt that GitHub committed before returning an
-# error -- so fetch the existing file's sha and send an update instead.
-putBuildFile() {
-   payload="{\"message\":\"Add $flower build $version in $build\",\"content\":\"$base64_contents\"}"
+# curl's --retry resends on timeouts, refused connections, and HTTP 408/429/5xx,
+# with exponential backoff. -w reports only the final attempt's status.
+curlRetryArgs=(--retry 5 --retry-connrefused)
+
+# PUT a payload to the build file, setting httpCode.
+githubPut() {
+   local payload=$1
+   local label=$2
 
    echo "Sending to Github: $payload"
    httpCode=$(curl \
+      "${curlRetryArgs[@]}" \
       -X PUT \
       -w "%{http_code}" \
       -o "$curlOutFname" \
@@ -226,49 +230,51 @@ putBuildFile() {
       -H "Authorization: token $pat" \
       "$githubUrl" \
       -d "$payload")
-   echo "Github's Response: "
+   echo "Github's $label Response:"
    echo "Http Code : $httpCode"
    cat "$curlOutFname"
+}
+
+# Create the build file. A 422 means the file already exists -- a re-publish, or
+# an earlier attempt that GitHub committed before returning an error -- so fetch
+# the existing file's sha and send an update instead.
+putBuildFile() {
+   githubPut "{\"message\":\"Add $flower build $version in $build\",\"content\":\"$base64_contents\"}" "Create"
 
    if [[ $httpCode -eq 422 ]]; then
       echo "Received a 422 http code, assuming this is actually an update not a create, so we get the existing file's info"
-      getShaResponse=$(curl \
+      local getCode
+      getCode=$(curl \
+         "${curlRetryArgs[@]}" \
          -X GET \
-         -H "Accept: application/vnd.github.v3+json" \
-         -H "Authorization: token $pat" \
-         "$githubUrl")
-      echo "$getShaResponse"
-
-      fileSha=$(echo "$getShaResponse" | jq -r .sha)
-
-      payload="{\"message\":\"Update $flower build $version in $build\",\"content\":\"$base64_contents\",\"sha\":\"$fileSha\"}"
-
-      httpCode=$(curl \
-         -X PUT \
          -w "%{http_code}" \
          -o "$curlOutFname" \
          -H "Accept: application/vnd.github.v3+json" \
          -H "Authorization: token $pat" \
-         "$githubUrl" \
-         -d "$payload")
-
-      echo "Github's Update Response:"
-      echo "Http Code : $httpCode"
+         "$githubUrl")
       cat "$curlOutFname"
+      if [[ $getCode -ne 200 ]]; then
+         echo "Failed to fetch the existing file's sha from $githubUrl (http code $getCode)"
+         exit 1
+      fi
+
+      local fileSha
+      fileSha=$(jq -r .sha "$curlOutFname")
+      githubPut "{\"message\":\"Update $flower build $version in $build\",\"content\":\"$base64_contents\",\"sha\":\"$fileSha\"}" "Update"
    fi
 }
 
 putBuildFile
 
-# Retry commit conflicts (409, e.g. interleaving with another publish) and transient
-# GitHub server errors (5xx). The random 3-8 second sleep keeps concurrent publishers
+# curl retries transient errors itself; retry commit conflicts (409, e.g. interleaving
+# with another publish) here. The random 3-8 second sleep keeps concurrent publishers
 # from retrying in lockstep.
 maxRetries=5
 retryCount=0
-while [[ $httpCode -eq 409 || $httpCode -ge 500 ]] && [[ $retryCount -lt $maxRetries ]]; do
+while [[ $httpCode -eq 409 ]] && [[ $retryCount -lt $maxRetries ]]; do
    retryCount=$((retryCount + 1))
-   sleep $((RANDOM % 6 + 3))
    echo "Received http code $httpCode; retrying (attempt $retryCount of $maxRetries)"
+   sleep $((RANDOM % 6 + 3))
    putBuildFile
 done
 
