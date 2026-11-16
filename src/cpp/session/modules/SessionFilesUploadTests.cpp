@@ -348,6 +348,20 @@ TEST(SessionFilesUploadTest, AcceptsAnyEndingAfterTheCloseDelimiter)
    }
 }
 
+TEST(SessionFilesUploadTest, IgnoresAFilePartAfterTheCloseDelimiter)
+{
+   // the close delimiter ends the body, so a part after it is epilogue
+   std::string body = formBody({ targetDirectoryPart() }, "\r\n" + filePart(kPayload));
+
+   Parsed parsed = parse(body);
+   ASSERT_FALSE(parsed.error);
+   EXPECT_FALSE(parsed.hasFile);
+   EXPECT_EQ(kTargetDirectory, parsed.targetDirectory);
+   EXPECT_EQ("", parsed.payload);
+
+   EXPECT_EQ("", firstSplitMismatch(body));
+}
+
 TEST(SessionFilesUploadTest, IgnoresThePreamble)
 {
    std::string body = "preamble\r\n\r\nwith blank lines\r\n" + browserBody();
@@ -560,6 +574,24 @@ TEST(SessionFilesUploadTest, HandlerRejectsAnUploadWithNoFileChosen)
    std::size_t filesBefore = uploadedFileCount();
 
    UploadResult result = upload(formBody({ filePart("", ""), targetDirectoryPart() }), {});
+   EXPECT_EQ(std::vector<bool>({ false }), result.keepGoing);
+   EXPECT_EQ(1, result.responses);
+   EXPECT_EQ(static_cast<int>(core::json::errc::ParamInvalid), result.errorCode);
+   EXPECT_TRUE(result.token.isEmpty());
+
+   EXPECT_EQ(filesBefore, uploadedFileCount());
+}
+
+TEST(SessionFilesUploadTest, HandlerRejectsADelimiterLineInThePartHeaders)
+{
+   std::size_t filesBefore = uploadedFileCount();
+
+   // the old driver ended the file data at the last delimiter, which here
+   // comes before the data starts, and computed a negative length
+   std::string fileHeader = "Content-Disposition: form-data; name=\"File\"; filename=\"hello.txt\"\r\n";
+   std::string body = formBody({ fileHeader + "--" + kBoundary + "\r\n" + targetDirectoryPart() });
+
+   UploadResult result = upload(body, {});
    EXPECT_EQ(std::vector<bool>({ false }), result.keepGoing);
    EXPECT_EQ(1, result.responses);
    EXPECT_EQ(static_cast<int>(core::json::errc::ParamInvalid), result.errorCode);
