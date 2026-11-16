@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -119,6 +120,7 @@ public class TabOverflowPopupPanel extends ThemedPopupPanel
       dockPanel.add(menu_, DockPanel.CENTER);
       setWidget(dockPanel);
       search_.controlMenu(menu_.getElement(), menu_);
+      Roles.getMenuRole().setAriaLabelProperty(menu_.getElement(), constants_.switchToTab());
 
       setStylePrimaryName(ThemeStyles.INSTANCE.tabOverflowPopup());
 
