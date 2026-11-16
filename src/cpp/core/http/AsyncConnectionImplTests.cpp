@@ -31,6 +31,7 @@
 #include <chrono>
 #include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include <boost/asio/error.hpp>
@@ -38,6 +39,7 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/read.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/weak_ptr.hpp>
 
 #include <core/http/AsyncConnectionImpl.hpp>
 #include <core/http/Response.hpp>
@@ -977,6 +979,126 @@ TEST(AsyncConnectionImpl, WriteResponseLetsTheFilterOverrideFramingHeadersToo)
    EXPECT_NE(received.find("Transfer-Encoding: gzip"), std::string::npos);
    EXPECT_NE(received.find("Connection: keep-alive"), std::string::npos);
    EXPECT_EQ(received.find("Connection: close"), std::string::npos);
+}
+
+TEST(AsyncConnectionImpl, ClientLeavingMidUploadTellsTheUploadHandler)
+{
+   // the upload handler (rserver's FormProxy) is what can stop forwarding the
+   // body to the session; a connection that just closes leaves the session
+   // waiting for the rest
+   boost::asio::io_context ioc;
+
+   tcp::acceptor acceptor(ioc, tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), 0));
+   unsigned short port = acceptor.local_endpoint().port();
+
+   std::vector<std::pair<std::size_t, bool>> calls;
+   AsyncUriUploadHandlerFunction uploadHandler =
+         [&](boost::shared_ptr<AsyncConnection>, const std::string& formData, bool complete)
+   {
+      calls.emplace_back(formData.size(), complete);
+      return true;
+   };
+
+   boost::shared_ptr<TcpAsyncConnection> pConnection =
+      boost::make_shared<TcpAsyncConnection>(
+         ioc,
+         boost::shared_ptr<boost::asio::ssl::context>(),
+         /*requestSequence=*/1,
+         [&](boost::shared_ptr<TcpAsyncConnection> pConn, http::Request*) -> bool {
+            pConn->setUploadHandler(uploadHandler);
+            return true;
+         },
+         TcpAsyncConnection::Handler(),
+         TcpAsyncConnection::ClosedHandler());
+
+   boost::system::error_code ec;
+   pConnection->socket().connect(
+      tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), port), ec);
+   ASSERT_FALSE(ec);
+
+   tcp::socket peer(ioc);
+   acceptor.accept(peer, ec);
+   ASSERT_FALSE(ec);
+
+   // a tenth of the body, then nothing more
+   std::string request =
+         "POST /upload HTTP/1.1\r\n"
+         "Host: localhost\r\n"
+         "Content-Type: multipart/form-data; boundary=b\r\n"
+         "Content-Length: 1000\r\n"
+         "\r\n" + std::string(100, 'x');
+   boost::asio::write(peer, boost::asio::buffer(request), ec);
+   ASSERT_FALSE(ec);
+   peer.shutdown(tcp::socket::shutdown_send, ec);
+
+   boost::weak_ptr<TcpAsyncConnection> pWeakConnection = pConnection;
+   pConnection->startReading();
+   pConnection.reset();
+   ioc.run_for(std::chrono::seconds(30));
+
+   ASSERT_EQ(1u, calls.size());
+   EXPECT_EQ(std::make_pair(std::size_t(0), true), calls[0]);
+   EXPECT_TRUE(pWeakConnection.expired());
+}
+
+TEST(AsyncConnectionImpl, UploadHandlerVisitedWithAFullRequestGetsItsWholeBody)
+{
+   // a POST to an upload handler that isn't multipart/form-data is read in
+   // full and dispatched like any other request
+   boost::asio::io_context ioc;
+
+   tcp::acceptor acceptor(ioc, tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), 0));
+   unsigned short port = acceptor.local_endpoint().port();
+
+   int calls = 0;
+   bool complete = false;
+   std::string received;
+   AsyncUriUploadHandlerFunction uploadHandler =
+         [&](boost::shared_ptr<AsyncConnection>, const std::string& formData, bool isComplete)
+   {
+      ++calls;
+      complete = isComplete;
+      received = formData;
+      return true;
+   };
+
+   boost::shared_ptr<TcpAsyncConnection> pConnection =
+      boost::make_shared<TcpAsyncConnection>(
+         ioc,
+         boost::shared_ptr<boost::asio::ssl::context>(),
+         /*requestSequence=*/1,
+         [](boost::shared_ptr<TcpAsyncConnection>, http::Request*) -> bool { return true; },
+         [&](boost::shared_ptr<TcpAsyncConnection> pConn, http::Request*) {
+            visitHandler(AsyncUriHandlerFunctionVariant(uploadHandler), pConn);
+         },
+         TcpAsyncConnection::ClosedHandler());
+
+   boost::system::error_code ec;
+   pConnection->socket().connect(
+      tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), port), ec);
+   ASSERT_FALSE(ec);
+
+   tcp::socket peer(ioc);
+   acceptor.accept(peer, ec);
+   ASSERT_FALSE(ec);
+
+   std::string request =
+         "POST /upload HTTP/1.1\r\n"
+         "Host: localhost\r\n"
+         "Content-Type: text/plain\r\n"
+         "Content-Length: 9\r\n"
+         "\r\n"
+         "form data";
+   boost::asio::write(peer, boost::asio::buffer(request), ec);
+   ASSERT_FALSE(ec);
+
+   pConnection->startReading();
+   ioc.run_for(std::chrono::seconds(30));
+
+   EXPECT_EQ(1, calls);
+   EXPECT_TRUE(complete);
+   EXPECT_EQ("form data", received);
+   pConnection->close();
 }
 
 } // namespace tests

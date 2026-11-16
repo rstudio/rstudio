@@ -1242,6 +1242,11 @@ bool proxyUploadRequest(
 
    if (!proxy)
    {
+      // the browser went away before any of the body reached us
+      // (RequestParser::abortForm), so there is nothing to forward
+      if (complete && formData.size() < ptrConnection->request().contentLength())
+         return true;
+
       // no proxy yet - we need to proxy this request and create
       // a form proxy to write form data to
       auto onClientCreated = [=](const boost::shared_ptr<http::IAsyncClient>& proxyClient)
@@ -1286,7 +1291,7 @@ bool proxyUploadRequest(
    }
    else
    {
-      return proxy->queueData(formData);
+      return proxy->queueData(formData, complete);
    }
 }
 
