@@ -28,55 +28,34 @@ namespace session {
 namespace modules {
 namespace files {
 
-// Extract the boundary from a multipart/form-data Content-Type (RFC 2046
-// 5.1.1), which may be quoted and may sit among other parameters.
+// The boundary parameter of a multipart Content-Type, which may be quoted.
 core::Error multipartBoundary(const std::string& contentType, std::string* pBoundary);
 
-// Streaming parser for the Files pane upload form (RFC 7578): one file part,
-// passed to the sink as it arrives so it is never held in memory, and a small
-// "targetDirectory" field. Parts may come in any order and other fields are
-// ignored. The body may be split into chunks at any byte.
+// Streaming parser for the Files pane upload form (RFC 7578): the file part
+// goes to the sink as it arrives, and the "targetDirectory" field is kept.
+// Parts may come in any order, other fields are ignored, and the body may be
+// split into chunks at any byte.
 class UploadFormParser
 {
 public:
+   // never called with empty data
    typedef std::function<core::Error(const char* data, std::size_t size)> FileSink;
 
    UploadFormParser(const std::string& boundary, const FileSink& fileSink);
 
-   // Consume the next chunk of the body; `complete` marks the final chunk,
-   // after which the body must have ended with the close delimiter.
+   // `complete` marks the final chunk, which must end the body
    core::Error consume(std::string_view chunk, bool complete);
 
    bool hasFile() const { return hasFile_; }
-
-   // The file part's name with any directory components removed; empty when
-   // the browser sent no file.
    const std::string& fileName() const { return fileName_; }
-
    const std::string& targetDirectory() const { return targetDirectory_; }
 
 private:
-   enum class State
-   {
-      Preamble,
-      AfterDelimiter,
-      PartHeaders,
-      PartBody,
-      Epilogue
-   };
-
-   enum class PartKind
-   {
-      File,
-      TargetDirectory,
-      Ignored
-   };
+   enum class State { AfterDelimiter, PartHeaders, PartBody, Epilogue };
+   enum class PartKind { File, TargetDirectory, Ignored };
 
    core::Error step(bool* pProgress);
-   core::Error stepAfterDelimiter(bool* pProgress);
-   core::Error stepPartHeaders(bool* pProgress);
-   core::Error stepPartBody(bool* pProgress);
-   core::Error beginPart(std::string_view headers);
+   core::Error beginPart(std::string_view headerBlock);
    core::Error emitPartData(std::size_t size);
 
    std::string delimiter_;

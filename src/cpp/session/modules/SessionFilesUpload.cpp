@@ -16,6 +16,8 @@
 #include "SessionFilesUpload.hpp"
 
 #include <algorithm>
+#include <map>
+#include <vector>
 
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -31,16 +33,9 @@ namespace files {
 
 namespace {
 
-// Browsers send a few hundred bytes of headers per part, and the target
-// directory is a single path; these only stop a malformed body from making
-// us buffer without bound.
-constexpr std::size_t kMaxPartHeaderBytes = 64 * 1024;
-constexpr std::size_t kMaxFieldBytes = 64 * 1024;
-
-// RFC 2046 5.1.1
-constexpr std::size_t kMaxBoundaryLength = 70;
-
-const char* const kCrLf = "\r\n";
+// Part headers and the target directory are small; this only stops a
+// malformed body from making us buffer it without bound.
+constexpr std::size_t kMaxBufferedBytes = 64 * 1024;
 
 Error formError(const std::string& description, const ErrorLocation& location)
 {
@@ -49,64 +44,29 @@ Error formError(const std::string& description, const ErrorLocation& location)
                       location);
 }
 
-bool isTransportPadding(char ch)
-{
-   return ch == ' ' || ch == '\t';
-}
-
-bool isIdentityTransferEncoding(const std::string& encoding)
-{
-   return boost::algorithm::iequals(encoding, "7bit") ||
-          boost::algorithm::iequals(encoding, "8bit") ||
-          boost::algorithm::iequals(encoding, "binary");
-}
-
-// RFC 7578 4.2: don't use directory information that may be present
-std::string bareFileName(const std::string& fileName)
-{
-#ifdef _WIN32
-   std::size_t pos = fileName.find_last_of("/\\");
-#else
-   std::size_t pos = fileName.find_last_of('/');
-#endif
-
-   if (pos == std::string::npos)
-      return fileName;
-
-   return fileName.substr(pos + 1);
-}
-
 } // anonymous namespace
 
 Error multipartBoundary(const std::string& contentType, std::string* pBoundary)
 {
-   http::util::HeaderParams contentTypeParams = http::util::parseHeaderParams(contentType);
-   if (contentTypeParams.values.empty() ||
-       !boost::algorithm::iequals(contentTypeParams.values.front(), "multipart/form-data"))
-   {
-      return formError("not multipart/form-data", ERROR_LOCATION);
-   }
+   std::vector<std::string> values;
+   std::map<std::string, std::string> params;
+   http::util::parseHeaderParams(contentType, &values, &params);
 
-   auto it = contentTypeParams.params.find("boundary");
-   if (it == contentTypeParams.params.end() ||
-       it->second.empty() ||
-       it->second.size() > kMaxBoundaryLength)
-   {
-      return formError("missing or invalid boundary", ERROR_LOCATION);
-   }
+   *pBoundary = params["boundary"];
+   if (pBoundary->empty())
+      return formError("no boundary", ERROR_LOCATION);
 
-   *pBoundary = it->second;
    return Success();
 }
 
 UploadFormParser::UploadFormParser(const std::string& boundary, const FileSink& fileSink)
-   : delimiter_(kCrLf + std::string("--") + boundary),
+   : delimiter_("\r\n--" + boundary),
      fileSink_(fileSink),
-     state_(State::Preamble),
+     // the preamble is skipped like the body of an ignored part; the CRLF
+     // lets the first delimiter be found when the body opens with it
+     state_(State::PartBody),
      partKind_(PartKind::Ignored),
-     // the body may open with the first delimiter and no CRLF before it;
-     // seeding one lets every delimiter be found the same way
-     buffer_(kCrLf),
+     buffer_("\r\n"),
      hasFile_(false),
      hasTargetDirectory_(false)
 {
@@ -135,142 +95,83 @@ Error UploadFormParser::step(bool* pProgress)
 {
    switch (state_)
    {
-   case State::Preamble:
+   case State::PartBody:
    {
+      // pass on everything before the next delimiter, holding back what
+      // could be the start of one split across chunks
       std::size_t pos = buffer_.find(delimiter_);
+      std::size_t size = pos;
+      if (pos == std::string::npos)
+         size = buffer_.size() - std::min(buffer_.size(), delimiter_.size() - 1);
+
+      Error error = emitPartData(size);
+      if (error)
+         return error;
+
       if (pos == std::string::npos)
       {
-         // discard the preamble, keeping what could begin a delimiter
-         std::size_t keep = std::min(buffer_.size(), delimiter_.size() - 1);
-         buffer_.erase(0, buffer_.size() - keep);
+         buffer_.erase(0, size);
          return Success();
       }
 
       buffer_.erase(0, pos + delimiter_.size());
       state_ = State::AfterDelimiter;
-      *pProgress = true;
-      return Success();
+      break;
    }
 
    case State::AfterDelimiter:
-      return stepAfterDelimiter(pProgress);
+   {
+      // "--" closes the body; otherwise the delimiter line ends with
+      // optional transport padding and a CRLF
+      if (buffer_.compare(0, 2, "--") == 0)
+      {
+         state_ = State::Epilogue;
+         break;
+      }
+
+      std::size_t pos = buffer_.find_first_not_of(" \t");
+      if (pos == std::string::npos || pos + 2 > buffer_.size())
+      {
+         if (buffer_.size() > kMaxBufferedBytes)
+            return formError("malformed boundary", ERROR_LOCATION);
+
+         return Success();
+      }
+
+      if (buffer_.compare(pos, 2, "\r\n") != 0)
+         return formError("malformed boundary", ERROR_LOCATION);
+
+      // keep the CRLF, so that even an empty header block ends at "\r\n\r\n"
+      buffer_.erase(0, pos);
+      state_ = State::PartHeaders;
+      break;
+   }
 
    case State::PartHeaders:
-      return stepPartHeaders(pProgress);
+   {
+      std::size_t pos = buffer_.find("\r\n\r\n");
+      if (pos == std::string::npos)
+      {
+         if (buffer_.size() > kMaxBufferedBytes)
+            return formError("part headers too long", ERROR_LOCATION);
 
-   case State::PartBody:
-      return stepPartBody(pProgress);
+         return Success();
+      }
+
+      Error error = beginPart(std::string_view(buffer_).substr(2, pos));
+      if (error)
+         return error;
+
+      buffer_.erase(0, pos + 4);
+      state_ = State::PartBody;
+      break;
+   }
 
    case State::Epilogue:
       buffer_.clear();
       return Success();
    }
 
-   return Success();
-}
-
-Error UploadFormParser::stepAfterDelimiter(bool* pProgress)
-{
-   // "--" straight after the boundary closes the body; anything after it is
-   // epilogue, including the CRLF that usually follows
-   if (!buffer_.empty() && buffer_[0] == '-')
-   {
-      if (buffer_.size() < 2)
-         return Success();
-
-      if (buffer_[1] != '-')
-         return formError("malformed boundary", ERROR_LOCATION);
-
-      buffer_.clear();
-      state_ = State::Epilogue;
-      *pProgress = true;
-      return Success();
-   }
-
-   // otherwise optional transport padding, then the CRLF ending the line
-   std::size_t pos = 0;
-   while (pos < buffer_.size() && isTransportPadding(buffer_[pos]))
-      ++pos;
-
-   if (pos + 2 > buffer_.size())
-   {
-      if (buffer_.size() > kMaxPartHeaderBytes)
-         return formError("boundary line too long", ERROR_LOCATION);
-
-      return Success();
-   }
-
-   if (buffer_.compare(pos, 2, kCrLf) != 0)
-      return formError("malformed boundary", ERROR_LOCATION);
-
-   buffer_.erase(0, pos + 2);
-   state_ = State::PartHeaders;
-   *pProgress = true;
-   return Success();
-}
-
-Error UploadFormParser::stepPartHeaders(bool* pProgress)
-{
-   // the headers end at an empty line, which comes first if there are none
-   std::size_t headersSize = 0;
-   std::size_t bodyStart = 0;
-   if (buffer_.compare(0, 2, kCrLf) == 0)
-   {
-      bodyStart = 2;
-   }
-   else
-   {
-      std::size_t pos = buffer_.find("\r\n\r\n");
-      if (pos == std::string::npos)
-      {
-         if (buffer_.size() > kMaxPartHeaderBytes)
-            return formError("part headers too long", ERROR_LOCATION);
-
-         return Success();
-      }
-
-      headersSize = pos + 2;
-      bodyStart = pos + 4;
-   }
-
-   if (headersSize > kMaxPartHeaderBytes)
-      return formError("part headers too long", ERROR_LOCATION);
-
-   Error error = beginPart(std::string_view(buffer_).substr(0, headersSize));
-   if (error)
-      return error;
-
-   buffer_.erase(0, bodyStart);
-   state_ = State::PartBody;
-   *pProgress = true;
-   return Success();
-}
-
-Error UploadFormParser::stepPartBody(bool* pProgress)
-{
-   std::size_t pos = buffer_.find(delimiter_);
-   if (pos == std::string::npos)
-   {
-      // hold back what could be the start of a delimiter split across chunks
-      if (buffer_.size() >= delimiter_.size())
-      {
-         std::size_t size = buffer_.size() - (delimiter_.size() - 1);
-         Error error = emitPartData(size);
-         if (error)
-            return error;
-
-         buffer_.erase(0, size);
-      }
-
-      return Success();
-   }
-
-   Error error = emitPartData(pos);
-   if (error)
-      return error;
-
-   buffer_.erase(0, pos + delimiter_.size());
-   state_ = State::AfterDelimiter;
    *pProgress = true;
    return Success();
 }
@@ -282,83 +183,54 @@ Error UploadFormParser::beginPart(std::string_view headerBlock)
    std::size_t lineStart = 0;
    while (lineStart < headerBlock.size())
    {
-      std::size_t lineEnd = headerBlock.find(kCrLf, lineStart);
-      if (lineEnd == std::string_view::npos)
-         lineEnd = headerBlock.size();
+      std::size_t lineEnd = std::min(headerBlock.find("\r\n", lineStart), headerBlock.size());
 
       http::Header header;
-      std::string line(headerBlock.substr(lineStart, lineEnd - lineStart));
-      if (http::parseHeader(line, &header))
+      if (http::parseHeader(std::string(headerBlock.substr(lineStart, lineEnd - lineStart)), &header))
          headers.push_back(header);
 
       lineStart = lineEnd + 2;
    }
 
    // RFC 7578 4.2: every part has a form-data Content-Disposition with a name
-   std::string disposition = http::headerValue(headers, "Content-Disposition");
-   http::util::HeaderParams dispositionParams = http::util::parseHeaderParams(disposition);
-   if (dispositionParams.values.empty() ||
-       !boost::algorithm::iequals(dispositionParams.values.front(), "form-data"))
+   std::vector<std::string> values;
+   std::map<std::string, std::string> params;
+   http::util::parseHeaderParams(http::headerValue(headers, "Content-Disposition"), &values, &params);
+   if (values.empty() || !boost::algorithm::iequals(values.front(), "form-data") || !params.count("name"))
+      return formError("part is not named form-data", ERROR_LOCATION);
+
+   // the first file and the first targetDirectory win
+   partKind_ = PartKind::Ignored;
+   if (params.count("filename"))
    {
-      return formError("part is not form-data", ERROR_LOCATION);
+      if (!hasFile_)
+      {
+         hasFile_ = true;
+         fileName_ = params["filename"];
+         partKind_ = PartKind::File;
+      }
    }
-
-   auto nameIt = dispositionParams.params.find("name");
-   if (nameIt == dispositionParams.params.end())
-      return formError("part has no name", ERROR_LOCATION);
-
-   auto fileNameIt = dispositionParams.params.find("filename");
-   if (fileNameIt != dispositionParams.params.end())
-   {
-      // the upload dialog has a single file input
-      if (hasFile_)
-         return formError("more than one file", ERROR_LOCATION);
-
-      hasFile_ = true;
-      fileName_ = bareFileName(fileNameIt->second);
-      partKind_ = PartKind::File;
-   }
-   else if (nameIt->second == "targetDirectory" && !hasTargetDirectory_)
+   else if (params["name"] == "targetDirectory" && !hasTargetDirectory_)
    {
       hasTargetDirectory_ = true;
       partKind_ = PartKind::TargetDirectory;
    }
-   else
-   {
-      partKind_ = PartKind::Ignored;
-      return Success();
-   }
-
-   // RFC 7578 4.7 deprecates Content-Transfer-Encoding; the identity
-   // encodings are harmless, but anything else would need decoding
-   std::string transferEncoding = http::headerValue(headers, "Content-Transfer-Encoding");
-   if (!transferEncoding.empty() && !isIdentityTransferEncoding(transferEncoding))
-      return formError("unsupported Content-Transfer-Encoding " + transferEncoding, ERROR_LOCATION);
 
    return Success();
 }
 
 Error UploadFormParser::emitPartData(std::size_t size)
 {
-   if (size == 0)
+   if (size == 0 || partKind_ == PartKind::Ignored)
       return Success();
 
-   switch (partKind_)
-   {
-   case PartKind::File:
+   if (partKind_ == PartKind::File)
       return fileSink_(buffer_.data(), size);
 
-   case PartKind::TargetDirectory:
-      if (targetDirectory_.size() + size > kMaxFieldBytes)
-         return formError("targetDirectory too long", ERROR_LOCATION);
+   if (targetDirectory_.size() + size > kMaxBufferedBytes)
+      return formError("targetDirectory too long", ERROR_LOCATION);
 
-      targetDirectory_.append(buffer_.data(), size);
-      return Success();
-
-   case PartKind::Ignored:
-      return Success();
-   }
-
+   targetDirectory_.append(buffer_.data(), size);
    return Success();
 }
 

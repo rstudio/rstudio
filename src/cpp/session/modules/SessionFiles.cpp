@@ -866,6 +866,32 @@ const char * const kUploadTargetDirectory = "targetDirectory";
 const char * const kIsZip = "isZip";
 const char * const kUnzipFound = "unzipFound";
 
+Error writeTmpData(const FilePath& tmpFile,
+                   const char* buffer,
+                   size_t beginOffset,
+                   size_t endOffset)
+{
+   Error error = tmpFile.ensureFile();
+   if (error)
+      return error;
+
+   std::shared_ptr<std::ostream> pOfs;
+   error = tmpFile.openForWrite(pOfs, false);
+   if (error)
+      return error;
+
+   pOfs->seekp(tmpFile.getSize());
+
+   if (!pOfs->write(buffer + beginOffset, endOffset - beginOffset + 1))
+   {
+      return systemError(boost::system::errc::io_error,
+                         "Could not write to destination file: " + tmpFile.getAbsolutePath(),
+                         ERROR_LOCATION);
+   }
+
+   return Success();
+}
+
 Error completeUpload(const core::json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
@@ -1113,48 +1139,14 @@ bool validateUploadedFile(const FilePath& file, http::Response* pResponse)
 
 struct UploadState
 {
-   void discardTmpFile()
-   {
-      Error error = tmpFile.removeIfExists();
-      if (error)
-         LOG_ERROR(error);
-   }
-
    FilePath tmpFile;
    boost::shared_ptr<UploadFormParser> pParser;
 };
-
-Error appendToTmpFile(const FilePath& tmpFile, const char* data, std::size_t size)
-{
-   // opened per write rather than held across chunks: nothing tells us when
-   // a client abandons an upload, so a held stream would leak its descriptor
-   std::shared_ptr<std::ostream> pStream;
-   Error error = tmpFile.openForWrite(pStream, false);
-   if (error)
-      return error;
-
-   pStream->write(data, size);
-   pStream->flush();
-   if (!pStream->good())
-   {
-      return systemError(boost::system::errc::io_error,
-                         "Could not write to destination file: " + tmpFile.getAbsolutePath(),
-                         ERROR_LOCATION);
-   }
-
-   return Success();
-}
 
 // leaked: uploads are handled on the http listener thread (#18318)
 boost::mutex& s_uploadMutex = core::make_leaked<boost::mutex>();
 std::map<const http::Request*, boost::shared_ptr<UploadState>>& s_uploadStateMap =
       core::make_leaked<std::map<const http::Request*, boost::shared_ptr<UploadState>>>();
-
-bool isUsableUploadFileName(const std::string& fileName)
-{
-   // an empty name is what the browser sends when no file was chosen
-   return !fileName.empty() && fileName != "." && fileName != "..";
-}
 
 // note: this function is invoked on the thread pool and is not handled in an R context
 // therefore, no R methods may be invoked within this function!!
@@ -1207,7 +1199,7 @@ bool handleFileUploadRequestAsync(const http::Request& request,
    auto writeError = [&](const Error& error)
    {
       LOG_ERROR(error);
-      pUploadState->discardTmpFile();
+      pUploadState->tmpFile.removeIfExists();
       json::setJsonRpcError(error, &response);
       cleanupState();
       cont(&response);
@@ -1215,28 +1207,20 @@ bool handleFileUploadRequestAsync(const http::Request& request,
 
    auto writeParamError = [&]()
    {
-      pUploadState->discardTmpFile();
+      pUploadState->tmpFile.removeIfExists();
       json::setJsonRpcError(Error(json::errc::ParamInvalid, ERROR_LOCATION), &response);
       cleanupState();
       cont(&response);
    };
 
-   if (!pUploadState->pParser)
+   if (pUploadState->tmpFile.isEmpty())
    {
-      std::string boundary;
-      Error error = multipartBoundary(request.contentType(), &boundary);
-      if (error)
-      {
-         writeError(error);
-         return false;
-      }
-
       // create a temporary file to store the form's file data
       // we store this temporary file under the user's home directory to increase the odds
       // that we can perform a fast move on the tmp file when the user confirms, as most
       // uploads are within the user's home directory
       FilePath tmpDir = module_context::userUploadedFilesScratchPath();
-      error = tmpDir.ensureDirectory();
+      Error error = tmpDir.ensureDirectory();
       if (error)
       {
          writeError(error);
@@ -1244,6 +1228,14 @@ bool handleFileUploadRequestAsync(const http::Request& request,
       }
 
       error = FilePath::uniqueFilePath(tmpDir.getAbsolutePath(), ".bin", pUploadState->tmpFile);
+      if (error)
+      {
+         writeError(error);
+         return false;
+      }
+
+      std::string boundary;
+      error = multipartBoundary(request.contentType(), &boundary);
       if (error)
       {
          writeError(error);
@@ -1263,24 +1255,23 @@ bool handleFileUploadRequestAsync(const http::Request& request,
          boundary,
          [tmpFile](const char* data, std::size_t size)
          {
-            return appendToTmpFile(tmpFile, data, size);
+            return writeTmpData(tmpFile, data, 0, size - 1);
          });
    }
 
-   Error error = pUploadState->pParser->consume(formData, complete);
-   if (error)
+   Error parseError = pUploadState->pParser->consume(formData, complete);
+   if (parseError)
    {
-      writeError(error);
+      writeError(parseError);
       return false;
    }
 
    if (!complete)
       return true;
 
+   // an empty file name is what the browser sends when no file was chosen
    const UploadFormParser& form = *pUploadState->pParser;
-   if (!form.hasFile() ||
-       !isUsableUploadFileName(form.fileName()) ||
-       form.targetDirectory().empty())
+   if (form.fileName().empty() || form.targetDirectory().empty())
    {
       writeParamError();
       return false;
@@ -1290,7 +1281,10 @@ bool handleFileUploadRequestAsync(const http::Request& request,
    if (!validateUploadedFile(pUploadState->tmpFile, &response))
    {
       // user cannot upload files this large - delete the temp file
-      pUploadState->discardTmpFile();
+      Error error = pUploadState->tmpFile.removeIfExists();
+      if (error)
+         LOG_ERROR(error);
+
       cleanupState();
       cont(&response);
       return false;
@@ -1305,7 +1299,7 @@ bool handleFileUploadRequestAsync(const http::Request& request,
    bool unzipFound = false;
    if (isZip)
    {
-      error = detectZipFileOverwrites(pUploadState->tmpFile, destDir, form.fileName(), &overwritesJson, &unzipFound);
+      Error error = detectZipFileOverwrites(pUploadState->tmpFile, destDir, form.fileName(), &overwritesJson, &unzipFound);
       if (error)
       {
          writeError(error);
@@ -1336,7 +1330,7 @@ bool handleFileUploadRequestAsync(const http::Request& request,
    uploadResponse.setResult(uploadJson);
    std::stringstream uploadResult;
    uploadResponse.write(uploadResult);
-   error = response.setBody(string_utils::jsonHtmlEscape(uploadResult.str()));
+   Error error = response.setBody(string_utils::jsonHtmlEscape(uploadResult.str()));
    if (error)
    {
       writeError(error);

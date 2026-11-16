@@ -352,10 +352,8 @@ private:
                return;
             }
 
-            // paused - the upload handler gave up and has already sent its
-            // response, so the request must not be dispatched again. Drop
-            // the form handler too: its continuation holds a reference to
-            // this connection, which would otherwise never be freed.
+            // paused - the upload handler gave up after sending its response;
+            // drop it, since its continuation keeps this connection alive
             else if (status == core::http::RequestParser::pause)
             {
                requestParser_.setFormHandler(core::http::FormHandler());

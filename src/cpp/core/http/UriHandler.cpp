@@ -33,8 +33,8 @@ namespace {
 class UriAsyncHandlerFunctionVariantVisitor : public boost::static_visitor<void>
 {
 public:
-   // an upload handler reached this way gets no streamed form data, and the
-   // request has already been read in full
+   // the request has already been read in full; an upload handler reached
+   // this way must see it as complete, or it waits for chunks that never come
    UriAsyncHandlerFunctionVariantVisitor(const Request& request,
                                          const UriHandlerFunctionContinuation& cont) :
       cont_(cont),
