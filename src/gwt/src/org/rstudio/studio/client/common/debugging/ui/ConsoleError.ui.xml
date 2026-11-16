@@ -31,6 +31,13 @@
       font-size: 80%;
       opacity: 0.50;
       cursor: pointer;
+      /* The container's 80% line-height lets text hit areas spill into the next row;
+         an inline-block with its own line-height keeps each link's hit area to its row. */
+      display: inline-block;
+      line-height: normal;
+      /* Opacity below 1 moves a link to a higher paint layer; where the two links meet,
+         hover would swap which is on top and flicker. Positioning pins that order. */
+      position: relative;
    }
    
    .errorCommandText:hover {
