@@ -1,12 +1,14 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page, type TestInfo } from '@playwright/test';
 import * as fs from 'fs';
 import type { AxeResults, NodeResult, Result } from 'axe-core';
 import * as path from 'path';
 import {
   a11yStateName,
+  declareStates,
   formatViolations,
   RESULTS_FILE,
   ruleSetLabel,
+  scanA11y,
   SCREENSHOT_FILE,
   STATE_MARKER,
   violationSummary,
@@ -141,6 +143,80 @@ test.describe('ruleSetLabel', () => {
 test.describe('a11yStateName', () => {
   test('is the test file name without its .test.ts suffix', () => {
     expect(a11yStateName('/repo/e2e/rstudio/tests/a11y/packages-pane.test.ts')).toBe('packages-pane');
+  });
+});
+
+test.describe('declareStates', () => {
+  /** A state test's TestInfo, as far as declareStates and scanA11y use it, writing under `dir`. */
+  function stateTest(dir: string): TestInfo {
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, STATE_MARKER), JSON.stringify({ state: 'global-options' }));
+    return {
+      file: '/repo/e2e/rstudio/tests/a11y/global-options.test.ts',
+      outputPath: (...parts: string[]) => path.join(dir, ...parts),
+    } as unknown as TestInfo;
+  }
+
+  test('replaces the test\'s marker with one per sub-state, each not yet scanned',
+    async ({}, testInfo) => {
+    const dir = testInfo.outputPath('state-test');
+    declareStates(stateTest(dir), ['code-display', 'git-svn']);
+    expect(fs.existsSync(path.join(dir, STATE_MARKER))).toBe(false);
+    expect(readStateScans(dir)).toEqual([
+      { state: 'global-options-code-display' },
+      { state: 'global-options-git-svn' },
+    ]);
+  });
+
+  for (const [what, subStates, message] of [
+    ['no sub-states', [], /no sub-states/],
+    ['a name that is not lowercase words joined by -', ['code display'],
+      /invalid sub-state name.*"code display"/],
+    ['an empty name', [''], /invalid sub-state name/],
+    ['a duplicate', ['console', 'console'], /"console"\] declared more than once/],
+  ] as const) {
+    test(`rejects ${what}, leaving the test's marker`, async ({}, testInfo) => {
+      const dir = testInfo.outputPath('state-test');
+      expect(() => declareStates(stateTest(dir), [...subStates])).toThrow(message);
+      expect(readStateScans(dir)).toEqual([{ state: 'global-options' }]);
+    });
+  }
+
+  test('scanA11y keeps each sub-state\'s results apart; one never scanned stays unscanned',
+    async ({ page }, testInfo) => {
+    const dir = testInfo.outputPath('state-test');
+    const info = Object.assign(stateTest(dir), { annotations: [], attach: async () => {} });
+    declareStates(info, ['with-image', 'clean', 'never-reached']);
+    const html = (body: string) => '<!doctype html><html lang="en"><head><title>t</title></head>' +
+      `<body><main>${body}</main></body></html>`;
+    await page.setContent(html(
+      '<img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" width="20" height="20">'));
+    await scanA11y(page, info, 'with-image');
+    await page.setContent(html('<p>No problems here.</p>'));
+    await scanA11y(page, info, 'clean');
+
+    // Only image-alt is checked: other rule sets (PW_A11Y_*) can add rules
+    // that both pages fail, and image-alt is Level A, so every rule set has it.
+    const scans = readStateScans(dir);
+    const hasImageAlt = (s: StateScan) => s.results?.violations.some((v) => v.id === 'image-alt');
+    expect(scans.map((s) => [s.state, hasImageAlt(s), s.screenshot !== undefined])).toEqual([
+      ['global-options-clean', false, true],
+      ['global-options-never-reached', undefined, false],
+      ['global-options-with-image', true, true],
+    ]);
+  });
+
+  test('scanA11y refuses a sub-state that was not declared', async ({}, testInfo) => {
+    const info = stateTest(testInfo.outputPath('state-test'));
+    declareStates(info, ['console']);
+    await expect(scanA11y({} as Page, info, 'python')).rejects.toThrow(/"python" was not declared/);
+    await expect(scanA11y({} as Page, info, '')).rejects.toThrow(/"" was not declared/);
+  });
+
+  test('scanA11y refuses no sub-state once sub-states are declared', async ({}, testInfo) => {
+    const info = stateTest(testInfo.outputPath('state-test'));
+    declareStates(info, ['console']);
+    await expect(scanA11y({} as Page, info)).rejects.toThrow(/pass the one being scanned/);
   });
 });
 

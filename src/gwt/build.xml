@@ -609,7 +609,9 @@
          </classpath>
          <classpath refid="project.class.path"/>
          <classpath refid="unittest.class.path"/>
-         <jvmarg value="-Dgwt.args=-sourceLevel ${javac.version}"/>
+         <!-- The default 1-minute wait for HtmlUnit to contact JUnitShell is too short on
+              loaded CI agents; one timeout fails every remaining test in the suite. -->
+         <jvmarg value="-Dgwt.args=-sourceLevel ${javac.version} -testBeginTimeout 3"/>
          <arg value="org.rstudio.studio.client.RStudioUnitTestSuite"/>
      </java>
    </target>

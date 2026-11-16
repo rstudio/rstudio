@@ -15,14 +15,12 @@
 package org.rstudio.core.client.widget;
 
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.dom.DomUtils;
 
 import com.google.gwt.aria.client.AutocompleteValue;
 import com.google.gwt.aria.client.ComboboxRole;
 import com.google.gwt.aria.client.ExpandedValue;
 import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
@@ -70,7 +68,6 @@ public class MenuSearchHeader
       addToMenu();
       initComboboxRole();
       nameMenuOnOpen();
-      restoreFocusOnClose();
       redirectMenuFocus();
    }
 
@@ -155,23 +152,6 @@ public class MenuSearchHeader
             buttonEl.setId(DOM.createUniqueId());
          Roles.getMenuRole().setAriaLabelledbyProperty(menu_.getMenuBarElement(),
                Id.of(buttonEl));
-      });
-   }
-
-   // Closing the menu removes the focused search box. Put focus back on the
-   // button rather than leave it on the page body; Tab's default action then
-   // moves on from there.
-   private void restoreFocusOnClose()
-   {
-      menu_.addCloseHandler(event ->
-      {
-         Element focused = DomUtils.getActiveElement();
-         if (focused == null ||
-             focused == Document.get().getBody() ||
-             menu_.getElement().isOrHasChild(focused))
-         {
-            button_.setFocus(true);
-         }
       });
    }
 
