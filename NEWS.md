@@ -11,6 +11,7 @@
 - ([#19555](https://github.com/rstudio/rstudio/issues/19555)): The branch filter in the History view of the Review Changes window now has a search box, and searches in the Git branch menus now ignore case.
 
 ### Fixed
+- ([#19654](https://github.com/rstudio/rstudio/issues/19654)): Fixed an issue where a chunk's output, restored when reopening an R Markdown or Quarto document, was missing all of the text shown before an error with a traceback, when text written to standard error (e.g. with `cat(file = stderr())`) came right before the error.
 - ([#10086](https://github.com/rstudio/rstudio/issues/10086)): Fixed an issue where moving the mouse between the "Show Traceback" and "Rerun with Debug" links on a Console error made them flicker.
 - ([#19631](https://github.com/rstudio/rstudio/issues/19631)): Fixed an issue where the RStudio Desktop installer on Windows showed its Welcome page a second time after the User Account Control prompt when installing for all users.
 - ([#19624](https://github.com/rstudio/rstudio/issues/19624)): Fixed an issue where installing or updating Posit Assistant failed when the computer's hostname contained a non-ASCII character such as an accented letter. On macOS the error was "Illegal byte sequence"; on Windows with R 4.1 or earlier, it said the downloaded package declared a blank version.

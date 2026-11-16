@@ -718,12 +718,15 @@ public class ChunkOutputStream extends FlowPanel
       }
       else if (lastOutputType_ == RmdChunkOutputUnit.TYPE_TEXT)
       {
-         // if switching from textual input, clear the text accumulator
+         // if switching from textual output, finish the current console and
+         // drop it, so that the next textual output gets a new console bound
+         // to its own <pre>; clearing it would erase the text already shown
          if (vconsole_ != null)
          {
             vconsole_.flushPartialAnsiCode();
-            vconsole_.clear();
+            vconsole_.normalizePreviousOutput();
          }
+         vconsole_ = null;
          console_ = null;
       }
       
