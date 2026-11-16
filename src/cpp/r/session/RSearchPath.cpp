@@ -162,7 +162,7 @@ Error save(const FilePath& statePath)
          // save the environment
          Error error = r::exec::RFunction(".rs.saveEnvironment",
                                           envSEXP,
-                                          dataFilePath.getAbsolutePath()).call();
+                                          dataFilePath).call();
          if (error)
             return error;
       }

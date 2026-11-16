@@ -111,7 +111,7 @@ void onDeferredInit(bool newSession)
 {
    r::exec::RFunction loadUserCommands(".rs.loadUserCommands");
    loadUserCommands.addParam("keybindingPath", 
-         core::system::xdg::userConfigDir().completePath("keybindings").getAbsolutePath());
+         core::system::xdg::userConfigDir().completePath("keybindings"));
          
    Error error = loadUserCommands.call();
    if (error)
