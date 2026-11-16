@@ -318,7 +318,15 @@ public class AnsiCode
       {
          int codeVal = token.isEmpty() ? RESET : StringUtil.parseInt(token,  -1);
          if (codeVal == -1)
+         {
+            // a skipped token can't continue an extended color, so abandon
+            // it rather than read the next parameter as its format
+            extendedColor = 0;
+            extendedMarkerSeen = false;
+            extendedRGBMarkerSeen = false;
+            extendedRGBColorsSeen = 0;
             continue;
+         }
 
          if (extendedColor > 0)
          {

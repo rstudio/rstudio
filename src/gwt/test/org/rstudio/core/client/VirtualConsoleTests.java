@@ -2549,6 +2549,59 @@ public class VirtualConsoleTests extends GWTTestCase
       assertNewlinesMatchDom(ele, vc);
    }
 
+   private static Element lastGroup(Element ele)
+   {
+      Element group = null;
+      for (int i = 0; i < ele.getChildCount(); i++)
+      {
+         Node child = ele.getChild(i);
+         if (Element.is(child) && Element.as(child).hasClassName(VirtualConsole.RES.styles().group()))
+            group = Element.as(child);
+      }
+      return group;
+   }
+
+   public void testSplitEscapeAfterGroupStaysOutsideTheGroup()
+   {
+      // a submit held back whole must keep the request for a new range that
+      // closing the group made, or the text completing the escape is
+      // written into the group's last range
+      String[][] splits = {
+         { "\033", "[0mafter\n" },
+         { "\033[", "0mafter\n" },
+         { "\033]8;;", "\007after\n" },
+      };
+
+      for (String[] split : splits)
+      {
+         PreElement ele = Document.get().createPreElement();
+         VirtualConsole vc = getVC(ele);
+         vc.submit("\033G3;message\n\033g");
+         vc.submit(split[0]);
+         vc.submit(split[1]);
+
+         Assert.assertEquals(split[0], "message", lastGroup(ele).getInnerText());
+         Assert.assertEquals(split[0], "message\nafter\n", vc.toString());
+         assertNewlinesMatchDom(ele, vc);
+      }
+   }
+
+   public void testFlushedTextAfterGroupStaysOutsideTheGroup()
+   {
+      // text shown by a flush is the first output after the group closed,
+      // so it takes up the request for a new range like any other text
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033G3;message\n\033g");
+      vc.submit("\033]stray");
+      vc.flushPartialAnsiCode();
+      vc.submit("after\n");
+
+      Assert.assertEquals("message", lastGroup(ele).getInnerText());
+      Assert.assertEquals("message\nstrayafter\n", vc.toString());
+      assertNewlinesMatchDom(ele, vc);
+   }
+
    // ---- chunking invariance and random streams ----
 
    // Streams exercising every path that touches the DOM: plain appends,

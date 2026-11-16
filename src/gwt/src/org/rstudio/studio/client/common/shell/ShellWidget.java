@@ -594,6 +594,9 @@ public class ShellWidget extends Composite implements ShellDisplay,
    {
       VirtualConsole console = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(null);
       console.submit(text);
+
+      // the text is complete, so show any text a stray escape held back
+      console.flushPartialAnsiCode();
       return console.toString();
    }
 

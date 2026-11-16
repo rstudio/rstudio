@@ -221,6 +221,22 @@ public class AnsiCodeTests extends GWTTestCase
       Assert.assertNull(ansi.processCode("\033[38:2::255:0:0m").inlineClazzes);
    }
 
+   public void testSubParameterAbandonsExtendedColor()
+   {
+      // a skipped token can't continue an extended color, so the parameters
+      // after it apply as usual rather than being read as its format
+      AnsiCode ansi = new AnsiCode();
+      String expected = ansi.processCode("\033[31;1m").inlineClazzes;
+
+      ansi = new AnsiCode();
+      ansi.processCode("\033[31m");
+      Assert.assertEquals(expected, ansi.processCode("\033[38;4:3;1m").inlineClazzes);
+
+      ansi = new AnsiCode();
+      ansi.processCode("\033[31m");
+      Assert.assertEquals(expected, ansi.processCode("\033[38;5;4:3;1m").inlineClazzes);
+   }
+
    public void testStripHyperlinks()
    {
       String belLink = "\033]8;;https://example.com\007link\033]8;;\007";

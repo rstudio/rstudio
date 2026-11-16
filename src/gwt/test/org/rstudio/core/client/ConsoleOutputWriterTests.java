@@ -794,6 +794,29 @@ public class ConsoleOutputWriterTests extends GWTTestCase
       Assert.assertTrue(output.getElement().getInnerText().endsWith("no newline\n"));
    }
 
+   public void testTextHeldBackAtPromptIsShownLikeOtherOutput()
+   {
+      // the prompt shows text held back for an escape sequence that never
+      // completed; it must land where the same text without the escape
+      // would, after the group rather than inside its last range
+      String group = "\033G3;\nmessage\n\n\033g";
+
+      ConsoleOutputWriter expected = getCOW();
+      expected.outputToConsole(group, myErrorClass, isError, ignoreLineCount, false);
+      expected.outputToConsole("stray", myErrorClass, isError, ignoreLineCount, false);
+      expected.normalizePreviousOutput();
+      expected.ensureStartingOnNewLine();
+
+      ConsoleOutputWriter output = getCOW();
+      output.outputToConsole(group, myErrorClass, isError, ignoreLineCount, false);
+      output.outputToConsole("\033]stray", myErrorClass, isError, ignoreLineCount, false);
+      output.normalizePreviousOutput();
+      output.ensureStartingOnNewLine();
+
+      Assert.assertEquals(getInnerHTML(expected), getInnerHTML(output));
+      assertLinesMatchDom(output);
+   }
+
    public void testTrimmingStaysExactAcrossPrompts()
    {
       // the uncounted newline added at each prompt would otherwise let the
