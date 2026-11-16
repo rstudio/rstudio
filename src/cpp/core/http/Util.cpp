@@ -294,78 +294,69 @@ struct BoundaryFinder
    }
 };
 
-struct HeaderParams
+}
+
+HeaderParams parseHeaderParams(std::string_view header)
 {
-   std::vector<std::string> values;
-   std::map<std::string, std::string> params;
+   namespace ba = boost::algorithm;
 
-   template <typename RANGE>
-   static HeaderParams parse(const RANGE& headerRange)
+   HeaderParams result;
+   if (header.empty())
+     return result;
+
+   auto fields = ba::make_split_iterator(header, semiFinder);
+
+   for (; !fields.eof(); fields++)
    {
-      namespace ba = boost::algorithm;
+      auto start = fields->begin();
+      auto end = fields->end();
+      while (start != end && std::isspace(std::uint8_t(*start)))
+         ++start;
+      while (start != end && std::isspace(std::uint8_t(*(end - 1))))
+         --end;
 
-      HeaderParams result;
-      if (!headerRange.size())
-        return result;
-
-      std::string_view header(&*headerRange.begin(), headerRange.size());
-
-      auto fields = ba::make_split_iterator(header, semiFinder);
-
-      for (; !fields.eof(); fields++)
+      auto eqPos = start;
+      while (eqPos != end && *eqPos != '=')
+         ++eqPos;
+      if (eqPos == end)
       {
-         auto start = fields->begin();
-         auto end = fields->end();
-         while (start != end && std::isspace(std::uint8_t(*start)))
-            ++start;
-         while (start != end && std::isspace(std::uint8_t(*(end - 1))))
-            --end;
-
-         auto eqPos = start;
-         while (eqPos != end && *eqPos != '=')
-            ++eqPos;
-         if (eqPos == end)
-         {
-            if (end != start)
-               result.values.emplace_back(&*start, end - start);
-            continue;
-         }
-         std::string key(&*start, eqPos - start);
-         boost::algorithm::to_lower(key);
-
-         std::string_view value(&*eqPos + 1, end - eqPos - 1);
-         // strip quotes
-         if (value.size() >= 2 && value.front() == '"' && value.back() == '"')
-         {
-            value.remove_prefix(1);
-            value.remove_suffix(1);
-            std::string valueStr;
-            valueStr.reserve(value.size());
-            bool escape = false;
-            for (char ch : value)
-            {
-               if (escape)
-               {
-                  escape = false;
-               }
-               else if (ch == '\\')
-               {
-                  escape = true;
-                  continue;
-               }
-               valueStr.push_back(ch);
-            }
-            result.params.emplace(key, valueStr);
-         }
-         else
-         {
-            result.params.emplace(key, value);
-         }
+         if (end != start)
+            result.values.emplace_back(&*start, end - start);
+         continue;
       }
-      return result;
-   }
-};
+      std::string key(&*start, eqPos - start);
+      boost::algorithm::to_lower(key);
 
+      std::string_view value(&*eqPos + 1, end - eqPos - 1);
+      // strip quotes
+      if (value.size() >= 2 && value.front() == '"' && value.back() == '"')
+      {
+         value.remove_prefix(1);
+         value.remove_suffix(1);
+         std::string valueStr;
+         valueStr.reserve(value.size());
+         bool escape = false;
+         for (char ch : value)
+         {
+            if (escape)
+            {
+               escape = false;
+            }
+            else if (ch == '\\')
+            {
+               escape = true;
+               continue;
+            }
+            valueStr.push_back(ch);
+         }
+         result.params.emplace(key, valueStr);
+      }
+      else
+      {
+         result.params.emplace(key, value);
+      }
+   }
+   return result;
 }
 
 
@@ -376,7 +367,7 @@ void parseMultipartForm(const std::string& contentType,
 {
    namespace ba = boost::algorithm;
    // get the boundary token
-   HeaderParams ctParams = HeaderParams::parse(contentType);
+   HeaderParams ctParams = parseHeaderParams(contentType);
    std::string boundary(ctParams.params["boundary"]);
    if (boundary.empty())
    {
@@ -433,7 +424,7 @@ void parseMultipartForm(const std::string& contentType,
          continue;
 
       // ignore sections that aren't form-data
-      HeaderParams cDisp = HeaderParams::parse(cDispStr);
+      HeaderParams cDisp = parseHeaderParams(cDispStr);
       if (cDisp.values.empty() || boost::algorithm::to_lower_copy(cDisp.values.front()) != "form-data")
          continue;
 

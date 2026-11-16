@@ -18,6 +18,7 @@
 
 #include <cstddef>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <map>
 
@@ -136,9 +137,21 @@ void parseFields(const std::string& fields,
 void parseForm(const std::string& body, Fields* pFields);
    
 void parseMultipartForm(const std::string& contentType,
-                        const std::string& body, 
+                        const std::string& body,
                         Fields* pFields,
                         Files* pFiles);
+
+// The parts of a parameterized header value such as Content-Type or
+// Content-Disposition: the bare values (e.g. "form-data"), and the
+// parameters, keyed by lowercased name. Quoted-string parameter values are
+// unquoted and unescaped; for a repeated parameter the first one wins.
+struct HeaderParams
+{
+   std::vector<std::string> values;
+   std::map<std::string, std::string> params;
+};
+
+HeaderParams parseHeaderParams(std::string_view header);
 
 void buildQueryString(const Fields& fields, std::string* pQueryString);
 void parseQueryString(const std::string& queryString, Fields* pFields);

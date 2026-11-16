@@ -27,7 +27,6 @@
 
 #include <boost/lexical_cast.hpp>
 #include <boost/filesystem.hpp>
-#include <boost/regex.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
@@ -70,6 +69,7 @@
 #include <session/projects/SessionProjects.hpp>
 
 #include "SessionFilesQuotas.hpp"
+#include "SessionFilesUpload.hpp"
 #include "SessionFilesListingMonitor.hpp"
 #include "SessionGit.hpp"
 
@@ -866,32 +866,6 @@ const char * const kUploadTargetDirectory = "targetDirectory";
 const char * const kIsZip = "isZip";
 const char * const kUnzipFound = "unzipFound";
 
-Error writeTmpData(const FilePath& tmpFile,
-                   const char* buffer,
-                   size_t beginOffset,
-                   size_t endOffset)
-{
-   Error error = tmpFile.ensureFile();
-   if (error)
-      return error;
-
-   std::shared_ptr<std::ostream> pOfs;
-   error = tmpFile.openForWrite(pOfs, false);
-   if (error)
-      return error;
-
-   pOfs->seekp(tmpFile.getSize());
-
-   if (!pOfs->write(buffer + beginOffset, endOffset - beginOffset + 1))
-   {
-      return systemError(boost::system::errc::io_error,
-                         "Could not write to destination file: " + tmpFile.getAbsolutePath(),
-                         ERROR_LOCATION);
-   }
-
-   return Success();
-}
-
 Error completeUpload(const core::json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
@@ -1139,19 +1113,23 @@ bool validateUploadedFile(const FilePath& file, http::Response* pResponse)
 
 struct UploadState
 {
-   UploadState() :
-      totalWritten(0),
-      fileStartPos(0),
-      fileEndPos(0)
+   // close the stream so the file can be measured, moved or removed
+   void closeTmpFile()
    {
+      pTmpStream.reset();
    }
 
-   uintmax_t totalWritten;
-   size_t fileStartPos;
-   size_t fileEndPos;
-   std::string fileName;
-   std::string targetDirectory;
+   void discardTmpFile()
+   {
+      closeTmpFile();
+      Error error = tmpFile.removeIfExists();
+      if (error)
+         LOG_ERROR(error);
+   }
+
    FilePath tmpFile;
+   std::shared_ptr<std::ostream> pTmpStream;
+   boost::shared_ptr<UploadFormParser> pParser;
 };
 
 // leaked: uploads are handled on the http listener thread (#18318)
@@ -1159,53 +1137,10 @@ boost::mutex& s_uploadMutex = core::make_leaked<boost::mutex>();
 std::map<const http::Request*, boost::shared_ptr<UploadState>>& s_uploadStateMap =
       core::make_leaked<std::map<const http::Request*, boost::shared_ptr<UploadState>>>();
 
-void parseContentBuffer(const std::string& buffer,
-                        const boost::shared_ptr<UploadState>& pUploadState)
+bool isUsableUploadFileName(const std::string& fileName)
 {
-   std::string nameRegex("form-data; name=\"(.*)\"");
-   boost::smatch nameMatch;
-   if (regex_utils::search(buffer, nameMatch, boost::regex(nameRegex)))
-   {
-      std::string filenameRegex(nameRegex + "; filename=\"");
-      boost::smatch fileMatch;
-      if (regex_utils::search(buffer, fileMatch, boost::regex(filenameRegex)))
-      {
-         std::string searchStr = "filename=\"";
-         size_t pos = buffer.find(searchStr) + searchStr.size();
-         size_t endPos = buffer.find("\"", pos);
-         pUploadState->fileName = buffer.substr(pos, endPos - pos);
-      }
-      else
-      {
-         if (nameMatch[1] == "targetDirectory")
-         {
-            // skip over to and record the value
-            size_t pos = buffer.find("targetDirectory");
-            size_t endPos = buffer.find("\r\n\r\n", pos);
-
-            size_t valueStartPos = endPos + 4;
-            size_t valueEndPos = buffer.find("\r\n", valueStartPos);
-
-            pUploadState->targetDirectory = buffer.substr(valueStartPos, valueEndPos - valueStartPos);
-         }
-      }
-   }
-}
-
-std::string getBoundary(const http::Request& request)
-{
-   std::string boundaryPrefix("boundary=");
-   std::string boundary;
-   size_t prefixLoc = request.contentType().find(boundaryPrefix);
-   if (prefixLoc != std::string::npos)
-   {
-      boundary = request.contentType().substr(prefixLoc + boundaryPrefix.size(),
-                                              std::string::npos);
-      boundary = "--" + boundary;
-      boost::algorithm::trim(boundary);
-   }
-
-   return boundary;
+   // an empty name is what the browser sends when no file was chosen
+   return !fileName.empty() && fileName != "." && fileName != "..";
 }
 
 // note: this function is invoked on the thread pool and is not handled in an R context
@@ -1259,6 +1194,7 @@ bool handleFileUploadRequestAsync(const http::Request& request,
    auto writeError = [&](const Error& error)
    {
       LOG_ERROR(error);
+      pUploadState->discardTmpFile();
       json::setJsonRpcError(error, &response);
       cleanupState();
       cont(&response);
@@ -1266,19 +1202,28 @@ bool handleFileUploadRequestAsync(const http::Request& request,
 
    auto writeParamError = [&]()
    {
+      pUploadState->discardTmpFile();
       json::setJsonRpcError(Error(json::errc::ParamInvalid, ERROR_LOCATION), &response);
       cleanupState();
       cont(&response);
    };
 
-   if (pUploadState->tmpFile.isEmpty())
+   if (!pUploadState->pParser)
    {
+      std::string boundary;
+      Error error = multipartBoundary(request.contentType(), &boundary);
+      if (error)
+      {
+         writeError(error);
+         return false;
+      }
+
       // create a temporary file to store the form's file data
       // we store this temporary file under the user's home directory to increase the odds
       // that we can perform a fast move on the tmp file when the user confirms, as most
       // uploads are within the user's home directory
       FilePath tmpDir = module_context::userUploadedFilesScratchPath();
-      Error error = tmpDir.ensureDirectory();
+      error = tmpDir.ensureDirectory();
       if (error)
       {
          writeError(error);
@@ -1291,162 +1236,81 @@ bool handleFileUploadRequestAsync(const http::Request& request,
          writeError(error);
          return false;
       }
-   }
 
-   if (pUploadState->totalWritten == 0)
-   {
-      // check the first set of headers within the first chunk
-      // because of the buffering done upstream, we are guaranteed
-      // to have all of the necessary data within this chunk
-
-      // skip to the end of the first form header
-      size_t pos = formData.find("\r\n\r\n");
-      if (pos == std::string::npos)
+      error = pUploadState->tmpFile.openForWrite(pUploadState->pTmpStream);
+      if (error)
       {
-         writeError(systemError(boost::system::errc::protocol_error,
-                                "Invalid form data received - first end of header not found",
-                                ERROR_LOCATION));
+         writeError(error);
          return false;
       }
 
-      // determine which form field we just read, file data or target directory
-      parseContentBuffer(formData, pUploadState);
-
-      if (pUploadState->targetDirectory.empty())
-      {
-         // we just read to the start of the file
-         pUploadState->fileStartPos = pos + 4;
-      }
-      else
-      {
-         // we just read the target directory
-         // skip over to the next headers and parse the filename
-         size_t posEnd = formData.find("\r\n\r\n", pos + 4);
-         if (posEnd == std::string::npos)
+      // the state owns the parser, so it outlives the sink
+      UploadState* pState = pUploadState.get();
+      pUploadState->pParser = boost::make_shared<UploadFormParser>(
+         boundary,
+         [pState](const char* data, std::size_t size) -> Error
          {
-            writeError(systemError(boost::system::errc::protocol_error,
-                                   "Invalid form data received - second end of header not found",
-                                   ERROR_LOCATION));
-            return false;
-         }
+            if (!pState->pTmpStream->write(data, size))
+            {
+               return systemError(boost::system::errc::io_error,
+                                  "Could not write to destination file: " + pState->tmpFile.getAbsolutePath(),
+                                  ERROR_LOCATION);
+            }
 
-         std::string headers = formData.substr(pos, posEnd - pos);
-         parseContentBuffer(headers, pUploadState);
-
-         if (pUploadState->fileName.empty())
-         {
-            // didn't find the file name - return an error
-            writeParamError();
-            return false;
-         }
-
-         pUploadState->fileStartPos += posEnd + 4;
-      }
+            return Success();
+         });
    }
 
-   if (complete)
+   Error error = pUploadState->pParser->consume(formData, complete);
+   if (error)
    {
-      if (pUploadState->targetDirectory.empty())
-      {
-         // now we need to read the target directory metadata field by reading backwards from the buffer
-         std::string searchStr = "\r\n" + getBoundary(request) + "\r\n";
-         size_t pos = formData.rfind(searchStr);
-         if (pos == std::string::npos)
-         {
-            pUploadState->tmpFile.removeIfExists();
-            writeError(systemError(boost::system::errc::protocol_error,
-                                   "Invalid form data received - final end of header not found",
-                                   ERROR_LOCATION));
-            return false;
-         }
-
-         std::string headers = formData.substr(pos + searchStr.size());
-         pUploadState->fileEndPos = pos - 1;
-
-         // read the target directory field
-         parseContentBuffer(headers, pUploadState);
-
-         if (pUploadState->targetDirectory.empty())
-         {
-            // didn't find target directory - return an error
-            pUploadState->tmpFile.removeIfExists();
-            writeParamError();
-            return false;
-         }
-      }
-      else
-      {
-         // read to the end of the file portion by reading to the final boundary start
-         std::string searchStr = "\r\n" + getBoundary(request) + "--\r\n";
-         size_t pos = formData.rfind(searchStr);
-         if (pos == std::string::npos)
-         {
-            pUploadState->tmpFile.removeIfExists();
-            writeError(systemError(boost::system::errc::protocol_error,
-                                   "Invalid form data received - final end of form not found",
-                                   ERROR_LOCATION));
-            return false;
-         }
-
-         pUploadState->fileEndPos = pos - 1;
-      }
-
-      // write the last chunk of file data
-      Error saveError = writeTmpData(pUploadState->tmpFile,
-                                     formData.c_str(),
-                                     pUploadState->fileStartPos,
-                                     pUploadState->fileEndPos);
-      if (saveError)
-      {
-         pUploadState->tmpFile.removeIfExists();
-         writeError(saveError);
-         return false;
-      }
-
-      pUploadState->totalWritten += pUploadState->fileEndPos - pUploadState->fileStartPos + 1;
+      writeError(error);
+      return false;
    }
-   else
-   {
-      // write a chunk of data
-      Error saveError = writeTmpData(pUploadState->tmpFile,
-                                     formData.c_str(),
-                                     pUploadState->fileStartPos,
-                                     formData.size() - 1);
-      if (saveError)
-      {
-         pUploadState->tmpFile.removeIfExists();
-         writeError(saveError);
-         return false;
-      }
 
-      pUploadState->totalWritten += formData.size() - pUploadState->fileStartPos;
-      pUploadState->fileStartPos = 0;
+   if (!complete)
       return true;
+
+   pUploadState->pTmpStream->flush();
+   bool written = pUploadState->pTmpStream->good();
+   pUploadState->closeTmpFile();
+   if (!written)
+   {
+      writeError(systemError(boost::system::errc::io_error,
+                             "Could not write to destination file: " + pUploadState->tmpFile.getAbsolutePath(),
+                             ERROR_LOCATION));
+      return false;
+   }
+
+   const UploadFormParser& form = *pUploadState->pParser;
+   if (!form.hasFile() ||
+       !isUsableUploadFileName(form.fileName()) ||
+       form.targetDirectory().empty())
+   {
+      writeParamError();
+      return false;
    }
 
    // the full file has been written - validate it
    if (!validateUploadedFile(pUploadState->tmpFile, &response))
    {
       // user cannot upload files this large - delete the temp file
-      Error error = pUploadState->tmpFile.removeIfExists();
-      if (error)
-         LOG_ERROR(error);
-
+      pUploadState->discardTmpFile();
       cleanupState();
       cont(&response);
       return false;
    }
 
    // detect any potential overwrites
-   bool isZip = boost::ends_with(pUploadState->fileName, "zip");
-   FilePath destDir = module_context::resolveAliasedPath(pUploadState->targetDirectory);
-   FilePath destPath = destDir.completeChildPath(pUploadState->fileName);
+   bool isZip = boost::ends_with(form.fileName(), "zip");
+   FilePath destDir = module_context::resolveAliasedPath(form.targetDirectory());
+   FilePath destPath = destDir.completeChildPath(form.fileName());
 
    json::Array overwritesJson;
    bool unzipFound = false;
    if (isZip)
    {
-      Error error = detectZipFileOverwrites(pUploadState->tmpFile, destDir, pUploadState->fileName, &overwritesJson, &unzipFound);
+      error = detectZipFileOverwrites(pUploadState->tmpFile, destDir, form.fileName(), &overwritesJson, &unzipFound);
       if (error)
       {
          writeError(error);
@@ -1461,7 +1325,7 @@ bool handleFileUploadRequestAsync(const http::Request& request,
 
    // set the upload information as the result
    json::Object uploadTokenJson;
-   uploadTokenJson[kUploadFilename] = pUploadState->fileName;
+   uploadTokenJson[kUploadFilename] = form.fileName();
    uploadTokenJson[kUploadedTempFile] = pUploadState->tmpFile.getAbsolutePath();
    uploadTokenJson[kUploadTargetDirectory] = destDir.getAbsolutePath();
    uploadTokenJson[kUnzipFound] = unzipFound;
@@ -1477,7 +1341,7 @@ bool handleFileUploadRequestAsync(const http::Request& request,
    uploadResponse.setResult(uploadJson);
    std::stringstream uploadResult;
    uploadResponse.write(uploadResult);
-   Error error = response.setBody(string_utils::jsonHtmlEscape(uploadResult.str()));
+   error = response.setBody(string_utils::jsonHtmlEscape(uploadResult.str()));
    if (error)
    {
       writeError(error);
@@ -1490,7 +1354,7 @@ bool handleFileUploadRequestAsync(const http::Request& request,
 
    // let the monitor client know we've started an upload
    using namespace monitor;
-   client().logEvent(Event(kSessionScope, kSessionUploadEvent, pUploadState->fileName));
+   client().logEvent(Event(kSessionScope, kSessionUploadEvent, form.fileName()));
 
    cont(&response);
    cleanupState();
