@@ -15,18 +15,33 @@
 
 #include "SessionFilesUpload.hpp"
 
+#include <fstream>
+#include <iterator>
 #include <random>
 #include <string>
 #include <vector>
 
 #include <gtest/gtest.h>
 
+#include <shared_core/FilePath.hpp>
+#include <shared_core/json/Json.hpp>
+
+#include <core/http/Request.hpp>
+#include <core/http/Response.hpp>
+#include <core/json/JsonRpc.hpp>
+
+#include <session/SessionModuleContext.hpp>
+
+#include "SessionFiles.hpp"
+
 namespace rstudio {
 namespace session {
 namespace tests {
 
 using core::Error;
+using core::FilePath;
 using core::Success;
+using modules::files::handleFileUploadRequestForTesting;
 using modules::files::multipartBoundary;
 using modules::files::UploadFormParser;
 
@@ -160,6 +175,69 @@ std::string firstSplitMismatch(const std::string& body)
       return "one byte at a time";
 
    return std::string();
+}
+
+struct UploadResult
+{
+   std::vector<bool> keepGoing;
+   int responses = 0;
+   int errorCode = 0;
+   core::json::Object token;
+};
+
+// drive the /upload handler with `body` split at `splits`, as the session's
+// request parser would, stopping once the handler gives up
+UploadResult upload(const std::string& body, const std::vector<std::size_t>& splits)
+{
+   core::http::Request request;
+   request.setHeader("Content-Type", "multipart/form-data; boundary=" + kBoundary);
+   request.setHeader("Content-Length", static_cast<uintmax_t>(body.size()));
+
+   UploadResult result;
+   std::string responseBody;
+   auto cont = [&](core::http::Response* pResponse)
+   {
+      ++result.responses;
+      responseBody = pResponse->body();
+   };
+
+   std::size_t start = 0;
+   for (std::size_t i = 0; i <= splits.size(); i++)
+   {
+      std::size_t end = (i < splits.size()) ? splits[i] : body.size();
+      bool complete = (i == splits.size());
+      bool keepGoing = handleFileUploadRequestForTesting(request, body.substr(start, end - start), complete, cont);
+      result.keepGoing.push_back(keepGoing);
+      if (!keepGoing)
+         break;
+
+      start = end;
+   }
+
+   core::json::Value value;
+   if (result.responses == 0 || value.parse(responseBody) || !value.isObject())
+      return result;
+
+   core::json::Object responseJson = value.getObject();
+   core::json::Object errorJson;
+   if (!core::json::readObject(responseJson, "error", errorJson))
+   {
+      core::json::readObject(errorJson, "code", result.errorCode);
+      return result;
+   }
+
+   core::json::Object resultJson;
+   if (!core::json::readObject(responseJson, "result", resultJson))
+      core::json::readObject(resultJson, "token", result.token);
+
+   return result;
+}
+
+std::size_t uploadedFileCount()
+{
+   std::vector<FilePath> children;
+   module_context::userUploadedFilesScratchPath().getChildren(children);
+   return children.size();
 }
 
 std::string randomBytes(std::size_t size)
@@ -460,6 +538,84 @@ TEST(SessionFilesUploadTest, StopsWhenTheSinkFails)
 
    EXPECT_TRUE(parser.consume(browserBody(), true));
    EXPECT_EQ(1, calls);
+}
+
+TEST(SessionFilesUploadTest, HandlerStoresAChunkedUpload)
+{
+   FilePath targetDirectory = module_context::tempFile("upload-target", "");
+   ASSERT_FALSE(targetDirectory.ensureDirectory());
+
+   std::string payload = randomBytes(64 * 1024);
+   std::string body = formBody({ filePart(payload), targetDirectoryPart(targetDirectory.getAbsolutePath()) });
+
+   // the final chunk is too short to hold the targetDirectory trailer
+   UploadResult result = upload(body, { 1000, body.size() - 7 });
+   EXPECT_EQ(std::vector<bool>({ true, true, true }), result.keepGoing);
+   EXPECT_EQ(1, result.responses);
+   EXPECT_EQ(0, result.errorCode);
+
+   std::string fileName;
+   std::string tmpFilePath;
+   std::string uploadedTargetDirectory;
+   EXPECT_FALSE(core::json::readObject(result.token, "filename", fileName));
+   EXPECT_FALSE(core::json::readObject(result.token, "uploadedTempFile", tmpFilePath));
+   EXPECT_FALSE(core::json::readObject(result.token, "targetDirectory", uploadedTargetDirectory));
+   EXPECT_EQ("hello.txt", fileName);
+   EXPECT_EQ(targetDirectory.getAbsolutePath(), uploadedTargetDirectory);
+
+   FilePath tmpFile(tmpFilePath);
+   std::ifstream stream(tmpFile.getAbsolutePath(), std::ios::binary);
+   std::string contents((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
+   stream.close();
+   EXPECT_TRUE(contents == payload);
+
+   tmpFile.removeIfExists();
+   targetDirectory.removeIfExists();
+}
+
+TEST(SessionFilesUploadTest, HandlerStoresAnEmptyFile)
+{
+   UploadResult result = upload(browserBody(""), {});
+   EXPECT_EQ(0, result.errorCode);
+
+   std::string tmpFilePath;
+   ASSERT_FALSE(core::json::readObject(result.token, "uploadedTempFile", tmpFilePath));
+
+   FilePath tmpFile(tmpFilePath);
+   EXPECT_TRUE(tmpFile.exists());
+   EXPECT_EQ(0u, tmpFile.getSize());
+
+   tmpFile.removeIfExists();
+}
+
+TEST(SessionFilesUploadTest, HandlerRejectsAnUploadWithNoFileChosen)
+{
+   std::size_t filesBefore = uploadedFileCount();
+
+   UploadResult result = upload(formBody({ filePart("", ""), targetDirectoryPart() }), {});
+   EXPECT_EQ(std::vector<bool>({ false }), result.keepGoing);
+   EXPECT_EQ(1, result.responses);
+   EXPECT_EQ(static_cast<int>(core::json::errc::ParamInvalid), result.errorCode);
+   EXPECT_TRUE(result.token.isEmpty());
+
+   EXPECT_EQ(filesBefore, uploadedFileCount());
+}
+
+TEST(SessionFilesUploadTest, HandlerRejectsAMalformedBodyAndRemovesTheTempFile)
+{
+   std::size_t filesBefore = uploadedFileCount();
+
+   // no close delimiter
+   std::string body = browserBody();
+   body.resize(body.size() - 4);
+
+   UploadResult result = upload(body, { 50 });
+   EXPECT_EQ(std::vector<bool>({ true, false }), result.keepGoing);
+   EXPECT_EQ(1, result.responses);
+   EXPECT_NE(0, result.errorCode);
+   EXPECT_TRUE(result.token.isEmpty());
+
+   EXPECT_EQ(filesBefore, uploadedFileCount());
 }
 
 TEST(SessionFilesUploadTest, FindsTheBoundaryInTheContentType)

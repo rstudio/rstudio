@@ -1113,24 +1113,37 @@ bool validateUploadedFile(const FilePath& file, http::Response* pResponse)
 
 struct UploadState
 {
-   // close the stream so the file can be measured, moved or removed
-   void closeTmpFile()
-   {
-      pTmpStream.reset();
-   }
-
    void discardTmpFile()
    {
-      closeTmpFile();
       Error error = tmpFile.removeIfExists();
       if (error)
          LOG_ERROR(error);
    }
 
    FilePath tmpFile;
-   std::shared_ptr<std::ostream> pTmpStream;
    boost::shared_ptr<UploadFormParser> pParser;
 };
+
+Error appendToTmpFile(const FilePath& tmpFile, const char* data, std::size_t size)
+{
+   // opened per write rather than held across chunks: nothing tells us when
+   // a client abandons an upload, so a held stream would leak its descriptor
+   std::shared_ptr<std::ostream> pStream;
+   Error error = tmpFile.openForWrite(pStream, false);
+   if (error)
+      return error;
+
+   pStream->write(data, size);
+   pStream->flush();
+   if (!pStream->good())
+   {
+      return systemError(boost::system::errc::io_error,
+                         "Could not write to destination file: " + tmpFile.getAbsolutePath(),
+                         ERROR_LOCATION);
+   }
+
+   return Success();
+}
 
 // leaked: uploads are handled on the http listener thread (#18318)
 boost::mutex& s_uploadMutex = core::make_leaked<boost::mutex>();
@@ -1237,27 +1250,20 @@ bool handleFileUploadRequestAsync(const http::Request& request,
          return false;
       }
 
-      error = pUploadState->tmpFile.openForWrite(pUploadState->pTmpStream);
+      // create it now, so that an empty file still has one to move
+      error = pUploadState->tmpFile.ensureFile();
       if (error)
       {
          writeError(error);
          return false;
       }
 
-      // the state owns the parser, so it outlives the sink
-      UploadState* pState = pUploadState.get();
+      FilePath tmpFile = pUploadState->tmpFile;
       pUploadState->pParser = boost::make_shared<UploadFormParser>(
          boundary,
-         [pState](const char* data, std::size_t size) -> Error
+         [tmpFile](const char* data, std::size_t size)
          {
-            if (!pState->pTmpStream->write(data, size))
-            {
-               return systemError(boost::system::errc::io_error,
-                                  "Could not write to destination file: " + pState->tmpFile.getAbsolutePath(),
-                                  ERROR_LOCATION);
-            }
-
-            return Success();
+            return appendToTmpFile(tmpFile, data, size);
          });
    }
 
@@ -1270,17 +1276,6 @@ bool handleFileUploadRequestAsync(const http::Request& request,
 
    if (!complete)
       return true;
-
-   pUploadState->pTmpStream->flush();
-   bool written = pUploadState->pTmpStream->good();
-   pUploadState->closeTmpFile();
-   if (!written)
-   {
-      writeError(systemError(boost::system::errc::io_error,
-                             "Could not write to destination file: " + pUploadState->tmpFile.getAbsolutePath(),
-                             ERROR_LOCATION));
-      return false;
-   }
 
    const UploadFormParser& form = *pUploadState->pParser;
    if (!form.hasFile() ||
@@ -2132,6 +2127,14 @@ bool isMonitoringDirectory(const FilePath& directory)
 {
    FilePath monitoredPath = s_filesListingMonitor.currentMonitoredPath();
    return !monitoredPath.isEmpty() && (directory == monitoredPath);
+}
+
+bool handleFileUploadRequestForTesting(const http::Request& request,
+                                       const std::string& formData,
+                                       bool complete,
+                                       const http::UriHandlerFunctionContinuation& cont)
+{
+   return handleFileUploadRequestAsync(request, formData, complete, cont);
 }
 
 Error initialize()
