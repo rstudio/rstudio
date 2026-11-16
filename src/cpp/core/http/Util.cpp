@@ -300,7 +300,7 @@ struct HeaderParams
    std::map<std::string, std::string> params;
 
    template <typename RANGE>
-   static HeaderParams parse(const RANGE& headerRange)
+   static HeaderParams parse(const RANGE& headerRange, bool unescape = true)
    {
       namespace ba = boost::algorithm;
 
@@ -348,7 +348,7 @@ struct HeaderParams
                {
                   escape = false;
                }
-               else if (ch == '\\')
+               else if (ch == '\\' && unescape)
                {
                   escape = true;
                   continue;
@@ -369,10 +369,11 @@ struct HeaderParams
 }
 
 void parseHeaderParams(const std::string& header,
+                       bool unescape,
                        std::vector<std::string>* pValues,
                        std::map<std::string, std::string>* pParams)
 {
-   HeaderParams parsed = HeaderParams::parse(header);
+   HeaderParams parsed = HeaderParams::parse(header, unescape);
    *pValues = std::move(parsed.values);
    *pParams = std::move(parsed.params);
 }

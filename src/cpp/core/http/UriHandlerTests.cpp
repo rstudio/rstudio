@@ -26,25 +26,29 @@ namespace core {
 namespace http {
 namespace tests {
 
-TEST(UriHandlerTest, UploadHandlerVisitedWithAFullRequestSeesItComplete)
+TEST(UriHandlerTest, UploadHandlerVisitedWithAFullRequestGetsItsWholeBody)
 {
    // an upload whose handler wasn't registered when its headers arrived is
    // read in full and dispatched like any other request
    int calls = 0;
    bool complete = false;
+   std::string received;
    UriAsyncUploadHandlerFunction uploadHandler =
-         [&](const Request&, const std::string&, bool isComplete, const UriHandlerFunctionContinuation&)
+         [&](const Request&, const std::string& formData, bool isComplete, const UriHandlerFunctionContinuation&)
    {
       ++calls;
       complete = isComplete;
+      received = formData;
       return true;
    };
 
    Request request;
+   request.setBody("--boundary\r\nform data\r\n--boundary--\r\n");
    visitHandler(UriAsyncHandlerFunctionVariant(uploadHandler), request, [](Response*) {});
 
    EXPECT_EQ(1, calls);
    EXPECT_TRUE(complete);
+   EXPECT_EQ(request.body(), received);
 }
 
 } // namespace tests

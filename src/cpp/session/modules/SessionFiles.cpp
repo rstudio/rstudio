@@ -1141,6 +1141,7 @@ struct UploadState
 {
    FilePath tmpFile;
    boost::shared_ptr<UploadFormParser> pParser;
+   uintmax_t bytesReceived = 0;
 };
 
 // leaked: uploads are handled on the http listener thread (#18318)
@@ -1163,27 +1164,8 @@ bool handleFileUploadRequestAsync(const http::Request& request,
    LOCK_MUTEX(s_uploadMutex)
    {
       auto iter = s_uploadStateMap.find(pRequest);
-      if (iter == s_uploadStateMap.end())
-      {
-         // no state exists for this request
-
-         // preliminary file size validation - a final check will be performed
-         // once the file is actually written to disk and we know for sure how big it is
-         http::Response response;
-         if (!validateUploadedFile(request, &response))
-         {
-            cont(&response);
-            return false;
-         }
-
-         // create new upload state
-         pUploadState = boost::make_shared<UploadState>();
-         s_uploadStateMap[pRequest] = pUploadState;
-      }
-      else
-      {
+      if (iter != s_uploadStateMap.end())
          pUploadState = iter->second;
-      }
    }
    END_LOCK_MUTEX
 
@@ -1195,6 +1177,42 @@ bool handleFileUploadRequestAsync(const http::Request& request,
       }
       END_LOCK_MUTEX
    };
+
+   // the session connection makes a final call marked complete when the
+   // client goes away mid-upload; there is no one left to answer
+   uintmax_t bytesReceived = formData.size() + (pUploadState ? pUploadState->bytesReceived : 0);
+   if (complete && bytesReceived < request.contentLength())
+   {
+      if (pUploadState)
+      {
+         pUploadState->tmpFile.removeIfExists();
+         cleanupState();
+      }
+
+      return false;
+   }
+
+   if (!pUploadState)
+   {
+      // preliminary file size validation - a final check will be performed
+      // once the file is actually written to disk and we know for sure how big it is
+      http::Response response;
+      if (!validateUploadedFile(request, &response))
+      {
+         cont(&response);
+         return false;
+      }
+
+      // create new upload state
+      pUploadState = boost::make_shared<UploadState>();
+      LOCK_MUTEX(s_uploadMutex)
+      {
+         s_uploadStateMap[pRequest] = pUploadState;
+      }
+      END_LOCK_MUTEX
+   }
+
+   pUploadState->bytesReceived = bytesReceived;
 
    auto writeError = [&](const Error& error)
    {

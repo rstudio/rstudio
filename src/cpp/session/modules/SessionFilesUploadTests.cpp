@@ -185,14 +185,18 @@ struct UploadResult
    core::json::Object token;
 };
 
+void setUploadHeaders(const std::string& body, core::http::Request* pRequest)
+{
+   pRequest->setHeader("Content-Type", "multipart/form-data; boundary=" + kBoundary);
+   pRequest->setHeader("Content-Length", static_cast<uintmax_t>(body.size()));
+}
+
 // drive the /upload handler with `body` split at `splits`, as the session's
 // request parser would, stopping once the handler gives up
-UploadResult upload(const std::string& body, const std::vector<std::size_t>& splits)
+UploadResult upload(const core::http::Request& request,
+                    const std::string& body,
+                    const std::vector<std::size_t>& splits)
 {
-   core::http::Request request;
-   request.setHeader("Content-Type", "multipart/form-data; boundary=" + kBoundary);
-   request.setHeader("Content-Length", static_cast<uintmax_t>(body.size()));
-
    UploadResult result;
    std::string responseBody;
    auto cont = [&](core::http::Response* pResponse)
@@ -231,6 +235,13 @@ UploadResult upload(const std::string& body, const std::vector<std::size_t>& spl
       core::json::readObject(resultJson, "token", result.token);
 
    return result;
+}
+
+UploadResult upload(const std::string& body, const std::vector<std::size_t>& splits)
+{
+   core::http::Request request;
+   setUploadHeaders(body, &request);
+   return upload(request, body, splits);
 }
 
 std::size_t uploadedFileCount()
@@ -447,16 +458,22 @@ TEST(SessionFilesUploadTest, ParsesDispositionParametersPerRfc7578)
    EXPECT_EQ(kTargetDirectory, parsed.targetDirectory);
 }
 
-TEST(SessionFilesUploadTest, UnescapesQuotedFileNames)
+TEST(SessionFilesUploadTest, KeepsBackslashesInFileNames)
 {
-   Parsed parsed = parse(formBody({ filePart(kPayload, "a \\\"b\\\".txt"), targetDirectoryPart() }));
-   ASSERT_FALSE(parsed.error);
-   EXPECT_EQ("a \"b\".txt", parsed.fileName);
+   // browsers percent-encode only CR, LF and '"' in a file name (#18854), so
+   // a backslash is part of the name, not an escape
+   std::vector<std::string> fileNames = { "a\\b.txt", "trailing\\", "a%22b%22.txt" };
+   for (const std::string& fileName : fileNames)
+   {
+      Parsed parsed = parse(formBody({ filePart(kPayload, fileName), targetDirectoryPart() }));
+      ASSERT_FALSE(parsed.error) << fileName;
+      EXPECT_EQ(fileName, parsed.fileName);
+   }
 }
 
 TEST(SessionFilesUploadTest, KeepsQuotesInTheTargetDirectory)
 {
-   // browsers escape quotes in file names, but send field values as-is
+   // browsers percent-encode quotes in file names, but send field values as-is
    std::string directory = "/home/user/x\"y";
    Parsed parsed = parse(formBody({ filePart(kPayload), targetDirectoryPart(directory) }));
    ASSERT_FALSE(parsed.error);
@@ -617,6 +634,55 @@ TEST(SessionFilesUploadTest, HandlerRejectsAMalformedBodyAndRemovesTheTempFile)
    EXPECT_EQ(filesBefore, uploadedFileCount());
 }
 
+TEST(SessionFilesUploadTest, HandlerDropsAnUploadItsClientAbandoned)
+{
+   std::size_t filesBefore = uploadedFileCount();
+
+   std::string body = browserBody();
+   core::http::Request request;
+   setUploadHeaders(body, &request);
+
+   int responses = 0;
+   auto cont = [&](core::http::Response*) { ++responses; };
+
+   // the session connection ends an upload whose client went away with an
+   // empty call marked complete, short of the Content-Length
+   EXPECT_TRUE(handleFileUploadRequestForTesting(request, body.substr(0, 150), false, cont));
+   EXPECT_FALSE(handleFileUploadRequestForTesting(request, std::string(), true, cont));
+   EXPECT_EQ(0, responses);
+   EXPECT_EQ(filesBefore, uploadedFileCount());
+
+   // nothing is left over for a later request at the same address
+   UploadResult result = upload(request, body, {});
+   EXPECT_EQ(0, result.errorCode);
+
+   std::string tmpFilePath;
+   ASSERT_FALSE(core::json::readObject(result.token, "uploadedTempFile", tmpFilePath));
+
+   FilePath tmpFile(tmpFilePath);
+   std::ifstream stream(tmpFile.getAbsolutePath(), std::ios::binary);
+   std::string contents((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
+   stream.close();
+   EXPECT_TRUE(contents == kPayload);
+
+   tmpFile.removeIfExists();
+}
+
+TEST(SessionFilesUploadTest, HandlerIgnoresAnUploadAbandonedBeforeItsFirstChunk)
+{
+   std::size_t filesBefore = uploadedFileCount();
+
+   core::http::Request request;
+   setUploadHeaders(browserBody(), &request);
+
+   int responses = 0;
+   auto cont = [&](core::http::Response*) { ++responses; };
+
+   EXPECT_FALSE(handleFileUploadRequestForTesting(request, std::string(), true, cont));
+   EXPECT_EQ(0, responses);
+   EXPECT_EQ(filesBefore, uploadedFileCount());
+}
+
 TEST(SessionFilesUploadTest, FindsTheBoundaryInTheContentType)
 {
    std::vector<std::pair<std::string, std::string>> cases = {
@@ -637,7 +703,8 @@ TEST(SessionFilesUploadTest, FindsTheBoundaryInTheContentType)
    std::vector<std::string> invalid = {
       "multipart/form-data",
       "multipart/form-data; boundary=",
-      "multipart/form-data; boundary=\"\""
+      "multipart/form-data; boundary=\"\"",
+      "text/plain; boundary=abc"
    };
 
    for (const std::string& contentType : invalid)

@@ -142,8 +142,11 @@ void parseMultipartForm(const std::string& contentType,
 
 // Split a header value such as Content-Disposition into its bare values
 // (e.g. "form-data") and its parameters, keyed by lowercased name, with
-// quoted-string values unquoted.
+// quoted-string values unquoted. Their backslash escapes are decoded only
+// with `unescape`: browsers send the backslashes in a multipart/form-data
+// file name as-is.
 void parseHeaderParams(const std::string& header,
+                       bool unescape,
                        std::vector<std::string>* pValues,
                        std::map<std::string, std::string>* pParams);
 

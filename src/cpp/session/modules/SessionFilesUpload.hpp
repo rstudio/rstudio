@@ -28,7 +28,8 @@ namespace session {
 namespace modules {
 namespace files {
 
-// The boundary parameter of a multipart Content-Type, which may be quoted.
+// The boundary parameter of a multipart/form-data Content-Type, which may be
+// quoted.
 core::Error multipartBoundary(const std::string& contentType, std::string* pBoundary);
 
 // Streaming parser for the Files pane upload form (RFC 7578): the file part

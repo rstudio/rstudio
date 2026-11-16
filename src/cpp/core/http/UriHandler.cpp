@@ -34,12 +34,13 @@ class UriAsyncHandlerFunctionVariantVisitor : public boost::static_visitor<void>
 {
 public:
    // the caller must have already read the request in full: an upload handler
-   // reached this way is told the request is complete, so it never waits for
-   // more chunks
+   // reached this way gets the whole body at once, marked complete, so it
+   // never waits for more chunks
    UriAsyncHandlerFunctionVariantVisitor(const Request& request,
                                          const UriHandlerFunctionContinuation& cont) :
       cont_(cont),
-      isComplete_(true)
+      isComplete_(true),
+      isFullRequest_(true)
    {
       request_.assign(request);
    }
@@ -50,7 +51,8 @@ public:
                                          const UriHandlerFunctionContinuation& cont) :
       cont_(cont),
       formData_(formData),
-      isComplete_(complete)
+      isComplete_(complete),
+      isFullRequest_(false)
    {
       request_.assign(request);
    }
@@ -62,7 +64,7 @@ public:
 
    void operator()(const UriAsyncUploadHandlerFunction& func)
    {
-      func(request_, formData_, isComplete_, cont_);
+      func(request_, isFullRequest_ ? request_.body() : formData_, isComplete_, cont_);
    }
 
 private:
@@ -70,6 +72,7 @@ private:
    UriHandlerFunctionContinuation cont_;
    std::string formData_;
    bool isComplete_;
+   bool isFullRequest_;
 };
 
 void runSynchronousHandler(const UriHandlerFunction& function,

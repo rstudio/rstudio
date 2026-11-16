@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <map>
+#include <sstream>
 #include <vector>
 
 #include <boost/algorithm/string/predicate.hpp>
@@ -50,7 +51,9 @@ Error multipartBoundary(const std::string& contentType, std::string* pBoundary)
 {
    std::vector<std::string> values;
    std::map<std::string, std::string> params;
-   http::util::parseHeaderParams(contentType, &values, &params);
+   http::util::parseHeaderParams(contentType, true, &values, &params);
+   if (values.empty() || !boost::algorithm::iequals(values.front(), "multipart/form-data"))
+      return formError("not multipart/form-data", ERROR_LOCATION);
 
    *pBoundary = params["boundary"];
    if (pBoundary->empty())
@@ -178,24 +181,14 @@ Error UploadFormParser::step(bool* pProgress)
 
 Error UploadFormParser::beginPart(std::string_view headerBlock)
 {
-   // each header line, including the last, ends with CRLF
    http::Headers headers;
-   std::size_t lineStart = 0;
-   while (lineStart < headerBlock.size())
-   {
-      std::size_t lineEnd = std::min(headerBlock.find("\r\n", lineStart), headerBlock.size());
-
-      http::Header header;
-      if (http::parseHeader(std::string(headerBlock.substr(lineStart, lineEnd - lineStart)), &header))
-         headers.push_back(header);
-
-      lineStart = lineEnd + 2;
-   }
+   std::istringstream headerStream{std::string(headerBlock)};
+   http::parseHeaders(headerStream, &headers);
 
    // RFC 7578 4.2: every part has a form-data Content-Disposition with a name
    std::vector<std::string> values;
    std::map<std::string, std::string> params;
-   http::util::parseHeaderParams(http::headerValue(headers, "Content-Disposition"), &values, &params);
+   http::util::parseHeaderParams(http::headerValue(headers, "Content-Disposition"), false, &values, &params);
    if (values.empty() || !boost::algorithm::iequals(values.front(), "form-data") || !params.count("name"))
       return formError("part is not named form-data", ERROR_LOCATION);
 
