@@ -49,9 +49,10 @@ runTests <- function(testDir = NULL, outputDir = NULL, filter = NULL) {
       stop_on_warning = FALSE
    )
    
-   # compute number of failures
+   # compute number of failures; a test that errors records it under 'error',
+   # not 'failed', so count both (as testthat's own pass/fail check does)
    df <- as.data.frame(results)
-   failures <- sum(df$failed)
+   failures <- sum(df$failed) + sum(df$error)
    
    # write to file
    cat(failures, file = file.path(outputDir, "testthat-failures.log"))
