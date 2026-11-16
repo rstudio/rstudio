@@ -132,16 +132,19 @@ public class SearchWidget extends Composite implements SearchDisplay
       
    }
 
+   // For a search box that only filters. SearchWidget recognizes it and keeps the
+   // box a plain text box, rather than a combobox whose list never opens.
+   public static class NoSuggestionsOracle extends SuggestOracle
+   {
+      @Override
+      public void requestSuggestions(Request request, Callback callback)
+      {
+      }
+   }
+
    public SearchWidget(String label)
    {
-      this(label, new SuggestOracle()
-      {
-         @Override
-         public void requestSuggestions(Request request, Callback callback)
-         {
-            // no-op
-         }
-      });
+      this(label, new NoSuggestionsOracle());
    }
 
    public SearchWidget(String label, SuggestOracle oracle)
@@ -176,6 +179,14 @@ public class SearchWidget extends Composite implements SearchDisplay
          suggestDisplay = new SearchSuggestionDisplay();
       
       suggestBox_ = new FocusSuggestBox(oracle, textBox, suggestDisplay);
+      if (oracle instanceof NoSuggestionsOracle)
+      {
+         // Undo the combobox attributes SuggestBox gives every box
+         Element input = textBox.getElement();
+         input.removeAttribute("role");
+         input.removeAttribute("aria-autocomplete");
+         input.removeAttribute("aria-expanded");
+      }
       initWidget(uiBinder.createAndBindUi(this));
       clearFilter_.setVisible(false);
       clearFilter_.setDescription(constants_.searchWidgetClearText());

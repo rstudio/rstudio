@@ -53,7 +53,6 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RadioButton;
-import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.CellPreviewEvent;
@@ -361,17 +360,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          }
       });
       
-      filterWidget_ = new SearchWidget(constants_.filterWidgetLabel(), new SuggestOracle() {
-
-         @Override
-         public void requestSuggestions(Request request, Callback callback)
-         {
-            callback.onSuggestionsReady(
-                  request,
-                  new Response(new ArrayList<>()));
-         }
-         
-      });
+      filterWidget_ = new SearchWidget(constants_.filterWidgetLabel());
 
       ElementIds.assignElementId(filterWidget_, ElementIds.KYBRD_SHRTCTS_FILTER_WIDGET);
       

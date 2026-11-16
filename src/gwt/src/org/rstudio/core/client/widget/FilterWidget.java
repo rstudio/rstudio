@@ -16,7 +16,6 @@ package org.rstudio.core.client.widget;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.SuggestOracle;
 
 public abstract class FilterWidget extends Composite
 {
@@ -24,15 +23,7 @@ public abstract class FilterWidget extends Composite
 
    public FilterWidget()
    {
-      SuggestOracle oracle = new SuggestOracle()
-      {
-         @Override
-         public void requestSuggestions(Request request, Callback callback)
-         {
-         }
-      };
-
-      searchWidget_ = new SearchWidget("", oracle);
+      searchWidget_ = new SearchWidget("");
       searchWidget_.addValueChangeHandler(event -> filter(event.getValue()));
       initWidget(searchWidget_);
    }

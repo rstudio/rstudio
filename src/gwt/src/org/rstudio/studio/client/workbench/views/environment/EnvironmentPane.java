@@ -80,7 +80,6 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.MenuItem;
-import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -254,16 +253,7 @@ public class EnvironmentPane extends WorkbenchPane
       ElementIds.assignElementId(environmentButton_, ElementIds.MB_ENVIRONMENT_LIST);
       toolbar.addLeftWidget(environmentButton_);
 
-      SearchWidget searchWidget = new SearchWidget(constants_.searchEnvironment(), new SuggestOracle() {
-         @Override
-         public void requestSuggestions(Request request, Callback callback)
-         {
-            // no suggestions
-            callback.onSuggestionsReady(
-                  request,
-                  new Response(new ArrayList<>()));
-         }
-      });
+      SearchWidget searchWidget = new SearchWidget(constants_.searchEnvironment());
 
       ElementIds.assignElementId(searchWidget, ElementIds.SW_ENVIRONMENT);
       searchWidget.addValueChangeHandler(new ValueChangeHandler<String>() {
