@@ -222,6 +222,11 @@ public class SearchWidget extends Composite implements SearchDisplay
                event.preventDefault();
                event.stopPropagation();
 
+               // Read now: SuggestBox's own Escape handler runs after this one
+               // and closes the list before the deferred command below runs
+               final boolean listShowing =
+                     getSuggestionDisplay().isSuggestionListShowing();
+
                // defer the handling of ESC so that it doesn't end up
                // inside other UI (the editor) if/when the parent search
                // ui is dismissed
@@ -230,7 +235,7 @@ public class SearchWidget extends Composite implements SearchDisplay
                   @Override
                   public void execute()
                   {
-                     if (getSuggestionDisplay().isSuggestionListShowing())
+                     if (listShowing)
                      {
                         getSuggestionDisplay().hideSuggestions();
                         setText("", true);
