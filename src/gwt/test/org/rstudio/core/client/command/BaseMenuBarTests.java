@@ -57,7 +57,7 @@ public class BaseMenuBarTests extends GWTTestCase
       menu_.selectItem(first_);
       assertEquals(1, fired_.size());
 
-      // Nothing highlighted yet, so clearing it isn't a change either
+      // Clearing the highlight fires once; clearing it again isn't a change
       fired_.clear();
       menu_.selectItem(null);
       menu_.selectItem(null);
