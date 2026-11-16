@@ -31,6 +31,7 @@
 #include <core/system/Xdg.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/Macros.hpp>
+#include <core/StringUtils.hpp>
 #include <core/YamlUtil.hpp>
 
 #ifdef _WIN32
@@ -273,14 +274,15 @@ protected:
       return true;
    }
    
+   // the child writes in the system encoding; strings reach R marked UTF-8
    void onStdout(const std::string& output)
    {
-      invokeCallback("stdout", output);
+      invokeCallback("stdout", string_utils::systemToUtf8(output));
    }
    
    void onStderr(const std::string& output)
    {
-      invokeCallback("stderr", output);
+      invokeCallback("stderr", string_utils::systemToUtf8(output));
    }
    
    void onCompleted(int exitStatus)
