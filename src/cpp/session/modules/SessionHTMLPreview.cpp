@@ -345,9 +345,9 @@ private:
          // call the function
          r::exec::RFunction renderMarkdownFunc(renderMarkdownSEXP);
          renderMarkdownFunc.addParam(
-            string_utils::utf8ToSystem(filePath.getFilename()));
+            filePath.getFilename());
          renderMarkdownFunc.addParam(
-            string_utils::utf8ToSystem(htmlPreviewFile().getFilename()));
+            htmlPreviewFile().getFilename());
          error = renderMarkdownFunc.call();
          if (error)
          {
@@ -709,7 +709,7 @@ Error createNotebook(const json::JsonRpcRequest& request,
 
       // call the function
       std::string scriptFileName =
-               string_utils::utf8ToSystem(scriptPath.getFilename());
+               scriptPath.getFilename();
       error = r::exec::RFunction(rmdFunction,
                                     scriptFileName,
                                     signature).call();

@@ -169,10 +169,8 @@ std::string copiedMathjax(const FilePath& targetFile)
 
    // copy the mathjax directory
    r::exec::RFunction fileCopy("file.copy");
-   fileCopy.addParam("from", string_utils::utf8ToSystem(
-      session::options().mathjaxPath().getAbsolutePath()));
-   fileCopy.addParam("to", string_utils::utf8ToSystem(
-      filesTargetDir.getAbsolutePath()));
+   fileCopy.addParam("from", session::options().mathjaxPath().getAbsolutePath());
+   fileCopy.addParam("to", filesTargetDir.getAbsolutePath());
    fileCopy.addParam("recursive", true);
    error = fileCopy.call();
    if (error)

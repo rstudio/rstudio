@@ -39,7 +39,7 @@ std::vector<std::string> bookdownFrontMatterValue(const std::string& name)
    if (module_context::isBookdownProject() && module_context::isPackageInstalled("bookdown"))
    {
       FilePath buildTargetPath = projects::projectContext().buildTargetPath();
-      std::string inputDir = string_utils::utf8ToSystem(buildTargetPath.getAbsolutePath());
+      std::string inputDir = buildTargetPath.getAbsolutePath();
       Error error = r::exec::RFunction(".rs.bookdown.frontMatterValue", inputDir, name).call(&values);
       if (error)
          LOG_ERROR(error);

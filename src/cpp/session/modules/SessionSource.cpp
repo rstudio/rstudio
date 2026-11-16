@@ -1494,7 +1494,7 @@ Error defaultRdResponse(const std::string& name,
 
    std::string contents;
    error = core::readStringFromFile(
-                        FilePath(string_utils::systemToUtf8(filePath)),
+                        FilePath(filePath),
                         &contents,
                         string_utils::LineEndingPosix);
    if (error)
@@ -1545,7 +1545,7 @@ Error createRdShell(const json::JsonRpcRequest& request,
       // if it was found then read it
       if (!filePath.empty())
       {
-         FilePath rdFilePath(string_utils::systemToUtf8(filePath));
+         FilePath rdFilePath(filePath);
          FilePath manFilePath = packageDir.completeChildPath("man").completeChildPath(
             rdFilePath.getFilename());
          if (!manFilePath.exists())
@@ -1662,7 +1662,7 @@ Error getScriptRunCommand(const json::JsonRpcRequest& request,
       error = r::exec::RFunction(
                  "system",
                   "chmod +x " +
-                  string_utils::utf8ToSystem(path)).call();
+                  path).call();
       if (error)
          return error;
    }

@@ -351,11 +351,11 @@ SEXP rs_runAsyncRProcess(SEXP codeSEXP,
 
 SEXP rs_systemToUtf8(SEXP stringSEXP)
 {
+   // asString() already converts from the string's encoding to UTF-8
    std::string text = r::sexp::asString(stringSEXP);
-   std::string asUtf8 = core::string_utils::systemToUtf8(text);
 
    r::sexp::Protect protect;
-   return r::sexp::createUtf8(asUtf8, &protect);
+   return r::sexp::createUtf8(text, &protect);
 }
 
 SEXP rs_utf8ToSystem(SEXP stringSEXP)
@@ -363,8 +363,8 @@ SEXP rs_utf8ToSystem(SEXP stringSEXP)
    std::string text = r::sexp::asUtf8String(stringSEXP);
    std::string asNative = core::string_utils::utf8ToSystem(text);
 
-   r::sexp::Protect protect;
-   return r::sexp::create(asNative, &protect);
+   // Rf_mkString() marks the result native; r::sexp::create() would mark it UTF-8
+   return Rf_mkString(asNative.c_str());
 }
 
 SEXP rs_runConsoleProcess(SEXP commandSEXP, SEXP captionSEXP)

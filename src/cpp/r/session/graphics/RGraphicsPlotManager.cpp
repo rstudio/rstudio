@@ -430,7 +430,7 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
       "{ require(grDevices, quietly=TRUE); "
       "  %1%(filename=\"%2%\", width=%3%, height=%4%, res = %5% %6%); }");
    std::string deviceCreationCode = boost::str(fmt % deviceType %
-                                               string_utils::utf8ToSystem(devicePath.getAbsolutePath()) %
+                                               devicePath.getAbsolutePath() %
                                                width %
                                                height %
                                                res %
@@ -484,7 +484,7 @@ Error PlotManager::savePlotAsPdf(const FilePath& filePath,
       code += " pdf(file=\"%1%\", width=%2%, height=%3%, "
              "      useDingbats=FALSE); }";
    boost::format fmt(code);
-   std::string deviceCreationCode = boost::str(fmt % string_utils::utf8ToSystem(filePath.getAbsolutePath()) %
+   std::string deviceCreationCode = boost::str(fmt % filePath.getAbsolutePath() %
                                                widthInches %
                                                heightInches);
    
@@ -504,7 +504,7 @@ Error PlotManager::savePlotAsSvg(const FilePath& targetPath,
    boost::format fmt("{ require(grDevices, quietly=TRUE); "
                      "  svg(filename=\"%1%\", width=%2%, height=%3%, "
                      "      antialias = \"subpixel\"); }");
-   std::string deviceCreationCode = boost::str(fmt % string_utils::utf8ToSystem(targetPath.getAbsolutePath()) %
+   std::string deviceCreationCode = boost::str(fmt % targetPath.getAbsolutePath() %
                                                widthInches %
                                                heightInches);
 
@@ -525,7 +525,7 @@ Error PlotManager::savePlotAsPostscript(const FilePath& targetPath,
                      "             onefile = FALSE, "
                      "             paper = \"special\", "
                      "             horizontal = FALSE); }");
-   std::string deviceCreationCode = boost::str(fmt % string_utils::utf8ToSystem(targetPath.getAbsolutePath()) %
+   std::string deviceCreationCode = boost::str(fmt % targetPath.getAbsolutePath() %
                                                widthInches %
                                                heightInches);
 
@@ -546,7 +546,7 @@ Error PlotManager::savePlotAsMetafile(const core::FilePath& filePath,
    boost::format fmt("{ require(grDevices, quietly=TRUE); "
                      "  win.metafile(filename=\"%1%\", width=%2%, height=%3%, "
                      "               restoreConsole=FALSE); }");
-   std::string deviceCreationCode = boost::str(fmt % string_utils::utf8ToSystem(filePath.getAbsolutePath()) %
+   std::string deviceCreationCode = boost::str(fmt % filePath.getAbsolutePath() %
                                                      widthInches %
                                                      heightInches);
 
