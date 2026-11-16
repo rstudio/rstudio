@@ -211,9 +211,9 @@ fi
 githubUrl="https://api.github.com/repos/rstudio/latest-builds/contents/content/$product/$flower/$build/$version_stem.md"
 curlOutFname="curl.out"
 
-# curl's --retry resends on timeouts, refused connections, and HTTP 408/5xx (429
-# too on curl 7.66+; rhel8 ships 7.61), with exponential backoff. -w reports only
-# the final attempt's status.
+# curl's --retry resends on timeouts, refused connections, and HTTP
+# 408/500/502/503/504 (429 too on curl 7.66+; rhel8 ships 7.61), with exponential
+# backoff. -w reports only the final attempt's status.
 curlRetryArgs=(--retry 5 --retry-connrefused)
 
 # PUT a payload to the build file, setting httpCode.
