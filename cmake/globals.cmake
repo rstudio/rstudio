@@ -170,22 +170,33 @@ if(RSTUDIO_USE_CCACHE AND
    # loop, and we break on the first match).
    #
    # A 'ccache' that is really sccache must be rejected without running it:
-   # sccache treats its invoked name as the compiler to wrap, so it breaks the
-   # build as a launcher, and its 'ccache --version' fails or (with no real
-   # ccache later on PATH) recurses into itself and never returns, leaving a
-   # detached sccache server behind either way. Skip one that resolves to
-   # sccache; validate the rest via --version with an anchored "^<name>" match,
-   # under a TIMEOUT for copies or hard links the name check misses. Either way
-   # we fall through and find the genuine sccache by its own name.
+   # sccache treats any invoked name but its own as the compiler to wrap, so it
+   # breaks the build as a launcher, and its 'ccache --version' fails or (with
+   # no real ccache later on PATH) recurses into itself and never returns,
+   # leaving a detached sccache server and hung clients behind either way. Skip
+   # one whose symlink target is named like sccache, and also search the target's
+   # directory when looking for sccache by name. That directory goes last, so a
+   # Homebrew install keeps its stable bin/ path over a versioned Cellar path
+   # that upgrades remove. Validate the rest via --version with an anchored
+   # "^<name>" match, under a TIMEOUT for copies or hard links the name check
+   # misses.
    set(RSTUDIO_COMPILER_CACHE "")
+   set(_cache_fallback_dir "")
 
    foreach(_cache_name ccache sccache)
       string(TOUPPER "${_cache_name}" _cache_var)
-      find_program(${_cache_var}_EXECUTABLE NAMES ${_cache_name} HINTS "${RSTUDIO_HOMEBREW_BIN}")
+      find_program(
+         ${_cache_var}_EXECUTABLE
+         NAMES ${_cache_name}
+         HINTS "${RSTUDIO_HOMEBREW_BIN}"
+         PATHS ${_cache_fallback_dir})
       if(${_cache_var}_EXECUTABLE)
          get_filename_component(_cache_real_path "${${_cache_var}_EXECUTABLE}" REALPATH)
-         get_filename_component(_cache_real_name "${_cache_real_path}" NAME_WE)
-         if(_cache_name STREQUAL "ccache" AND _cache_real_name STREQUAL "sccache")
+         get_filename_component(_cache_real_name "${_cache_real_path}" NAME)
+         string(TOLOWER "${_cache_real_name}" _cache_real_name)
+         if(_cache_name STREQUAL "ccache" AND _cache_real_name MATCHES "^sccache([-.]|$)")
+            message(STATUS "Not using ${CCACHE_EXECUTABLE} as ccache: it resolves to ${_cache_real_path}")
+            get_filename_component(_cache_fallback_dir "${_cache_real_path}" DIRECTORY)
             continue()
          endif()
 
@@ -195,7 +206,11 @@ if(RSTUDIO_USE_CCACHE AND
             ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE
             RESULT_VARIABLE RSTUDIO_CACHE_RESULT
             TIMEOUT 5)
-         if(RSTUDIO_CACHE_RESULT EQUAL 0 AND RSTUDIO_CACHE_VERSION MATCHES "^${_cache_name}")
+         if(NOT RSTUDIO_CACHE_RESULT EQUAL 0)
+            message(STATUS "Not using ${${_cache_var}_EXECUTABLE} as ${_cache_name}: '--version' failed (${RSTUDIO_CACHE_RESULT})")
+         elseif(NOT RSTUDIO_CACHE_VERSION MATCHES "^${_cache_name}")
+            message(STATUS "Not using ${${_cache_var}_EXECUTABLE} as ${_cache_name}: '--version' does not report ${_cache_name}")
+         else()
             set(RSTUDIO_COMPILER_CACHE "${${_cache_var}_EXECUTABLE}")
             set(RSTUDIO_COMPILER_CACHE_NAME "${_cache_name}")
             break()
