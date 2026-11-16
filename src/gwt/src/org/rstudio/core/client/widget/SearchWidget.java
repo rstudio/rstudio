@@ -25,6 +25,11 @@ import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 
+import com.google.gwt.aria.client.AutocompleteValue;
+import com.google.gwt.aria.client.ComboboxRole;
+import com.google.gwt.aria.client.ExpandedValue;
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -41,6 +46,7 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -48,8 +54,10 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.MenuBar;
+import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.SuggestBox.DefaultSuggestionDisplay;
 import com.google.gwt.user.client.ui.SuggestBox.SuggestionCallback;
@@ -434,6 +442,30 @@ public class SearchWidget extends Composite implements SearchDisplay
    public boolean isFocused()
    {
       return focusTracker_.isFocused();
+   }
+
+   // For a menu whose highlight the arrow keys move while focus stays in this box.
+   // The box, not the menu, then has to tell screen readers which item is highlighted.
+   public void controlMenu(Element menuEl, HasSelectionHandlers<MenuItem> menu)
+   {
+      final Element input = getInputElement();
+      if (StringUtil.isNullOrEmpty(menuEl.getId()))
+         menuEl.setId(DOM.createUniqueId());
+
+      ComboboxRole role = Roles.getComboboxRole();
+      role.set(input);
+      role.setAriaExpandedState(input, ExpandedValue.TRUE);
+      role.setAriaAutocompleteProperty(input, AutocompleteValue.LIST);
+      role.setAriaControlsProperty(input, Id.of(menuEl));
+
+      menu.addSelectionHandler(event ->
+      {
+         MenuItem item = event.getSelectedItem();
+         if (item == null)
+            role.removeAriaActivedescendantProperty(input);
+         else
+            role.setAriaActivedescendantProperty(input, Id.of(item.getElement()));
+      });
    }
 
    public Element getInputElement()

@@ -27,6 +27,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 
 public class ScrollableToolbarPopupMenu extends ToolbarPopupMenu
+   implements HasSelectionHandlers<MenuItem>
 {
    @Override
    protected ToolbarMenuBar createMenuBar()
@@ -48,9 +49,10 @@ public class ScrollableToolbarPopupMenu extends ToolbarPopupMenu
       return menuBar;
    }
    
+   @Override
    public HandlerRegistration addSelectionHandler(SelectionHandler<MenuItem> handler)
    {
-      return ((ScrollableToolbarMenuBar)menuBar_).addSelectionHandler(handler);
+      return menuBar_.addSelectionHandler(handler);
    }
 
 
@@ -117,25 +119,11 @@ public class ScrollableToolbarPopupMenu extends ToolbarPopupMenu
    }
 
    protected class ScrollableToolbarMenuBar extends ToolbarMenuBar
-      implements HasSelectionHandlers<MenuItem>
    {
       public ScrollableToolbarMenuBar(boolean vertical)
       {
          super(vertical);
          setFocusOnHoverEnabled(false);
-      }
-
-      public HandlerRegistration addSelectionHandler(
-            SelectionHandler<MenuItem> handler)
-      {
-         return addHandler(handler, SelectionEvent.getType());
-      }
-
-      @Override
-      public void selectItem(MenuItem item)
-      {
-         super.selectItem(item);
-         SelectionEvent.fire(this, item);
       }
    }
 

@@ -30,6 +30,9 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.logical.shared.HasSelectionHandlers;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
@@ -42,7 +45,7 @@ import elemental2.dom.DomGlobal;
 import elemental2.dom.EventListener;
 
 public class BaseMenuBar extends MenuBar
-                         implements CommandHandler
+                         implements CommandHandler, HasSelectionHandlers<MenuItem>
 {
    private class PositionComparator implements Comparator<UIObject>
    {
@@ -426,6 +429,20 @@ public class BaseMenuBar extends MenuBar
 
       List<MenuItem> items = getItems();
       return items.get(index);
+   }
+
+   // Fired as the highlight moves, whether by the arrow keys or the mouse
+   @Override
+   public HandlerRegistration addSelectionHandler(SelectionHandler<MenuItem> handler)
+   {
+      return addHandler(handler, SelectionEvent.getType());
+   }
+
+   @Override
+   public void selectItem(MenuItem item)
+   {
+      super.selectItem(item);
+      SelectionEvent.fire(this, item);
    }
 
    public void selectItem(int index)
