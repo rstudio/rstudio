@@ -54,7 +54,6 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
@@ -449,14 +448,11 @@ public class SearchWidget extends Composite implements SearchDisplay
    public void controlMenu(Element menuEl, HasSelectionHandlers<MenuItem> menu)
    {
       final Element input = getInputElement();
-      if (StringUtil.isNullOrEmpty(menuEl.getId()))
-         menuEl.setId(DOM.createUniqueId());
-
       ComboboxRole role = Roles.getComboboxRole();
       role.set(input);
       role.setAriaExpandedState(input, ExpandedValue.TRUE);
       role.setAriaAutocompleteProperty(input, AutocompleteValue.LIST);
-      role.setAriaControlsProperty(input, Id.of(menuEl));
+      role.setAriaControlsProperty(input, Id.of(DomUtils.ensureHasId(menuEl)));
 
       menu.addSelectionHandler(event ->
       {
