@@ -60,7 +60,24 @@ Currently, the style diagnostics feature is not user configurable; this may be a
 
 Diagnostics for other languages, such as C / C++, JavaScript, and Python, are also available.
 
+### C / C++ diagnostics
+
 The C / C++ diagnostics engine is powered by `libclang`, and is able to report compiler errors and warnings inline in the source document.
+
+RStudio derives the compiler flags for a file from the way it would normally be built. For sources in an R package, the flags come from `R CMD SHLIB`, so the package's `src/Makevars` and `LinkingTo` dependencies are respected. For standalone files, they come from `Rcpp::sourceCpp()` or `cpp11::cpp_source()`. All errors in a file are reported; RStudio does not stop after clang's default error limit.
+
+To add or override flags, create a `compile_flags.txt` file containing one argument per line, in the same format used by [clangd](https://clangd.llvm.org/design/compile-commands#compile_flagstxt). For a file inside the current project, RStudio looks for this file in the source file's directory and its parent directories, up to the project directory; for any other file, only the source file's own directory is checked. Its contents are appended to the generated flags, so they take precedence over the flags RStudio generates. Relative paths in include and other path options, such as `-Iinst/include`, are resolved against the directory containing `compile_flags.txt`; paths beginning with `=` or `$SYSROOT`, which clang resolves against the sysroot, are left as written. For example, to stop reporting after 50 errors and silence a warning:
+
+```
+-ferror-limit=50
+-Wno-unused-parameter
+```
+
+Changes to `compile_flags.txt` take effect the next time diagnostics run; no restart is required. Problems with the flags themselves, such as an unknown argument, are reported as diagnostics on the first line of the source file.
+
+In an R package, add `compile_flags.txt` to `.Rbuildignore` (for example, with `usethis::use_build_ignore("compile_flags.txt")`) so that `R CMD build` leaves it out of the package and `R CMD check` does not report it as a non-standard file.
+
+To see the flags being passed to `libclang`, run `.rs.setClangDiagnostics(2)` in the R console, which restarts the R session, or set the `clang_verbose` preference to `2` in [`rstudio-prefs.json`](../productivity/custom-settings.qmd) and restart the R session yourself. The flags are then printed in the R console (RStudio shows the R session's standard error stream there) the next time a file is parsed from scratch, that is, when it is first opened or when its flags change; a reparse of an already indexed file does not print them again.
 
 ## Viewing diagnostics
 

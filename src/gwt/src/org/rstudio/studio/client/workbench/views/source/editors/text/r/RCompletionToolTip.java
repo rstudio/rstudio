@@ -21,7 +21,6 @@ import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositioner;
-import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositioner.Coordinates;
 import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
@@ -97,15 +96,6 @@ public class RCompletionToolTip extends CppCompletionToolTip
       return false;
    }
 
-   public void resolvePositionAndShow(String signature,
-                                      Rectangle rectangle)
-   {
-      resolvePositionAndShow(
-            signature,
-            rectangle.getLeft(),
-            (rectangle.getTop() + rectangle.getBottom()) / 2);
-   }
-
    public void resolvePositionAndShow(String signature)
    {
       setCursorAnchor();
@@ -147,8 +137,7 @@ public class RCompletionToolTip extends CppCompletionToolTip
    }
 
    public void resolvePositionAndShow(String signature,
-                                      int left,
-                                      int top)
+                                      Rectangle line)
    {
       signature = truncateSignature(signature);
       if (signature != null)
@@ -156,10 +145,10 @@ public class RCompletionToolTip extends CppCompletionToolTip
 
       // resolve the tooltip width (allow the left bounds to be
       // nudged if the tooltip would be too large to fit)
-      left = resolveWidth(left, signature);
+      int left = resolveWidth(line.getLeft(), signature);
 
       // show the tooltip
-      resolvePositionRelativeTo(left, top);
+      resolvePositionRelativeTo(left, line);
       setVisible(true);
       show();
 
@@ -213,23 +202,34 @@ public class RCompletionToolTip extends CppCompletionToolTip
    }
 
    private void resolvePositionRelativeTo(final int left,
-                                          final int top)
+                                          final Rectangle line)
    {
-      setPopupPositionAndShow(new PositionCallback()
+      final int viewportTop = docDisplay_.getViewportBounds().getTop();
+      final Rectangle anchors = getAnchors(line, docDisplay_.getLineHeight());
+
+      // Prefer above the line, but not over the editor's toolbar or
+      // tabs, nor off the window.
+      setPopupPositionAndShow((int offsetWidth, int offsetHeight) ->
       {
-         @Override
-         public void setPosition(int offsetWidth, int offsetHeight)
-         {
-            Coordinates position = PopupPositioner.getPopupPosition(
-                  offsetWidth,
-                  offsetHeight,
-                  left,
-                  top,
-                  8,
-                  false);
-            setPopupPosition(position.getLeft(), position.getTop());
-         }
+         setPopupPosition(
+               PopupPositioner.constrainLeft(offsetWidth, left, GAP),
+               PopupPositioner.getTopPreferringAbove(
+                     offsetHeight, anchors, GAP, viewportTop));
       });
+   }
+
+   /**
+    * The anchors a tooltip is placed from beside a line (see
+    * PopupPositioner.getTopPreferringAbove): above, the middle of the
+    * line's bounds; below, the bottom of the whole line, as the bounds can
+    * be shorter than the line (see AceEditor.getPositionBounds).
+    */
+   public static Rectangle getAnchors(Rectangle line, double lineHeight)
+   {
+      int middle = (line.getTop() + line.getBottom()) / 2;
+      int lineBottom = line.getTop() + (int) Math.ceil(lineHeight);
+      return new Rectangle(
+            line.getLeft(), middle, line.getWidth(), lineBottom - middle);
    }
 
    private void setAnchor(Position start, Position end)
@@ -323,4 +323,7 @@ public class RCompletionToolTip extends CppCompletionToolTip
    private HandlerRegistration nativePreviewReg_;
    private AnchoredSelection anchor_;
    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
+
+   // Space between the line and the tooltip.
+   private static final int GAP = 8;
 }

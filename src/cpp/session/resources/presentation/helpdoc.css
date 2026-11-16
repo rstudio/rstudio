@@ -11,6 +11,6 @@ pre code {
    display: block; padding: 0.5em;
 }
 
-code.r, code.cpp {
+code.r, code.cpp, code.language-r, code.language-cpp {
    background-color: #F8F8F8;
 }

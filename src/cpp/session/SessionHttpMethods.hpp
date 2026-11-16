@@ -56,6 +56,14 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
 boost::shared_ptr<HttpConnection> handleAsyncRpc(boost::shared_ptr<HttpConnection> ptrConnection);
 core::WaitResult startHttpConnectionListenerWithTimeout();
 void registerGwtHandlers();
+
+// Tell the client that the quit_session it had acknowledged did not happen:
+// R refused to quit (.Last() failed, or the workspace could not be saved)
+// and the session goes on, so the client must drop what that quit was for
+// (an R version switch, a desktop update). A no-op unless a quit_session is
+// being handled; called when R comes back to its top-level prompt and when
+// r::session::quit() returns, whichever an aborted quit reaches first.
+void notifyQuitAborted();
 std::string clientVersion();
 std::string nextSessionUrl();
 bool protocolDebugEnabled();

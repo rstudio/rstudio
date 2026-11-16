@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.plots.ui.manipulator;
 
+import static org.rstudio.core.client.dom.LabelTestHelper.labelTextFor;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -56,7 +58,7 @@ public class ManipulatorControlTests extends GWTTestCase
             "type", "Points", picker, values -> {}));
 
       Element select = DomUtils.querySelector(control.getElement(), "select");
-      assertEquals("Plot type:", labelTextFor(control, select));
+      assertEquals("Plot type:", labelTextFor(control.getElement(), select));
    }
 
    public void testCheckBoxInputIsLabelled()
@@ -67,7 +69,7 @@ public class ManipulatorControlTests extends GWTTestCase
             "axes", true, checkBox, values -> {}));
 
       Element input = DomUtils.querySelector(control.getElement(), "input");
-      assertEquals("Show axes", labelTextFor(control, input));
+      assertEquals("Show axes", labelTextFor(control.getElement(), input));
    }
 
    public void testSliderExposesRoleNameAndRange()
@@ -415,15 +417,6 @@ public class ManipulatorControlTests extends GWTTestCase
       Element slider = DomUtils.querySelector(control.getElement(), "[role=slider]");
       assertNotNull("no element with role=slider", slider);
       return slider;
-   }
-
-   private static String labelTextFor(Widget control, Element target)
-   {
-      assertFalse("control has no id", target.getId().isEmpty());
-      Element label = DomUtils.querySelector(
-            control.getElement(), "label[for=\"" + target.getId() + "\"]");
-      assertNotNull("no <label> for the control", label);
-      return label.getInnerText();
    }
 
    private static void pressKey(Element target, int keyCode)

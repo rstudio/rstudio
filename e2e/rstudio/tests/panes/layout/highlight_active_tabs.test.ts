@@ -3,6 +3,7 @@ import { clearPref, dismissAllModals, executeCommand, getPref, resetLayoutZoom, 
 import { executeInConsole } from '@pages/console_pane.page';
 import { TIMEOUTS } from '@utils/constants';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
+import { waitForRpcResponse } from '@utils/rpc';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { DARK_THEME, LIGHT_THEME, expectThemeStylesheet } from '@utils/theme';
 import type { Locator, Page } from 'playwright';
@@ -116,7 +117,7 @@ test.describe.serial('Active tab highlighting preference', () => {
 
     dialog = await openBasicOptions(page);
     await dialog.getByRole('checkbox', { name: LABEL }).uncheck();
-    const saved = page.waitForResponse(response => response.url().endsWith('/rpc/set_user_prefs'));
+    const saved = waitForRpcResponse(page, 'set_user_prefs');
     await dialog.locator('#rstudio_dlg_apply').click();
     await saved;
     await expect.poll(() => getPref(page, PREF)).toBe(false);

@@ -18,7 +18,6 @@ import { Callbacks, CallbackData } from './preload';
 import { changeLanguage, initI18n, localize } from '../../../main/i18n-manager';
 
 import './styles.css';
-import { checkForNewLanguage } from '../../utils';
 import { logString } from '../../renderer-logging';
 
 declare global {
@@ -120,17 +119,7 @@ window.addEventListener('load', () => {
     true,
   );
 
-  checkForNewLanguage()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .then(async (newLanguage: any) =>
-      changeLanguage('' + newLanguage).then(() => {
-        updateLabels();
-      }),
-    )
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .catch((err: any) => {
-      console.error('An error happened when trying to fetch a new locale: ', err);
-    });
+  void changeLanguage(window.desktopLanguage).then(updateLabels);
 });
 
 function closeWindow() {

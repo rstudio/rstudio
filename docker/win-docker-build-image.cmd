@@ -28,7 +28,6 @@ REM Build the image.
     --memory 16GB ^
     %NO_CACHE% ^
     --build-arg JENKINS_URL=development-build ^
-    --build-arg GITHUB_LOGIN=%DOCKER_GITHUB_LOGIN% ^
     .
 
 if %ERRORLEVEL% NEQ 0 (

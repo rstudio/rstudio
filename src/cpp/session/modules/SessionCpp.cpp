@@ -61,7 +61,7 @@ std::string cppProjectStyleImpl()
    }
 
    // ---- check if cpp11 was vendored
-   FilePath cpp11Header = context.directory().completePath("inst/include/cpp11.hpp");
+   FilePath cpp11Header = context.packageDirectory().completePath("inst/include/cpp11.hpp");
    if (cpp11Header.exists())
    {
       return "cpp11";

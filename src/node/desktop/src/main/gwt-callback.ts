@@ -41,6 +41,7 @@ import { logger } from '../core/logger';
 import { isCentOS } from '../core/system';
 import { resolveTemplateVar } from '../core/template-filter';
 import desktop from '../native/desktop.node';
+import { setDefaultApplicationForRFiles } from './default-file-handler';
 import { ChooseRModalWindow } from '../ui/widgets/choose-r';
 import { appState } from './app-state';
 import { clipboardWritesSettled, queueClipboardWrite, readClipboardText, readClipboardType } from './clipboard-queue';
@@ -56,6 +57,8 @@ import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
 import { AuthorizationCancelledError, frameworkVersion, isOrthogonal, makeOrthogonal } from './r-framework';
 import { openMinimalWindow } from './minimal-window';
+import { electronUpdaterHost, Updater } from './updater';
+import { kProjectNone } from '../core/r-user-data';
 import {
   defaultFonts,
   ElectronDesktopOptions,
@@ -63,8 +66,11 @@ import {
 } from './preferences/electron-desktop-options';
 import {
   parseFilter,
-  handleLocaleCookies,
   isAutomated,
+  openExternalPath,
+  openExternalUrl,
+  openFileUrlWithWindowsShell,
+  showWindowForAutomation,
   resolveAliasedPath,
   raiseAndActivateWindow,
 } from './utils';
@@ -73,8 +79,18 @@ import { getenv } from '../core/environment';
 import { safeError } from '../core/err';
 import { userHomePathString } from '../core/user';
 import { buildInfo } from './build-info';
-import { showPersistentSplashScreen } from './splash-screen';
 import { harvestRendererTiming, startupCheckpoint } from './startup-timing';
+
+/**
+ * The executable a session is launched from for the R the client names:
+ * sessions launched from bin\R.exe fail to load on Windows, so the
+ * architecture-specific executable is used, as the Choose R dialog does.
+ * Applied wherever the client's path is taken, so that the R prepared by
+ * setPendingRVersion() is the one setPendingQuit() then finds.
+ */
+export function preparedRExecutablePath(rExecutablePath: string): string {
+  return process.platform === 'win32' ? fixWindowsRExecutablePath(rExecutablePath) : rExecutablePath;
+}
 
 export enum PendingQuit {
   PendingQuitNone,
@@ -104,6 +120,12 @@ export function formatSelectedVersionForUi(rBinDir: string) {
   }
 }
 
+/** How long setPendingRVersion() lets the chosen R take to describe itself. */
+const kPendingRVersionTimeoutMs = 30000;
+
+/** The files a GTK file manager (Nautilus, Nemo, Caja, Thunar) copied or cut. */
+const kGnomeCopiedFilesFormat = 'electron application/osclipboard;format="x-special/gnome-copied-files"';
+
 /**
  * The R version line for the default 64-bit R at `rHomeDir`, labeled by the R
  * that actually runs: [ARM64] when it runs from bin, [64-bit] from bin\x64.
@@ -126,6 +148,8 @@ export class GwtCallback extends EventEmitter {
   // the R executable to launch the next session with (set alongside a
   // pending restart when the user switches R versions)
   pendingRVersion = '';
+  /** the R executables setPendingRVersion() found usable, which a quit may then name */
+  preparedRVersions = new Set<string>();
 
   private hasFontConfig = false;
   private owners = new Set<GwtWindow>();
@@ -135,6 +159,8 @@ export class GwtCallback extends EventEmitter {
 
   monospaceFonts: string[] = [];
   proportionalFonts: string[] = [];
+  // in-app updates; GWT drives it through the desktop_*_update ipc below
+  updater: Updater;
 
   /**
    * Opens a file in the main window and activates it.
@@ -167,6 +193,7 @@ export class GwtCallback extends EventEmitter {
   constructor(public mainWindow: MainWindow) {
     super();
     this.owners.add(mainWindow);
+    this.updater = new Updater(electronUpdaterHost(mainWindow));
 
     if (process.platform === 'linux') {
       try {
@@ -207,14 +234,36 @@ export class GwtCallback extends EventEmitter {
       console.log(output);
     });
 
+    ipcMain.handle('desktop_check_for_updates', async (_event, manual: boolean) => {
+      return JSON.stringify(await this.updater.checkForUpdates(manual));
+    });
+
+    ipcMain.on('desktop_download_update', (_event, version: string) => {
+      void this.updater.downloadUpdate(version);
+    });
+
+    ipcMain.handle('desktop_can_install_update', async (_event, version: string) => {
+      return this.updater.canInstallUpdate(version);
+    });
+
+    ipcMain.handle(
+      'desktop_install_update',
+      async (_event, version: string, projectFilePath: string, requestId: string) => {
+        // the session reports the project with the home directory aliased (~/...)
+        const project = projectFilePath === kProjectNone ? kProjectNone : resolveAliasedPath(projectFilePath);
+        return this.updater.installUpdate(version, project, requestId);
+      },
+    );
+
+    ipcMain.on('desktop_cancel_update_install', (_event, requestId: string) => {
+      this.updater.cancelPendingInstall(requestId);
+    });
+
     ipcMain.on('desktop_browse_url', (event, url: string) => {
-      // shell.openExternal() seems unreliable on Windows
-      // https://github.com/electron/electron/issues/31347
       if (process.platform === 'win32' && url.startsWith('file:///')) {
-        const path = decodeURI(url).substring('file:///'.length).replaceAll('/', '\\');
-        desktop.openExternal(path);
+        openFileUrlWithWindowsShell(url);
       } else {
-        void shell.openExternal(url);
+        void openExternalUrl(url);
       }
     });
 
@@ -392,14 +441,22 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_get_clipboard_uris', async () => {
+      // On Linux, Chromium 148+ reads the URI list through the XDG file
+      // transfer portal when the file manager offers it, and the list comes
+      // back empty when the portal lookup fails. GTK file managers also publish
+      // their own list ("copy" or "cut", then one URI per line), so use that.
+      // Entries in a URI list are CRLF-separated per RFC 2483.
+      const lines = await readClipboardType(['text/uri-list', kGnomeCopiedFilesFormat], async (blob, mimeType) => {
+        const entries = (await blob.text()).split(/\r?\n/);
+        return mimeType === kGnomeCopiedFilesFormat ? entries.slice(1) : entries;
+      });
+
       // if we don't have a URI list, nothing to do
-      const uriList = await readClipboardType('text/uri-list', async (blob) => blob.text());
-      if (uriList === undefined) {
+      if (lines === undefined) {
         return [];
       }
 
-      // return uri list as array; entries are CRLF-separated per RFC 2483
-      const parts = uriList.split(/\r?\n/).filter((x) => x.length > 0);
+      const parts = lines.filter((x) => x.length > 0);
 
       // Electron only puts percent-encoded file:// URIs here; decode them to
       // filesystem paths, with the forward slashes the visual editor expects
@@ -422,7 +479,7 @@ export class GwtCallback extends EventEmitter {
     // return the path to that file.
     ipcMain.handle('desktop_get_clipboard_image', async () => {
       // if we don't have any image, bail
-      const pngData = await readClipboardType('image/png', async (blob) => Buffer.from(await blob.arrayBuffer()));
+      const pngData = await readClipboardType(['image/png'], async (blob) => Buffer.from(await blob.arrayBuffer()));
       if (!pngData) {
         return '';
       }
@@ -487,14 +544,14 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_show_folder', (event, path: string) => {
-      shell.openPath(resolveAliasedPath(normalizeSeparatorsNative(path))).catch((value) => {
+      openExternalPath(resolveAliasedPath(normalizeSeparatorsNative(path))).catch((value) => {
         console.log('error:', value);
         logger().logErrorMessage(value);
       });
     });
 
     function showFileInSystemViewer(file: string) {
-      shell.openPath(resolveAliasedPath(normalizeSeparatorsNative(file))).catch((value) => {
+      openExternalPath(resolveAliasedPath(normalizeSeparatorsNative(file))).catch((value) => {
         console.log('error:', value);
         logger().logErrorMessage(value);
       });
@@ -562,7 +619,6 @@ export class GwtCallback extends EventEmitter {
 
       // ask the user what version of R they'd like to use
       const chooseRDialog = new ChooseRModalWindow(rInstalls, mainWindow.window);
-      void handleLocaleCookies(chooseRDialog);
 
       const [data, error] = await chooseRDialog.showModal();
       if (error) {
@@ -617,7 +673,7 @@ export class GwtCallback extends EventEmitter {
         const minimalWindow = openMinimalWindow(sender, name, url, width, height);
         minimalWindow.window.once('ready-to-show', () => {
           if (isAutomated()) {
-            minimalWindow.window.showInactive();
+            showWindowForAutomation(minimalWindow.window);
           } else {
             minimalWindow.window.show();
           }
@@ -760,10 +816,10 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on('desktop_bring_main_frame_to_front', () => {
       // GWT requests this on flows like opening a document from a satellite
-      // window. In automation mode, surface the window without stealing OS
-      // focus from whatever the user is doing while the tests run.
+      // window. In automation mode, leave OS focus and the window stacking
+      // alone for whatever the user is doing while the tests run.
       if (isAutomated()) {
-        this.mainWindow.window.showInactive();
+        showWindowForAutomation(this.mainWindow.window);
       } else {
         this.mainWindow.window.focus();
       }
@@ -823,14 +879,16 @@ export class GwtCallback extends EventEmitter {
       ElectronDesktopOptions().setRenderingEngine(engine);
     });
 
+    ipcMain.handle('desktop_set_default_application_for_r_files', async () => setDefaultApplicationForRFiles());
+
     // cleanClipboard rewrites the pasteboard, so it takes its turn with the
     // other clipboard writes instead of interleaving with a pending one
     ipcMain.on('desktop_clean_clipboard', (event, stripHtml) => {
       queueClipboardWrite(() => desktop.cleanClipboard(stripHtml));
     });
 
-    ipcMain.handle('desktop_set_pending_quit', (event, pendingQuit: number) => {
-      this.setPendingQuit(pendingQuit);
+    ipcMain.handle('desktop_set_pending_quit', (event, pendingQuit: number, rExecutablePath: string) => {
+      return this.setPendingQuit(pendingQuit, rExecutablePath);
     });
 
     ipcMain.handle('desktop_set_pending_r_version', async (event, rExecutablePath: string) => {
@@ -948,10 +1006,6 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on('desktop_set_enable_accessibility', (_event, enable) => {
       ElectronDesktopOptions().setAccessibility(enable);
-    });
-
-    ipcMain.on('desktop_set_enable_splash_screen', (_event, enable) => {
-      ElectronDesktopOptions().setEnableSplashScreen(enable);
     });
 
     ipcMain.on('desktop_set_autohide_menubar', (_event, autohide: boolean) => {
@@ -1182,10 +1236,6 @@ export class GwtCallback extends EventEmitter {
       }
       return resolveTemplateVar(varName, this.errorPageData);
     });
-
-    ipcMain.on('desktop_show_splash_screen', () => {
-      showPersistentSplashScreen();
-    });
   }
 
   addRVersionTooNewError(): void {
@@ -1196,8 +1246,7 @@ export class GwtCallback extends EventEmitter {
       }
 
       // Try to query the R version from the R installation
-      const rBinPath =
-        process.platform === 'win32' ? path.join(rHome, 'bin', 'R.exe') : path.join(rHome, 'bin', 'R');
+      const rBinPath = process.platform === 'win32' ? path.join(rHome, 'bin', 'R.exe') : path.join(rHome, 'bin', 'R');
 
       let rVersionStr: string;
       try {
@@ -1276,26 +1325,44 @@ export class GwtCallback extends EventEmitter {
     }
   }
 
-  setPendingQuit(pendingQuit: number): void {
+  /**
+   * Record what the coming session exit is for, and the R it should restart
+   * with (one setPendingRVersion() prepared), if any. The R is published
+   * only here, with the quit it was prepared for: a quit prepared but never
+   * recorded (its claim superseded, its save prompts cancelled) then leaves
+   * nothing for a later, unrelated quit to pick up. Answers '' once
+   * recorded, or why not.
+   */
+  setPendingQuit(pendingQuit: number, rExecutablePath = ''): string {
+    // the client names the R as it was given to setPendingRVersion()
+    const rPath = rExecutablePath ? preparedRExecutablePath(rExecutablePath) : '';
+    if (rPath && !this.preparedRVersions.has(rPath)) {
+      const interpolation = { escapeValue: false };
+      return (
+        i18next.t('gwtCallbackTs.rExecutableNotPrepared', { path: rExecutablePath, interpolation }) || rExecutablePath
+      );
+    }
+
     this.pendingQuit = pendingQuit;
+    this.pendingRVersion = rPath;
 
     // a quit that was abandoned (e.g. the session refused it) leaves no R
-    // switch behind for some later, unrelated restart
+    // switch or update install behind for some later, unrelated quit
     if (pendingQuit === PendingQuit.PendingQuitNone) {
-      this.pendingRVersion = '';
+      this.updater.cancelPendingInstall();
     }
+    return '';
   }
 
   /**
-   * Hold on to the R executable the next session should use, after checking
-   * that it runs as itself. Resolves to an error message when it doesn't,
-   * and '' otherwise; '' tells the client the R is ready, so a failure
-   * always says something.
+   * Prepare an R executable for the restart a quit is about to ask for, by
+   * checking that it runs as itself. Resolves to an error message when it
+   * doesn't, and '' otherwise; '' tells the client the R is ready, so a
+   * failure always says something. The R is used only by a quit that names
+   * it (see setPendingQuit).
    */
   async setPendingRVersion(rExecutablePath: string): Promise<string> {
-    // sessions launched from bin\R.exe fail to load on Windows; use the
-    // architecture-specific executable as the Choose R dialog does
-    const rPath = process.platform === 'win32' ? fixWindowsRExecutablePath(rExecutablePath) : rExecutablePath;
+    const rPath = preparedRExecutablePath(rExecutablePath);
 
     // the client escapes the message for display itself
     const interpolation = { escapeValue: false };
@@ -1312,8 +1379,11 @@ export class GwtCallback extends EventEmitter {
         return i18next.t('gwtCallbackTs.rExecutableNotOrthogonal', { path: rPath, interpolation }) || rPath;
       }
 
-      // queried in the background: R can take seconds to start
-      const [, error] = await detectREnvironmentAsync(rPath);
+      // queried in the background: R can take seconds to start. Bounded,
+      // because the client holds the quit for this answer (see
+      // ApplicationQuit.claimQuit) and an R that hangs must not hold it
+      // forever; a late answer prepares an R that no quit will name
+      const [, error] = await detectREnvironmentAsync(rPath, kPendingRVersionTimeoutMs);
       if (error) {
         logger().logError(error);
         return (
@@ -1325,7 +1395,7 @@ export class GwtCallback extends EventEmitter {
       return safeError(error).message || rPath;
     }
 
-    this.pendingRVersion = rPath;
+    this.preparedRVersions.add(rPath);
     return '';
   }
 
@@ -1366,14 +1436,20 @@ export class GwtCallback extends EventEmitter {
     return pending;
   }
 
+  /**
+   * What the session's exit is for, asked once when it exits. An accepted
+   * update is installed only by the quit-and-exit it was recorded for: an
+   * exit that restarts the session instead (Terminate R, a project switch
+   * accepted during a slow shutdown) or that nothing asked for (a crash)
+   * forgets it, or a later, unrelated quit would run the installer.
+   */
   collectPendingQuitRequest(): PendingQuit {
-    if (this.pendingQuit != PendingQuit.PendingQuitNone) {
-      const currentPendingQuit = this.pendingQuit;
-      this.pendingQuit = PendingQuit.PendingQuitNone;
-      return currentPendingQuit;
-    } else {
-      return PendingQuit.PendingQuitNone;
+    const pendingQuit = this.pendingQuit;
+    this.pendingQuit = PendingQuit.PendingQuitNone;
+    if (pendingQuit !== PendingQuit.PendingQuitAndExit) {
+      this.updater.cancelPendingInstall();
     }
+    return pendingQuit;
   }
 
   convertMessageBoxType(type: number): 'info' | 'warning' | 'error' | 'question' {

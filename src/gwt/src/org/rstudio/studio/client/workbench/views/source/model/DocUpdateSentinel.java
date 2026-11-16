@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.rstudio.core.client.Barrier.Token;
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.DebouncedCommand;
 import org.rstudio.core.client.Debug;
@@ -73,6 +74,17 @@ public class DocUpdateSentinel
    {
       public void onCompleted();
       public void onError(String message);
+   }
+
+   // Reports how a save went. A save refused because another process had the
+   // file open -- backup and antivirus software do so briefly -- goes to
+   // onFileInUseError, which callers may override to treat it as transient.
+   public static abstract class SaveIndicator implements ProgressIndicator
+   {
+      public void onFileInUseError(String message)
+      {
+         onError(message);
+      }
    }
 
    private class ReopenFileCallback extends ServerRequestCallback<SourceDocument>
@@ -144,7 +156,7 @@ public class DocUpdateSentinel
       eventBus_ = events;
       prefs_ = prefs;
       chunkDefProvider_ = chunkDefProvider;
-      changeTracker_ = docDisplay.getChangeTracker();
+      changeTracker_ = docDisplay.createChangeTracker();
       saveCommands_ = new ArrayList<>();
       propertyChangeHandlers_ = new HashMap<>();
       
@@ -206,7 +218,7 @@ public class DocUpdateSentinel
                   // Save one last time before the app quits or reloads.
                   final Token token = event.acquire();
                   boolean saving = doSave(null, null, null, true,
-                        new ProgressIndicator()
+                        new SaveIndicator()
                   {
                      public void onProgress(String message)
                      {
@@ -273,7 +285,7 @@ public class DocUpdateSentinel
             @Override
             public void onCompleted()
             {
-               onSaved.execute();
+               runWhenSavedDocCurrent(retryWrite, onSaved, onError);
             }
 
             @Override
@@ -286,13 +298,12 @@ public class DocUpdateSentinel
       }
       else if (changeTracker_.hasChanged())
       {
-         boolean saved = doSave(null, null, null, retryWrite, new ProgressIndicator() {
+         boolean saved = doSave(null, null, null, retryWrite, new SaveIndicator() {
 
             @Override
             public void onCompleted()
             {
-               if (onSaved != null)
-                  onSaved.execute();
+               runWhenSavedDocCurrent(retryWrite, onSaved, onError);
             }
 
             @Override
@@ -317,6 +328,29 @@ public class DocUpdateSentinel
          onSaved.execute();
       }
    }
+
+   // A save completes even if the document changed while it was in flight,
+   // leaving the session's copy behind the editor; callers of withSavedDoc()
+   // rely on the session having what the editor shows. The tracker is only
+   // reset when nothing changed during the save, so hasChanged() answers
+   // whether another pass is needed (a line widget resize also counts, and
+   // costs one no-op pass). Defer that save until the finishing one clears
+   // isSaving_, or it would just queue behind it.
+   private void runWhenSavedDocCurrent(final boolean retryWrite,
+                                       final Command onSaved,
+                                       final CommandWithArg<String> onError)
+   {
+      if (changeTracker_.hasChanged())
+      {
+         Scheduler.get().scheduleDeferred(() ->
+            withSavedDocImpl(retryWrite, onSaved, onError));
+      }
+      else if (onSaved != null)
+      {
+         onSaved.execute();
+      }
+   }
+
    private boolean maybeAutoSave()
    {
       if (quit_.isQuitting() || quit_.isSuspendingAndRestarting())
@@ -326,7 +360,7 @@ public class DocUpdateSentinel
       
       if (changeTracker_.hasChanged())
       {
-         return doSave(null, null, null, false, new ProgressIndicator()
+         return doSave(null, null, null, false, new SaveIndicator()
          {
 
             @Override
@@ -355,19 +389,23 @@ public class DocUpdateSentinel
                
                if (!ignoreError)
                {
-                  // do not show the error if it is a transient autosave related issue - this can occur fairly frequently
-                  // when attempting to save files that are being backed up by external software
-                  if (!message.contains(constants_.processStillBeingUsedTextEditingTarget()))
-                  {
-                     loggedAutosaveError_ = true;
+                  loggedAutosaveError_ = true;
 
-                     RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                           constants_.errorAutosavingFile(),
-                           constants_.rStudioUnableToAutosave());
-                  }
+                  RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+                        constants_.errorAutosavingFile(),
+                        constants_.rStudioUnableToAutosave());
                }
 
                // Use regular completed callback for indicator.
+               if (progress_ != null)
+                  progress_.onCompleted();
+            }
+
+            @Override
+            public void onFileInUseError(String message)
+            {
+               // Transient, and frequent while external software backs files
+               // up, so don't report it.
                if (progress_ != null)
                   progress_.onCompleted();
             }
@@ -394,7 +432,7 @@ public class DocUpdateSentinel
       }
    }
 
-   public void changeFileType(String fileType, final ProgressIndicator progress)
+   public void changeFileType(String fileType, final SaveIndicator progress)
    {
       saveWithSuspendedAutoSave(null, fileType, null, true, progress);
    }
@@ -405,7 +443,7 @@ public class DocUpdateSentinel
                     // encoding==null means don't change value
                     String encoding,
                     boolean retryWrite,
-                    final ProgressIndicator progress)
+                    final SaveIndicator progress)
    {
       assert path != null;
       if (path == null)
@@ -417,7 +455,7 @@ public class DocUpdateSentinel
                                           String fileType,
                                           String encoding,
                                           boolean retryWrite,
-                                          final ProgressIndicator progress)
+                                          final SaveIndicator progress)
    {
       if (autosaver_ != null)
          autosaver_.suspend();
@@ -431,7 +469,7 @@ public class DocUpdateSentinel
          autosaver_ = null;
       }
 
-      doSave(path, fileType, encoding, retryWrite, new ProgressIndicator()
+      doSave(path, fileType, encoding, retryWrite, new SaveIndicator()
       {
          public void onProgress(String message)
          {
@@ -467,6 +505,15 @@ public class DocUpdateSentinel
             if (progress != null)
                progress.onError(message);
          }
+
+         @Override
+         public void onFileInUseError(String message)
+         {
+            if (autosaver_ != null)
+               autosaver_.resume();
+            if (progress != null)
+               progress.onFileInUseError(message);
+         }
       });
    }
 
@@ -474,7 +521,7 @@ public class DocUpdateSentinel
                           String fileType,
                           String encoding,
                           boolean retryWrite,
-                          ProgressIndicator progress)
+                          SaveIndicator progress)
    {
       boolean didSave = false;
       try
@@ -521,18 +568,12 @@ public class DocUpdateSentinel
                               final String fileType,
                               final String encoding,
                               final boolean retryWrite,
-                              final ProgressIndicator progress)
+                              final SaveIndicator progress)
    {
-      /* We need to fork the change tracker so that we can "mark" the moment
-         in history when we took the contents from the source doc, so that
-         if the document is edited while the save is in progress we don't
-         reset the true change tracker's state to a version we haven't
-         actually sent to the server. */
-      final ChangeTracker thisChangeTracker = changeTracker_.fork();
-
-      // we only want to know about changes that happen during this save operation,
-      // so we reset the forked change tracker to its initial state.
-      thisChangeTracker.reset();
+      // Mark the moment we take the editor's contents, so that an edit made
+      // while the save is in flight doesn't reset the change tracker to a
+      // version we never sent to the server.
+      final int savedVersion = changeTracker_.getVersion();
 
       final String newContents = docDisplay_.getCode();
       String oldContents = sourceDoc_.getContents();
@@ -615,7 +656,10 @@ public class DocUpdateSentinel
 
                   if (progress != null)
                   {
-                     progress.onError(errorMessage);
+                     if (isFileInUseError(error))
+                        progress.onFileInUseError(errorMessage);
+                     else
+                        progress.onError(errorMessage);
                   }
 
                   // Attempt to report save error.
@@ -645,7 +689,7 @@ public class DocUpdateSentinel
                      // we saved, then we know we're all synced up.
                      try
                      {
-                        if (!thisChangeTracker.hasChanged())
+                        if (changeTracker_.getVersion() == savedVersion)
                            changeTracker_.reset();
 
                         // update the foldSpec and newChunkDefs so we
@@ -701,6 +745,15 @@ public class DocUpdateSentinel
             });
 
       return true;
+   }
+
+   // Only a Windows session reports Win32 error codes.
+   private static boolean isFileInUseError(ServerError error)
+   {
+      ServerErrorCause cause = error.getCause();
+      return BrowseCap.isWindowsDesktop() &&
+             cause != null &&
+             cause.isWindowsSharingViolation();
    }
 
    private void onSaveComplete()

@@ -297,11 +297,12 @@ public class CppCompletionRequest
    {
       switch (type)
       {
-         case CppDiagnostic.IGNORED: return constants_.ignored();
-         case CppDiagnostic.NOTE:    return constants_.note();
-         case CppDiagnostic.WARNING: return constants_.warningLowercase();
-         case CppDiagnostic.ERROR:   return constants_.error();
-         case CppDiagnostic.FATAL:   return constants_.fatal();
+         case CppDiagnostic.IGNORED: return "ignored";
+         case CppDiagnostic.NOTE:    return "note";
+         case CppDiagnostic.WARNING: return "warning";
+         // the editor has no "fatal" lint type; show fatal errors as errors
+         case CppDiagnostic.ERROR:
+         case CppDiagnostic.FATAL:   return "error";
          default: return "";
       }
    }

@@ -5,7 +5,7 @@
 // runner.
 import { test, expect } from '@fixtures/rstudio.fixture';
 import type { Page } from '@playwright/test';
-import { CONSOLE_OUTPUT, executeInConsole } from '@pages/console_pane.page';
+import { executeInConsoleChecked } from '@pages/console_pane.page';
 import { CONFIRM_BTN } from '@pages/modals.page';
 import { executeCommand, openProject } from '@utils/commands';
 import { heredoc } from '@utils/heredoc';
@@ -45,30 +45,6 @@ const NEW_BRANCH = 'feature/new-worktree';
 const BRANCH_DIALOG_BRANCH = 'feature/from-branch-dialog';
 
 /**
- * executeInConsole only confirms that R reached a new prompt, which an R error
- * does just as readily as a success; scrape the output this command produced
- * for an error header so a failed setup step fails here, not as a later
- * unrelated-looking timeout.
- */
-async function executeInConsoleChecked(
-  page: Page,
-  command: string,
-  opts: { timeout?: number } = {},
-): Promise<void> {
-  const before = await page.locator(CONSOLE_OUTPUT).innerText();
-  await executeInConsole(page, command, { wait: true, timeout: opts.timeout });
-  const after = await page.locator(CONSOLE_OUTPUT).innerText();
-
-  const emitted = after.startsWith(before) ? after.slice(before.length) : after;
-  const errMatch = emitted.match(/(?:Error in|Error:)[^\n]*(?:\n[ \t]+[^\n]*)*/);
-  if (errMatch) {
-    throw new Error(
-      `R error running "${command.slice(0, 120)}": ${errMatch[0].replace(/\n+/g, ' | ').trim()}`,
-    );
-  }
-}
-
-/**
  * Open the Git pane's branch menu and return its item texts. Waits for the
  * button to show `currentBranch` first: the pane refreshes its status when
  * selected, and the menu has nothing to list until that has completed.
@@ -90,8 +66,14 @@ async function openBranchMenu(page: Page, currentBranch: string): Promise<string
 
 // Items of the open branch popup; it is the only menu open while the test
 // reads it (the top menubar's entries are menuitems too, but not in a menu).
+// Worktrees are radio items, the current one checked.
 function menuItems(page: Page) {
-  return page.getByRole('menu').getByRole('menuitem');
+  return page.getByRole('menu').locator('[role=menuitem], [role=menuitemradio]');
+}
+
+// The worktree items, as screen readers see them
+function worktreeItems(page: Page, checked: boolean) {
+  return page.getByRole('menu').getByRole('menuitemradio', { checked });
 }
 
 test.describe.serial('Git pane worktrees', () => {
@@ -161,6 +143,15 @@ test.describe.serial('Git pane worktrees', () => {
     expect(items).toContain('extra-local');
     expect(items).not.toContain(LINKED_BRANCH);
 
+    // -- the check mark is hidden from screen readers; the current worktree is
+    //    the checked radio item instead --
+    await expect(worktreeItems(page, true)).toHaveText([new RegExp(`/${PROJECT_NAME}$`)]);
+    await expect(worktreeItems(page, false)).toHaveText([new RegExp(`/${LINKED_WORKTREE}$`)]);
+    // the arrow keys skip the heading, so the first worktree is named with it,
+    // followed by the name its content gives it
+    await expect(worktreeItems(page, true)).toHaveAccessibleName(
+      new RegExp(`^\\(worktrees\\) main .*/${PROJECT_NAME}$`));
+
     // -- selecting the linked worktree opens it as a project --
     await menuItems(page).filter({ hasText: new RegExp(`/${LINKED_WORKTREE}$`) }).click();
 
@@ -213,6 +204,7 @@ test.describe.serial('Git pane worktrees', () => {
     const itemsAfter = await openBranchMenu(page, LINKED_BRANCH);
     expect(itemsAfter.some((text) => text.startsWith('main') && text.endsWith(`/${PROJECT_NAME}`))).toBe(true);
     expect(itemsAfter).toContain('main (worktree)');
+    await expect(worktreeItems(page, true)).toHaveText([new RegExp(`/${LINKED_WORKTREE}$`)]);
     await page.keyboard.press('Escape');
   });
 

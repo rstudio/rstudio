@@ -1074,7 +1074,7 @@ public class ObjectExplorerDataGrid
       Data data = getData().get(row);
       String code = generateExtractingCode(data);
       String language = handle_.getLanguage();
-      code = constants_.viewCode(code);
+      code = "View(" + code + ")";
       events_.fireEvent(new SendToConsoleEvent(code, language, true));
    }
 

@@ -847,6 +847,25 @@ Error executeAlternateEngineChunk(const std::string& docId,
    return error;
 }
 
+Error reportAlternateEngineChunkError(const std::string& docId,
+                                      const std::string& chunkId,
+                                      const std::string& label,
+                                      const std::string& nbCtxId,
+                                      const std::string& code,
+                                      const std::string& message)
+{
+   // signals completion when this scope exits, which moves the queue along
+   ChunkExecCompletedScope execScope(docId, chunkId, code, label);
+
+   FilePath targetPath;
+   Error error = prepareCacheConsoleOutputFile(docId, chunkId, nbCtxId, &targetPath);
+   if (error)
+      return error;
+
+   reportChunkExecutionError(docId, chunkId, nbCtxId, message, targetPath);
+   return Success();
+}
+
 Error initAlternateEngines()
 {
    using namespace module_context;

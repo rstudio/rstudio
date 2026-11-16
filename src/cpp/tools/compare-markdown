@@ -1,0 +1,96 @@
+#!/usr/bin/env python3
+"""Compare two rstudio-markdown builds, retaining HTML and readable diffs."""
+
+import argparse
+import difflib
+from html.parser import HTMLParser
+from pathlib import Path
+import re
+import subprocess
+
+
+class Normalizer(HTMLParser):
+    """Ignore serialization whitespace/entities and the code-class prefix."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.tokens = []
+        self.pre = 0
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "pre":
+            self.pre += 1
+        attrs = [
+            (key, value.removeprefix("language-") if tag == "code" and key == "class" and value else value)
+            for key, value in attrs
+        ]
+        self.tokens.append(repr((tag, sorted(attrs, key=lambda attr: attr[0]))))
+
+    def handle_endtag(self, tag):
+        self.tokens.append(f"</{tag}>")
+        if tag == "pre":
+            self.pre -= 1
+
+    def handle_startendtag(self, tag, attrs):
+        self.handle_starttag(tag, attrs)
+
+    def handle_data(self, data):
+        if not self.pre:
+            data = re.sub(r"\s+", " ", data).strip()
+        if data:
+            self.tokens.append(repr(data))
+
+    def handle_comment(self, data):
+        self.tokens.append(f"<!--{data}-->")
+
+
+def normalize(html):
+    parser = Normalizer()
+    parser.feed(html)
+    return parser.tokens
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("baseline", type=Path)
+    parser.add_argument("candidate", type=Path)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--safe", action="store_true")
+    parser.add_argument("files", nargs="+", type=Path)
+    args = parser.parse_args()
+    args.output.mkdir(parents=True, exist_ok=True)
+    changed = []
+    exact = 0
+    for index, path in enumerate(args.files):
+        source = path.read_bytes()
+        outputs = []
+        for label, executable in [("sundown", args.baseline), ("cmark", args.candidate)]:
+            command = [str(executable.resolve())] + (["--safe"] if args.safe else [])
+            result = subprocess.run(command, input=source, capture_output=True)
+            if result.returncode != 0:
+                # Record the failure as a difference instead of aborting the run.
+                html = f"<!-- {label} exited with {result.returncode}: {result.stderr.decode('utf-8', 'replace').strip()} -->\n"
+            else:
+                html = result.stdout.decode("utf-8")
+            outputs.append(html)
+            (args.output / f"{index:03d}-{path.name}.{label}.html").write_text(html, encoding="utf-8")
+        if outputs[0] == outputs[1]:
+            exact += 1
+        before, after = map(normalize, outputs)
+        if before != after:
+            changed.append(str(path))
+            diff = difflib.unified_diff(before, after, fromfile="sundown", tofile="cmark", lineterm="")
+            (args.output / f"{index:03d}-{path.name}.diff").write_text("\n".join(diff) + "\n", encoding="utf-8")
+    report = (
+        f"{len(args.files)} inputs; {exact} byte-identical; "
+        f"{len(args.files) - len(changed)} equivalent after normalization.\n"
+        "Normalization ignores whitespace outside pre, entity spelling, attribute order, "
+        "void-tag slash and the language- code-class prefix.\n"
+        "Inputs requiring review:\n" + "\n".join(changed) + "\n"
+    )
+    (args.output / "report.txt").write_text(report, encoding="utf-8")
+    print(report, end="")
+
+
+if __name__ == "__main__":
+    main()

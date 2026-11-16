@@ -594,10 +594,12 @@
    
    ## Validate the package name -- note that we validate this upstream
    ## but it is sensible to validate it once more here
-   if (!grepl("^[[:alpha:]][[:alnum:].]*", packageName))
+   pattern <- sprintf("^%s$", .standard_regexps()$valid_package_name)
+   if (!grepl(pattern, packageName))
       return(.rs.error(
-         "Invalid package name: the package name must start ",
-         "with a letter and follow with only alphanumeric characters"))
+         "Invalid package name: package names must be at least two ",
+         "characters long, start with a letter, contain only letters, ",
+         "numbers, and periods, and not end with a period"))
    
    ## Validate the package directory -- if it exists, make sure it's empty,
    ## otherwise, try to create it

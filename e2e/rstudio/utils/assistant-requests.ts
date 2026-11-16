@@ -1,4 +1,5 @@
 import type { Page, Response } from 'playwright';
+import { asyncCompletions } from '@utils/rpc';
 
 /**
  * An agent answer slower than this counts as slow. Suggestions normally land
@@ -42,11 +43,6 @@ export function slowAssistantReason(outcomes: AssistantRequestOutcome[]): string
     `too slow: it answered ${answered.length} request(s), the fastest after ${(fastestMs / 1000).toFixed(1)}s, ` +
     `and left ${cancelled.length} unanswered past the session's 10s cutoff`
   );
-}
-
-interface AsyncCompletionEvent {
-  type?: string;
-  data?: { handle?: string; response?: { result?: { cancelled?: unknown } } };
 }
 
 /**
@@ -100,20 +96,11 @@ export class AssistantRequestWatcher {
       return;
     }
 
-    if (!path.endsWith('/events/get_events')) {
-      return;
-    }
-
-    const body = (await response.json().catch(() => null)) as { result?: unknown } | null;
-    if (!Array.isArray(body?.result)) {
-      return;
-    }
-
-    for (const event of body.result as AsyncCompletionEvent[]) {
-      const handle = event?.data?.handle;
-      const cancelled = event?.data?.response?.result?.cancelled;
-      if (event?.type === 'async_completion' && typeof handle === 'string' && typeof cancelled === 'boolean') {
-        this.settledAt.set(handle, { cancelled, at });
+    for (const completion of await asyncCompletions(response)) {
+      const body = completion.response as { result?: { cancelled?: unknown } } | undefined;
+      const cancelled = body?.result?.cancelled;
+      if (typeof cancelled === 'boolean') {
+        this.settledAt.set(completion.handle, { cancelled, at });
       }
     }
   }

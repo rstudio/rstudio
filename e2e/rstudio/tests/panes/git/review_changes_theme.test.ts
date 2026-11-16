@@ -7,7 +7,7 @@
 // in the Git pane in the main window.
 import { test, expect } from '@fixtures/rstudio.fixture';
 import type { Page } from '@playwright/test';
-import { CONSOLE_OUTPUT, executeInConsole } from '@pages/console_pane.page';
+import { executeInConsole, executeInConsoleChecked } from '@pages/console_pane.page';
 import { executeCommand, getPref, openProject } from '@utils/commands';
 import { heredoc } from '@utils/heredoc';
 import { closeProjectIfOpen } from '@utils/project';
@@ -97,35 +97,6 @@ const PROJECT_NAME = 'GitReviewTheme';
 async function paneLuminances(satellite: Page): Promise<number[]> {
   const colors = await visibleStyles(satellite, EDITOR_THEMED_PANE, 'backgroundColor');
   return colors.length === 0 ? [Number.NaN] : colors.map(luminance);
-}
-
-/**
- * executeInConsole only confirms that R reached a new prompt, which an R error
- * does just as readily as a success -- so a failed setup step would otherwise
- * sail through and resurface later as an unrelated-looking timeout. Scrape for
- * an error header the way createSandbox does, but only over the output this
- * command produced: the console buffer is shared with everything else that ran
- * in this worker, and matching against all of it would let one earlier error
- * fail every later call.
- */
-async function executeInConsoleChecked(
-  page: Page,
-  command: string,
-  opts: { timeout?: number } = {},
-): Promise<void> {
-  const before = await page.locator(CONSOLE_OUTPUT).innerText();
-  await executeInConsole(page, command, { wait: true, timeout: opts.timeout });
-  const after = await page.locator(CONSOLE_OUTPUT).innerText();
-
-  // R formats errors as `Error in <call> :\n  <message>`, so take the indented
-  // continuation lines along with the header.
-  const emitted = after.startsWith(before) ? after.slice(before.length) : after;
-  const errMatch = emitted.match(/(?:Error in|Error:)[^\n]*(?:\n[ \t]+[^\n]*)*/);
-  if (errMatch) {
-    throw new Error(
-      `R error running "${command.slice(0, 120)}": ${errMatch[0].replace(/\n+/g, ' | ').trim()}`,
-    );
-  }
 }
 
 /** One computed style property, for each element matching `selector` on screen. */

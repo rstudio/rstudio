@@ -182,9 +182,6 @@ pipeline {
         dir("package/osx/build/src/cpp") {
           // attempt to run cpp unit tests
           sh "arch -x86_64 ./rstudio-tests"
-          
-          // electron tests not working in CI environment, under investigation
-          // sh "cd ../../../../../src/node/desktop/ && $HOME/.yarn/bin/yarn && $HOME/.yarn/bin/yarn test"
           }
         }
       }
@@ -196,6 +193,12 @@ pipeline {
         PATH = "${env.HOME}/opt/bin:${env.PATH}"
         PACKAGE_FILE = """${sh (
           script: "basename `ls package/osx/build/RStudio-*.dmg`",
+          returnStdout: true
+        ).trim()}"""
+        // the .app zipped for the in-app updater (see package/osx/make-package);
+        // empty for Pro builds, which are not updated in-app
+        ZIP_FILE = """${sh (
+          script: "basename `ls package/osx/build/RStudio-*.zip 2>/dev/null | head -1` 2>/dev/null || true",
           returnStdout: true
         ).trim()}"""
         BUILD_TYPE = """${sh (
@@ -215,6 +218,11 @@ pipeline {
 
           steps {
             sh "docker/jenkins/notarize-release.sh package/osx/build/${PACKAGE_FILE}"
+            script {
+              if (env.ZIP_FILE) {
+                sh "docker/jenkins/notarize-release.sh package/osx/build/${ZIP_FILE}"
+              }
+            }
           }
         }
 
@@ -225,6 +233,9 @@ pipeline {
               retry(5) {
                 script {
                   utils.uploadPackageToS3 "package/osx/build/${PACKAGE_FILE}", "${AWS_PATH}/"
+                  if (env.ZIP_FILE) {
+                    utils.uploadPackageToS3 "package/osx/build/${ZIP_FILE}", "${AWS_PATH}/"
+                  }
                 }
               }
             }
@@ -255,6 +266,11 @@ pipeline {
               script {
                 // publish build to dailies page
                 utils.publishToDailiesSite PACKAGE_FILE, DAILIES_PATH, AWS_PATH
+                // and the zipped .app, which the in-app updater reads from
+                // the same JSON API (platform "macos-zip"); open-source only
+                if (env.ZIP_FILE) {
+                  utils.publishToDailiesSite ZIP_FILE, "${DAILIES_PATH}-zip", AWS_PATH
+                }
               }
             }
           }

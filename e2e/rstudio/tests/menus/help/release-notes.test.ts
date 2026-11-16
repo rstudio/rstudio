@@ -3,9 +3,10 @@
  *
  * Server: triggers the command and catches the new browser tab to verify
  *         the URL contains the expected release notes link.
- * Desktop: the URL is opened via Electron's shell.openExternal(), which
- *          Playwright cannot intercept. We verify the command executes
- *          without error.
+ * Desktop: the URL goes to Electron's shell.openExternal(), which Playwright
+ *          cannot intercept, and which an automation run skips (the browser
+ *          would come up over the IDE window; see openExternalUrl). We verify
+ *          the command executes without error.
  */
 
 import { expect } from '@playwright/test';
@@ -24,8 +25,9 @@ test.describe('Help > Release Notes - #17330', { tag: ['@parallel_safe'] }, () =
   });
 
   test('command executes without error', { tag: ['@desktop_only'] }, async ({ rstudioPage: page }) => {
-    // Desktop opens the URL via shell.openExternal() -- Playwright cannot
-    // intercept it, so we just verify the command doesn't throw. The handler
+    // Desktop hands the URL to openExternalUrl(), which only logs it in an
+    // automation run (Playwright could not intercept shell.openExternal()
+    // anyway), so we just verify the command doesn't throw. The handler
     // is synchronous (Application.onShowReleaseNotes), so any error would
     // already be in console output by the time executeCommand returns.
     await consoleActions.clearConsole();

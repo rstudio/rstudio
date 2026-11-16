@@ -156,6 +156,7 @@ public class WebApplicationHeader extends Composite
       mainMenu_ = menuCallback.getMenu();
       mainMenu_.setAutoHideRedundantSeparators(false);
       mainMenu_.addStyleName(themeResources.themeStyles().mainMenu());
+      Roles.getMenubarRole().setAriaLabelProperty(mainMenu_.getElement(), constants_.mainMenuLabel());
       AppMenuBar.addSubMenuVisibleChangedHandler(event ->
       {
          // When submenus of the main menu appear, glass over any iframes

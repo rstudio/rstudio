@@ -7,6 +7,8 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { TIMEOUTS } from '@utils/constants';
+import { executeCommand } from '@utils/commands';
+import { rStringLiteral } from '@utils/r';
 import type { Page } from 'playwright';
 
 const PACKAGES_TAB = '#rstudio_workbench_tab_packages';
@@ -32,6 +34,56 @@ async function clickPackageCheckbox(page: Page, packageName: string): Promise<vo
   const checkbox = checkboxLocator(page, packageName);
   await checkbox.scrollIntoViewIfNeeded();
   await checkbox.click();
+}
+
+function packageRow(page: Page, packageName: string) {
+  return page
+    .locator(`${PACKAGES_PANEL} tr`)
+    .filter({ has: page.locator(`input[type='checkbox'][aria-label='${packageName}']`) });
+}
+
+// Installs a minimal package from a local source directory into a temporary
+// library placed first on .libPaths(), then shows it in the pane. Undo with
+// restoreLibPaths.
+async function installLocalPackage(
+  page: Page,
+  consoleActions: ConsolePaneActions,
+  packageName: string,
+): Promise<void> {
+  const pkg = rStringLiteral(packageName);
+  await consoleActions.executeInConsole(
+    [
+      'local({',
+      `src <- file.path(tempfile("pwsrc"), ${pkg}); dir.create(src, recursive = TRUE);`,
+      `writeLines(c(paste("Package:", ${pkg}), "Version: 0.0.1", "Title: Local Test Package",`,
+      '"Description: Installed from a local path.", "License: GPL-2"),',
+      'file.path(src, "DESCRIPTION"));',
+      'file.create(file.path(src, "NAMESPACE"));',
+      'lib <- tempfile("pwlib"); dir.create(lib);',
+      'install.packages(src, repos = NULL, type = "source", lib = lib, quiet = TRUE);',
+      'options(pw.savedLibPaths = .libPaths()); .libPaths(c(lib, .libPaths()))',
+      '})',
+    ].join(' '),
+    { wait: true },
+  );
+
+  const ok = await consoleActions.evalRLogical(
+    `${pkg} %in% rownames(installed.packages(.libPaths()[1]))`,
+  );
+  expect(ok, `setup failed to install ${packageName} into a temporary library`).toBe(true);
+
+  await selectPackagesTab(page);
+  await executeCommand(page, 'refreshPackages');
+  await expect(packageRow(page, packageName)).toHaveCount(1, { timeout: TIMEOUTS.consoleReady });
+}
+
+async function restoreLibPaths(page: Page, consoleActions: ConsolePaneActions): Promise<void> {
+  await consoleActions.executeInConsole(
+    'if (!is.null(getOption("pw.savedLibPaths"))) ' +
+      '{ .libPaths(getOption("pw.savedLibPaths")); options(pw.savedLibPaths = NULL) }',
+    { wait: true },
+  );
+  await executeCommand(page, 'refreshPackages');
 }
 
 test.describe('Packages pane', () => {
@@ -96,6 +148,63 @@ test.describe('Packages pane', () => {
     );
   });
 
+  // https://github.com/rstudio/rstudio/issues/19471: the Help button's
+  // accessible name was the package's website URL.
+  test('names the Help button by its action, not its URL', async ({ rstudioPage: page }) => {
+    // DBI's DESCRIPTION has a URL field, so its row shows a Help button.
+    const installed = await consoleActions.ensurePackage('DBI');
+    test.skip(!installed, 'DBI is not installed');
+
+    await selectPackagesTab(page);
+
+    // DBI can have a row in more than one library; any one row will do.
+    const helpButton = page
+      .locator(PACKAGES_PANEL)
+      .getByRole('img', { name: 'Open DBI website', exact: true })
+      .first();
+    await expect(helpButton).toBeAttached({ timeout: TIMEOUTS.consoleReady });
+
+    // The URL stays available to sighted users as the tooltip.
+    await expect(helpButton.locator('xpath=..')).toHaveAttribute('title', /^https?:\/\//);
+  });
+
+  // https://github.com/rstudio/rstudio/issues/19470: the Browse and Remove
+  // buttons didn't name their package, and Browse's name included its URL.
+  test('names the Browse and Remove buttons by action and package', async ({ rstudioPage: page }) => {
+    const installed = await consoleActions.ensurePackage('DBI');
+    test.skip(!installed, 'DBI is not installed');
+
+    await selectPackagesTab(page);
+    const panel = page.locator(PACKAGES_PANEL);
+
+    // DBI can have a row in more than one library; any one row will do. The
+    // name leaves out the source, which can be a repository URL.
+    const browseButton = panel.getByRole('img', { name: 'Browse DBI', exact: true }).first();
+    await expect(browseButton).toBeAttached({ timeout: TIMEOUTS.consoleReady });
+    await expect(browseButton.locator('xpath=..')).toHaveAttribute('title', /^https?:\/\//);
+
+    await expect(
+      panel.getByRole('img', { name: 'Remove DBI', exact: true }).first(),
+    ).toBeAttached();
+  });
+
+  // https://github.com/rstudio/rstudio/issues/19470: a package installed from a
+  // local path has no browse URL, but its row showed an unlabeled Browse button.
+  test('shows no Browse button for a package installed from a local path', async ({ rstudioPage: page }) => {
+    const pkg = 'pwLocalPkg19470';
+    try {
+      await installLocalPackage(page, consoleActions, pkg);
+
+      // The package has no URL field, so Remove is the row's only button. The
+      // broken build also rendered the Browse image, with an empty alt.
+      const row = packageRow(page, pkg);
+      await expect(row.locator('img')).toHaveCount(1);
+      await expect(row.locator('img')).toHaveAttribute('alt', `Remove ${pkg}`);
+    } finally {
+      await restoreLibPaths(page, consoleActions);
+    }
+  });
+
   test('shows correct initial checkbox state for an always-attached base package', async ({ rstudioPage: page }) => {
     // `stats` is always on the search path -- if its checkbox isn't checked,
     // the initial-state plumbing is broken.
@@ -104,5 +213,14 @@ test.describe('Packages pane', () => {
     const checkbox = checkboxLocator(page, 'stats');
     await expect(checkbox).toBeVisible({ timeout: TIMEOUTS.consoleReady });
     await expect(checkbox).toBeChecked();
+  });
+
+  test('shows no Browse or Remove button for a base package', async ({ rstudioPage: page }) => {
+    await selectPackagesTab(page);
+
+    // The row's buttons render with the row, so once it exists they would too.
+    const row = packageRow(page, 'stats');
+    await expect(row).toHaveCount(1, { timeout: TIMEOUTS.consoleReady });
+    await expect(row.getByRole('img', { name: /^(Browse|Remove) / })).toHaveCount(0);
   });
 });

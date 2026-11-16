@@ -15,10 +15,14 @@
 
 #include "Diagnostics.hpp"
 
+#include <map>
+#include <set>
+
 #include <core/libclang/LibClang.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
+#include "CompilationDatabase.hpp"
 #include "SourceIndex.hpp"
 
 using namespace rstudio::core;
@@ -138,22 +142,103 @@ json::Object diagnosticToJson(const TranslationUnit& tu,
    return diagnosticJson;
 }
 
+// A diagnostic of our own, anchored to the top of the file
+json::Object syntheticDiagnosticJson(const FilePath& filePath,
+                                     CXDiagnosticSeverity severity,
+                                     const std::string& message)
+{
+   json::Object diagnosticJson;
+   diagnosticJson["severity"] = safe_convert::numberTo<double>(severity, 0);
+   diagnosticJson["category"] = 0;
+   diagnosticJson["category_text"] = "";
+   diagnosticJson["enable_option"] = "";
+   diagnosticJson["disable_option"] = "";
+   diagnosticJson["message"] = message;
+   diagnosticJson["file"] = module_context::createAliasedPath(filePath);
+   diagnosticJson["position"] = locationToPositionJson(FileLocation(filePath, 1, 1));
+   diagnosticJson["ranges"] = json::Array();
+   diagnosticJson["fixits"] = json::Array();
+   diagnosticJson["children"] = json::Array();
+   return diagnosticJson;
+}
+
+// The location-less diagnostics clang emits for the flags we generate (an
+// '-fopenmp' from Makevars that this libclang doesn't support, say). Those
+// were never shown, and the user can't act on them from compile_flags.txt,
+// so when a flags file is in play we show only the location-less
+// diagnostics beyond this baseline. Clang doesn't say which flag produced a
+// diagnostic, so the baseline comes from parsing an empty copy of the file
+// with just the generated flags, once per distinct set of them.
+const std::set<std::string>& baselineDiagnostics(const std::string& filename)
+{
+   static std::map<std::vector<std::string>, std::set<std::string>> s_baselines;
+
+   std::vector<std::string> args = clangCompilationDatabase().generatedCompileArgs(filename);
+   auto it = s_baselines.find(args);
+   if (it == s_baselines.end())
+   {
+      std::vector<std::string> messages = sourceIndex().commandLineDiagnostics(filename, args);
+      it = s_baselines.emplace(args, std::set<std::string>(messages.begin(), messages.end())).first;
+   }
+
+   return it->second;
+}
+
 json::Array getCppDiagnosticsJson(const FilePath& filePath)
 {
    json::Array diagnosticsJson;
 
+   // a bad flag in a compile_flags.txt is reported by clang against the
+   // command line rather than the file (or makes the parse fail outright),
+   // so when one is in play we surface those at the top of the file instead
+   // of silently dropping them
+   FilePath flagsFile = compileFlagsFileForSource(filePath);
+   bool hasUserFlags = !flagsFile.isEmpty() && !readCompileFlags(flagsFile).empty();
+
    // get diagnostics from translation unit
-   TranslationUnit tu = sourceIndex().getTranslationUnit(
-      filePath.getAbsolutePath(),
-                                             true);
-   if (!tu.empty())
+   std::string filename = filePath.getAbsolutePath();
+   TranslationUnit tu = sourceIndex().getTranslationUnit(filename, true);
+   if (tu.empty())
    {
-      unsigned numDiagnostics = tu.getNumDiagnostics();
-      for (unsigned i = 0; i < numDiagnostics; i++)
+      if (hasUserFlags)
       {
-         boost::shared_ptr<Diagnostic> pDiag = tu.getDiagnostic(i);
-         if (pDiag->location().getSpellingLocation().filePath == filePath)
-            diagnosticsJson.push_back(diagnosticToJson(tu, *pDiag));
+         // (without the PCH, so a bad flag doesn't trigger a second failed PCH build)
+         bool indexable = !clangCompilationDatabase().compileArgsForTranslationUnit(filename, false).empty();
+         if (indexable)
+         {
+            std::string message =
+                  "libclang could not parse this file; check the flags in " +
+                  module_context::createAliasedPath(flagsFile);
+            diagnosticsJson.push_back(syntheticDiagnosticJson(filePath, CXDiagnostic_Error, message));
+         }
+      }
+
+      return diagnosticsJson;
+   }
+
+   const std::set<std::string>* pBaseline = nullptr;
+
+   unsigned numDiagnostics = tu.getNumDiagnostics();
+   for (unsigned i = 0; i < numDiagnostics; i++)
+   {
+      boost::shared_ptr<Diagnostic> pDiag = tu.getDiagnostic(i);
+      FileLocation location = pDiag->location().getSpellingLocation();
+      if (location.filePath == filePath)
+      {
+         diagnosticsJson.push_back(diagnosticToJson(tu, *pDiag));
+      }
+      else if (hasUserFlags && location.empty())
+      {
+         if (pBaseline == nullptr)
+            pBaseline = &baselineDiagnostics(filename);
+
+         if (pBaseline->count(pDiag->spelling()) > 0)
+            continue;
+
+         json::Object diagnosticJson = diagnosticToJson(tu, *pDiag);
+         diagnosticJson["file"] = module_context::createAliasedPath(filePath);
+         diagnosticJson["position"] = locationToPositionJson(FileLocation(filePath, 1, 1));
+         diagnosticsJson.push_back(diagnosticJson);
       }
    }
 

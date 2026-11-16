@@ -568,6 +568,7 @@ if(LINUX)
 endif()
 
 # external libraries
+option(RSTUDIO_USE_CMARK_GFM "Use the cmark-gfm Markdown renderer" ON)
 add_subdirectory(ext)
 
 # Make the bundled {fmt} headers available to all targets. We deliberately add

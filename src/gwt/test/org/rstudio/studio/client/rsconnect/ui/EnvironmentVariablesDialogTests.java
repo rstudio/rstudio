@@ -14,12 +14,13 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import static org.rstudio.core.client.dom.LabelTestHelper.labelTextFor;
+
 import java.util.Arrays;
 
 import org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy.EnvironmentVariablesDialog;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.LabelElement;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.junit.client.GWTTestCase;
 
@@ -39,23 +40,8 @@ public class EnvironmentVariablesDialogTests extends GWTTestCase
 
       NodeList<Element> selects = content.getElementsByTagName("select");
       assertEquals("the dialog should hold one variable list", 1, selects.getLength());
-      String id = selects.getItem(0).getId();
-      assertFalse("the list needs an id for <label for>", id.isEmpty());
-
-      assertEquals(
+            assertEquals(
             "Select one or more environment variables to publish with this document.",
-            labelTextFor(content, id));
-   }
-
-   private static String labelTextFor(Element container, String id)
-   {
-      NodeList<Element> labels = container.getElementsByTagName("label");
-      for (int i = 0; i < labels.getLength(); i++)
-      {
-         LabelElement label = labels.getItem(i).cast();
-         if (id.equals(label.getHtmlFor()))
-            return label.getInnerText();
-      }
-      return null;
+            labelTextFor(content, selects.getItem(0)));
    }
 }

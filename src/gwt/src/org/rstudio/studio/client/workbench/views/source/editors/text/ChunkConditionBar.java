@@ -72,7 +72,7 @@ public class ChunkConditionBar extends Composite
          bar.setVisible(true);
 
          String condition = conditions.get(i).getString(1);
-         Label entry = new Label(AnsiCode.strip(condition));
+         Label entry = new Label(AnsiCode.stripStatic(condition));
          entry.addStyleName(style.contents());
          contents.add(entry);
       }

@@ -97,7 +97,10 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
                 const FileScannerOptions& options,
                 tree<FileInfo>* pTree)
 {
-   // clear all existing
+   // Keep failed directory entries distinguishable from successfully scanned
+   // empty directories, and clear the flag when a later scan succeeds.
+   fromNode->setScanFailed(false);
+   fromNode->setScanFiltered(false);
    pTree->erase_children(fromNode);
 
    // create FilePath for root
@@ -112,14 +115,20 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
    {
       Error error = options.onBeforeScanDir(*fromNode);
       if (error)
+      {
+         fromNode->setScanFailed(true);
          return error;
+      }
    }
 
    // read directory contents
    std::vector<std::string> names;
    Error error = scanDir(fromNode->absolutePath(), &names);
    if (error)
+   {
+      fromNode->setScanFailed(true);
       return error;
+   }
 
    // iterate over the names
    for (const std::string& name : names)
@@ -129,6 +138,7 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
       {
          Error error = core::systemError(boost::system::errc::interrupted, ERROR_LOCATION);
          error.setExpected();
+         fromNode->setScanFailed(true);
          return error;
       }
 
@@ -140,11 +150,18 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
       int res = ::lstat(path.c_str(), &st);
       if (res == -1)
       {
-         if (errno != ENOENT && errno != EACCES)
+         // A disappeared entry is an ordinary scan race. Other failures
+         // leave the directory incomplete, even when scandir succeeded.
+         int scanErrno = errno;
+         if (scanErrno != ENOENT)
          {
-            Error error = systemError(errno, ERROR_LOCATION);
-            error.addProperty("path", path);
-            LOG_ERROR(error);
+            fromNode->setScanFailed(true);
+            if (scanErrno != EACCES)
+            {
+               Error error = systemError(scanErrno, ERROR_LOCATION);
+               error.addProperty("path", path);
+               LOG_ERROR(error);
+            }
          }
          continue;
       }

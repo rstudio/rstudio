@@ -28,7 +28,8 @@ public class Search extends JavaScriptObject
                                       boolean regexpMode) /*-{
       var Search = $wnd.require('ace/search').Search;
       return new Search().set({
-         needle: needle,
+         // Ace adds word boundaries without grouping the expression.
+         needle: regexpMode && wholeWord ? "(?:" + needle + ")" : needle,
          backwards: backwards,
          wrap: wrap,
          caseSensitive: caseSensitive,

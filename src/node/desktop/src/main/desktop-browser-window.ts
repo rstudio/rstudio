@@ -13,7 +13,7 @@
  *
  */
 
-import { BrowserWindow, dialog, screen, shell, WebContents } from 'electron';
+import { BrowserWindow, dialog, screen, WebContents } from 'electron';
 
 import path from 'path';
 import debounce from 'lodash/debounce';
@@ -37,7 +37,7 @@ import {
   isSafeHost,
   makeAbsoluteUrl,
 } from './url-utils';
-import { executeJavaScript, handleLocaleCookies } from './utils';
+import { executeJavaScript, openExternalUrl } from './utils';
 import { isWayland, kMinWindowHeight, kMinWindowWidth, positionAndEnsureVisible } from './window-utils';
 import { properties } from '../../../../cpp/session/resources/schema/user-state-schema.json';
 
@@ -84,10 +84,6 @@ export interface WindowConstructorOptions {
 
   /** Size to create the `BrowserWindow` at; default is Electron's */
   initialSize?: { width: number; height: number };
-
-  /** Skip locale cookie detection (for unit tests; otherwise we get
-   * warnings about Possible EventEmitter memory leak on [cookies]) */
-  skipLocaleDetection?: boolean;
 }
 
 /**
@@ -146,7 +142,6 @@ export class DesktopBrowserWindow extends EventEmitter {
     this.options.autohideMenu = this.options.autohideMenu ?? false;
     this.options.allowExternalNavigate = this.options.allowExternalNavigate ?? false;
     this.options.openExternalLinksInBrowser = this.options.openExternalLinksInBrowser ?? false;
-    this.options.skipLocaleDetection = this.options.skipLocaleDetection ?? false;
 
     const apiKeys = [['--api-keys=desktopInfo', ...(this.options.addApiKeys ?? [])].join('|')];
 
@@ -173,10 +168,6 @@ export class DesktopBrowserWindow extends EventEmitter {
         acceptFirstMouse: true,
         ...this.options.initialSize,
       });
-
-      if (!options.skipLocaleDetection) {
-        void handleLocaleCookies(this.window, true);
-      }
 
       const customStyles =
         '.gwt-SplitLayoutPanel-HDragger{cursor:ew-resize !important;} .gwt-SplitLayoutPanel-VDragger{cursor:ns-resize !important;}';
@@ -250,7 +241,7 @@ export class DesktopBrowserWindow extends EventEmitter {
         (details.disposition === 'foreground-tab' || details.disposition === 'background-tab')
       ) {
         // TODO: validation/restrictions on the URLs?
-        void shell.openExternal(details.url);
+        void openExternalUrl(details.url);
         return { action: 'deny' };
       }
 
@@ -272,7 +263,7 @@ export class DesktopBrowserWindow extends EventEmitter {
       // https://github.com/rstudio/rstudio/issues/16624
       if (event.frame?.origin !== event.initiator?.origin) {
         event.preventDefault();
-        void shell.openExternal(url);
+        void openExternalUrl(url);
         return;
       }
 
@@ -543,7 +534,7 @@ export class DesktopBrowserWindow extends EventEmitter {
       // https://github.com/rstudio/rstudio/issues/12256
       return true;
     } else if (this.options.openExternalLinksInBrowser) {
-      void shell.openExternal(url);
+      void openExternalUrl(url);
       return false;
     } else {
       logger().logDebug(

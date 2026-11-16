@@ -24,8 +24,14 @@ namespace core {
 
 namespace rstudio {
 namespace session {
+namespace projects {
+   class ProjectContext;
+}
 namespace modules {
 namespace diagnostics {
+
+// Refresh diagnostic imports when the package directory or NAMESPACE changes.
+void monitorProjectNamespace(projects::ProjectContext& context);
 
 core::Error initialize();
 

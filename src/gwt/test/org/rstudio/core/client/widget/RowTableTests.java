@@ -26,6 +26,7 @@ import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.RootPanel;
 
 public class RowTableTests extends GWTTestCase
@@ -52,6 +53,7 @@ public class RowTableTests extends GWTTestCase
       @Override
       public void drawRowImpl(String object, TableRowElement rowEl)
       {
+         rowsDrawn++;
          rowEl.appendChild(Document.get().createTDElement()).setInnerText(object);
       }
 
@@ -72,6 +74,8 @@ public class RowTableTests extends GWTTestCase
       {
          return object;
       }
+
+      int rowsDrawn = 0;
    }
 
    private StringTable createTable(String... items)
@@ -201,18 +205,17 @@ public class RowTableTests extends GWTTestCase
    public void testShiftTabFromMouseFocusKeepsScrollPosition()
    {
       // keys that may only be leaving the list show no ring, which would
-      // scroll row 0 into view as focus goes
-      String[] items = new String[50];
-      for (int i = 0; i < items.length; i++)
-         items[i] = "item" + i;
-      StringTable table = createTable(items);
-      table.setVerticalScrollPosition(400);
+      // scroll row 0 into view as focus goes. Row 0 is scrolled out of the
+      // rendered window, where revealing it sets the scroll position
+      // directly; HtmlUnit ignores scrollIntoView.
+      StringTable table = createLongTable();
+      scrollToRow(table, 400);
       table.setFocus(true);
 
       pressKey(table, "Shift", KeyCodes.KEY_SHIFT);
       pressKey(table, "Tab", KeyCodes.KEY_TAB);
 
-      assertEquals(400, table.getVerticalScrollPosition());
+      assertEquals(8000, table.getVerticalScrollPosition());
       assertEquals("", getActiveDescendant(table));
    }
 
@@ -320,18 +323,17 @@ public class RowTableTests extends GWTTestCase
 
    public void testMouseFocusMarksNoOptionAndDoesNotScroll()
    {
-      // scrolling while a click is in progress would move the clicked row
-      String[] items = new String[50];
-      for (int i = 0; i < items.length; i++)
-         items[i] = "item" + i;
-      StringTable table = createTable(items);
-      table.setVerticalScrollPosition(400);
-      assertEquals(400, table.getVerticalScrollPosition());
+      // scrolling while a click is in progress would move the clicked row.
+      // Row 0 is scrolled out of the rendered window, as in
+      // testShiftTabFromMouseFocusKeepsScrollPosition.
+      StringTable table = createLongTable();
+      scrollToRow(table, 400);
+      assertEquals(8000, table.getVerticalScrollPosition());
 
       table.setFocus(true);
 
+      assertEquals(8000, table.getVerticalScrollPosition());
       assertEquals("", getActiveDescendant(table));
-      assertEquals(400, table.getVerticalScrollPosition());
    }
 
    // More rows than RowTable renders at once (MAX_VISIBLE_ROWS = 500).
@@ -411,6 +413,133 @@ public class RowTableTests extends GWTTestCase
       assertEquals(1, selected.size());
       assertEquals("120", selected.get(0).getAttribute("__row"));
       assertActiveDescendantRendered(table, 120);
+   }
+
+   // Scrolls as a user does: RowTable redraws on a timer after scroll events,
+   // which setting the position alone does not fire in HtmlUnit.
+   private static void scrollByUser(StringTable table, int row)
+   {
+      table.setVerticalScrollPosition((int) (row * table.getRowHeight()));
+      table.getElement().dispatchEvent(Document.get().createScrollEvent());
+   }
+
+   // Runs the check once RowTable's 100ms scroll timer has fired.
+   private void afterScrollTimer(Runnable check)
+   {
+      delayTestFinish(5000);
+      new Timer()
+      {
+         @Override
+         public void run()
+         {
+            check.run();
+            finishTest();
+         }
+      }.schedule(500);
+   }
+
+   public void testScrollPastRenderedWindowRedraws()
+   {
+      StringTable table = createLongTable();
+
+      scrollByUser(table, 400);
+
+      afterScrollTimer(() ->
+         assertFalse("0".equals(getOptions(table).get(0).getAttribute("__row"))));
+   }
+
+   public void testScrollWithinRenderedWindowRedrawsNothing()
+   {
+      // a list short enough to render whole never moves its window
+      String[] items = new String[50];
+      for (int i = 0; i < items.length; i++)
+         items[i] = "item" + i;
+      StringTable table = createTable(items);
+      int rowsDrawn = table.rowsDrawn;
+
+      scrollByUser(table, 20);
+
+      afterScrollTimer(() -> assertEquals(rowsDrawn, table.rowsDrawn));
+   }
+
+   public void testRedrawTitlesReusedRowsByTheirOwnItem()
+   {
+      // scrolling redraws each row element with another item
+      StringTable table = createLongTable();
+
+      scrollToRow(table, 400);
+
+      for (Element option : getOptions(table))
+         assertEquals("item" + option.getAttribute("__row"), option.getTitle());
+   }
+
+   public void testRedrawFiresNoSelectionEvent()
+   {
+      // a file dialog copies each selection into its File name box, which
+      // would overwrite a name typed after selecting
+      StringTable table = createLongTable();
+      table.selectRow(120, RowTable.ScrollType.NONE);
+      int[] selectionEvents = { 0 };
+      table.addSelectionHandler(event -> selectionEvents[0]++);
+
+      scrollToRow(table, 400);
+      scrollToRow(table, 100);
+
+      assertEquals(0, selectionEvents[0]);
+      assertEquals("item120", table.getSelectedItem());
+      assertActiveDescendantRendered(table, 120);
+   }
+
+   public void testKeyboardFocusRevealsVirtualizedSelectedOption()
+   {
+      // the user scrolled the selection out of the rendered window, then
+      // tabbed back to the list. HtmlUnit's scrollIntoView does nothing, so
+      // revealing a rendered row is covered by the e2e spec
+      // file_dialog_list_scroll.test.ts instead.
+      StringTable table = createLongTable();
+      table.selectRow(0);
+      scrollToRow(table, 400);
+      assertFalse(getTableElement(table).hasAttribute("aria-activedescendant"));
+      int[] selectionEvents = { 0 };
+      table.addSelectionHandler(event -> selectionEvents[0]++);
+
+      focusByKeyboard(table);
+
+      assertActiveDescendantRendered(table, 0);
+      assertTrue(table.getVerticalScrollPosition() < 400 * table.getRowHeight());
+      assertEquals("item0", table.getSelectedItem());
+      assertEquals(0, selectionEvents[0]);
+   }
+
+   public void testEndKeyNamesLastOptionAtOnce()
+   {
+      // the last row is outside the initial rendered window, and the scroll
+      // timer's redraw would leave no active option until it ran. The ring
+      // is already showing, so End's own handling must render the row.
+      StringTable table = createLongTable();
+      focusByKeyboard(table);
+
+      pressKey(table, "End", KeyCodes.KEY_END);
+
+      assertActiveDescendantRendered(table, LONG_TABLE_ROWS - 1);
+      assertEquals(1, getAriaSelectedRows(table).size());
+   }
+
+   public void testEndAgainRevealsLastOptionScrolledAway()
+   {
+      // End reselects the selected row, which must still come back into view
+      StringTable table = createLongTable();
+      focusByKeyboard(table);
+      pressKey(table, "End", KeyCodes.KEY_END);
+      int[] selectionEvents = { 0 };
+      table.addSelectionHandler(event -> selectionEvents[0]++);
+      scrollToRow(table, 0);
+      assertFalse(getTableElement(table).hasAttribute("aria-activedescendant"));
+
+      pressKey(table, "End", KeyCodes.KEY_END);
+
+      assertActiveDescendantRendered(table, LONG_TABLE_ROWS - 1);
+      assertEquals(0, selectionEvents[0]);
    }
 
    public void testSelectingRowPastRenderedWindowMarksNoElement()

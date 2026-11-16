@@ -1369,10 +1369,18 @@ public class TextEditingTargetAssistantHelper
             if (target_.isVisualEditorActive())
                return;
 
+            // Claim the request ID before saving: when saves are slow, requests
+            // queue behind them, and only the newest should reach the assistant.
+            requestId_ += 1;
+            final int requestId = requestId_;
+            markDocumentRequested();
+
             target_.withSavedDoc(() ->
             {
-               requestId_ += 1;
-               final int requestId = requestId_;
+               if (requestId_ != requestId)
+                  return;
+
+               final int documentVersion = markDocumentRequested();
                final Position savedCursorPosition = display_.getCursorPosition();
 
                events_.fireEvent(
@@ -1402,6 +1410,12 @@ public class TextEditingTargetAssistantHelper
                            // Check for invalidated request.
                            if (requestId_ != requestId)
                               return;
+
+                           if (documentVersion != documentVersion_)
+                           {
+                              onStaleReply();
+                              return;
+                           }
 
                            // Check for alternate cursor position.
                            Position currentCursorPosition = display_.getCursorPosition();
@@ -1842,6 +1856,10 @@ public class TextEditingTargetAssistantHelper
 
                display_.addDocumentChangedHandler((event) ->
                {
+                  // Count every edit, including our own, so in-flight completion and
+                  // next edit suggestion replies can tell their ranges are stale.
+                  documentVersion_ += 1;
+
                   // Eagerly reset Tab acceptance flag
                   canAcceptSuggestionWithTab_ = false;
 
@@ -1869,44 +1887,7 @@ public class TextEditingTargetAssistantHelper
                         return;
                   }
 
-                  // The rest of this handler auto-triggers new suggestions.
-                  // Only proceed if assistant is available.
-                  if (!isAssistantAvailable())
-                     return;
-
-                  // Check if we've been toggled off
-                  if (!automaticCodeSuggestionsEnabled_)
-                     return;
-
-                  // Check preference value
-                  String trigger = prefs_.assistantCompletionsTrigger().getGlobalValue();
-                  if (trigger != UserPrefsAccessor.ASSISTANT_COMPLETIONS_TRIGGER_AUTO)
-                     return;
-
-                  // Respect suppression flag
-                  if (completionRequestsSuspended_)
-                     return;
-
-                  // Don't do anything if we have a selection.
-                  if (display_.hasSelection())
-                  {
-                     suggestionTimer_.cancel();
-                     completionTriggeredByCommand_ = false;
-                     return;
-                  }
-
-                  // Request completions on cursor navigation.
-                  int delayMs = MathUtil.clamp(prefs_.assistantCompletionsDelay().getValue(), 10, 5000);
-
-                  // For Posit AI with NES enabled, request NES directly instead of regular completions
-                  if (shouldRequestNesDirectly())
-                  {
-                     nesTimer_.schedule(delayMs);
-                  }
-                  else
-                  {
-                     suggestionTimer_.schedule(delayMs);
-                  }
+                  scheduleAutomaticSuggestionRequest();
                }),
 
                display_.addUndoRedoHandler((event) ->
@@ -2043,6 +2024,78 @@ public class TextEditingTargetAssistantHelper
          );
    }
 
+   /**
+    * Schedules a suggestion request as an edit does when suggestions are
+    * triggered automatically. Returns false if no request was scheduled.
+    */
+   private boolean scheduleAutomaticSuggestionRequest()
+   {
+      if (!isAssistantAvailable())
+         return false;
+
+      // Check if we've been toggled off
+      if (!automaticCodeSuggestionsEnabled_)
+         return false;
+
+      // Check preference value
+      String trigger = prefs_.assistantCompletionsTrigger().getGlobalValue();
+      if (trigger != UserPrefsAccessor.ASSISTANT_COMPLETIONS_TRIGGER_AUTO)
+         return false;
+
+      // Respect suppression flag
+      if (completionRequestsSuspended_)
+         return false;
+
+      // Don't do anything if we have a selection.
+      if (display_.hasSelection())
+      {
+         suggestionTimer_.cancel();
+         completionTriggeredByCommand_ = false;
+         return false;
+      }
+
+      // Request completions on cursor navigation.
+      int delayMs = MathUtil.clamp(prefs_.assistantCompletionsDelay().getValue(), 10, 5000);
+
+      // For Posit AI with NES enabled, request NES directly instead of regular completions
+      if (shouldRequestNesDirectly())
+      {
+         nesTimer_.schedule(delayMs);
+      }
+      else
+      {
+         suggestionTimer_.schedule(delayMs);
+      }
+      return true;
+   }
+
+   /**
+    * Records that a request for the current document is being made, and returns
+    * its version. Requests call this when claimed and again when sent after their
+    * save, since edits made during the save are included in what is sent.
+    */
+   private int markDocumentRequested()
+   {
+      requestedDocumentVersion_ = documentVersion_;
+      return requestedDocumentVersion_;
+   }
+
+   /**
+    * Handles a reply computed for an older version of the document, whose ranges
+    * are in pre-edit coordinates: ask again as the edit would have (most edits
+    * already have; newlines don't), unless a pending or newer request covers it.
+    */
+   private void onStaleReply()
+   {
+      boolean requestPending =
+         nesTimer_.isRunning() ||
+         suggestionTimer_.isRunning() ||
+         requestedDocumentVersion_ == documentVersion_;
+
+      if (!requestPending && !scheduleAutomaticSuggestionRequest())
+         events_.fireEvent(new AssistantEvent(AssistantEventType.COMPLETION_RECEIVED_NONE));
+   }
+
    private void requestNextEditSuggestions()
    {
       // Capture and clear the completion-fallback flag up-front, so that an
@@ -2068,19 +2121,23 @@ public class TextEditingTargetAssistantHelper
       if (target_.isVisualEditorActive())
          return;
 
+      // Claim the request ID before saving, invalidating any prior requests:
+      // when saves are slow, requests queue behind them, and only the newest
+      // should reach the assistant.
+      nesId_ += 1;
+      final int id = nesId_;
+      markDocumentRequested();
+
       target_.withSavedDoc(() ->
       {
-         requestNextEditSuggestionsImpl(fromCompletionFallback);
+         if (id == nesId_)
+            requestNextEditSuggestionsImpl(id, fromCompletionFallback);
       });
    }
 
-   private void requestNextEditSuggestionsImpl(boolean fromCompletionFallback)
+   private void requestNextEditSuggestionsImpl(int id, boolean fromCompletionFallback)
    {
-      // Invalidate any prior requests.
-      nesId_ += 1;
-
-      // Save current request ID.
-      final int id = nesId_;
+      final int documentVersion = markDocumentRequested();
 
       // Notify the listeners.
       events_.fireEvent(new AssistantEvent(AssistantEventType.COMPLETION_REQUESTED));
@@ -2100,6 +2157,12 @@ public class TextEditingTargetAssistantHelper
                // Check for invalidated request.
                if (id != nesId_)
                   return;
+
+               if (documentVersion != documentVersion_)
+               {
+                  onStaleReply();
+                  return;
+               }
 
                // Check for edits
                boolean hasEdits =
@@ -2829,6 +2892,10 @@ public class TextEditingTargetAssistantHelper
    private final Timer nesTimer_;
    private final Timer pendingHideTimer_;
    private int nesId_ = 0;
+   private int documentVersion_ = 0;
+
+   // documentVersion_ when the newest completion or NES request was made
+   private int requestedDocumentVersion_ = 0;
    private boolean dismissed_ = false;
    private boolean completionTriggeredByCommand_ = false;
 

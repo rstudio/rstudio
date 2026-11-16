@@ -1,9 +1,21 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
+import { executeInConsole, executeInConsoleChecked } from '@pages/console_pane.page';
+import { getPref } from '@utils/commands';
 import { TIMEOUTS } from '@utils/constants';
 import { restartSessionWithSentinel } from '@utils/project';
+import {
+  DARK_THEME,
+  DARK_THEME_HREF,
+  LIGHT_THEME,
+  LIGHT_THEME_HREF,
+  THEME_CONTAINER,
+  THEME_POLL,
+  expectThemeStylesheet,
+} from '@utils/theme';
 
 const INTERPRETER_VERSION = '#rstudio_console_interpreter_version_tabbed';
 const INTERPRETER_VERSION_UNTABBED = '#rstudio_console_interpreter_version';
+const R_LOGO = '#rstudio_console_interpreter_r_logo_tabbed';
 const RVERSION_RPC = /\/rpc\/get_rversion_info(?:\?|$)/;
 
 test.describe('Console interpreter version', () => {
@@ -20,6 +32,47 @@ test.describe('Console interpreter version', () => {
       return [...counts].filter(([, count]) => count > 1).map(([id]) => id);
     });
     expect(duplicateIds).toEqual([]);
+  });
+
+  // #19620: the stylesheet swaps in a recolored R logo for dark themes, since
+  // the original's blue R is too dark against the dark toolbar.
+  test('R logo switches to its dark variant with a dark theme', async ({ rstudioPage: page }) => {
+    const logo = page.locator(R_LOGO);
+    const darkContainer = page.locator(`${THEME_CONTAINER}.rstudio-themes-dark`);
+    const originalTheme = (await getPref(page, 'editor_theme')) as string | null;
+    const logoStyle = () => logo.evaluate((el) => {
+      const style = getComputedStyle(el);
+      return { image: style.backgroundImage, filter: style.filter };
+    });
+
+    try {
+      await executeInConsoleChecked(page, `.rs.api.applyTheme(${JSON.stringify(LIGHT_THEME)})`);
+      await expectThemeStylesheet(page, LIGHT_THEME_HREF);
+      await expect(darkContainer).toHaveCount(0, { timeout: THEME_POLL.timeout });
+      await expect(logo).toBeVisible();
+      const lightBox = await logo.boundingBox();
+      const light = await logoStyle();
+      expect(light.image).toMatch(/^url\(/);
+
+      await executeInConsoleChecked(page, `.rs.api.applyTheme(${JSON.stringify(DARK_THEME)})`);
+      await expectThemeStylesheet(page, DARK_THEME_HREF);
+      await expect(darkContainer).toBeAttached({ timeout: THEME_POLL.timeout });
+      await expect(logo).toBeVisible();
+      const dark = await logoStyle();
+      expect(dark.image).toMatch(/^url\(/);
+      expect(dark.image).not.toBe(light.image);
+      // the variant carries its own colors, so a filter would only wash them out
+      expect(dark.filter).toBe('none');
+      expect(await logo.boundingBox()).toEqual(lightBox);
+    } finally {
+      await executeInConsole(
+        page,
+        `.rs.api.applyTheme(${JSON.stringify(originalTheme ?? LIGHT_THEME)})`,
+        { wait: true },
+      ).catch((err) => {
+        console.warn(`[interpreter_version] theme restore failed: ${(err as Error).message}`);
+      });
+    }
   });
 
 

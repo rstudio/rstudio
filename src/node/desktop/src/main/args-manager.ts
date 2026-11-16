@@ -18,7 +18,9 @@ import path from 'path';
 import { getenv, setenv } from '../core/environment';
 import { FilePath } from '../core/file-path';
 import { enableDiagnosticsOutput, logger, setLogger } from '../core/logger';
-import { kRStudioInitialProject, kRStudioInitialWorkingDir } from '../core/r-user-data';
+import { kProjectNone, kRStudioInitialProject, kRStudioInitialWorkingDir } from '../core/r-user-data';
+import { buildInfo } from './build-info';
+import { installationKey, takeRelaunchProject } from './relaunch-project';
 import { WinstonLogger } from '../core/winston-logger';
 import { Application } from './application';
 import { appState } from './app-state';
@@ -31,6 +33,8 @@ import { safeError } from '../core/err';
 
 // RStudio command-line switches
 export const kRunDiagnosticsOption = '--run-diagnostics';
+/** passed by the Windows installer when it brings the previous build back after a failed in-app update */
+export const kAfterFailedUpdateOption = '--after-failed-update';
 export const kVersion = '--version';
 export const kVersionJson = '--version-json';
 export const kLogLevel = 'log-level';
@@ -41,9 +45,6 @@ export const kNoArg = '';
 export const kDelaySession = 'session-delay';
 export const kSessionExit = 'session-exit';
 export const kHelp = '--help';
-export const kStartupDelay = 'startup-delay';
-
-const defaultStartupDelaySeconds = 5;
 
 export interface Option {
   arg: string;
@@ -85,8 +86,6 @@ export class ArgsManager {
       console.log('  --log-dir          The log directory to store log files in. The resulting log file name is based on the executable name.');
       console.log('  --session-delay    Pause the rsession so the "Loading R" screen displays longer');
       console.log('  --session-exit     Terminate the rsession immediately forcing error page to display');
-      console.log('  --startup-delay    Pause before showing the application so the splash screen displays longer');
-      console.log(`                     --startup-delay=<number of seconds> ${defaultStartupDelaySeconds} by default`);
       console.log('  --help             Show this help');
       return exitSuccess();
     }
@@ -157,17 +156,6 @@ export class ArgsManager {
       application.sessionStartDelaySeconds = 5;
     }
 
-    // switch for forcing the splash to show by adding a startup delay
-    if (app.commandLine.hasSwitch(kStartupDelay)) {
-      let startupDelayValue = parseInt(app.commandLine.getSwitchValue(kStartupDelay));
-
-      if (startupDelayValue < 0 || isNaN(startupDelayValue)) {
-        startupDelayValue = defaultStartupDelaySeconds;
-      }
-
-      application.startupDelayMs = startupDelayValue * 1000;
-    }
-
     // switch for forcing rsession to exit immediately with non-zero exit code
     // (will happen after session start delay above, if also specified)
     if (app.commandLine.hasSwitch(kSessionExit)) {
@@ -201,6 +189,23 @@ export class ArgsManager {
         logger().logDebug(`RS_INITIAL_WD: ${getenv(kRStudioInitialWorkingDir)}`);
         return true;
       });
+    }
+
+    // an in-app update relaunches RStudio with no arguments; reopen what was
+    // open when the update was accepted, as "Restart RStudio" does. The
+    // marker names the build and installation it is for, so an unrelated
+    // launch in between leaves it alone; the previous build takes it only
+    // when the installer brings it back after a failed update, and says so.
+    if (!getenv(kRStudioInitialProject)) {
+      const identity = { version: buildInfo().RSTUDIO_VERSION, installKey: installationKey(process.execPath) };
+      const afterFailedUpdate = process.argv.indexOf(kAfterFailedUpdateOption) > -1;
+      const project = takeRelaunchProject(identity, Date.now(), undefined, afterFailedUpdate);
+      if (project === kProjectNone) {
+        setenv(kRStudioInitialProject, kProjectNone);
+      } else if (project && existsSync(project)) {
+        setenv(kRStudioInitialProject, project);
+        setenv(kRStudioInitialWorkingDir, path.dirname(project));
+      }
     }
   }
 

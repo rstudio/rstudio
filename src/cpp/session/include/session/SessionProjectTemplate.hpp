@@ -56,10 +56,6 @@ struct ProjectTemplateWidgetDescription
    core::json::Value toJson() const;
 };
 
-core::Error fromJson(
-      const core::json::Object& object,
-      ProjectTemplateWidgetDescription* pDescription);
-
 struct ProjectTemplateDescription
 {
    // COPYING: copyable members
@@ -72,13 +68,13 @@ struct ProjectTemplateDescription
    std::string icon;
    std::vector<std::string> openFiles;
    std::vector<ProjectTemplateWidgetDescription> widgets;
+
+   // Set only for templates RStudio registers itself that use the project
+   // directory name as the package name, so the client can validate it
+   bool createsPackage = false;
    
    core::json::Value toJson() const;
 };
-
-core::Error fromJson(
-      const core::json::Object&,
-      ProjectTemplateDescription* pDescription);
 
 core::Error initialize();
 

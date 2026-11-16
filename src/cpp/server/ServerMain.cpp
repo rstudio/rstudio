@@ -973,22 +973,6 @@ int main(int argc, char * const argv[])
       boost::optional<system::User> serverUser;
       if (core::system::effectiveUserIsRoot())
       {
-         auto shouldChown = [&](int depth, const FilePath& file)
-         {
-            // don't chown user sockets - they belong to the user
-            if (depth == 3 &&
-                boost::ends_with(file.getParent().getParent().getFilename(), "-ds"))
-               return false;
-
-            if (depth == 1 &&
-                (boost::ends_with(file.getFilename(), "-d") ||
-                 boost::ends_with(file.getFilename(), "-d.pid") ||
-                 boost::ends_with(file.getFilename(), "-d.ctx")))
-               return false;
-
-            return true;
-         };
-
          system::User serverUserObj;
          error = system::getUserFromUsername(options.serverUser(), serverUserObj);
          if (error)
@@ -996,7 +980,7 @@ int main(int argc, char * const argv[])
 
          serverUser = serverUserObj;
 
-         error = serverDataDir.changeOwnership(serverUserObj, true, shouldChown);
+         error = serverDataDir.changeOwnership(serverUserObj, true, shouldChownServerDataFile);
          if (error)
          {
             error.addProperty("description",

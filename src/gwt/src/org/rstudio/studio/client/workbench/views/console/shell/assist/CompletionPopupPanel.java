@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -33,6 +34,7 @@ import org.rstudio.core.client.widget.ThemedPopupPanel;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
+import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo.ParsedInfo;
 
 import com.google.gwt.core.client.GWT;
@@ -58,9 +60,10 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 public class CompletionPopupPanel extends ThemedPopupPanel
       implements CompletionPopupDisplay
 {
-   public CompletionPopupPanel()
+   public CompletionPopupPanel(InputEditorDisplay input)
    {
       super();
+      input_ = input;
       autoConstrain_ = false;
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
 
@@ -111,6 +114,10 @@ public class CompletionPopupPanel extends ThemedPopupPanel
 
    public void placeOffscreen()
    {
+      // An offscreen list stays attached; stop announcing its selection.
+      if (list_ != null)
+         list_.setInput(null);
+      placedBelow_ = null;
       setPopupPosition(-10000, -10000);
       help_.setPopupPosition(-10000, -10000);
    }
@@ -136,6 +143,9 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    @Override
    public void clearCompletions()
    {
+      // The cleared list can stay attached, offscreen or behind a message.
+      if (list_ != null)
+         list_.setInput(null);
       list_ = null;
    }
 
@@ -145,29 +155,66 @@ public class CompletionPopupPanel extends ThemedPopupPanel
                                     boolean truncated)
    {
       registerIgnoredKeys();
-      
-      // If we're going to display completions on top, then reverse
-      // the completion list, and select the last values instead of the first.
-      boolean isShowingOnBottom = false;
-      if (callback instanceof PopupPositioner)
-      {
-         PopupPositioner positioner = (PopupPositioner) callback;
-         isShowingOnBottom = positioner.getPreferBottom();
-      }
-      
-      if (!isShowingOnBottom)
-      {
-         List<QualifiedName> names = Arrays.asList(values);
-         Collections.reverse(names);
-         values = names.toArray(new QualifiedName[0]);
-      }
-      
+
+      PopupPositioner positioner = callback instanceof PopupPositioner
+            ? (PopupPositioner) callback
+            : null;
+      boolean preferBottom =
+            positioner != null && positioner.getPreferBottom();
+
+      // Refreshed as the user types, a showing popup stays on its side of
+      // the line while it fits there, rather than jumping across the line
+      // as its list narrows.
+      Boolean keepBelow = positioner != null && isShowing() ? placedBelow_ : null;
+      if (keepBelow != null)
+         positioner.setKeepSide(keepBelow);
+
       // Since completion popups are usually displayed from the Source pane,
       // if we're trying to display completions on top of the cursor location,
       // we'll have relatively less space available. In that case, try to display
-      // fewer items, so we can fit the visible space.
-      int numVisibleItems = isShowingOnBottom ? 9 : 6;
-      CompletionList<QualifiedName> list = new CompletionList<>(values, numVisibleItems, true, true);
+      // fewer items, so we can fit the visible space. The count stays the same
+      // if the popup ends up below, so it keeps the height it was placed with.
+      int numVisibleItems = preferBottom ? 9 : 6;
+
+      // A list that prefers the top runs bottom-up when shown above the
+      // line, so its best match sits next to the line. Guess the side from
+      // the preference and the side kept, and rebuild if the guess is wrong.
+      boolean bottomUp = !preferBottom && !Boolean.TRUE.equals(keepBelow);
+      setCompletionList(values, truncated, bottomUp, numVisibleItems);
+      show(callback);
+
+      if (positioner != null)
+      {
+         boolean wantBottomUp = !preferBottom && !placedBelow_;
+         if (wantBottomUp != bottomUp)
+         {
+            bottomUp = wantBottomUp;
+            setCompletionList(values, truncated, bottomUp, numVisibleItems);
+            show(callback);
+         }
+      }
+
+      if (bottomUp)
+         selectLast();
+   }
+
+   private void setCompletionList(QualifiedName[] values,
+                                  boolean truncated,
+                                  boolean bottomUp,
+                                  int numVisibleItems)
+   {
+      // Above the cursor, reverse the completion list, so the first value
+      // sits next to the cursor.
+      if (bottomUp)
+      {
+         List<QualifiedName> names = new ArrayList<>(Arrays.asList(values));
+         Collections.reverse(names);
+         values = names.toArray(new QualifiedName[0]);
+      }
+
+      CompletionList<QualifiedName> list = new CompletionList<>(
+            values, numVisibleItems, true, true, constants_.completionsListLabel());
+      list.setInput(input_);
 
       list.addSelectionCommitHandler((SelectionCommitEvent<QualifiedName> event) ->
       {
@@ -194,11 +241,6 @@ public class CompletionPopupPanel extends ThemedPopupPanel
 
       setWidget(container_);
       ElementIds.assignElementId(list_.getElement(), ElementIds.POPUP_COMPLETIONS);
-
-      show(callback);
-      
-      if (!isShowingOnBottom)
-         selectLast();
    }
 
    public boolean hasCompletions()
@@ -221,6 +263,12 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          setPopupPositionAndShow(callback);
       else
          show();
+
+      // Track every placement, of messages as well as lists, so a list that
+      // replaces what is showing keeps its side (see showCompletionValues).
+      placedBelow_ = callback instanceof PopupPositioner
+            ? ((PopupPositioner) callback).isPlacedBelow()
+            : null;
 
 
       // Fudge the completion width when the scrollbar is visible. This has
@@ -465,6 +513,9 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    
    private void registerNativeFocusHandler()
    {
+      // show() also runs to refresh a popup that is already showing, so
+      // replace any listener it added before rather than stacking another.
+      unregisterNativeHandler();
       focusHandler_ = registerNativeFocusHandlerImpl();
    }
    
@@ -524,6 +575,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       resetIgnoredKeysHandle();
    }
 
+   private final InputEditorDisplay input_;
    private CompletionList<QualifiedName> list_;
    private HelpInfoPopupPanel help_;
    private final ConsoleResources.ConsoleStyles styles_;
@@ -531,6 +583,9 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    private VerticalPanel container_;
    private final Label truncated_;
    private JavaScriptObject focusHandler_;
+   // The side of the cursor the popup was last shown on (below, or not),
+   // or null if unknown or it was since placed offscreen.
+   private Boolean placedBelow_;
    private ShortcutManager.Handle handle_;
    private HandlerRegistration windowBlurHandler_;
    private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);

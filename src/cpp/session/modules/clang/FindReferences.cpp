@@ -15,15 +15,11 @@
 
 #include "FindReferences.hpp"
 
-#include <gsl/gsl-lite.hpp>
-
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/split.hpp>
 
 #include <core/FileSerializer.hpp>
 #include <core/libclang/LibClang.hpp>
-
-#include <core/system/ProcessArgs.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -373,15 +369,11 @@ core::Error findReferences(const core::libclang::FileLocation& location,
                               1 /* Exclude PCH */,
                               (sourceIndex().verbose() > 0) ? 1 : 0);
 
-            // get args in form clang expects
-            core::system::ProcessArgs argsArray(compileArgs);
-
             // parse the translation unit
-            CXTranslationUnit tu = libclang::clang().parseTranslationUnit(
+            CXTranslationUnit tu = parseWithPrecompiledHeaderFallback(
                                   index,
-                                  filename.c_str(),
-                                  argsArray.args(),
-                                  gsl::narrow_cast<int>(argsArray.argCount()),
+                                  filename,
+                                  compileArgs,
                                   nullptr, 0, // no unsaved files
                                   parseTranslationUnitOptions());
 

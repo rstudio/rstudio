@@ -927,25 +927,20 @@ Error formatContext(
    std::string id;
    std::string path;
    Error error = json::readParams(request.params, &id, &path);
-   if (error || path.empty())
+   if (error)
    {
-      json::Object contextJson = JSON {
-         {
-            "air", JSON {
-               {
-                  "path", json::Value()
-               }
-            }
-         }
-      };
-
       json::JsonRpcResponse response;
       response.setResult(JSON { { "air", json::Value() } });
       continuation(error, &response);
       return error;
    }
 
-   FilePath documentPath = module_context::resolveAliasedPath(path);
+   // An untitled document sends an empty path; keep it empty rather than
+   // resolving it to the home directory, so findAirTomlPath() can treat the
+   // document as part of the active project. See #19406.
+   FilePath documentPath;
+   if (!path.empty())
+      documentPath = module_context::resolveAliasedPath(path);
    FilePath airTomlPath = modules::air::findAirTomlPath(documentPath);
 
    json::Object contextJson = JSON {
@@ -988,7 +983,10 @@ Error formatDocument(
    if (error)
       return onError(error, ERROR_LOCATION);
 
-   FilePath documentPath = module_context::resolveAliasedPath(pDoc->path());
+   // As in formatContext(), an untitled document keeps an empty path.
+   FilePath documentPath;
+   if (!pDoc->path().empty())
+      documentPath = module_context::resolveAliasedPath(pDoc->path());
    std::string contents = pDoc->contents();
 
    // Initialize format context

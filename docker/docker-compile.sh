@@ -95,11 +95,6 @@ fi
 # add architecture to build arguments
 BUILD_ARGS=(--build-arg ARCH="${CONTAINER_ARCH}")
 
-# get build arg env vars, if any
-if [ -n "${DOCKER_GITHUB_LOGIN}" ]; then
-  BUILD_ARGS+=(--build-arg GITHUB_LOGIN="${DOCKER_GITHUB_LOGIN}")
-fi
-
 # rebuild the image if necessary
 docker build                                \
   --tag "$REPO:$IMAGE_TAG"                  \

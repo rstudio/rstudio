@@ -18,7 +18,6 @@ import { detectREnvironment, findDefault32Bit, findDefault64Bit, isValidInstalla
 import { logger } from '../../core/logger';
 import { ModalDialog } from '../modal-dialog';
 
-import { initI18n } from '../../main/i18n-manager';
 import i18next, { t } from 'i18next';
 import { CallbackData } from './choose-r/preload';
 import { ElectronDesktopOptions, fixWindowsRExecutablePath } from '../../main/preferences/electron-desktop-options';
@@ -33,7 +32,11 @@ import { isArm64MachineWin32, rArchitectureWin32, rExecutablePathWin32 } from '.
 declare const CHOOSE_R_WEBPACK_ENTRY: string;
 declare const CHOOSE_R_PRELOAD_WEBPACK_ENTRY: string;
 
-function checkValid(data: CallbackData) {
+/**
+ * Whether the R the user picked can be used; when it cannot, tells them
+ * which R failed and what it reported.
+ */
+export function checkValid(data: CallbackData) {
   const binaryPath = data.binaryPath;
   if (!binaryPath) {
     logger().logErrorMessage('internal error: binaryPath was unexpectedly null');
@@ -53,6 +56,7 @@ function checkValid(data: CallbackData) {
         type: 'error',
         title: t('chooseRDialog.rLaunchFailedTitle'),
         message: t('chooseRDialog.rLaunchFailedMessage'),
+        detail: err.message,
         buttons: [t('common.buttonOk')],
       }),
     );
@@ -72,8 +76,6 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
     super(CHOOSE_R_WEBPACK_ENTRY, CHOOSE_R_PRELOAD_WEBPACK_ENTRY, parentWindow);
 
     this.rInstalls = rInstalls;
-
-    initI18n();
   }
 
   async maybeResolve(resolve: (data: CallbackData) => void, data: CallbackData) {

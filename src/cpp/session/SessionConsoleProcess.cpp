@@ -87,6 +87,19 @@ void ConsoleProcess::setenv(const std::string& name,
             value);
 }
 
+std::string bashPromptCommand()
+{
+   // Abbreviate $HOME to '~' the way `dirs +0` does, but with builtins only:
+   // a subshell or command substitution here forks two processes at every
+   // prompt, and bash has been seen stuck waiting on that child with the
+   // prompt never drawn and typed input echoed but not run (#19542). A
+   // `${string//pattern/~}` replacement is avoided because bash treats the
+   // tilde in the replacement inconsistently. The hook runs in the user's
+   // shell, so it has to survive `set -u` with HOME unset, and like bash it
+   // leaves a HOME of "/" unabbreviated.
+   return R"(_RS_PWD=${PWD}; if [ -n "${HOME:-}" ] && [ "${HOME}" != "/" ]; then case "${_RS_PWD}/" in "${HOME}/"*) _RS_PWD="~${_RS_PWD#"${HOME}"}";; esac; fi; printf '\033]0;%s\007' "${_RS_PWD}"; unset _RS_PWD)";
+}
+
 // create process options for a terminal
 core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
       const ConsoleProcessInfo& procInfo,
@@ -194,11 +207,7 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
    
    case TerminalShell::ShellType::PosixBash:
    {
-      // NOTE: We don't use `${string//pattern/replacement}`-style variable substitution
-      // on Bash, as the way tilde is handled as a replacement character seems to depend
-      // on some unknown factors (sometimes it needs to be escaped like '\~'?)
-      const char* kPromptCommand = R"((_RS_PWD=$(dirs +0); echo -ne "\033]0;${_RS_PWD}\007"; unset _RS_PWD))"; 
-      core::system::setenv(&shellEnv, "PROMPT_COMMAND", kPromptCommand);
+      core::system::setenv(&shellEnv, "PROMPT_COMMAND", bashPromptCommand());
       break;
    }
       

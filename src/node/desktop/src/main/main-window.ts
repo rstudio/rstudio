@@ -14,7 +14,7 @@
  */
 
 import { ChildProcess } from 'child_process';
-import { BrowserWindow, dialog, session, shell } from 'electron';
+import { BrowserWindow, dialog, session } from 'electron';
 
 import { Err, safeError } from '../core/err';
 import { logger } from '../core/logger';
@@ -22,6 +22,7 @@ import { logger } from '../core/logger';
 import i18next from 'i18next';
 import desktop from '../native/desktop.node';
 import { setDockLabel } from '../native/dock.node';
+import { promptForDefaultRFileHandlerOnce } from './default-file-handler';
 import { appState, getEventBus } from './app-state';
 import { ApplicationLaunch, LaunchRStudioOptions } from './application-launch';
 import { DesktopBrowserWindow } from './desktop-browser-window';
@@ -31,9 +32,10 @@ import { MenuCallback } from './menu-callback';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { RCommandEvaluator } from './r-command-evaluator';
 import { SessionLauncher } from './session-launcher';
+import { kWebDialogCookie } from './shared-cookies';
 import { startupCheckpoint } from './startup-timing';
 import { waitForUrlWithTimeout } from './url-utils';
-import { isAutomated, registerWebContentsDebugHandlers } from './utils';
+import { isAutomated, openExternalUrl, registerWebContentsDebugHandlers } from './utils';
 
 export function closeAllSatellites(mainWindow: BrowserWindow): void {
   const topLevels = BrowserWindow.getAllWindows();
@@ -71,7 +73,7 @@ async function preSeedAutomationCookies(targetUrl: string): Promise<void> {
   try {
     await session.defaultSession.cookies.set({
       url: targetUrl,
-      name: 'WEBDIALOG',
+      name: kWebDialogCookie,
       value: '1',
       expirationDate: new Date(Date.UTC(5000, 11, 31)).getTime() / 1000,
     });
@@ -134,6 +136,9 @@ export class MainWindow extends GwtWindow {
     appState().gwtCallback?.once(GwtCallback.WORKBENCH_INITIALIZED, () => {
       appState().argsManager.handleAfterSessionLaunchCommands();
     });
+    appState().gwtCallback?.once(GwtCallback.WORKBENCH_INITIALIZED, () => {
+      promptForDefaultRFileHandlerOnce(this.window).catch((error) => logger().logError(error));
+    });
     appState().gwtCallback?.on(GwtCallback.SESSION_QUIT, () => {
       this.onSessionQuit();
     });
@@ -154,7 +159,7 @@ export class MainWindow extends GwtWindow {
       // the url from the iframe src
       if (details.resourceType === 'subFrame' && details.frame?.url && !this.allowNavigation(details.url)) {
         // Open the page externally
-        shell.openExternal(details.url).catch((error) => {
+        openExternalUrl(details.url).catch((error) => {
           logger().logError(error);
         });
         // Re-direct the iframe back to the source URL (bleh)
@@ -285,6 +290,42 @@ export class MainWindow extends GwtWindow {
   quit(): void {
     RCommandEvaluator.setMainWindow(null);
     this.quitConfirmed = true;
+
+    // an accepted update is applied now that the session has exited; on
+    // macOS Squirrel closes the window and relaunches the app itself. A quit
+    // with the session still alive (the renderer crashed and the window was
+    // closed) is not that exit: the installer would run beside the session,
+    // so the install is forgotten and the next check offers it again
+    const updater = appState().gwtCallback?.updater;
+    if (updater?.hasPendingInstall() && !this.sessionAlive()) {
+      updater
+        .applyPendingUpdate()
+        .then((applied) => {
+          if (!applied) {
+            this.closeWindow();
+          }
+        })
+        .catch((error: unknown) => {
+          logger().logError(safeError(error));
+          this.closeWindow();
+        });
+      return;
+    }
+
+    if (updater?.hasPendingInstall()) {
+      logger().logInfo('quitting with the session still running; the accepted update is not installed');
+      updater.cancelPendingInstall();
+    }
+    this.closeWindow();
+  }
+
+  /** whether a session process is attached and has not exited */
+  private sessionAlive(): boolean {
+    const session = this.sessionProcess;
+    return session !== undefined && session.exitCode === null && session.signalCode === null;
+  }
+
+  private closeWindow(): void {
     if (!this.window.isDestroyed()) {
       this.window.close();
     } else {
@@ -329,6 +370,14 @@ export class MainWindow extends GwtWindow {
   }
 
   closeEvent(event: Electron.Event): void {
+    // quit() is deciding whether an accepted update can be installed; the
+    // session has already exited, so letting this close through would end
+    // the process before the installer is launched (see Updater.isHandingOff)
+    if (appState().gwtCallback?.updater.isHandingOff()) {
+      event.preventDefault();
+      return;
+    }
+
     if (this.quitConfirmed || !this.sessionProcess || this.sessionProcess.exitCode !== null) {
       // the window really is closing, so this is where its geometry is final;
       // recording it on an earlier attempt persisted bounds from a close the

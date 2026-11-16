@@ -25,6 +25,7 @@
 #include "chat/ChatSelector.hpp"
 #include "chat/ChatSlots.hpp"
 #include "chat/ChatStaticFiles.hpp"
+#include "chat/ChatBackendStdout.hpp"
 #include "chat/ChatUpdateThrottle.hpp"
 
 #ifndef _WIN32
@@ -48,7 +49,6 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/optional.hpp>
-#include <boost/regex.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/weak_ptr.hpp>
 
@@ -734,12 +734,8 @@ void callExpressionBoundaryHook(const std::string& hookName,
 // JSON-RPC Message Handling
 // ============================================================================
 
-// Buffer for accumulating stdout data from backend
-std::string s_backendOutputBuffer;
-
-// Regex for parsing Content-Length header (case-insensitive per HTTP spec)
-// Matches only at start of line to avoid false matches in log output
-boost::regex s_contentLengthRegex("(?:^|\r\n)Content-Length:\\s*(\\d+)", boost::regex::icase);
+// Splits the running backend's stdout into its Content-Length framed messages.
+chat::backend::StdoutReader s_backendStdout;
 
 // Map of notification method names to handler functions
 using NotificationHandler = std::function<void(const json::Object&)>;
@@ -4312,6 +4308,20 @@ bool isVersionDowngrade(
    return available < installed;
 }
 
+// Calls one of the .rs.chat helpers built on .rs.chat.failureReason, which
+// return "" on success or the reason the operation failed.
+// callUtf8 because the reason is an R condition message, which on a localized
+// non-UTF-8 session carries native-encoded bytes that the install status
+// response (JSON) requires as UTF-8.
+Error callReportingFailure(r::exec::RFunction& function)
+{
+   std::string reason;
+   Error error = function.callUtf8(&reason);
+   if (!error && !reason.empty())
+      error = systemError(boost::system::errc::io_error, reason, ERROR_LOCATION);
+   return error;
+}
+
 // Download package to temp directory
 Error downloadPackage(const std::string& url, const FilePath& destPath)
 {
@@ -4331,25 +4341,16 @@ Error downloadPackage(const std::string& url, const FilePath& destPath)
    // a non-zero return status, so the helper folds the warnings and the status
    // into the reason it returns ("" when the download succeeded). The helper also
    // owns the transfer timeout and leaves the download method to the user/admin's
-   // download.file.* options.
-   // callUtf8 because the reason is an R condition message, which on a localized
-   // non-UTF-8 session carries native-encoded bytes that the install status
-   // response (JSON) requires as UTF-8.
-   std::string reason;
-   Error error = r::exec::RFunction(".rs.chat.downloadPackage")
-         .addParam("url", url)
-         .addParam("destfile", destPath.getAbsolutePath())
-         .callUtf8(&reason);
+   // download.file.* options. destfile goes in as UTF-8 for the same reason as
+   // the paths in installPackage().
+   r::exec::RFunction download(".rs.chat.downloadPackage");
+   download.addParam("url", url);
+   download.addUtf8Param("destfile", destPath);
+   Error error = callReportingFailure(download);
    if (error)
    {
-      WLOG("Failed to download package: {}", error.getMessage());
+      WLOG("Failed to download package: {}", core::errorDescription(error));
       return error;
-   }
-
-   if (!reason.empty())
-   {
-      WLOG("Failed to download package: {}", reason);
-      return systemError(boost::system::errc::io_error, reason, ERROR_LOCATION);
    }
 
    // Verify file exists and has content
@@ -4386,7 +4387,8 @@ Error installPackage(const FilePath& packagePath,
    }
 
    FilePath stagingDir;
-   error = chat_slots::prepareStagingDir(slotsDir, &stagingDir);
+   error = chat_slots::prepareStagingDir(
+      slotsDir, core::system::getHostname(), &stagingDir);
    if (error)
    {
       WLOG("Failed to create staging directory: {}", error.getMessage());
@@ -4410,14 +4412,16 @@ Error installPackage(const FilePath& packagePath,
    DLOG("Extracting package {} to {}",
         packagePath.getAbsolutePath(), stagingDir.getAbsolutePath());
 
-   r::exec::RFunction unzipFunc("unzip");
-   unzipFunc.addParam("zipfile", packagePath.getAbsolutePath());
-   unzipFunc.addParam("exdir", stagingDir.getAbsolutePath());
-
-   error = unzipFunc.call();
+   // FilePath strings are UTF-8, but addParam() marks them native. Under R < 4.2
+   // on Windows, native is the system code page, so a non-ASCII path (a user
+   // name such as José) would name a different directory in R than here.
+   r::exec::RFunction extract(".rs.chat.extractPackage");
+   extract.addUtf8Param("zipfile", packagePath);
+   extract.addUtf8Param("exdir", stagingDir);
+   error = callReportingFailure(extract);
    if (error)
    {
-      WLOG("Failed to extract package: {}", error.getMessage());
+      WLOG("Failed to extract package: {}", core::errorDescription(error));
       return discardStaging(error);
    }
 
@@ -4917,87 +4921,32 @@ std::string buildWebSocketUrl(int port)
 // Process Management
 // ============================================================================
 
-void onBackendStdout(core::system::ProcessOperations& ops, const std::string& output)
+void onBackendStdout(core::system::ProcessOperations& ops,
+                     const std::string& output,
+                     uint64_t generation)
 {
-   // Append new output to buffer
-   s_backendOutputBuffer.append(output);
-
-   // Process all complete messages in the buffer
    // NOTE: We process messages immediately here (not deferred) because:
    // 1. callbacksRequireMainThread=true means we're already on the main thread
    // 2. We need the valid 'ops' reference to send responses to requests
-   while (true)
+   std::vector<std::string> errors;
+   for (const std::string& messageBody : s_backendStdout.append(generation, output, &errors))
    {
-      // Find the end of headers (blank line: \r\n\r\n) first
-      // This ensures we only parse Content-Length from a valid header block
-      size_t headerEnd = s_backendOutputBuffer.find("\r\n\r\n");
-      if (headerEnd == std::string::npos)
-      {
-         // Headers not complete yet
-         break;
-      }
-
-      // Extract header block (everything before \r\n\r\n)
-      std::string headerBlock = s_backendOutputBuffer.substr(0, headerEnd);
-
-      // Look for Content-Length header within this header block only
-      // This prevents matching stray "Content-Length:" text in non-protocol stdout
-      boost::smatch matches;
-      if (!boost::regex_search(headerBlock, matches, s_contentLengthRegex))
-      {
-         // No Content-Length in this header block - malformed JSON-RPC message
-         WLOG("JSON-RPC message missing Content-Length header, skipping malformed message");
-         // Skip past this malformed message (discard up to and including \r\n\r\n)
-         s_backendOutputBuffer = s_backendOutputBuffer.substr(headerEnd + 4);
-         continue;
-      }
-
-      // Extract content length
-      std::string lengthStr = matches[1].str();
-      int contentLength = safe_convert::stringTo<int>(lengthStr, -1);
-      if (contentLength <= 0)
-      {
-         WLOG("Invalid Content-Length value in backend message: {}", lengthStr);
-         // Skip past this malformed message
-         s_backendOutputBuffer = s_backendOutputBuffer.substr(headerEnd + 4);
-         continue;
-      }
-
-      // Calculate where the body starts and ends
-      size_t bodyStart = headerEnd + 4; // Skip past \r\n\r\n
-      size_t bodyEnd = bodyStart + contentLength;
-
-      // Check if we have the complete body
-      if (s_backendOutputBuffer.size() < bodyEnd)
-      {
-         // Body not complete yet
-         break;
-      }
-
-      // Extract the message body (IMPORTANT: byte-based, not character-based)
-      std::string messageBody = s_backendOutputBuffer.substr(bodyStart, contentLength);
-
       // Verbose logging (filtered by backend log level for logger/log notifications)
       if (chatLogLevel() >= 2 && shouldLogBackendMessage(messageBody))
       {
          DLOG("Received message from backend: {}", messageBody);
       }
 
-      // Parse JSON
       json::Value messageValue;
       if (messageValue.parse(messageBody))
-      {
          WLOG("Failed to parse JSON from backend: {}", messageBody);
-      }
       else
-      {
-         // Process message immediately while ops is valid
          processBackendMessage(ops, messageValue);
-      }
-
-      // Remove the processed message from buffer
-      s_backendOutputBuffer = s_backendOutputBuffer.substr(bodyEnd);
    }
+
+   if (!errors.empty())
+      WLOG("Malformed message from chat backend: {}",
+           assistant::agentStdoutErrorSummary(errors));
 }
 
 void onBackendStderr(core::system::ProcessOperations& ops, const std::string& output)
@@ -5052,7 +5001,7 @@ void onBackendExit(int exitCode, uint64_t generation)
    // Clear state
    s_chatBackendPid = -1;
    clearChatBackendPort();
-   s_backendOutputBuffer.clear();
+   s_backendStdout.stop();
    s_chatBackendOps.reset();
    s_peerSentCapabilities = false;
    s_peerCapabilities.clear();
@@ -5194,11 +5143,8 @@ Error startChatBackend(bool resumeConversation)
    if (!certificatesFile.empty())
       core::system::setenv(&environment, "NODE_EXTRA_CA_CERTS", certificatesFile);
 
-   // Enable Node.js proxy support for fetch().
-   // When HTTP_PROXY / HTTPS_PROXY env vars are set (e.g. via ~/.Renviron),
-   // this tells Node.js 22.21+ to route fetch() through the proxy.
-   // See: https://github.com/nodejs/node/pull/57165
-   core::system::setenv(&environment, "NODE_USE_ENV_PROXY", "1");
+   // Route fetch() through HTTP_PROXY / HTTPS_PROXY (e.g. from ~/.Renviron).
+   node_tools::applyEnvProxyOption(&environment);
 
    node_tools::applySystemCaOption(&environment, nodePath);
 
@@ -5213,6 +5159,7 @@ Error startChatBackend(bool resumeConversation)
 #endif
 
    uint64_t generation = ++s_chatBackendGeneration;
+   s_backendStdout.start(generation);
 
    // A stale flag from a previous unreaped generation must not classify a
    // later crash of this backend as an expected shutdown.
@@ -5225,7 +5172,10 @@ Error startChatBackend(bool resumeConversation)
       s_chatBackendOps = ops.shared_from_this();
       DLOG("Chat backend started with PID: {}", s_chatBackendPid);
    };
-   callbacks.onStdout = onBackendStdout;
+   callbacks.onStdout = [generation](core::system::ProcessOperations& ops,
+                                     const std::string& output) {
+      onBackendStdout(ops, output, generation);
+   };
    callbacks.onStderr = onBackendStderr;
    callbacks.onExit = [generation](int exitCode)
    {
@@ -5400,6 +5350,9 @@ Error chatStopBackend(const json::JsonRpcRequest& request,
       }
    }
 
+   // Whatever the backend writes from here on is not handled.
+   s_backendStdout.stop();
+
    // Release ProcessOperations reference before force termination
    s_chatBackendOps.reset();
 
@@ -5418,7 +5371,6 @@ Error chatStopBackend(const json::JsonRpcRequest& request,
 
    // Clear busy state
    s_chatBusy = false;
-   s_backendOutputBuffer.clear();
 
    result["success"] = true;
    result["message"] = "Backend stopped";
@@ -5662,6 +5614,10 @@ void stopChatBackendForInstall(const std::string& reason)
          elapsed += POLL_INTERVAL_MS;
       }
    }
+
+   // Whatever the backend writes from here on, including during the wait
+   // for it to exit, is not handled.
+   s_backendStdout.stop();
    s_chatBackendOps.reset();
 
    // Force-terminate if still running after grace period, then wait for the
@@ -5689,7 +5645,6 @@ void stopChatBackendForInstall(const std::string& reason)
    s_chatBackendPid = -1;
    clearChatBackendPort();
    s_chatBusy = false;
-   s_backendOutputBuffer.clear();
 }
 
 // Record an install failure and resolve the continuation. Every failure path
@@ -6106,6 +6061,10 @@ void stopChatBackendForSessionExit(const std::string& reason, int gracePeriodMs)
       }
    }
 
+   // Whatever the backend writes from here on, including during the wait
+   // for it to exit, is not handled.
+   s_backendStdout.stop();
+
    // Release ProcessOperations reference before force termination
    s_chatBackendOps.reset();
 
@@ -6185,9 +6144,8 @@ void onSuspend(const r::session::RSuspendOptions& options, Settings* pSettings)
    // while still allowing cleanup.
    stopChatBackendForSessionExit("suspend", 500);
 
-   // Clear busy state and JSON-RPC buffer
+   // Clear busy state
    s_chatBusy = false;
-   s_backendOutputBuffer.clear();
 }
 
 void onResume(const Settings& settings)
@@ -6211,9 +6169,8 @@ void onResume(const Settings& settings)
 
 void onShutdown(bool terminatedNormally)
 {
-   // Clear busy state and JSON-RPC state early
+   // Clear busy state early
    s_chatBusy = false;
-   s_backendOutputBuffer.clear();
 
    // Request graceful shutdown, wait, and escalate as needed. On the suspend
    // leg the suspend handler has already run this and the call is a no-op.

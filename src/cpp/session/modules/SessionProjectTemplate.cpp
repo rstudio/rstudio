@@ -152,28 +152,6 @@ Error emptyField(const std::string& field,
 
 } // end namespace errors
 
-Error fromJson(
-      const json::Object& object,
-      ProjectTemplateWidgetDescription* pDescription)
-{
-   ProjectTemplateWidgetDescription description;
-
-   core::Error error = core::json::readObject(
-            object,
-            "parameter", description.parameter,
-            "type",      description.type,
-            "label",     description.label,
-            "default",   description.defaultValue,
-            "position",  description.position,
-            "fields",    description.fields);
-
-   if (error)
-      return error;
-   
-   *pDescription = description;
-   return Success();
-}
-
 json::Value ProjectTemplateWidgetDescription::toJson() const
 {
    core::json::Object object;
@@ -188,51 +166,6 @@ json::Value ProjectTemplateWidgetDescription::toJson() const
    return std::move(object);
 }
 
-Error fromJson(
-      const json::Object& object,
-      ProjectTemplateDescription* pDescription)
-{
-   Error error;
-   ProjectTemplateDescription description;
-
-   error = json::readObject(
-            object,
-            "package",    description.package,
-            "binding",    description.binding,
-            "title",      description.title,
-            "subtitle",   description.subtitle,
-            "caption",    description.caption,
-            "icon",       description.icon,
-            "open_files", description.openFiles);
-   
-   if (error)
-      return error;
-   
-   json::Array array;
-   error = json::readObject(object, "widgets", array);
-   if (error)
-      return error;
-   
-   for (const json::Value& value : array)
-   {
-      if (!json::isType<json::Object>(value))
-         return json::errors::typeMismatch(
-                  value,
-                  json::Type::OBJECT,
-                  ERROR_LOCATION);
-      
-      ProjectTemplateWidgetDescription widget;
-      error = fromJson(value.getObject(), &widget);
-      if (error)
-         return error;
-      
-      description.widgets.push_back(widget);
-   }
-   
-   *pDescription = description;
-   return Success();
-}
-
 json::Value ProjectTemplateDescription::toJson() const
 {
    core::json::Object object;
@@ -244,6 +177,7 @@ json::Value ProjectTemplateDescription::toJson() const
    object["caption"]    = caption;
    object["icon"]       = icon;
    object["open_files"] = json::toJsonArray(openFiles);
+   object["creates_package"] = createsPackage;
 
    core::json::Array widgetsJson;
    for (const ProjectTemplateWidgetDescription& widgetDescription : widgets)
@@ -577,15 +511,16 @@ private:
    
    void addKnownProjectTemplates()
    {
-      addProjectTemplate("devtools", "create", "R Package using devtools");
-      addProjectTemplate("Rcpp", "Rcpp.package.skeleton", "R Package using Rcpp");
-      addProjectTemplate("RcppArmadillo", "RcppArmadillo.package.skeleton", "R Package using RcppArmadillo");
-      addProjectTemplate("RcppEigen", "RcppEigen.package.skeleton", "R Package using RcppEigen");
+      addProjectTemplate("devtools", "create", "R Package using devtools", true);
+      addProjectTemplate("Rcpp", "Rcpp.package.skeleton", "R Package using Rcpp", true);
+      addProjectTemplate("RcppArmadillo", "RcppArmadillo.package.skeleton", "R Package using RcppArmadillo", true);
+      addProjectTemplate("RcppEigen", "RcppEigen.package.skeleton", "R Package using RcppEigen", true);
    }
    
    void addProjectTemplate(const std::string& package,
                            const std::string& binding,
-                           const std::string& title)
+                           const std::string& title,
+                           bool createsPackage)
    {
       // if we already have a project template registered for this
       // package with this binding, bail (this allows R packages to
@@ -609,6 +544,7 @@ private:
       ptd.subtitle = subtitle;
       ptd.caption  = caption;
       ptd.openFiles = { "Read-and-delete-me" };
+      ptd.createsPackage = createsPackage;
       projectTemplateRegistry()->add(package, ptd);
    }
    

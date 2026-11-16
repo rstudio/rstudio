@@ -34,8 +34,22 @@ public interface InputEditorDisplay extends HasAllFocusHandlers,
    Rectangle getCursorBounds();
    Rectangle getPositionBounds(InputEditorPosition position);
    Rectangle getBounds();
+
+   /**
+    * The page region this editor's lines show in: the nearest scrolling
+    * ancestor (e.g. a visual mode document holding a code chunk), or else
+    * the editor itself.
+    */
+   Rectangle getViewportBounds();
    void setFocus(boolean focused);
    boolean isFocused();
+
+   /**
+    * Names the element, such as a selected completion, that screen readers
+    * should treat as focused while keyboard focus stays in this input.
+    * @param elementId The element's id, or null to clear.
+    */
+   void setAriaActiveDescendant(String elementId);
    /**
     * @param value New value
     * @return Original value

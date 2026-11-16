@@ -16,6 +16,8 @@ package org.rstudio.core.client.widget;
 
 import java.util.List;
 
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
@@ -23,6 +25,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -32,6 +35,7 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.MenuItemSeparator;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.ElementIds;
@@ -187,6 +191,21 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       menuBar_.selectLast();
    }
 
+   public void moveSelectionUp()
+   {
+      menuBar_.moveSelectionUp();
+   }
+
+   public void moveSelectionDown()
+   {
+      menuBar_.moveSelectionDown();
+   }
+
+   public void activateSelectedItem()
+   {
+      menuBar_.activateSelectedItem();
+   }
+
    public void moveSelectionFwd(int numElements)
    {
       menuBar_.moveSelectionFwd(numElements);
@@ -287,6 +306,27 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       menuBar_.addSeparator(new MinWidthMenuSeparator(minPx));
    }
 
+   // A heading for the items below it, flush left and with no divider line.
+   // Returns its element, for nameWithSubheader.
+   public Element addSubheader(String text)
+   {
+      LabelledMenuSeparator subheader = LabelledMenuSeparator.subheader(text);
+      Element el = subheader.getElement();
+      el.setId(DOM.createUniqueId());
+      menuBar_.addSeparator(subheader);
+      return el;
+   }
+
+   // The arrow keys skip headings, so screen readers would announce a group's
+   // first item without its heading. Names the item with the heading's text
+   // followed by the name its own content gives it.
+   public static void nameWithSubheader(MenuItem item, Element subheader)
+   {
+      Element itemEl = item.getElement();
+      Roles.getMenuitemRole().setAriaLabelledbyProperty(itemEl,
+            Id.of(subheader), Id.of(itemEl));
+   }
+
    public int getItemCount()
    {
       return menuBar_.getItemCount();
@@ -297,6 +337,21 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    public void focus()
    {
       menuBar_.focus();
+   }
+
+   // Whether Escape or a chosen item closed the menu, with focus falling to
+   // <body> as it detached; the opening button should then take focus back (APG
+   // menu button). Check in the close handler, before a chosen item's command
+   // runs, so the command can move focus on and a dialog it opens returns it.
+   public static boolean focusLostOnClose(CloseEvent<PopupPanel> event)
+   {
+      if (event.isAutoClosed())
+         return false;
+
+      Element active = DomUtils.getActiveElement();
+      return active == null ||
+             active == Document.get().getBody() ||
+             event.getTarget().getElement().isOrHasChild(active);
    }
 
    public void setAutoHideRedundantSeparators(boolean value)
@@ -416,22 +471,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
                      case KeyCodes.KEY_ENTER:
                      case KeyCodes.KEY_SPACE:
                         nativePreviewEvent.cancel();
-                        final MenuItem menuItem = getSelectedItem();
-                        if (menuItem != null)
-                        {
-                           nativePreviewEvent.cancel();
-                           NativeEvent evt = Document.get().createClickEvent(
-                              0,
-                              0,
-                              0,
-                              0,
-                              0,
-                              false,
-                              false,
-                              false,
-                              false);
-                           menuItem.getElement().dispatchEvent(evt);
-                        }
+                        activateSelectedItem();
                         break;
                   }
                }
@@ -456,6 +496,26 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
                return i;
          }
          return -1;
+      }
+
+      // Runs the item as a click on it does
+      private void activateSelectedItem()
+      {
+         MenuItem menuItem = getSelectedItem();
+         if (menuItem == null)
+            return;
+
+         NativeEvent evt = Document.get().createClickEvent(
+            0,
+            0,
+            0,
+            0,
+            0,
+            false,
+            false,
+            false,
+            false);
+         menuItem.getElement().dispatchEvent(evt);
       }
 
       private void moveSelectionFwd(int numElements)
@@ -487,6 +547,12 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    public boolean wasRightImageClicked()
    {
       return menuBar_.rightImageClicked_;
+   }
+
+   // The element with the menu role, which owns the items' ids
+   public Element getMenuBarElement()
+   {
+      return menuBar_.getElement();
    }
 
    public Element getMenuTableElement()

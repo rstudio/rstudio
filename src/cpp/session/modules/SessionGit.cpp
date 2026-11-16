@@ -149,6 +149,80 @@ json::Array parseWorktreeList(const std::string& output)
    return worktrees;
 }
 
+// A path as Git prints it with core.quotepath off: in double quotes, with
+// backslashes, double quotes and control characters escaped as C does
+// (quote.c), when it has any; as it is otherwise.
+static std::string gitQuotedPath(const std::string& path)
+{
+   bool quote = false;
+   for (unsigned char c : path)
+   {
+      if (c == '"' || c == '\\' || c < 0x20 || c == 0x7f)
+         quote = true;
+   }
+   if (!quote)
+      return path;
+
+   std::string quoted = "\"";
+   for (unsigned char c : path)
+   {
+      switch (c)
+      {
+      case '"':  quoted += "\\\""; break;
+      case '\\': quoted += "\\\\"; break;
+      case '\a': quoted += "\\a"; break;
+      case '\b': quoted += "\\b"; break;
+      case '\t': quoted += "\\t"; break;
+      case '\n': quoted += "\\n"; break;
+      case '\v': quoted += "\\v"; break;
+      case '\f': quoted += "\\f"; break;
+      case '\r': quoted += "\\r"; break;
+      default:
+         if (c < 0x20 || c == 0x7f)
+         {
+            quoted += '\\';
+            quoted += static_cast<char>('0' + ((c >> 6) & 7));
+            quoted += static_cast<char>('0' + ((c >> 3) & 7));
+            quoted += static_cast<char>('0' + (c & 7));
+         }
+         else
+         {
+            quoted += static_cast<char>(c);
+         }
+      }
+   }
+   return quoted + "\"";
+}
+
+std::string renamedPairFor(const std::string& diff, const std::string& path)
+{
+   std::vector<std::string> pairs;
+   std::size_t pos = 0;
+   while (pos < diff.size())
+   {
+      std::size_t next = diff.find("\ndiff --git ", pos);
+      std::size_t end = (next == std::string::npos) ? diff.size() : next + 1;
+      pairs.push_back(diff.substr(pos, end - pos));
+      pos = end;
+   }
+
+   if (pairs.size() < 2)
+      return diff;
+
+   std::string quotedPath = gitQuotedPath(path);
+   for (const std::string& pair : pairs)
+   {
+      std::string lines = "\n" + pair + "\n";
+      if (lines.find("\nrename to " + quotedPath + "\n") != std::string::npos ||
+          lines.find("\ncopy to " + quotedPath + "\n") != std::string::npos)
+      {
+         return pair;
+      }
+   }
+
+   return diff;
+}
+
 namespace {
 
 
@@ -1248,14 +1322,20 @@ public:
                           PatchMode mode,
                           int contextLines,
                           bool ignoreWhitespace,
+                          bool pairedOnly,
                           std::string* pOutput)
    {
-      ShellArgs args = gitArgs() << "diff";
+      ShellArgs args = gitArgs();
+      if (pairedOnly)
+         args << "-c" << "core.quotepath=false";
+      args << "diff";
       args << "-U" + safe_convert::numberToString(contextLines);
       if (mode == PatchModeStage)
          args << "--cached";
       if (ignoreWhitespace)
          args << "-w";
+      if (pairedOnly)
+         args << "-C" << "--diff-filter=CR";
       args << "--";
       if (pCompareTo)
          args << *pCompareTo;
@@ -1264,13 +1344,21 @@ public:
       return runGit(args, pOutput, nullptr, nullptr);
    }
 
+   // pRenamedFrom: for a staged rename or copy, the path the file came from.
+   // Without it in the pathspec Git cannot pair the two sides, and shows the
+   // file as added whole rather than as its own changes. A copy is paired
+   // only when asked (-C), as the status was (status.renames=copies), and
+   // the diff is kept to the pairs: the source of a copy may have staged
+   // changes of its own, which the pathspec would bring along, as it would
+   // the other files of a directory that took the source's name.
    core::Error diffFile(const FilePath& filePath,
+                        const FilePath* pRenamedFrom,
                         PatchMode mode,
                         int contextLines,
                         bool ignoreWhitespace,
                         std::string* pOutput)
    {
-      Error error = doDiffFile(filePath, nullptr, mode, contextLines, ignoreWhitespace, pOutput);
+      Error error = doDiffFile(filePath, pRenamedFrom, mode, contextLines, ignoreWhitespace, pRenamedFrom != nullptr, pOutput);
       if (error)
          return error;
 
@@ -1288,6 +1376,7 @@ public:
                                mode,
                                contextLines,
                                ignoreWhitespace,
+                               false,
                                pOutput);
             if (error)
                return error;
@@ -2216,17 +2305,26 @@ Error vcsDiffFile(const json::JsonRpcRequest& request,
    if (contextLines < 0)
       contextLines = 999999999;
 
-   splitRename(path, nullptr, &path);
+   // the diff of a staged rename takes both of its paths (see diffFile)
+   std::string oldPath;
+   bool renamed = splitRename(path, &oldPath, &path);
+   FilePath renamedFrom;
+   if (renamed && mode == PatchModeStage)
+      renamedFrom = resolveAliasedPath(oldPath);
 
    std::string output;
    error = s_git_.diffFile(
                resolveAliasedPath(path),
+               renamedFrom.isEmpty() ? nullptr : &renamedFrom,
                static_cast<PatchMode>(mode),
                contextLines,
                ignoreWhitespace,
                &output);
    if (error)
       return error;
+
+   if (!renamedFrom.isEmpty())
+      output = renamedPairFor(output, path);
 
    std::string sourceEncoding = projects::projectContext().defaultEncoding();
    bool usedSourceEncoding;

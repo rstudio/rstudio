@@ -21,6 +21,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 section "Installing Dictionaries"
 
 URL="${RSTUDIO_BUILDTOOLS}/dictionaries"
+DICTIONARIES_VERSION="2019-02-08"
 
 # download and extract the dictionaries if necessary
 DICTIONARIES_DIR="${RSTUDIO_TOOLS_ROOT}/dictionaries"
@@ -31,7 +32,7 @@ fi
 
 sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
 
-CORE_DICTIONARIES=core-dictionaries.zip
+CORE_DICTIONARIES="core-dictionaries-${DICTIONARIES_VERSION}.zip"
 download "${URL}/${CORE_DICTIONARIES}"
 rm -rf "${DICTIONARIES_DIR}"
 mkdir -p "${DICTIONARIES_DIR}"

@@ -4,6 +4,7 @@ import { test } from '../fixtures/rstudio.fixture';
 import {
   executeInConsole,
   ensureConsoleIdle,
+  findRErrorAfter,
   CONSOLE_OUTPUT,
   waitForConsoleIdle,
 } from '../pages/console_pane.page';
@@ -130,14 +131,15 @@ export async function createSandbox(page: Page): Promise<string> {
       return dir;
     }
   }
-  // Marker timeout. Surface the underlying R error if one is in the buffer,
-  // otherwise echo the console tail and the resolved root expression so the
-  // failure is actionable. R formats errors as `Error in <call> :\n  <message>`,
-  // so capture indented continuation lines along with the header.
+  // Marker timeout. Surface the underlying R error if this command raised
+  // one, otherwise echo the console tail and the resolved root expression so
+  // the failure is actionable. The command's echo holds the marker, so scan
+  // from there: the buffer is shared with earlier specs, and an error one of
+  // them left behind is not this command's.
   const tail = await page.locator(CONSOLE_OUTPUT).innerText();
-  const errMatch = tail.match(/(?:Error in|Error:)[^\n]*(?:\n[ \t]+[^\n]*)*/);
-  const detail = errMatch
-    ? `R error: ${errMatch[0].replace(/\n+/g, ' | ').trim()}`
+  const rError = findRErrorAfter(tail, marker);
+  const detail = rError
+    ? `R error: ${rError}`
     : `console tail: ${tail.slice(-300).replace(/\n+/g, ' | ').trim()}`;
   throw new Error(
     `createSandbox: marker not found within ${TIMEOUTS.consoleReady}ms\n` +

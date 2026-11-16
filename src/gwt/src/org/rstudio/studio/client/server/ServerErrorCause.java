@@ -27,6 +27,15 @@ public class ServerErrorCause
    public String getCategory() { return category_; }
    public String getMessage() { return message_; }
 
+   // True for Win32 ERROR_SHARING_VIOLATION: another process had the file
+   // open. Checked by code because Windows words the message in its display
+   // language. Only meaningful for a Windows session, where "system" codes are
+   // Win32 codes; elsewhere 32 is errno EPIPE.
+   public boolean isWindowsSharingViolation()
+   {
+      return code_ == WIN32_ERROR_SHARING_VIOLATION && "system".equals(category_);
+   }
+
    @Override
    public String toString()
    {
@@ -38,4 +47,5 @@ public class ServerErrorCause
    private final String message_;
    
    public static final int FILE_NOT_FOUND = 2;
+   private static final int WIN32_ERROR_SHARING_VIOLATION = 32;
 }

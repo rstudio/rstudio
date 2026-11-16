@@ -19,6 +19,7 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -62,6 +63,8 @@ public class NewConnectionPreInstallOdbcHost extends Composite
 
       dirChooser_ = new DirectoryChooserTextBox(constants_.installationPath(), "", ElementIds.TextBoxButtonId.ODBC_PATH, null);
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
+      licenseLabel_.setText(constants_.licenseLabel());
+      licenseLabel_.setFor(license_);
  
       initWidget(createWidget());
    }
@@ -108,6 +111,9 @@ public class NewConnectionPreInstallOdbcHost extends Composite
    private ConnectionsServerOperations server_;
 
    private Widget mainWidget_;
+
+   @UiField
+   FormLabel licenseLabel_;
 
    @UiField
    TextArea license_;

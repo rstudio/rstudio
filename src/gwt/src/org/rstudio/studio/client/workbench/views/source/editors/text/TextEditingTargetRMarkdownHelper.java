@@ -1015,8 +1015,11 @@ public class TextEditingTargetRMarkdownHelper
             @Override
             public void onError(ServerError error)
             {
+               // the session refuses to delete a directory it depends on (e.g.
+               // the one shown in the Files pane); say why, not just that it failed
                globalDisplay_.showErrorMessage(constants_.cleanAndCreateTemplateCaption(),
-                     constants_.cleanAndCreateTemplateMessage(oldFile.getPath()));
+                     constants_.cleanAndCreateTemplateMessage(oldFile.getPath()) +
+                     "\n\n" + error.getUserMessage());
             }
          });
    }

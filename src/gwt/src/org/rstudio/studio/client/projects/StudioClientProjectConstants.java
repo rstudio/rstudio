@@ -30,7 +30,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String cloneSVNRepoLabel();
     String cloneGitRepoLabel();
     String vcsCloneFailMessage();
-    String invalidPackageMessage(String packageName);
     String invalidPackageName(String packageName);
     String creatingProjectLabel();
     String projectFailedMessage();
@@ -72,7 +71,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String newDirectoryTitle();
     String newDirectorySubTitle();
     String newDirectoryPageCaption();
-    String titleName();
     String newProjectTitle();
     String newProjectSubTitle();
     String createNewProjectPageCaption();
@@ -92,7 +90,7 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String typeLabel();
     String packageNameLabel();
     String rcppPackageOption();
-    String validateAsyncMessage(String packageName);
+    String invalidPackageMessage(String packageName);
     String fileAlreadyExistsMessage(String path);
     String directoryAlreadyExistsMessage(String path);
     String pleaseEnterDirectoryNameMessage();
@@ -117,9 +115,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String txtVenvPackagesNone();
     String txtVenvPackagesLabel();
     String loadingCapabilitiesLabel();
-    String quartoProjectTypeOption();
-    String quartoProjectEngineOption();
-    String quartoProjectKernelOption();
     String quartoBlogTitle();
     String quartoBlogSubTitle();
     String quartoBlogPageCaption();
@@ -240,7 +235,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String roxygenOptionsCaption();
     String pathSelectorSiteDir();
     String websiteOutputFormatLabel();
-    String allLabel();
     String chkPreviewAfterBuildingCaption();
     String chkLivePreviewSiteCaption();
     String infoLabel();

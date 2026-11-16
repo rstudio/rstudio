@@ -2338,6 +2338,14 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Open selected file(s)") // $NON-NLS-1$
     String vcsOpenDesc();
     
+    // vcsOpenAtFirstChange
+    @DefaultStringValue("Open Selected File at First Change") // $NON-NLS-1$
+    String vcsOpenAtFirstChangeLabel();
+    @DefaultStringValue("Open at First Change") // $NON-NLS-1$
+    String vcsOpenAtFirstChangeMenuLabel();
+    @DefaultStringValue("Open the selected file at its first change") // $NON-NLS-1$
+    String vcsOpenAtFirstChangeDesc();
+    
     // vcsIgnore
     @DefaultStringValue("Ignore Files or Folders") // $NON-NLS-1$
     String vcsIgnoreLabel();
@@ -4311,10 +4319,6 @@ public interface CmdConstants extends Constants {
     String consoleActivatePythonLabel();
     @DefaultStringValue("Python") // $NON-NLS-1$
     String consoleActivatePythonMenuLabel();
-    
-    // showSplashScreen
-    @DefaultStringValue("Show Splash Screen") // $NON-NLS-1$
-    String showSplashScreenLabel();
     
     // copyRStudioVersion
     @DefaultStringValue("Copy RStudio Version") // $NON-NLS-1$

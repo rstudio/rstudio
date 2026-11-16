@@ -33,9 +33,10 @@ echo -- Installing dependencies to: %RSTUDIO_TOOLS_ROOT%\dependencies
 set PATH=%WINDOWS_SCRIPTS_DIR%tools;%PATH%
 
 set BOOST_VERSION=1.91.0
+set DICTIONARIES_VERSION=2019-02-08
 set GNUGREP_VERSION=3.0
 :: Build name of RStudio's GWT fork SDK; see src/gwt/tools/build-gwt-README.md.
-set GWT_VERSION=2.13.1-montauk-daisy-4
+set GWT_VERSION=2.13.1-parrot-balsam-1
 set LIBCLANG_VERSION=13.0.1
 set MATHJAX_VERSION=2.7.9
 set MATHJAX4_VERSION=4.1.3
@@ -46,7 +47,7 @@ set NSPROCESS_VERSION=1.6
 set OPENSSL_VERSION=3.5.9
 set PANDOC_VERSION=3.2
 set QUARTO_VERSION=1.11.9
-set COPILOT_VERSION=1.555.7
+set COPILOT_VERSION=1.570.0
 set SUMATRA_VERSION=3.1.2
 set WINUTILS_VERSION=1.0
 
@@ -133,7 +134,7 @@ set NSISMULTIUSER_FOLDER=nsis-multiuser\%NSISMULTIUSER_VERSION%
 set NSISMULTIUSER_OUTPUT=nsis-multiuser\%NSISMULTIUSER_VERSION%
 
 
-set DICTIONARIES_URL=dictionaries/core-dictionaries.zip
+set DICTIONARIES_URL=dictionaries/core-dictionaries-%DICTIONARIES_VERSION%.zip
 set DICTIONARIES_FOLDER=dictionaries
 set DICTIONARIES_OUTPUT=dictionaries
 
@@ -259,13 +260,6 @@ if exist node\%NODEBUNDLE_FILE% (
   )
   rmdir /s /q node\%NODEBUNDLE_FILE% 2>NUL
 )
-
-pushd node\%NODEBUILD_VERSION%
-if not exist yarn.cmd (
-  echo -- Installing yarn
-  call npm install --global yarn
-)
-popd
 
 echo -- Installing packages
 call "%COMMON_SCRIPTS_DIR%\install-packages.cmd"

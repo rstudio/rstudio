@@ -18,7 +18,7 @@
    # form url to dictionaries
    fmt <- "%s://s3.amazonaws.com/rstudio-buildtools/dictionaries/%s"
    protocol <- if (secure) "https" else "http"
-   archive <- "all-dictionaries.zip"
+   archive <- "all-dictionaries-2024-02-20.zip"
    url <- sprintf(fmt, protocol, archive)
    
    # form path to downloaded dictionaries in tempdir

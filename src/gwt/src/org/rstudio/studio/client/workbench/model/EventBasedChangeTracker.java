@@ -15,21 +15,12 @@
 package org.rstudio.studio.client.workbench.model;
 
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 
 public class EventBasedChangeTracker<T> implements ChangeTracker
 {
    public EventBasedChangeTracker(HasValueChangeHandlers<T> source)
    {
-      source_ = source;
-      source.addValueChangeHandler(new ValueChangeHandler<T>()
-      {
-         public void onValueChange(ValueChangeEvent<T> valueChangeEvent)
-         {
-            changed_ = true;
-         }
-      });
+      source.addValueChangeHandler(event -> markChanged());
    }
 
    public boolean hasChanged()
@@ -42,13 +33,17 @@ public class EventBasedChangeTracker<T> implements ChangeTracker
       changed_ = false;
    }
 
-   public ChangeTracker fork()
+   public int getVersion()
    {
-      EventBasedChangeTracker<T> ebct = new EventBasedChangeTracker<>(source_);
-      ebct.changed_ = changed_;
-      return ebct;
+      return version_;
    }
 
-   protected boolean changed_ = false;
-   private final HasValueChangeHandlers<T> source_;
+   protected void markChanged()
+   {
+      changed_ = true;
+      version_++;
+   }
+
+   private boolean changed_ = false;
+   private int version_ = 0;
 }

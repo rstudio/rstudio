@@ -946,17 +946,6 @@ void rInitComplete()
 // failures it causes otherwise look entirely unrelated to their cause.
 std::string s_workingDirWarning;
 
-void notifyIfWorkingDirectoryTooLong()
-{
-   if (s_workingDirWarning.empty())
-      return;
-
-   console_output::writeLine(
-      console_output::OutputStreamStderr,
-      s_workingDirWarning,
-      console_output::OutputTypeWarning);
-}
-
 // Set during startup when the user data directory can't be written and a
 // temporary directory is used in its place. Like the warning above, it's held
 // until the console is available.
@@ -966,6 +955,25 @@ std::string s_temporaryDataDirWarning;
 // couldn't be entered and another was used in its place. Held until the
 // console is available, like the warnings above.
 std::string s_workingDirectoryWarning;
+
+// Report one of the held startup warnings above. A resumed session (including
+// Restart R) replays its saved console output, which may already show the same
+// warning; printing it again would only add a duplicate (#19246). The check is
+// against this session's own output, so a warning that was cleared or scrolled
+// out of the console is printed again while its condition persists.
+void notifyStartupWarning(const std::string& warning)
+{
+   if (warning.empty())
+      return;
+
+   if (rstudio::r::session::consoleActions().containsOutput(warning))
+      return;
+
+   console_output::writeLine(
+      console_output::OutputStreamStderr,
+      warning,
+      console_output::OutputTypeWarning);
+}
 
 // Whether the session was given a scope on the command line, as rserver does
 // for the sessions it manages (e.g. with multiple sessions or the Launcher).
@@ -1035,28 +1043,6 @@ void reportUnwritableUserDataDir(const FilePath& dataDir,
       temporaryDir.getAbsolutePath());
 }
 
-void notifyIfUserDataDirTemporary()
-{
-   if (s_temporaryDataDirWarning.empty())
-      return;
-
-   console_output::writeLine(
-      console_output::OutputStreamStderr,
-      s_temporaryDataDirWarning,
-      console_output::OutputTypeWarning);
-}
-
-void notifyIfWorkingDirectoryReplaced()
-{
-   if (s_workingDirectoryWarning.empty())
-      return;
-
-   console_output::writeLine(
-      console_output::OutputStreamStderr,
-      s_workingDirectoryWarning,
-      console_output::OutputTypeWarning);
-}
-
 void notifyIfRVersionChanged()
 {
    using namespace rstudio::r::session::state;
@@ -1094,13 +1080,13 @@ void rSessionInitHook(bool newSession)
    notifyIfRVersionChanged();
 
    // notify the user if the working directory is too long to launch children from
-   notifyIfWorkingDirectoryTooLong();
+   notifyStartupWarning(s_workingDirWarning);
 
    // notify the user if session state is being kept in a temporary directory
-   notifyIfUserDataDirTemporary();
+   notifyStartupWarning(s_temporaryDataDirWarning);
 
    // notify the user if the session started somewhere other than its working directory
-   notifyIfWorkingDirectoryReplaced();
+   notifyStartupWarning(s_workingDirectoryWarning);
 
    // synchronize session info
    json::Object dataJson;

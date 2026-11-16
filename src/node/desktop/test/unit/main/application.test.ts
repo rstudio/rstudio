@@ -21,7 +21,8 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 
-import { Menu } from 'electron';
+import { app as electronApp, BrowserWindow, dialog, Menu, MessageBoxOptions } from 'electron';
+import i18next from 'i18next';
 
 import { createSinonStubInstance, restore, saveAndClear } from '../unit-utils';
 import { Application, collectStateDirIssues } from '../../../src/main/application';
@@ -29,12 +30,15 @@ import { ApplicationLaunch } from '../../../src/main/application-launch';
 import { clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
 import { NullLogger, setLogger } from '../../../src/core/logger';
 import { clearCoreSingleton } from '../../../src/core/core-state';
+import * as Utils from '../../../src/main/utils';
 import { randomString } from '../../../src/main/utils';
 import { FilePath } from '../../../src/core/file-path';
 import { kRunDiagnosticsOption } from '../../../src/main/args-manager';
 import { DesktopBrowserWindow } from '../../../src/main/desktop-browser-window';
 import { MainWindow } from '../../../src/main/main-window';
 import { PendingWindow } from '../../../src/main/pending-window';
+import { initI18n } from '../../../src/main/i18n-manager';
+import { clearOptionsSingleton, ElectronDesktopOptions } from '../../../src/main/preferences/electron-desktop-options';
 
 describe('Application', () => {
   before(() => {
@@ -100,6 +104,63 @@ describe('Application', () => {
     });
   });
 
+  describe('reportDesktopOptionsRecovery', () => {
+    let configDir: string;
+
+    before(async () => {
+      initI18n();
+      await new Promise<void>((resolve) => {
+        if (i18next.isInitialized) {
+          resolve();
+        } else {
+          i18next.on('initialized', () => resolve());
+        }
+      });
+    });
+
+    beforeEach(() => {
+      clearOptionsSingleton();
+      configDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rstudio-application-recovery-test-'));
+    });
+
+    afterEach(() => {
+      sinon.restore();
+      clearOptionsSingleton();
+      fs.rmSync(configDir, { recursive: true, force: true });
+    });
+
+    // i18next HTML-escapes interpolated values by default, which would turn
+    // the backup path the dialog exists to show into '&#x2F;Users&#x2F;...'
+    it('shows the backup path verbatim in the reset dialog', async () => {
+      fs.writeFileSync(path.join(configDir, 'config.json'), '{"view":{"zoomLevel":"huge"}}');
+      const recovery = ElectronDesktopOptions(configDir).configRecovery();
+      assert.isDefined(recovery);
+
+      const showMessageBox = sinon.stub(dialog, 'showMessageBox').resolves({ response: 0, checkboxChecked: false });
+      const app = new Application();
+      try {
+        (app as unknown as { reportDesktopOptionsRecovery(): void }).reportDesktopOptionsRecovery();
+        while (!showMessageBox.called) {
+          await new Promise((resolve) => setImmediate(resolve));
+        }
+
+        // the stub's typing sees only the one-argument overload
+        const [, options] = showMessageBox.firstCall.args as unknown as [BrowserWindow, MessageBoxOptions];
+        const text = process.platform === 'win32' ? options.message : options.detail;
+        assert.include(text, recovery!.configPath);
+        assert.include(text, recovery!.backupPath);
+        assert.include(text, recovery!.reason);
+        assert.notInclude(text, '&#x2F;');
+        assert.notInclude(text, '&lt;');
+      } finally {
+        // the dialog's default window is not closed by the dialog itself (#19535)
+        if (showMessageBox.called) {
+          (showMessageBox.firstCall.args[0] as unknown as BrowserWindow).destroy();
+        }
+      }
+    });
+  });
+
   describe('Dock menu', () => {
     beforeEach(() => {
       clearApplicationSingleton();
@@ -131,6 +192,69 @@ describe('Application', () => {
     });
   });
 
+  describe('Instance lock', () => {
+    const env: Record<string, string> = { RS_INITIAL_PROJECT: '' };
+    let userData: string;
+    let application: Application;
+    let requestLock: sinon.SinonStub;
+    let setPath: sinon.SinonStub;
+
+    beforeEach(() => {
+      saveAndClear(env);
+      userData = fs.mkdtempSync(path.join(os.tmpdir(), 'rstudio-instance-lock-test-'));
+      const getPath = sinon.stub(electronApp, 'getPath').callThrough();
+      getPath.withArgs('userData').returns(userData);
+      requestLock = sinon.stub(electronApp, 'requestSingleInstanceLock').returns(false);
+      setPath = sinon.stub(electronApp, 'setPath');
+      // keep the second-instance listener off the test runner's app
+      sinon.stub(electronApp, 'on').returnsThis();
+      application = new Application();
+      setApplication(application);
+    });
+
+    afterEach(() => {
+      sinon.restore();
+      clearApplicationSingleton();
+      restore(env);
+      fs.rmSync(userData, { recursive: true, force: true });
+    });
+
+    const sessionDataRoot = () => path.join(userData, 'instance-session-data');
+
+    it('gives a secondary instance session data of its own', () => {
+      application['initializeInstanceLock']();
+      assert.isTrue(setPath.calledOnceWithExactly('sessionData', path.join(sessionDataRoot(), String(process.pid))));
+    });
+
+    it('keeps the primary instance on the shared session data', () => {
+      requestLock.returns(true);
+      application['initializeInstanceLock']();
+      assert.isTrue(setPath.notCalled);
+    });
+
+    it('creates no session data for a launch that hands its file to the primary instance', () => {
+      const file = path.join(userData, 'analysis.R');
+      fs.writeFileSync(file, '');
+      application.argsManager.setUnswitchedArgs([file]);
+
+      application['initializeInstanceLock']();
+      assert.isTrue(setPath.notCalled);
+      assert.isFalse(fs.existsSync(sessionDataRoot()));
+    });
+
+    it('takes the lock at startup if that did not happen earlier, keeping the shared session data', () => {
+      application['ensureInstanceLock']();
+      assert.isTrue(requestLock.calledOnce);
+      assert.isTrue(setPath.notCalled);
+    });
+
+    it('does not take the lock again at startup', () => {
+      application['initializeInstanceLock']();
+      application['ensureInstanceLock']();
+      assert.isTrue(requestLock.calledOnce);
+    });
+  });
+
   describe('Command line switches', () => {
     it('run-diagnostics sets diag mode and continues', () => {
       const app = new Application();
@@ -144,9 +268,10 @@ describe('Application', () => {
   describe('Window creation', () => {
     // stands in for a tracked window; only the methods the tracker and
     // raiseAndActivateWindow() touch are provided
-    function trackedWindow(): { tracked: DesktopBrowserWindow; focus: sinon.SinonStub } {
+    function trackedWindow() {
       const focus = sinon.stub();
       const window = {
+        isVisible: sinon.stub().returns(true),
         isMinimized: sinon.stub().returns(false),
         restore: sinon.stub(),
         moveTop: sinon.stub(),
@@ -154,7 +279,7 @@ describe('Application', () => {
         focus: focus,
         addListener: sinon.stub(),
       };
-      return { tracked: { window } as unknown as DesktopBrowserWindow, focus };
+      return { tracked: { window } as unknown as DesktopBrowserWindow, focus, window };
     }
 
     function pendingSatellite(name: string): PendingWindow {
@@ -192,6 +317,26 @@ describe('Application', () => {
       // a denied request never reaches windowCreated(), so the pending entry
       // must not be left behind for the next unrelated window.open()
       assert.equal(app.pendingWindows.length, 0);
+    });
+
+    // the window is already on screen, wherever the user left it
+    it('denies a satellite whose name is already open without raising that window in automation mode', () => {
+      const app = new Application();
+      const { tracked, window } = trackedWindow();
+      app.windowTracker.addWindow('rstudio_satellite_source', tracked);
+      app.prepareForWindow(pendingSatellite('rstudio_satellite_source'));
+
+      electronApp.commandLine.appendSwitch('automation-agent');
+      try {
+        assert.equal(app.windowOpening('rstudio_satellite_source').action, 'deny');
+      } finally {
+        electronApp.commandLine.removeSwitch('automation-agent');
+      }
+
+      assert.isFalse(window.restore.called);
+      assert.isFalse(window.showInactive.called);
+      assert.isFalse(window.moveTop.called);
+      assert.isFalse(window.focus.called);
     });
 
     it('denies a secondary window whose name is already open and activates that window', () => {
@@ -246,6 +391,28 @@ describe('Application', () => {
 
       assert.equal(result.action, 'allow');
       assert.equal(app.pendingWindows.length, 1);
+    });
+
+    // windowOpening() creates the window hidden during automation runs
+    it('shows a new window without raising it in automation mode', () => {
+      const showWindowForAutomation = sinon.stub(Utils, 'showWindowForAutomation');
+      const app = new Application();
+      const newWindow = new BrowserWindow({ show: false });
+      setApplication(app);
+
+      try {
+        app.windowCreated(newWindow, newWindow.webContents, '_blank');
+        assert.isFalse(showWindowForAutomation.called);
+
+        electronApp.commandLine.appendSwitch('automation-agent');
+        app.windowCreated(newWindow, newWindow.webContents, '_blank');
+        assert.isTrue(showWindowForAutomation.calledOnceWithExactly(newWindow));
+      } finally {
+        electronApp.commandLine.removeSwitch('automation-agent');
+        showWindowForAutomation.restore();
+        newWindow.destroy();
+        clearApplicationSingleton();
+      }
     });
   });
 

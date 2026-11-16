@@ -16,22 +16,12 @@ package org.rstudio.studio.client.common.icons;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.DataResource;
-import com.google.gwt.resources.client.DataResource.MimeType;
 import com.google.gwt.resources.client.ImageResource;
 
 public interface StandardIcons extends ClientBundle
 {
    public static final StandardIcons INSTANCE = GWT.create(StandardIcons.class);
 
-   @Source("r_logo.svg")
-   @MimeType("image/svg+xml")
-   DataResource rLogoSvg();
-   
-   @Source("python_logo.svg")
-   @MimeType("image/svg+xml")
-   DataResource pythonLogoSvg();
-   
    @Source("stock_new_2x.png")
    ImageResource stock_new2x();
 
@@ -93,6 +83,12 @@ public interface StandardIcons extends ClientBundle
 
    @Source("outline_2x.png")
    ImageResource outline2x();
+
+   @Source("diffSideBySide_2x.png")
+   ImageResource diffSideBySide2x();
+
+   @Source("diffSideBySideDark_2x.png")
+   ImageResource diffSideBySideDark2x();
 
    @Source("options_2x.png")
    ImageResource options2x();

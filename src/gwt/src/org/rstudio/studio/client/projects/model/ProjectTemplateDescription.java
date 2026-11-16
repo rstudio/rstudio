@@ -32,6 +32,13 @@ public class ProjectTemplateDescription extends JavaScriptObject
    public native final String getPageCaption()      /*-{ return this["caption"]; }-*/;
    public native final JsArrayString getOpenFiles() /*-{ return this["open_files"]; }-*/;
    
+   // Whether the template uses the project directory name as an R package
+   // name; set by the session for the package templates it registers
+   public native final boolean createsPackage()
+   /*-{
+      return this["creates_package"] === true;
+   }-*/;
+
    public final ImageResource getIcon()      { return getIconImpl("icon"); }
    public final ImageResource getIconLarge() { return getIconImpl("icon_large"); }
    

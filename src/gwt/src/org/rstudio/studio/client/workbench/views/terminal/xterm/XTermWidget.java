@@ -25,6 +25,7 @@ import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalConstants;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalSessionSocket;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalDataInputEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.XTermTitleEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.XTermTitleEvent.Handler;
@@ -44,7 +45,6 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 
-import java.util.function.Consumer;
 
 /**
  * Xterm-compatible terminal emulator widget. This widget does no network
@@ -68,7 +68,7 @@ public class XTermWidget extends Widget
                          implements RequiresResize,
                                     TerminalDataInputEvent.HasHandlers,
                                     XTermTitleEvent.HasHandlers,
-                                    Consumer<String>
+                                    TerminalSessionSocket.Emulator
 {
    /**
     * Creates an XTermWidget.

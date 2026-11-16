@@ -79,7 +79,7 @@ Measures where RStudio Desktop spends its startup time:
 
 ```sh
 npm run startup-timing                                   # dev build, 3 launches
-npm run startup-timing -- --runs=5 --no-splash
+npm run startup-timing -- --runs=5
 npm run startup-timing -- --app=/Applications/RStudio.app/Contents/MacOS/RStudio
 npm run startup-timing -- --report=.rstudio-dev/startup-timing   # re-print
 ```

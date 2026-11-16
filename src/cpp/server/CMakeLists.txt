@@ -293,6 +293,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
      ServerCheckConfigTests.cpp
      ServerEnvVarsTests.cpp
      ServerFormatUtilsTests.cpp
+     ServerPathsTests.cpp
      ServerSessionManagerTests.cpp
      session/ServerSessionProxyTests.cpp
      ServerSetupDbTests.cpp)

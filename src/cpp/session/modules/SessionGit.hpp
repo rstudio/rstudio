@@ -68,6 +68,11 @@ core::Error initializeGit(const core::FilePath& workingDir);
 // worktree (path, head, branch, detached, bare, locked, prunable, is_main).
 core::json::Array parseWorktreeList(const std::string& output);
 
+// The rename or copy pair in a diff (of renames and copies, with
+// core.quotepath off) whose new side is the given repository-relative path,
+// when the diff has more than one; otherwise the diff whole.
+std::string renamedPairFor(const std::string& diff, const std::string& path);
+
 core::FilePath gitExePath();
 core::FilePath detectedGitExePath();
 

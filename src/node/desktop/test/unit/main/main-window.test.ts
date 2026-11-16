@@ -23,7 +23,8 @@ import { ipcMain } from 'electron';
 import { FilePath } from '../../../src/core/file-path';
 import { NullLogger, setLogger } from '../../../src/core/logger';
 import { Application } from '../../../src/main/application';
-import { clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
+import { appState, clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
+import { GwtCallback } from '../../../src/main/gwt-callback';
 import { MainWindow } from '../../../src/main/main-window';
 import { clearOptionsSingleton, ElectronDesktopOptions } from '../../../src/main/preferences/electron-desktop-options';
 import desktop from '../../../src/native/desktop.node';
@@ -130,6 +131,7 @@ describe('MainWindow', () => {
       nullLogger = new NullLogger();
       logSpy = sinon.spy(nullLogger, 'logErrorAtLevel');
       setLogger(nullLogger);
+      setApplication(new Application()); // closeEvent() asks it for the updater
 
       // point the options singleton at a temp directory so the real user
       // config is never touched, then stub the write itself
@@ -140,6 +142,7 @@ describe('MainWindow', () => {
     afterEach(() => {
       sinon.restore();
       setLogger(new NullLogger());
+      clearApplicationSingleton();
       clearOptionsSingleton();
       new FilePath(configDirectory).removeIfExistsSync();
     });
@@ -198,6 +201,21 @@ describe('MainWindow', () => {
       };
       return { fake, close };
     }
+
+    it('refuses to close while the quit is deciding whether to install an update', () => {
+      const fake = {
+        quitConfirmed: true,
+        sessionProcess: { exitCode: 0 },
+        window: windowStub(),
+        executeJavaScript: sinon.stub(),
+        quit: sinon.stub(),
+      };
+      appState().gwtCallback = { updater: { isHandingOff: () => true } } as unknown as GwtCallback;
+      const event = { preventDefault: sinon.stub() };
+      MainWindow.prototype.closeEvent.call(fake as unknown as MainWindow, event as unknown as Electron.Event);
+      assert.isTrue(event.preventDefault.calledOnce);
+      assert.isTrue(saveWindowBounds.notCalled);
+    });
 
     it('does not confirm the quit just because quitR() was dispatched', async () => {
       const { fake, close } = closeEventWithLiveRenderer();

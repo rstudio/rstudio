@@ -58,7 +58,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
     String installationPageCaption(String name);
     String connectExistingDataSourceCaption();
     String connectionInfoSubTitle(String name, String source);
-    String titleText();
     String driverLabelText(String name);
     String installOdbcCaption(String name);
     String connectionUserActionLabel();
@@ -87,4 +86,5 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
     String loadingObjectsMessage();
     String viewTableTitle();
     String installationPath();
+    String licenseLabel();
 }

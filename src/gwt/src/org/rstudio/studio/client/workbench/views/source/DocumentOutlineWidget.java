@@ -456,20 +456,17 @@ public class DocumentOutlineWidget extends Composite
 
    private void buildScopeTreeImpl(Scope node, int depth, Counter counter)
    {
-      if (shouldDisplayNode(node))
+      boolean displayed = shouldDisplayNode(node);
+      if (displayed)
          addOrSetItem(node, depth, counter.increment());
+
+      // Only a displayed node indents the items it contains; an anonymous
+      // brace or a namespace has no entry of its own to indent them under.
+      int childDepth = displayed ? depth + 1 : depth;
 
       JsArray<Scope> children = node.getChildren();
       for (int i = 0; i < children.length(); i++)
-      {
-         int newDepth = depth + 1;
-
-         // Don't add extra indentation for items within namespaces
-         if (node.isNamespace())
-            newDepth--;
-
-         buildScopeTreeImpl(children.get(i), newDepth, counter);
-      }
+         buildScopeTreeImpl(children.get(i), childDepth, counter);
    }
 
    private boolean isUnnamedNode(Scope node)

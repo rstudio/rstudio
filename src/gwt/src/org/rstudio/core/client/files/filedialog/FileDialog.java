@@ -20,6 +20,7 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 
 import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -87,12 +88,37 @@ public abstract class FileDialog extends FileSystemDialog
       // the browser filename.
       String filename = browser_.getFilename().trim();
       if (StringUtil.isNullOrEmpty(filename))
+      {
+         // a selected folder row is a request to navigate into it; the `..`
+         // row resolves to the parent, which the name validation below would
+         // otherwise reject as an illegal name (#19427)
+         FileSystemItem selected = browser_.getSelectedTarget();
+         if (selected != null && selected.isDirectory())
+         {
+            cd(selected.getPath());
+            return false;
+         }
+
          filename = browser_.getSelectedValue().trim();
-      
+      }
+
       if (filename.length() == 0)
+      {
+         // an accept deferred (#18922) behind a navigation that an earlier
+         // accept turned into (a selected folder row, `~`, `..`, a typed
+         // `dir/`) arrives to find the name that navigation consumed; any
+         // other accept asked to save with an empty name
+         if (!(inDeferredAccept_ && arrivedFromAccept_))
+         {
+            browser_.selectFilename();
+            showError(constants_.nameEmptyMessage());
+         }
          return false;
-      
-      if (filename == "~")
+      }
+
+      // a typed `..` names the parent, like the `..` row; the name validation
+      // below would reject it
+      if (filename == "~" || filename == "..")
       {
          browser_.setFilename("");
          cd(filename);
@@ -121,6 +147,7 @@ public abstract class FileDialog extends FileSystemDialog
          browser_.setFilename(file);
          browser_.setFilenameEnabled(false);
          acceptOnNavigated_ = true;
+         splitPath_ = filename;
          cd(dir);
          return false;
       }
@@ -210,10 +237,34 @@ public abstract class FileDialog extends FileSystemDialog
       return false;
    }
 
+   /**
+    * Navigates on behalf of an accept (see shouldAccept()); the dialog's
+    * initial listing and the browser's own navigations do not come through
+    * here.
+    */
    protected void cd(String path)
    {
       browser_.setFilenameEnabled(false);
+      navigatingFromAccept_ = true;
       browser_.cd(path);
+   }
+
+   /**
+    * The user choosing a folder (a list row or a crumb) while a cd() of ours
+    * is pending supersedes it: the listing or error that arrives next is
+    * theirs, so a typed `dir/name` must not be put back over what they did.
+    */
+   @Override
+   public void onSelectionCommit(SelectionCommitEvent<FileSystemItem> event)
+   {
+      FileSystemItem item = event.getSelectedItem();
+      if (item != null && item.isDirectory())
+      {
+         navigatingFromAccept_ = false;
+         splitPath_ = null;
+      }
+
+      super.onSelectionCommit(event);
    }
 
    @Override
@@ -223,6 +274,12 @@ public abstract class FileDialog extends FileSystemDialog
 
       // re-enable before the deferred accept, which may cd() and disable again
       browser_.setFilenameEnabled(true);
+
+      // for the deferred accept that may follow: whether the listing it
+      // waited for was one of ours
+      arrivedFromAccept_ = navigatingFromAccept_;
+      navigatingFromAccept_ = false;
+      splitPath_ = null;
    }
 
    @Override
@@ -230,6 +287,18 @@ public abstract class FileDialog extends FileSystemDialog
    {
       // a failed cd() does not reach onNavigated()
       browser_.setFilenameEnabled(true);
+      navigatingFromAccept_ = false;
+
+      // the folder of a typed `dir/name` could not be entered: give the whole
+      // path back for correction, rather than leaving just `name` staged to
+      // be saved where the dialog still is
+      if (splitPath_ != null)
+      {
+         browser_.setFilename(splitPath_);
+         browser_.selectFilename();
+         splitPath_ = null;
+      }
+
       super.onError(errorMessage);
    }
 
@@ -252,5 +321,12 @@ public abstract class FileDialog extends FileSystemDialog
 
    protected boolean promptOnOverwrite_;
    protected boolean allowNonexistentFile_;
+
+   // a cd() of ours is in flight / the last listing came from one
+   private boolean navigatingFromAccept_ = false;
+   private boolean arrivedFromAccept_ = false;
+
+   // the typed `dir/name` whose `dir` a cd() of ours is entering
+   private String splitPath_ = null;
    private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

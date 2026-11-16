@@ -14,11 +14,13 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.dom.DomUtils;
@@ -54,12 +56,37 @@ public class ScrollableToolbarPopupMenu extends ToolbarPopupMenu
 
    public void ensureSelectedIsVisible()
    {
-      if (menuBar_.getSelectedItem() != null)
+      MenuItem item = menuBar_.getSelectedItem();
+      if (item == null)
+         return;
+
+      Element itemEl = item.getElement();
+      DomUtils.ensureVisibleVert(scrollPanel_.getElement(), itemEl, 0);
+
+      // Also show the headings and separators directly above the item, so that
+      // moving up to a group's first item (or the menu's) brings its heading
+      // back into view. They are above the item, so this only scrolls up. Not
+      // for the mouse: hovering selects, and the item would move from the pointer.
+      Event event = Event.getCurrentEvent();
+      if (event != null && (event.getTypeInt() & (Event.MOUSEEVENTS | Event.ONCLICK)) != 0)
+         return;
+
+      Element rowEl = itemEl.getParentElement();
+      Element topEl = null;
+      for (Element prevEl = rowEl.getPreviousSiblingElement();
+           prevEl != null && !isItemRow(prevEl);
+           prevEl = prevEl.getPreviousSiblingElement())
       {
-         DomUtils.ensureVisibleVert(scrollPanel_.getElement(),
-                                    menuBar_.getSelectedItem().getElement(),
-                                    0);
+         topEl = prevEl;
       }
+      if (topEl != null)
+         DomUtils.ensureVisibleVert(scrollPanel_.getElement(), topEl, 0);
+   }
+
+   private static boolean isItemRow(Element rowEl)
+   {
+      Element cellEl = rowEl.getFirstChildElement();
+      return cellEl != null && cellEl.hasClassName("gwt-MenuItem");
    }
    
    public int getSelectedIndex()

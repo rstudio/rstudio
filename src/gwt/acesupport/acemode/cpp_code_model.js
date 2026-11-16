@@ -434,7 +434,7 @@ var CppCodeModel = function(session, tokenizer,
 
             // function and lambdas
             else if (
-               localCursor.bwdOverConstNoexceptDecltype() &&
+               localCursor.bwdOverFunctionQualifiers() &&
                (localCursor.bwdOverInitializationList() &&
                 localCursor.moveBackwardOverMatchingParens()) ||
                   localCursor.moveBackwardOverMatchingParens()) {
@@ -520,13 +520,33 @@ var CppCodeModel = function(session, tokenizer,
                               fnArgsCursor.fwdToMatchingToken();
                            }
 
-                           var fnArgsEndPos = fnArgsCursor.peekFwd().currentPosition();
+                           var fnArgsEndCursor = fnArgsCursor.peekFwd();
+                           var fnArgsEndPos = fnArgsEndCursor.currentPosition();
                            if (fnArgsEndPos)
                               fnArgs = this.$session.getTextRange(new Range(
                                  fnArgsStartPos.row, fnArgsStartPos.column,
                                  fnArgsEndPos.row, fnArgsEndPos.column
                               ));
-                           
+
+                           // With 'auto A::f() -> int', show 'int A::' as for
+                           // 'int A::f()'. A requires-clause, 'override',
+                           // 'final' or the 'try' of a function-try-block after
+                           // the trailing type isn't part of it.
+                           if (fnArgsEndCursor.currentValue() === "->") {
+                              var bracePos = tokenCursor.currentPosition();
+                              var trailingType = this.$session.getTextRange(new Range(
+                                 fnArgsEndPos.row, fnArgsEndPos.column + 2,
+                                 bracePos.row, bracePos.column
+                              ))
+                                 .replace(/\brequires\b[\s\S]*$/, "")
+                                 .replace(/(\s+(override|final|try))+\s*$/, "")
+                                 .trim();
+                              var lastAuto = /\bauto\b(?![\s\S]*\bauto\b)/;
+                              fnType = lastAuto.test(fnType)
+                                 ? fnType.replace(lastAuto, function() { return trailingType; })
+                                 : trailingType;
+                           }
+
                         }
                         
                         var fullFnName;

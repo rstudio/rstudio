@@ -136,7 +136,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     String replace();
     String checkForExistingAppMessage(String appName, String server, String url);
     String overwriteAppName(String appName);
-    String index();
     String onAddFileClickMessage(String dirPath);
     String cannotAddFile();
     String selectFile();

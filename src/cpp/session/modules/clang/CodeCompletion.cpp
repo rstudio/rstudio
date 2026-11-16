@@ -15,6 +15,7 @@
 
 #include "CodeCompletion.hpp"
 
+#include <cstring>
 #include <iostream>
 
 #include <core/Debug.hpp>
@@ -171,22 +172,39 @@ core::json::Object toJson(const CodeCompleteResult& result)
 }
 
 void discoverTranslationUnitIncludePaths(const FilePath& filePath,
+                                         bool systemHeadersOnly,
                                          std::vector<std::string>* pIncludePaths)
 {
    std::vector<std::string> args =
          clangCompilationDatabase().compileArgsForTranslationUnit(
             filePath.getAbsolutePathNative(), false);
    
+   // every option that adds a directory to the include search (in the joined
+   // form, which is how compile_flags.txt paths are emitted); the search
+   // order they imply doesn't matter for offering completions
+   static const char* const kIncludeOptions[] = {
+      "-isystem-after", "-idirafter", "-isystem", "-iquote", "-I"
+   };
+
    for (const std::string& arg : args)
    {
-      if (boost::algorithm::starts_with(arg, "-I"))
+      for (const char* option : kIncludeOptions)
       {
+         if (!boost::algorithm::starts_with(arg, option))
+            continue;
+
          // skip RStudio's libclang builtin header paths
          if (arg.find("libclang/builtin-headers") != std::string::npos)
-            continue;
-         
-         pIncludePaths->push_back(
-                  string_utils::strippedOfQuotes(arg.substr(2)));
+            break;
+
+         // '-iquote' directories are only searched for "quoted" includes
+         if (systemHeadersOnly && std::strcmp(option, "-iquote") == 0)
+            break;
+
+         std::string path = arg.substr(std::strlen(option));
+         if (!path.empty())
+            pIncludePaths->push_back(string_utils::strippedOfQuotes(path));
+         break;
       }
    }
 }
@@ -395,7 +413,7 @@ Error getHeaderCompletionsImpl(const std::string& token,
    discoverSystemIncludePaths(&includePaths);
    
    // discover TU-related include paths
-   discoverTranslationUnitIncludePaths(filePath, &includePaths);
+   discoverTranslationUnitIncludePaths(filePath, systemHeadersOnly, &includePaths);
    
    // discover local include paths
    if (!systemHeadersOnly)

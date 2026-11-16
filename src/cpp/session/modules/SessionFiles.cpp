@@ -40,6 +40,7 @@
 #include <core/FileUtils.hpp>
 #include <core/Settings.hpp>
 #include <core/Exec.hpp>
+#include <core/Thread.hpp>
 #include <core/DateTime.hpp>
 
 #include <core/http/Util.hpp>
@@ -101,6 +102,34 @@ namespace {
 
 // monitor for file listings
 FilesListingMonitor s_filesListingMonitor;
+
+// the directory the Files pane last asked to list (and monitor); tracked
+// separately from the monitor because a directory under the project is
+// watched by the project monitor instead. list_files is an offlineable RPC,
+// so it can run on the offline service thread while delete_files runs on the
+// main thread; guard the shared path.
+boost::mutex s_browsedPathMutex;
+FilePath s_browsedPath;
+
+void setBrowsedPath(const FilePath& path)
+{
+   LOCK_MUTEX(s_browsedPathMutex)
+   {
+      s_browsedPath = path;
+   }
+   END_LOCK_MUTEX
+}
+
+FilePath browsedPath()
+{
+   LOCK_MUTEX(s_browsedPathMutex)
+   {
+      return s_browsedPath;
+   }
+   END_LOCK_MUTEX
+
+   return FilePath();
+}
 
 // make sure that monitoring persists across suspended sessions
 const char * const kFilesMonitoredPath = "files.monitored-path";
@@ -277,6 +306,8 @@ Error listFiles(const json::JsonRpcRequest& request, json::JsonRpcResponse* pRes
    core::json::Array jsonFiles;
    if (monitor)
    {
+      setBrowsedPath(targetPath);
+
       // always stop existing if we have one
       s_filesListingMonitor.stop();
 
@@ -389,6 +420,65 @@ core::Error deleteFile(const FilePath& filePath)
    }
 }
 
+// Deleting a directory removes everything below it, so refuse to delete any
+// directory that is (or contains) one the session depends on. The client only
+// offers the entries of the directory it is browsing, so a request for one of
+// these means the request itself is wrong (#19493: the Files pane's ".." row
+// could be selected from the keyboard and then deleted).
+struct ProtectedDirectory
+{
+   FilePath path;
+   const char* description;
+};
+
+// the protected directories, resolved once per request: the client and R may
+// refer to the same directory through a symlink (e.g. /var vs. /private/var
+// on macOS), and a trailing '.' or '..' must resolve to the directory it names
+std::vector<ProtectedDirectory> protectedDirectories()
+{
+   std::vector<ProtectedDirectory> roots = {
+      { module_context::userHomePath(), "the home directory" },
+      { module_context::safeCurrentPath(), "the current working directory" },
+      { browsedPath(), "the directory shown in the Files pane" }
+   };
+
+   if (projects::projectContext().hasProject())
+      roots.push_back({ projects::projectContext().directory(), "the project directory" });
+
+   std::vector<ProtectedDirectory> resolved;
+   for (const ProtectedDirectory& root : roots)
+   {
+      if (!root.path.isEmpty())
+         resolved.push_back({ FilePath(root.path.getWeaklyCanonicalPath()), root.description });
+   }
+
+   return resolved;
+}
+
+core::Error validateDeletion(const FilePath& filePath,
+                             const std::vector<ProtectedDirectory>& roots)
+{
+   // A symlink entry keeps its final component: deleting a link removes the
+   // link, not its target, so a link to a protected directory is still fair game.
+   FilePath target = filePath.isSymlink()
+         ? FilePath(filePath.getParent().getWeaklyCanonicalPath()).completeChildPath(filePath.getFilename())
+         : FilePath(filePath.getWeaklyCanonicalPath());
+
+   for (const ProtectedDirectory& root : roots)
+   {
+      if (root.path.isWithin(target))
+      {
+         // the text goes in the error's message, not a property: RPC error
+         // responses drop properties, and the Files pane shows the message
+         std::string message = "Cannot delete '" + filePath.getAbsolutePath() +
+               "' because it is or contains " + root.description + ".";
+         return Error(boost::system::errc::operation_not_permitted, message, ERROR_LOCATION);
+      }
+   }
+
+   return Success();
+}
+
 // IN: Array<String> paths
 core::Error deleteFiles(const core::json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
@@ -397,12 +487,21 @@ core::Error deleteFiles(const core::json::JsonRpcRequest& request,
    Error error = json::readParam(request.params, 0, &files);
    if (error)
       return error;
-   
+
    // extract vector of FilePath
    std::vector<FilePath> filePaths;
    Error extractError = extractFilePaths(files, &filePaths);
    if (extractError)
       return extractError;
+
+   // refuse the whole request before deleting anything
+   std::vector<ProtectedDirectory> roots = protectedDirectories();
+   for (const FilePath& filePath : filePaths)
+   {
+      Error validateError = validateDeletion(filePath, roots);
+      if (validateError)
+         return validateError;
+   }
 
    // delete each file
    Error deleteError;

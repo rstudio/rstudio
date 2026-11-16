@@ -21,10 +21,13 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -62,6 +65,10 @@ public class SlideLabel extends Composite
       String curtain();
       String container();
       String content();
+      String percentColumn();
+      String percent();
+      String percentSizer();
+      String percentValue();
       String cancelColumn();
       String cancelButton();
    }
@@ -102,6 +109,20 @@ public class SlideLabel extends Composite
             panel.remove(slideLabel);
          }
       });
+   }
+
+   /**
+    * Show a progress label for work that reports how far along it is. Room
+    * for the percentage is set aside from the start, so the label keeps its
+    * size as setPercent() changes it. Remove the label from the panel to
+    * dismiss it.
+    */
+   public static SlideLabel showWithPercent(String label, LayoutPanel panel)
+   {
+      SlideLabel slideLabel = showInternal(label, false, true, panel);
+      slideLabel.reservePercent();
+      slideLabel.show();
+      return slideLabel;
    }
 
    private static SlideLabel showInternal(String label,
@@ -154,6 +175,32 @@ public class SlideLabel extends Composite
          content_.setInnerHTML(label);
       else
          content_.setInnerText(label);
+   }
+
+   /**
+    * Set aside room beside the text for a percentage, empty until
+    * setPercent() says what it is.
+    */
+   public void reservePercent()
+   {
+      // the widest value there will be, in this locale's format
+      percentSizer_.setInnerText(formatPercent(100));
+      percentColumn_.getStyle().setDisplay(Style.Display.TABLE_CELL);
+   }
+
+   /**
+    * @param percent How far along the work is, from 0 to 100.
+    */
+   public void setPercent(int percent)
+   {
+      percent = Math.max(0, Math.min(100, percent));
+      percent_.setInnerText(formatPercent(percent));
+      innerTable_.setAttribute("aria-valuenow", String.valueOf(percent));
+   }
+
+   private static String formatPercent(int percent)
+   {
+      return NumberFormat.getPercentFormat().format(percent / 100.0);
    }
 
    public void show()
@@ -311,6 +358,12 @@ public class SlideLabel extends Composite
    DivElement container_;
    @UiField
    DivElement content_;
+   @UiField
+   TableCellElement percentColumn_;
+   @UiField
+   SpanElement percentSizer_;
+   @UiField
+   SpanElement percent_;
    @UiField
    Spinner progress_;
    @UiField

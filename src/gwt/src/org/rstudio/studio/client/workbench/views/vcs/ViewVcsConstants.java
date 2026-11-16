@@ -114,7 +114,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
     String diffError();
     String changeList();
     String svnIgnore();
-    String svnColonIgnore();
     String svnAdd();
     String svnDelete();
     String resolveCapitalized();
@@ -187,4 +186,7 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
     String commitFile(String path);
     String changedFiles();
     String filesToCommit();
+    String goToFirstChangeColumn();
+    String goToFirstChange(String path);
+    String goToFirstChangeTitle();
 }

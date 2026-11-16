@@ -132,7 +132,7 @@ export class SatelliteWindow extends GwtWindow {
         autoHideMenuBar: true,
         // Electron shows window.open() windows immediately, which on macOS
         // activates the app; Application.windowCreated() surfaces them with
-        // showInactive() instead during automation runs.
+        // showWindowForAutomation() instead during automation runs.
         show: !isAutomated(),
         webPreferences: {
           additionalArguments: ['--api-keys=desktopInfo|desktop'],

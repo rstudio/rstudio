@@ -1101,7 +1101,14 @@ var RCodeModel = function(session, tokenizer,
             }
             else
             {
+               // A header that shares its row with code before it, as in
+               // '} # done ----', begins at its own column: the row's start
+               // would lie inside the scope that code has just closed.
                var labelStartPos = {row: position.row, column: 0};
+               var lineStart = this.$session.getLine(position.row).substring(0, position.column);
+               if (lineStart.trim().length > 0)
+                  labelStartPos.column = position.column;
+
                var labelEndPos = {row: position.row, column: Infinity};
                this.$scopes.onMarkdownHead(label, labelStartPos, labelEndPos, depth, false);
             }

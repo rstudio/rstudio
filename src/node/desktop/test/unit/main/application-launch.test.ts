@@ -98,6 +98,29 @@ describe('ApplicationLaunch', () => {
     assert.include(spawnStub.secondCall.args[1] as string[], '--automation-agent');
   });
 
+  it('launchRStudio forwards --no-sandbox to the relaunched instance', () => {
+    const spawnStub = sinon.stub(childProcess, 'spawn').returns({ unref: sinon.stub() } as unknown as ChildProcess);
+    const appLaunch = ApplicationLaunch.init();
+
+    // the test runner itself is started with --no-sandbox
+    const hadSwitch = app.commandLine.hasSwitch('no-sandbox');
+    try {
+      app.commandLine.removeSwitch('no-sandbox');
+      appLaunch.launchRStudio({ noProject: true });
+      assert.notInclude(spawnStub.firstCall.args[1] as string[], '--no-sandbox');
+
+      app.commandLine.appendSwitch('no-sandbox');
+      appLaunch.launchRStudio({ noProject: true });
+      assert.include(spawnStub.secondCall.args[1] as string[], '--no-sandbox');
+    } finally {
+      if (hadSwitch) {
+        app.commandLine.appendSwitch('no-sandbox');
+      } else {
+        app.commandLine.removeSwitch('no-sandbox');
+      }
+    }
+  });
+
   it('launchRStudio opens the project found in the working directory', () => {
     const launchEnv = captureLaunchEnv();
     const dir = projectDir();

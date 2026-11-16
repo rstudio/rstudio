@@ -14,13 +14,13 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display;
 
+import static org.rstudio.core.client.dom.LabelTestHelper.labelTextFor;
+
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.ChunkOptionValue.OptionLocation;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.LabelElement;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.user.client.ui.Widget;
 
 public class ChunkOptionsPopupPanelTests extends GWTTestCase
 {
@@ -33,13 +33,13 @@ public class ChunkOptionsPopupPanelTests extends GWTTestCase
    public void testEnginePathBoxIsLabelled()
    {
       ChunkOptionsPopupPanel panel = newCustomEnginePanel();
-      assertEquals("Engine path:", labelTextFor(panel, panel.enginePathBox_));
+      assertEquals("Engine path:", labelTextFor(panel.getElement(), panel.enginePathBox_.getElement()));
    }
 
    public void testEngineOptionsBoxIsLabelled()
    {
       ChunkOptionsPopupPanel panel = newCustomEnginePanel();
-      assertEquals("Engine options:", labelTextFor(panel, panel.engineOptsBox_));
+      assertEquals("Engine options:", labelTextFor(panel.getElement(), panel.engineOptsBox_.getElement()));
    }
 
    public void testEnginePathBrowseButtonIsNamed()
@@ -62,22 +62,5 @@ public class ChunkOptionsPopupPanelTests extends GWTTestCase
    {
       return new CustomEngineChunkOptionsPopupPanel(
             "python", OptionLocation.FirstLine, false);
-   }
-
-   // a <label for> only names the control if the id matches, so look the
-   // label up by the control's id rather than trusting widget wiring
-   private static String labelTextFor(Widget container, Widget control)
-   {
-      String id = control.getElement().getId();
-      assertFalse("the control needs an id for <label for>", id.isEmpty());
-
-      NodeList<Element> labels = container.getElement().getElementsByTagName("label");
-      for (int i = 0; i < labels.getLength(); i++)
-      {
-         LabelElement label = labels.getItem(i).cast();
-         if (id.equals(label.getHtmlFor()))
-            return label.getInnerText();
-      }
-      return null;
    }
 }

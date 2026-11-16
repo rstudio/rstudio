@@ -17,7 +17,7 @@ import fs, { existsSync } from 'fs';
 import os from 'os';
 import path from 'path';
 import { sep } from 'path';
-import { app, BrowserWindow, Cookie, dialog, FileFilter, MessageBoxOptions, shell, WebContents } from 'electron';
+import { app, BrowserWindow, dialog, FileFilter, MessageBoxOptions, shell, WebContents } from 'electron';
 
 import { Xdg } from '../core/xdg';
 import { getenv, setenv } from '../core/environment';
@@ -27,10 +27,10 @@ import { userHomePath } from '../core/user';
 
 import i18next from 'i18next';
 import { spawnSync } from 'child_process';
-import { changeLanguage } from './i18n-manager';
 import { randomUUID } from 'crypto';
-import { appState } from './app-state';
+import { appState, hasApplication } from './app-state';
 import { isOzonePlatformChromiumArgument } from './electron-flags';
+import desktop from '../native/desktop.node';
 
 // work around Electron resolving the application path to 'app.asar'
 const appPath = path.join(path.dirname(app.getAppPath()), 'app');
@@ -42,12 +42,117 @@ export function getAppPath(): string {
 /**
  * True when rsession is launched with --automation-agent (the flag the
  * Playwright fixture passes). Use this to gate test-only behaviors such as
- * `showInactive` over `show` -- the goal is to keep windows from leaping to
- * the front while leaving the app visible in the dock / Cmd+Tab so the user
- * can still find and focus it manually.
+ * `showWindowForAutomation` over `show` -- the goal is to keep windows from
+ * leaping to the front while leaving the app visible in the dock / Cmd+Tab so
+ * the user can still find and focus it manually.
  */
 export function isAutomated(): boolean {
   return app.commandLine.hasSwitch('automation-agent');
+}
+
+/**
+ * Automation windows sit behind the user's own, and one they clicked to watch
+ * a run and then covered again would otherwise report itself hidden and stop
+ * painting, stalling the tests.
+ */
+export function keepAutomationWindowsRendering(): void {
+  if (!isAutomated()) {
+    return;
+  }
+
+  app.on('web-contents-created', (_event, contents) => {
+    contents.setBackgroundThrottling(false);
+  });
+}
+
+/**
+ * Whether an automation run should skip opening `target` outside the IDE; it
+ * is only logged then. The browser, or a file's app, would come up over the
+ * user's own windows, and on the macOS CI runners the IDE window stops
+ * painting for 10s or more after it does, which times out the next test's
+ * actions.
+ */
+function automationSkipsOpen(target: string): boolean {
+  if (!isAutomated()) {
+    return false;
+  }
+
+  logger().logDebug(`Automation run: not opening ${target} outside the IDE`);
+  return true;
+}
+
+/**
+ * Open a URL in the user's default browser (not during an automation run;
+ * see automationSkipsOpen).
+ */
+export async function openExternalUrl(url: string): Promise<void> {
+  if (automationSkipsOpen(url)) {
+    return;
+  }
+
+  return shell.openExternal(url);
+}
+
+/**
+ * Open a file in the app registered for it, or a folder in the file manager
+ * (not during an automation run; see automationSkipsOpen). Resolves to an
+ * error message, empty on success, as shell.openPath() does.
+ */
+export async function openExternalPath(path: string): Promise<string> {
+  if (automationSkipsOpen(path)) {
+    return '';
+  }
+
+  return shell.openPath(path);
+}
+
+/**
+ * Open a file:/// URL with the Windows shell, since shell.openExternal() seems
+ * unreliable for them there: https://github.com/electron/electron/issues/31347
+ * (not during an automation run; see automationSkipsOpen).
+ */
+export function openFileUrlWithWindowsShell(url: string): void {
+  if (automationSkipsOpen(url)) {
+    return;
+  }
+
+  const path = decodeURI(url).substring('file:///'.length).replaceAll('/', '\\');
+  desktop.openExternal(path);
+}
+
+/**
+ * Put a window on screen during an automation run without activating it or
+ * raising it over whatever the user is working in. A window that is already
+ * on screen is left exactly where it is, so the user can click one to watch a
+ * run and it stays put; windows that open while they are watching appear
+ * just underneath it.
+ */
+export function showWindowForAutomation(window: BrowserWindow): void {
+  if (window.isVisible() && !window.isMinimized()) {
+    return;
+  }
+
+  // one of our windows only has focus once the user has clicked it
+  const watched = BrowserWindow.getFocusedWindow();
+
+  // showInactive() is what tells Electron and the page that the window is
+  // visible, but on macOS it also orders the window in front of every other
+  // application (un-minimizing it first if need be). Sending it to the back
+  // before the next display pass means it first appears behind them instead.
+  window.showInactive();
+  if (process.platform !== 'darwin') {
+    return;
+  }
+
+  const handle = window.getNativeWindowHandle();
+  const ordered =
+    watched && watched !== window
+      ? desktop.macOSOrderWindowBelow(handle, watched.getNativeWindowHandle())
+      : desktop.macOSOrderWindowBack(handle);
+
+  if (!ordered) {
+    logger().logWarning('Could not order an automation window behind the others; it stays in front of them');
+  }
 }
 
 export function initializeSharedSecret(): void {
@@ -418,14 +523,21 @@ export function parseFilter(filters: string): FileFilter[] {
 }
 
 export function raiseAndActivateWindow(window: BrowserWindow): void {
+  // In automation mode, leave OS focus and the window stacking alone for
+  // whatever the user is doing while the tests run.
+  if (isAutomated()) {
+    // On macOS restore() orders the window in front of every other
+    // application once it has animated out of the dock, after it was sent to
+    // the back; showInactive() un-minimizes it without that.
+    if (window.isMinimized() && process.platform !== 'darwin') {
+      window.restore();
+    }
+    showWindowForAutomation(window);
+    return;
+  }
+
   if (window.isMinimized()) {
     window.restore();
-  }
-  // In automation mode, surface the window without pulling OS focus away
-  // from whatever the user is doing while the tests run.
-  if (isAutomated()) {
-    window.showInactive();
-    return;
   }
   window.moveTop();
   window.focus();
@@ -512,57 +624,23 @@ export async function createStandaloneErrorDialog(
     dialogContent[process.platform === 'win32' ? 'title' : 'message'] = title;
     dialogContent[process.platform === 'win32' ? 'message' : 'detail'] = message;
 
-    await appState().modalTracker.trackElectronModalAsync(async () =>
-      dialog.showMessageBox(options.window, dialogContent),
-    );
+    const showDialog = async () => dialog.showMessageBox(options.window, dialogContent);
 
-    if (options.shouldCloseWindow) window.close();
+    // startup can fail before the Application singleton (which owns the modal
+    // tracker) exists, e.g. when desktop options cannot be read (#19496); the
+    // dialog is the only feedback the user gets, so show it untracked then
+    if (hasApplication()) {
+      await appState().modalTracker.trackElectronModalAsync(showDialog);
+    } else {
+      await showDialog();
+    }
+
+    if (options.shouldCloseWindow) options.window.close();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('[utils.ts] [createStandaloneErrorDialog] Error when creating Standalone Error Dialog: ', error);
   }
 }
-
-export const handleLocaleCookies = async (window: BrowserWindow, isMainWindow = false) => {
-  const updateLocaleFromCookie = async (cookie: Electron.Cookie, window: BrowserWindow) => {
-    const localeCookieName = 'LOCALE';
-
-    if (cookie.name == localeCookieName) {
-      const localeLastTimeSetStorageItemKey = 'LAST_TIME';
-
-      const newLanguage = cookie.value;
-
-      const jsSetLocaleScript = `
-          window.localStorage.setItem('${localeCookieName}', '${newLanguage}');
-          window.localStorage.setItem('${localeLastTimeSetStorageItemKey}', '${new Date().getTime()}');
-      `;
-
-      await window.webContents.executeJavaScript(jsSetLocaleScript);
-
-      await changeLanguage(newLanguage);
-    }
-  };
-
-  if (isMainWindow) {
-    window.webContents.session.cookies.on('changed', async (_, cookie) => {
-      await updateLocaleFromCookie(cookie, window);
-    });
-  }
-
-  await window.webContents.session.cookies
-    .get({})
-    .then(async (cookies: Cookie[]) => {
-      if (cookies.length === 0) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await updateLocaleFromCookie({ name: 'LOCALE', value: 'en' } as any, window);
-      } else {
-        cookies.forEach(async (cookie) => {
-          await updateLocaleFromCookie(cookie, window);
-        });
-      }
-    })
-    .catch((err) => logger().logError(err));
-};
 
 export function registerWebContentsDebugHandlers(webContents: WebContents) {
   // add debug handlers for all of the various navigation and load events
@@ -696,5 +774,5 @@ export function removeTrailingSlashes(str: string): string {
  */
 export function loadRWebsite() {
   const rProjectUrl = 'https://www.rstudio.org/links/r-project';
-  void shell.openExternal(rProjectUrl);
+  void openExternalUrl(rProjectUrl);
 }

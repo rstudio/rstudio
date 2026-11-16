@@ -63,18 +63,13 @@
                 "disableRendererAccessibility": {
                     "type": "boolean",
                     "description": "Disable Electron accessibility support"
-                },
-                "enableSplashScreen": {
-                    "type": "boolean",
-                    "description": "Whether to show the splash screen on startup"
                 }
              },
             "default": {
                 "zoomLevel": 1.0,
                 "windowBounds": { "width": 1200, "height": 900, "x": 0, "y": 0, "maximized": false },
                 "accessibility": false,
-                "disableRendererAccessibility": false,
-                "enableSplashScreen": true
+                "disableRendererAccessibility": false
             }
         },
         "renderer": {
@@ -106,6 +101,15 @@
                         "rBinDir": { "type": "string" },
                         "preferR64": { "type": "boolean" }
                     }
+                },
+                "macos": {
+                    "type": "object",
+                    "properties": {
+                        "defaultFileHandlerPrompted": {
+                            "type": "boolean",
+                            "description": "Whether RStudio has already asked macOS to make it the default application for R files."
+                        }
+                    }
                 }
             },
             "default": {
@@ -115,7 +119,10 @@
                     "rBinDir": "",
                     "preferR64": true,
                     "rExecutablePath": ""
-                  }
+                  },
+                "macos": {
+                    "defaultFileHandlerPrompted": false
+                }
             }
         },
         "context_id": {

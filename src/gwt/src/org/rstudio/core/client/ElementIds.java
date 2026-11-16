@@ -128,6 +128,8 @@ public class ElementIds
    public final static String CONSOLE_INPUT = "console_input";
    public final static String CONSOLE_OUTPUT = "console_output";
    public final static String CONSOLE_INTERPRETER_VERSION = "console_interpreter_version";
+   public final static String CONSOLE_INTERPRETER_R_LOGO = "console_interpreter_r_logo";
+   public final static String CONSOLE_INTERPRETER_PYTHON_LOGO = "console_interpreter_python_logo";
    public final static String DEPLOY_CONTENT = "deploy_content";
    public final static String FIND_REPLACE_BAR = "find_replace_bar";
    public final static String HELP_FRAME = "help_frame";
@@ -149,6 +151,7 @@ public class ElementIds
    public final static String FILE_DIALOG_NAME_PROMPT = "file_dialog_name_prompt";
    public final static String WORKBENCH_PANEL = "workbench_panel";
    public final static String WORKBENCH_TAB = "workbench_tab";
+   public final static String APP_ARIA_LIVE_STATUS = "app_aria_live_status";
    public final static String FILE_ACCEPT_BUTTON = "file_accept";
    public final static String FILE_CANCEL_BUTTON = "file_cancel";
    public final static String FILE_NEW_FOLDER_BUTTON = "file_new_folder";

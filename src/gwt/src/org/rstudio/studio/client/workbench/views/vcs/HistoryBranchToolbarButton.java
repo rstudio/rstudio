@@ -48,7 +48,11 @@ public class HistoryBranchToolbarButton extends BranchToolbarButton
    protected void onBeforePopulateMenu(ToolbarPopupMenu rootMenu)
    {
       super.onBeforePopulateMenu(rootMenu);
-      
+
+      // Left out of search results, so that a search highlights its first match
+      if (isSearching())
+         return;
+
       String label = constants_.allBranchesParentheses();
       rootMenu.addItem(
             new MenuItem(label, new SwitchBranchCommand(label, "--all")));

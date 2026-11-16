@@ -19,14 +19,18 @@ import com.google.gwt.user.client.ui.HTML;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
+import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 
 public class CompletionListPopupPanel<TItem> extends ThemedPopupPanel
    implements HasSelectionCommitHandlers<TItem>
 {
-   public CompletionListPopupPanel(TItem[] entries)
+   public CompletionListPopupPanel(TItem[] entries,
+                                   String ariaLabel,
+                                   InputEditorDisplay input)
    {
       super(true);
-      list_ = new CompletionList<>(entries, 10, true, true);
+      list_ = new CompletionList<>(entries, 10, true, true, ariaLabel);
+      list_.setInput(input);
       setWidget(list_);
    }
 

@@ -254,10 +254,14 @@ TEST_F(ChatInstallationIdentity, RejectsAPackageWithoutProtocolJson)
 
 TEST_F(ChatInstallationIdentity, RejectsAPackageWithoutPackageJson)
 {
+   // Also what an extraction into some other directory leaves behind (#19625),
+   // which used to be reported as a package declaring a blank version.
    stageVersionlessInstallation(dir_);
    Error error = verifyDeclaredIdentity(dir_, "1.2.0", kProtocolVersion);
    ASSERT_TRUE(error);
    EXPECT_EQ(error.getCode(), boost::system::errc::invalid_argument);
+   EXPECT_NE(errorDescription(error).find(kPackageJsonFileName), std::string::npos);
+   EXPECT_NE(errorDescription(error).find("'1.2.0'"), std::string::npos);
 }
 
 // ============================================================================

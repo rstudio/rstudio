@@ -18,6 +18,7 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.Barrier;
 import org.rstudio.core.client.Barrier.Token;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -28,6 +29,7 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.HandleUnsavedChangesEvent;
+import org.rstudio.studio.client.application.events.QuitAbortedEvent;
 import org.rstudio.studio.client.application.events.QuitInitiatedEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.application.events.SaveActionChangedEvent;
@@ -70,7 +72,8 @@ import com.google.inject.Singleton;
 @Singleton
 public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                                         HandleUnsavedChangesEvent.Handler,
-                                        SuspendAndRestartEvent.Handler
+                                        SuspendAndRestartEvent.Handler,
+                                        QuitAbortedEvent.Handler
 {
    public interface Binder extends CommandBinder<Commands, ApplicationQuit> {}
    
@@ -107,6 +110,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
       eventBus.addHandler(SaveActionChangedEvent.TYPE, this);
       eventBus.addHandler(HandleUnsavedChangesEvent.TYPE, this);
       eventBus.addHandler(SuspendAndRestartEvent.TYPE, this);
+      eventBus.addHandler(QuitAbortedEvent.TYPE, this);
    }
    
   
@@ -349,66 +353,195 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
       }
    }
    
-   public void performQuit(TutorialApiCallContext callContext, boolean saveChanges)
+   // every overload answers whether the quit was started: false when one is
+   // already in progress, in which case nothing more happens
+   public boolean performQuit(TutorialApiCallContext callContext, boolean saveChanges)
    {
-      performQuit(callContext, saveChanges, null, null);
+      return performQuit(callContext, saveChanges, null, null);
    }
    
-   public void performQuit(TutorialApiCallContext callContext,
-                           boolean saveChanges,
-                           Command onQuitAcknowledged)
+   public boolean performQuit(TutorialApiCallContext callContext,
+                              boolean saveChanges,
+                              Command onQuitAcknowledged)
    {
-      performQuit(callContext, null, saveChanges, null, null, onQuitAcknowledged);
+      return performQuit(callContext, null, saveChanges, null, null, onQuitAcknowledged);
    }
    
-   public void performQuit(TutorialApiCallContext callContext,
-                           boolean saveChanges,
-                           String switchToProject)
+   public boolean performQuit(TutorialApiCallContext callContext,
+                              boolean saveChanges,
+                              String switchToProject)
    {
-      performQuit(callContext, saveChanges, switchToProject, null);
+      return performQuit(callContext, saveChanges, switchToProject, null);
    }
    
-   public void performQuit(TutorialApiCallContext callContext,
-                           boolean saveChanges,
-                           String switchToProject,
-                           RVersionSpec switchToRVersion)
+   public boolean performQuit(TutorialApiCallContext callContext,
+                              boolean saveChanges,
+                              String switchToProject,
+                              RVersionSpec switchToRVersion)
    {
-      performQuit(callContext, null, saveChanges, switchToProject, switchToRVersion);
+      return performQuit(callContext, null, saveChanges, switchToProject, switchToRVersion);
    }
    
-   public void performQuit(TutorialApiCallContext callContext,
-                           String progressMessage,
-                           boolean saveChanges, 
-                           String switchToProject,
-                           RVersionSpec switchToRVersion)
+   public boolean performQuit(TutorialApiCallContext callContext,
+                              String progressMessage,
+                              boolean saveChanges, 
+                              String switchToProject,
+                              RVersionSpec switchToRVersion)
    {
-      performQuit(callContext,
-                  progressMessage,
-                  saveChanges, 
-                  switchToProject, 
-                  switchToRVersion,
-                  null);
+      return performQuit(callContext,
+                         progressMessage,
+                         saveChanges, 
+                         switchToProject, 
+                         switchToRVersion,
+                         null);
    }
    
-   public void performQuit(TutorialApiCallContext callContext,
-                           String progressMessage,
-                           boolean saveChanges, 
-                           String switchToProject,
-                           RVersionSpec switchToRVersion,
-                           Command onQuitAcknowledged)
+   public boolean performQuit(TutorialApiCallContext callContext,
+                              String progressMessage,
+                              boolean saveChanges, 
+                              String switchToProject,
+                              RVersionSpec switchToRVersion,
+                              Command onQuitAcknowledged)
    {
-      new QuitCommand(callContext,
+      QuitGate.Attempt attempt = quitGate_.start();
+      if (attempt == null)
+      {
+         // the save prompts have usually just been answered, so say why
+         // nothing follows (and let a tutorial caller fail rather than wait)
+         Debug.logToConsole("Ignoring quit request: a quit is already in progress");
+         globalDisplay_.showMessage(MessageDialog.INFO,
+                                    constants_.quitRSessionCaption(),
+                                    constants_.quitAlreadyInProgressMessage());
+         if (callContext != null)
+         {
+            eventBus_.fireEvent(new ApplicationTutorialEvent(
+                  ApplicationTutorialEvent.API_ERROR,
+                  constants_.quitAlreadyInProgressMessage(),
+                  callContext));
+         }
+         return false;
+      }
+
+      new QuitCommand(attempt,
+                      callContext,
                       progressMessage,
-                      saveChanges, 
+                      saveChanges,
                       switchToProject,
                       switchToRVersion,
+                      null,
                       onQuitAcknowledged).execute();
+      return true;
+   }
+
+   /**
+    * The quit a caller holds for itself while it arms what the quit is for
+    * (the desktop frame keeps an R version, or an update, for the relaunch),
+    * so that nothing is armed for a quit that then cannot start and nothing
+    * armed is consumed by a quit already under way. The claim ends with
+    * performQuit() or release(); other quits are refused meanwhile (see
+    * {@link QuitGate}).
+    */
+   public class QuitClaim
+   {
+      private QuitClaim(QuitGate.Claim claim)
+      {
+         claim_ = claim;
+      }
+
+      /**
+       * `rExecutablePath` names the R the desktop frame should restart
+       * with (prepared with its setPendingRVersion), or null; the frame
+       * uses it only for this quit.
+       */
+      public boolean performQuit(String progressMessage,
+                                 boolean saveChanges,
+                                 String switchToProject,
+                                 RVersionSpec switchToRVersion,
+                                 String rExecutablePath)
+      {
+         QuitGate.Attempt attempt = claim_.start();
+         if (attempt == null)
+         {
+            Debug.logToConsole("Ignoring quit request: its claim was released");
+            return false;
+         }
+
+         new QuitCommand(attempt,
+                         null,
+                         progressMessage,
+                         saveChanges,
+                         switchToProject,
+                         switchToRVersion,
+                         rExecutablePath,
+                         null).execute();
+         return true;
+      }
+
+      /**
+       * The caller has armed the desktop frame for this quit already (an
+       * update install recorded, which any later exit would apply), so a
+       * quit that then does not happen undoes it, even one replaced before
+       * it reached the frame itself.
+       */
+      public void armed()
+      {
+         claim_.armed();
+      }
+
+      public void release()
+      {
+         // the claim may have replaced a stalled quit that armed the frame;
+         // otherwise the frame's pending quit is not ours to clear (a
+         // console q() records one without the gate)
+         if (claim_.release())
+            undoQuit();
+      }
+
+      private final QuitGate.Claim claim_;
+   }
+
+   /** Claim the next quit; null when one is in progress (or claimed). */
+   public QuitClaim claimQuit()
+   {
+      QuitGate.Claim claim = quitGate_.claim();
+      if (claim == null)
+      {
+         Debug.logToConsole("Refusing to claim the quit: a quit is already in progress");
+         return null;
+      }
+      return new QuitClaim(claim);
    }
    
    @Override
    public void onSaveActionChanged(SaveActionChangedEvent event)
    {
       saveAction_ = event.getAction();
+   }
+
+   /**
+    * The session acknowledged the quit but R then refused to quit (.Last()
+    * or saving the workspace failed; R's error is in the console), so the
+    * session goes on. Tell the desktop frame the quit is over; otherwise it
+    * would apply what that quit was for (an R version switch, an update) at
+    * some later, unrelated quit.
+    */
+   @Override
+   public void onQuitAborted(QuitAbortedEvent event)
+   {
+      if (!isQuitting_)
+         return;
+
+      isQuitting_ = false;
+      quitGate_.reopen();
+
+      // a project switch keeps its progress up until the page reloads, which
+      // is now not going to happen
+      if (quitProgress_ != null)
+      {
+         quitProgress_.dismiss();
+         quitProgress_ = null;
+      }
+      DesktopFrameHelper.setPendingQuit(DesktopFrame.PENDING_QUIT_NONE, () -> {});
    }
 
    /**
@@ -534,6 +667,16 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
       // Ignore nested restarts once restart starts
       if (suspendingAndRestarting_)
          return;
+
+      // nor a restart while a quit is in progress: it would replace the
+      // desktop frame's pending quit, so the session's exit would restart it
+      // instead of quitting, with the gate left closed (and an accepted
+      // update left armed) for good
+      if (quitGate_.isClosed())
+      {
+         Debug.logToConsole("Ignoring restart request: a quit is already in progress");
+         return;
+      }
       
       // set restart pending for desktop
       DesktopFrameHelper.setPendingQuit(DesktopFrame.PENDING_QUIT_AND_RESTART, () ->
@@ -643,18 +786,22 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
    
    private class QuitCommand implements Command 
    {
-      public QuitCommand(TutorialApiCallContext callContext,
+      public QuitCommand(QuitGate.Attempt attempt,
+                         TutorialApiCallContext callContext,
                          String progressMessage,
-                         boolean saveChanges, 
+                         boolean saveChanges,
                          String switchToProject,
                          RVersionSpec switchToRVersion,
+                         String rExecutablePath,
                          Command onQuitAcknowledged)
       {
+         attempt_ = attempt;
          callContext_ = callContext;
          progressMessage_ = progressMessage;
          saveChanges_ = saveChanges;
          switchToProject_ = switchToProject;
          switchToRVersion_ = switchToRVersion;
+         rExecutablePath_ = rExecutablePath;
          onQuitAcknowledged_ = onQuitAcknowledged;
       }
       
@@ -669,10 +816,15 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                                     constants_.quitRSessionMessage();
          }
          
+         // a stalled quit's indicator would otherwise stay up for good once
+         // this attempt replaces it (see QuitGate.kStaleQuitMs)
+         if (quitProgress_ != null)
+            quitProgress_.dismiss();
          final GlobalProgressDelayer progress = new GlobalProgressDelayer(
                                                                globalDisplay_,
                                                                250,
                                                                msg);
+         quitProgress_ = progress;
          
          // Use a barrier and LastChanceSaveEvent to allow source documents
          // and client state to be synchronized before quitting.
@@ -680,16 +832,38 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
          barrier.addBarrierReleasedHandler((releasedEvent) ->
          {
             // All last chance save operations have completed (or possibly
-            // failed). Now do the real quit.
+            // failed). Now do the real quit -- unless a later quit replaced
+            // this one meanwhile: that one arms the desktop frame and sends
+            // quit_session itself, and must not be overwritten
+            if (!attempt_.isCurrent())
+            {
+               quitNotStarted(constants_.quitAlreadyInProgressMessage(), progress);
+               return;
+            }
 
             // notify the desktop frame that we are about to quit
             final int quitType = switchToProject_ == null
                   ? DesktopFrame.PENDING_QUIT_AND_EXIT
                   : DesktopFrame.PENDING_QUIT_RESTART_AND_RELOAD;
-            
+
             isQuitting_ = true;
-            DesktopFrameHelper.setPendingQuit(quitType, () ->
+            attempt_.armed();
+            DesktopFrameHelper.setPendingQuit(quitType, rExecutablePath_, (String frameError) ->
             {
+               if (!StringUtil.isNullOrEmpty(frameError))
+               {
+                  // the desktop frame does not know a quit is coming, so the
+                  // session's exit would be taken for a crash: do not quit
+                  quitNotStarted(frameError, progress);
+                  return;
+               }
+               if (!attempt_.isCurrent())
+               {
+                  quitNotStarted(constants_.quitAlreadyInProgressMessage(), progress);
+                  return;
+               }
+
+               attempt_.sent();
                server_.quitSession(
                      saveChanges_,
                      switchToProject_,
@@ -702,6 +876,10 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                         {
                            if (response)
                            {
+                              // the session is exiting for this attempt,
+                              // whether or not a later one replaced it
+                              attempt_.acknowledged();
+
                               // clear progress only if we aren't switching projects
                               // (otherwise we want to leave progress up until
                               // the app reloads)
@@ -732,18 +910,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
 
                         private void onFailedToQuit(String message)
                         {
-                           isQuitting_ = false;
-                           progress.dismiss();
-
-                           if (callContext_ != null)
-                           {
-                              eventBus_.fireEvent(new ApplicationTutorialEvent(
-                                    ApplicationTutorialEvent.API_ERROR,
-                                    message,
-                                    callContext_));
-                           }
-                           
-                           DesktopFrameHelper.setPendingQuit(DesktopFrame.PENDING_QUIT_NONE, () -> {});
+                           quitNotStarted(message, progress);
                         }
                      });
             });
@@ -764,14 +931,54 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
          }
       }
 
+      /**
+       * The quit did not start: admit the next one, fail a tutorial caller,
+       * and leave nothing armed in the desktop frame (an update install
+       * recorded for this quit, the R it named) for a later, unrelated quit.
+       * Only once nothing else can still make the session quit, though (see
+       * {@link QuitGate.Attempt#fail}): a replaced attempt's late failure
+       * would otherwise cancel the quit that replaced it, an older request
+       * still unanswered may yet be accepted, and a quit the session accepted
+       * goes ahead whichever request then fails.
+       */
+      private void quitNotStarted(String message, GlobalProgressDelayer progress)
+      {
+         progress.dismiss();
+         if (quitProgress_ == progress)
+            quitProgress_ = null;
+
+         if (attempt_.fail())
+            undoQuit();
+
+         if (callContext_ != null)
+         {
+            eventBus_.fireEvent(new ApplicationTutorialEvent(
+                  ApplicationTutorialEvent.API_ERROR,
+                  message,
+                  callContext_));
+         }
+      }
+
+      private final QuitGate.Attempt attempt_;
       private final TutorialApiCallContext callContext_;
       private final boolean saveChanges_;
       private final String switchToProject_;
       private final RVersionSpec switchToRVersion_;
+      private final String rExecutablePath_;
       private final String progressMessage_;
       private final Command onQuitAcknowledged_;
    }
    
+   /**
+    * No quit is going to happen: leave nothing armed in the desktop frame (an
+    * update install, an R to restart with) for a later, unrelated quit.
+    */
+   private void undoQuit()
+   {
+      isQuitting_ = false;
+      DesktopFrameHelper.setPendingQuit(DesktopFrame.PENDING_QUIT_NONE, () -> {});
+   }
+
    public boolean isQuitting()
    {
       return isQuitting_;
@@ -786,6 +993,8 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
    // saveAction() so the value client_init delivered is used in the meantime
    private SaveAction saveAction_ = null;
    private boolean isQuitting_ = false;
+   private final QuitGate quitGate_ = new QuitGate();
+   private GlobalProgressDelayer quitProgress_ = null;
    private boolean suspendingAndRestarting_ = false;
 
    // injected

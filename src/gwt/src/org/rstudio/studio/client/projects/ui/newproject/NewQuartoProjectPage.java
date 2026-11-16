@@ -369,9 +369,9 @@ public class NewQuartoProjectPage extends NewDirectoryPage
          lastOptions_ = (value == null) ?
             QuartoNewProjectOptions.createDefault() :
                QuartoNewProjectOptions.create(
-                        value.getString(constants_.quartoProjectTypeOption()),
-                        value.getString(constants_.quartoProjectEngineOption()),
-                        value.getString(constants_.quartoProjectKernelOption()),
+                        value.getString("type"),
+                        value.getString("engine"),
+                        value.getString("kernel"),
                         value.getString("venv"),
                         value.getString("condaenv"),
                         value.getString("packages"),

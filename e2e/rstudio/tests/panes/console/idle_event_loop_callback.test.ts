@@ -16,6 +16,7 @@ import { clearPref, executeCommand, setPref } from '@utils/commands';
 import { withDeadline } from '@utils/deadline';
 import { TIMEOUTS } from '@utils/constants';
 import { canWriteDir } from '@utils/files';
+import { waitForRpcResponse } from '@utils/rpc';
 import { useSuiteSandbox } from '@utils/sandbox';
 import {
   ensureConsoleIdle,
@@ -32,59 +33,16 @@ const BUSY_CLASS = /rstudio-console-busy/;
 const BUSY_TIMEOUT = 15000;
 
 /**
- * Run `trigger`, which sends the RPC named by `rpc`, and wait until the
- * session's main thread has served it. While R is busy the listener thread
- * acknowledges an RPC at once with an asyncHandle; the main thread's
- * handling arrives later as an async_completion event carrying that handle
- * on the events long-poll. Returning on the acknowledgement alone would race
- * the server. The events listener is installed before triggering, since the
- * completion can land while the acknowledgement is still being read.
- */
-async function awaitServed(page: Page, rpc: RegExp, trigger: () => Promise<unknown>): Promise<void> {
-  const events: string[] = [];
-  let wanted: string | undefined;
-  let found: (() => void) | undefined;
-  const onResponse = async (response: Response): Promise<void> => {
-    if (!/\/events\/get_events/.test(response.url()))
-      return;
-    const text = await response.text().catch(() => '');
-    events.push(text);
-    if (wanted !== undefined && text.includes(wanted))
-      found?.();
-  };
-  page.on('response', onResponse);
-  try {
-    const [ack] = await Promise.all([
-      page.waitForResponse((r) => rpc.test(r.url()), { timeout: 10000 }),
-      trigger(),
-    ]);
-    const body = await ack.json().catch(() => ({}));
-    const handle = body?.asyncHandle;
-    if (typeof handle !== 'string')
-      return; // answered inline: the main thread has already handled it
-    await withDeadline(
-      new Promise<void>((resolve) => {
-        found = resolve;
-        wanted = handle;
-        if (events.some((text) => text.includes(handle)))
-          resolve();
-      }),
-      10000,
-      `async completion of ${rpc.source}`,
-    );
-  } finally {
-    page.off('response', onResponse);
-  }
-}
-
-/**
  * Submit console input and wait until the session's main thread has taken
  * it (queued it behind whatever R is doing): an interrupt sent on the
  * acknowledgement alone could discard an empty queue and leave the input to
  * run afterwards.
  */
 async function submitAndAwaitQueued(page: Page, command: string): Promise<void> {
-  await awaitServed(page, /\/rpc\/console_input/, () => executeInConsole(page, command, { wait: false }));
+  await Promise.all([
+    waitForRpcResponse(page, 'console_input'),
+    executeInConsole(page, command, { wait: false }),
+  ]);
 }
 
 /**
@@ -233,7 +191,8 @@ test.describe('Idle event loop callbacks', () => {
     await executeInConsole(page,
       `later::later(function() { cat("callback", "started\\n"); while (!file.exists(${JSON.stringify(flag)})) Sys.sleep(0.05); cat("callback", "done\\n") }, 0.1)`);
     await expect(consoleActions.consolePane.consoleOutput).toContainText('callback started');
-    await awaitServed(page, /\/rpc\/set_user_prefs/, () => setPref(page, 'blinking_cursor', false));
+    // Resolves once the session has served the write.
+    await setPref(page, 'blinking_cursor', false);
     fs.writeFileSync(flag, '');
 
     // Only the call itself and the command below complete: two prompts. The

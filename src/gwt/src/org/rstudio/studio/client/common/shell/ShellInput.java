@@ -58,7 +58,7 @@ public class ShellInput extends JavaScriptObject
    
    
    
-   public native final boolean getSequence() /*-{
+   public native final int getSequence() /*-{
       return this.sequence;
    }-*/;
 

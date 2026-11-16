@@ -15,7 +15,6 @@
 
 import { changeLanguage, initI18n } from '../../main/i18n-manager';
 import i18next from 'i18next';
-import { checkForNewLanguage } from '../utils';
 
 const loadPageLocalization = () => {
   initI18n();
@@ -65,13 +64,10 @@ const loadPageLocalization = () => {
               element.innerHTML = i18next.t('uiFolder.' + reducedId, {
                 exitCode: '<strong><span id="exit_code"></span></strong>',
               });
-              // the exit code's box exists only once the sentence is written
+              // the span only exists from here on, so fill it here rather than on page load
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (window as any).desktop.getStartupErrorInfo('exit_code', (result: string) => {
-                const exitCode = document.getElementById('exit_code');
-                if (exitCode) {
-                  exitCode.innerHTML = result;
-                }
+              (window as any).desktop.getStartupErrorInfo('!exit_code', (exitCode: string) => {
+                (document.getElementById('exit_code') as HTMLElement).textContent = exitCode;
               });
               break;
             case 'copyProblemReport':
@@ -89,17 +85,7 @@ const loadPageLocalization = () => {
   };
 
   window.addEventListener('load', () => {
-    checkForNewLanguage()
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .then(async (newLanguage: any) =>
-        changeLanguage('' + newLanguage).then(() => {
-          updateLabels();
-        }),
-      )
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .catch((err: any) => {
-        console.error('An error happened when trying to fetch a new locale: ', err);
-      });
+    void changeLanguage(window.desktopLanguage).then(updateLabels);
   });
 };
 

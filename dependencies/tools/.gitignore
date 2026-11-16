@@ -1,6 +1,8 @@
 /copilot-language-server-*
 /quarto-*.tar.gz
 /quarto-*.zip
+/core-dictionaries-*.zip
+/all-dictionaries-*.zip
 hunspell_dictionaries/
 /node-v*.tar.gz
 /node-v*.zip

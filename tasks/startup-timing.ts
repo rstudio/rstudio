@@ -32,7 +32,7 @@ import {
 
 const TAG = 'startup-timing';
 
-const KNOWN_FLAGS = ['path', 'runs', 'app', 'out', 'report', 'user-config', 'warm-profile', 'splash', 'extra', 'timeout', 'help'];
+const KNOWN_FLAGS = ['path', 'runs', 'app', 'out', 'report', 'user-config', 'warm-profile', 'extra', 'timeout', 'help'];
 
 const USAGE = `
 Usage: npm run startup-timing -- [<checkout>] [options]
@@ -51,7 +51,6 @@ Options:
                      (default: a fresh temporary profile per run)
   --warm-profile     Reuse isolated config/data across runs to measure caches
                      (the first run starts with a fresh profile)
-  --no-splash        Suppress the splash screen (RS_NO_SPLASH=1)
   --extra=<args>     Extra command-line arguments for RStudio (space separated)
   --timeout=<sec>    Give up on a launch after this long (default 120)
   --help             Show this message
@@ -78,7 +77,6 @@ interface LaunchOptions {
   outDir: string;
   userConfig: boolean;
   warmProfile: boolean;
-  splash: boolean;
   extraArgs: string[];
   timeoutMs: number;
 }
@@ -117,10 +115,6 @@ async function launchOnce(index: number, options: LaunchOptions): Promise<Run> {
     ...process.env,
     RSTUDIO_STARTUP_TIMING: timingFile,
   };
-  if (!options.splash) {
-    env.RS_NO_SPLASH = '1';
-  }
-
   const args: string[] = [];
   if (!options.userConfig) {
     const profileDir = options.warmProfile ? path.join(options.outDir, 'profile') : runDir;
@@ -436,7 +430,6 @@ async function main(): Promise<void> {
     outDir,
     userConfig: args.flags.get('user-config') === true,
     warmProfile: args.flags.get('warm-profile') === true,
-    splash: args.flags.get('splash') !== false,
     extraArgs: typeof extra === 'string' ? extra.split(' ').filter((a) => a.length > 0) : [],
     timeoutMs: timeoutSec * 1000,
   };

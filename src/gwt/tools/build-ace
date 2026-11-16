@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 set -e
 
-# Build and copy ace, ace-uncompressed to RStudio
-cd rstudio-ace
+# An optional source checkout lets a reviewed Ace worktree be built without
+# modifying the checkout used by sync-ace-commits.
+TOOLS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ACE_SOURCE_DIR="${ACE_SOURCE_DIR:-${TOOLS_DIR}/rstudio-ace}"
+ACE_OUTPUT_DIR="${TOOLS_DIR}/../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace"
+WORKER_OUTPUT_DIR="${TOOLS_DIR}/../www/js/workers"
+cd "${ACE_SOURCE_DIR}"
 
 # Build ace. Note that we pass an explicit larger stack size to accommodate
 # https://github.com/ajaxorg/ace/issues/4596.
@@ -10,26 +15,26 @@ NODEJS="$(command -v nodejs &> /dev/null && echo nodejs || echo node)"
 ${NODEJS} --stack_size=2048 ./Makefile.dryice.js normal
 ${NODEJS} --stack_size=2048 ./Makefile.dryice.js -m normal
 
-cp build/src/ace.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace-uncompressed.js
-cp build/src-min/ace.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace.js
+cp build/src/ace.js "${ACE_OUTPUT_DIR}/ace-uncompressed.js"
+cp build/src-min/ace.js "${ACE_OUTPUT_DIR}/ace.js"
 
 # Copy in the 'emacs', 'vim' keybindings
-cp build/src/keybinding-vim.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/keybinding-vim-uncompressed.js
-cp build/src/keybinding-emacs.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/keybinding-emacs-uncompressed.js
-cp build/src-min/keybinding-* ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/
+cp build/src/keybinding-vim.js "${ACE_OUTPUT_DIR}/keybinding-vim-uncompressed.js"
+cp build/src/keybinding-emacs.js "${ACE_OUTPUT_DIR}/keybinding-emacs-uncompressed.js"
+cp build/src-min/keybinding-* "${ACE_OUTPUT_DIR}/"
 
 # Copy the ext-language-tools
-cp build/src/ext-language_tools.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ext-language_tools-uncompressed.js
-cp build/src-min/ext-language_tools.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ext-language_tools.js
+cp build/src/ext-language_tools.js "${ACE_OUTPUT_DIR}/ext-language_tools-uncompressed.js"
+cp build/src-min/ext-language_tools.js "${ACE_OUTPUT_DIR}/ext-language_tools.js"
 
 # Copy the ext-diff extension (used by the Git diff gutter)
-cp build/src/ext-diff.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ext-diff-uncompressed.js
-cp build/src-min/ext-diff.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ext-diff.js
+cp build/src/ext-diff.js "${ACE_OUTPUT_DIR}/ext-diff-uncompressed.js"
+cp build/src-min/ext-diff.js "${ACE_OUTPUT_DIR}/ext-diff.js"
 
 # Copy in workers
-cp build/src-min/worker-html.js ../../www/js/workers
-cp build/src-min/worker-css.js ../../www/js/workers
-cp build/src-min/worker-javascript.js ../../www/js/workers
+cp build/src-min/worker-html.js "${WORKER_OUTPUT_DIR}"
+cp build/src-min/worker-css.js "${WORKER_OUTPUT_DIR}"
+cp build/src-min/worker-javascript.js "${WORKER_OUTPUT_DIR}"
 
 cd ..
 

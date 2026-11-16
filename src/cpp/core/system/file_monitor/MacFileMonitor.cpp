@@ -617,10 +617,12 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
    }
 
    // While a deferred recovery rescan is pending, skip MustScanSubDirs
-   // recursion below: fseventsd attaches that flag (typically to the root
-   // path), and honoring it would perform exactly the full-tree scan the
-   // debounce is deferring. The deferred rescan runs later and from the
-   // root, so it observes everything these scans would.
+   // recursion below, and let discoverAndProcessFileChanges defer its own
+   // subtree scans (added directories, failed-directory recovery): fseventsd
+   // attaches that flag (typically to the root path), and honoring it would
+   // perform exactly the full-tree scan the debounce is deferring. The
+   // deferred rescan runs later and from the root, so it observes everything
+   // these scans would.
    bool rescanPending = pContext->rescanTimerRef != nullptr;
 
    for (const std::pair<std::string, FSEventStreamEventFlags>& event : events)
@@ -642,12 +644,23 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
                                              recursive,
                                              pContext->filter,
                                              &(pContext->fileTree),
-                                             pContext->callbacks.onFilesChanged);
+                                             pContext->callbacks.onFilesChanged,
+                                             pContext->recursive,
+                                             rescanPending);
          if (error &&
             !isNotFoundError(error))
          {
             LOG_ERROR(error);
          }
+      }
+      else
+      {
+         // Keep a failed node so removing an ignore rule triggers a complete
+         // recovery scan even when the directory entry itself is unchanged.
+         impl::invalidateDirectory(
+               fileInfo,
+               &(pContext->fileTree),
+               pContext->callbacks.onFilesChanged);
       }
    }
 }
@@ -835,10 +848,16 @@ Handle registerMonitor(const FilePath& filePath,
       }
    }
 
-   // schedule with the run loop
+   // schedule with the run loop. deprecated since macOS 13 in favor of
+   // FSEventStreamSetDispatchQueue, but that delivers callbacks on a GCD
+   // thread, while this monitor relies on callbacks, rescan timers, and
+   // (un)registration all running on the file monitor thread's run loop
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
    ::FSEventStreamScheduleWithRunLoop(pContext->streamRef,
                                       ::CFRunLoopGetCurrent(),
                                       kCFRunLoopDefaultMode);
+#pragma clang diagnostic pop
 
    // start the event stream (check for errors and release if necessary
    if (!::FSEventStreamStart(pContext->streamRef))

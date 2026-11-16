@@ -976,6 +976,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <shortcut value="Ctrl+Down" title="Scroll Diff Down"/>
          <shortcut value="Space" title="Stage or Unstage Selected Files"/>
          <shortcut value="Enter" title="Stage or Unstage and Move to Next File"/>
+         <shortcut value="Shift+Enter" title="Open Selected File at Its First Change"/>
       </shortcutgroup>
       <shortcutgroup name="Other">
          <shortcut value="F1" title="Show Function Help" />
@@ -2911,6 +2912,13 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         rebindable="false"
         context="vcs"/>
 
+   <cmd id="vcsOpenAtFirstChange"
+        label="Open Selected File at First Change"
+        menuLabel="Open at First Change"
+        desc="Open the selected file at its first change"
+        rebindable="false"
+        context="vcs"/>
+
    <cmd id="vcsIgnore"
         label="Ignore Files or Folders"
         menuLabel="Ignore..."
@@ -4605,9 +4613,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         label="Console: Activate Python"
         menuLabel="Python" />
         
-   <cmd id="showSplashScreen"
-        label="Show Splash Screen" />
-         
    <cmd id="copyRStudioVersion"
         label="Copy RStudio Version" />
 

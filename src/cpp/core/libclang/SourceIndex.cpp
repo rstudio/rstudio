@@ -15,6 +15,9 @@
 
 #include <core/libclang/SourceIndex.hpp>
 
+#include <algorithm>
+#include <set>
+
 #include <boost/scoped_ptr.hpp>
 
 #include <gsl/gsl-lite.hpp>
@@ -44,6 +47,18 @@ unsigned parseTranslationUnitOptions()
    );
 }
 
+// With modules enabled (C++20 and newer), libclang refuses a precompiled
+// header that wasn't built with the detailed preprocessing record when the
+// translation unit including it asks for one, so that option is taken from
+// parseTranslationUnitOptions().
+unsigned precompiledHeaderOptions()
+{
+   return (
+      CXTranslationUnit_ForSerialization |
+      (parseTranslationUnitOptions() & CXTranslationUnit_DetailedPreprocessingRecord)
+   );
+}
+
 namespace {
 
 bool isHeaderExtension(const std::string& ex)
@@ -51,7 +66,145 @@ bool isHeaderExtension(const std::string& ex)
    return ex == ".h" || ex == ".hh" || ex == ".hpp";
 }
 
+// fix up '-std=' arguments: remove C++ '-std' flags when compiling
+// C sources, and remove C-only '-std' flags when compiling C++ sources
+void removeMismatchedStdArgs(const std::string& filename, std::vector<std::string>* pArgs)
+{
+   if (FilePath(filename).hasExtensionLowerCase(".c"))
+   {
+      // remove C++ std flags (e.g. -std=c++20) from C compilations
+      core::algorithm::expel_if(*pArgs, [](const std::string& arg)
+      {
+         return arg.find("-std") == 0 && arg.find("++") != std::string::npos;
+      });
+   }
+   else
+   {
+      // remove C-only std flags (e.g. -std=c11) from C++ compilations
+      core::algorithm::expel_if(*pArgs, [](const std::string& arg)
+      {
+         return arg.find("-std") == 0 && arg.find("++") == std::string::npos;
+      });
+   }
+}
+
+// remove '-include-pch <path>' from the arguments, returning the paths of
+// the precompiled headers removed
+std::vector<std::string> removePrecompiledHeaderArgs(std::vector<std::string>* pArgs)
+{
+   const std::string flag = "-include-pch";
+   std::vector<std::string> paths;
+
+   auto it = std::find(pArgs->begin(), pArgs->end(), flag);
+   while (it != pArgs->end())
+   {
+      // the flag takes its path as the next argument
+      auto last = it + 1;
+      if (last != pArgs->end())
+      {
+         paths.push_back(*last);
+         last = last + 1;
+      }
+
+      it = pArgs->erase(it, last);
+      it = std::find(it, pArgs->end(), flag);
+   }
+
+   return paths;
+}
+
+// the clang driver finds the macOS SDK through these variables
+class SdkEnvironmentScope : boost::noncopyable
+{
+public:
+   SdkEnvironmentScope()
+   {
+#ifdef __APPLE__
+      const char* sdkRootPath("/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk");
+      if (core::system::getenv("SDKROOT").empty() && FilePath(sdkRootPath).exists())
+         sdkRootScope_.reset(new core::system::EnvironmentScope("SDKROOT", sdkRootPath));
+
+      const char* developerDirPath = "/Library/Developer/CommandLineTools";
+      if (core::system::getenv("DEVELOPER_DIR").empty() && FilePath(developerDirPath).exists())
+         developerDirScope_.reset(new core::system::EnvironmentScope("DEVELOPER_DIR", developerDirPath));
+#endif
+   }
+
+private:
+   boost::scoped_ptr<core::system::EnvironmentScope> sdkRootScope_;
+   boost::scoped_ptr<core::system::EnvironmentScope> developerDirScope_;
+};
+
+std::set<std::string>& rejectedPrecompiledHeadersImpl()
+{
+   static std::set<std::string> instance;
+   return instance;
+}
+
 } // anonymous namespace
+
+const std::set<std::string>& rejectedPrecompiledHeaders()
+{
+   return rejectedPrecompiledHeadersImpl();
+}
+
+bool takeRejectedPrecompiledHeader(const std::string& path)
+{
+   return rejectedPrecompiledHeadersImpl().erase(path) > 0;
+}
+
+CXTranslationUnit parseWithPrecompiledHeaderFallback(
+      CXIndex index,
+      const std::string& filename,
+      const std::vector<std::string>& args,
+      struct CXUnsavedFile* unsavedFiles,
+      unsigned numUnsavedFiles,
+      unsigned options)
+{
+   core::system::ProcessArgs argsArray(args);
+   CXTranslationUnit tu = clang().parseTranslationUnit(
+            index,
+            filename.c_str(),
+            argsArray.args(),
+            gsl::narrow_cast<int>(argsArray.argCount()),
+            unsavedFiles,
+            numUnsavedFiles,
+            options);
+
+   if (tu != nullptr)
+      return tu;
+
+   std::vector<std::string> pchFreeArgs = args;
+   std::vector<std::string> pchPaths = removePrecompiledHeaderArgs(&pchFreeArgs);
+   if (pchPaths.empty())
+      return nullptr;
+
+   core::system::ProcessArgs pchFreeArgsArray(pchFreeArgs);
+   tu = clang().parseTranslationUnit(
+            index,
+            filename.c_str(),
+            pchFreeArgsArray.args(),
+            gsl::narrow_cast<int>(pchFreeArgsArray.argCount()),
+            unsavedFiles,
+            numUnsavedFiles,
+            options);
+
+   // libclang doesn't say why a parse failed (it reports the same error for
+   // a bad flag as for a bad precompiled header), so the header is only
+   // known to be at fault once the parse works without it. Every full parse
+   // naming that header ends up here until it's taken, so say so only when
+   // it's first recorded.
+   if (tu != nullptr)
+   {
+      for (const std::string& pchPath : pchPaths)
+      {
+         if (rejectedPrecompiledHeadersImpl().insert(pchPath).second)
+            LOG_WARNING_MESSAGE("libclang could not load precompiled header " + pchPath + "; parsing without it");
+      }
+   }
+
+   return tu;
+}
 
 bool SourceIndex::isSourceFile(const FilePath& filePath)
 {
@@ -161,22 +314,8 @@ std::map<std::string,TranslationUnit>
 TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
                                                 bool alwaysReparse)
 {
-#ifdef __APPLE__
+   SdkEnvironmentScope sdkScope;
 
-   // ensure SDK_ROOT is set
-   boost::scoped_ptr<core::system::EnvironmentScope> sdkRootScope;
-   const char* sdkRootPath("/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk");
-   if (core::system::getenv("SDKROOT").empty() && FilePath(sdkRootPath).exists())
-      sdkRootScope.reset(new core::system::EnvironmentScope("SDKROOT", sdkRootPath));
-
-   // ensure DEVELOPER_DIR is set
-   boost::scoped_ptr<core::system::EnvironmentScope> developerDirScope;
-   const char* developerDirPath = "/Library/Developer/CommandLineTools";
-   if (core::system::getenv("DEVELOPER_DIR").empty() && FilePath(developerDirPath).exists())
-      developerDirScope.reset(new core::system::EnvironmentScope("DEVELOPER_DIR", developerDirPath));
-
-#endif
-   
    FilePath filePath(filename);
 
    boost::scoped_ptr<core::PerformanceTimer> pTimer;
@@ -253,38 +392,24 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
    // translation unit we have
    removeTranslationUnit(filename);
 
+   // the arguments to parse with. These are kept apart from the arguments
+   // as fetched, which are what's stored: the next request compares its own
+   // freshly fetched arguments against those to decide whether a reparse
+   // will do, and would never match ones adjusted here.
+   std::vector<std::string> parseArgs = args;
+
    // add verbose output if requested
    if (verbose_ >= 3)
-     args.push_back("-v");
+     parseArgs.push_back("-v");
    
-   // fix up '-std=' arguments: remove C++ '-std' flags when compiling
-   // C sources, and remove C-only '-std' flags when compiling C++ sources
-   if (FilePath(filename).hasExtensionLowerCase(".c"))
-   {
-      // remove C++ std flags (e.g. -std=c++20) from C compilations
-      core::algorithm::expel_if(args, [](const std::string& arg)
-      {
-         return arg.find("-std") == 0 && arg.find("++") != std::string::npos;
-      });
-   }
-   else
-   {
-      // remove C-only std flags (e.g. -std=c11) from C++ compilations
-      core::algorithm::expel_if(args, [](const std::string& arg)
-      {
-         return arg.find("-std") == 0 && arg.find("++") == std::string::npos;
-      });
-   }
-   
+   removeMismatchedStdArgs(filename, &parseArgs);
+
    // report to user if requested
    if (verbose_ > 1)
    {
       std::cerr << "# COMPILATION ARGUMENTS ----" << std::endl;
-      core::debug::print(args);
+      core::debug::print(parseArgs);
    }
-
-   // get the args in the fashion libclang expects (char**)
-   core::system::ProcessArgs argsArray(args);
 
    if (verbose_ > 0)
    {
@@ -292,16 +417,14 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
    }
    
    // create a new translation unit from the file
-   CXTranslationUnit tu = clang().parseTranslationUnit(
+   CXTranslationUnit tu = parseWithPrecompiledHeaderFallback(
                          index_,
-                         filename.c_str(),
-                         argsArray.args(),
-                         gsl::narrow_cast<int>(argsArray.argCount()),
+                         filename,
+                         parseArgs,
                          unsavedFiles().unsavedFilesArray(),
                          unsavedFiles().numUnsavedFiles(),
                          parseTranslationUnitOptions()
                          );
-
 
    // save and return it if we succeeded
    if (tu != nullptr)
@@ -320,6 +443,42 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
       LOG_ERROR_MESSAGE("Error parsing translation unit " + filename);
       return TranslationUnit();
    }
+}
+
+std::vector<std::string> SourceIndex::commandLineDiagnostics(const std::string& filename,
+                                                             std::vector<std::string> args)
+{
+   std::vector<std::string> messages;
+
+   // parse the same way getTranslationUnit() would, but with the file empty
+   SdkEnvironmentScope sdkScope;
+   removeMismatchedStdArgs(filename, &args);
+   core::system::ProcessArgs argsArray(args);
+
+   UnsavedFiles emptyFile;
+   emptyFile.update(filename, "", false);
+
+   CXTranslationUnit tu = clang().parseTranslationUnit(
+                         index_,
+                         filename.c_str(),
+                         argsArray.args(),
+                         gsl::narrow_cast<int>(argsArray.argCount()),
+                         emptyFile.unsavedFilesArray(),
+                         emptyFile.numUnsavedFiles(),
+                         CXTranslationUnit_None);
+   if (tu == nullptr)
+      return messages;
+
+   unsigned numDiagnostics = clang().getNumDiagnostics(tu);
+   for (unsigned i = 0; i < numDiagnostics; i++)
+   {
+      Diagnostic diagnostic(clang().getDiagnostic(tu, i));
+      if (diagnostic.location().empty())
+         messages.push_back(diagnostic.spelling());
+   }
+
+   clang().disposeTranslationUnit(tu);
+   return messages;
 }
 
 Cursor SourceIndex::referencedCursorForFileLocation(const FileLocation &loc)

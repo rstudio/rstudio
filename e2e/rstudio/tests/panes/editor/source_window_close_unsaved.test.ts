@@ -16,6 +16,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { TIMEOUTS } from '@utils/constants';
+import { waitForRpcResponse } from '@utils/rpc';
 import { openFile, seedSandboxFile } from '@utils/files';
 import { executeCommand, resetSourcePaneState } from '@utils/commands';
 import { SOURCE_WINDOW_URL, closeSourceWindows, expectNoSourceWindowAfterReload } from '@utils/source-windows';
@@ -39,7 +40,7 @@ const RELOAD_DECISION_MS = 6000;
 async function popOutUnsavedDoc(page: Page, sandboxDir: string, fileName: string, edit: string): Promise<Page> {
   await openFile(page, await seedSandboxFile(page, sandboxDir, fileName, '# closed\n'));
 
-  const backedUp = page.waitForResponse((response) => response.url().includes('/rpc/save_document_diff'));
+  const backedUp = waitForRpcResponse(page, 'save_document_diff');
   await new SourcePaneActions(page, new ConsolePaneActions(page)).sendText(edit);
   await backedUp;
   await expect(page.locator(SELECTED_DOC_TAB)).toContainText(`${fileName}*`);
@@ -174,9 +175,7 @@ test.describe('Unloading a popped-out source window without a gesture (#19008)',
     // report left by the reload must not make the main window keep a
     // document the user just chose to discard.
     await satellite.evaluate(() => {});
-    const released = page.waitForResponse((response) => response.url().includes('/rpc/close_document'), {
-      timeout: RELOAD_DECISION_MS,
-    });
+    const released = waitForRpcResponse(page, 'close_document', { timeout: RELOAD_DECISION_MS });
     const closed = satellite.waitForEvent('close');
     await satellite.close({ runBeforeUnload: true });
     await closed;

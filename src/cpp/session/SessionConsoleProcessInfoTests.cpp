@@ -40,7 +40,6 @@ const std::string bogusHandle1("unit-test03");
 const int sequence = 1;
 const InteractionMode mode = InteractionAlways;
 const TerminalShell::ShellType shellType = TerminalShell::ShellType::Default;
-const std::string channelId("some channel Id");
 const bool altActive = false;
 
 #ifdef _WIN32

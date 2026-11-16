@@ -1820,14 +1820,6 @@ public interface UserPrefsAccessorConstants extends Constants {
    String clangVerboseDescription();
 
    /**
-    * Whether to show the splash screen when RStudio is starting.
-    */
-   @DefaultStringValue("Show splash screen when RStudio is starting")
-   String enableSplashScreenTitle();
-   @DefaultStringValue("Whether to show the splash screen when RStudio is starting.")
-   String enableSplashScreenDescription();
-
-   /**
     * The R version to use by default.
     */
    @DefaultStringValue("")
@@ -1960,6 +1952,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String reduceRemoteFilesystemOperationsTitle();
    @DefaultStringValue("When enabled, RStudio reduces background file monitoring, code indexing, and external-edit checks for projects detected to be on a network or remote filesystem. This improves responsiveness on slow drives, at the cost of less frequent automatic refreshing of file listings and version-control status.")
    String reduceRemoteFilesystemOperationsDescription();
+
+   /**
+    * Whether to print a notice in the Console at startup when RStudio has reduced background file operations for the current project.
+    */
+   @DefaultStringValue("Show a notice in the Console when background file operations are reduced")
+   String showReducedFileOperationsNoticeTitle();
+   @DefaultStringValue("Whether to print a notice in the Console at startup when RStudio has reduced background file operations for the current project.")
+   String showReducedFileOperationsNoticeDescription();
 
    /**
     * Initial directory for new terminals.

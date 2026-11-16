@@ -996,11 +996,14 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    Encoding(code) <- "UTF-8"
    code <- unlist(strsplit(code, "\n", fixed = TRUE))
 
-   # find chunk indicators (safe fallbacks if absent)
-   start <- max(1, grep(.rs.reRmdChunkBegin(), code, perl = TRUE))
-   end   <- min(length(code), grep(.rs.reRmdChunkEnd(), code, perl = TRUE))
+   # find chunk indicators; code from knitr's 'file' option or read_chunk()
+   # has none, and then every line is part of the body
+   begin <- grep(.rs.reRmdChunkBegin(), code, perl = TRUE)
+   end   <- grep(.rs.reRmdChunkEnd(), code, perl = TRUE)
+   start <- if (length(begin)) max(begin) + 1L else 1L
+   last  <- if (length(end)) min(end) - 1L else length(code)
 
-   code <- code[(start + 1):(end - 1)]
+   code <- if (start <= last) code[start:last] else character()
 
    # strip cell-option lines (e.g. '#| key: value'). these use a
    # language-specific comment prefix, so handle each of the prefixes

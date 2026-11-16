@@ -6,10 +6,13 @@ import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
+import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionListAria;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletion;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -31,6 +34,12 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
       completionPosition_ = completionPosition;
       setReceivesFocus(ReceivesFocus.NO);
 
+      // Focus stays in the editor, so the selection reaches screen readers
+      // through the editor input's aria-activedescendant.
+      CompletionListAria.setListRole(menuBar_.getElement(),
+                                     constants_.completionsListLabel());
+      addSelectionHandler(event -> setActiveItem(event.getSelectedItem()));
+
       addToolTipHandler();
 
       addStyleName(ThemeStyles.INSTANCE.statusBarMenu());
@@ -49,6 +58,7 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
       // save completions and selectable state
       completions_ = completions;
       onSelected_ = onSelected;
+      announceable_ = false;
 
       // clear existing items
       updatingMenu_ = true;
@@ -61,9 +71,10 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
          final CppCompletion completion = completions.get(i);
 
          SafeHtmlBuilder sb = new SafeHtmlBuilder();
-         SafeHtmlUtil.appendImage(sb,
-                                  RES.styles().itemImage(),
-                                  completion.getIcon());
+         // The item's text names it; an unlabeled icon would only add noise.
+         SafeHtmlUtil.appendPresentationImage(sb,
+                                              RES.styles().itemImage(),
+                                              completion.getIcon());
          SafeHtmlUtil.appendSpan(sb,
                                  RES.styles().itemName(),
                                  completion.getTypedText());
@@ -80,6 +91,7 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
             }
          });
          menuItem.addStyleName(RES.styles().itemMenu());
+         CompletionListAria.setItemRole(menuItem.getElement());
 
          FontSizer.applyNormalFontSize(menuItem);
 
@@ -98,6 +110,7 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
       if (completions.length() > 0)
       {
          showMenu();
+         announceWhenVisible();
       }
       else
       {
@@ -153,6 +166,48 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
    private boolean isSelectable()
    {
       return onSelected_ != null;
+   }
+
+   private void setActiveItem(MenuItem item)
+   {
+      if (activeItem_ != null)
+         CompletionListAria.setItemActive(activeItem_.getElement(), false);
+
+      activeItem_ = isSelectable() ? item : null;
+      if (activeItem_ != null)
+         CompletionListAria.setItemActive(activeItem_.getElement(), true);
+
+      updateActiveDescendant();
+   }
+
+   private void updateActiveDescendant()
+   {
+      String id = null;
+      if (announceable_ && activeItem_ != null)
+         id = activeItem_.getElement().getId();
+      docDisplay_.setAriaActiveDescendant(id);
+   }
+
+   // setPopupPositionAndShow hides the popup while positioning it. VoiceOver
+   // ignores an active descendant that is hidden when named, and won't
+   // announce it once shown, so name it after the popup is visible.
+   private void announceWhenVisible()
+   {
+      Scheduler.get().scheduleDeferred(() ->
+      {
+         if (!isShowing() || !isVisible())
+            return;
+         announceable_ = true;
+         updateActiveDescendant();
+      });
+   }
+
+   @Override
+   protected void onUnload()
+   {
+      announceable_ = false;
+      docDisplay_.setAriaActiveDescendant(null);
+      super.onUnload();
    }
 
    private void addToolTipHandler()
@@ -315,7 +370,10 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
    private Boolean showBelow_ = null;
    private boolean updatingMenu_ = false;
    private CppCompletionToolTip toolTip_;
+   private MenuItem activeItem_;
+   private boolean announceable_ = false;
 
    private static CppCompletionResources RES = CppCompletionResources.INSTANCE;
+   private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
 
 }

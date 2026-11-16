@@ -109,10 +109,6 @@ RUN cd /tmp && \
     make && \
     make install
 
-# set github login from build argument if defined
-ARG GITHUB_LOGIN
-ENV RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN
-
 # Set Rust environment variables
 ENV PATH="/opt/rstudio-tools/dependencies/common/overlay/rust/bin:${PATH}"
 ENV CARGO_HOME="/opt/rstudio-tools/dependencies/common/overlay/rust"

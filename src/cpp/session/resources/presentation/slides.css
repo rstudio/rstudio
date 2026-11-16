@@ -59,11 +59,11 @@
   max-height: none;
 }
 
-.reveal code.r {
+.reveal code.r, .reveal code.language-r {
   background-color: #F8F8F8;
 }
 
-.reveal code.cpp {
+.reveal code.cpp, .reveal code.language-cpp {
   background-color: #F8F8F8;
 }
 

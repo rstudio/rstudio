@@ -15,6 +15,8 @@
 
 #include "NotebookQueueUnit.hpp"
 
+#include <algorithm>
+
 #include <gsl/gsl-lite.hpp>
 
 #include <session/SessionModuleContext.hpp>
@@ -205,22 +207,64 @@ Error NotebookQueueUnit::parseOptions(json::Object* pOptions)
    {
       *pOptions = jsonOptions.getObject();
    }
-   
-   // if this chunk defines a 'file' option, then we'll read
-   // the contents of that file and use it for code. note that
-   // any existing code in the chunk will be ignored.
-   std::string file;
-   Error readError = core::json::readObject(*pOptions, "file", file);
-   if (!readError)
+
+   return Success();
+}
+
+Error NotebookQueueUnit::replaceCodeFromFileOption(const json::Object& options,
+                                                   const FilePath& baseDir,
+                                                   bool* pReplaced)
+{
+   *pReplaced = false;
+
+   // as in knitr, a 'file' option supplies the chunk's code, and any code
+   // in the chunk itself is ignored; a null value ('file: null', or a bare
+   // 'file:') is no file, as knitr treats it
+   json::Object::Iterator it = options.find("file");
+   if (it == options.end() || (*it).getValue().isNull())
+      return Success();
+
+   // knitr accepts a vector of files too, and concatenates their lines
+   // (xfun::read_all()); any other value is an error, not a silent fallback
+   // (the message is the error's own text, as that is what the chunk shows)
+   json::Value value = (*it).getValue();
+   std::vector<std::string> files;
+   if (value.isString())
+      files.push_back(value.getString());
+   else if (!value.isArray() || !value.getArray().toVectorString(files))
+      return Error(boost::system::errc::invalid_argument,
+                   "the 'file' chunk option must be a file path or a vector of file paths",
+                   ERROR_LOCATION);
+
+   // an empty path means no file, as before
+   files.erase(std::remove(files.begin(), files.end(), std::string()), files.end());
+   if (files.empty())
+      return Success();
+
+   std::string code;
+   for (const std::string& file : files)
    {
-      FilePath resolvedPath = module_context::resolveAliasedPath(file);
-      
-      std::string code;
-      Error error = core::readStringFromFile(resolvedPath, &code);
-      if (!error)
-         replaceCode(code);
+      FilePath path = file[0] == '~'
+                         ? module_context::resolveAliasedPath(file)
+                         : baseDir.completePath(file);
+
+      // R's parser rejects '\r', so CRLF files (the default on Windows) must be
+      // normalized; knitr's readLines() does the same
+      std::string contents;
+      Error error = core::readStringFromFile(path, &contents, string_utils::LineEndingPosix);
+      if (error)
+      {
+         error.addOrUpdateProperty("path", path.getAbsolutePath());
+         return error;
+      }
+
+      if (!code.empty() && code.back() != '\n')
+         code.push_back('\n');
+      code.append(contents);
    }
 
+   replaceCode(code);
+   *pReplaced = true;
    return Success();
 }
 
@@ -381,9 +425,12 @@ void NotebookQueueUnit::replaceCode(const std::string& code)
    // replace the entire body of the code
    code_ = code;
 
-   // replace the pending queue with one that executes exactly the code given
+   // replace the pending queue with one that executes exactly the code given;
+   // empty code gets no range, so the unit is skipped before an execution
+   // context connects (an empty range would leave that context connected)
    pending_.clear();
-   pending_.push_back(ExecRange(0, gsl::narrow_cast<int>(code_.length())));
+   if (!code_.empty())
+      pending_.push_back(ExecRange(0, gsl::narrow_cast<int>(code_.length())));
 }
 
 } // namespace notebook

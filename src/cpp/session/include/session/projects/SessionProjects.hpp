@@ -18,6 +18,8 @@
 
 #include <vector>
 #include <map>
+#include <mutex>
+#include <set>
 
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
@@ -113,8 +115,10 @@ class ProjectContext : boost::noncopyable
 {
 public:
    ProjectContext()
-      : isNewProject_(false),
+      : packageInfoInitialized_(false),
+        isNewProject_(false),
         hasFileMonitor_(false),
+        fileMonitorInitialized_(false),
         reduceRemoteFilesystemOpsResolved_(false),
         reduceRemoteFilesystemOps_(false)
    {
@@ -181,6 +185,7 @@ public:
       updateDefaultEncoding();
       updateBuildTargetPath();
       updatePackageInfo();
+      updatePackageDirectoryInProject();
       onConfigChanged();
    }
 
@@ -224,10 +229,26 @@ public:
       return buildOptions_;
    }
 
-   const core::r_util::RPackageInfo& packageInfo() const
+   // The package build target, or the project directory for other build types.
+   core::FilePath packageDirectory() const;
+
+   // Return the package directory only when project indexing covers it.
+   // Disabled indexing, external paths, symlinks, and excluded directories
+   // return an empty path (as does a session with no project). The value is
+   // cached: it is recomputed on configuration changes and monitor callbacks,
+   // so it reflects the state as of the last monitor batch.
+   core::FilePath packageDirectoryInProject() const
    {
-      return packageInfo_;
+      return indexedPackageDirectory_;
    }
+
+   // Retain source-index exclusions until a fresh monitor snapshot is indexed.
+   void noteSourceIndexExcludedDirectory(const core::FilePath& directory);
+
+   // Metadata and package detection share the DESCRIPTION refreshed by the
+   // file monitor. Without monitoring, refresh on demand.
+   const core::r_util::RPackageInfo& packageInfo() const;
+   void updatePackageInfo() const;
    
    // is this an R package project?
    bool isPackageProject();
@@ -261,6 +282,8 @@ public:
    static core::r_util::RProjectConfig defaultConfig();
 
 private:
+   friend class PackageProjectInfoTests;
+
    // deferred init handler (this allows other modules to reliably subscribe
    // to our file monitoring events with no concern that they'll miss
    // onMonitoringEnabled)
@@ -275,13 +298,20 @@ private:
    bool fileMonitorFilter(const core::FileInfo& fileInfo,
                           const FileMonitorFilterContext& context) const;
 
+   bool fileMonitorFilterWithCoverage(const core::FileInfo& fileInfo,
+                                      const FileMonitorFilterContext& context) const;
+   void noteUnmonitoredSource(const core::FileInfo& fileInfo) const;
+   void resetFileMonitorCoverage();
+   FileMonitorFilterContext createFileMonitorFilterContext() const;
+   core::FilePath resolvePackageDirectoryInProject() const;
+   void updatePackageDirectoryInProject();
+
    core::FilePath vcsOptionsFilePath() const;
    core::Error buildOptionsFile(core::Settings* pOptionsFile) const;
    core::FilePath assistantOptionsFilePath() const;
 
    void updateDefaultEncoding();
    void updateBuildTargetPath();
-   void updatePackageInfo();
 
    void augmentRbuildignore();
 
@@ -300,10 +330,24 @@ private:
    std::string defaultEncoding_;
    core::FilePath buildTargetPath_;
    RProjectBuildOptions buildOptions_;
-   core::r_util::RPackageInfo packageInfo_;
+   mutable core::r_util::RPackageInfo packageInfo_;
+   mutable bool packageInfoInitialized_;
+   // DESCRIPTION metadata as of the last read; unmonitored package
+   // directories re-read only when it changes.
+   mutable core::FileInfo descriptionInfo_;
    bool isNewProject_;
 
    bool hasFileMonitor_;
+   bool fileMonitorInitialized_;
+   std::set<core::FilePath> monitoredDirectories_;
+   std::set<core::FilePath> failedMonitorDirectories_;
+   mutable std::set<core::FilePath> sourceIndexExcludedDirectories_;
+   // The monitor thread records exclusions; the session thread consumes them.
+   enum class UnmonitoredSource { File, Directory, Link };
+   mutable std::mutex unmonitoredSourcesMutex_;
+   mutable std::map<core::FilePath, UnmonitoredSource> unmonitoredSources_;
+   core::FilePath indexedPackageDirectory_;
+   mutable boost::shared_ptr<FileMonitorFilterContext> packageFilterContext_;
    std::vector<std::string> monitorSubscribers_;
 
    // cached result of reduceRemoteFilesystemOperations(); resolved at most once
@@ -326,6 +370,9 @@ core::r_util::ProjectId& projectId();
 void addFirstRunDocs(const core::FilePath& projectFilePath, const std::vector<std::string>& docs);
 
 core::json::Array websiteOutputFormatsJson();
+
+// Returns the HTML warning shown when a project's text encoding is unavailable.
+std::string unavailableEncodingWarning(const std::string& encoding);
 
 // Returns the editor_theme value to write: the value from the request JSON when the
 // "editor_theme" key is present and a string (an explicit "" clears the override),

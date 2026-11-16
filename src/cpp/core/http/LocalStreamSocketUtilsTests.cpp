@@ -17,7 +17,17 @@
 
 #include <core/http/LocalStreamSocketUtils.hpp>
 
+#include <array>
+#include <cstdio>
+#include <memory>
+#include <thread>
+
+#include <poll.h>
+#include <signal.h>
+#include <sys/wait.h>
 #include <unistd.h>
+
+#include <boost/thread/barrier.hpp>
 
 #include <gtest/gtest.h>
 
@@ -40,12 +50,14 @@ protected:
       ASSERT_FALSE(FilePath::tempFilePath(streamPath_));
       ASSERT_FALSE(streamPath_.removeIfExists());
       pinPath_ = FilePath(streamPath_.getAbsolutePath() + ".pin");
+      lockPath_ = FilePath(streamPath_.getAbsolutePath() + ".lock");
    }
 
    void TearDown() override
    {
       streamPath_.removeIfExists();
       pinPath_.removeIfExists();
+      lockPath_.removeIfExists();
    }
 
    // Linux hands a freed inode number straight to the next file created, so
@@ -66,8 +78,65 @@ protected:
       return listening;
    }
 
+   void checkConcurrentClaims(bool stale)
+   {
+      for (int attempt = 0; attempt < 25; ++attempt)
+      {
+         SCOPED_TRACE(attempt);
+         ASSERT_FALSE(streamPath_.removeIfExists());
+         if (stale)
+         {
+            SocketAcceptorService<stream_protocol> service;
+            ASSERT_FALSE(initLocalStreamAcceptor(service, streamPath_, FileMode::USER_READ_WRITE));
+         }
+
+         constexpr int count = 8;
+         boost::barrier start(count);
+         std::array<SocketAcceptorService<stream_protocol>, count> services;
+         std::array<LocalStreamIdentity, count> identities;
+         std::array<Error, count> errors;
+         std::array<std::thread, count> threads;
+         for (int i = 0; i < count; ++i)
+         {
+            threads[i] = std::thread([&, i]()
+            {
+               start.wait();
+               errors[i] = claimLocalStream(
+                  services[i],
+                  streamPath_,
+                  FileMode::USER_READ_WRITE,
+                  &identities[i]);
+            });
+         }
+         for (auto& thread : threads)
+            thread.join();
+
+         // Keep all acceptors open until every claim finishes. Exactly one
+         // must succeed, and the path must still identify that listener.
+         int claimed = 0;
+         LocalStreamIdentity current;
+         ASSERT_FALSE(getLocalStreamIdentity(streamPath_, &current));
+         for (int i = 0; i < count; ++i)
+         {
+            if (!errors[i])
+            {
+               ++claimed;
+               EXPECT_EQ(identities[i], current);
+            }
+            else
+            {
+               EXPECT_EQ(errors[i], boost::asio::error::make_error_code(boost::asio::error::address_in_use))
+                     << errors[i].asString();
+            }
+         }
+         ASSERT_EQ(claimed, 1);
+         EXPECT_TRUE(listening());
+      }
+   }
+
    FilePath streamPath_;
    FilePath pinPath_;
+   FilePath lockPath_;
 };
 
 } // anonymous namespace
@@ -192,6 +261,175 @@ TEST_F(LocalStreamSocketUtilsTest, ClaimedSocketIsNotInherited)
    int flags = ::fcntl(service.acceptor().native_handle(), F_GETFD);
    ASSERT_NE(flags, -1);
    EXPECT_TRUE(flags & FD_CLOEXEC);
+}
+
+TEST_F(LocalStreamSocketUtilsTest, ConcurrentClaimsOfMissingPathHaveOneOwner)
+{
+   checkConcurrentClaims(false);
+}
+
+TEST_F(LocalStreamSocketUtilsTest, ConcurrentClaimsOfStaleSocketHaveOneOwner)
+{
+   checkConcurrentClaims(true);
+}
+
+TEST_F(LocalStreamSocketUtilsTest, ClaimWaitsForAnotherProcess)
+{
+   int lockFd = ::open(lockPath_.getAbsolutePath().c_str(), O_CREAT | O_RDWR, 0600);
+   ASSERT_NE(lockFd, -1);
+   BOOST_SCOPE_EXIT(lockFd)
+   {
+      ::close(lockFd);
+   }
+   BOOST_SCOPE_EXIT_END
+   ASSERT_EQ(::flock(lockFd, LOCK_EX), 0);
+
+   int ready[2];
+   ASSERT_EQ(::pipe(ready), 0);
+   BOOST_SCOPE_EXIT(&ready)
+   {
+      ::close(ready[0]);
+      if (ready[1] != -1)
+         ::close(ready[1]);
+   }
+   BOOST_SCOPE_EXIT_END
+
+   pid_t child = ::fork();
+   ASSERT_NE(child, -1);
+   if (child == 0)
+   {
+      ::close(ready[0]);
+      ::close(lockFd);
+      // Bound the test even if a regression leaves the child waiting.
+      ::signal(SIGALRM, SIG_DFL);
+      ::alarm(5);
+      if (::write(ready[1], "r", 1) != 1)
+         ::_exit(2);
+
+      SocketAcceptorService<stream_protocol> service;
+      LocalStreamIdentity identity;
+      Error error = claimLocalStream(service, streamPath_, FileMode::USER_READ_WRITE, &identity);
+      ::_exit(error ? 1 : 0);
+   }
+
+   ::close(ready[1]);
+   ready[1] = -1;
+   char byte;
+   EXPECT_EQ(::read(ready[0], &byte, 1), 1);
+
+   // The child's pipe reaches EOF when its claim finishes. It must not
+   // finish or touch the socket while this process holds the claim lock.
+   struct pollfd finished = {ready[0], POLLIN, 0};
+   EXPECT_EQ(::poll(&finished, 1, 200), 0);
+   EXPECT_FALSE(streamPath_.exists());
+   EXPECT_EQ(::flock(lockFd, LOCK_UN), 0);
+
+   int status = 0;
+   EXPECT_EQ(::waitpid(child, &status, 0), child);
+   ASSERT_TRUE(WIFEXITED(status));
+   EXPECT_EQ(WEXITSTATUS(status), 0);
+}
+
+TEST_F(LocalStreamSocketUtilsTest, ClaimsLeaveTheSameUnlockedFile)
+{
+   SocketAcceptorService<stream_protocol> live;
+   LocalStreamIdentity identity;
+   ASSERT_FALSE(claimLocalStream(live, streamPath_, FileMode::USER_READ_WRITE, &identity));
+
+   LocalStreamIdentity lockIdentity;
+   ASSERT_FALSE(getLocalStreamIdentity(lockPath_, &lockIdentity));
+   std::unique_ptr<std::FILE, decltype(&std::fclose)> lockFile(
+      std::fopen(lockPath_.getAbsolutePath().c_str(), "r+"),
+      &std::fclose);
+   ASSERT_NE(lockFile, nullptr);
+   int lockFd = ::fileno(lockFile.get());
+   ASSERT_EQ(::flock(lockFd, LOCK_EX | LOCK_NB), 0);
+   ASSERT_EQ(::flock(lockFd, LOCK_UN), 0);
+
+   SocketAcceptorService<stream_protocol> duplicate;
+   EXPECT_TRUE(claimLocalStream(duplicate, streamPath_, FileMode::USER_READ_WRITE, &identity));
+   EXPECT_EQ(::flock(lockFd, LOCK_EX | LOCK_NB), 0);
+   LocalStreamIdentity current;
+   ASSERT_FALSE(getLocalStreamIdentity(lockPath_, &current));
+   EXPECT_EQ(lockIdentity, current);
+}
+
+TEST_F(LocalStreamSocketUtilsTest, ClaimRefusesSymlinkLockFile)
+{
+   ASSERT_FALSE(writeStringToFile(pinPath_, "untouched"));
+   ASSERT_EQ(::symlink(pinPath_.getAbsolutePath().c_str(), lockPath_.getAbsolutePath().c_str()), 0);
+
+   SocketAcceptorService<stream_protocol> service;
+   LocalStreamIdentity identity;
+   EXPECT_TRUE(claimLocalStream(service, streamPath_, FileMode::USER_READ_WRITE, &identity));
+   EXPECT_FALSE(streamPath_.exists());
+   std::string contents;
+   ASSERT_FALSE(readStringFromFile(pinPath_, &contents));
+   EXPECT_EQ(contents, "untouched");
+}
+
+TEST_F(LocalStreamSocketUtilsTest, ClaimRefusesNonRegularLockFile)
+{
+   ASSERT_EQ(::mkfifo(lockPath_.getAbsolutePath().c_str(), 0600), 0);
+
+   SocketAcceptorService<stream_protocol> service;
+   LocalStreamIdentity identity;
+   Error error = claimLocalStream(service, streamPath_, FileMode::USER_READ_WRITE, &identity);
+   ASSERT_TRUE(error);
+   EXPECT_FALSE(streamPath_.exists());
+
+   // the log must name the file to remove
+   EXPECT_EQ(error.getProperty("lock-file"), lockPath_.getAbsolutePath());
+   EXPECT_FALSE(error.getProperty("description").empty());
+}
+
+TEST_F(LocalStreamSocketUtilsTest, ClaimRunsCallbackWhileListeningAndLocked)
+{
+   SocketAcceptorService<stream_protocol> service;
+   LocalStreamIdentity identity;
+   bool called = false;
+   ASSERT_FALSE(claimLocalStream(
+      service,
+      streamPath_,
+      FileMode::USER_READ_WRITE,
+      &identity,
+      [&]()
+      {
+         called = true;
+         EXPECT_TRUE(listening());
+
+         // another claimant must still be waiting on the lock at this point
+         std::unique_ptr<std::FILE, decltype(&std::fclose)> lockFile(
+            std::fopen(lockPath_.getAbsolutePath().c_str(), "r+"),
+            &std::fclose);
+         EXPECT_NE(lockFile, nullptr);
+         if (lockFile)
+         {
+            EXPECT_EQ(::flock(::fileno(lockFile.get()), LOCK_EX | LOCK_NB), -1);
+            EXPECT_EQ(errno, EWOULDBLOCK);
+         }
+         return Success();
+      }));
+   EXPECT_TRUE(called);
+}
+
+TEST_F(LocalStreamSocketUtilsTest, ClaimReturnsCallbackError)
+{
+   SocketAcceptorService<stream_protocol> service;
+   LocalStreamIdentity identity;
+   Error error = claimLocalStream(
+      service,
+      streamPath_,
+      FileMode::USER_READ_WRITE,
+      &identity,
+      [&]()
+      {
+         return systemError(boost::system::errc::io_error, ERROR_LOCATION);
+      });
+   EXPECT_EQ(error, systemError(boost::system::errc::io_error, ErrorLocation()));
+
+   // the claim stands: the caller decides what to do with the bound socket
+   EXPECT_TRUE(listening());
 }
 
 TEST_F(LocalStreamSocketUtilsTest, IdentityOfMissingPathIsAnError)

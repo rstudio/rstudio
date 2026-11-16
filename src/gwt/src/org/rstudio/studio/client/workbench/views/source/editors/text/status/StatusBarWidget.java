@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -84,6 +85,7 @@ public class StatusBarWidget extends Composite
       show(scope_);
       show(scopeIcon_);
       hide(message_);
+      hide(changes_);
 
       initWidget(panel_);
 
@@ -412,12 +414,39 @@ public class StatusBarWidget extends Composite
       return progress_.addCancelHandler(onCanceled);
    }
 
+   @Override
+   public void initChangeNavigator(AppCommand previous,
+                                   AppCommand next,
+                                   ChangeNavigatorWidget.Handler handler)
+   {
+      changes_.setCommands(previous, next, handler);
+   }
+
+   @Override
+   public void setChangeNavigatorVisible(boolean visible)
+   {
+      if (visible == changes_.isVisible())
+         return;
+
+      if (visible)
+         show(changes_);
+      else
+         hide(changes_);
+   }
+
+   @Override
+   public void setChanges(String text, boolean canNavigate)
+   {
+      changes_.setText(text, canNavigate);
+   }
+
    @UiField StatusBarElementWidget position_;
    @UiField StatusBarElementWidget scope_;
    @UiField StatusBarElementWidget message_;
    @UiField StatusBarElementWidget language_;
    @UiField Image scopeIcon_;
    @UiField NotebookProgressWidget progress_;
+   @UiField ChangeNavigatorWidget changes_;
 
    public interface Resources extends ClientBundle
    {

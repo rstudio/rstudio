@@ -1,0 +1,156 @@
+import { test, expect, type Page, type Route } from '@playwright/test';
+import { waitForRpcResponse } from '@utils/rpc';
+
+/**
+ * Harness self-test for utils/rpc.ts: waitForRpcResponse() must not settle on a
+ * bare asyncHandle acknowledgement. RPC and event traffic is routed to fakes.
+ */
+
+const ORIGIN = 'http://rstudio.test';
+
+// What each RPC answers, by method; a method without an entry is held until
+// the test fulfills it through `held`.
+let answers: Record<string, unknown>;
+let held: Map<string, Route>;
+// Each get_events poll answers with the next batch of events queued here, or
+// with a raw string body.
+let eventBatches: (unknown[] | string)[];
+
+test.beforeEach(async ({ page }) => {
+  answers = {};
+  held = new Map();
+  eventBatches = [];
+  await page.route(`${ORIGIN}/`, (route) =>
+    route.fulfill({ contentType: 'text/html', body: '<div></div>' }));
+  await page.route(`${ORIGIN}/rpc/*`, (route) => {
+    const method = new URL(route.request().url()).pathname.split('/').pop() ?? '';
+    if (method in answers)
+      return route.fulfill({ json: answers[method] });
+    held.set(method, route);
+    return Promise.resolve();
+  });
+  await page.route(`${ORIGIN}/events/get_events`, (route) => {
+    const batch = eventBatches.shift() ?? [];
+    return typeof batch === 'string'
+      ? route.fulfill({ body: batch })
+      : route.fulfill({ json: { result: batch } });
+  });
+  await page.goto(`${ORIGIN}/`);
+});
+
+const completion = (handle: string, response: unknown) => ({
+  type: 'async_completion',
+  data: { handle, response },
+});
+
+// Send without waiting for the answer, as the IDE does.
+const send = (page: Page, path: string) =>
+  page.evaluate((url) => {
+    void fetch(url, { method: 'POST' }).catch(() => {});
+  }, path);
+
+// Send with a JSON body and wait for the answer.
+const sendJson = (page: Page, path: string, body: unknown) =>
+  page.evaluate(async ({ url, data }) => {
+    await fetch(url, { method: 'POST', body: JSON.stringify(data) });
+  }, { url: path, data: body });
+
+const pollEvents = (page: Page, ...events: unknown[]) => pollRaw(page, events);
+
+const pollRaw = (page: Page, batch: unknown[] | string) => {
+  eventBatches.push(batch);
+  return page.evaluate(async () => {
+    await fetch('/events/get_events', { method: 'POST' });
+  });
+};
+
+test('returns an inline answer from the named RPC only', async ({ page }) => {
+  answers = {
+    get_recent_history_extra: { result: 'other' },
+    get_recent_history: { result: 'mine' },
+  };
+  const response = waitForRpcResponse(page, 'get_recent_history');
+  await send(page, '/rpc/get_recent_history_extra');
+  await send(page, '/rpc/get_recent_history');
+  expect(await response).toEqual({ result: 'mine' });
+});
+
+test('returns the answer to the request the filter selects', async ({ page }) => {
+  answers = { close_document: { result: 'any' } };
+  const response = waitForRpcResponse(page, 'close_document', {
+    request: (request) => request.postDataJSON()?.params?.[0] === 'doc2',
+  });
+  await sendJson(page, '/rpc/close_document', { params: ['doc1'] });
+  answers = { close_document: { result: 'doc2 closed' } };
+  await sendJson(page, '/rpc/close_document', { params: ['doc2'] });
+  expect(await response).toEqual({ result: 'doc2 closed' });
+});
+
+test('returns the body an async completion delivers after the ack', async ({ page }) => {
+  answers = { console_input: { asyncHandle: 'h1', ep: 'false' } };
+  const response = waitForRpcResponse(page, 'console_input');
+  await send(page, '/rpc/console_input');
+  await pollEvents(page, completion('other', { result: 'not mine' }));
+  const busy = { type: 'busy', data: { value: true } };
+  await pollEvents(page, busy, completion('h1', { result: 'served' }));
+  expect(await response).toEqual({ result: 'served' });
+});
+
+test('skips an events poll whose body cannot be read', async ({ page }) => {
+  answers = { console_input: { asyncHandle: 'h6', ep: 'false' } };
+  const response = waitForRpcResponse(page, 'console_input');
+  await send(page, '/rpc/console_input');
+  await pollRaw(page, '{"result": [');
+  await pollEvents(page, completion('h6', { result: 'after the cut' }));
+  expect(await response).toEqual({ result: 'after the cut' });
+});
+
+test('returns the body of a completion that arrived before the ack', async ({ page }) => {
+  const response = waitForRpcResponse(page, 'console_input');
+  await send(page, '/rpc/console_input');
+  await expect.poll(() => held.has('console_input')).toBe(true);
+  await pollEvents(page, completion('h2', { result: 'early' }));
+  await held.get('console_input')!.fulfill({ json: { asyncHandle: 'h2', ep: 'false' } });
+  expect(await response).toEqual({ result: 'early' });
+});
+
+test('rejects an inline answer that carries an error', async ({ page }) => {
+  answers = { close_document: { error: { code: 1, message: 'no such document' } } };
+  const rejected = expect(waitForRpcResponse(page, 'close_document')).rejects.toThrow(
+    'close_document failed: {"code":1,"message":"no such document"}');
+  await send(page, '/rpc/close_document');
+  await rejected;
+});
+
+test('rejects a completion that carries an error', async ({ page }) => {
+  answers = { close_document: { asyncHandle: 'h3', ep: 'false' } };
+  const rejected = expect(waitForRpcResponse(page, 'close_document')).rejects.toThrow(
+    'close_document failed: {"code":2}');
+  await send(page, '/rpc/close_document');
+  await pollEvents(page, completion('h3', { error: { code: 2 }, ep: 'false' }));
+  await rejected;
+});
+
+test('rejects, naming the RPC, when it is never answered', async ({ page }) => {
+  const rejected = expect(waitForRpcResponse(page, 'ping', { timeout: 500 }))
+    .rejects.toThrow('response of ping did not complete within 500ms');
+  await send(page, '/rpc/ping');
+  await rejected;
+});
+
+test('rejects when the completion does not arrive in time', async ({ page }) => {
+  answers = { set_user_prefs: { asyncHandle: 'h4', ep: 'false' } };
+  const rejected = expect(waitForRpcResponse(page, 'set_user_prefs', { timeout: 500 }))
+    .rejects.toThrow('response of set_user_prefs did not complete within 500ms');
+  await send(page, '/rpc/set_user_prefs');
+  await rejected;
+});
+
+test('rejects an acknowledgement that is not JSON', async ({ page }) => {
+  const rejected = expect(waitForRpcResponse(page, 'ping')).rejects.toThrow(
+    'ping answered HTTP 401 with a body that is not JSON');
+  await send(page, '/rpc/ping');
+  await expect.poll(() => held.has('ping')).toBe(true);
+  await held.get('ping')!.fulfill({ status: 401, body: '<html>sign in</html>' });
+  await rejected;
+});

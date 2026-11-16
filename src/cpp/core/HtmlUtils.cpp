@@ -134,20 +134,6 @@ std::string CssUrlFilter::toBase64Url(const boost::cmatch& match)
    }
 }
 
-TextRange findClosestRange(std::string::const_iterator pos,
-                           const std::vector<TextRange>& ranges)
-{
-   TextRange closestRange = ranges.front();
-
-   for (const auto& range : ranges)
-   {
-      if (std::abs(range.begin - pos) < std::abs(closestRange.begin - pos))
-         closestRange = range;
-   }
-
-   return closestRange;
-}
-
 void HtmlPreserver::preserve(std::string* pInput)
 {
    // begin and end regexes

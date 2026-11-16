@@ -327,19 +327,25 @@ public class Workbench implements BusyEvent.Handler,
          long over = quotaStatus.getUsed() - quotaStatus.getQuota();
          StringBuilder msg = new StringBuilder();
          msg.append(constants_.onQuotaMessage(StringUtil.formatFileSize(over),StringUtil.formatFileSize(quotaStatus.getQuota())));
-         globalDisplay_.showWarningBar(false, msg.toString());
+         globalDisplay_.showWarningBar("quota", false, msg.toString());
       }
 
       // show a warning if the user is near their quota (but no more
-      // than one time per instantiation of the application)
-      else if (quotaStatus.isNearQuota() && !nearQuotaWarningShown_)
+      // than one time per instantiation of the application, unless it
+      // replaces an over-quota warning)
+      else if (quotaStatus.isNearQuota() && (!nearQuotaWarningShown_ || wasOverQuota_))
       {
          StringBuilder msg = new StringBuilder();
          msg.append(constants_.quotaStatusMessage(StringUtil.formatFileSize(quotaStatus.getQuota())));
-         globalDisplay_.showWarningBar(false, msg.toString());
+         globalDisplay_.showWarningBar("quota", false, msg.toString());
 
          nearQuotaWarningShown_ = true;
       }
+      else if (!quotaStatus.isNearQuota())
+      {
+         globalDisplay_.hideWarningBar("quota");
+      }
+      wasOverQuota_ = quotaStatus.isOverQuota();
    }
 
    @Override
@@ -760,11 +766,11 @@ public class Workbench implements BusyEvent.Handler,
    @Override
    public void onReportShortcutBinding(ReportShortcutBindingEvent event)
    {
+      if (event.getReset())
+         globalDisplay_.undismissWarningBar(ReportShortcutBindingEvent.WARNING_ID);
       AppCommand command = commands_.getCommandById(event.getCommand());
-      if (command == null)
-         globalDisplay_.showWarningBar(false, event.getCommand());
-      else
-         globalDisplay_.showWarningBar(false, event.getCommand() + " : " + command.summarize());
+      globalDisplay_.showWarningBar(ReportShortcutBindingEvent.WARNING_ID, false,
+            command == null ? event.getCommand() : event.getCommand() + " : " + command.summarize());
    }
 
    private final Server server_;
@@ -786,6 +792,7 @@ public class Workbench implements BusyEvent.Handler,
    private WorkbenchMetrics lastWorkbenchMetrics_;
    private final WorkbenchNewSession newSession_;
    private boolean nearQuotaWarningShown_ = false;
+   private boolean wasOverQuota_ = false;
    
    @SuppressWarnings("unused") private final SourceWindowManager sourceWindowManager_;
    private static final ClientWorkbenchConstants constants_ = GWT.create(ClientWorkbenchConstants.class);

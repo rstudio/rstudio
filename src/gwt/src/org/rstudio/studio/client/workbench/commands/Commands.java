@@ -322,6 +322,7 @@ public abstract class
    public abstract AppCommand vcsRefresh();
    public abstract AppCommand vcsRefreshNoError();
    public abstract AppCommand vcsOpen();
+   public abstract AppCommand vcsOpenAtFirstChange();
    public abstract AppCommand vcsIgnore();
    public abstract AppCommand vcsNewWorktree();
    public abstract AppCommand vcsRemoveWorktree();
@@ -548,7 +549,6 @@ public abstract class
    public abstract AppCommand activateHelp();
    public abstract AppCommand layoutZoomHelp();
    public abstract AppCommand showAboutDialog();
-   public abstract AppCommand showSplashScreen();
    public abstract AppCommand copyRStudioVersion();
    public abstract AppCommand showTrustRequestDialog();
    public abstract AppCommand showLicenseDialog();

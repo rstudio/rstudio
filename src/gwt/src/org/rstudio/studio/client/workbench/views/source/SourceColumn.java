@@ -638,15 +638,10 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
    public boolean insertCode(String code, boolean isBlock)
    {
-      if (activeEditor_ != null &&
-          activeEditor_ instanceof TextEditingTarget &&
-          commands_.executeCode().isEnabled())
-      {
-         TextEditingTarget textEditor = (TextEditingTarget) activeEditor_;
-         textEditor.insertCode(code, isBlock);
-         return true;
-      }
-      return false;
+      if (!(activeEditor_ instanceof TextEditingTarget))
+         return false;
+
+      return ((TextEditingTarget) activeEditor_).tryInsertCode(code, isBlock);
    }
 
    public void incrementNewTabPending()
@@ -1179,7 +1174,9 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
    public void onBeforeShow()
    {
-      // All columns aside from the main column should open with a document
+      // A column shown with no documents opens one, the main column included.
+      // Only the pass after restoring documents, beforeShow(true), skips the
+      // main column, so a session restored with none keeps Source hidden.
       if (getTabCount() == 0 && newTabPending_ == 0)
       {
          newTabPending_++;

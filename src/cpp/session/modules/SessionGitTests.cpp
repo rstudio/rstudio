@@ -15,6 +15,8 @@
 
 #include <gtest/gtest.h>
 
+#include <boost/algorithm/string.hpp>
+
 #include "SessionGit.hpp"
 
 namespace rstudio {
@@ -24,6 +26,59 @@ namespace git {
 namespace {
 
 using namespace core;
+
+TEST(SessionGitTests, KeepsTheRenamedPairForItsNewPath)
+{
+   // two files staged in place of the one they came from (the directory
+   // of its name is in the pathspec for it), the one without hunks first
+   std::string whole =
+         "diff --git a/foo b/foo/a.R\n"
+         "similarity index 100%\n"
+         "copy from foo\n"
+         "copy to foo/a.R\n";
+   std::string edited =
+         "diff --git a/foo b/foo/z.R\n"
+         "similarity index 77%\n"
+         "rename from foo\n"
+         "rename to foo/z.R\n"
+         "index dbe1d57..3daa188 100644\n"
+         "--- a/foo\n"
+         "+++ b/foo/z.R\n"
+         "@@ -2 +2 @@ a <- 1\n"
+         "-b <- 2\n"
+         "+b <- 20\n";
+
+   EXPECT_EQ(renamedPairFor(whole + edited, "foo/z.R"), edited);
+   EXPECT_EQ(renamedPairFor(whole + edited, "foo/a.R"), whole);
+   EXPECT_EQ(renamedPairFor(edited + whole, "foo/z.R"), edited);
+
+   // the path whole, not one ending the same
+   EXPECT_EQ(renamedPairFor(whole + edited, "z.R"), whole + edited);
+
+   // a path Git quotes (a double quote, a backslash, a tab) is matched as
+   // Git prints it; one with a non-ASCII name is not quoted (core.quotepath
+   // is off for this diff)
+   std::string quoted =
+         "diff --git \"a/foo\" \"b/foo/z\\\".R\"\n"
+         "similarity index 77%\n"
+         "rename from foo\n"
+         "rename to \"foo/z\\\".R\"\n"
+         "--- \"a/foo\"\n"
+         "+++ \"b/foo/z\\\".R\"\n"
+         "@@ -2 +2 @@ a <- 1\n"
+         "-b <- 2\n"
+         "+b <- 20\n";
+   EXPECT_EQ(renamedPairFor(whole + quoted, "foo/z\".R"), quoted);
+   std::string escaped = boost::algorithm::replace_all_copy(quoted, "z\\\".R", "z\\\\\\t\\001.R");
+   EXPECT_EQ(renamedPairFor(whole + escaped, "foo/z\\\t\001.R"), escaped);
+   std::string accented = boost::algorithm::replace_all_copy(edited, "z.R", "caf\xc3\xa9.R");
+   EXPECT_EQ(renamedPairFor(whole + accented, "foo/caf\xc3\xa9.R"), accented);
+
+   // one pair, or none for the path, stays as it is
+   EXPECT_EQ(renamedPairFor(edited, "foo/a.R"), edited);
+   EXPECT_EQ(renamedPairFor(whole + edited, "other.R"), whole + edited);
+   EXPECT_EQ(renamedPairFor("", "foo/z.R"), "");
+}
 
 TEST(SessionGitTests, ParsesWorktreeListPorcelain)
 {

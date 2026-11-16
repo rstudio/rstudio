@@ -440,7 +440,34 @@ std::vector<std::string> ConsoleActions::getConsoleLines(int limit,
 
    return result;
 }
-   
+
+bool ConsoleActions::containsOutput(const std::string& text)
+{
+   LOCK_MUTEX(mutex_)
+   {
+      flush();
+
+      // concatenate in order, so text that spans several actions (one per
+      // line, or per chunk of a long line) is matched as a whole
+      std::string output;
+      for (const auto& action : actions_)
+      {
+         if (action.type == kConsoleActionOutput ||
+             action.type == kConsoleActionOutputError)
+         {
+            output.append(action.data);
+         }
+      }
+
+      text::stripAnsiCodes(&output);
+      return output.find(text) != std::string::npos;
+   }
+   END_LOCK_MUTEX
+
+   // keep compiler happy
+   return false;
+}
+
 } // namespace session
 } // namespace r
 } // namespace rstudio

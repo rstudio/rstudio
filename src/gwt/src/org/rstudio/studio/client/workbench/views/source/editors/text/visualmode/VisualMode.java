@@ -47,6 +47,7 @@ import org.rstudio.studio.client.panmirror.PanmirrorCode;
 import org.rstudio.studio.client.panmirror.PanmirrorContext;
 import org.rstudio.studio.client.panmirror.PanmirrorKeybindings;
 import org.rstudio.studio.client.panmirror.PanmirrorOptions;
+import org.rstudio.studio.client.panmirror.PanmirrorSelection;
 import org.rstudio.studio.client.panmirror.PanmirrorSetMarkdownResult;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommands;
@@ -558,6 +559,7 @@ public class VisualMode implements VisualModeEditorSync,
          // The find bar can clear activeEditor_ while deliberately leaving
          // chunk commands enabled. A format reload has no chunk to restore,
          // so the active document must revoke those global commands now.
+         cursorInCodeEditor_ = false;
          if (target_.isActiveDocument())
             setCodeCommandsEnabled(false);
       }
@@ -843,9 +845,11 @@ public class VisualMode implements VisualModeEditorSync,
         commands_.vcsShowChangesSideBySide()
       );
       
-      // initially disable code commands (they will be re-enabled later when an
-      // editor has focus)
-      if (isActivated())
+      // Disable code commands unless the cursor is in a chunk editor. Leave
+      // them alone when it is: this also runs on each command refresh, e.g.
+      // when the document is edited or saved, and that must not turn them off
+      // -- whether the chunk still has focus or has lent it to another pane.
+      if (isActivated() && !cursorInCodeEditor_)
       {
          setCodeCommandsEnabled(false);
       }
@@ -855,6 +859,7 @@ public class VisualMode implements VisualModeEditorSync,
    public void unmanageCommands()
    {
       restoreDisabledForVisualMode();
+      cursorInCodeEditor_ = false;
       setCodeCommandsEnabled(true);
    }
    
@@ -901,6 +906,51 @@ public class VisualMode implements VisualModeEditorSync,
 
       if (activeEditor_ != null)
          command.execute(activeEditor_);
+   }
+
+   /**
+    * Inserts code at the visual editor's cursor: into the code editor holding
+    * it, or else as a new R chunk at that position.
+    *
+    * @param code The code to insert.
+    * @return Whether the code was inserted. It is not while the editor is
+    *    being loaded, rebuilt or switched back to source, when the cursor is
+    *    somewhere a chunk can't go (e.g. in a table, or in a document without
+    *    code chunks), or when a new chunk would replace a selection.
+    */
+   public boolean insertCode(String code)
+   {
+      // A document still loading from source is about to be replaced, which
+      // would discard the insert. So would one on its way back to source
+      // mode: it is no longer activated, and what the source editor gets has
+      // already been read from it.
+      if (panmirror_ == null || !isActivated() || isLoading_ || loadingFromSource_)
+         return false;
+
+      // The pane the code came from holds focus. Returning it to the editing
+      // surface restores the cursor and, in a code editor, activeEditor_.
+      panmirror_.focus();
+
+      if (activeEditor_ != null)
+      {
+         activeEditor_.insertCode(code, true);
+         return true;
+      }
+
+      if (!panmirror_.isCommandEnabled(PanmirrorCommands.RCodeChunk))
+         return false;
+
+      // A new chunk replaces the selection, which may be a node (an image
+      // that was clicked, say) as well as text. Only a bare cursor is safe.
+      PanmirrorSelection selection = panmirror_.getSelection();
+      if (selection.from != selection.to)
+         return false;
+
+      // End on an empty line, which is where the new chunk leaves the cursor,
+      // so that code inserted next starts on a line of its own.
+      String body = code.endsWith("\n") ? code : code + "\n";
+      panmirror_.insertChunk("{r}\n" + body, 0, 0);
+      return true;
    }
 
    /**
@@ -959,6 +1009,7 @@ public class VisualMode implements VisualModeEditorSync,
       if (editor != null)
       {
          // A code chunk has focus; enable code commands
+         cursorInCodeEditor_ = true;
          setCodeCommandsEnabled(true);
       }
    }
@@ -976,6 +1027,7 @@ public class VisualMode implements VisualModeEditorSync,
          return;
 
       setActiveEditor(null);
+      cursorInCodeEditor_ = false;
       if (target_.isActiveDocument())
          setCodeCommandsEnabled(false);
    }
@@ -1922,6 +1974,7 @@ public class VisualMode implements VisualModeEditorSync,
                   // Note that the PanmirrorFocusEvent is fired when selection
                   // exits a code chunk as well as when the entire widget loses
                   // focus.
+                  cursorInCodeEditor_ = false;
                   setCodeCommandsEnabled(false);
                   
                   // Also clear the last focused Ace editor. This is normally
@@ -2215,6 +2268,12 @@ public class VisualMode implements VisualModeEditorSync,
    private SourceServerOperations source_;
    private Session session_;
    private DocDisplay activeEditor_;  // the current embedded editor
+
+   // Whether the visual editor's cursor is in a code editor. Unlike
+   // activeEditor_, which a chunk gives up on blur, this holds while another
+   // pane (a toolbar, the History pane) has focus, and so tells a command
+   // refresh that runs meanwhile to leave the code commands enabled.
+   private boolean cursorInCodeEditor_ = false;
    
    private final TextEditingTarget target_;
    private final TextEditingTarget.Display view_;

@@ -115,3 +115,33 @@ test_that(".rs.docDeployList() tolerates non-existent resource files", {
    # the .qmd file itself should still be present
    expect_true("main.qmd" %in% result$contents)
 })
+
+test_that(".rs.rsconnect.withDashboardUrls() links Connect apps by GUID (#19428)", {
+   apps <- data.frame(
+      id         = c(1234L, 5678L),
+      guid       = c("0b6f-guid-a", "7c1e-guid-b"),
+      config_url = c("https://connect.example.com/connect/#/apps/1234",
+                     "https://connect.example.com/connect/#/apps/5678"),
+      stringsAsFactors = FALSE
+   )
+
+   res <- .rs.rsconnect.withDashboardUrls(apps, "https://connect.example.com/__api__")
+   expect_equal(res$config_url, c(
+      "https://connect.example.com/connect/#/apps/0b6f-guid-a",
+      "https://connect.example.com/connect/#/apps/7c1e-guid-b"
+   ))
+   expect_equal(res$id, apps$id)
+})
+
+test_that(".rs.rsconnect.withDashboardUrls() keeps a server path prefix", {
+   apps <- data.frame(guid = "0b6f-guid-a", config_url = "x", stringsAsFactors = FALSE)
+   res <- .rs.rsconnect.withDashboardUrls(apps, "https://example.com/rsc/__api__")
+   expect_equal(res$config_url, "https://example.com/rsc/connect/#/apps/0b6f-guid-a")
+})
+
+test_that(".rs.rsconnect.withDashboardUrls() passes an empty app list through", {
+   # rsconnect::applications() returns NULL when the account has no content
+   expect_null(.rs.rsconnect.withDashboardUrls(NULL, "https://connect.example.com/__api__"))
+   expect_equal(.rs.scalarListFromFrame(
+      .rs.rsconnect.withDashboardUrls(NULL, "https://connect.example.com/__api__")), list())
+})

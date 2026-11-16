@@ -69,6 +69,12 @@ export class ApplicationLaunch {
       argv.push('--automation-agent');
     }
 
+    // where Chromium's sandbox can't start (e.g. a dev build on Linux with unprivileged user
+    // namespaces restricted), the new instance would abort at startup without this
+    if (app.commandLine.hasSwitch('no-sandbox')) {
+      argv.push('--no-sandbox');
+    }
+
     // this instance may have been started by opening a project or a file, which leaves these
     // variables set in our own environment; give the new session a copy without them
     const env = { ...process.env };

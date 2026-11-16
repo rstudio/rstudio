@@ -101,7 +101,6 @@ public class UserPrefs extends UserPrefsComputed
       if (BrowseCap.isElectron())
       {
          autohideMenubar().addValueChangeHandler(enabled -> Desktop.getFrame().setAutohideMenubar(enabled.getValue()));
-         enableSplashScreen().addValueChangeHandler(enabled -> Desktop.getFrame().setEnableSplashScreen(enabled.getValue()));
          enableScreenReader().addValueChangeHandler(enabled -> Desktop.getFrame().setEnableAccessibility(enabled.getValue()));
          enableMousewheelZoom().addValueChangeHandler(enabled -> Desktop.getFrame().setMousewheelZoomEnabled(enabled.getValue()));
          mousewheelZoomDebounceMs().addValueChangeHandler(debounceMs -> Desktop.getFrame().setMousewheelZoomDebounce(debounceMs.getValue()));
@@ -326,7 +325,6 @@ public class UserPrefs extends UserPrefsComputed
          Desktop.getFrame().setMousewheelZoomEnabled(enableMousewheelZoom().getValue());
          Desktop.getFrame().setMousewheelZoomDebounce(mousewheelZoomDebounceMs().getValue());
          Desktop.getFrame().setEnableAccessibility(enableScreenReader().getValue());
-         Desktop.getFrame().setEnableSplashScreen(enableSplashScreen().getValue());
       }
    }
 

@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.common.rstudioapi.model;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.FormListBox;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
@@ -24,7 +25,6 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -51,14 +51,19 @@ public class ChoiceListDialog extends ModalDialog<Integer>
       VerticalPanel panel = new VerticalPanel();
       panel.setWidth("400px");
 
-      if (!StringUtil.isNullOrEmpty(message_))
+      listBox_ = new FormListBox();
+      if (StringUtil.isNullOrEmpty(message_))
       {
-         Label msg = new Label(message_);
+         // with no message, the title is the only text describing the list
+         Roles.getListboxRole().setAriaLabelProperty(listBox_.getElement(), getText());
+      }
+      else
+      {
+         FormLabel msg = new FormLabel(message_, listBox_);
          msg.getElement().getStyle().setPaddingBottom(8, Unit.PX);
          panel.add(msg);
       }
 
-      listBox_ = new FormListBox();
       listBox_.setWidth("100%");
       int visible = Math.min(Math.max(choices_.length, 3), 10);
       listBox_.setVisibleItemCount(visible);

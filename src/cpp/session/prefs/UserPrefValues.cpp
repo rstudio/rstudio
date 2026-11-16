@@ -2845,19 +2845,6 @@ core::Error UserPrefValues::setClangVerbose(int val)
 }
 
 /**
- * Whether to show the splash screen when RStudio is starting.
- */
-bool UserPrefValues::enableSplashScreen()
-{
-   return readPref<bool>("enable_splash_screen");
-}
-
-core::Error UserPrefValues::setEnableSplashScreen(bool val)
-{
-   return writePref("enable_splash_screen", val);
-}
-
-/**
  * The R version to use by default.
  */
 core::json::Object UserPrefValues::defaultRVersion()
@@ -3063,6 +3050,19 @@ bool UserPrefValues::reduceRemoteFilesystemOperations()
 core::Error UserPrefValues::setReduceRemoteFilesystemOperations(bool val)
 {
    return writePref("reduce_remote_filesystem_operations", val);
+}
+
+/**
+ * Whether to print a notice in the Console at startup when RStudio has reduced background file operations for the current project.
+ */
+bool UserPrefValues::showReducedFileOperationsNotice()
+{
+   return readPref<bool>("show_reduced_file_operations_notice");
+}
+
+core::Error UserPrefValues::setShowReducedFileOperationsNotice(bool val)
+{
+   return writePref("show_reduced_file_operations_notice", val);
 }
 
 /**
@@ -4286,7 +4286,6 @@ std::vector<std::string> UserPrefValues::allKeys()
       kLatexShellEscape,
       kRestoreProjectRVersion,
       kClangVerbose,
-      kEnableSplashScreen,
       kDefaultRVersion,
       kDataViewerMaxColumns,
       kDataViewerMaxCellSize,
@@ -4303,6 +4302,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kAutoSaveIdleMs,
       kAutoSaveOnBlur,
       kReduceRemoteFilesystemOperations,
+      kShowReducedFileOperationsNotice,
       kTerminalInitialDirectory,
       kFullProjectPathInWindowTitle,
       kVisualMarkdownEditingIsDefault,

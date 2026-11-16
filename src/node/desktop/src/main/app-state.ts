@@ -47,7 +47,6 @@ export interface AppState {
   scratchTempDir(defaultPath: FilePath): FilePath;
   sessionStartDelaySeconds: number;
   sessionEarlyExitCode: number;
-  startupDelayMs: number;
   prepareForWindow(pendingWindow: PendingWindow): void;
   windowOpening(
     frameName: string,
@@ -72,6 +71,13 @@ export function appState(): AppState {
     throw Error('application not set');
   }
   return rstudio;
+}
+
+/**
+ * @returns Whether the application singleton has been set
+ */
+export function hasApplication(): boolean {
+  return rstudio !== null;
 }
 
 /**

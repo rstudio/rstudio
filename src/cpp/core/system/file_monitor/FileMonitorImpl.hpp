@@ -74,6 +74,21 @@ void processFileRemoved(tree<FileInfo>::iterator parentIt,
                         tree<FileInfo>* pTree,
                         std::vector<FileChangeEvent>* pFileChanges);
 
+// Locate a path by descending from the root, scanning one level of siblings
+// at a time. Events for paths absent from the tree (build output churn) are
+// common, so this avoids a full-tree walk per event.
+tree<FileInfo>::iterator findPath(tree<FileInfo>* pTree, const std::string& path);
+
+// Discard stale descendants when a previously observed directory is filtered.
+// Retain the directory as incomplete so a later accepted event can recover it.
+void invalidateDirectory(
+   const FileInfo& fileInfo,
+   tree<FileInfo>* pTree,
+   const boost::function<void(const std::vector<FileChangeEvent>&)>& onFilesChanged);
+
+// A recursive monitor must rebuild failed subtrees even when the current
+// event ordinarily requests only a shallow scan. While a recursive rescan
+// from the root is already pending, subtree scans are left to that rescan.
 Error discoverAndProcessFileChanges(
    const FileInfo& fileInfo,
    bool recursive,
@@ -81,7 +96,9 @@ Error discoverAndProcessFileChanges(
    const boost::function<Error(const FileInfo&)>& onBeforeScanDir,
    tree<FileInfo>* pTree,
    const boost::function<void(const std::vector<FileChangeEvent>&)>&
-                                                            onFilesChanged);
+                                                            onFilesChanged,
+   bool recursiveMonitor = false,
+   bool rescanPending = false);
 
 inline Error discoverAndProcessFileChanges(
    const FileInfo& fileInfo,
@@ -89,7 +106,9 @@ inline Error discoverAndProcessFileChanges(
    const boost::function<bool(const FileInfo&)>& filter,
    tree<FileInfo>* pTree,
    const boost::function<void(const std::vector<FileChangeEvent>&)>&
-                                                            onFilesChanged)
+                                                            onFilesChanged,
+   bool recursiveMonitor = false,
+   bool rescanPending = false)
 {
    return discoverAndProcessFileChanges(
                                  fileInfo,
@@ -97,7 +116,9 @@ inline Error discoverAndProcessFileChanges(
                                  filter,
                                  boost::function<Error(const FileInfo&)>(),
                                  pTree,
-                                 onFilesChanged);
+                                 onFilesChanged,
+                                 recursiveMonitor,
+                                 rescanPending);
 }
 
 template <typename Iterator>

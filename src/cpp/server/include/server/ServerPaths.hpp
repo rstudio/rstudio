@@ -16,6 +16,8 @@
 #ifndef SERVER_PATHS_HPP
 #define SERVER_PATHS_HPP
 
+#include <boost/algorithm/string/predicate.hpp>
+
 #include <shared_core/FilePath.hpp>
 
 #include <monitor/MonitorConstants.hpp>
@@ -37,6 +39,25 @@ inline FilePath serverRpcSocketPath() { return serverTmpDir().completeChildPath(
 inline FilePath serverLocalSocketPath() { return serverTmpDir().completeChildPath(kServerLocalSocket); }
 inline FilePath monitorSocketPath() { return serverTmpDir().completeChildPath(kMonitorSocket); }
 inline FilePath sessionTmpDir() { return options().serverDataDir().completeChildPath(kSessionTmpDir); }
+
+inline bool shouldChownServerDataFile(int depth, const FilePath& file)
+{
+   // Session sockets and their metadata belong to the session user. This
+   // includes the persistent claim lock, which must remain user-writable
+   // after rserver restarts.
+   if (depth == 3 &&
+       boost::ends_with(file.getParent().getParent().getFilename(), "-ds"))
+      return false;
+
+   if (depth == 1 &&
+       (boost::ends_with(file.getFilename(), "-d") ||
+        boost::ends_with(file.getFilename(), "-d.pid") ||
+        boost::ends_with(file.getFilename(), "-d.ctx") ||
+        boost::ends_with(file.getFilename(), "-d.lock")))
+      return false;
+
+   return true;
+}
 
 } // namespace server
 } // namespace rstudio

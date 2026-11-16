@@ -19,11 +19,14 @@
 #include <cerrno>
 
 #include <fcntl.h>
+#include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
 #include <boost/asio/local/stream_protocol.hpp>
+#include <boost/function.hpp>
+#include <boost/scope_exit.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
@@ -171,12 +174,69 @@ inline Error getLocalStreamIdentity(const FilePath& localStreamPath,
 // this fails with address_in_use and leaves the path alone. A socket that
 // nobody listens on any more is replaced. On success, *pIdentity identifies
 // the socket bound here.
+//
+// onClaimed, if given, runs once the socket is listening and before the
+// claim is released, so that whatever it puts in place (e.g. a pid file)
+// is there by the time a competing claimant learns that it lost. Its error,
+// if any, is returned, with the socket left bound.
 inline Error claimLocalStream(
    SocketAcceptorService<boost::asio::local::stream_protocol>& acceptorService,
    const core::FilePath& localStreamPath,
    core::FileMode fileMode,
-   LocalStreamIdentity* pIdentity)
+   LocalStreamIdentity* pIdentity,
+   const boost::function<Error()>& onClaimed = boost::function<Error()>())
 {
+   // Serialize the entire claim, including the first bind: a socket that
+   // has been bound but is not listening yet also looks stale to a probe.
+   // Keep this file after closing it. Unlinking it would let a new claimant
+   // lock a different inode while another is still waiting on this one.
+   FilePath lockPath(localStreamPath.getAbsolutePath() + ".lock");
+   int lockFd = ::open(
+      lockPath.getAbsolutePath().c_str(),
+      O_CREAT | O_RDWR | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK,
+      S_IRUSR | S_IWUSR);
+   if (lockFd == -1)
+   {
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("lock-file", lockPath);
+      return error;
+   }
+
+   BOOST_SCOPE_EXIT(lockFd)
+   {
+      ::close(lockFd);
+   }
+   BOOST_SCOPE_EXIT_END
+
+   // The stream directory may be shared by users. Do not follow symlinks
+   // or lock a special file or a file belonging to another user.
+   struct stat lockInfo;
+   if (::fstat(lockFd, &lockInfo) == -1)
+   {
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("lock-file", lockPath);
+      return error;
+   }
+   if (!S_ISREG(lockInfo.st_mode) || lockInfo.st_uid != ::geteuid())
+   {
+      Error error = systemError(EACCES, ERROR_LOCATION);
+      error.addProperty("lock-file", lockPath);
+      error.addProperty("description",
+                        "The session's lock file is not a regular file owned by "
+                        "the current user; remove it and start the session again");
+      return error;
+   }
+
+   while (::flock(lockFd, LOCK_EX) == -1)
+   {
+      if (errno != EINTR)
+      {
+         Error error = systemError(errno, ERROR_LOCATION);
+         error.addProperty("lock-file", lockPath);
+         return error;
+      }
+   }
+
    using boost::asio::local::stream_protocol;
    stream_protocol::endpoint endpoint(localStreamPath.getAbsolutePath());
    stream_protocol::acceptor& acceptor = acceptorService.acceptor();
@@ -213,7 +273,7 @@ inline Error claimLocalStream(
       if (error)
          return error;
 
-      // a process that bound the path since our probe keeps it
+      // no other claimant can replace the path between the probe and bind
       acceptor.bind(endpoint, ec);
    }
 
@@ -224,8 +284,8 @@ inline Error claimLocalStream(
       return error;
    }
 
-   // record which socket is ours, then listen at once: until we do, another
-   // process probing the path would take our socket for an abandoned one
+   // Record the identity and start listening before releasing the claim
+   // lock, so the next claimant sees this socket as live.
    Error error = getLocalStreamIdentity(localStreamPath, pIdentity);
    if (error)
       return error;
@@ -234,7 +294,14 @@ inline Error claimLocalStream(
    if (ec)
       return Error(ec, ERROR_LOCATION);
 
-   return localStreamPath.changeFileMode(fileMode);
+   error = localStreamPath.changeFileMode(fileMode);
+   if (error)
+      return error;
+
+   if (onClaimed)
+      return onClaimed();
+
+   return Success();
 }
 
 } // namespace http

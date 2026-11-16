@@ -13,7 +13,7 @@
  *
  */
 
-import { app, BrowserWindow, dialog, Event, Menu, screen, WebContents } from 'electron';
+import { app, BrowserWindow, dialog, Event, Menu, screen, session, WebContents } from 'electron';
 import i18next from 'i18next';
 import path from 'path';
 import { getenv, setenv } from '../core/environment';
@@ -34,12 +34,15 @@ import {
   showRNotFoundError,
 } from './detect-r';
 import { GwtCallback } from './gwt-callback';
+import { prepareInstanceSessionData, removeExitedInstanceSessionData } from './instance-session-data';
 import { PendingWindow } from './pending-window';
+import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { exitFailure, exitSuccess, ProgramStatus, run } from './program-status';
 import { registerProcessDiagnostics } from './process-diagnostics';
 import { SatelliteWindow } from './satellite-window';
 import { SecondaryWindow } from './secondary-window';
 import { SessionLauncher } from './session-launcher';
+import { shareBootstrapCookies } from './shared-cookies';
 import { startupCheckpoint } from './startup-timing';
 import {
   augmentCommandLineArguments,
@@ -48,6 +51,8 @@ import {
   initializeLang,
   initializeSharedSecret,
   isAutomated,
+  keepAutomationWindowsRendering,
+  showWindowForAutomation,
   loadRWebsite,
   raiseAndActivateWindow,
   removeStaleOptionsLockfile,
@@ -57,6 +62,7 @@ import { WindowTracker } from './window-tracker';
 import { configureSatelliteWindow, configureSecondaryWindow } from './window-utils';
 import { Client, Server } from 'net-ipc';
 import { LoggerCallback } from './logger-callback';
+import { registerLanguageChannel, trackLocaleCookie } from './page-language';
 import { checkDirectoryWritable, UserDirIssue, Xdg } from '../core/xdg';
 import { ModalDialogTracker } from './modal-dialog-tracker';
 import LogOptions from './log-options';
@@ -98,7 +104,6 @@ export class Application implements AppState {
   loggerCallback?: LoggerCallback;
   sessionStartDelaySeconds = 0;
   sessionEarlyExitCode = 0;
-  startupDelayMs = 0;
   pendingWindows = new Array<PendingWindow>();
   server?: Server;
   client?: Client;
@@ -108,6 +113,8 @@ export class Application implements AppState {
   sessionLauncher?: SessionLauncher;
   private activationInst?: DesktopActivation;
   private scratchPath?: FilePath;
+  private sharedSessionData = true;
+  private instanceLockTaken = false;
 
   argsManager = new ArgsManager();
 
@@ -125,6 +132,7 @@ export class Application implements AppState {
     // surface any problems in an error dialog once the app is ready
     // https://github.com/rstudio/rstudio/issues/18179
     this.checkStateDirectories();
+    this.reportDesktopOptionsRecovery();
 
     // attempt to remove stale lockfiles, as they can impede application startup
     try {
@@ -142,6 +150,16 @@ export class Application implements AppState {
     }
 
     initializeSharedSecret();
+
+    // On macOS, an instance that fails to take the lock before NSApplication starts launching
+    // doesn't get 'ready' until it's activated (by a click on its Dock icon, say). Elsewhere,
+    // 'will-finish-launching' comes with 'ready', too late to move the session data.
+    if (process.platform === 'darwin') {
+      app.once('will-finish-launching', () => this.initializeInstanceLock());
+    } else {
+      this.initializeInstanceLock();
+    }
+
     this.registerAppEvents();
 
     // allow users to supply extra command-line arguments for Chromium
@@ -185,16 +203,54 @@ export class Application implements AppState {
       .catch((error: unknown) => logger().logError(error));
   }
 
-  private shouldInstanceOpen() {
-    // check if this is the primary instance
-    // projects always open in a new instance
-    // files prefer to reuse the primary instance
-    const hasInstanceLock = app.requestSingleInstanceLock();
+  /**
+   * Desktop options are read before the file logger or this Application
+   * exist, so a config.json moved aside at that point (#19496) could not be
+   * logged or shown then. Do both now: the user's zoom, window bounds and
+   * fonts have just been reset, and the backup is where they can get them back.
+   */
+  private reportDesktopOptionsRecovery(): void {
+    const recovery = ElectronDesktopOptions().configRecovery();
+    if (!recovery) {
+      return;
+    }
+
+    logger().logWarning(
+      `Could not read ${recovery.configPath} (${recovery.reason}); moved it to ${recovery.backupPath} and reset desktop options to their defaults.`,
+    );
+
+    // as above, the dialog has to wait for the app to be ready
+    app
+      .whenReady()
+      .then(async () =>
+        createStandaloneErrorDialog(
+          i18next.t('applicationTs.desktopOptionsResetTitle'),
+          // the native message box shows text, not HTML: keep the paths readable
+          i18next.t('applicationTs.desktopOptionsResetMessage', {
+            configPath: recovery.configPath,
+            backupPath: recovery.backupPath,
+            reason: recovery.reason,
+            interpolation: { escapeValue: false },
+          }),
+        ),
+      )
+      .catch((error: unknown) => logger().logError(error));
+  }
+
+  /**
+   * Whether this launch only hands its files to the primary instance and exits: projects always
+   * open in a new instance, and files prefer to reuse the primary instance.
+   */
+  private forwardsToPrimary(hasInstanceLock: boolean): boolean {
     const hasProjectToOpen = this.argsManager.getProjectFileArg() ?? getenv('RS_INITIAL_PROJECT');
     const hasFileToOpen = this.argsManager.getFileArgs().length > 0;
 
     logger().logDebug(`instance lock: ${hasInstanceLock}, project: ${hasProjectToOpen}, file: ${hasFileToOpen}`);
-    if (!hasInstanceLock && !(hasProjectToOpen.length > 0) && hasFileToOpen) {
+    return !hasInstanceLock && !(hasProjectToOpen.length > 0) && hasFileToOpen;
+  }
+
+  private shouldInstanceOpen() {
+    if (this.forwardsToPrimary(app.hasSingleInstanceLock())) {
       logger().logDebug('No instance lock - exiting');
       return false;
     }
@@ -211,6 +267,34 @@ export class Application implements AppState {
       this.createMessageClient();
     }
 
+    keepAutomationWindowsRendering();
+  }
+
+  /**
+   * Takes the instance lock, which decides where Chromium keeps this instance's storage; that
+   * can only be changed before the app is ready. The listener for files forwarded by later
+   * launches goes in with the lock, as they can arrive from then on.
+   */
+  private initializeInstanceLock(canMoveSessionData = true) {
+    this.instanceLockTaken = true;
+    const userData = app.getPath('userData');
+    const hasInstanceLock = app.requestSingleInstanceLock();
+
+    // a launch that only hands its files to the primary instance never opens a window, so it
+    // has no use for storage of its own
+    if (!hasInstanceLock && canMoveSessionData && !this.forwardsToPrimary(hasInstanceLock)) {
+      const sessionData = prepareInstanceSessionData(userData);
+      if (sessionData) {
+        logger().logDebug(`Another instance is running; using session data folder ${sessionData}`);
+        app.setPath('sessionData', sessionData);
+        this.sharedSessionData = false;
+      }
+    }
+
+    getEventBus().once('main-window-loaded', () => {
+      removeExitedInstanceSessionData(userData).catch((error: unknown) => logger().logError(error));
+    });
+
     app.on('second-instance', (_event, argv) => {
       logger().logDebug(`second-instance event: ARGS ${argv}`);
 
@@ -222,6 +306,19 @@ export class Application implements AppState {
       this.argsManager.setUnswitchedArgs(argv.slice(1));
       if (this.argsManager.getProjectFileArg() === undefined) this.argsManager.handleAfterSessionLaunchCommands();
     });
+  }
+
+  /**
+   * Takes the instance lock if that didn't happen before the app was ready, as it wouldn't if
+   * awaited work before beforeAppReady() let 'will-finish-launching' fire before its handler was
+   * registered. Without the lock, a launch with a file would exit without handing it over. The
+   * session data can no longer move, so this instance keeps the shared storage.
+   */
+  private ensureInstanceLock() {
+    if (!this.instanceLockTaken) {
+      logger().logWarning('The instance lock was not taken before the app was ready; taking it now');
+      this.initializeInstanceLock(false);
+    }
   }
 
   // listens for messages from the server
@@ -345,10 +442,20 @@ export class Application implements AppState {
    * Invoked when Electron app is 'ready'
    */
   async run(): Promise<ProgramStatus> {
+    this.ensureInstanceLock();
     if (!this.shouldInstanceOpen()) {
       return exitSuccess();
     }
     this.initializeInstance();
+
+    // the desktop's own pages (choose R, loading) need the UI language; read it while the
+    // rest of startup runs, and wait for it after R detection. It's one of the cookies an
+    // instance with its own session data starts from, so those come first
+    registerLanguageChannel();
+    const sharedCookiesDir = path.join(app.getPath('userData'), 'shared-cookies');
+    const languageReady = shareBootstrapCookies(session.defaultSession, sharedCookiesDir, this.sharedSessionData).then(
+      async () => trackLocaleCookie(session.defaultSession),
+    );
 
     // prepare application for launch
     this.appLaunch = ApplicationLaunch.init();
@@ -387,8 +494,7 @@ export class Application implements AppState {
 
     // Prevent app from terminating when last window closes during startup; this can cause
     // app to exit after Choose R dialog closes but before the license dialog shows. Also
-    // happens after the Manage License dialog (w/o Choose R being involved) if there is no
-    // splash screen to keep the app alive.
+    // happens after the Manage License dialog (w/o Choose R being involved).
     // https://github.com/rstudio/rstudio-pro/issues/6062
 
     const windowAllClosedHandler = () => {
@@ -404,6 +510,7 @@ export class Application implements AppState {
     if (process.platform !== 'win32' || !rChooserLikely()) {
       await rDetectionReady();
     }
+    await languageReady;
     startupCheckpoint('r-query-ready');
 
     // on Windows, ask the user what version of R they'd like to use
@@ -450,7 +557,10 @@ export class Application implements AppState {
       const [scannedPath, error] = scanForR();
       if (error) {
         logger().logDebug(`Error scanning for R: ${error}`);
-        await showRNotFoundError();
+
+        // an R that was found but would not start is a different problem
+        // from no R at all; the error says which one it was
+        await showRNotFoundError(error);
         return exitFailure();
       }
 
@@ -464,8 +574,9 @@ export class Application implements AppState {
     logger().logDebug(`Preparing environment using R: ${rPath}`);
     const prepareError = prepareEnvironment(rPath);
     if (prepareError) {
-      logger().logError(prepareError);
-      await showRNotFoundError();
+      // the failure was logged where it happened, with R's full output
+      logger().logDebug(`Error preparing R environment: ${prepareError}`);
+      await showRNotFoundError(prepareError);
       return exitFailure();
     }
     startupCheckpoint('r-environment-prepared');
@@ -598,7 +709,7 @@ export class Application implements AppState {
     // windowOpening() created the window hidden; surface it without pulling
     // OS focus away from whatever the user is doing while the tests run.
     if (isAutomated()) {
-      newWindow.showInactive();
+      showWindowForAutomation(newWindow);
     }
   }
 

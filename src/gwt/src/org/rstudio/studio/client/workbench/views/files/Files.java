@@ -642,8 +642,14 @@ public class Files
    @Handler
    void onDeleteFiles()
    {
-      // get currently selected files
-      final ArrayList<FileSystemItem> selectedFiles = view_.getSelectedFiles();
+      // get currently selected files, never including the directory being
+      // browsed or anything above it (#19493)
+      final ArrayList<FileSystemItem> selectedFiles = new ArrayList<>();
+      for (FileSystemItem file : view_.getSelectedFiles())
+      {
+         if (!containsCurrentPath(file))
+            selectedFiles.add(file);
+      }
 
       // validation: some selection exists
       if (selectedFiles.size() == 0)
@@ -708,6 +714,18 @@ public class Files
                            }
                         },
                        true);
+   }
+
+   // true when deleting 'file' would remove the directory the pane is showing,
+   // i.e. 'file' is that directory or one of its ancestors. The view never
+   // reports the parent row as selected, so this only matters when the pane
+   // has navigated away but the old listing is still displayed.
+   private boolean containsCurrentPath(FileSystemItem file)
+   {
+      if (currentPath_ == null)
+         return false;
+
+      return currentPath_.equalTo(file) || currentPath_.getPathRelativeTo(file) != null;
    }
 
    private boolean validateNotRestrictedFolder(ArrayList<FileSystemItem> files,

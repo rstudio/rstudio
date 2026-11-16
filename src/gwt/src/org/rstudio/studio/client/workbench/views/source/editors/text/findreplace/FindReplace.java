@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.findreplace;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardHelper;
@@ -220,6 +221,7 @@ public class FindReplace
 
       boolean wholeWord = display_.getWholeWord().getValue();
       boolean caseSensitive = display_.getCaseSensitive().getValue();
+      boolean regex = display_.getRegex().getValue();
 
       String searchString = display_.getFindValue().getValue();
       if (searchString.length() != 0)
@@ -229,8 +231,19 @@ public class FindReplace
          // is that first match the selection handler would keep the marker
          clearMatchHighlight();
 
-         editor_.selectAll(searchString, range, wholeWord, caseSensitive);
-         editor_.focus();
+         try
+         {
+            editor_.selectAll(searchString, range, wholeWord, caseSensitive, regex);
+            editor_.focus();
+         }
+         catch (Exception e)
+         {
+            // Only an invalid regex is expected here; keep anything else diagnosable.
+            Debug.logException(e);
+            globalDisplay_.showMessage(GlobalDisplay.MSG_ERROR,
+                  errorCaption_,
+                  constants_.invalidSearchTerm());
+         }
       }
    }
 
@@ -379,8 +392,9 @@ public class FindReplace
 
       String flags = caseSensitive ? "gm" : "igm";
       String query = regex ? find : Pattern.escape(find);
+      // Group the pattern so the boundaries apply to every alternative.
       if (wholeWord)
-         query = "(?<![\\w.])" + query + "(?![\\w.])";
+         query = "(?<![\\w.])(?:" + query + ")(?![\\w.])";
 
       return Pattern.create(query, flags);
    }

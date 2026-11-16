@@ -227,6 +227,7 @@ const int kChatCheckForUpdates = 210;
 const int kProjectRVersionMismatch = 211;
 const int kRInstallCompleted = 212;
 const int kRenvRestorePrompt = 213;
+const int kQuitAborted = 214;
 
 }
 
@@ -637,6 +638,8 @@ std::string ClientEvent::typeName() const
          return "r_install_completed";
       case client_events::kRenvRestorePrompt:
          return "renv_restore_prompt";
+      case client_events::kQuitAborted:
+         return "quit_aborted";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " +
                              safe_convert::numberToString(type_));

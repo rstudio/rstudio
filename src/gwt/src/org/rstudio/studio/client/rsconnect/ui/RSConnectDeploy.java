@@ -1308,7 +1308,7 @@ public class RSConnectDeploy extends Composite
             // if this is a document with the name "index", guess the directory
             // as the content name rather than the file
             if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT &&
-                appTitle.toLowerCase().equals(constants_.index()))
+                appTitle.toLowerCase().equals("index"))
             {
                appTitle = FilePathUtils.fileNameSansExtension(
                      source_.getDeployDir());

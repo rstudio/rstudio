@@ -17,6 +17,7 @@ import { captureOutputTail, describeLaunchState } from './launch-diagnostics';
 import { keepRequestInterceptionOn } from './request-interception';
 import { isDebugMode } from '../utils/debug';
 import { userHomeForAuthState } from '../utils/auth';
+import { withoutCredentials } from '../utils/env';
 
 const BASE_PREFS_PATH = path.join(__dirname, 'base-prefs.jsonc');
 const OVERRIDE_PREFS_ENV = 'PW_RSTUDIO_PREFS_OVERRIDE';
@@ -581,7 +582,7 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
   const launchHome = userHomeForAuthState(workerUserHome());
   const spawnOptions: SpawnOptions = {
     env: {
-      ...process.env,
+      ...withoutCredentials(process.env),
       HOME: launchHome,
       // R expands %p / %v at startup; the resolved path is the same one
       // globalSetup pre-creates and pre-populates in r-libs-setup.ts. Setting
@@ -605,10 +606,6 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
       // startup so the renderer's Performance profiler is ready before
       // waitForUserConsoleInput resumes the test.
       ...(isDebugMode() ? { RSTUDIO_OPEN_DEVTOOLS: '1' } : {}),
-      // Suppress the Electron splash screen during automation; otherwise CDP
-      // can grab the splash window before the main app loads (see the
-      // automation-bridge poll loop below).
-      RS_NO_SPLASH: '1',
       // Force window closes through even when a page's beforeunload handler
       // prevents unload; the interactive path shows a native "Leave page?"
       // dialog that automation cannot dismiss (rstudio#17439).
@@ -771,13 +768,12 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
     };
     logLaunchStep('CDP connected; polling for window.rstudio.ready');
 
-    // The splash screen and (in GWT super dev mode) a transient "Compiling
-    // RStudio" page both flash before the real app loads, and the compiling
-    // page briefly exposes window.rstudio. Polling for window.rstudio.ready
-    // === true cuts through both: ApplicationAutomation initializes ready to
-    // false and only flips it on DeferredInitCompletedEvent, so the transient
-    // page never matches and we proceed exactly when R-to-GWT roundtrips are
-    // safe (no separate stability window needed).
+    // In GWT super dev mode a transient "Compiling RStudio" page flashes
+    // before the real app loads and briefly exposes window.rstudio. Polling
+    // for window.rstudio.ready === true cuts through it: ApplicationAutomation
+    // initializes ready to false and only flips it on DeferredInitCompletedEvent,
+    // so the transient page never matches and we proceed exactly when R-to-GWT
+    // roundtrips are safe (no separate stability window needed).
     const pageDeadline = Date.now() + PAGE_READY_TIMEOUT_MS;
     let page: Page | undefined;
     let bridgeFirstSeen = false;
@@ -803,7 +799,7 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
               break;
             }
           } catch {
-            // Page may be navigating or closing during splash -> main transition.
+            // Page may be navigating or closing during the loading -> main transition.
           }
         }
         if (page) break;

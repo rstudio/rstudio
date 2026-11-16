@@ -37,7 +37,7 @@
                        ui:field="radioWorking_"
                        value="working"/>
             </td>
-            <td><label ui:field="labelWorking_"><ui:msg key="labelWorking">Working</ui:msg></label></td>
+            <td><label ui:field="labelWorking_">Working</label></td>
          </tr>
          <tr>
             <td />
@@ -52,7 +52,7 @@
                        value="mine-conflict"/>
             </td>
             <td>
-               <label ui:field="labelMineConflict_"><ui:msg key="labelMineConflict">Mine-Conflict</ui:msg></label>
+               <label ui:field="labelMineConflict_">Mine-Conflict</label>
             </td>
          </tr>
          <tr>
@@ -68,7 +68,7 @@
                        value="theirs-conflict"/>
             </td>
             <td>
-               <label ui:field="labelTheirsConflict_"><ui:msg key="labelTheirsConflict">Theirs-Conflict</ui:msg></label>
+               <label ui:field="labelTheirsConflict_">Theirs-Conflict</label>
             </td>
          </tr>
          <tr>

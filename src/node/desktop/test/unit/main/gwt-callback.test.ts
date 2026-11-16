@@ -112,11 +112,22 @@ describe('DesktopCallback', () => {
       callback.setPendingQuit(PendingQuit.PendingQuitNone);
     });
 
-    it('records an R that runs and hands it over once', async () => {
+    it('hands over an R that runs, once the quit names it, and only once', async () => {
       sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{} as never, null]);
 
       assert.equal(await callback.setPendingRVersion(rPath), '');
+      // prepared is not pending: a quit that does not name it leaves it alone
+      assert.equal(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload), '');
+      assert.equal(callback.collectPendingRVersion(), '');
+
+      assert.equal(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload, rPath), '');
       assert.equal(callback.collectPendingRVersion(), rPath);
+      assert.equal(callback.collectPendingRVersion(), '');
+    });
+
+    it('refuses a quit naming an R that was not prepared', () => {
+      assert.isNotEmpty(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload, '/no/such/R'));
+      assert.equal(callback.collectPendingQuitRequest(), PendingQuit.PendingQuitNone);
       assert.equal(callback.collectPendingRVersion(), '');
     });
 
@@ -143,11 +154,43 @@ describe('DesktopCallback', () => {
     it('forgets the R when the quit it was meant for is abandoned', async () => {
       sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{} as never, null]);
 
-      callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload);
       assert.equal(await callback.setPendingRVersion(rPath), '');
+      assert.equal(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload, rPath), '');
 
       callback.setPendingQuit(PendingQuit.PendingQuitNone);
       assert.equal(callback.collectPendingRVersion(), '');
+    });
+  });
+
+  describe('collectPendingQuitRequest', () => {
+    afterEach(() => {
+      callback.setPendingQuit(PendingQuit.PendingQuitNone);
+    });
+
+    it('hands the pending quit over once', () => {
+      callback.setPendingQuit(PendingQuit.PendingQuitAndExit);
+      assert.equal(callback.collectPendingQuitRequest(), PendingQuit.PendingQuitAndExit);
+      assert.equal(callback.collectPendingQuitRequest(), PendingQuit.PendingQuitNone);
+    });
+
+    it('keeps an accepted update only for the quit-and-exit it was recorded for', () => {
+      const cancel = sinon.stub(callback.updater, 'cancelPendingInstall');
+
+      callback.setPendingQuit(PendingQuit.PendingQuitAndExit);
+      callback.collectPendingQuitRequest();
+      assert.isTrue(cancel.notCalled);
+
+      // the session exits to restart (Terminate R, a project switch), or crashed
+      for (const other of [
+        PendingQuit.PendingQuitRestartAndReload,
+        PendingQuit.PendingQuitAndRestart,
+        PendingQuit.PendingQuitNone,
+      ]) {
+        cancel.resetHistory();
+        callback.setPendingQuit(other);
+        callback.collectPendingQuitRequest();
+        assert.isTrue(cancel.called, `collected as ${PendingQuit[other]}`);
+      }
     });
   });
 
@@ -202,6 +245,65 @@ describe('DesktopCallback', () => {
       } finally {
         app.commandLine.removeSwitch('automation-agent');
       }
+    });
+  });
+
+  describe('desktop_bring_main_frame_to_front', () => {
+    it('focuses the main window', () => {
+      const main = fakeBrowserWindow();
+      mainWindow.window = main as unknown as BrowserWindow;
+      ipcMain.emit('desktop_bring_main_frame_to_front');
+
+      assert.isTrue(main.focus.calledOnce);
+    });
+
+    it('leaves a visible main window alone in automation mode', () => {
+      const main = fakeBrowserWindow();
+      mainWindow.window = main as unknown as BrowserWindow;
+
+      app.commandLine.appendSwitch('automation-agent');
+      try {
+        ipcMain.emit('desktop_bring_main_frame_to_front');
+      } finally {
+        app.commandLine.removeSwitch('automation-agent');
+      }
+
+      assert.isFalse(main.focus.called);
+      assert.isFalse(main.show.called);
+      assert.isFalse(main.showInactive.called);
+      assert.isFalse(main.moveTop.called);
+    });
+  });
+
+  describe('desktop_activate_minimal_window', () => {
+    function namedWindow(name: string) {
+      return { ...fakeBrowserWindow(), webContents: { mainFrame: { name: name } } };
+    }
+
+    it('focuses the named window', () => {
+      const viewer = namedWindow('viewer');
+      sinon.stub(BrowserWindow, 'getAllWindows').returns([viewer as unknown as BrowserWindow]);
+      ipcMain.emit('desktop_activate_minimal_window', {}, 'viewer');
+
+      assert.isTrue(viewer.moveTop.calledOnce);
+      assert.isTrue(viewer.focus.calledOnce);
+    });
+
+    it('leaves a visible window alone in automation mode', () => {
+      const viewer = namedWindow('viewer');
+      sinon.stub(BrowserWindow, 'getAllWindows').returns([viewer as unknown as BrowserWindow]);
+
+      app.commandLine.appendSwitch('automation-agent');
+      try {
+        ipcMain.emit('desktop_activate_minimal_window', {}, 'viewer');
+      } finally {
+        app.commandLine.removeSwitch('automation-agent');
+      }
+
+      assert.isFalse(viewer.focus.called);
+      assert.isFalse(viewer.show.called);
+      assert.isFalse(viewer.showInactive.called);
+      assert.isFalse(viewer.moveTop.called);
     });
   });
 
@@ -569,6 +671,47 @@ describe('DesktopCallback', () => {
       assert.deepEqual(await invoke('desktop_get_clipboard_uris'), [
         process.platform === 'win32' ? expected.replace(/\\/g, '/') : expected,
       ]);
+    });
+
+    // On Linux, Chromium 148+ reads the URI list through the XDG file transfer
+    // portal when a file manager offers it, and hands back an empty list when
+    // the portal lookup fails. The file manager's own list still names the files.
+    it('desktop_get_clipboard_uris falls back to the copied-files list', async () => {
+      const files = ['plain.txt', 'with space.txt'].map((name) => path.join(tempDir, name));
+      const uris = files.map((file) => pathToFileURL(file).href);
+      const data: Record<string, string> = {
+        'text/uri-list': '',
+        'electron application/osclipboard;format="x-special/gnome-copied-files"': ['cut', ...uris].join('\n'),
+      };
+      const item = {
+        types: Object.keys(data),
+        getType: sinon.stub().callsFake(async (type: string) => new Blob([data[type]])),
+      };
+      sinon.stub(clipboard, 'read').resolves([item as unknown as ClipboardItem]);
+
+      const expected = process.platform === 'win32' ? files.map((file) => file.replace(/\\/g, '/')) : files;
+      assert.deepEqual(await invoke('desktop_get_clipboard_uris'), expected);
+    });
+
+    it('desktop_get_clipboard_uris prefers a non-empty URI list to the copied-files list', async () => {
+      const [fromUriList, fromCopiedFiles] = ['uri-list.txt', 'copied-files.txt'].map((name) =>
+        path.join(tempDir, name),
+      );
+      const data: Record<string, string> = {
+        'text/uri-list': pathToFileURL(fromUriList).href,
+        'electron application/osclipboard;format="x-special/gnome-copied-files"': [
+          'copy',
+          pathToFileURL(fromCopiedFiles).href,
+        ].join('\n'),
+      };
+      const item = {
+        types: Object.keys(data),
+        getType: sinon.stub().callsFake(async (type: string) => new Blob([data[type]])),
+      };
+      sinon.stub(clipboard, 'read').resolves([item as unknown as ClipboardItem]);
+
+      const expected = process.platform === 'win32' ? fromUriList.replace(/\\/g, '/') : fromUriList;
+      assert.deepEqual(await invoke('desktop_get_clipboard_uris'), [expected]);
     });
 
     // the renderer never calls back on a rejected IPC call, so every failed

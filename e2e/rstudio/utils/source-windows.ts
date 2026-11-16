@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { TIMEOUTS } from '@utils/constants';
+import { waitForRpcResponse } from '@utils/rpc';
 
 /** Matches the URL of a popped-out source window. */
 export const SOURCE_WINDOW_URL = /view=source_window_/;
@@ -38,8 +39,7 @@ export async function closeSourceWindows(page: Page): Promise<void> {
     });
     await satellite.evaluate(() => {}).catch(() => {});
 
-    const released = page
-      .waitForResponse((response) => response.url().includes('/rpc/close_document'), { timeout: CLOSE_WINDOW_MS })
+    const released = waitForRpcResponse(page, 'close_document', { timeout: CLOSE_WINDOW_MS })
       .catch(() => undefined);
     const closed = satellite.waitForEvent('close', { timeout: CLOSE_WINDOW_MS }).catch(() => undefined);
     await satellite.close({ runBeforeUnload: true }).catch(() => {});

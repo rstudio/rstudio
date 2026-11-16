@@ -12,10 +12,8 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { executeCommand } from '@utils/commands';
 import { TIMEOUTS } from '@utils/constants';
-import { OPEN_FILE_DIALOG, holdListFiles } from '@utils/file-dialogs';
+import { FILE_LIST, FILE_NAME, OPEN_FILE_DIALOG, holdListFiles } from '@utils/file-dialogs';
 
-const FILE_LIST = '#rstudio_directory_contents';
-const FILE_NAME = '#file_dialog_name_prompt';
 // the breadcrumb marks the current location when a listing arrives, in the
 // same task as any focus change, and also for a directory with no entries
 const CURRENT_LOCATION = '[aria-current="location"]';

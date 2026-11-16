@@ -118,9 +118,11 @@ FilePath getAirTomlPath(const FilePath& projectPath)
 
 FilePath findAirTomlPath(const core::FilePath& documentPath)
 {
-   // Early check for empty document paths
+   // An untitled document has no path; treat it as living in the active
+   // project (if any), so it formats the same way it will once saved there.
+   // See #19406.
    if (documentPath.isEmpty())
-      return FilePath();
+      return getProjectAirTomlPath();
 
    // If the document lives within the active project, then first
    // check for air.toml in the project directory.

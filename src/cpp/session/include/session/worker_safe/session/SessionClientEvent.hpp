@@ -228,6 +228,7 @@ extern const int kFilesChanged;
 extern const int kProjectRVersionMismatch;
 extern const int kRInstallCompleted;
 extern const int kRenvRestorePrompt;
+extern const int kQuitAborted;
 
 }
    

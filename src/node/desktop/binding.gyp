@@ -13,11 +13,14 @@
               [
                 'OS=="mac"',
                 {
+                  "sources": [ "src/native/desktop/desktop_mac.mm" ],
                   "link_settings": {
                     "libraries": [
+                      "AppKit.framework",
                       "CoreFoundation.framework",
                       "Carbon.framework",
-                      "CoreText.framework"
+                      "CoreText.framework",
+                      "UniformTypeIdentifiers.framework"
                     ]
                   }
                 }

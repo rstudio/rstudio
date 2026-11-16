@@ -67,22 +67,10 @@ CppScopeNode.CATEGORY_ANON      = 5;
    
 }).call(CppScopeNode.prototype);
 
+// The base constructor sets up the state the inherited methods expect
+// (the parse position, the root, the cut-brace lists).
 var CppScopeManager = function(ScopeNodeFactory) {
-
-   this.$ScopeNodeFactory = ScopeNodeFactory;
-   
-   this.parsePos = {
-      row: 0,
-      column: 0
-   };
-
-   this.$root = new ScopeNodeFactory(
-      "(Top Level)",
-      this.parsePos,
-      null,
-      ScopeNode.TYPE_ROOT
-   );
-   
+   ScopeManager.call(this, ScopeNodeFactory);
 };
 oop.mixin(CppScopeManager.prototype, ScopeManager.prototype);
 

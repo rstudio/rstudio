@@ -42,12 +42,14 @@ protected:
       ASSERT_FALSE(FilePath::tempFilePath(streamPath_));
       ASSERT_FALSE(streamPath_.removeIfExists());
       pidPath_ = FilePath(streamPath_.getAbsolutePath() + ".pid");
+      lockPath_ = FilePath(streamPath_.getAbsolutePath() + ".lock");
    }
 
    void TearDown() override
    {
       streamPath_.removeIfExists();
       pidPath_.removeIfExists();
+      lockPath_.removeIfExists();
    }
 
    std::unique_ptr<LocalStreamHttpConnectionListener> newListener()
@@ -86,6 +88,7 @@ protected:
 
    FilePath streamPath_;
    FilePath pidPath_;
+   FilePath lockPath_;
 };
 
 } // anonymous namespace

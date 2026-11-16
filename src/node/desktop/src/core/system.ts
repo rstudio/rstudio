@@ -32,6 +32,9 @@ export function generateShortenedUuid(): string {
   return crc.crc32(generateUuid(false)).toString(16);
 }
 
+/** The host the desktop's own R sessions serve the IDE from. */
+export const kLocalSessionHost = '127.0.0.1';
+
 export function generateRandomPort(): number {
   // Create a random-ish port number to avoid collisions between different
   // instances of rdesktop-launched rsessions; not a cryptographically

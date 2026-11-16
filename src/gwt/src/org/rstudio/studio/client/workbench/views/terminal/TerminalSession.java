@@ -38,7 +38,6 @@ import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
-import org.rstudio.studio.client.common.shell.ShellInput;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidResponse;
@@ -300,7 +299,6 @@ public class TerminalSession extends XTermWidget
    public void disconnect(boolean permanent)
    {
       inputQueue_.setLength(0);
-      inputSequence_ = ShellInput.IGNORE_SEQUENCE;
       socket_.disconnect(permanent);
       registrations_.removeHandler();
       consoleProcess_ = null;
@@ -500,37 +498,7 @@ public class TerminalSession extends XTermWidget
          inputQueue_.setLength(0);
       }
 
-      // On desktop, rapid typing sometimes causes RPC messages for writeStandardInput
-      // to arrive out of sequence in the terminal; send a sequence number with each
-      // message so server can put messages back in order
-      if (Desktop.hasDesktopFrame() &&
-            consoleProcess_.getChannelMode() == ConsoleProcessInfo.CHANNEL_RPC)
-      {
-         if (inputSequence_ == ShellInput.IGNORE_SEQUENCE)
-         {
-            // First message sent for this client-side terminal instance, start
-            // by flushing the server-side queue to reset server's "last-sequence"
-            // back to default.
-            inputSequence_ = ShellInput.FLUSH_SEQUENCE;
-         }
-         else if (inputSequence_ == ShellInput.FLUSH_SEQUENCE)
-         {
-            // Last message has flushed server, start tracking sequences again.
-            inputSequence_ = 0;
-         }
-         else if (inputSequence_ >= Integer.MAX_VALUE - 100)
-         {
-            // Very diligent typist!  Tell server to flush its input
-            // queue, temporarily ignoring sequences.
-            inputSequence_ = ShellInput.FLUSH_SEQUENCE;
-         }
-         else
-         {
-            inputSequence_++;
-         }
-      }
-
-      socket_.dispatchInput(inputSequence_, userInput, doLocalEcho(),
+      socket_.dispatchInput(userInput, doLocalEcho(),
             new VoidServerRequestCallback() {
 
                @Override
@@ -1093,7 +1061,6 @@ public class TerminalSession extends XTermWidget
    private final ArrayList<String> deferredOutput_ = new ArrayList<>();
    private boolean restartSequenceWritten_;
    private final StringBuilder inputQueue_ = new StringBuilder();
-   private int inputSequence_ = ShellInput.IGNORE_SEQUENCE;
    private boolean newTerminal_ = true;
    private boolean showAltAfterReload_;
 

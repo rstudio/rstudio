@@ -41,8 +41,7 @@ public class HyperlinkPopupPositioner implements PositionCallback
             popupHeight, 
             cursorBounds_.getLeft(), 
             cursorBounds_.getBottom(), 
-            10, 
-            true);
+            10);
 
         popup_.setPopupPosition(coords.getLeft(), coords.getTop());
     }

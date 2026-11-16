@@ -227,7 +227,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       final CompletionManager completionManager = new RCompletionManager(
             view_.getInputEditorDisplay(),
             null,
-            new CompletionPopupPanel(),
+            new CompletionPopupPanel(view_.getInputEditorDisplay()),
             server,
             null,
             null,

@@ -19,6 +19,21 @@ import com.google.gwt.event.shared.GwtEvent;
 
 public class ReportShortcutBindingEvent extends GwtEvent<ReportShortcutBindingEvent.Handler>
 {
+   public static final String WARNING_ID = "shortcut-report";
+
+   public ReportShortcutBindingEvent(String command, boolean reset)
+   {
+      this(command);
+      reset_ = reset;
+   }
+
+   public boolean getReset()
+   {
+      return reset_;
+   }
+
+   private boolean reset_;
+
    public ReportShortcutBindingEvent(String command)
    {
       command_ = command;

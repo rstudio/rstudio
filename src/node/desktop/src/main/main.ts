@@ -28,6 +28,7 @@ import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { parseStatus } from './program-status';
 import { recordProcessStart, startupCheckpoint } from './startup-timing';
 import { createStandaloneErrorDialog } from './utils';
+import { forwardTerminalCommand } from './terminal-launch';
 import { Xdg } from '../core/xdg';
 import {
   ElectronFlagsConfig,
@@ -223,21 +224,29 @@ function relaunchForOzonePlatform(config: ElectronFlagsConfig | undefined): Ozon
   return { relaunched: true };
 }
 
-// Startup
-const electronFlags = loadAppConfig();
-const ozoneRelaunch = relaunchForOzonePlatform(electronFlags.config);
-if (!ozoneRelaunch.relaunched) {
-  recordProcessStart();
-  startupCheckpoint('main-entry');
+// A terminal command naming a file must finish before Ozone relaunch, R
+// detection, or any Desktop windows are started. Dev builds have the app path
+// in argv[1].
+const terminalStatus = forwardTerminalCommand(process.argv.slice(app.isPackaged ? 1 : 2));
+if (terminalStatus !== undefined) {
+  app.exit(terminalStatus);
+} else {
+  // Startup
+  const electronFlags = loadAppConfig();
+  const ozoneRelaunch = relaunchForOzonePlatform(electronFlags.config);
+  if (!ozoneRelaunch.relaunched) {
+    recordProcessStart();
+    startupCheckpoint('main-entry');
 
-  // the login shell is slow to answer and the session will need its PATH, so
-  // ask before anything else (see login-shell-path.ts); likewise start asking
-  // R about itself, which takes about as long as Electron's own startup
-  startLoginShellPathQuery();
-  startRDetection();
+    // the login shell is slow to answer and the session will need its PATH, so
+    // ask before anything else (see login-shell-path.ts); likewise start asking
+    // R about itself, which takes about as long as Electron's own startup
+    startLoginShellPathQuery();
+    startRDetection();
 
-  initI18n();
+    initI18n();
 
-  const main = new RStudioMain(electronFlags, ozoneRelaunch.message);
-  void main.main();
+    const main = new RStudioMain(electronFlags, ozoneRelaunch.message);
+    void main.main();
+  }
 }
