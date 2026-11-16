@@ -144,6 +144,34 @@ elseif(RSTUDIO_ELECTRON)
 
 endif()
 
+# CPACK_RPM_PACKAGE_AUTOREQPROV is off, so require the OpenSSL libraries we
+# link by soname. A distribution that has moved to a newer OpenSSL can then
+# satisfy them from its compat package (e.g. openssl3-libs on Fedora 45).
+set(RPM_SONAME_SUFFIX "")
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+  set(RPM_SONAME_SUFFIX "()(64bit)")
+endif()
+
+foreach(OPENSSL_LIBRARY ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY})
+
+  # a static library adds no runtime dependency
+  if(OPENSSL_LIBRARY MATCHES "\\.a$")
+    continue()
+  endif()
+
+  execute_process(
+    COMMAND "${CMAKE_OBJDUMP}" -p "${OPENSSL_LIBRARY}"
+    OUTPUT_VARIABLE OPENSSL_OBJDUMP_OUTPUT
+    ERROR_QUIET)
+
+  if(OPENSSL_OBJDUMP_OUTPUT MATCHES "SONAME[ \t]+([^ \t\r\n]+)")
+    list(APPEND RSTUDIO_RPM_DEPENDS "${CMAKE_MATCH_1}${RPM_SONAME_SUFFIX}")
+  else()
+    message(WARNING "Could not read the SONAME of '${OPENSSL_LIBRARY}'; the RPM will not require it.")
+  endif()
+
+endforeach()
+
 # define package suffix
 set(RSTUDIO_PACKAGE_SUFFIX "-")
 

@@ -11,6 +11,7 @@
 - ([#19555](https://github.com/rstudio/rstudio/issues/19555)): The branch filter in the History view of the Review Changes window now has a search box, and searches in the Git branch menus now ignore case.
 
 ### Fixed
+- ([#19647](https://github.com/rstudio/rstudio/issues/19647)): Fixed an issue where RStudio Desktop installed from the RPM on Fedora 45 could not start an R session, failing with "error while loading shared libraries: libssl.so.3". The RStudio Desktop and RStudio Server RPMs now require the OpenSSL libraries they were built with, so installing them on a system that has moved to a newer OpenSSL also installs the older one (on Fedora 45, `openssl3-libs`).
 - ([#10086](https://github.com/rstudio/rstudio/issues/10086)): Fixed an issue where moving the mouse between the "Show Traceback" and "Rerun with Debug" links on a Console error made them flicker.
 - ([#19631](https://github.com/rstudio/rstudio/issues/19631)): Fixed an issue where the RStudio Desktop installer on Windows showed its Welcome page a second time after the User Account Control prompt when installing for all users.
 - ([#19624](https://github.com/rstudio/rstudio/issues/19624)): Fixed an issue where installing or updating Posit Assistant failed when the computer's hostname contained a non-ASCII character such as an accented letter. On macOS the error was "Illegal byte sequence"; on Windows with R 4.1 or earlier, it said the downloaded package declared a blank version.
