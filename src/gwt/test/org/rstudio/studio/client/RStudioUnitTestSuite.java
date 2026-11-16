@@ -77,6 +77,8 @@ import org.rstudio.studio.client.workbench.views.output.lint.model.LintItemTests
 import org.rstudio.studio.client.workbench.views.packages.ui.PackageLinkColumnTests;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorControlTests;
 import org.rstudio.studio.client.workbench.views.source.editors.text.VimrcLoaderTests;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionPopupPanelTests;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositionerTests;
 import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParserTests;
 import org.rstudio.studio.client.workbench.views.vcs.common.model.VcsStateTests;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalLocalEchoTests;
@@ -106,6 +108,8 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(KeyMapDispatchTests.class);
       suite.addTestSuite(DomUtilsTests.class);
       suite.addTestSuite(MiniPopupPanelTests.class);
+      suite.addTestSuite(PopupPositionerTests.class);
+      suite.addTestSuite(CompletionPopupPanelTests.class);
       suite.addTestSuite(ModalDialogTrackerTests.class);
       suite.addTestSuite(LayoutGridTests.class);
       suite.addTestSuite(WidgetListBoxTests.class);

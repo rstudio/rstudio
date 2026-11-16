@@ -1087,6 +1087,23 @@ public class DomUtils
       return null;
    }
 
+   /**
+    * The nearest ancestor of el, short of the page itself, that scrolls
+    * vertically (its computed overflow-y is auto or scroll), or null.
+    */
+   public static Element findScrollingAncestor(Element el)
+   {
+      final Element body = Document.get().getBody();
+      final Element root = Document.get().getDocumentElement();
+      return findParentElement(el, (Element parent) ->
+      {
+         if (parent == body || parent == root)
+            return false;
+         String overflow = getComputedStyles(parent).getOverflowY();
+         return "auto".equals(overflow) || "scroll".equals(overflow);
+      });
+   }
+
    public final static native Element elementFromPoint(int x, int y) /*-{
       return $doc.elementFromPoint(x, y);
    }-*/;

@@ -137,10 +137,13 @@ std::vector<SlotInfo> verifiedSlots(const core::FilePath& slotsDir,
  * there to give that effort something to identify them by.
  *
  * @param slotsDir The directory holding the slots.
+ * @param hostname The machine's hostname, for the directory name. Bytes other
+ *                 than ASCII letters, digits, '-' and '.' are replaced.
  * @param pStagingDir Output: the empty staging directory.
  * @return Success, or an error if the directory could not be created.
  */
 core::Error prepareStagingDir(const core::FilePath& slotsDir,
+                              const std::string& hostname,
                               core::FilePath* pStagingDir);
 
 /**
