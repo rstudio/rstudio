@@ -1005,7 +1005,7 @@ void onNAMESPACEchanged(const FilePath& packageDir)
       return;
 
    RFunction parseNamespace(".rs.parseNamespaceImports");
-   parseNamespace.addParam(NAMESPACE);
+   parseNamespace.addParam(NAMESPACE.getAbsolutePath());
 
    r::sexp::Protect protect;
    SEXP result;

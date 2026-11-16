@@ -359,7 +359,7 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
          if (bitmapFileType == kPngFormat)
          {
             return r::exec::RFunction("ragg:::agg_png")
-                  .addParam("filename", targetPath)
+                  .addParam("filename", targetPath.getAbsolutePath())
                   .addParam("width", width)
                   .addParam("height", height)
                   .addParam("res", res)
@@ -368,7 +368,7 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
          else if (bitmapFileType == kJpegFormat)
          {
             return r::exec::RFunction("ragg:::agg_jpeg")
-                  .addParam("filename", targetPath)
+                  .addParam("filename", targetPath.getAbsolutePath())
                   .addParam("width", width)
                   .addParam("height", height)
                   .addParam("res", res)
@@ -378,7 +378,7 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
          else if (bitmapFileType == kTiffFormat)
          {
             return r::exec::RFunction("ragg:::agg_tiff")
-                  .addParam("filename", targetPath)
+                  .addParam("filename", targetPath.getAbsolutePath())
                   .addParam("width", width)
                   .addParam("height", height)
                   .addParam("res", res)

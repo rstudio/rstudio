@@ -259,29 +259,66 @@ TEST(SessionRTest, PreservedSEXPMovedFromIsEmpty) {
    EXPECT_EQ(R_NilValue, constructed.get());
 }
 
-TEST(SessionRTest, FilePathParamsReachRAsUtf8) {
-   // a FilePath holds UTF-8; marked native instead, a non-ASCII path names a
-   // different file wherever the native encoding is not UTF-8 (e.g. Windows
-   // with R < 4.2), as when an uploaded zip was expanded with unzip() (#19627)
-   FilePath path("/tmp/test-\xc3\xa9");
+TEST(SessionRTest, StringsReachRMarkedUtf8) {
+   // C++ strings are UTF-8; marked native instead, non-ASCII text is misread
+   // wherever the native encoding is not UTF-8 (e.g. Windows with R < 4.2), as
+   // when an uploaded zip was expanded into a differently named folder (#19627)
+   std::string value = "/tmp/test-\xc3\xa9";
 
    std::string encoding;
-   Error error = r::exec::RFunction("base:::Encoding", path).call(&encoding);
+   Error error = r::exec::RFunction("base:::Encoding", value).call(&encoding);
    ASSERT_FALSE(error);
    EXPECT_EQ("UTF-8", encoding);
 
    encoding.clear();
    error = r::exec::RFunction("base:::Encoding")
-         .addParam("x", path)
+         .addParam("x", value)
          .call(&encoding);
    ASSERT_FALSE(error);
    EXPECT_EQ("UTF-8", encoding);
 
-   std::string roundTrip;
-   error = r::exec::RFunction("base:::identity", path).callUtf8(&roundTrip);
+   std::vector<std::string> encodings;
+   std::vector<std::string> values = { value, value };
+   error = r::exec::RFunction("base:::Encoding", values).call(&encodings);
    ASSERT_FALSE(error);
-   EXPECT_EQ(path.getAbsolutePath(), roundTrip);
+   EXPECT_EQ(std::vector<std::string>({ "UTF-8", "UTF-8" }), encodings);
 }
+
+#ifndef _WIN32
+
+TEST(SessionRTest, StringsFromRAreReadAsUtf8) {
+   // the C locale can't represent the string, so reading it as native rather
+   // than as UTF-8 would give "<U+00E9>" in place of the original bytes
+   std::string ctype;
+   Error error = r::exec::RFunction("base:::Sys.getlocale", "LC_CTYPE").call(&ctype);
+   ASSERT_FALSE(error);
+
+   BOOST_SCOPE_EXIT(&ctype)
+   {
+      r::exec::RFunction("base:::Sys.setlocale", "LC_CTYPE", ctype).call();
+   }
+   BOOST_SCOPE_EXIT_END
+
+   error = r::exec::RFunction("base:::Sys.setlocale", "LC_CTYPE", "C").call();
+   ASSERT_FALSE(error);
+
+   std::string value = "/tmp/test-\xc3\xa9";
+   r::sexp::Protect protect;
+   SEXP valueSEXP = r::sexp::createUtf8(value, &protect);
+   EXPECT_EQ(value, r::sexp::asString(valueSEXP));
+
+   std::string result;
+   error = r::exec::RFunction("base:::identity", valueSEXP).call(&result);
+   ASSERT_FALSE(error);
+   EXPECT_EQ(value, result);
+
+   std::vector<std::string> results;
+   error = r::exec::RFunction("base:::identity", valueSEXP).call(&results);
+   ASSERT_FALSE(error);
+   EXPECT_EQ(std::vector<std::string>({ value }), results);
+}
+
+#endif
 
 #ifdef _WIN32
 

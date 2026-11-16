@@ -78,7 +78,7 @@ Error restoreGlobalEnvironment(const core::FilePath& environmentFile)
    if (!environmentFile.exists())
       return Success();
 
-   return RFunction("base:::load", environmentFile).call();
+   return RFunction("base:::load", environmentFile.getAbsolutePath()).call();
 }
 
 bool hasEnvironmentData(const std::string& elementName)
@@ -162,7 +162,7 @@ Error save(const FilePath& statePath)
          // save the environment
          Error error = r::exec::RFunction(".rs.saveEnvironment",
                                           envSEXP,
-                                          dataFilePath).call();
+                                          dataFilePath.getAbsolutePath()).call();
          if (error)
             return error;
       }

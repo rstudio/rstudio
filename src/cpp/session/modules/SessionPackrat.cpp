@@ -531,7 +531,7 @@ bool getPendingActions(PackratActionType action, bool useCached,
    r::sexp::Protect protect;
    Error error = r::exec::RFunction(".rs.pendingActions", 
          packratActionName(action),
-                                    projects::projectContext().directory())
+                                    projects::projectContext().directory().getAbsolutePath())
          .call(&actions, &protect);
 
    // if an error occurs, presume that there are pending actions (i.e. don't

@@ -128,22 +128,30 @@ FunctionSymbolUsageCache& functionSymbolUsageCache()
    return instance;
 }
 
-std::string translate(SEXP charSEXP, bool asUtf8 = false)
+// C++ treats a std::string as UTF-8, so strings read from R are converted to
+// UTF-8 unless the caller asks for R's native encoding
+std::string translate(SEXP charSEXP, bool asUtf8 = true)
 {
-   if (asUtf8)
-   {
-      if (Rf_getCharCE(charSEXP) == CE_UTF8)
-         return std::string(CHAR(charSEXP), LENGTH(charSEXP));
-      else
-         return Rf_translateCharUTF8(charSEXP);
-   }
-   else
-   {
-      if (Rf_getCharCE(charSEXP) == CE_NATIVE)
-         return std::string(CHAR(charSEXP), LENGTH(charSEXP));
-      else
-         return Rf_translateChar(charSEXP);
-   }
+   // "bytes" strings have no encoding to convert from, and translating one
+   // is an R error that would longjmp through this frame
+   cetype_t encoding = Rf_getCharCE(charSEXP);
+   if (encoding == CE_BYTES || encoding == (asUtf8 ? CE_UTF8 : CE_NATIVE))
+      return std::string(CHAR(charSEXP), LENGTH(charSEXP));
+
+   // release the R_alloc() buffer a conversion makes, which would otherwise
+   // live until R next resets its allocation stack
+   const void* vmax = vmaxget();
+   std::string result = asUtf8 ? Rf_translateCharUTF8(charSEXP) : Rf_translateChar(charSEXP);
+   vmaxset(vmax);
+   return result;
+}
+
+// strings created for R are marked UTF-8, the encoding C++ strings are in.
+// marked native, R would misread non-ASCII text wherever the native encoding
+// is not UTF-8 (e.g. Windows with R < 4.2)
+SEXP mkCharUtf8(const std::string& value)
+{
+   return Rf_mkCharCE(value.c_str(), CE_UTF8);
 }
 
 std::string asStringImpl(SEXP objectSEXP, bool asUtf8)
@@ -176,9 +184,9 @@ std::string asStringImpl(SEXP objectSEXP, bool asUtf8)
 
 } // anonymous namespace
    
-std::string asString(SEXP object) 
+std::string asString(SEXP object)
 {
-   return asStringImpl(object, false);
+   return asStringImpl(object, true);
 }
 
 std::string asUtf8String(SEXP object)
@@ -189,7 +197,7 @@ std::string asUtf8String(SEXP object)
 std::string safeAsString(SEXP object, const std::string& defValue)
 {
    if (object != R_NilValue)
-      return asStringImpl(object, false);
+      return asStringImpl(object, true);
    else 
       return defValue;
 }
@@ -218,9 +226,7 @@ bool fillVectorString(SEXP object, std::vector<std::string>* pVector)
    pVector->reserve(pVector->size() + n);
    for (int i = 0; i < n; i++)
    {
-      SEXP charSEXP = STRING_ELT(object, i);
-      pVector->push_back(
-               std::string(CHAR(charSEXP), LENGTH(charSEXP)));
+      pVector->push_back(translate(STRING_ELT(object, i)));
    }
    
    return true;
@@ -234,9 +240,7 @@ bool fillSetString(SEXP object, std::set<std::string>* pSet)
    int n = Rf_length(object);
    for (int i = 0; i < n; i++)
    {
-      SEXP charSEXP = STRING_ELT(object, i);
-      pSet->insert(
-               std::string(CHAR(charSEXP), LENGTH(charSEXP)));
+      pSet->insert(translate(STRING_ELT(object, i)));
    }
    
    return true;
@@ -906,7 +910,7 @@ bool setNames(SEXP sexp, const std::vector<std::string>& names)
 
    SEXP namesSEXP = Rf_getAttrib(sexp, R_NamesSymbol);
    for (std::size_t i = 0; i < n; ++i)
-      SET_STRING_ELT(namesSEXP, i, Rf_mkChar(names[i].c_str()));
+      SET_STRING_ELT(namesSEXP, i, mkCharUtf8(names[i]));
 
    return true;
 }
@@ -1405,32 +1409,7 @@ SEXP create(const char* value, Protect* pProtect)
    return create(std::string(value), pProtect);
 }
 
-// NOTE: by default, we create strings in the _native_ encoding,
-// not as UTF-8 strings. this is primarily because in a number of
-// places we explicitly convert strings from UTF-8 to the native
-// encoding, and so those code paths rely on the 'value' parameter
-// here really being in the native encoding. we should change this
-// to CE_UTF8 in the future but that will require auditing all
-// usages of create(), of which there are many (especially through
-// e.g. the RFunction class)
 SEXP create(const std::string& value, Protect* pProtect)
-{
-   SEXP charSEXP;
-
-   int size = static_cast<int>(value.size());
-   pProtect->add(charSEXP = Rf_mkCharLenCE(value.c_str(), size, CE_NATIVE));
-   
-   SEXP valueSEXP;
-   pProtect->add(valueSEXP = Rf_allocVector(STRSXP, 1));
-   
-   SET_STRING_ELT(valueSEXP, 0, charSEXP);
-   return valueSEXP;
-}
-
-// unlike std::string, a FilePath's path is always UTF-8, so mark it as such.
-// marked native, R would misread a non-ASCII path wherever the native encoding
-// is not UTF-8 (e.g. Windows with R < 4.2) and name a different file
-SEXP create(const FilePath& value, Protect* pProtect)
 {
    return createUtf8(value, pProtect);
 }
@@ -1488,7 +1467,7 @@ SEXP create(const core::json::Object& value, Protect* pProtect)
    for (const core::json::Object::Member& member : value)
    {
       // set name
-      SET_STRING_ELT(namesSEXP, index, Rf_mkChar(member.getName().c_str()));
+      SET_STRING_ELT(namesSEXP, index, mkCharUtf8(member.getName()));
       
       // set value
       SEXP valueSEXP = create(member.getValue(), pProtect);
@@ -1514,7 +1493,7 @@ SEXP create(const std::vector<std::string>& value, Protect* pProtect)
    for (std::vector<std::string>::const_iterator 
         it = value.begin(); it != value.end(); ++it)
    {
-      SET_STRING_ELT(valueSEXP, index++, Rf_mkChar(it->c_str()));
+      SET_STRING_ELT(valueSEXP, index++, mkCharUtf8(*it));
    }
    
    return valueSEXP;
@@ -1595,7 +1574,7 @@ SEXP create(const std::map<std::string, std::vector<std::string> > &value,
    typedef std::map< std::string, std::vector<std::string> >::const_iterator iterator;
    for (iterator it = value.begin(); it != value.end(); ++it)
    {
-      SET_STRING_ELT(namesSEXP, index, Rf_mkChar(it->first.c_str()));
+      SET_STRING_ELT(namesSEXP, index, mkCharUtf8(it->first));
       SET_VECTOR_ELT(listSEXP, index, r::sexp::create(it->second, pProtect));
       ++index;
    }
@@ -1617,7 +1596,7 @@ SEXP create(const std::map<std::string, SEXP> &value,
    typedef std::map<std::string, SEXP>::const_iterator iterator;
    for (iterator it = value.begin(); it != value.end(); ++it)
    {
-      SET_STRING_ELT(namesSEXP, index, Rf_mkChar(it->first.c_str()));
+      SET_STRING_ELT(namesSEXP, index, mkCharUtf8(it->first));
       SET_VECTOR_ELT(listSEXP, index, it->second);
       ++index;
    }
@@ -1640,8 +1619,8 @@ SEXP create(const std::vector<std::pair<std::string,std::string> >& value,
          it = value.begin(); it != value.end(); ++it)
    {
       // set name and value
-      SET_STRING_ELT(namesSEXP, index, Rf_mkChar(it->first.c_str()));
-      SET_STRING_ELT(charSEXP, index,  Rf_mkChar(it->second.c_str()));
+      SET_STRING_ELT(namesSEXP, index, mkCharUtf8(it->first));
+      SET_STRING_ELT(charSEXP, index,  mkCharUtf8(it->second));
       
       // increment element index
       index++;
@@ -1664,7 +1643,7 @@ SEXP create(const std::set<std::string> &value, Protect *pProtect)
         it != value.end();
         ++it)
    {
-      SET_STRING_ELT(charSEXP, index, Rf_mkChar(it->c_str()));
+      SET_STRING_ELT(charSEXP, index, mkCharUtf8(*it));
       ++index;
    }
    
@@ -1687,7 +1666,7 @@ SEXP create(const ListBuilder& builder, Protect *pProtect)
    for (int i = 0; i < n; i++)
    {
       SET_VECTOR_ELT(resultSEXP, i, objects[i] == nullptr ? R_NilValue : objects[i]);
-      SET_STRING_ELT(namesSEXP, i, Rf_mkChar(names[i].c_str()));
+      SET_STRING_ELT(namesSEXP, i, mkCharUtf8(names[i]));
    }
 
    // NOTE: empty lists are intentionally left unnamed
@@ -1711,8 +1690,8 @@ SEXP create(const std::map<std::string, std::string>& map, Protect* pProtect)
         it != map.end();
         ++it, ++i)
    {
-      SET_STRING_ELT(namesSEXP, i, Rf_mkChar(it->first.c_str()));
-      SET_STRING_ELT(listSEXP, i, Rf_mkChar(it->second.c_str()));
+      SET_STRING_ELT(namesSEXP, i, mkCharUtf8(it->first));
+      SET_STRING_ELT(listSEXP, i, mkCharUtf8(it->second));
    }
    
    Rf_setAttrib(listSEXP, R_NamesSymbol, namesSEXP);
@@ -1769,7 +1748,7 @@ SEXP createList(const std::vector<std::string>& names, Protect* pProtect)
    SEXP namesSEXP;
    pProtect->add(namesSEXP = Rf_allocVector(STRSXP, n));
    for (std::size_t i = 0; i < n; ++i)
-      SET_STRING_ELT(namesSEXP, i, Rf_mkChar(names[i].c_str()));
+      SET_STRING_ELT(namesSEXP, i, mkCharUtf8(names[i]));
 
    Rf_setAttrib(listSEXP, R_NamesSymbol, namesSEXP);
 

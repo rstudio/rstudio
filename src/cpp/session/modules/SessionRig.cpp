@@ -218,7 +218,7 @@ private:
       // LaunchAgent that sets RSTUDIO_WHICH_R); what the install adds or
       // changes is put back when the job finishes (#19229)
       std::vector<std::string> notes;
-      Error beginError = r::exec::RFunction(".rs.rig.userInstallBegin", rigPath, installSnapshotPath())
+      Error beginError = r::exec::RFunction(".rs.rig.userInstallBegin", rigPath, installSnapshotPath().getAbsolutePath())
             .addParam("directory", rigDirectory)
             .call(&notes);
       logNotes(notes);
@@ -373,7 +373,7 @@ void onShutdown(bool)
 void onDeferredInit(bool)
 {
    std::vector<std::string> notes;
-   Error error = r::exec::RFunction(".rs.rig.userInstallRecover", installSnapshotPath()).call(&notes);
+   Error error = r::exec::RFunction(".rs.rig.userInstallRecover", installSnapshotPath().getAbsolutePath()).call(&notes);
    if (error)
       LOG_ERROR(error);
 

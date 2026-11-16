@@ -168,32 +168,6 @@ test_that("lazy modules can retry after a failed load", {
    expect_true(.rs.startupTest.retry())
 })
 
-test_that("lazy modules load from a non-ASCII path when the native encoding is not UTF-8", {
-   # the C locale stands in for a native encoding that isn't UTF-8 (Windows
-   # with R < 4.2); SourceManager::source() still hands R the path as native,
-   # which only POSIX passes through to the file system unchanged
-   skip_on_os("windows")
-
-   dir <- file.path(tempdir(), "lazy-modules-é")
-   path <- file.path(dir, "module.R")
-   dir.create(dir)
-   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
-   on.exit(rm(".rs.startupTest.nonAscii", envir = .rs.toolsEnv()), add = TRUE)
-
-   writeLines('.rs.addFunction("startupTest.nonAscii", function() TRUE)', path)
-   .rs.addLazyModule(path)
-
-   # the C locale can't represent the path, so reading it back as native
-   # rather than as UTF-8 would name a file that doesn't exist
-   ctype <- Sys.getlocale("LC_CTYPE")
-   Sys.setlocale("LC_CTYPE", "C")
-   on.exit(Sys.setlocale("LC_CTYPE", ctype), add = TRUE, after = FALSE)
-
-   # expect_no_error(), since run-tests.R counts only failed expectations
-   expect_no_error(value <- .rs.startupTest.nonAscii())
-   expect_true(value)
-})
-
 test_that("SQL helpers remain available through lazy loading", {
    expect_true(".rs.rpc.sql_get_completions" %in% .rs.listJsonRpcHandlers())
    expect_true(.rs.sql.isTableScopedKeyword("from"))
