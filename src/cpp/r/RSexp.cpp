@@ -154,6 +154,17 @@ SEXP mkCharUtf8(const std::string& value)
    return Rf_mkCharCE(value.c_str(), CE_UTF8);
 }
 
+// names read from R arrive in C++ as UTF-8 (see translate()), but a symbol's
+// name is native; Rf_install() would take the UTF-8 bytes as native and, where
+// native is not UTF-8, name a different symbol than the one R bound
+SEXP installUtf8(const std::string& name)
+{
+   Protect protect;
+   SEXP charSEXP;
+   protect.add(charSEXP = mkCharUtf8(name));
+   return Rf_installTrChar(charSEXP);
+}
+
 std::string asStringImpl(SEXP objectSEXP, bool asUtf8)
 {
    switch (TYPEOF(objectSEXP))
@@ -472,7 +483,7 @@ SEXP findBindingFrame(SEXP sym, SEXP env)
 
 BindingType getBindingType(const std::string& name, SEXP env)
 {
-   SEXP sym = Rf_install(name.c_str());
+   SEXP sym = installUtf8(name);
    int bt = runtime::getBindingType(sym, env);
 
    // .Last.value lives in baseenv (SET_SYMVALUE on R_LastvalueSymbol), not
@@ -507,7 +518,7 @@ BindingType getBindingType(const std::string& name, SEXP env)
 
 SEXP getBindingIdentity(const std::string& name, SEXP env, BindingType type)
 {
-   SEXP sym = Rf_install(name.c_str());
+   SEXP sym = installUtf8(name);
 
    switch (type)
    {
@@ -588,7 +599,7 @@ bool hasActiveBindingImpl(const std::string& name,
    // iterate over items and search for active bindings
    for (int i = 0, n = Rf_length(bindingsSEXP); i < n; ++i)
    {
-      const char* binding = CHAR(STRING_ELT(bindingsSEXP, i));
+      std::string binding = translate(STRING_ELT(bindingsSEXP, i));
       if (hasActiveBindingImpl(binding, varSEXP, pVisitedObjects))
          return true;
    }
@@ -628,7 +639,7 @@ bool isActiveBinding(SEXP nameSEXP, SEXP envSEXP)
 
 bool isActiveBinding(const std::string& name, SEXP envSEXP)
 {
-   SEXP nameSEXP = Rf_install(name.c_str());
+   SEXP nameSEXP = installUtf8(name);
    return isActiveBinding(nameSEXP, envSEXP);
 }
 
@@ -661,7 +672,7 @@ SEXP findVar(SEXP nameSEXP, SEXP envSEXP)
 
 SEXP findVar(const std::string& name, SEXP envSEXP)
 {
-   SEXP nameSEXP = Rf_install(name.c_str());
+   SEXP nameSEXP = installUtf8(name);
    return findVar(nameSEXP, envSEXP);
 }
 
@@ -701,7 +712,7 @@ SEXP findFunction(const std::string& name, const std::string& ns)
    // to the console. To avoid this,
    // we instead attempt to find the function by manually
    // walking through the environment (and its enclosing environments)
-   SEXP nameSEXP = Rf_install(name.c_str());
+   SEXP nameSEXP = installUtf8(name);
    
    // Search through frames until we find the global environment.
    while (env != R_EmptyEnv)
