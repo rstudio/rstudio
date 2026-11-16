@@ -227,8 +227,8 @@ public class DirectoryContentsWidget extends Composite
     */
    public FileSystemItem getSelectedTarget()
    {
-      FileSystemItem item = getSelectedItem();
-      return item == null ? null : resolveItem(item);
+      FileSystemItem row = table_.getSelectedItem();
+      return row == null ? null : resolveItem(row);
    }
 
    public void showProgress(boolean show)
