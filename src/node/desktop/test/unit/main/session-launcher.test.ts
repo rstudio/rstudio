@@ -309,26 +309,41 @@ describe('SessionLauncher', () => {
       assert.equal(launcher.rPath, '/opt/R/4.3.3/bin/R');
     });
 
-    it('goes back to the R in use before a switch whose session failed, without storing either', () => {
+    it('goes back to the R in use before a switch whose session failed, without storing either', async () => {
       const prepare = sinon.stub(DetectR, 'prepareEnvironment').returns(null);
       const { launcher, gwtCallback, store } = launcherWithPendingR('/opt/R/4.4.1/bin/R');
       const relaunch = sinon.stub(launcher, 'launchNextSession').resolves(null);
       sinon.stub(RChoice, 'savedRChoice').returns(null);
+      sinon.stub(DetectR, 'defaultR').resolves('/usr/local/bin/R');
 
       launcher.applyPendingRVersion();
       launcher.restartWithPreviousR();
+      await new Promise((resolve) => setImmediate(resolve));
 
       assert.isTrue(prepare.secondCall.calledWithExactly('/opt/R/4.3.3/bin/R'));
       assert.isTrue(relaunch.calledOnceWithExactly(true));
       assert.equal(launcher.rPath, '/opt/R/4.3.3/bin/R');
 
-      // with nothing chosen, the R that failed may have been the default R
-      // chosen in Global Options, so the R in use before is kept instead
-      assert.isTrue(store.calledOnceWithExactly('/opt/R/4.3.3/bin/R'));
+      // RStudio follows the default R, which wasn't the one that failed
+      assert.isFalse(store.called);
 
       // the session that now starts is not the one switched to
       gwtCallback.emit(GwtCallback.WORKBENCH_INITIALIZED);
-      assert.isFalse(store.calledWith('/opt/R/4.4.1/bin/R'));
+      assert.isFalse(store.called);
+    });
+
+    it('keeps the R in use before when the default R chosen in Global Options failed', async () => {
+      sinon.stub(DetectR, 'prepareEnvironment').returns(null);
+      const { launcher, store } = launcherWithPendingR('/opt/R/4.4.1/bin/R');
+      sinon.stub(launcher, 'launchNextSession').resolves(null);
+      sinon.stub(RChoice, 'savedRChoice').returns(null);
+      sinon.stub(DetectR, 'defaultR').resolves('/opt/R/4.4.1/bin/R');
+
+      launcher.applyPendingRVersion();
+      launcher.restartWithPreviousR();
+      await new Promise((resolve) => setImmediate(resolve));
+
+      assert.isTrue(store.calledOnceWithExactly('/opt/R/4.3.3/bin/R'));
     });
 
     it('puts back the R in use before, when the R that failed was already kept', () => {

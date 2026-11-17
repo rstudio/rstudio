@@ -174,6 +174,15 @@ public class RVersionSwitcher
                               Command onReady,
                               CommandWithArg<String> onFailed)
    {
+      makeOrthogonal(installed, onReady, onFailed, () -> {});
+   }
+
+   /** As above, running `onDeclined` when the user declines the update. */
+   public void makeOrthogonal(RVersionInstall installed,
+                              Command onReady,
+                              CommandWithArg<String> onFailed,
+                              Command onDeclined)
+   {
       if (installed.orthogonal)
       {
          onReady.execute();
@@ -184,6 +193,7 @@ public class RVersionSwitcher
             GlobalDisplay.MSG_QUESTION,
             constants_.updateRCaption(),
             constants_.updateRMessage(installed.version),
+            false,
             () ->
             {
                Desktop.getFrame().makeROrthogonal(installed.home, error ->
@@ -200,6 +210,7 @@ public class RVersionSwitcher
                   }
                });
             },
+            () -> onDeclined.execute(),
             true);
    }
 

@@ -36,7 +36,7 @@ import { GwtCallback, PendingQuit } from './gwt-callback';
 import LogOptions from './log-options';
 import { closeAllSatellites, MainWindow } from './main-window';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
-import { prepareEnvironment, storeRChoice, UnusableRChoice } from './detect-r';
+import { defaultR, prepareEnvironment, storeRChoice, UnusableRChoice } from './detect-r';
 import { sameRExecutable, savedRChoice } from './r-choice';
 import { EXIT_FAILURE } from './program-status';
 import { waitForUrlWithTimeout } from './url-utils';
@@ -625,15 +625,17 @@ export class SessionLauncher {
           logger().logError(error);
         })
         .finally(() => {
-          // a session that has exited left the launch error page up, and a
-          // later launch (going back to the previous R after this session
-          // failed, say) supersedes this one; either keeps the window
-          const exited = launched.exitCode !== null || launched.signalCode !== null;
-          if (exited || this.sessionProcess !== launched) {
-            return;
-          }
-          this.nextSessionUrl = launchContext.url;
-          setImmediate(this.onReloadFrameForNextSession.bind(this));
+          setImmediate(() => {
+            // a session that has exited left the launch error page up, and a
+            // later launch (going back to the previous R after this session
+            // failed, say) supersedes this one; either keeps the window
+            const exited = launched.exitCode !== null || launched.signalCode !== null;
+            if (exited || this.sessionProcess !== launched) {
+              return;
+            }
+            this.nextSessionUrl = launchContext.url;
+            this.onReloadFrameForNextSession();
+          });
         });
     }
 
@@ -700,14 +702,9 @@ export class SessionLauncher {
       return;
     }
 
-    // with nothing chosen, the R that failed may be the default R (chosen as
-    // such in Global Options); a choice made since, of yet another R, is
-    // left alone
-    const failedR = this.rPath;
-    const saved = savedRChoice();
-    if (saved === null || sameRExecutable(saved.path, failedR)) {
-      storeRChoice(rPath).catch((storeError: unknown) => logger().logError(safeError(storeError)));
-    }
+    this.forgetFailedChoice(this.rPath, rPath).catch((storeError: unknown) =>
+      logger().logError(safeError(storeError)),
+    );
 
     this.rBeforeSwitch = '';
     this.switchedRToStore = '';
@@ -721,6 +718,27 @@ export class SessionLauncher {
         }
       })
       .catch((launchError: unknown) => logger().logError(safeError(launchError)));
+  }
+
+  /**
+   * Keep the R gone back to rather than the R that failed, when the failed R
+   * is what RStudio would otherwise start with next: the R chosen (in Global
+   * Options, before the switch), or the default R with nothing chosen. Any
+   * other choice was made apart from the switch, and is left alone.
+   */
+  private async forgetFailedChoice(failedR: string, previousR: string): Promise<void> {
+    const saved = savedRChoice();
+    if (saved !== null) {
+      if (sameRExecutable(saved.path, failedR)) {
+        await storeRChoice(previousR);
+      }
+      return;
+    }
+
+    const defaultPath = await defaultR();
+    if (sameRExecutable(failedR, defaultPath) && savedRChoice() === null) {
+      await storeRChoice(previousR);
+    }
   }
 
   /**

@@ -59,6 +59,7 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
@@ -600,7 +601,15 @@ public class GeneralPreferencesPane extends PreferencesPane
       // this one, which is then neither reported nor offered
       int request = ++rVersionApplyRequests_;
 
+      // a choice that wasn't kept (declined, or failed) is still the one
+      // shown, and applying again tries it again
       String caption = renvConstants_.chooseRVersionCaption();
+      Command keepPending = () ->
+      {
+         if (request == rVersionApplyRequests_ && rVersionChoice_ == choice)
+            rVersionChanged_ = true;
+      };
+
       rVersionSwitcher_.makeOrthogonal(
             choice.installation,
             () -> Desktop.getFrame().setDefaultRVersion(choice.installation.binary, error ->
@@ -609,11 +618,21 @@ public class GeneralPreferencesPane extends PreferencesPane
                   return;
 
                if (!StringUtil.isNullOrEmpty(error))
+               {
+                  keepPending.execute();
                   globalDisplay_.showErrorMessage(caption, error);
+               }
                else if (!choice.installation.current)
+               {
                   rVersionSwitcher_.offerRestartWith(choice);
+               }
             }),
-            error -> globalDisplay_.showErrorMessage(caption, error));
+            error ->
+            {
+               keepPending.execute();
+               globalDisplay_.showErrorMessage(caption, error);
+            },
+            keepPending);
    }
 
    @Override

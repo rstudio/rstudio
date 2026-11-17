@@ -26,7 +26,7 @@ import {
   nativeImage,
   webContents,
 } from 'electron';
-import { existsSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'fs';
 import os from 'os';
 import path from 'path';
 import { pathToFileURL } from 'url';
@@ -41,6 +41,21 @@ import * as DetectR from '../../../src/main/detect-r';
 import * as RChoice from '../../../src/main/r-choice';
 import { MainWindow } from '../../../src/main/main-window';
 import desktop from '../../../src/native/desktop.node';
+
+// A stand-in R executable that exists on disk (querying it is stubbed). On
+// Windows the path must name bin\<arch>\Rterm.exe, or it is rewritten to one
+// (see fixWindowsRExecutablePath) that doesn't exist.
+function standInRExecutable(): string {
+  if (process.platform !== 'win32') {
+    return process.execPath;
+  }
+
+  const dir = mkdtempSync(path.join(os.tmpdir(), 'stand-in-r-'));
+  const executable = path.join(dir, 'bin', 'x64', 'Rterm.exe');
+  mkdirSync(path.dirname(executable), { recursive: true });
+  writeFileSync(executable, '');
+  return executable;
+}
 
 function fakeBrowserWindow(state?: { visible?: boolean; minimized?: boolean; destroyed?: boolean }) {
   return {
@@ -89,7 +104,7 @@ describe('DesktopCallback', () => {
 
   describe('setPendingRVersion', () => {
     // a stand-in R that exists on disk; querying it is stubbed
-    const rPath = process.execPath;
+    const rPath = standInRExecutable();
 
     afterEach(() => {
       callback.collectPendingRVersion();
@@ -148,7 +163,7 @@ describe('DesktopCallback', () => {
 
   describe('setDefaultRVersion', () => {
     // a stand-in R that exists on disk; querying it is stubbed
-    const rPath = process.execPath;
+    const rPath = standInRExecutable();
 
     it('stores an R that runs as the one RStudio uses', async () => {
       sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{} as never, null]);
