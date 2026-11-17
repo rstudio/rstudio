@@ -197,6 +197,32 @@ export function rExecutableProblem(rPath: string): string | null {
   return null;
 }
 
+/**
+ * What stops an R that answered RStudio's query from hosting a session on
+ * macOS: the session is launched with R's shared library, which an R built
+ * without one lacks (and looking for it then fails the launch outright,
+ * before the launch error page can offer a way back). The message is for
+ * the user; null when nothing does.
+ */
+export function rSharedLibraryProblem(
+  rPath: string,
+  environment: REnvironment,
+  platform = process.platform,
+): string | null {
+  const home = environment.envVars['R_HOME'];
+  if (platform !== 'darwin' || !home) {
+    return null;
+  }
+
+  const library = join(home, 'lib', 'libR.dylib');
+  if (existsSync(library)) {
+    return null;
+  }
+
+  const interpolation = { escapeValue: false };
+  return t('gwtCallbackTs.rSharedLibraryMissing', { path: rPath, library, interpolation }) || rPath;
+}
+
 /** An R chosen in RStudio that startup could not use, and why. */
 export interface UnusableRChoice {
   path: string;
@@ -219,14 +245,18 @@ export function chosenRForStartup(platform = process.platform): { path?: string;
 
   let reason = rExecutableProblem(choice.path);
   if (reason === null) {
-    const [, error] = detectREnvironment(choice.path);
-    if (!error) {
-      logger().logDebug(`Using R chosen in RStudio: ${choice.path}`);
-      return { path: choice.path };
+    const [environment, error] = detectREnvironment(choice.path);
+    if (error) {
+      const interpolation = { escapeValue: false };
+      reason = t('gwtCallbackTs.rExecutableFailed', { path: choice.path, error: error.message, interpolation });
+    } else {
+      reason = rSharedLibraryProblem(choice.path, environment);
     }
+  }
 
-    const interpolation = { escapeValue: false };
-    reason = t('gwtCallbackTs.rExecutableFailed', { path: choice.path, error: error.message, interpolation });
+  if (reason === null) {
+    logger().logDebug(`Using R chosen in RStudio: ${choice.path}`);
+    return { path: choice.path };
   }
 
   logger().logWarning(`The R chosen in RStudio cannot be used; using the default R instead: ${reason}`);

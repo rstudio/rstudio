@@ -222,6 +222,28 @@ describe('SessionLauncher', () => {
         assert.deepEqual(loaded, []);
       });
 
+      it('keeps the launch error page when the session exits just before its page loads', async () => {
+        const { launcher, loaded, processes, answerWait } = setup();
+
+        // the load is deferred, and the session exits once it is scheduled
+        const deferred: Array<() => void> = [];
+        sinon.stub(global, 'setImmediate').callsFake(((callback: () => void) => {
+          deferred.push(callback);
+          return {} as NodeJS.Immediate;
+        }) as unknown as typeof setImmediate);
+
+        await launcher.launchNextSession(true);
+        answerWait[0]();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        assert.lengthOf(deferred, 1);
+
+        processes[0].exitCode = 1;
+        deferred[0]();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        assert.deepEqual(loaded, []);
+      });
+
       it('loads only the page of a later launch that replaced it', async () => {
         const { launcher, loaded, answerWait } = setup();
 

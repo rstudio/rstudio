@@ -1,6 +1,12 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { YES_BTN } from '@pages/modals.page';
-import { GENERAL_TAB, OPTIONS_OK, openGlobalOptions } from '@pages/global_options.page';
+import { NO_BTN, YES_BTN } from '@pages/modals.page';
+import {
+  GENERAL_TAB,
+  OPTIONS_APPLY,
+  OPTIONS_OK,
+  closeGlobalOptions,
+  openGlobalOptions,
+} from '@pages/global_options.page';
 import { executeCommand, getVersion } from '@utils/commands';
 import { waitForSessionRestart } from '@utils/project';
 import { installedRVersions, isEmulated, isOrthogonal, majorMinor, compareVersions } from '@utils/r-installations';
@@ -125,6 +131,37 @@ test.describe('switching the version of R', { tag: ['@desktop_only'] }, () => {
     const choice = await rChoice(page);
     expect(choice.current.version).toBe(target!.version);
     expect(choice.chosen.version).toBe(target!.version);
+  });
+
+  // Declining the update leaves the installation as it was (nothing on the
+  // machine changes), and the choice pending in the dialog.
+  test('Global Options asks again after the update a chosen R needs is declined', async ({ rstudioPage: page }) => {
+    test.setTimeout(120000);
+
+    const current = (await getVersion(page)).r;
+    const target = installedRVersions()
+      .filter((entry) => majorMinor(entry.version) !== majorMinor(current))
+      .filter((entry) => !isOrthogonal(entry.binary) && !isEmulated(entry.binary))
+      .sort((a, b) => compareVersions(b.version, a.version))[0];
+    test.skip(!target, "needs a second macOS framework version of R that isn't orthogonal");
+
+    await openGlobalOptions(page);
+    await page.locator(GENERAL_TAB).click();
+    await page.locator(R_VERSION_CHANGE).click();
+    await chooseR(page, `R ${target!.version} (`, 'OK');
+
+    const updatePrompt = page.getByText('This changes the installation for all users of this Mac', { exact: false });
+    for (let attempt = 0; attempt < 2; attempt++) {
+      await page.locator(OPTIONS_APPLY).click();
+      await expect(updatePrompt).toBeVisible({ timeout: 30000 });
+      await page.locator(NO_BTN).click();
+      await expect(updatePrompt).toBeHidden();
+    }
+
+    // nothing was kept, and the session keeps its R
+    expect((await rChoice(page)).chosen.path).toBe('');
+    await closeGlobalOptions(page);
+    expect((await getVersion(page)).r).toBe(current);
   });
 
   test('Session > Switch R Version switches R, and back to the default R', async ({ rstudioPage: page }) => {

@@ -44,7 +44,14 @@ import desktop from '../native/desktop.node';
 import { setDefaultApplicationForRFiles } from './default-file-handler';
 import { appState } from './app-state';
 import { clipboardWritesSettled, queueClipboardWrite, readClipboardText, readClipboardType } from './clipboard-queue';
-import { defaultR, detectREnvironmentAsync, kRQueryTimeoutMs, rExecutableProblem, storeRChoice } from './detect-r';
+import {
+  defaultR,
+  detectREnvironmentAsync,
+  kRQueryTimeoutMs,
+  rExecutableProblem,
+  rSharedLibraryProblem,
+  storeRChoice,
+} from './detect-r';
 import { rChoiceApplies, savedRChoice } from './r-choice';
 import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
@@ -110,12 +117,17 @@ async function checkRExecutable(rPath: string): Promise<string> {
       return problem;
     }
 
-    const [, error] = await detectREnvironmentAsync(rPath, kPendingRVersionTimeoutMs);
+    const [environment, error] = await detectREnvironmentAsync(rPath, kPendingRVersionTimeoutMs);
     if (error) {
       logger().logError(error);
       return (
         i18next.t('gwtCallbackTs.rExecutableFailed', { path: rPath, error: error.message, interpolation }) || rPath
       );
+    }
+
+    const libraryProblem = rSharedLibraryProblem(rPath, environment);
+    if (libraryProblem) {
+      return libraryProblem;
     }
   } catch (error: unknown) {
     logger().logError(error);

@@ -127,6 +127,7 @@
     "rExecutableNotPrepared": "R at {{path}} has not been checked for this restart.",
     "rExecutableFailed": "{{path}} could not be run: {{error}}",
     "rExecutableNotOrthogonal": "{{path}} is set up to run the default version of R rather than itself",
+    "rSharedLibraryMissing": "{{path}} has no shared R library ({{library}}), which RStudio needs to run R",
     "rUpdatePrompt": "RStudio wants to update R {{version}} so it can run alongside other versions of R.",
     "rUpdateCancelled": "the update of R was cancelled",
     "rUpdateFailed": "unable to update {{path}}: {{error}}"

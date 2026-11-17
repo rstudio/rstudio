@@ -527,9 +527,16 @@ describe('DetectR with an R chosen in RStudio', () => {
   let dir = '';
 
   // a stand-in R that answers the version query the way R would (\036 is
-  // the marker, \037 the field separator)
-  function writeFakeR(version: string): string {
-    const fields = [version, `/opt/fake-r-${version}`, '', '', '', '', '', '', 'aarch64-fake'];
+  // the marker, \037 the field separator), with an R home holding the
+  // shared library unless asked otherwise
+  function writeFakeR(version: string, sharedLibrary = true): string {
+    const home = join(dir, `home-${version}`);
+    mkdirSync(join(home, 'lib'), { recursive: true });
+    if (sharedLibrary) {
+      writeFileSync(join(home, 'lib', 'libR.dylib'), '');
+    }
+
+    const fields = [version, home, '', '', '', '', '', '', 'aarch64-fake'];
     const fakeR = join(dir, 'R');
     writeFileSync(fakeR, `#!/bin/sh\nprintf '\\036${fields.join('\\037')}\\037'\n`, { mode: 0o755 });
     return fakeR;
@@ -591,6 +598,21 @@ describe('DetectR with an R chosen in RStudio', () => {
     assert.isUndefined(chosen.path);
     assert.equal(chosen.unusable?.path, missing);
     assert.include(chosen.unusable?.reason, 'does not exist');
+    assert.isTrue(options.setRExecutablePath.calledOnceWithExactly(''));
+  });
+
+  it('forgets a chosen R without the shared library a session needs on macOS', function () {
+    if (process.platform !== 'darwin') {
+      this.skip();
+    }
+
+    const fakeR = writeFakeR('4.4.1', false);
+    const options = fakeROptions({ path: fakeR, rstudioWhichR: launchRStudioWhichR() });
+
+    const chosen = chosenRForStartup();
+
+    assert.isUndefined(chosen.path);
+    assert.include(chosen.unusable?.reason, 'libR.dylib');
     assert.isTrue(options.setRExecutablePath.calledOnceWithExactly(''));
   });
 
