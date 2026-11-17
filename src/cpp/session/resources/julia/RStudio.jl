@@ -201,7 +201,7 @@ function completions(line::AbstractString)
 
       # newer Julia versions keep a backslash completion's text in a field
       # that completion_text doesn't read
-      text =hasfield(typeof(result), :completion) ? result.completion : C.completion_text(result)
+      text = hasfield(typeof(result), :completion) ? result.completion : C.completion_text(result)
       push!(names, text)
       push!(kinds, completion_kind(result))
       push!(sources, completion_source(result))

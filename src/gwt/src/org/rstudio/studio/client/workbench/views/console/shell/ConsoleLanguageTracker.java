@@ -169,6 +169,11 @@ public class ConsoleLanguageTracker
       adaptToLanguage(language, null);
    }
 
+   public String getLanguage()
+   {
+      return language_;
+   }
+
    // Console input that moves the console from language 'from' to 'to': the
    // same input the session enqueues in adaptToLanguage()
    // (languageSwitchInput() in SessionConsoleInput.cpp). The REPLs aren't

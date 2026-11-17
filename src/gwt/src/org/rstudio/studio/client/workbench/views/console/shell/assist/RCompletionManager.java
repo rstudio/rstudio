@@ -46,6 +46,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.console.shell.ConsoleLanguageTracker;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.CompletionResult;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
@@ -83,6 +84,7 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class RCompletionManager implements CompletionManager
 {  
@@ -117,10 +119,10 @@ public class RCompletionManager implements CompletionManager
          @Override
          protected boolean isEnabled(Position position)
          {
-            return DocumentMode.isPositionInRMode(docDisplay_, position);
+            return isConsoleInR() && DocumentMode.isPositionInRMode(docDisplay_, position);
          }
       };
-      
+
       suggestTimer_ = new SuggestionTimer(this, userPrefs_);
       snippets_ = new SnippetHelper((AceEditor) docDisplay, getSourceDocumentPath());
       requester_ = new CompletionRequester(rContext, rnwContext, docDisplay, snippets_);
@@ -205,7 +207,8 @@ public class RCompletionManager implements CompletionManager
                           HelpStrategy helpStrategy,
                           UserPrefs uiPrefs,
                           Assistant assistant,
-                          ApplicationAutomation automation)
+                          ApplicationAutomation automation,
+                          Provider<ConsoleLanguageTracker> languageTracker)
    {
       globalDisplay_ = globalDisplay;
       fileTypeRegistry_ = fileTypeRegistry;
@@ -214,6 +217,7 @@ public class RCompletionManager implements CompletionManager
       userPrefs_ = uiPrefs;
       assistant_ = assistant;
       automation_ = automation;
+      languageTracker_ = languageTracker;
    }
    
    public void attach()
@@ -871,11 +875,14 @@ public class RCompletionManager implements CompletionManager
                
                if (token.matches("^(library|require|requireNamespace|data)\\s*$"))
                   canAutoPopup = true;
-               
-               Scheduler.get().scheduleDeferred(() -> 
+
+               if (isConsoleInR())
                {
-                  sigTipManager_.resolveActiveFunctionAndDisplayToolTip();
-               });
+                  Scheduler.get().scheduleDeferred(() ->
+                  {
+                     sigTipManager_.resolveActiveFunctionAndDisplayToolTip();
+                  });
+               }
             }
          }
          
@@ -922,6 +929,18 @@ public class RCompletionManager implements CompletionManager
             input_.getSelection().getStart().getPosition());
 
       return c != ' ' || linePart.matches(".*,\\s*");
+   }
+
+   // At another language's console prompt, R's signatures would be the wrong
+   // ones; that language's are shown with its completions, by help handler.
+   private boolean isConsoleInR()
+   {
+      if (behavior_ != EditorBehavior.AceBehaviorConsole)
+         return true;
+
+      return StringUtil.equals(
+         languageTracker_.get().getLanguage(),
+         ConsoleLanguageTracker.LANGUAGE_R);
    }
 
    private static boolean canContinueCompletions(NativeEvent event)
@@ -2318,6 +2337,7 @@ public class RCompletionManager implements CompletionManager
    private UserPrefs userPrefs_;
    private Assistant assistant_;
    private ApplicationAutomation automation_;
+   private Provider<ConsoleLanguageTracker> languageTracker_;
 
    private final CodeToolsServerOperations server_;
    private final InputEditorDisplay input_;

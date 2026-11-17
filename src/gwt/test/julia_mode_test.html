@@ -43,7 +43,8 @@
     else
     {
       failed++;
-      failures.push(description);
+      // the headless runner reports the lines marked [FAIL]
+      failures.push("[FAIL] " + description);
     }
   }
 
