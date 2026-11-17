@@ -285,8 +285,8 @@ Error initializeProjectFromTemplate(const FilePath& projectFilePath,
    FilePath projectPath = projectFilePath.getParent();
 
    return r::exec::RFunction(".rs.initializeProjectFromTemplate")
-         .addParam(string_utils::utf8ToSystem(projectFilePath.getAbsolutePath()))
-         .addParam(string_utils::utf8ToSystem(projectPath.getAbsolutePath()))
+         .addParam(projectFilePath.getAbsolutePath())
+         .addParam(projectPath.getAbsolutePath())
          .addParam(descriptionJson)
          .addParam(inputsJson)
          .call();
@@ -320,8 +320,8 @@ Error addFirstRunDocsForTemplate(const FilePath& projectFilePath,
       return Success();
 
    return r::exec::RFunction(".rs.addFirstRunDocumentsForTemplate")
-         .addParam(string_utils::utf8ToSystem(projectFilePath.getAbsolutePath()))
-         .addParam(string_utils::utf8ToSystem(projectFilePath.getParent().getAbsolutePath()))
+         .addParam(projectFilePath.getAbsolutePath())
+         .addParam(projectFilePath.getParent().getAbsolutePath())
          .addParam(openFiles)
          .call();
 }

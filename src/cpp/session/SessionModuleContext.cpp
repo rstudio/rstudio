@@ -2355,8 +2355,7 @@ std::string libPathsString()
       return std::string();
    }
 
-   // this is presumably system-encoded, so convert this to utf8 before return
-   return string_utils::systemToUtf8(libPaths);
+   return libPaths;
 }
 
 Error sourceModuleRFile(const std::string& rSourceFile)
@@ -3022,7 +3021,7 @@ FilePath sourceDiagnostics()
          options().coreRSourcePath().completeChildPath("Diagnostics.R");
 
    Error error = r::exec::RFunction("source")
-         .addParam(string_utils::utf8ToSystem(diagnosticsPath.getAbsolutePath()))
+         .addParam(diagnosticsPath.getAbsolutePath())
          .addParam("chdir", true)
          .call();
 
@@ -3162,10 +3161,9 @@ shell_utils::ShellCommand RCommand::buildRCmd(const core::FilePath& rBinDir)
 core::Error recursiveCopyDirectory(const core::FilePath& fromDir,
                                    const core::FilePath& toDir)
 {
-   using namespace string_utils;
    r::exec::RFunction fileCopy("file.copy");
-   fileCopy.addParam("from", utf8ToSystem(fromDir.getAbsolutePath()));
-   fileCopy.addParam("to", utf8ToSystem(toDir.getAbsolutePath()));
+   fileCopy.addParam("from", fromDir.getAbsolutePath());
+   fileCopy.addParam("to", toDir.getAbsolutePath());
    fileCopy.addParam("recursive", true);
    return fileCopy.call();
 }
@@ -3350,10 +3348,10 @@ Error createSelfContainedHtml(const FilePath& sourceFilePath,
                               const FilePath& targetFilePath)
 {
    r::exec::RFunction func(".rs.pandocSelfContainedHtml");
-   func.addParam(string_utils::utf8ToSystem(sourceFilePath.getAbsolutePath()));
-   func.addParam(string_utils::utf8ToSystem(
-      session::options().rResourcesPath().completePath("pandoc_template.html").getAbsolutePath()));
-   func.addParam(string_utils::utf8ToSystem(targetFilePath.getAbsolutePath()));
+   func.addParam(sourceFilePath.getAbsolutePath());
+   func.addParam(
+      session::options().rResourcesPath().completePath("pandoc_template.html").getAbsolutePath());
+   func.addParam(targetFilePath.getAbsolutePath());
    return func.call();
 }
 

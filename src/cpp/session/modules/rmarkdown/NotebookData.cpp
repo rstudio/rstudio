@@ -93,7 +93,7 @@ core::Error DataCapture::connectDataCapture(
               const json::Object& chunkOptions)
 {
    return r::exec::RFunction(".rs.initDataCapture",
-         string_utils::utf8ToSystem(outputFolder.getAbsolutePath()),
+         outputFolder.getAbsolutePath(),
          chunkOptions).call();
 }
 

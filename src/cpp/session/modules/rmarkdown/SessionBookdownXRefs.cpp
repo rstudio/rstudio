@@ -58,7 +58,7 @@ bool isBookdownRmd(const FileInfo& fileInfo)
 std::vector<std::string> bookdownSourceFiles()
 {
    std::vector<std::string> files;
-   std::string inputDir = string_utils::utf8ToSystem(projects::projectContext().buildTargetPath().getAbsolutePath());
+   std::string inputDir = projects::projectContext().buildTargetPath().getAbsolutePath();
    Error error = r::exec::RFunction(".rs.bookdown.SourceFiles", inputDir).call(&files);
    if (error)
       LOG_ERROR(error);

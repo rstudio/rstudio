@@ -196,7 +196,7 @@ Error shadowDevDesc(DeviceContext* pDC, pDevDesc* pDev)
       if (backend == "ragg")
       {
          Error error = r::exec::RFunction("ragg:::agg_png")
-               .addParam("filename", string_utils::utf8ToSystem(targetPath.getAbsolutePath()))
+               .addParam("filename", targetPath.getAbsolutePath())
                .addParam("width", width)
                .addParam("height", height)
                .addParam("res", res)
@@ -209,7 +209,7 @@ Error shadowDevDesc(DeviceContext* pDC, pDevDesc* pDev)
          // create PNG device (completely bail on error)
          boost::format fmt("grDevices:::png(\"%1%\", %2%, %3%, res = %4% %5%)");
          std::string code = boost::str(fmt %
-                                       string_utils::utf8ToSystem(targetPath.getAbsolutePath()) %
+                                       targetPath.getAbsolutePath() %
                                        width %
                                        height %
                                        res %

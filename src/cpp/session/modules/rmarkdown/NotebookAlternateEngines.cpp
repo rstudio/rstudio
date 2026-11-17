@@ -348,7 +348,7 @@ Error executeStanEngineChunk(const std::string& docId,
    
    // if the 'file' option was not set, set it explicitly
    if (!core::algorithm::contains(engineOptsNames, "file"))
-      fStanEngine.addParam("file", string_utils::utf8ToSystem(tempFile.getAbsolutePath()));
+      fStanEngine.addParam("file", tempFile.getAbsolutePath());
    
    // evaluate stan_model call
    SEXP stanModelSEXP = R_NilValue;

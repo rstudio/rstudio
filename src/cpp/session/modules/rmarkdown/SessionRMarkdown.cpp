@@ -189,8 +189,7 @@ enum
 
 std::string projectBuildDir()
 {
-   return string_utils::utf8ToSystem(
-      projects::projectContext().buildTargetPath().getAbsolutePath());
+   return projects::projectContext().buildTargetPath().getAbsolutePath();
 }
 
 Error detectWebsiteOutputDir(const std::string& siteDir,
@@ -393,7 +392,7 @@ void getOutputFormat(const std::string& path,
    r::sexp::Protect protect;
    SEXP sexpOutputFormat;
    Error error = r::exec::RFunction("rmarkdown:::default_output_format",
-                                    string_utils::utf8ToSystem(path), encoding)
+                                    path, encoding)
                                    .call(&sexpOutputFormat, &protect);
    if (error)
    {
@@ -487,7 +486,7 @@ public:
       std::string runtime;
       Error error = r::exec::RFunction(
          ".rs.getRmdRuntime",
-         string_utils::utf8ToSystem(targetFile.getAbsolutePath())).call(
+         targetFile.getAbsolutePath()).call(
                                                                &runtime);
       if (error)
          LOG_ERROR(error);
@@ -566,7 +565,7 @@ private:
          // see if the input file has a custom render function
          error = r::exec::RFunction(
             ".rs.getCustomRenderFunction",
-            string_utils::utf8ToSystem(targetFile_.getAbsolutePath())).call(
+            targetFile_.getAbsolutePath()).call(
                                                                   &renderFunc);
          if (error)
             LOG_ERROR(error);
@@ -1243,7 +1242,7 @@ Error getCustomRenderFunction(const json::JsonRpcRequest& request,
    std::string renderFunc;
    error = r::exec::RFunction(
       ".rs.getCustomRenderFunction",
-      string_utils::utf8ToSystem(targetPath.getAbsolutePath())).call(&renderFunc);
+      targetPath.getAbsolutePath()).call(&renderFunc);
 
    // fail closed: if we could not determine the document's render function, ask
    // the client to confirm rather than silently treating it as known-safe. This
@@ -1630,7 +1629,7 @@ Error maybeCopyWebsiteAsset(const json::JsonRpcRequest& request,
    // get the list of copyable site resources
    std::vector<std::string> copyableResources;
    r::exec::RFunction func("rmarkdown:::copyable_site_resources");
-   func.addParam("input", string_utils::utf8ToSystem(websiteDir.getAbsolutePath()));
+   func.addParam("input", websiteDir.getAbsolutePath());
    func.addParam("encoding", projects::projectContext().config().encoding);
    error = func.call(&copyableResources);
    if (error)

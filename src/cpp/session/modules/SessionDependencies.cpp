@@ -93,7 +93,7 @@ EmbeddedPackage embeddedPackageInfo(const std::string& name)
          pkg.name = name;
          pkg.version = match[1];
          pkg.sha1 = match[2];
-         pkg.archivePath = string_utils::utf8ToSystem(child.getAbsolutePath());
+         pkg.archivePath = child.getAbsolutePath();
          return pkg;
       }
    }
@@ -395,7 +395,7 @@ std::string buildCombinedInstallScript(const std::vector<Dependency>& deps, bool
       {
          EmbeddedPackage pkg = embeddedPackageInfo(dep.name);
          if (!pkg.empty())
-            embeddedPackages.push_back(pkg.archivePath);
+            embeddedPackages.push_back(string_utils::utf8ToSystem(pkg.archivePath));
       }
    }
 
@@ -569,7 +569,7 @@ std::string buildIndividualInstallScript(const std::vector<Dependency>& dependen
          EmbeddedPackage pkg = embeddedPackageInfo(dep.name);
 
          // Build install command for bundled archive
-         script += "utils::install.packages('" + pkg.archivePath + "', repos = NULL, type = 'source')";
+         script += "utils::install.packages('" + string_utils::utf8ToSystem(pkg.archivePath) + "', repos = NULL, type = 'source')";
       }
 
       script += "\n\n";
@@ -745,7 +745,7 @@ namespace module_context {
 Error installEmbeddedPackage(const std::string& name)
 {
    EmbeddedPackage pkg = embeddedPackageInfo(name);
-   return module_context::installPackage(pkg.archivePath);
+   return module_context::installPackage(string_utils::utf8ToSystem(pkg.archivePath));
 }
 
 } // namespace module_context
