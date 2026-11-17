@@ -88,7 +88,8 @@ function Publish-BuildFile {
     $createPayload = @{ message = $createMessage; content = $content } | ConvertTo-Json -Compress
     Write-Host "Sending to Github: $createPayload"
     try {
-        return Invoke-RestMethod -Body $createPayload -Method 'PUT' -Headers $headers -Uri $uri -UseBasicParsing
+        return Invoke-RestMethod -Body $createPayload -Method 'PUT' -Headers $headers -Uri $uri `
+            -UseBasicParsing
     } catch {
         if ((Get-StatusCode $_) -ne 422) {
             throw
@@ -100,7 +101,8 @@ function Publish-BuildFile {
     $updatePayload = @{ message = $updateMessage; content = $content; sha = $existing.sha } |
         ConvertTo-Json -Compress
     Write-Host "Sending to Github: $updatePayload"
-    return Invoke-RestMethod -Body $updatePayload -Method 'PUT' -Headers $headers -Uri $uri -UseBasicParsing
+    return Invoke-RestMethod -Body $updatePayload -Method 'PUT' -Headers $headers -Uri $uri `
+        -UseBasicParsing
 }
 
 # Extract file metadata
