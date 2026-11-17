@@ -16,16 +16,17 @@ function mainToolbar(page: Page): Locator {
   return page.getByRole('toolbar', { name: 'Main', exact: true });
 }
 
-// The focused element's id, or a marker for focus outside the main toolbar.
+// A reference to the focused element for comparing later, or a marker for focus
+// outside the main toolbar. The reference is a data attribute, not an id, so
+// later tests in the shared session see the IDE's elements unchanged.
 async function focusedItem(page: Page): Promise<string> {
   return page.evaluate(() => {
     const el = document.activeElement as HTMLElement | null;
     const toolbar = document.querySelector('[role="toolbar"][aria-label="Main"]');
     if (!el || !toolbar || !toolbar.contains(el))
       return '<outside main toolbar>';
-    if (el.id === '')
-      el.id = `pw-toolbar-item-${Math.random().toString(36).slice(2)}`;
-    return el.id;
+    el.dataset.pwRef ??= Math.random().toString(36).slice(2);
+    return el.dataset.pwRef;
   });
 }
 
@@ -51,7 +52,7 @@ test.describe('Toolbar keyboard navigation (#5960)', () => {
     await page.keyboard.press('ArrowRight');
     const arrowedTo = await focusedItem(page);
     expect(arrowedTo).not.toBe('<outside main toolbar>');
-    expect(arrowedTo).not.toBe('rstudio_new_file_menubutton');
+    await expect(page.locator(NEW_FILE_BUTTON)).not.toBeFocused();
 
     await page.keyboard.press('Tab');
     await expect(page.locator(GO_TO_FILE_INPUT)).toBeFocused();

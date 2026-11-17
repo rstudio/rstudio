@@ -216,14 +216,14 @@ test.describe('Addins toolbar menu (#19552)', () => {
     rstudioPage: page,
   }) => {
     const button = page.locator(ADDINS_BUTTON);
-    // Tab can leave the toolbar for an element with no id; give it one to compare.
+    // Tab can leave the toolbar for an element with no id; tag it to compare,
+    // with a data attribute so the IDE's ids stay as they are.
     const focusedId = () => page.evaluate(() => {
-      const el = document.activeElement;
+      const el = document.activeElement as HTMLElement | null;
       if (!el || el === document.body)
         return '';
-      if (el.id === '')
-        el.id = `pw-addins-neighbor-${Math.random().toString(36).slice(2)}`;
-      return el.id;
+      el.dataset.pwRef ??= Math.random().toString(36).slice(2);
+      return el.dataset.pwRef;
     });
     await button.focus();
     await page.keyboard.press('Tab');
