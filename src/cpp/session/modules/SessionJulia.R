@@ -844,7 +844,9 @@
    {
       state$sigints <- state$sigints + 1L
       .rs.julia.debug("sending SIGINT %d to Julia (pid %d)", state$sigints, state$pid)
-      tools::pskill(state$pid, tools::SIGINT)
+
+      # to Julia's process group, so the commands it runs get it too
+      .Call("rs_juliaInterrupt", state$pid, PACKAGE = "(embedding)")
    }
 
    invisible(NULL)
@@ -883,10 +885,40 @@
    if (requireNamespace("JuliaConnectoR", quietly = TRUE))
       tryCatch(JuliaConnectoR::stopJulia(), error = function(e) NULL)
 
-   if (kill && !is.null(pid))
+   # a call can be cut short by Julia having gone, too
+   if (kill && !is.null(pid) && .rs.julia.isJuliaProcess(pid))
       tools::pskill(pid, tools::SIGKILL)
 
    invisible(NULL)
+})
+
+#' Is a Process Julia?
+#'
+#' @param pid A process ID.
+#'
+#' @return Whether the process with that ID runs Julia; FALSE when there is
+#'   none, or that can't be told.
+.rs.addFunction("julia.isJuliaProcess", function(pid)
+{
+   if (identical(.Platform$OS.type, "windows"))
+   {
+      filter <- sprintf("PID eq %d", as.integer(pid))
+      command <- tryCatch(
+         system2("tasklist", c("/FI", shQuote(filter), "/NH", "/FO", "CSV"), stdout = TRUE, stderr = FALSE),
+         error = function(e) character()
+      )
+   }
+   else
+   {
+      command <- tryCatch(
+         suppressWarnings(system2("ps", c("-o", "comm=", "-p", as.integer(pid)), stdout = TRUE, stderr = FALSE)),
+         error = function(e) character()
+      )
+   }
+
+   # the executable's name, not its path, which could mention Julia anyway
+   # ('ps' gives a path; 'tasklist' a quoted name, as CSV)
+   any(grepl("^\"?julia", basename(command), ignore.case = TRUE))
 })
 
 .rs.addFunction("julia.onConnectionLost", function(reason = "Julia closed the connection")

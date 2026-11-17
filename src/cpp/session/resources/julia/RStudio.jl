@@ -340,9 +340,14 @@ function evaluate(code::AbstractString, mode::AbstractString, width::Integer, co
    evaluation_task[] = current_task()
    try
       # set up within the protected region too; and move first, as pwd()
-      # throws while Julia's working directory is one that has been deleted
+      # throws while Julia's working directory is one that has been deleted.
+      # A directory that can't be entered leaves Julia where it is
       if isdir(cwd)
-         cd(cwd)
+         try
+            cd(cwd)
+         catch err
+            err isa InterruptException && rethrow()
+         end
       end
       before = pwd()
 
@@ -367,11 +372,17 @@ function evaluate(code::AbstractString, mode::AbstractString, width::Integer, co
    flush(stdout)
    flush(stderr)
 
-   # an interrupt during setup leaves no input to have moved Julia
-   if isempty(before) || pwd() == before
+   # an interrupt during setup leaves no input to have moved Julia; nor is
+   # there a directory to follow once the input has deleted Julia's own
+   after = try
+      pwd()
+   catch
+      ""
+   end
+   if isempty(before) || isempty(after) || after == before
       return ""
    end
-   return pwd()
+   return after
 end
 
 # Evaluate and print, returning the number of interrupts this caught.

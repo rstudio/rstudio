@@ -18,6 +18,11 @@
 #include <string>
 #include <vector>
 
+#ifndef _WIN32
+# include <signal.h>
+# include <sys/types.h>
+#endif
+
 #include <boost/bind/bind.hpp>
 
 #include <shared_core/Error.hpp>
@@ -66,6 +71,19 @@ SEXP rs_juliaReadConsole(SEXP promptSEXP)
    return Rf_ScalarString(Rf_mkCharLenCE(line.c_str(), static_cast<int>(line.size()), CE_NATIVE));
 }
 
+// Interrupt Julia as a terminal would: SIGINT to its process group, which
+// RStudio.init made, so the commands Julia runs get it too; to Julia alone
+// if it couldn't make one. (R's pskill() takes no process group.)
+SEXP rs_juliaInterrupt(SEXP pidSEXP)
+{
+#ifndef _WIN32
+   pid_t pid = static_cast<pid_t>(Rf_asInteger(pidSEXP));
+   if (pid > 0 && ::killpg(pid, SIGINT) == -1)
+      ::kill(pid, SIGINT);
+#endif
+   return R_NilValue;
+}
+
 } // anonymous namespace
 
 bool isReplActive()
@@ -83,6 +101,7 @@ Error initialize()
    using namespace module_context;
 
    RS_REGISTER_CALL_METHOD(rs_juliaReadConsole, 1);
+   RS_REGISTER_CALL_METHOD(rs_juliaInterrupt, 1);
 
    ExecBlock initBlock;
    initBlock.addFunctions()

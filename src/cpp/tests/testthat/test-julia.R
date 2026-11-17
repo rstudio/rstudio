@@ -66,7 +66,10 @@ test_that("completions and their help come from Julia", {
    skip_if(.rs.julia.isFirstStart(), "Julia's first start installs packages")
 
    # e.g. 'julia version 1.13.4'
-   version <- suppressWarnings(system2(.rs.julia.executable(), "--version", stdout = TRUE, stderr = FALSE))
+   version <- tryCatch(
+      suppressWarnings(system2(.rs.julia.executable(), "--version", stdout = TRUE, stderr = FALSE)),
+      error = function(e) character()
+   )
    version <- regmatches(version, regexpr("[0-9]+\\.[0-9]+", version))
    skip_if(length(version) == 0L, "Julia's version can't be told")
    skip_if(numeric_version(version) < .rs.julia.minimumVersion, "Julia is older than the console supports")
@@ -74,8 +77,8 @@ test_that("completions and their help come from Julia", {
    # the test stops Julia when it's done; don't take a running session with it
    skip_if(!is.null(.rs.julia.state$pid), "a Julia session is already running")
 
-   .rs.julia.start()
    on.exit(.rs.julia.stop(), add = TRUE)
+   .rs.julia.start()
 
    types <- .rs.acCompletionTypes
 
@@ -105,4 +108,8 @@ test_that("completions and their help come from Julia", {
    help <- .rs.julia.helpHandler("completion", "Math", "Base")
    expect_identical(help$signature, "")
    expect_identical(help$title, "Math")
+
+   # the process is told apart from others, before it is ever killed
+   expect_true(.rs.julia.isJuliaProcess(.rs.julia.state$pid))
+   expect_false(.rs.julia.isJuliaProcess(Sys.getpid()))
 })
