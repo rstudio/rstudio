@@ -508,17 +508,16 @@ void onDeferredInit(bool)
       source_database::events().onDocRemoved.connect(onSourceDocRemoved);
       source_database::events().onRemoveAll.connect(onAllSourceDocsRemoved);
 
-      // create an incremental file change handler (on the heap so that it
-      // survives the call to this function and is never deleted)
-      IncrementalFileChangeHandler* pFileChangeHandler =
-         new IncrementalFileChangeHandler(
-            isBookdownRmd,
-            fileChangeHandler,
-            boost::posix_time::seconds(1),
-            boost::posix_time::milliseconds(500),
-            true
-         );
-      pFileChangeHandler->subscribeToFileMonitor("Bookdown Cross References");   
+      // the file monitor holds callbacks bound to this handler, so it
+      // must live as long as the session
+      static IncrementalFileChangeHandler fileChangeHandlerInstance(
+         isBookdownRmd,
+         fileChangeHandler,
+         boost::posix_time::seconds(1),
+         boost::posix_time::milliseconds(500),
+         true
+      );
+      fileChangeHandlerInstance.subscribeToFileMonitor("Bookdown Cross References");
    }
 
 }
