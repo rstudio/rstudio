@@ -498,8 +498,9 @@ describe('SessionLauncher', () => {
   });
 
   describe('a first session started with the R chosen in RStudio', () => {
-    const kChosenR = '/opt/R/4.4.1/bin/R';
-    const kDefaultR = '/usr/local/bin/R';
+    // paths that name no R on the host, which could resolve to one another
+    const kChosenR = '/nonexistent/chosen-r/bin/R';
+    const kDefaultR = '/nonexistent/default-r/bin/R';
 
     function launcherWithStartupR(rPath: string, pending = '') {
       const launcher = getNewLauncher();
@@ -615,8 +616,11 @@ describe('SessionLauncher', () => {
         launcher.mainWindow = { clearErrorDisplayed: sinon.stub() } as unknown as MainWindow;
         launcher.setStartupR(failedR);
         const prepare = sinon.stub(DetectR, 'prepareEnvironment').returns(null);
+        sinon.stub(DetectR, 'rExecutableProblem').returns(null);
+        const query = sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{ envVars: {} } as never, null]);
 
         assert.isNotEmpty(await launcher.restartWithPreviousR());
+        assert.isFalse(query.called);
         assert.isFalse(prepare.called);
       } finally {
         rmSync(dir, { recursive: true, force: true });

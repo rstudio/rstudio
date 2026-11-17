@@ -109,6 +109,7 @@ public class ChooseRVersionDialog extends ModalDialog<RVersionChooser.Choice>
                defaultR.home = installation.home;
                defaultR.orthogonal = installation.orthogonal;
                defaultR.emulated = installation.emulated;
+               defaultR.current = defaultR.current || installation.current;
             }
          }
          add(new RVersionChooser.Choice(defaultR, true));

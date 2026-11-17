@@ -95,8 +95,9 @@ public class ChooseRVersionDialogTests extends GWTTestCase
       defaultR.home = "";
       defaultR.orthogonal = true;
 
-      // a framework version found at the same path, which needs updating
-      RVersionInstall found = installation("4.4.1", false);
+      // a framework version found at the same path, which needs updating,
+      // and which the session (unlike the desktop) knows to be the R in use
+      RVersionInstall found = installation("4.4.1", true);
       found.orthogonal = false;
       List<RVersionInstall> installed = new ArrayList<>();
       installed.add(found);
@@ -115,6 +116,7 @@ public class ChooseRVersionDialogTests extends GWTTestCase
       assertTrue(start.useDefault);
       assertFalse(start.installation.orthogonal);
       assertEquals(found.home, start.installation.home);
+      assertTrue(start.installation.current);
    }
 
    public void testStartsFromTheRInUseWithNothingChosen()
