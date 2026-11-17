@@ -87,9 +87,9 @@ describe('DesktopCallback', () => {
   });
 
   describe('setPendingRVersion', () => {
-    // a stand-in R that exists on disk; querying it is stubbed. It is named
-    // Rterm.exe because on Windows any other executable is swapped for a
-    // sibling Rterm.exe (see fixWindowsRExecutablePath)
+    // a stand-in R that exists on disk; querying it is stubbed. It is an
+    // Rterm.exe outside any bin folder, the one path that Windows leaves
+    // unrewritten (see fixWindowsRExecutablePath)
     let rDir: string;
     let rPath: string;
 
