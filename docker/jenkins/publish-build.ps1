@@ -29,6 +29,8 @@ param(
     [string]$channel = (Get-Content (Join-Path -Path "version" -ChildPath "BUILDTYPE") | Out-String).Trim()
 )
 
+$ErrorActionPreference = 'Stop'
+
 # Function to urlize a string
 function URLize {
     param(
@@ -48,21 +50,57 @@ function URLize {
     return $string
 }
 
-function Handle409 {
+# The HTTP status of a failed Invoke-RestMethod call, or $null when no response arrived
+function Get-StatusCode {
     param(
-        $url,
-        $payload,
-        $headers
+        $errorRecord
     )
 
-    Write-Host "Received a 409, assuming it's a commit interleaving error, waiting 3 seconds and retrying".
-    Start-Sleep -Seconds 3
+    $response = $errorRecord.Exception.Response
+    if ($null -eq $response) {
+        return $null
+    }
+    return [int]$response.StatusCode
+}
 
-    # Identical call to the original above
-    Write-Host "Retrying..."
-    $retryCreateResponse = Invoke-RestMethod -Body $payload -Method 'PUT' -Headers $headers -Uri $url -UseBasicParsing
-    Write-Host "Response :"
-    Write-Host $retryCreateResponse.Content
+# Commit conflicts (409, e.g. interleaving with another publish), timeouts, rate limits,
+# server errors, and transport failures with no response are worth retrying.
+function Test-Retryable {
+    param(
+        $statusCode
+    )
+
+    return ($null -eq $statusCode) -or ($statusCode -in 408, 409, 429) -or ($statusCode -ge 500)
+}
+
+# Create the build file. A 422 means the file already exists -- a re-publish, or an earlier
+# attempt that GitHub committed before returning an error -- so fetch the existing file's sha
+# and send an update instead. Throws if any request fails.
+function Publish-BuildFile {
+    param(
+        $uri,
+        $headers,
+        $createMessage,
+        $updateMessage,
+        $content
+    )
+
+    $createPayload = @{ message = $createMessage; content = $content } | ConvertTo-Json -Compress
+    Write-Host "Sending to Github: $createPayload"
+    try {
+        return Invoke-RestMethod -Body $createPayload -Method 'PUT' -Headers $headers -Uri $uri -UseBasicParsing
+    } catch {
+        if ((Get-StatusCode $_) -ne 422) {
+            throw
+        }
+    }
+
+    Write-Host "Received a 422, assuming the file already exists. Getting existing file's SHA"
+    $existing = Invoke-RestMethod -Method 'GET' -Headers $headers -Uri $uri -UseBasicParsing
+    $updatePayload = @{ message = $updateMessage; content = $content; sha = $existing.sha } |
+        ConvertTo-Json -Compress
+    Write-Host "Sending to Github: $updatePayload"
+    return Invoke-RestMethod -Body $updatePayload -Method 'PUT' -Headers $headers -Uri $uri -UseBasicParsing
 }
 
 # Extract file metadata
@@ -109,12 +147,6 @@ Write-Host $mdContents
 $bytes = [System.Text.Encoding]::UTF8.GetBytes($mdContents)
 $base64 = [System.Convert]::ToBase64String($bytes)
 
-# Prepare the payload for the Github API
-$payload = @"
-{ "message": "Add $flower build $version in $build", "content": "$base64" }
-"@
-Write-Host "Sending to Github: $payload"
-
 # Prepare headers
 $headers = @{}
 $headers.Add("Accept", "application/vnd.github.v3+json")
@@ -134,46 +166,24 @@ $url = "https://api.github.com/repos/rstudio/latest-builds/contents/content/$pro
 
 Write-Host "Writing content to $url"
 
-try
-{
-    $createResponse = Invoke-RestMethod -Body $payload -Method 'PUT' -Headers $headers -Uri $url -UseBasicParsing
-    Write-Host "Response :"
-    Write-Host $createResponse.Content
-} catch {
-    $StatusCode = $_.Exception.Response.StatusCode.value__
-    
-    if ($StatusCode -eq 422) # Assume the file already exists and we need to do an update
-    {
-        Write-Host "Received a 422 error, assuming it's an issue updating. Getting existing file's SHA"
-        $getSha = Invoke-RestMethod -Method 'GET' -Headers $headers -Uri $url -UseBasicParsing
-        Write-Host "Github Response:"
-        Write-Host $getSha
-        $updateSha = $getSha.sha
-
-        # This looks messy but the whitespace is meaningful
-        $payload = @"
-{ "message": "Update $flower build $version in $build", "content": "$base64", "sha": "$updateSha" }
-"@
-        try {
-            Write-Host "Updating version file..."
-            $updateResponse = Invoke-RestMethod -Body $payload -Method 'PUT' -Headers $headers -Uri $url -UseBasicParsing
-            Write-Host "Response :"
-            Write-Host $updateResponse.Content
-        } catch {
-            $StatusCode = $_.Exception.Response.StatusCode.value__
-
-            if ($StatusCode -eq 409)
-            {
-                Handle409 -url $url -payload $payload -headers $headers
-            }
-            else 
-            {
-                Write-Host "Received an unexpected error code: $StatusCode"
-            }
+# The random 3-8 second sleep keeps concurrent publishers from retrying in lockstep.
+$maxRetries = 5
+for ($retry = 0; ; $retry++) {
+    try {
+        $response = Publish-BuildFile -uri $url -headers $headers `
+            -createMessage "Add $flower build $version in $build" -updateMessage "Update $flower build $version in $build" -content $base64
+        break
+    } catch {
+        $statusCode = Get-StatusCode $_
+        $status = if ($null -eq $statusCode) { "no response" } else { "HTTP $statusCode" }
+        Write-Host "Request failed ($status): $($_.Exception.Message) $($_.ErrorDetails.Message)"
+        if (($retry -ge $maxRetries) -or -not (Test-Retryable $statusCode)) {
+            throw "Failed to publish $flower build $version to $url ($status); see the log above"
         }
-    }
-    
-    if ($StatusCode -eq 409) { # Assume the repo has been updated backoff and try again.
-        Handle409 -url $url -payload $payload -headers $headers
+        $delay = Get-Random -Minimum 3 -Maximum 9
+        Write-Host "Retrying in $delay seconds (retry $($retry + 1) of $maxRetries)"
+        Start-Sleep -Seconds $delay
     }
 }
+
+Write-Host "Published $($response.content.path) in commit $($response.commit.sha)"
