@@ -63,20 +63,14 @@ function Get-StatusCode {
     return [int]$response.StatusCode
 }
 
-# Transport failures with no response, commit conflicts (409, e.g. interleaving with another
-# publish), timeouts, rate limits, and server errors are worth retrying. Other errors,
-# including bugs in this script, are not.
+# Failed requests with no response (connection errors, timeouts), commit conflicts (409, e.g.
+# interleaving with another publish), rate limits, and server errors are worth retrying.
 function Test-Retryable {
     param(
-        $errorRecord
+        $statusCode
     )
 
-    $statusCode = Get-StatusCode $errorRecord
-    if ($null -eq $statusCode) {
-        # Jenkins runs this under Windows PowerShell 5.1, where request failures are WebExceptions
-        return $errorRecord.Exception -is [System.Net.WebException]
-    }
-    return ($statusCode -in 408, 409, 429) -or ($statusCode -ge 500)
+    return ($null -eq $statusCode) -or ($statusCode -in 408, 409, 429) -or ($statusCode -ge 500)
 }
 
 # Create the build file. A 422 means the file already exists -- a re-publish, or an earlier
@@ -187,10 +181,15 @@ for ($retry = 0; ; $retry++) {
             -content $base64
         break
     } catch {
+        # Jenkins runs this under Windows PowerShell 5.1, where a failed request is a
+        # WebException. Anything else, such as a bug in this script, propagates unchanged.
+        if ($_.Exception -isnot [System.Net.WebException]) {
+            throw
+        }
         $statusCode = Get-StatusCode $_
-        $status = if ($null -eq $statusCode) { "no HTTP response" } else { "HTTP $statusCode" }
+        $status = if ($null -eq $statusCode) { "no response" } else { "HTTP $statusCode" }
         Write-Host "Request failed ($status): $($_.Exception.Message) $($_.ErrorDetails.Message)"
-        if (($retry -ge $maxRetries) -or -not (Test-Retryable $_)) {
+        if (($retry -ge $maxRetries) -or -not (Test-Retryable $statusCode)) {
             throw "Failed to publish $flower build $version to $url ($status): " +
                 "$($_.Exception.Message)`nCheck the log above, the PAT's access to " +
                 "rstudio/latest-builds, and githubstatus.com."
