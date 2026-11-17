@@ -16,9 +16,6 @@
 package org.rstudio.studio.client.common.debugging.ui;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Node;
-import com.google.gwt.dom.client.NodeList;
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 
 import org.rstudio.core.client.VirtualConsole;
@@ -58,8 +55,6 @@ public class ConsoleError extends Composite
       void runCommandWithDebug(String command);
    }
 
-   // Because we are adding interactive elements to the VirtualScroller the GWT bindings are lost.
-   // We need to programmatically find the elements and manipulate them through regular JS functions.
    public ConsoleError(UnhandledError error,
                        String errorClass, 
                        String command,
@@ -103,6 +98,8 @@ public class ConsoleError extends Composite
       if (errorClass != null)
          errorMessage.addStyleName(errorClass);
 
+      // The Console inserts only this widget's element, never attaching the widget,
+      // so the links' own GWT click handlers would not fire; listen on the root instead.
       EventListener onConsoleErrorClick = event ->
       {
          if (DOM.eventGetType(event) == Event.ONCLICK)
@@ -124,6 +121,9 @@ public class ConsoleError extends Composite
          }
       };
 
+      // Sets the localized label, so it doesn't change language on first toggle
+      setTracebackVisible(false);
+      rerunText.setText(constants_.rerunWithDebugText());
       rerunText.setVisible(command_ != null);
       rerunImage.setVisible(command_ != null);
 
@@ -147,29 +147,10 @@ public class ConsoleError extends Composite
    public void setTracebackVisible(boolean visible)
    {
       showingTraceback_ = visible;
-
-      NodeList<Node> children = this.getElement().getChildNodes();
-      for (int i = 0; i < children.getLength(); i++)
-      {
-         Node n = children.getItem(i);
-         if (n.getNodeType() != Node.ELEMENT_NODE)
-            continue;
-
-         Element child = Element.as(children.getItem(i));
-         if (child.hasClassName("show_traceback_text")) {
-            if (showingTraceback_)
-               child.setInnerText(constants_.hideTracebackText());
-            else
-               child.setInnerText(constants_.showTracebackText());
-         }
-         else if (child.hasClassName("stack_trace"))
-         {
-            if (showingTraceback_)
-               child.getStyle().setDisplay(Style.Display.BLOCK);
-            else
-               child.getStyle().setDisplay(Style.Display.NONE);
-         }
-      }
+      showTracebackText.setText(showingTraceback_
+            ? constants_.hideTracebackText()
+            : constants_.showTracebackText());
+      framePanel.setVisible(showingTraceback_);
    }
 
    @UiField Anchor showTracebackText;
