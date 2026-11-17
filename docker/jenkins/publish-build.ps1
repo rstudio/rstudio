@@ -85,7 +85,9 @@ function Test-Retryable {
 # and send an update instead. Throws if any request fails.
 #
 # -UseBasicParsing is required: without it, Windows PowerShell's web cmdlets depend on the IE
-# DOM engine, which the Windows SKU this script runs on doesn't have.
+# DOM engine, which the Windows SKU this script runs on doesn't have. Without -TimeoutSec they
+# wait forever for a response; a timeout throws a WebException with no response, which the
+# caller retries.
 function Publish-BuildFile {
     param(
         $uri,
@@ -95,11 +97,12 @@ function Publish-BuildFile {
         $content
     )
 
+    $request = @{ Headers = $headers; Uri = $uri; UseBasicParsing = $true; TimeoutSec = 60 }
+
     $createPayload = @{ message = $createMessage; content = $content } | ConvertTo-Json -Compress
     Write-Host "Sending to Github: $createPayload"
     try {
-        return Invoke-RestMethod -Body $createPayload -Method 'PUT' -Headers $headers -Uri $uri `
-            -UseBasicParsing
+        return Invoke-RestMethod -Method 'PUT' -Body $createPayload @request
     } catch {
         if ((Get-StatusCode $_) -ne 422) {
             throw
@@ -108,12 +111,11 @@ function Publish-BuildFile {
     }
 
     Write-Host "Assuming the file already exists. Getting existing file's SHA"
-    $existing = Invoke-RestMethod -Method 'GET' -Headers $headers -Uri $uri -UseBasicParsing
+    $existing = Invoke-RestMethod -Method 'GET' @request
     $updatePayload = @{ message = $updateMessage; content = $content; sha = $existing.sha } |
         ConvertTo-Json -Compress
     Write-Host "Sending to Github: $updatePayload"
-    return Invoke-RestMethod -Body $updatePayload -Method 'PUT' -Headers $headers -Uri $uri `
-        -UseBasicParsing
+    return Invoke-RestMethod -Method 'PUT' -Body $updatePayload @request
 }
 
 # Extract file metadata
