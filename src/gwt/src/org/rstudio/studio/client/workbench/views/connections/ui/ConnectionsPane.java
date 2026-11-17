@@ -37,7 +37,6 @@ import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.MenuItem;
-import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.ProvidesKey;
@@ -345,27 +344,9 @@ public class ConnectionsPane extends WorkbenchPane
    {
       toolbar_ = new Toolbar(constants_.connectionsTabLabel());
    
-      searchWidget_ = new SearchWidget(constants_.filterByConnectionLabel(), new SuggestOracle() {
-         @Override
-         public void requestSuggestions(Request request, Callback callback)
-         {
-            // no suggestions
-            callback.onSuggestionsReady(
-                  request,
-                  new Response(new ArrayList<>()));
-         }
-      });
+      searchWidget_ = new SearchWidget(constants_.filterByConnectionLabel());
 
-      objectSearchWidget_ = new SearchWidget(constants_.filterByObjectLabel(), new SuggestOracle() {
-         @Override
-         public void requestSuggestions(Request request, Callback callback)
-         {
-            // no suggestions
-            callback.onSuggestionsReady(
-                  request,
-                  new Response(new ArrayList<>()));
-         }
-      });
+      objectSearchWidget_ = new SearchWidget(constants_.filterByObjectLabel());
 
       objectSearchWidget_.addValueChangeHandler(event -> 
          connectionExplorer_.setFilterText(event.getValue()));
