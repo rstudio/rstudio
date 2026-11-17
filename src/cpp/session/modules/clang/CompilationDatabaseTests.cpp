@@ -256,6 +256,20 @@ TEST_F(CompileFlagsTest, RejectsFlagsThatReachBeyondTheParse)
    EXPECT_EQ(rejectedFlags(flags), expected);
 }
 
+TEST_F(CompileFlagsTest, ReportsLinkOptionsWithTheirValues)
+{
+   std::vector<std::string> flags = {
+      "-framework", "Accelerate", "-weak_framework", "Metal", "-undefined", "dynamic_lookup",
+      "-install_name", "libfoo.dylib", "-rpath", "lib", "-arch_only", "arm64", "-l", "m",
+      "--config", "x.cfg",
+   };
+   std::vector<std::string> expected = {
+      "-framework Accelerate", "-weak_framework Metal", "-undefined dynamic_lookup",
+      "-install_name libfoo.dylib", "-rpath lib", "-arch_only arm64", "-l m", "--config x.cfg",
+   };
+   EXPECT_EQ(rejectedFlags(flags), expected);
+}
+
 TEST_F(CompileFlagsTest, ReportsValueOnlyWithAnOptionThatTakesOne)
 {
    // neither takes the argument after it, which is reported on its own

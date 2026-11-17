@@ -378,13 +378,15 @@ const std::set<std::string> kTargetFeatureFlags = {
 };
 
 // Options we don't support that clang reads the next argument as the value
-// of; only so that the report shows such a value along with its option
+// of; only so that the report shows such a value along with its option. Not
+// all of clang's, but those a pasted build or link line is likely to have.
 const std::set<std::string> kUnsupportedSeparateOptions = {
-   "-B", "-L", "-MF", "-MJ", "-MQ", "-MT", "-T", "-Xanalyzer", "-Xassembler", "-Xclang",
-   "-Xlinker", "-Xpreprocessor", "-dependency-file", "-include-pch", "-iframeworkwithsysroot",
-   "-iprefix", "-iwithprefix", "-iwithprefixbefore", "-iwithsysroot", "-mllvm",
-   "-module-dependency-dir", "-o", "-resource-dir", "-serialize-diagnostics", "-vfsoverlay",
-   "-working-directory", "-z",
+   "--config", "-B", "-L", "-MF", "-MJ", "-MQ", "-MT", "-T", "-Xanalyzer", "-Xassembler",
+   "-Xclang", "-Xlinker", "-Xpreprocessor", "-arch_only", "-dependency-file", "-framework",
+   "-include-pch", "-iframeworkwithsysroot", "-install_name", "-iprefix", "-iwithprefix",
+   "-iwithprefixbefore", "-iwithsysroot", "-l", "-mllvm", "-module-dependency-dir", "-o",
+   "-resource-dir", "-rpath", "-serialize-diagnostics", "-undefined", "-vfsoverlay",
+   "-weak_framework", "-working-directory", "-z",
 };
 
 struct CompileFlagMatch
