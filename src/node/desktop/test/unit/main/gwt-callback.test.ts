@@ -88,8 +88,8 @@ describe('DesktopCallback', () => {
 
   describe('setPendingRVersion', () => {
     // a stand-in R that exists on disk; querying it is stubbed. It is an
-    // Rterm.exe outside any bin folder, the one path that Windows leaves
-    // unrewritten (see fixWindowsRExecutablePath)
+    // Rterm.exe whose folder isn't bin, which Windows leaves unrewritten
+    // (see fixWindowsRExecutablePath)
     let rDir: string;
     let rPath: string;
 
