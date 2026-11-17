@@ -73,6 +73,9 @@ class ToolbarKeyboardNavigation
       elemental2.dom.Element root = Js.uncheckedCast(root_);
       root.removeEventListener("keydown", keyDownListener_);
       root.removeEventListener("focusin", focusInListener_);
+
+      // Handle what changed since the last callback; disconnecting discards it.
+      onMutations(observer_.takeRecords(), observer_);
       observer_.disconnect();
    }
 
@@ -201,12 +204,9 @@ class ToolbarKeyboardNavigation
 
          for (Element item : group)
          {
-            item.setAttribute(MANAGED, "");
+            setFlag(item, MANAGED, true);
             setTabIndex(item, item == stop ? 0 : -1);
-            if (item == stop)
-               item.setAttribute(LAST_FOCUSED, "");
-            else
-               item.removeAttribute(LAST_FOCUSED);
+            setFlag(item, LAST_FOCUSED, item == stop);
          }
       }
 
@@ -225,6 +225,15 @@ class ToolbarKeyboardNavigation
    {
       if (el.getTabIndex() != tabIndex || !el.hasAttribute("tabindex"))
          el.setTabIndex(tabIndex);
+   }
+
+   // Style recalculation follows any attribute write, even an unchanged one.
+   private static void setFlag(Element el, String name, boolean on)
+   {
+      if (on && !el.hasAttribute(name))
+         el.setAttribute(name, "");
+      else if (!on && el.hasAttribute(name))
+         el.removeAttribute(name);
    }
 
    // A text field, and any control in the same toolbar widget as one, is a
