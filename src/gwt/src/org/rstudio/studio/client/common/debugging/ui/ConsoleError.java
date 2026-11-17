@@ -121,6 +121,8 @@ public class ConsoleError extends Composite
          }
       };
 
+      // Sets the localized label, so it doesn't change language on first toggle
+      setTracebackVisible(false);
       rerunText.setVisible(command_ != null);
       rerunImage.setVisible(command_ != null);
 

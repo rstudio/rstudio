@@ -83,9 +83,7 @@
                   width="9"
                   height="9"
                   styleName="{style.errorCommandImage} show_traceback_image"/>
-           <g:Anchor styleName="{style.errorCommandText} show_traceback_text" ui:field="showTracebackText">
-              Show Traceback
-           </g:Anchor>
+           <g:Anchor styleName="{style.errorCommandText} show_traceback_text" ui:field="showTracebackText"/>
         </g:HTMLPanel>
         <g:HTMLPanel>
            <rw:DecorativeImage resource="{rerun}"
