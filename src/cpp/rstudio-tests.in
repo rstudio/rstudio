@@ -572,6 +572,10 @@ if has-scope "r"; then
       export TESTTHAT_FILTER
    fi
 
+   # remove any stale failures log, so a run that writes none can't pass on
+   # an earlier run's result
+   rm -f "@CMAKE_CURRENT_BINARY_DIR@/testthat-failures.log"
+
    # the full suite can run past 5 minutes on slower machines without hanging
    runWatchdogProcess 15m false                                                  \
       "@CMAKE_CURRENT_BINARY_DIR@/session/${RSTUDIO_SESSION_BIN}"                \
