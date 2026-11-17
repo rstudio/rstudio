@@ -41,6 +41,7 @@ import {
   detectREnvironmentAsync,
   kRQueryTimeoutMs,
   prepareEnvironment,
+  rSharedLibraryProblem,
   storeChosenR,
   storeRChoice,
   UnusableRChoice,
@@ -205,6 +206,18 @@ export function launchFailedDetail(abendMessage: string | null, stateDirIssues: 
   }
 
   return '[No error available]';
+}
+
+/**
+ * Whether two R executables are the same file once links are followed: a
+ * default R that is a link to the R that failed would fail the same way.
+ */
+function sameInstallation(a: string, b: string): boolean {
+  try {
+    return fs.realpathSync(a) === fs.realpathSync(b);
+  } catch {
+    return false;
+  }
 }
 
 export class SessionLauncher {
@@ -741,7 +754,7 @@ export class SessionLauncher {
     let rPath = rBeforeSwitch;
     if (!rPath && defaultRIfSessionFails) {
       rPath = await defaultR();
-      if (!rPath || sameRExecutable(rPath, failedR)) {
+      if (!rPath || sameRExecutable(rPath, failedR) || sameInstallation(rPath, failedR)) {
         return i18next.t('sessionLauncherTs.noDefaultRToRestartWith');
       }
     }
@@ -755,10 +768,16 @@ export class SessionLauncher {
     // PATH names is taken as it is); query it in the background, bounded,
     // so that preparing it below reads the answer rather than running an R
     // that may hang on the main process
-    const [, queryError] = await detectREnvironmentAsync(rPath, kRQueryTimeoutMs);
+    const [environment, queryError] = await detectREnvironmentAsync(rPath, kRQueryTimeoutMs);
     if (queryError) {
       logger().logError(queryError);
       return queryError.message;
+    }
+
+    const libraryProblem = rSharedLibraryProblem(rPath, environment);
+    if (libraryProblem) {
+      logger().logError(new Error(libraryProblem));
+      return libraryProblem;
     }
 
     const error = prepareEnvironment(rPath);

@@ -98,7 +98,21 @@ public class ChooseRVersionDialog extends ModalDialog<RVersionChooser.Choice>
       defaultR_ = defaultR;
       foldIntoDefault_ = !windows;
       if (defaultR != null)
+      {
+         // the desktop's description of the default R lacks what the
+         // installation found at its path knows: its home, and whether it
+         // must be updated first to run as itself (a macOS framework version)
+         for (RVersionInstall installation : installed)
+         {
+            if (RVersionChooser.sameExecutable(installation.binary, defaultR.binary))
+            {
+               defaultR.home = installation.home;
+               defaultR.orthogonal = installation.orthogonal;
+               defaultR.emulated = installation.emulated;
+            }
+         }
          add(new RVersionChooser.Choice(defaultR, true));
+      }
       for (RVersionInstall installation : installed)
       {
          if (!offeredAsDefault(installation))

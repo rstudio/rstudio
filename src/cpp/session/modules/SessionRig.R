@@ -1333,11 +1333,14 @@
                                                     current = R.home(),
                                                     architecture = .rs.rInstallations.preferredArchitecture())
 {
-   # only an executable can be R; any other file in a macOS framework would
-   # otherwise pass for its version (see rig.rHome)
+   # only an executable can be R, and of a macOS framework version only its
+   # launcher: any other file in it (Rscript, say) would otherwise pass for
+   # that version, as its home is taken from the path (see rig.rHome)
    if (!file.exists(binary) || dir.exists(binary))
       return(NULL)
    if (!.rs.platform.isWindows && file.access(binary, 1L) != 0L)
+      return(NULL)
+   if (grepl("/R[.]framework/Versions/[^/]+/Resources/", binary) && !grepl("/Resources/bin/R$", binary))
       return(NULL)
 
    home <- .rs.rig.rHome(binary)

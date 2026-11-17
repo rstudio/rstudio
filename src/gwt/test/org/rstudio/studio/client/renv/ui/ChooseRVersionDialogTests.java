@@ -85,6 +85,38 @@ public class ChooseRVersionDialogTests extends GWTTestCase
       assertEquals(binary("4.4.1"), start.installation.binary);
    }
 
+   public void testDefaultEntryKnowsWhatItsInstallationKnows()
+   {
+      // as the desktop describes the default R: assumed to run as itself
+      RVersionInstall defaultR = new RVersionInstall();
+      defaultR.version = "4.4.1";
+      defaultR.binary = binary("4.4.1");
+      defaultR.path = "";
+      defaultR.home = "";
+      defaultR.orthogonal = true;
+
+      // a framework version found at the same path, which needs updating
+      RVersionInstall found = installation("4.4.1", false);
+      found.orthogonal = false;
+      List<RVersionInstall> installed = new ArrayList<>();
+      installed.add(found);
+
+      ChooseRVersionDialog dialog = new ChooseRVersionDialog(
+            "Choose R Version",
+            "OK",
+            defaultR,
+            installed,
+            new RVersionChooser.Choice(defaultR, true),
+            onChosen -> {},
+            input -> {},
+            false);
+      RVersionChooser.Choice start = dialog.collectInput();
+
+      assertTrue(start.useDefault);
+      assertFalse(start.installation.orthogonal);
+      assertEquals(found.home, start.installation.home);
+   }
+
    public void testStartsFromTheRInUseWithNothingChosen()
    {
       RVersionChooser.Choice start = startingChoice(null, null);

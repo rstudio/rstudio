@@ -17,7 +17,7 @@ import { describe } from 'mocha';
 import { assert } from 'chai';
 import sinon from 'sinon';
 import { EventEmitter } from 'events';
-import { mkdtempSync, writeFileSync } from 'fs';
+import { mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { restore, saveAndClear } from '../unit-utils';
@@ -305,7 +305,7 @@ describe('SessionLauncher', () => {
       // going back keeps an R by its path; a switch keeps it as it was chosen
       const store = sinon.stub(DetectR, 'storeRChoice').resolves();
       const storeChosen = sinon.stub(DetectR, 'storeChosenR').resolves();
-      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{} as never, null]);
+      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{ envVars: {} } as never, null]);
       return { launcher, gwtCallback, store, storeChosen };
     }
 
@@ -503,7 +503,7 @@ describe('SessionLauncher', () => {
         prepare: sinon.stub(DetectR, 'prepareEnvironment').returns(null),
         relaunch: sinon.stub(launcher, 'launchNextSession').resolves(null),
         store: sinon.stub(DetectR, 'storeRChoice').resolves(),
-        query: sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{} as never, null]),
+        query: sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{ envVars: {} } as never, null]),
       };
     }
 
@@ -538,17 +538,63 @@ describe('SessionLauncher', () => {
     it('reports a default R that does not answer, without preparing it', async () => {
       sinon.stub(DetectR, 'defaultR').resolves(kDefaultR);
       const { launcher, prepare, relaunch, query } = launcherWithStartupR(kChosenR);
-      query.resolves([{} as never, new Error(`${kDefaultR} did not answer`)]);
+      query.resolves([{ envVars: {} } as never, new Error(`${kDefaultR} did not answer`)]);
 
       assert.include(await launcher.restartWithPreviousR(), 'did not answer');
       assert.isTrue(query.calledOnceWith(kDefaultR));
+      assert.isAbove(query.firstCall.args[1] as number, 0, 'the query is bounded');
       assert.isFalse(prepare.called);
       assert.isFalse(relaunch.called);
 
       // the way back is still offered
-      query.resolves([{} as never, null]);
+      query.resolves([{ envVars: {} } as never, null]);
       assert.equal(await launcher.restartWithPreviousR(), '');
       assert.isTrue(prepare.calledOnceWithExactly(kDefaultR));
+    });
+
+    it('reports a default R without the shared library a session needs, without preparing it', async function () {
+      if (process.platform === 'win32') {
+        this.skip();
+      }
+
+      sinon.stub(DetectR, 'defaultR').resolves(kDefaultR);
+      const { launcher, prepare, relaunch, query } = launcherWithStartupR(kChosenR);
+      const home = mkdtempSync(join(tmpdir(), 'r-home-without-library-'));
+      try {
+        query.resolves([{ envVars: { R_HOME: home } } as never, null]);
+
+        assert.include(await launcher.restartWithPreviousR(), process.platform === 'darwin' ? 'libR.dylib' : 'libR.so');
+        assert.isFalse(prepare.called);
+        assert.isFalse(relaunch.called);
+      } finally {
+        rmSync(home, { recursive: true, force: true });
+      }
+    });
+
+    it('says so when the default R is a link to the R that failed', async function () {
+      if (process.platform === 'win32') {
+        this.skip();
+      }
+
+      const dir = mkdtempSync(join(tmpdir(), 'r-default-link-'));
+      try {
+        const failedR = join(dir, 'R-4.4.1');
+        const defaultLink = join(dir, 'R');
+        writeFileSync(failedR, '');
+        symlinkSync(failedR, defaultLink);
+        sinon.stub(DetectR, 'defaultR').resolves(defaultLink);
+        sinon.stub(RChoice, 'savedRChoice').returns({ path: failedR, rstudioWhichR: RChoice.launchRStudioWhichR() });
+
+        const launcher = getNewLauncher();
+        launcher.mainWindow = { clearErrorDisplayed: sinon.stub() } as unknown as MainWindow;
+        launcher.setStartupR(failedR);
+        const prepare = sinon.stub(DetectR, 'prepareEnvironment').returns(null);
+
+        assert.isNotEmpty(await launcher.restartWithPreviousR());
+        assert.isFalse(prepare.called);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
     });
 
     it('says so when the default R is the R that failed', async () => {

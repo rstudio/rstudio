@@ -526,6 +526,12 @@ test_that("only the R launcher of a macOS framework version is described as R", 
    expect_identical(as.vector(entry$binary), launcher)
 
    expect_null(.rs.rInstallations.describe(header, minimum = "3.6.0", architecture = NULL))
+
+   # another executable in it is not its launcher
+   rscript <- file.path(home, "bin", "Rscript")
+   writeLines("#!/bin/sh", rscript)
+   Sys.chmod(rscript, "755")
+   expect_null(.rs.rInstallations.describe(rscript, minimum = "3.6.0", architecture = NULL))
    expect_null(.rs.rInstallations.describe(file.path(home, "bin"), minimum = "3.6.0", architecture = NULL))
 
 })
