@@ -81,6 +81,12 @@ public class LeftRightToggleButton extends Widget
       ClassIds.assignClassId(right_, ClassIds.RIGHT_TOGGLE_BTN + "_"  + rightId);
    }
    
+   public void setEnabled(boolean enabled)
+   {
+      left_.setPropertyBoolean("disabled", !enabled);
+      right_.setPropertyBoolean("disabled", !enabled);
+   }
+
    @Override
    public HandlerRegistration addClickHandler(ClickHandler handler)
    {

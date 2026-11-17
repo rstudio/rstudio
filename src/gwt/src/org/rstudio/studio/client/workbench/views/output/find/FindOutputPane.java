@@ -488,14 +488,15 @@ public class FindOutputPane extends WorkbenchPane
       setReplaceModeToggleEnabled(false);
    }
 
-   // The Find/Replace mode toggle has no enabled state of its own, so grey it
-   // out, block pointer input, and expose the state via aria-disabled; the
-   // click handler also consults replaceModeToggleEnabled_ so the mode cannot be
+   // Disabling the toggle's buttons keeps them out of keyboard navigation; the
+   // toggle is also greyed out and blocks pointer input on its padding, and the
+   // click handler consults replaceModeToggleEnabled_ so the mode cannot be
    // toggled while disabled. Only the find-to-replace direction is gated -- the
    // replace-to-find toggle (showReplaceButton_) stays usable.
    private void setReplaceModeToggleEnabled(boolean enabled)
    {
       replaceModeToggleEnabled_ = enabled;
+      showFindButton_.setEnabled(enabled);
 
       Element toggle = showFindButton_.getElement();
       if (enabled)
@@ -508,7 +509,6 @@ public class FindOutputPane extends WorkbenchPane
          toggle.getStyle().setOpacity(0.4);
          toggle.getStyle().setProperty("pointerEvents", "none");
       }
-      toggle.setAttribute("aria-disabled", enabled ? "false" : "true");
    }
 
    @Override

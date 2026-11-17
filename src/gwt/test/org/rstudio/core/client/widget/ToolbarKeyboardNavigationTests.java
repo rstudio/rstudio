@@ -204,6 +204,26 @@ public class ToolbarKeyboardNavigationTests extends GWTTestCase
       assertFocused(a);
    }
 
+   public void testDisabledToggleButtonIsSkipped()
+   {
+      Toolbar toolbar = new Toolbar("Test");
+      Button a = button(toolbar, "a");
+      LeftRightToggleButton toggle =
+            toolbar.addLeftWidget(new LeftRightToggleButton("left", "right", true));
+      Button b = button(toolbar, "b");
+      attach(toolbar);
+
+      toggle.setEnabled(false);
+      a.setFocus(true);
+      press(a, KeyCodes.KEY_RIGHT);
+      assertFocused(b);
+
+      toggle.setEnabled(true);
+      press(b, KeyCodes.KEY_LEFT);
+      Element right = toggle.getElement().getElementsByTagName("button").getItem(1);
+      assertEquals(right, DomUtils.getActiveElement());
+   }
+
    public void testFocusFirstTabStopReturnsToLastFocused()
    {
       Toolbar toolbar = attach(new Toolbar("Test"));
