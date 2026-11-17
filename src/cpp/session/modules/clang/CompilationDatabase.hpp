@@ -157,6 +157,11 @@ core::FilePath findCompileFlagsFile(const core::FilePath& dir,
                                     const core::FilePath& stopDir);
 core::FilePath compileFlagsFileForSource(const core::FilePath& srcFile);
 std::vector<std::string> readCompileFlags(const core::FilePath& flagsFile);
+
+// Keeps the flags that only shape how a file is parsed and diagnosed; the
+// rest are dropped and, with any value that follows them, put in pRejected.
+std::vector<std::string> filterCompileFlags(const std::vector<std::string>& flags,
+                                            std::vector<std::string>* pRejected = nullptr);
 std::vector<std::string> resolveCompileFlagPaths(const std::vector<std::string>& flags,
                                                  const core::FilePath& dir);
 std::vector<std::string> compileFlagsForSource(const core::FilePath& srcFile);

@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <cstring>
 #include <map>
+#include <set>
 #include <gsl/gsl-lite.hpp>
 
 #include <boost/format.hpp>
@@ -263,6 +264,256 @@ std::vector<std::string> readCompileFlags(const FilePath& flagsFile)
    return flags;
 }
 
+namespace {
+
+// The flags a compile_flags.txt may supply: those that shape how a file is
+// parsed and diagnosed (macros, include paths, the language and target,
+// warnings). Anything else, such as an option that loads a plugin, writes a
+// file, or passes arguments on to another tool, is dropped and reported.
+
+// How an option takes its value: joined to it ('-Iinc'), after an '='
+// ('--sysroot=sys'), or never, so only as the next argument ('-arch arm64')
+enum class JoinedValue { Direct, Equals, Never };
+
+struct CompileFlagOption
+{
+   const char* spelling;
+   JoinedValue joined;
+   bool separate;     // the value may be the next argument, as in '-I inc'
+   bool path;         // the value is a path, resolved against the flags file's directory
+   const char* alias; // the short option a long path option is emitted as, if any
+   const std::set<std::string>* values;   // the values allowed, or null for any
+};
+
+// what '-x' may treat the file as; not, say, a precompiled AST
+const std::set<std::string> kLanguages = {
+   "c", "c++", "c-header", "c++-header",
+   "objective-c", "objective-c++", "objective-c-header", "objective-c++-header",
+};
+
+// Options that take a path, a value joined directly to them, or a value in
+// the next argument. clang reads an argument as the longest option it begins
+// with, so longer spellings come before the ones they extend. The long
+// include options are emitted as the short options they alias, which is the
+// spelling header completion looks for.
+const CompileFlagOption kCompileFlagOptions[] = {
+   { "-D",                        JoinedValue::Direct, true,  false, nullptr,      nullptr     },
+   { "-U",                        JoinedValue::Direct, true,  false, nullptr,      nullptr     },
+   { "-imacros",                  JoinedValue::Direct, true,  true,  nullptr,      nullptr     },
+   { "-include",                  JoinedValue::Direct, true,  true,  nullptr,      nullptr     },
+   { "--include-directory-after", JoinedValue::Equals, true,  true,  "-idirafter", nullptr     },
+   { "--include-directory",       JoinedValue::Equals, true,  true,  "-I",         nullptr     },
+   { "-isystem-after",            JoinedValue::Direct, true,  true,  nullptr,      nullptr     },
+   { "-isystem",                  JoinedValue::Direct, true,  true,  nullptr,      nullptr     },
+   { "-cxx-isystem",              JoinedValue::Direct, true,  true,  nullptr,      nullptr     },
+   { "-idirafter",                JoinedValue::Direct, true,  true,  nullptr,      nullptr     },
+   { "-iquote",                   JoinedValue::Direct, true,  true,  nullptr,      nullptr     },
+   { "-iframework",               JoinedValue::Direct, true,  true,  nullptr,      nullptr     },
+   { "-ivfsoverlay",              JoinedValue::Direct, true,  true,  nullptr,      nullptr     },
+   { "-isysroot",                 JoinedValue::Direct, true,  true,  nullptr,      nullptr     },
+   { "-I",                        JoinedValue::Direct, true,  true,  nullptr,      nullptr     },
+   { "-F",                        JoinedValue::Direct, true,  true,  nullptr,      nullptr     },
+   { "--sysroot",                 JoinedValue::Equals, true,  true,  nullptr,      nullptr     },
+   { "--gcc-toolchain",           JoinedValue::Equals, false, true,  nullptr,      nullptr     },
+   { "-fmodule-map-file",         JoinedValue::Equals, false, true,  nullptr,      nullptr     },
+   { "-target",                   JoinedValue::Never,  true,  false, nullptr,      nullptr     },
+   { "-arch",                     JoinedValue::Never,  true,  false, nullptr,      nullptr     },
+   { "-x",                        JoinedValue::Direct, true,  false, nullptr,      &kLanguages },
+};
+
+// clang options of their own that begin with one of the spellings above
+const char* const kShadowingOptions[] = { "-include-pch", "-iframeworkwithsysroot" };
+
+// Options that take their value only after an '=', as in '-std=c++17'
+const std::set<std::string> kSettingOptions = {
+   "--target", "-std", "-stdlib",
+   "-march", "-mcpu", "-mtune", "-mabi", "-mfpu", "-mfloat-abi",
+   "-mmacos-version-min", "-mmacosx-version-min",
+   "-fbracket-depth", "-fcf-protection", "-fconstexpr-backtrace-limit",
+   "-fconstexpr-depth", "-fconstexpr-steps", "-fdiagnostics-color", "-ferror-limit",
+   "-fexec-charset", "-fgnuc-version", "-finput-charset", "-fmacro-backtrace-limit",
+   "-fms-compatibility-version", "-fmsc-version", "-fnew-alignment", "-fopenmp",
+   "-fopenmp-version", "-fsanitize", "-fspell-checking-limit",
+   "-ftemplate-backtrace-limit", "-ftemplate-depth", "-fvisibility",
+};
+
+// Flags without a value
+const std::set<std::string> kStandaloneFlags = {
+   "-ansi", "-fsyntax-only", "-m32", "-m64", "-nobuiltininc", "-nostdinc",
+   "-nostdinc++", "-nostdlibinc", "-pedantic", "-pedantic-errors", "-pthread",
+   "-trigraphs", "-undef", "-w",
+   "-O", "-O0", "-O1", "-O2", "-O3", "-O4", "-Ofast", "-Og", "-Os", "-Oz",
+   "-g", "-g0", "-g1", "-g2", "-g3", "-ggdb",
+};
+
+// Language and diagnostic features, as '-f<name>' or '-fno-<name>'
+const std::set<std::string> kFeatureFlags = {
+   "PIC", "PIE", "access-control", "aligned-allocation", "asm-blocks", "blocks",
+   "borland-extensions", "builtin", "caret-diagnostics", "cf-protection", "char8_t",
+   "color-diagnostics", "common", "coroutines", "cxx-exceptions", "declspec",
+   "delayed-template-parsing", "diagnostics-color", "diagnostics-fixit-info",
+   "diagnostics-show-option", "diagnostics-show-template-tree", "digraphs",
+   "dollars-in-identifiers", "elide-constructors", "elide-type", "exceptions",
+   "fast-math", "finite-math-only", "freestanding", "gnu-inline-asm", "gnu-keywords",
+   "gnu89-inline", "math-errno", "ms-compatibility", "ms-extensions", "objc-arc",
+   "openmp", "operator-names", "pic", "pie", "rtti", "short-enums", "short-wchar",
+   "show-column", "show-source-location", "signed-char", "sized-deallocation",
+   "spell-checking", "stack-clash-protection", "stack-protector", "stack-protector-all",
+   "stack-protector-strong", "strict-aliasing", "threadsafe-statics", "trigraphs",
+   "unsigned-char", "visibility-inlines-hidden",
+};
+
+// Instruction set extensions, as '-m<name>' or '-mno-<name>'
+const std::set<std::string> kTargetFeatureFlags = {
+   "aes", "avx", "avx2", "avx512bw", "avx512cd", "avx512dq", "avx512f", "avx512vl",
+   "bmi", "bmi2", "f16c", "fma", "lzcnt", "pclmul", "popcnt", "sha", "sse", "sse2",
+   "sse3", "sse4.1", "sse4.2", "ssse3",
+};
+
+struct CompileFlagMatch
+{
+   const CompileFlagOption* option = nullptr;
+   std::string value;
+   bool separate = false;   // the value is the next argument
+};
+
+// Whether clang reads an argument as a value, rather than as an option or a
+// response file ('@args')
+bool isPlainValue(const std::string& arg)
+{
+   return !boost::algorithm::starts_with(arg, "-") && !boost::algorithm::starts_with(arg, "@");
+}
+
+// Matches the argument at 'i' against the options in kCompileFlagOptions. A
+// value in the next argument must be a plain value: then whatever clang makes
+// of the arguments before it, each argument we pass on is either a flag we
+// have checked or a value, never an option we haven't.
+bool matchCompileFlagOption(const std::vector<std::string>& flags,
+                            std::size_t i,
+                            CompileFlagMatch* pMatch)
+{
+   const std::string& flag = flags[i];
+
+   for (const char* shadowing : kShadowingOptions)
+   {
+      if (boost::algorithm::starts_with(flag, shadowing))
+         return false;
+   }
+
+   for (const CompileFlagOption& option : kCompileFlagOptions)
+   {
+      if (!boost::algorithm::starts_with(flag, option.spelling))
+         continue;
+
+      std::string rest = flag.substr(std::strlen(option.spelling));
+      std::string value;
+      bool separate = false;
+      if (rest.empty() && option.separate)
+      {
+         if (i + 1 == flags.size() || !isPlainValue(flags[i + 1]))
+            return false;
+
+         value = flags[i + 1];
+         separate = true;
+      }
+      else if (option.joined == JoinedValue::Direct && !rest.empty())
+      {
+         value = rest;
+      }
+      else if (option.joined == JoinedValue::Equals && rest.size() > 1 && rest[0] == '=')
+      {
+         value = rest.substr(1);
+      }
+      else
+      {
+         continue;
+      }
+
+      if (option.values != nullptr && option.values->count(value) == 0)
+         return false;
+
+      pMatch->option = &option;
+      pMatch->value = value;
+      pMatch->separate = separate;
+      return true;
+   }
+
+   return false;
+}
+
+// Whether a flag that doesn't take its value from the next argument is allowed
+bool isAllowedSingleFlag(const std::string& flag)
+{
+   if (kStandaloneFlags.count(flag) > 0)
+      return true;
+
+   std::size_t equals = flag.find('=');
+   if (equals != std::string::npos && equals + 1 < flag.size() &&
+       kSettingOptions.count(flag.substr(0, equals)) > 0)
+   {
+      return true;
+   }
+
+   // a warning ('-Wall', '-Wno-unused', '-Werror=format'); the only other
+   // '-W' options, '-Wa,', '-Wl,' and '-Wp,', pass arguments on to other tools
+   if (boost::algorithm::starts_with(flag, "-W"))
+      return flag.size() > 2 && flag.find(',') == std::string::npos;
+
+   // a feature ('-fopenmp', '-fno-exceptions', '-mavx2', '-mno-sse4')
+   const std::set<std::string>* pFeatures = nullptr;
+   if (boost::algorithm::starts_with(flag, "-f"))
+      pFeatures = &kFeatureFlags;
+   else if (boost::algorithm::starts_with(flag, "-m"))
+      pFeatures = &kTargetFeatureFlags;
+
+   if (pFeatures == nullptr)
+      return false;
+
+   std::string name = flag.substr(2);
+   if (boost::algorithm::starts_with(name, "no-"))
+      name = name.substr(3);
+
+   return pFeatures->count(name) > 0;
+}
+
+} // anonymous namespace
+
+std::vector<std::string> filterCompileFlags(const std::vector<std::string>& flags,
+                                            std::vector<std::string>* pRejected)
+{
+   std::vector<std::string> allowed;
+   for (std::size_t i = 0; i < flags.size(); i++)
+   {
+      const std::string& flag = flags[i];
+
+      CompileFlagMatch match;
+      if (matchCompileFlagOption(flags, i, &match))
+      {
+         allowed.push_back(flag);
+         if (match.separate)
+            allowed.push_back(flags[++i]);
+         continue;
+      }
+
+      if (isAllowedSingleFlag(flag))
+      {
+         allowed.push_back(flag);
+         continue;
+      }
+
+      // a value after a dropped option goes with it, rather than being
+      // reported (and dropped) on its own
+      std::string rejected = flag;
+      if (boost::algorithm::starts_with(flag, "-") && i + 1 < flags.size() && isPlainValue(flags[i + 1]))
+         rejected += " " + flags[++i];
+
+      if (pRejected != nullptr)
+         pRejected->push_back(rejected);
+   }
+
+   return allowed;
+}
+
 // A relative path in compile_flags.txt is relative to the file, as in clangd,
 // but libclang would resolve it against the session's working directory. We
 // make such paths absolute here rather than passing '-working-directory', so
@@ -272,75 +523,25 @@ std::vector<std::string> readCompileFlags(const FilePath& flagsFile)
 std::vector<std::string> resolveCompileFlagPaths(const std::vector<std::string>& flags,
                                                  const FilePath& dir)
 {
-   // how clang accepts the operand of each path option: joined to it
-   // ('-Iinc'), after an '=' ('--include-directory=inc'), or only as the
-   // next argument ('-include-pch x.pch'); all of them also take it as the
-   // next argument. Longer spellings come before the ones they extend, so
-   // '-isystem-after' isn't read as '-isystem' with a '-after...' operand.
-   // The long include options are emitted as the short options they alias,
-   // which is the spelling header completion looks for.
-   enum OperandStyle { Joined, Equals, Separate };
-   struct PathOption { const char* spelling; OperandStyle style; const char* alias; };
-   static const PathOption kPathOptions[] = {
-      { "--include-directory-after", Equals, "-idirafter" },
-      { "--include-directory", Equals, "-I" },
-      { "--gcc-toolchain", Equals, nullptr },
-      { "--sysroot", Equals, nullptr },
-      { "-fmodule-map-file", Equals, nullptr },
-      { "-include-pch", Separate, nullptr },
-      { "-isystem-after", Joined, nullptr },
-      { "-cxx-isystem", Joined, nullptr },
-      { "-ivfsoverlay", Joined, nullptr },
-      { "-iframework", Joined, nullptr },
-      { "-idirafter", Joined, nullptr },
-      { "-isysroot", Joined, nullptr },
-      { "-imacros", Joined, nullptr },
-      { "-include", Joined, nullptr },
-      { "-isystem", Joined, nullptr },
-      { "-iquote", Joined, nullptr },
-      { "-F", Joined, nullptr },
-      { "-I", Joined, nullptr },
-   };
-
    std::vector<std::string> resolved;
    for (std::size_t i = 0; i < flags.size(); i++)
    {
-      const std::string& flag = flags[i];
-
-      const PathOption* option = nullptr;
-      bool separate = false;
-      std::string path;
-      for (const PathOption& candidate : kPathOptions)
+      CompileFlagMatch match;
+      bool matched = matchCompileFlagOption(flags, i, &match);
+      if (!matched || !match.option->path)
       {
-         if (!boost::algorithm::starts_with(flag, candidate.spelling))
-            continue;
-
-         std::string rest = flag.substr(std::strlen(candidate.spelling));
-         if (rest.empty())
-            separate = true;
-         else if (candidate.style == Joined)
-            path = rest;
-         else if (candidate.style == Equals && rest[0] == '=')
-            path = rest.substr(1);
-         else
-            continue;
-
-         option = &candidate;
-         break;
-      }
-
-      // not a path option, or one with no operand at all (left for clang to report)
-      if (option == nullptr || (separate && i + 1 == flags.size()))
-      {
-         resolved.push_back(flag);
+         resolved.push_back(flags[i]);
+         if (matched && match.separate)
+            resolved.push_back(flags[++i]);
          continue;
       }
 
-      if (separate)
-         path = flags[++i];
+      if (match.separate)
+         i++;
 
       // clang replaces a leading '=' or '$SYSROOT' with the sysroot, so
-      // such an operand isn't relative to the flags file
+      // such a path isn't relative to the flags file
+      std::string path = match.value;
       bool sysrootRelative =
             boost::algorithm::starts_with(path, "=") ||
             boost::algorithm::starts_with(path, "$SYSROOT");
@@ -348,25 +549,13 @@ std::vector<std::string> resolveCompileFlagPaths(const std::vector<std::string>&
          path = dir.completePath(path).getAbsolutePath();
 
       // emit each option in a single spelling, so the same flags hash alike
-      if (option->alias != nullptr)
-      {
-         resolved.push_back(option->alias + path);
-         continue;
-      }
-
-      switch (option->style)
-      {
-      case Joined:
-         resolved.push_back(option->spelling + path);
-         break;
-      case Equals:
-         resolved.push_back(option->spelling + ("=" + path));
-         break;
-      case Separate:
-         resolved.push_back(option->spelling);
-         resolved.push_back(path);
-         break;
-      }
+      const CompileFlagOption& option = *match.option;
+      if (option.alias != nullptr)
+         resolved.push_back(option.alias + path);
+      else if (option.joined == JoinedValue::Equals)
+         resolved.push_back(option.spelling + ("=" + path));
+      else
+         resolved.push_back(option.spelling + path);
    }
 
    return resolved;
@@ -382,9 +571,9 @@ std::vector<std::string> compileFlagsForSource(const FilePath& srcFile)
    if (flagsFile.isEmpty())
       return {};
 
-   // a file with no flags in it is the same as no file, so it keeps
-   // sharing the default precompiled header
-   std::vector<std::string> flags = readCompileFlags(flagsFile);
+   // a file with no allowed flags in it is the same as no file, so it keeps
+   // sharing the default precompiled header; the diagnostics report the rest
+   std::vector<std::string> flags = filterCompileFlags(readCompileFlags(flagsFile));
    if (flags.empty())
       return {};
 
@@ -411,7 +600,7 @@ std::vector<std::string> compileFlagsForSource(const FilePath& srcFile)
 }
 
 // A user-flags PCH would otherwise outlive its 'compile_flags.txt': once the
-// file is gone (or emptied) its sources share the default PCH again, and
+// file is gone (or has no allowed flags left) its sources share the default PCH again, and
 // nothing else touches the variant. So drop the variants built from any
 // flags file we have read that no longer supplies flags.
 void removeOrphanedUserFlagsPchs(const FilePath& platformPath,
@@ -420,7 +609,7 @@ void removeOrphanedUserFlagsPchs(const FilePath& platformPath,
    for (auto it = s_compileFlagsCache.begin(); it != s_compileFlagsCache.end(); )
    {
       FilePath flagsFile(it->first);
-      if (flagsFile.exists() && !readCompileFlags(flagsFile).empty())
+      if (flagsFile.exists() && !filterCompileFlags(readCompileFlags(flagsFile)).empty())
       {
          ++it;
          continue;

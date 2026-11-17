@@ -193,7 +193,20 @@ json::Array getCppDiagnosticsJson(const FilePath& filePath)
    // so when one is in play we surface those at the top of the file instead
    // of silently dropping them
    FilePath flagsFile = compileFlagsFileForSource(filePath);
-   bool hasUserFlags = !flagsFile.isEmpty() && !readCompileFlags(flagsFile).empty();
+   std::vector<std::string> rejectedFlags;
+   bool hasUserFlags =
+         !flagsFile.isEmpty() &&
+         !filterCompileFlags(readCompileFlags(flagsFile), &rejectedFlags).empty();
+
+   // flags we don't pass on to libclang are reported, so they aren't
+   // mistaken for flags that had no effect
+   for (const std::string& flag : rejectedFlags)
+   {
+      std::string message =
+            "'" + flag + "' in " + module_context::createAliasedPath(flagsFile) +
+            " was ignored; only flags that affect how files are parsed are supported";
+      diagnosticsJson.push_back(syntheticDiagnosticJson(filePath, CXDiagnostic_Warning, message));
+   }
 
    // get diagnostics from translation unit
    std::string filename = filePath.getAbsolutePath();
