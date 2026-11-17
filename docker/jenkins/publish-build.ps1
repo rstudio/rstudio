@@ -83,6 +83,9 @@ function Test-Retryable {
 # Create the build file. A 422 means the file already exists -- a re-publish, or an earlier
 # attempt that GitHub committed before returning an error -- so fetch the existing file's sha
 # and send an update instead. Throws if any request fails.
+#
+# -UseBasicParsing is required: without it, Windows PowerShell's web cmdlets depend on the IE
+# DOM engine, which the Windows SKU this script runs on doesn't have.
 function Publish-BuildFile {
     param(
         $uri,
@@ -170,9 +173,6 @@ if ($channel -eq "Hourly")
 }
 
 $url = "https://api.github.com/repos/rstudio/latest-builds/contents/content/$product/$flower/$build/$versionStem.md"
-# Send to Github! We have to use basic parsing here because this script runs on SKU of Windows that
-# doesn't contain a working copy of IE (and, incredibly, without -UseBasicParsing, Invoke-WebRequest
-# has a dendency on the IE DOM engine).
 
 Write-Host "Writing content to $url"
 
