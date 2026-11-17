@@ -1,7 +1,7 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
-import { installDepIfPrompted, CONFIRM_BTN, NO_BTN } from '@pages/modals.page';
+import { installDepIfPrompted, CONFIRM_BTN, NEW_DOCUMENT_ERROR_MODAL, NO_BTN } from '@pages/modals.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { executeCommand } from '@utils/commands';
 import type { Page } from 'playwright';
@@ -101,6 +101,42 @@ test.describe('Create file types', () => {
     // already current), and the doc is created either way.
     await page.locator(NO_BTN).click({ timeout: 15000 }).catch(() => {});
     await consoleActions.resetSourcePane();
+  });
+
+  // A new_document RPC lost in transit (a Windows CI runner's
+  // net::ERR_NO_BUFFER_SPACE, run 44136608397) used to be dropped without a
+  // trace: no tab, no dialog. route.abort() reproduces that failure.
+  test('reports a failed new_document, and newDocument() retries past it', async ({ rstudioPage: page }) => {
+    let failures = 0;
+    await page.route('**/rpc/new_document', async (route) => {
+      if (failures < 1) {
+        failures++;
+        await route.abort('failed');
+        return;
+      }
+      await route.continue();
+    });
+
+    try {
+      const errorDialog = page.locator(NEW_DOCUMENT_ERROR_MODAL);
+      await executeCommand(page, 'newMarkdownDoc');
+      await expect(errorDialog).toBeVisible({ timeout: 20000 });
+      await errorDialog.locator(CONFIRM_BTN).click();
+      await expect(errorDialog).toBeHidden();
+      await expect(sourceTabs(page)).toHaveCount(1);
+
+      // The helper dismisses that same dialog and reissues the command.
+      failures = 0;
+      await sourceActions.newDocument('newMarkdownDoc');
+      expect(failures).toBe(1);
+      await expect(sourceTabs(page)).toHaveCount(2);
+      await expect(
+        sourceActions.sourcePane.footerTable.getByText('Markdown', { exact: true })
+      ).toBeVisible();
+    } finally {
+      await page.unroute('**/rpc/new_document');
+      await consoleActions.resetSourcePane();
+    }
   });
 
   // ---- Types that need an R package and/or a creation dialog ----

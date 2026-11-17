@@ -33,14 +33,9 @@ test.describe('Markdown', () => {
     await consoleActions.clearConsole();
   });
 
-  test('create new markdown file', async ({ rstudioPage: page }) => {
+  test('create new markdown file', async () => {
     // Original: test_desktop_Markdown.py::test_creating_new_markdown_file
-    await executeCommand(page, 'newMarkdownDoc');
-
-    // The suite keeps an Untitled placeholder tab open, so the new doc may be
-    // Untitled2 rather than Untitled1 -- assert the stable parts (it's an
-    // Untitled doc, and its file type is Markdown).
-    await expect(sourceActions.sourcePane.selectedTab).toContainText('Untitled', { timeout: 10000 });
+    await sourceActions.newDocument('newMarkdownDoc');
     await expect(sourceActions.sourcePane.footerTable).toContainText('Markdown');
 
     await consoleActions.resetSourcePane();

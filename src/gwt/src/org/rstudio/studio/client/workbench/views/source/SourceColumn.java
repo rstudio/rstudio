@@ -1159,8 +1159,12 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                @Override
                public void onError(ServerError error)
                {
+                  // Callers without a result callback (the New File commands)
+                  // have no other way to learn the document was never created.
                   if (resultCallback != null)
                      resultCallback.onFailure(error);
+                  else
+                     super.onError(error);
                }
             });
    }

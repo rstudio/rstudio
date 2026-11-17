@@ -3,9 +3,7 @@ import { externalServerUrl } from '@fixtures/server.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { InsertCitationDialog, CITATION_SOURCES } from '@pages/insert_citation.page';
-import { installDepIfPrompted } from '@pages/modals.page';
 import { useSuiteSandbox } from '@utils/sandbox';
-import { executeCommand } from '@utils/commands';
 import { executeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { rStringLiteral } from '@utils/r';
 import { CitationServiceMock, RESET_CITATION_SERVICE_OPTIONS, type CitationService } from '@utils/citation-services';
@@ -110,17 +108,15 @@ test.describe('Citations', () => {
 
   // Open a fresh markdown document in visual mode (the only place citations are
   // reachable). Plain markdown is the cheapest host -- no rmarkdown package, no
-  // Quarto new-doc wizard.
-  async function newMarkdownVisualDoc(page: Page): Promise<void> {
-    await executeCommand(page, 'newMarkdownDoc');
-    await installDepIfPrompted(page);
-    await expect(sourceActions.sourcePane.selectedTab).toContainText('Untitled', { timeout: 20000 });
+  // Quarto new-doc wizard, and no dependency prompt.
+  async function newMarkdownVisualDoc(): Promise<void> {
+    await sourceActions.newDocument('newMarkdownDoc');
     await sourceActions.ensureVisualMode();
   }
 
   test('inserts an authorless DOI citation into a markdown visual editor', async ({ rstudioPage: page }) => {
     skipUnlessServicesReachable();
-    await newMarkdownVisualDoc(page);
+    await newMarkdownVisualDoc();
 
     const citation = new InsertCitationDialog(page);
     await citation.open();
@@ -177,7 +173,7 @@ test.describe('Citations', () => {
   // search. Insert one and verify it lands in the document -- the only insert
   // test that exercises a non-network source.
   test('inserts an R Package citation into the document', async ({ rstudioPage: page }) => {
-    await newMarkdownVisualDoc(page);
+    await newMarkdownVisualDoc();
 
     const citation = new InsertCitationDialog(page);
     await citation.open();
@@ -192,7 +188,7 @@ test.describe('Citations', () => {
 
   test('deletes a staged citation', async ({ rstudioPage: page }) => {
     skipUnlessServicesReachable();
-    await newMarkdownVisualDoc(page);
+    await newMarkdownVisualDoc();
 
     const citation = new InsertCitationDialog(page);
     await citation.open();
@@ -216,7 +212,7 @@ test.describe('Citations', () => {
   test('does not duplicate a citation inserted from two sources', async ({ rstudioPage: page }) => {
     // The same work is inserted first via From DOI, then via DataCite.
     skipUnlessServicesReachable();
-    await newMarkdownVisualDoc(page);
+    await newMarkdownVisualDoc();
     const citation = new InsertCitationDialog(page);
     const doi = '10.5281/ZENODO.4266706';
 
@@ -245,7 +241,7 @@ test.describe('Citations', () => {
   // Clicking Insert with nothing staged should dismiss the dialog rather than
   // leaving it stuck open (#12833).
   test('dismisses the dialog when inserting with nothing staged', async ({ rstudioPage: page }) => {
-    await newMarkdownVisualDoc(page);
+    await newMarkdownVisualDoc();
 
     const citation = new InsertCitationDialog(page);
     await citation.open();
@@ -284,7 +280,7 @@ test.describe('Citations', () => {
   for (const source of SEARCH_SOURCES) {
     test(`searches ${source.alt} and returns matching results`, async ({ rstudioPage: page }) => {
       skipUnlessServicesReachable();
-      await newMarkdownVisualDoc(page);
+      await newMarkdownVisualDoc();
 
       const citation = new InsertCitationDialog(page);
       await citation.open();
@@ -333,7 +329,7 @@ test.describe('Citations', () => {
     test(`reports a ${what} service failure in the dialog`, async ({ rstudioPage: page }) => {
       skipUnlessUsingMock();
       services.fail(service, 503, resource);
-      await newMarkdownVisualDoc(page);
+      await newMarkdownVisualDoc();
 
       const citation = new InsertCitationDialog(page);
       await citation.open();
@@ -351,7 +347,7 @@ test.describe('Citations', () => {
   // an R parse error.
   test('looks up a DOI containing a quote', async ({ rstudioPage: page }) => {
     skipUnlessServicesReachable();
-    await newMarkdownVisualDoc(page);
+    await newMarkdownVisualDoc();
 
     const citation = new InsertCitationDialog(page);
     await citation.open();
