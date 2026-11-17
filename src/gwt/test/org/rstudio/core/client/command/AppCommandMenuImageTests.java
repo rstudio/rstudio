@@ -71,13 +71,16 @@ public class AppCommandMenuImageTests extends GWTTestCase
    {
       // Chrome exposes layout elements without a role, such as table parts and
       // the right image's floated <div>, as nameless generic nodes, which
-      // VoiceOver announces as "group" after the menu item's text.
-      ImageResource2x rightImage =
+      // VoiceOver announces as "group" after the menu item's text. Elements in
+      // the aria-hidden icon cell are checked too, in case it's ever unhidden.
+      ImageResource2x image =
             new ImageResource2x(ThemeResources.INSTANCE.executeChunk2x());
       String[] labels = {
             AppCommand.formatMenuLabel(null, "Item", "Ctrl+K"),
             AppCommand.formatMenuLabel(null, "Item", null),
-            AppCommand.formatMenuLabel(null, "Item", false, null, rightImage, "Run"),
+            AppCommand.formatMenuLabel(image, "Item", "Ctrl+K"),
+            AppCommand.formatMenuLabel(null, "Item", false, null, image, "Run"),
+            AppCommand.formatMenuLabelWithStyle(null, "Item", "Ctrl+K", "styled"),
       };
       for (String html : labels)
       {
@@ -88,19 +91,13 @@ public class AppCommandMenuImageTests extends GWTTestCase
          for (int i = 0; i < elements.getLength(); i++)
          {
             Element el = elements.getItem(i);
-            if (el.getTagName().equalsIgnoreCase("img") || isHidden(el, label))
+            // images and the empty icon cell's <br/> are content, not layout
+            String tag = el.getTagName().toLowerCase();
+            if (tag.equals("img") || tag.equals("br"))
                continue;
             assertEquals(el.getTagName(), "presentation", el.getAttribute("role"));
          }
       }
-   }
-
-   private static boolean isHidden(Element el, Element root)
-   {
-      for (; el != root; el = el.getParentElement())
-         if ("true".equals(el.getAttribute("aria-hidden")))
-            return true;
-      return false;
    }
 
    @Override
