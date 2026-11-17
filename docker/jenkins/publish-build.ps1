@@ -63,14 +63,21 @@ function Get-StatusCode {
     return [int]$response.StatusCode
 }
 
-# Commit conflicts (409, e.g. interleaving with another publish), timeouts, rate limits,
-# server errors, and transport failures with no response are worth retrying.
+# Transport failures with no response, commit conflicts (409, e.g. interleaving with another
+# publish), timeouts, rate limits, and server errors are worth retrying. Other errors,
+# including bugs in this script, are not.
 function Test-Retryable {
     param(
-        $statusCode
+        $errorRecord
     )
 
-    return ($null -eq $statusCode) -or ($statusCode -in 408, 409, 429) -or ($statusCode -ge 500)
+    $statusCode = Get-StatusCode $errorRecord
+    if ($null -eq $statusCode) {
+        # WebException on Windows PowerShell; HttpRequestException on PowerShell 7
+        return $errorRecord.Exception.GetType().FullName -in
+            'System.Net.WebException', 'System.Net.Http.HttpRequestException'
+    }
+    return ($statusCode -in 408, 409, 429) -or ($statusCode -ge 500)
 }
 
 # Create the build file. A 422 means the file already exists -- a re-publish, or an earlier
@@ -94,9 +101,10 @@ function Publish-BuildFile {
         if ((Get-StatusCode $_) -ne 422) {
             throw
         }
+        Write-Host "Received a 422: $($_.ErrorDetails.Message)"
     }
 
-    Write-Host "Received a 422, assuming the file already exists. Getting existing file's SHA"
+    Write-Host "Assuming the file already exists. Getting existing file's SHA"
     $existing = Invoke-RestMethod -Method 'GET' -Headers $headers -Uri $uri -UseBasicParsing
     $updatePayload = @{ message = $updateMessage; content = $content; sha = $existing.sha } |
         ConvertTo-Json -Compress
@@ -179,10 +187,12 @@ for ($retry = 0; ; $retry++) {
         break
     } catch {
         $statusCode = Get-StatusCode $_
-        $status = if ($null -eq $statusCode) { "no response" } else { "HTTP $statusCode" }
+        $status = if ($null -eq $statusCode) { "no HTTP response" } else { "HTTP $statusCode" }
         Write-Host "Request failed ($status): $($_.Exception.Message) $($_.ErrorDetails.Message)"
-        if (($retry -ge $maxRetries) -or -not (Test-Retryable $statusCode)) {
-            throw "Failed to publish $flower build $version to $url ($status); see the log above"
+        if (($retry -ge $maxRetries) -or -not (Test-Retryable $_)) {
+            throw "Failed to publish $flower build $version to $url ($status): " +
+                "$($_.Exception.Message)`nCheck the log above, the PAT's access to " +
+                "rstudio/latest-builds, and githubstatus.com."
         }
         $delay = Get-Random -Minimum 3 -Maximum 9
         Write-Host "Retrying in $delay seconds (retry $($retry + 1) of $maxRetries)"
