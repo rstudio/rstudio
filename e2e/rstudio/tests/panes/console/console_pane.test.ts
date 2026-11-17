@@ -163,12 +163,18 @@ test.describe('Console pane', () => {
     await consoleActions.executeInConsole('k()');
 
     await expect(consoleActions.consolePane.tracebackBtn).toBeVisible({ timeout: 10000 });
+    await expect(consoleActions.consolePane.tracebackBtn).toHaveText('Show Traceback');
     await consoleActions.consolePane.tracebackBtn.click();
     await expect(consoleActions.consolePane.stackTrace).toBeVisible();
+    await expect(consoleActions.consolePane.tracebackBtn).toHaveText('Hide Traceback');
 
     const actual = (await consoleActions.consolePane.stackTrace.innerText()).replace(/\s+/g, '');
     const expected = '5.function()stop()4.function()f()3.function()g()2.function()h()1.k()';
     expect(actual).toBe(expected);
+
+    await consoleActions.consolePane.tracebackBtn.click();
+    await expect(consoleActions.consolePane.stackTrace).toBeHidden();
+    await expect(consoleActions.consolePane.tracebackBtn).toHaveText('Show Traceback');
   });
 
   test.describe('Find in Console', () => {

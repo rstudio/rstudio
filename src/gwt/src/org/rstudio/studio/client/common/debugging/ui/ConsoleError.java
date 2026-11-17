@@ -16,12 +16,11 @@
 package org.rstudio.studio.client.common.debugging.ui;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Node;
-import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 
 import org.rstudio.core.client.VirtualConsole;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.common.debugging.model.ErrorFrame;
@@ -148,27 +147,22 @@ public class ConsoleError extends Composite
    {
       showingTraceback_ = visible;
 
-      NodeList<Node> children = this.getElement().getChildNodes();
-      for (int i = 0; i < children.getLength(); i++)
+      // The label sits inside the commands panel, below the box's direct children,
+      // so search the whole subtree for both elements.
+      Element label = DomUtils.querySelector(getElement(), ".show_traceback_text");
+      if (label != null)
       {
-         Node n = children.getItem(i);
-         if (n.getNodeType() != Node.ELEMENT_NODE)
-            continue;
+         label.setInnerText(showingTraceback_
+               ? constants_.hideTracebackText()
+               : constants_.showTracebackText());
+      }
 
-         Element child = Element.as(children.getItem(i));
-         if (child.hasClassName("show_traceback_text")) {
-            if (showingTraceback_)
-               child.setInnerText(constants_.hideTracebackText());
-            else
-               child.setInnerText(constants_.showTracebackText());
-         }
-         else if (child.hasClassName("stack_trace"))
-         {
-            if (showingTraceback_)
-               child.getStyle().setDisplay(Style.Display.BLOCK);
-            else
-               child.getStyle().setDisplay(Style.Display.NONE);
-         }
+      Element stackTrace = DomUtils.querySelector(getElement(), ".stack_trace");
+      if (stackTrace != null)
+      {
+         stackTrace.getStyle().setDisplay(showingTraceback_
+               ? Style.Display.BLOCK
+               : Style.Display.NONE);
       }
    }
 
