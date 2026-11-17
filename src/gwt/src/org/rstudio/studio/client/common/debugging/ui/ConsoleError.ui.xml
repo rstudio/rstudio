@@ -91,9 +91,7 @@
                     width="9"
                     height="9"
                     styleName="{style.errorCommandImage} rerun_image"/>
-           <g:Anchor styleName="{style.errorCommandText} rerun_text" ui:field="rerunText">
-              Rerun with Debug
-           </g:Anchor>
+           <g:Anchor styleName="{style.errorCommandText} rerun_text" ui:field="rerunText"/>
         </g:HTMLPanel>
      </g:HTMLPanel>
      <g:HTML ui:field="errorMessage" styleName="{style.errorMessage}"></g:HTML>
