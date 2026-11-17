@@ -101,10 +101,19 @@ function Publish-BuildFile {
             throw
         }
         Write-Host "Received a 422: $($_.ErrorDetails.Message)"
+        $createError = $_
     }
 
     Write-Host "Assuming the file already exists. Getting existing file's SHA"
-    $existing = Invoke-RestMethod -Method 'GET' @request
+    try {
+        $existing = Invoke-RestMethod -Method 'GET' @request
+    } catch {
+        # No file means the 422 was some other validation failure; report it, not the 404
+        if ((Get-StatusCode $_) -eq 404) {
+            throw $createError
+        }
+        throw
+    }
     $updatePayload = @{ message = $updateMessage; content = $content; sha = $existing.sha } |
         ConvertTo-Json -Compress
     Write-Host "Sending to Github: $updatePayload"
