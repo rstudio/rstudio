@@ -16,11 +16,9 @@
 package org.rstudio.studio.client.common.debugging.ui;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 
 import org.rstudio.core.client.VirtualConsole;
-import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.common.debugging.model.ErrorFrame;
@@ -146,24 +144,10 @@ public class ConsoleError extends Composite
    public void setTracebackVisible(boolean visible)
    {
       showingTraceback_ = visible;
-
-      // The label sits inside the commands panel, below the box's direct children,
-      // so search the whole subtree for both elements.
-      Element label = DomUtils.querySelector(getElement(), ".show_traceback_text");
-      if (label != null)
-      {
-         label.setInnerText(showingTraceback_
-               ? constants_.hideTracebackText()
-               : constants_.showTracebackText());
-      }
-
-      Element stackTrace = DomUtils.querySelector(getElement(), ".stack_trace");
-      if (stackTrace != null)
-      {
-         stackTrace.getStyle().setDisplay(showingTraceback_
-               ? Style.Display.BLOCK
-               : Style.Display.NONE);
-      }
+      showTracebackText.setText(showingTraceback_
+            ? constants_.hideTracebackText()
+            : constants_.showTracebackText());
+      framePanel.setVisible(showingTraceback_);
    }
 
    @UiField Anchor showTracebackText;
