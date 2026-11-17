@@ -433,9 +433,8 @@ public class ConsoleInterpreterVersion
       @MimeType("image/svg+xml")
       DataResource pythonLogo();
 
-      // the Julia file icon
-      @Source("org/rstudio/studio/client/common/filetypes/iconJulia_2x.png")
-      @MimeType("image/png")
+      @Source("org/rstudio/studio/client/common/icons/julia_logo.svg")
+      @MimeType("image/svg+xml")
       DataResource juliaLogo();
    }
 
