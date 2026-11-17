@@ -1,5 +1,5 @@
 import type { Locator, Page } from 'playwright';
-import { expect } from '@playwright/test';
+import { errors, expect } from '@playwright/test';
 import { SourcePane } from '../pages/source_pane.page';
 import { ConsolePaneActions } from './console_pane.actions';
 import { TIMEOUTS, sleep } from '../utils/constants';
@@ -338,11 +338,15 @@ export class SourcePaneActions {
    * "Untitled" passes even when no document was created.
    *
    * A Windows CI runner can drop the new_document RPC at the transport layer
-   * (net::ERR_NO_BUFFER_SPACE in run 44136608397). That error comes from the
-   * connect, before the request reaches the session, so reissuing the command
-   * does not create a second document. The IDE reports the failure in an
-   * "Error Creating New Document" dialog, which is the signal to dismiss it
-   * and retry once.
+   * (net::ERR_NO_BUFFER_SPACE in run 44136608397). The IDE reports the failure
+   * in an "Error Creating New Document" dialog, which is the signal to dismiss
+   * it and retry once.
+   *
+   * The retry can leave an extra document behind. The error is thought to be
+   * ephemeral port exhaustion, which fails the connect before the request
+   * reaches the session, but a transport error can't rule out a lost response
+   * instead. In that case the session already created the document, and it
+   * shows up as an extra tab after the next reload.
    *
    * Only for commands that create the document directly. A command that
    * opens a wizard or a dependency prompt first needs its own handling.
@@ -367,7 +371,16 @@ export class SourcePaneActions {
           { prevId: previousId, dialogSelector: NEW_DOCUMENT_ERROR_MODAL },
           { timeout: TIMEOUTS.fileOpen, polling: 50 },
         )
-        .then((handle) => handle.jsonValue(), () => 'timeout');
+        .then(
+          (handle) => handle.jsonValue(),
+          (err: unknown) => {
+            // Anything else (a closed page, a throwing predicate) is not a
+            // missing document; let it surface as itself.
+            if (err instanceof errors.TimeoutError)
+              return 'timeout';
+            throw err;
+          },
+        );
 
       if (outcome === 'created')
         return;

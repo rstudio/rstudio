@@ -1091,6 +1091,15 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    public void newDoc(EditableFileType fileType,
                       ResultCallback<EditingTarget, ServerError> callback)
    {
+      newDoc(fileType, callback, true);
+   }
+
+   // Pass reportErrors = false for a document the user didn't ask for, whose
+   // failure would otherwise raise a dialog about an action they never took.
+   public void newDoc(EditableFileType fileType,
+                      ResultCallback<EditingTarget, ServerError> callback,
+                      boolean reportErrors)
+   {
       ensureVisible(true);
       if (fileType instanceof TextFileType)
       {
@@ -1104,26 +1113,34 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                   public void onResponseReceived(String template)
                   {
                      // Create a new document with the supplied template.
-                     newDoc(fileType, template, callback);
+                     newDoc(fileType, template, callback, reportErrors);
                   }
 
                   @Override
                   public void onError(ServerError error)
                   {
                      // Ignore errors; there's just not a template for this type.
-                     newDoc(fileType, null, callback);
+                     newDoc(fileType, null, callback, reportErrors);
                   }
                });
       }
       else
       {
-         newDoc(fileType, null, callback);
+         newDoc(fileType, null, callback, reportErrors);
       }
    }
 
    public void newDoc(EditableFileType fileType,
                       final String contents,
                       final ResultCallback<EditingTarget, ServerError> resultCallback)
+   {
+      newDoc(fileType, contents, resultCallback, true);
+   }
+
+   private void newDoc(EditableFileType fileType,
+                       final String contents,
+                       final ResultCallback<EditingTarget, ServerError> resultCallback,
+                       final boolean reportErrors)
    {
       ensureVisible(false);
       server_.newDocument(
@@ -1159,12 +1176,14 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                @Override
                public void onError(ServerError error)
                {
-                  // Callers without a result callback (the New File commands)
-                  // have no other way to learn the document was never created.
+                  // Report here rather than leave it to the callback: most
+                  // callbacks only handle success, and without a dialog the
+                  // command appears to do nothing.
+                  if (reportErrors)
+                     super.onError(error);
+
                   if (resultCallback != null)
                      resultCallback.onFailure(error);
-                  else
-                     super.onError(error);
                }
             });
    }
@@ -1210,7 +1229,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                Debug.logError(info);
                newTabPending_--;
             }
-         });
+         }, false);
       }
    }
 
