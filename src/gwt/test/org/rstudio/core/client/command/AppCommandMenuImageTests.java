@@ -19,6 +19,7 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.resources.client.ImageResource;
 
@@ -63,6 +64,32 @@ public class AppCommandMenuImageTests extends GWTTestCase
                : menuLabel(icon));
          Element iconCell = label.getElementsByTagName("td").getItem(0);
          assertEquals("true", iconCell.getAttribute("aria-hidden"));
+      }
+   }
+
+   public void testLayoutElementsArePresentational()
+   {
+      // Chrome exposes table parts without a role as nameless generic nodes,
+      // which VoiceOver announces as "group" after the menu item's text.
+      ImageResource2x rightImage =
+            new ImageResource2x(ThemeResources.INSTANCE.executeChunk2x());
+      String[] labels = {
+            AppCommand.formatMenuLabel(null, "Item", "Ctrl+K"),
+            AppCommand.formatMenuLabel(null, "Item", null),
+            AppCommand.formatMenuLabel(null, "Item", false, null, rightImage, "Run"),
+      };
+      for (String html : labels)
+      {
+         Element label = Document.get().createDivElement();
+         label.setInnerHTML(html);
+         assertEquals(1, label.getElementsByTagName("tbody").getLength());
+         for (String tag : new String[] { "table", "tbody", "tr", "td" })
+         {
+            NodeList<Element> elements = label.getElementsByTagName(tag);
+            assertTrue(tag, elements.getLength() > 0);
+            for (int i = 0; i < elements.getLength(); i++)
+               assertEquals(tag, "presentation", elements.getItem(i).getAttribute("role"));
+         }
       }
    }
 

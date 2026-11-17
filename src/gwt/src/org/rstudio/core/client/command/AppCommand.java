@@ -679,7 +679,12 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       int topOffset = -2;
       if (iconOffsetY != null)
          topOffset += iconOffsetY;
-      text.append("<table role=\"presentation\"");
+      // Every layout element gets role="presentation": Chrome exposes table parts
+      // without one as nameless generic nodes, which VoiceOver announces as
+      // "group". The <tbody> is written explicitly so the browser doesn't insert
+      // one without a role.
+      String presentation = " role=\"presentation\"";
+      text.append("<table" + presentation + " ");
       if (label != null)
       {
          text.append("id=\"" + ElementIds.idFromLabel(label) + "_command\" ");
@@ -690,11 +695,13 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
          text.append("class='" + styleName + "' ");
       }
 
-      text.append("border=0 cellpadding=0 cellspacing=0 width='100%'><tr>");
+      text.append("border=0 cellpadding=0 cellspacing=0 width='100%'>" +
+                  "<tbody" + presentation + "><tr" + presentation + ">");
 
       // The icon cell is decorative: icons have empty alt text, and the <br/>
       // placeholder would otherwise add whitespace to the item's name.
-      text.append("<td width=\"25\" style=\"vertical-align: top\" aria-hidden=\"true\">" +
+      text.append("<td" + presentation + " width=\"25\" style=\"vertical-align: top\" " +
+                  "aria-hidden=\"true\">" +
                   "<div style=\"width: 25px; margin-top: " +
                   topOffset + "px; margin-bottom: -10px\">");
       if (icon != null)
@@ -711,21 +718,21 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       label = StringUtil.notNull(label);
       if (!html)
          label = DomUtils.textToHtml(label);
-      text.append("<td>" + label + "</td>");
+      text.append("<td" + presentation + ">" + label + "</td>");
       if (rightImage != null)
       {
          SafeHtml imageHtml = createRightImageHtml(rightImage, rightImageDesc);
-         text.append("<td align=right width=\"25\"><div style=\"width: 25px; float: right; margin-top: -7px; margin-bottom: -10px;\">" + imageHtml.asString() + "</div></td>");
+         text.append("<td" + presentation + " align=right width=\"25\"><div style=\"width: 25px; float: right; margin-top: -7px; margin-bottom: -10px;\">" + imageHtml.asString() + "</div></td>");
       }
       else if (!StringUtil.isNullOrEmpty(shortcut))
       {
-         text.append("<td align=right nowrap>&nbsp;&nbsp;&nbsp;&nbsp;" + shortcut + "</td>");
+         text.append("<td" + presentation + " align=right nowrap>&nbsp;&nbsp;&nbsp;&nbsp;" + shortcut + "</td>");
       }
       else
       {
-         text.append("<td width=\"16\"></td>");
+         text.append("<td" + presentation + " width=\"16\"></td>");
       }
-      text.append("</tr></table>");
+      text.append("</tr></tbody></table>");
 
       return text.toString();
    }
