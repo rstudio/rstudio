@@ -50,7 +50,7 @@ import {
   kRQueryTimeoutMs,
   rExecutableProblem,
   rSharedLibraryProblem,
-  storeRChoice,
+  storeChosenR,
 } from './detect-r';
 import { rChoiceApplies, savedRChoice } from './r-choice';
 import { GwtWindow } from './gwt-window';
@@ -90,6 +90,12 @@ import { harvestRendererTiming, startupCheckpoint } from './startup-timing';
  */
 export function preparedRExecutablePath(rExecutablePath: string): string {
   return process.platform === 'win32' ? fixWindowsRExecutablePath(rExecutablePath) : rExecutablePath;
+}
+
+/** The R a pending restart switches to, and whether it was chosen as the default R. */
+export interface PendingRVersion {
+  path: string;
+  useDefault: boolean;
 }
 
 export enum PendingQuit {
@@ -171,11 +177,14 @@ export class GwtCallback extends EventEmitter {
   initialized = false;
   pendingQuit: number = PendingQuit.PendingQuitNone;
 
-  // the R executable to launch the next session with (set alongside a
-  // pending restart when the user switches R versions)
-  pendingRVersion = '';
-  /** the R executables setPendingRVersion() found usable, which a quit may then name */
-  preparedRVersions = new Set<string>();
+  // the R to launch the next session with (set alongside a pending restart
+  // when the user switches R versions)
+  pendingRVersion: PendingRVersion | null = null;
+  /**
+   * the R executables setPendingRVersion() found usable, which a quit may
+   * then name, each with whether it was chosen as the default R
+   */
+  preparedRVersions = new Map<string, boolean>();
 
   // counts setDefaultRVersion() requests, so that one checked after a later
   // request was made doesn't overwrite the later choice
@@ -621,8 +630,8 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.handle('desktop_get_r_choice', async () => this.getRChoice());
 
-    ipcMain.handle('desktop_set_default_r_version', async (event, rExecutablePath: string) => {
-      return this.setDefaultRVersion(rExecutablePath);
+    ipcMain.handle('desktop_set_default_r_version', async (event, rExecutablePath: string, useDefault: boolean) => {
+      return this.setDefaultRVersion(rExecutablePath, useDefault === true);
     });
 
     ipcMain.handle('desktop_restart_with_previous_r', async () => {
@@ -876,8 +885,8 @@ export class GwtCallback extends EventEmitter {
       return this.setPendingQuit(pendingQuit, rExecutablePath);
     });
 
-    ipcMain.handle('desktop_set_pending_r_version', async (event, rExecutablePath: string) => {
-      return this.setPendingRVersion(rExecutablePath);
+    ipcMain.handle('desktop_set_pending_r_version', async (event, rExecutablePath: string, useDefault: boolean) => {
+      return this.setPendingRVersion(rExecutablePath, useDefault === true);
     });
 
     ipcMain.handle('desktop_make_r_orthogonal', async (event, rHome: string) => {
@@ -1329,7 +1338,7 @@ export class GwtCallback extends EventEmitter {
     }
 
     this.pendingQuit = pendingQuit;
-    this.pendingRVersion = rPath;
+    this.pendingRVersion = rPath ? { path: rPath, useDefault: this.preparedRVersions.get(rPath) === true } : null;
 
     // a quit that was abandoned (e.g. the session refused it) leaves no R
     // switch or update install behind for some later, unrelated quit
@@ -1344,9 +1353,10 @@ export class GwtCallback extends EventEmitter {
    * checking that it runs as itself. Resolves to an error message when it
    * doesn't, and '' otherwise; '' tells the client the R is ready, so a
    * failure always says something. The R is used only by a quit that names
-   * it (see setPendingQuit).
+   * it (see setPendingQuit). `useDefault` says it was chosen as the default
+   * R, which RStudio then follows (see storeChosenR).
    */
-  async setPendingRVersion(rExecutablePath: string): Promise<string> {
+  async setPendingRVersion(rExecutablePath: string, useDefault = false): Promise<string> {
     const rPath = preparedRExecutablePath(rExecutablePath);
 
     // queried in the background: R can take seconds to start. Bounded,
@@ -1358,17 +1368,18 @@ export class GwtCallback extends EventEmitter {
       return problem;
     }
 
-    this.preparedRVersions.add(rPath);
+    this.preparedRVersions.set(rPath, useDefault);
     return '';
   }
 
   /**
    * Make the given R the one RStudio uses from its next launch on, after
-   * checking that it runs as itself; an R that is the default R means using
-   * the default R from then on (see storeRChoice). Resolves to an error
-   * message when the R can't be used, and '' otherwise.
+   * checking that it runs as itself: the default R, followed from then on,
+   * when `useDefault` is set, and otherwise that installation (see
+   * storeChosenR). Resolves to an error message when the R can't be used,
+   * and '' otherwise.
    */
-  async setDefaultRVersion(rExecutablePath: string): Promise<string> {
+  async setDefaultRVersion(rExecutablePath: string, useDefault = false): Promise<string> {
     const rPath = preparedRExecutablePath(rExecutablePath);
     const request = ++this.defaultRVersionRequests;
 
@@ -1384,7 +1395,7 @@ export class GwtCallback extends EventEmitter {
 
     // kept before looking for the default R (see storeRChoice), which a
     // later request then can't be overwritten by
-    await storeRChoice(rPath);
+    await storeChosenR(rPath, useDefault);
     return '';
   }
 
@@ -1436,9 +1447,9 @@ export class GwtCallback extends EventEmitter {
     }
   }
 
-  collectPendingRVersion(): string {
+  collectPendingRVersion(): PendingRVersion | null {
     const pending = this.pendingRVersion;
-    this.pendingRVersion = '';
+    this.pendingRVersion = null;
     return pending;
   }
 

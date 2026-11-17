@@ -108,7 +108,7 @@ describe('SessionLauncher', () => {
       return {
         workbenchInitialized: true,
         setSessionProcess: () => {},
-        collectPendingRVersion: () => '',
+        collectPendingRVersion: () => null,
       } as unknown as MainWindow;
     }
 
@@ -185,7 +185,7 @@ describe('SessionLauncher', () => {
         launcher.mainWindow = {
           workbenchInitialized: true,
           setSessionProcess: sinon.stub(),
-          collectPendingRVersion: () => '',
+          collectPendingRVersion: () => null,
           loadUrl: async (url: string) => {
             loaded.push(url);
           },
@@ -282,15 +282,19 @@ describe('SessionLauncher', () => {
   describe('applyPendingRVersion', () => {
     // The R a restart asked for is prepared for the next session; the current
     // R stays in place when nothing is pending or the requested R fails.
-    function launcherWithPendingR(pending: string): {
+    function launcherWithPendingR(
+      pending: string,
+      useDefault = false,
+    ): {
       launcher: SessionLauncher;
       gwtCallback: EventEmitter;
       store: sinon.SinonStub;
+      storeChosen: sinon.SinonStub;
     } {
       const launcher = getNewLauncher();
       launcher.rPath = '/opt/R/4.3.3/bin/R';
       launcher.mainWindow = {
-        collectPendingRVersion: () => pending,
+        collectPendingRVersion: () => (pending ? { path: pending, useDefault } : null),
         clearErrorDisplayed: sinon.stub(),
         setErrorDisplayed: sinon.stub(),
       } as unknown as MainWindow;
@@ -298,8 +302,10 @@ describe('SessionLauncher', () => {
       const gwtCallback = new EventEmitter();
       appState().gwtCallback = gwtCallback as unknown as GwtCallback;
 
+      // going back keeps an R by its path; a switch keeps it as it was chosen
       const store = sinon.stub(DetectR, 'storeRChoice').resolves();
-      return { launcher, gwtCallback, store };
+      const storeChosen = sinon.stub(DetectR, 'storeChosenR').resolves();
+      return { launcher, gwtCallback, store, storeChosen };
     }
 
     afterEach(() => {
@@ -308,13 +314,14 @@ describe('SessionLauncher', () => {
 
     it('does nothing when no R version is pending', () => {
       const prepare = sinon.stub(DetectR, 'prepareEnvironment');
-      const { launcher, gwtCallback, store } = launcherWithPendingR('');
+      const { launcher, gwtCallback, store, storeChosen } = launcherWithPendingR('');
 
       launcher.applyPendingRVersion();
       gwtCallback.emit(GwtCallback.WORKBENCH_INITIALIZED);
 
       assert.isFalse(prepare.called);
       assert.isFalse(store.called);
+      assert.isFalse(storeChosen.called);
       assert.equal(launcher.rPath, '/opt/R/4.3.3/bin/R');
     });
 
@@ -330,31 +337,41 @@ describe('SessionLauncher', () => {
 
     it('stores the switch as the chosen R once a session starts with it', () => {
       sinon.stub(DetectR, 'prepareEnvironment').returns(null);
-      const { launcher, gwtCallback, store } = launcherWithPendingR('/opt/R/4.4.1/bin/R');
+      const { launcher, gwtCallback, storeChosen } = launcherWithPendingR('/opt/R/4.4.1/bin/R');
 
       launcher.applyPendingRVersion();
-      assert.isFalse(store.called);
+      assert.isFalse(storeChosen.called);
 
       gwtCallback.emit(GwtCallback.WORKBENCH_INITIALIZED);
 
-      assert.isTrue(store.calledOnceWithExactly('/opt/R/4.4.1/bin/R'));
+      assert.isTrue(storeChosen.calledOnceWithExactly('/opt/R/4.4.1/bin/R', false));
+    });
+
+    it('stores a switch to the default R, chosen as such, to be followed', () => {
+      sinon.stub(DetectR, 'prepareEnvironment').returns(null);
+      const { launcher, gwtCallback, storeChosen } = launcherWithPendingR('/opt/R/4.4.1/bin/R', true);
+
+      launcher.applyPendingRVersion();
+      gwtCallback.emit(GwtCallback.WORKBENCH_INITIALIZED);
+
+      assert.isTrue(storeChosen.calledOnceWithExactly('/opt/R/4.4.1/bin/R', true));
     });
 
     it('keeps the current R when the pending one cannot be prepared', () => {
       const prepare = sinon.stub(DetectR, 'prepareEnvironment').returns(new Error('no such R'));
-      const { launcher, gwtCallback, store } = launcherWithPendingR('/opt/R/missing/bin/R');
+      const { launcher, gwtCallback, storeChosen } = launcherWithPendingR('/opt/R/missing/bin/R');
 
       launcher.applyPendingRVersion();
       gwtCallback.emit(GwtCallback.WORKBENCH_INITIALIZED);
 
       assert.isTrue(prepare.calledOnce);
-      assert.isFalse(store.called);
+      assert.isFalse(storeChosen.called);
       assert.equal(launcher.rPath, '/opt/R/4.3.3/bin/R');
     });
 
     it('goes back to the R in use before a switch whose session failed, without storing either', async () => {
       const prepare = sinon.stub(DetectR, 'prepareEnvironment').returns(null);
-      const { launcher, gwtCallback, store } = launcherWithPendingR('/opt/R/4.4.1/bin/R');
+      const { launcher, gwtCallback, store, storeChosen } = launcherWithPendingR('/opt/R/4.4.1/bin/R');
       const relaunch = sinon.stub(launcher, 'launchNextSession').resolves(null);
       sinon.stub(RChoice, 'savedRChoice').returns(null);
       sinon.stub(DetectR, 'defaultR').resolves('/usr/local/bin/R');
@@ -373,6 +390,7 @@ describe('SessionLauncher', () => {
       // the session that now starts is not the one switched to
       gwtCallback.emit(GwtCallback.WORKBENCH_INITIALIZED);
       assert.isFalse(store.called);
+      assert.isFalse(storeChosen.called);
     });
 
     it('keeps the R in use before when the default R chosen in Global Options failed', async () => {
@@ -470,7 +488,7 @@ describe('SessionLauncher', () => {
     function launcherWithStartupR(rPath: string, pending = '') {
       const launcher = getNewLauncher();
       launcher.mainWindow = {
-        collectPendingRVersion: () => pending,
+        collectPendingRVersion: () => (pending ? { path: pending, useDefault: false } : null),
         clearErrorDisplayed: sinon.stub(),
         setErrorDisplayed: sinon.stub(),
       } as unknown as MainWindow;

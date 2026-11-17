@@ -26,7 +26,7 @@ import { promptForDefaultRFileHandlerOnce } from './default-file-handler';
 import { appState, getEventBus } from './app-state';
 import { ApplicationLaunch, LaunchRStudioOptions } from './application-launch';
 import { DesktopBrowserWindow } from './desktop-browser-window';
-import { GwtCallback, PendingQuit } from './gwt-callback';
+import { GwtCallback, PendingQuit, PendingRVersion } from './gwt-callback';
 import { GwtWindow } from './gwt-window';
 import { MenuCallback } from './menu-callback';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
@@ -424,8 +424,8 @@ export class MainWindow extends GwtWindow {
     return appState().gwtCallback?.collectPendingQuitRequest() ?? PendingQuit.PendingQuitNone;
   }
 
-  collectPendingRVersion(): string {
-    return appState().gwtCallback?.collectPendingRVersion() ?? '';
+  collectPendingRVersion(): PendingRVersion | null {
+    return appState().gwtCallback?.collectPendingRVersion() ?? null;
   }
 
   onActivated(): void {

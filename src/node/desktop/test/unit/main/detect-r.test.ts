@@ -41,6 +41,7 @@ import {
   resolveRHome,
   scanForRPosix,
   startRDetection,
+  storeChosenR,
   storeRChoice,
   storedRCandidatesWin32,
   windowsSessionPath,
@@ -670,6 +671,37 @@ describe('DetectR with an R chosen in RStudio', () => {
     assert.equal(options.rExecutablePath(), '/opt/R/4.5.0/bin/R');
   });
 
+  it('follows the default R from then on when it is chosen as such', async () => {
+    const options = fakeROptions({ path: '/opt/R/4.4.1/bin/R', rstudioWhichR: launchRStudioWhichR() });
+
+    await storeChosenR('/opt/R/4.5.0/bin/R', true);
+
+    assert.equal(options.rExecutablePath(), '');
+    assert.equal(options.rstudioWhichRWhenChosen(), '');
+  });
+
+  it('takes an installation chosen at the default R path to be the default R', async function () {
+    // that path (Debian's /usr/bin/R, say) follows upgrades itself
+    const options = fakeROptions({ path: '/opt/R/4.4.1/bin/R' });
+    const rPath = await defaultR();
+    if (!rPath) {
+      this.skip();
+    }
+
+    await storeChosenR(rPath, false);
+
+    assert.equal(options.rExecutablePath(), '');
+  });
+
+  it('holds on to an installation chosen other than the default R', async () => {
+    const fakeR = writeFakeR('4.4.1');
+    const options = fakeROptions();
+
+    await storeChosenR(fakeR, false);
+
+    assert.equal(options.rExecutablePath(), fakeR);
+  });
+
   it('passes over a candidate for the default R that never answers', async () => {
     const fakeR = writeFakeR('4.4.1');
     const hangingR = join(dir, 'hanging-R');
@@ -737,6 +769,30 @@ describe('DetectR on Windows with an R chosen in RStudio', () => {
     fakeROptions({ path: join(dir, 'missing', 'bin', 'x64', kWindowsRExe), rstudioWhichR: launchRStudioWhichR() });
 
     assert.isTrue(rChooserLikely());
+  });
+
+  it('holds on to the own installation of the registry default when it is chosen', async () => {
+    // the registry default moves to each R installed; the user asked for this version
+    const registryR = registryDefault();
+    const options = fakeROptions({ useDefault64BitR: true });
+
+    await storeChosenR(registryR, false, 'win32');
+
+    assert.isFalse(options.useDefault64BitR());
+    assert.equal(options.rExecutablePath(), registryR);
+    assert.deepEqual(
+      storedRCandidatesWin32().map((candidate) => candidate.path),
+      [registryR],
+    );
+  });
+
+  it('follows the registry default when the default R is chosen', async () => {
+    const registryR = registryDefault();
+    const options = fakeROptions({ path: kStoredR, rstudioWhichR: launchRStudioWhichR() });
+
+    await storeChosenR(registryR, true, 'win32');
+
+    assert.isTrue(options.useDefault64BitR());
   });
 
   it('expects no chooser when RSTUDIO_WHICH_R has superseded the chosen R', () => {

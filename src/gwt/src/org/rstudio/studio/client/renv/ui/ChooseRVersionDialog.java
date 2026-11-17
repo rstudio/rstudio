@@ -17,6 +17,7 @@ package org.rstudio.studio.client.renv.ui;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
@@ -52,8 +53,9 @@ public class ChooseRVersionDialog extends ModalDialog<RVersionChooser.Choice>
     * @param okCaption The caption of the button that accepts the choice.
     * @param defaultR The default R as an installation (null when there is
     *    none); its 'current' says whether it is the R in use.
-    * @param installed The installations to offer, newest first. One whose
-    *    executable is the default R's is offered only as the default R.
+    * @param installed The installations to offer, newest first. Off
+    *    Windows, one whose executable is the default R's is offered only as
+    *    the default R.
     * @param selected The choice to start from.
     */
    public ChooseRVersionDialog(String caption,
@@ -63,6 +65,19 @@ public class ChooseRVersionDialog extends ModalDialog<RVersionChooser.Choice>
                                RVersionChooser.Choice selected,
                                Browser browser,
                                OperationWithInput<RVersionChooser.Choice> operation)
+   {
+      this(caption, okCaption, defaultR, installed, selected, browser, operation, BrowseCap.isWindowsDesktop());
+   }
+
+   // as above, with the platform given (for tests)
+   ChooseRVersionDialog(String caption,
+                        String okCaption,
+                        RVersionInstall defaultR,
+                        List<RVersionInstall> installed,
+                        RVersionChooser.Choice selected,
+                        Browser browser,
+                        OperationWithInput<RVersionChooser.Choice> operation,
+                        boolean windows)
    {
       super(caption, Roles.getDialogRole(), operation);
       setThemeAware(true);
@@ -75,15 +90,18 @@ public class ChooseRVersionDialog extends ModalDialog<RVersionChooser.Choice>
       ElementIds.assignElementId(list_, ElementIds.CHOOSE_R_VERSION_LIST);
       list_.addChangeHandler(event -> updateOkButton());
 
-      // an installation that is the default R (Debian's /usr/lib/R, whose
-      // executable is /usr/bin/R, say) would be followed as the default R if
-      // chosen, whatever its entry says
+      // off Windows, an installation that is the default R (Debian's
+      // /usr/lib/R, whose executable is /usr/bin/R, say) would be followed as
+      // the default R if chosen, whatever its entry says. On Windows the
+      // default R is the registry's, which moves to each R installed, so its
+      // own installation stays on offer to hold on to that version.
       defaultR_ = defaultR;
+      foldIntoDefault_ = !windows;
       if (defaultR != null)
          add(new RVersionChooser.Choice(defaultR, true));
       for (RVersionInstall installation : installed)
       {
-         if (!isDefaultR(installation))
+         if (!offeredAsDefault(installation))
             add(new RVersionChooser.Choice(installation, false));
       }
 
@@ -94,7 +112,7 @@ public class ChooseRVersionDialog extends ModalDialog<RVersionChooser.Choice>
          browser.browse(installation ->
          {
             RVersionChooser.Choice choice = new RVersionChooser.Choice(installation, false);
-            int index = isDefaultR(installation) ? indexOfDefault() : indexOf(choice);
+            int index = offeredAsDefault(installation) ? indexOfDefault() : indexOf(choice);
             if (index < 0)
             {
                add(choice);
@@ -142,12 +160,12 @@ public class ChooseRVersionDialog extends ModalDialog<RVersionChooser.Choice>
 
    // the given choice, or else the default R when nothing was chosen, or
    // else the R in use. A chosen R is never replaced by another: one that is
-   // now the default R is listed only as that, and one found nowhere else
-   // (browsed to, say) is offered as it is.
+   // now offered only as the default R is selected as that, and one found
+   // nowhere else (browsed to, say) is offered as it is.
    private void select(RVersionChooser.Choice selected)
    {
       int index = selected == null ? -1 : indexOf(selected);
-      if (index < 0 && selected != null && (selected.useDefault || isDefaultR(selected.installation)))
+      if (index < 0 && selected != null && (selected.useDefault || offeredAsDefault(selected.installation)))
          index = indexOfDefault();
       if (index < 0 && selected != null && !StringUtil.isNullOrEmpty(selected.installation.binary))
       {
@@ -171,9 +189,12 @@ public class ChooseRVersionDialog extends ModalDialog<RVersionChooser.Choice>
       return -1;
    }
 
-   private boolean isDefaultR(RVersionInstall installation)
+   // an installation offered only as the default R (see the constructor)
+   private boolean offeredAsDefault(RVersionInstall installation)
    {
-      return defaultR_ != null && RVersionChooser.sameExecutable(installation.binary, defaultR_.binary);
+      return foldIntoDefault_ &&
+             defaultR_ != null &&
+             RVersionChooser.sameExecutable(installation.binary, defaultR_.binary);
    }
 
    private int indexOfDefault()
@@ -199,6 +220,7 @@ public class ChooseRVersionDialog extends ModalDialog<RVersionChooser.Choice>
 
    private final ListBox list_;
    private final RVersionInstall defaultR_;
+   private final boolean foldIntoDefault_;
    private final List<RVersionChooser.Choice> choices_ = new ArrayList<>();
    private final VerticalPanel contents_;
 

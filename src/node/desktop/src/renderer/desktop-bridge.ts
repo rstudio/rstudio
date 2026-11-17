@@ -326,9 +326,9 @@ export function getDesktopBridge() {
         });
     },
 
-    setDefaultRVersion: (rExecutablePath: string, callback: VoidCallback<string>) => {
+    setDefaultRVersion: (rExecutablePath: string, useDefault: boolean, callback: VoidCallback<string>) => {
       ipcRenderer
-        .invoke('desktop_set_default_r_version', rExecutablePath)
+        .invoke('desktop_set_default_r_version', rExecutablePath, useDefault)
         .then((error) => callback(error))
         .catch((error) => {
           reportIpcError('setDefaultRVersion', error);
@@ -471,9 +471,9 @@ export function getDesktopBridge() {
 
     // these answer with an error message, or '' on success; a failed call
     // still answers, so the client never waits on it forever
-    setPendingRVersion: (rExecutablePath: string, callback: VoidCallback<string>) => {
+    setPendingRVersion: (rExecutablePath: string, useDefault: boolean, callback: VoidCallback<string>) => {
       ipcRenderer
-        .invoke('desktop_set_pending_r_version', rExecutablePath)
+        .invoke('desktop_set_pending_r_version', rExecutablePath, useDefault)
         .then((error) => callback(error))
         .catch((error) => {
           reportIpcError('setPendingRVersion', error);

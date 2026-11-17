@@ -612,7 +612,7 @@ public class GeneralPreferencesPane extends PreferencesPane
 
       rVersionSwitcher_.makeOrthogonal(
             choice.installation,
-            () -> Desktop.getFrame().setDefaultRVersion(choice.installation.binary, error ->
+            () -> Desktop.getFrame().setDefaultRVersion(choice.installation.binary, choice.useDefault, error ->
             {
                if (request != rVersionApplyRequests_)
                   return;

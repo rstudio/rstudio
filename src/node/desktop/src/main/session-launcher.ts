@@ -36,7 +36,7 @@ import { GwtCallback, PendingQuit } from './gwt-callback';
 import LogOptions from './log-options';
 import { closeAllSatellites, MainWindow } from './main-window';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
-import { defaultR, prepareEnvironment, storeRChoice, UnusableRChoice } from './detect-r';
+import { defaultR, prepareEnvironment, storeChosenR, storeRChoice, UnusableRChoice } from './detect-r';
 import { clearRChoice, rChoiceApplies, sameRExecutable, savedRChoice } from './r-choice';
 import { EXIT_FAILURE } from './program-status';
 import { waitForUrlWithTimeout } from './url-utils';
@@ -664,16 +664,18 @@ export class SessionLauncher {
    * kept if preparing fails anyway.
    *
    * The choice is stored as the R RStudio uses from then on (see
-   * storeRChoice), but only once a session has started with it: an R that
+   * storeChosenR), but only once a session has started with it: an R that
    * runs but can't host a session would otherwise fail every later launch.
    * Until then, the launch error page offers to go back to the R in use
    * before.
    */
   applyPendingRVersion(): void {
-    const rPath = this.mainWindow?.collectPendingRVersion();
-    if (!rPath) {
+    const pending = this.mainWindow?.collectPendingRVersion();
+    if (!pending?.path) {
       return;
     }
+
+    const rPath = pending.path;
 
     logger().logInfo(`Switching to R: ${rPath}`);
     const error = prepareEnvironment(rPath);
@@ -686,10 +688,12 @@ export class SessionLauncher {
     this.defaultRIfSessionFails = false;
     this.rPath = rPath;
     this.switchedRToStore = rPath;
-    appState().gwtCallback?.once(GwtCallback.WORKBENCH_INITIALIZED, () => this.storeSwitchedR(rPath));
+    appState().gwtCallback?.once(GwtCallback.WORKBENCH_INITIALIZED, () =>
+      this.storeSwitchedR(rPath, pending.useDefault),
+    );
   }
 
-  private storeSwitchedR(rPath: string): void {
+  private storeSwitchedR(rPath: string, useDefault: boolean): void {
     // a later switch (or going back) supersedes this one
     if (this.switchedRToStore !== rPath) {
       return;
@@ -697,7 +701,7 @@ export class SessionLauncher {
     this.switchedRToStore = '';
     this.rBeforeSwitch = '';
 
-    storeRChoice(rPath).catch((error: unknown) => logger().logError(safeError(error)));
+    storeChosenR(rPath, useDefault).catch((error: unknown) => logger().logError(safeError(error)));
   }
 
   /**

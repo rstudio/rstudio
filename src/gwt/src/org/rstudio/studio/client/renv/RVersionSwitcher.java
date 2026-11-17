@@ -97,7 +97,7 @@ public class RVersionSwitcher
                // the R in use needs no restart, only keeping from now on
                if (choice.installation.current)
                {
-                  Desktop.getFrame().setDefaultRVersion(choice.installation.binary, error ->
+                  Desktop.getFrame().setDefaultRVersion(choice.installation.binary, choice.useDefault, error ->
                   {
                      if (!StringUtil.isNullOrEmpty(error))
                         showSwitchFailed(choice, error);
@@ -105,7 +105,7 @@ public class RVersionSwitcher
                   return;
                }
 
-               switchTo(choice.installation, new Observer()
+               switchTo(choice, new Observer()
                {
                   @Override
                   public void onSwitchStarted()
@@ -131,7 +131,7 @@ public class RVersionSwitcher
             GlobalDisplay.MSG_QUESTION,
             constants_.restartWithChosenRCaption(),
             constants_.restartWithChosenRMessage(RVersionChooser.describe(choice, false)),
-            () -> switchTo(choice.installation, new Observer()
+            () -> switchTo(choice, new Observer()
             {
                @Override
                public void onSwitchStarted()
@@ -155,13 +155,15 @@ public class RVersionSwitcher
    }
 
    /**
-    * Restart the session with the given R. A macOS framework version that
-    * would run the default version of R instead of itself is updated first,
-    * with the user's consent; declining leaves everything as it was.
+    * Restart the session with the given R: the default R, which RStudio then
+    * follows, or an installation, which it holds on to. A macOS framework
+    * version that would run the default version of R instead of itself is
+    * updated first, with the user's consent; declining leaves everything as
+    * it was.
     */
-   public void switchTo(RVersionInstall installed, Observer observer)
+   public void switchTo(RVersionChooser.Choice choice, Observer observer)
    {
-      makeOrthogonal(installed, () -> restartWithR(installed, observer), observer::onSwitchFailed);
+      makeOrthogonal(choice.installation, () -> restartWithR(choice, observer), observer::onSwitchFailed);
    }
 
    /**
@@ -216,8 +218,10 @@ public class RVersionSwitcher
 
    // Once the quit is going ahead, the desktop checks that the R runs and
    // holds on to it for the relaunch; a quit that then fails clears it again.
-   private void restartWithR(RVersionInstall installed, Observer observer)
+   private void restartWithR(RVersionChooser.Choice choice, Observer observer)
    {
+      RVersionInstall installed = choice.installation;
+
       // the quit restarts the session (rather than exiting RStudio) only
       // when it names a project to switch to, which may be none
       String activeProject = session_.getSessionInfo().getActiveProjectFile();
@@ -236,7 +240,7 @@ public class RVersionSwitcher
             return;
          }
 
-         Desktop.getFrame().setPendingRVersion(installed.binary, error ->
+         Desktop.getFrame().setPendingRVersion(installed.binary, choice.useDefault, error ->
          {
             if (!StringUtil.isNullOrEmpty(error))
             {

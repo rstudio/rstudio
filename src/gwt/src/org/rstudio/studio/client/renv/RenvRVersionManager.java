@@ -221,7 +221,8 @@ public class RenvRVersionManager
    // ahead, as the user can still back out of it.
    private void switchToR(RVersionInstall installed)
    {
-      switcher_.switchTo(installed, new RVersionSwitcher.Observer()
+      // the version the lockfile asks for, as an installation (not the default R)
+      switcher_.switchTo(new RVersionChooser.Choice(installed, false), new RVersionSwitcher.Observer()
       {
          @Override
          public void onSwitchStarted()

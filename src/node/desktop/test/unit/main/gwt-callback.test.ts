@@ -129,21 +129,34 @@ describe('DesktopCallback', () => {
       assert.equal(await callback.setPendingRVersion(rPath), '');
       // prepared is not pending: a quit that does not name it leaves it alone
       assert.equal(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload), '');
-      assert.equal(callback.collectPendingRVersion(), '');
+      assert.isNull(callback.collectPendingRVersion());
 
       assert.equal(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload, rPath), '');
-      assert.equal(callback.collectPendingRVersion(), rPath);
-      assert.equal(callback.collectPendingRVersion(), '');
+      assert.deepEqual(callback.collectPendingRVersion(), { path: rPath, useDefault: false });
+      assert.isNull(callback.collectPendingRVersion());
+    });
+
+    it('hands over whether the R was chosen as the default R', async () => {
+      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([kRunningR, null]);
+
+      assert.equal(await invoke('desktop_set_pending_r_version', rPath, true), '');
+      assert.equal(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload, rPath), '');
+      assert.deepEqual(callback.collectPendingRVersion(), { path: rPath, useDefault: true });
+
+      // as the latest preparation of that R says
+      assert.equal(await invoke('desktop_set_pending_r_version', rPath, false), '');
+      assert.equal(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload, rPath), '');
+      assert.deepEqual(callback.collectPendingRVersion(), { path: rPath, useDefault: false });
     });
 
     it('refuses a quit naming an R that was not prepared', () => {
       assert.isNotEmpty(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload, '/no/such/R'));
       assert.equal(callback.collectPendingQuitRequest(), PendingQuit.PendingQuitNone);
-      assert.equal(callback.collectPendingRVersion(), '');
+      assert.isNull(callback.collectPendingRVersion());
     });
 
     it('has nothing pending by default', () => {
-      assert.equal(callback.collectPendingRVersion(), '');
+      assert.isNull(callback.collectPendingRVersion());
     });
 
     it('refuses an R that is missing or fails to run', async () => {
@@ -152,14 +165,14 @@ describe('DesktopCallback', () => {
       assert.isNotEmpty(await callback.setPendingRVersion(rPath));
       assert.isNotEmpty(await callback.setPendingRVersion('/no/such/R'));
       assert.isTrue(detect.calledOnce);
-      assert.equal(callback.collectPendingRVersion(), '');
+      assert.isNull(callback.collectPendingRVersion());
     });
 
     it('answers with an error rather than failing', async () => {
       sinon.stub(DetectR, 'detectREnvironmentAsync').rejects(new Error('boom'));
 
       assert.include(await callback.setPendingRVersion(rPath), 'boom');
-      assert.equal(callback.collectPendingRVersion(), '');
+      assert.isNull(callback.collectPendingRVersion());
     });
 
     it('refuses an R without the shared library a session needs on macOS and Linux', async function () {
@@ -183,7 +196,7 @@ describe('DesktopCallback', () => {
       assert.equal(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload, rPath), '');
 
       callback.setPendingQuit(PendingQuit.PendingQuitNone);
-      assert.equal(callback.collectPendingRVersion(), '');
+      assert.isNull(callback.collectPendingRVersion());
     });
   });
 
@@ -193,15 +206,23 @@ describe('DesktopCallback', () => {
 
     it('stores an R that runs as the one RStudio uses', async () => {
       sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([kRunningR, null]);
-      const store = sinon.stub(DetectR, 'storeRChoice').resolves();
+      const store = sinon.stub(DetectR, 'storeChosenR').resolves();
 
       assert.equal(await callback.setDefaultRVersion(rPath), '');
-      assert.isTrue(store.calledOnceWithExactly(rPath));
+      assert.isTrue(store.calledOnceWithExactly(rPath, false));
+    });
+
+    it('stores the default R, chosen as such, to be followed', async () => {
+      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([kRunningR, null]);
+      const store = sinon.stub(DetectR, 'storeChosenR').resolves();
+
+      assert.equal(await invoke('desktop_set_default_r_version', rPath, true), '');
+      assert.isTrue(store.calledOnceWithExactly(rPath, true));
     });
 
     it('stores nothing for an R that is missing or fails to run', async () => {
       sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([null as never, new Error('boom')]);
-      const store = sinon.stub(DetectR, 'storeRChoice').resolves();
+      const store = sinon.stub(DetectR, 'storeChosenR').resolves();
 
       assert.include(await callback.setDefaultRVersion(rPath), 'boom');
       assert.isNotEmpty(await callback.setDefaultRVersion('/no/such/R'));
@@ -214,7 +235,7 @@ describe('DesktopCallback', () => {
       const detect = sinon.stub(DetectR, 'detectREnvironmentAsync');
       detect.onFirstCall().returns(new Promise((resolve) => (answerFirst = resolve)) as never);
       detect.onSecondCall().resolves([kRunningR, null]);
-      const store = sinon.stub(DetectR, 'storeRChoice').resolves();
+      const store = sinon.stub(DetectR, 'storeChosenR').resolves();
 
       const first = callback.setDefaultRVersion(rPath);
       const second = callback.setDefaultRVersion(rPath);
@@ -227,9 +248,9 @@ describe('DesktopCallback', () => {
 
     it('is registered for the client', async () => {
       sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([kRunningR, null]);
-      sinon.stub(DetectR, 'storeRChoice').resolves();
+      sinon.stub(DetectR, 'storeChosenR').resolves();
 
-      assert.equal(await invoke('desktop_set_default_r_version', rPath), '');
+      assert.equal(await invoke('desktop_set_default_r_version', rPath, false), '');
     });
   });
 

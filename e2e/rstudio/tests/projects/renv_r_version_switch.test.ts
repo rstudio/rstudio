@@ -137,9 +137,11 @@ test.describe("renv lockfile R version", { tag: ["@desktop_only"] }, () => {
         (rPath) =>
           new Promise<string>((resolve) => {
             const desktop = (window as unknown as {
-              desktop: { setPendingRVersion(rPath: string, callback: (error: string) => void): void };
+              desktop: {
+                setPendingRVersion(rPath: string, useDefault: boolean, callback: (error: string) => void): void;
+              };
             }).desktop;
-            desktop.setPendingRVersion(rPath, resolve);
+            desktop.setPendingRVersion(rPath, false, resolve);
           }),
         originalR,
       );

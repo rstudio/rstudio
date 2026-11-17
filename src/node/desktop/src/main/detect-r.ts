@@ -332,6 +332,25 @@ export async function storeRChoice(rPath: string, platform = process.platform): 
   }
 }
 
+/**
+ * Make the R the user chose the one RStudio uses from now on: the default R
+ * (`useDefault`), followed from then on, or else the installation chosen.
+ * Off Windows an installation at the default R's own path is the default R
+ * (see storeRChoice): that path, such as Debian's /usr/bin/R, follows
+ * upgrades itself. On Windows each version has its own directory and the
+ * registry's default moves to each newly installed one, so choosing the
+ * default R's own installation holds on to that version.
+ */
+export async function storeChosenR(rPath: string, useDefault: boolean, platform = process.platform): Promise<void> {
+  if (useDefault) {
+    clearRChoice(platform);
+  } else if (platform === 'win32') {
+    saveRChoice(rPath, platform);
+  } else {
+    await storeRChoice(rPath, platform);
+  }
+}
+
 /** As storeRChoice(), given the default R (from defaultR()). */
 export function rememberRChoice(rPath: string, defaultPath: string, platform = process.platform): void {
   if (sameRExecutable(rPath, defaultPath, platform)) {

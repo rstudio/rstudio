@@ -64,6 +64,27 @@ public class ChooseRVersionDialogTests extends GWTTestCase
       assertEquals("/home/user/R-4.3.3/bin/R", start.installation.binary);
    }
 
+   public void testOffersTheDefaultRsOwnInstallationOnWindows()
+   {
+      // the registry's default moves to each R installed, so its own entry
+      // stays on offer to hold on to that version
+      RVersionInstall defaultR = installation("4.4.1", false);
+      RVersionChooser.Choice chosen = new RVersionChooser.Choice(installation("4.4.1", false), false);
+      RVersionChooser.Choice start = startingChoice(defaultR, chosen, true);
+
+      assertFalse(start.useDefault);
+      assertEquals(binary("4.4.1"), start.installation.binary);
+   }
+
+   public void testOffersTheDefaultEntryAlongsideItsInstallationOnWindows()
+   {
+      RVersionInstall defaultR = installation("4.4.1", false);
+      RVersionChooser.Choice start = startingChoice(defaultR, new RVersionChooser.Choice(defaultR, true), true);
+
+      assertTrue(start.useDefault);
+      assertEquals(binary("4.4.1"), start.installation.binary);
+   }
+
    public void testStartsFromTheRInUseWithNothingChosen()
    {
       RVersionChooser.Choice start = startingChoice(null, null);
@@ -73,9 +94,16 @@ public class ChooseRVersionDialogTests extends GWTTestCase
    }
 
    // The choice the dialog starts from, offering the given default R and the
-   // installations 4.5.0 (the R in use) and 4.4.1.
+   // installations 4.5.0 (the R in use) and 4.4.1, off Windows.
    private static RVersionChooser.Choice startingChoice(RVersionInstall defaultR,
                                                         RVersionChooser.Choice selected)
+   {
+      return startingChoice(defaultR, selected, false);
+   }
+
+   private static RVersionChooser.Choice startingChoice(RVersionInstall defaultR,
+                                                        RVersionChooser.Choice selected,
+                                                        boolean windows)
    {
       List<RVersionInstall> installed = new ArrayList<>();
       installed.add(installation("4.5.0", true));
@@ -88,7 +116,8 @@ public class ChooseRVersionDialogTests extends GWTTestCase
             installed,
             selected,
             onChosen -> {},
-            input -> {});
+            input -> {},
+            windows);
       return dialog.collectInput();
    }
 
