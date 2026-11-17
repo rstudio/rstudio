@@ -339,9 +339,9 @@ function evaluate(code::AbstractString, mode::AbstractString, width::Integer, co
    before = ""
    evaluation_task[] = current_task()
    try
-      # set up within the protected region too: pwd() throws once Julia's
-      # working directory has been deleted
-      if isdir(cwd) && cwd != pwd()
+      # set up within the protected region too; and move first, as pwd()
+      # throws while Julia's working directory is one that has been deleted
+      if isdir(cwd)
          cd(cwd)
       end
       before = pwd()
@@ -366,7 +366,12 @@ function evaluate(code::AbstractString, mode::AbstractString, width::Integer, co
 
    flush(stdout)
    flush(stderr)
-   return pwd() == before ? "" : pwd()
+
+   # an interrupt during setup leaves no input to have moved Julia
+   if isempty(before) || pwd() == before
+      return ""
+   end
+   return pwd()
 end
 
 # Evaluate and print, returning the number of interrupts this caught.

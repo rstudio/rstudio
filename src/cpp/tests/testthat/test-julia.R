@@ -65,10 +65,14 @@ test_that("completions and their help come from Julia", {
    skip_if(is.null(.rs.julia.executable()), "Julia isn't installed")
    skip_if(.rs.julia.isFirstStart(), "Julia's first start installs packages")
 
-   # e.g. a Julia older than the console supports
-   started <- tryCatch(.rs.julia.start(), error = function(e) conditionMessage(e))
+   # e.g. 'julia version 1.13.4'
+   version <- suppressWarnings(system2(.rs.julia.executable(), "--version", stdout = TRUE, stderr = FALSE))
+   version <- regmatches(version, regexpr("[0-9]+\\.[0-9]+", version))
+   skip_if(length(version) == 0L, "Julia's version can't be told")
+   skip_if(numeric_version(version) < .rs.julia.minimumVersion, "Julia is older than the console supports")
+
+   .rs.julia.start()
    on.exit(.rs.julia.stop(), add = TRUE)
-   skip_if(is.character(started), paste("Julia couldn't be started:", started))
 
    types <- .rs.acCompletionTypes
 
