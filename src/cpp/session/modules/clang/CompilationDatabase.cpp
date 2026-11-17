@@ -332,7 +332,7 @@ const std::set<std::string> kSettingOptions = {
    "-fbracket-depth", "-fcf-protection", "-fconstexpr-backtrace-limit",
    "-fconstexpr-depth", "-fconstexpr-steps", "-fdiagnostics-color", "-ferror-limit",
    "-fexec-charset", "-fgnuc-version", "-finput-charset", "-fmacro-backtrace-limit",
-   "-fms-compatibility-version", "-fmsc-version", "-fnew-alignment", "-fopenmp",
+   "-fms-compatibility-version", "-fmsc-version", "-fnew-alignment", "-fno-sanitize", "-fopenmp",
    "-fopenmp-version", "-fsanitize", "-fspell-checking-limit",
    "-ftemplate-backtrace-limit", "-ftemplate-depth", "-fvisibility",
 };
@@ -367,7 +367,17 @@ const std::set<std::string> kFeatureFlags = {
 const std::set<std::string> kTargetFeatureFlags = {
    "aes", "avx", "avx2", "avx512bw", "avx512cd", "avx512dq", "avx512f", "avx512vl",
    "bmi", "bmi2", "f16c", "fma", "lzcnt", "pclmul", "popcnt", "sha", "sse", "sse2",
-   "sse3", "sse4.1", "sse4.2", "ssse3",
+   "sse3", "sse4", "sse4.1", "sse4.2", "ssse3",
+};
+
+// Options we don't support that clang reads the next argument as the value
+// of; only so that the report shows such a value along with its option
+const std::set<std::string> kUnsupportedSeparateOptions = {
+   "-B", "-L", "-MF", "-MJ", "-MQ", "-MT", "-T", "-Xanalyzer", "-Xassembler", "-Xclang",
+   "-Xlinker", "-Xpreprocessor", "-dependency-file", "-include-pch", "-iframeworkwithsysroot",
+   "-iprefix", "-iwithprefix", "-iwithprefixbefore", "-iwithsysroot", "-mllvm",
+   "-module-dependency-dir", "-o", "-resource-dir", "-serialize-diagnostics", "-vfsoverlay",
+   "-working-directory", "-z",
 };
 
 struct CompileFlagMatch
@@ -375,7 +385,13 @@ struct CompileFlagMatch
    const CompileFlagOption* option = nullptr;
    std::string value;
    bool separate = false;   // the value is the next argument
+   std::string reason;      // why an argument naming one of the options can't be used
 };
+
+std::string quoteFlag(const std::string& text)
+{
+   return "'" + text + "'";
+}
 
 // Whether clang reads an argument as a value, rather than as an option or a
 // response file ('@args')
@@ -400,18 +416,36 @@ bool matchCompileFlagOption(const std::vector<std::string>& flags,
          return false;
    }
 
+   // clang reads this as an option of its own, which it rejects, rather than
+   // as '-I' with the path '-'
+   if (flag == "-I-")
+   {
+      pMatch->reason = "clang doesn't support '-I-'; use '-iquote' instead";
+      return false;
+   }
+
    for (const CompileFlagOption& option : kCompileFlagOptions)
    {
       if (!boost::algorithm::starts_with(flag, option.spelling))
          continue;
 
-      std::string rest = flag.substr(std::strlen(option.spelling));
+      std::string spelling = option.spelling;
+      std::string rest = flag.substr(spelling.size());
       std::string value;
       bool separate = false;
       if (rest.empty() && option.separate)
       {
-         if (i + 1 == flags.size() || !isPlainValue(flags[i + 1]))
+         if (i + 1 == flags.size())
+         {
+            pMatch->reason = quoteFlag(spelling) + " needs a value";
             return false;
+         }
+
+         if (!isPlainValue(flags[i + 1]))
+         {
+            pMatch->reason = quoteFlag(spelling) + " needs a value; one on the next line can't begin with '-' or '@'";
+            return false;
+         }
 
          value = flags[i + 1];
          separate = true;
@@ -426,11 +460,18 @@ bool matchCompileFlagOption(const std::vector<std::string>& flags,
       }
       else
       {
+         // ('--gcc-toolchain' alone, or '--sysroot=' with nothing after it)
+         if (option.joined == JoinedValue::Equals && (rest.empty() || rest == "="))
+            pMatch->reason = quoteFlag(spelling) + " needs a value after an '=', as in " + quoteFlag(spelling + "=<value>");
+
          continue;
       }
 
       if (option.values != nullptr && option.values->count(value) == 0)
+      {
+         pMatch->reason = quoteFlag(spelling) + " doesn't support the value " + quoteFlag(value);
          return false;
+      }
 
       pMatch->option = &option;
       pMatch->value = value;
@@ -441,8 +482,9 @@ bool matchCompileFlagOption(const std::vector<std::string>& flags,
    return false;
 }
 
-// Whether a flag that doesn't take its value from the next argument is allowed
-bool isAllowedSingleFlag(const std::string& flag)
+// Whether a flag that doesn't take its value from the next argument is
+// allowed; for a setting given without a value, pReason says why not
+bool isAllowedSingleFlag(const std::string& flag, std::string* pReason)
 {
    if (kStandaloneFlags.count(flag) > 0)
       return true;
@@ -454,10 +496,11 @@ bool isAllowedSingleFlag(const std::string& flag)
       return true;
    }
 
-   // a warning ('-Wall', '-Wno-unused', '-Werror=format'); the only other
-   // '-W' options, '-Wa,', '-Wl,' and '-Wp,', pass arguments on to other tools
+   // a warning ('-W', '-Wall', '-Wno-unused', '-Werror=format'); one with a
+   // comma is turned away, since '-Wa,', '-Wl,' and '-Wp,' pass arguments on
+   // to other tools (which also turns away a list for '-Wundef-prefix=')
    if (boost::algorithm::starts_with(flag, "-W"))
-      return flag.size() > 2 && flag.find(',') == std::string::npos;
+      return flag.find(',') == std::string::npos;
 
    // a feature ('-fopenmp', '-fno-exceptions', '-mavx2', '-mno-sse4')
    const std::set<std::string>* pFeatures = nullptr;
@@ -466,20 +509,46 @@ bool isAllowedSingleFlag(const std::string& flag)
    else if (boost::algorithm::starts_with(flag, "-m"))
       pFeatures = &kTargetFeatureFlags;
 
-   if (pFeatures == nullptr)
-      return false;
+   if (pFeatures != nullptr)
+   {
+      std::string name = flag.substr(2);
+      if (boost::algorithm::starts_with(name, "no-"))
+         name = name.substr(3);
 
-   std::string name = flag.substr(2);
-   if (boost::algorithm::starts_with(name, "no-"))
-      name = name.substr(3);
+      if (pFeatures->count(name) > 0)
+         return true;
+   }
 
-   return pFeatures->count(name) > 0;
+   // a setting with nothing after an '=' ('-std', '-std=')
+   std::string setting = flag.substr(0, equals);
+   if (kSettingOptions.count(setting) > 0)
+      *pReason = quoteFlag(setting) + " needs a value after an '=', as in " + quoteFlag(setting + "=<value>");
+
+   return false;
+}
+
+// Whether the argument after a rejected flag goes with it in the report: the
+// flag is an option that clang reads the next argument as the value of, or
+// one of ours whose value that argument was likely meant to be ('-std' then
+// 'c++17')
+bool takesSeparateValue(const std::string& flag)
+{
+   if (kUnsupportedSeparateOptions.count(flag) > 0 || kSettingOptions.count(flag) > 0)
+      return true;
+
+   for (const CompileFlagOption& option : kCompileFlagOptions)
+   {
+      if (flag == option.spelling)
+         return true;
+   }
+
+   return false;
 }
 
 } // anonymous namespace
 
 std::vector<std::string> filterCompileFlags(const std::vector<std::string>& flags,
-                                            std::vector<std::string>* pRejected)
+                                            std::vector<RejectedCompileFlag>* pRejected)
 {
    std::vector<std::string> allowed;
    for (std::size_t i = 0; i < flags.size(); i++)
@@ -495,17 +564,27 @@ std::vector<std::string> filterCompileFlags(const std::vector<std::string>& flag
          continue;
       }
 
-      if (isAllowedSingleFlag(flag))
+      std::string reason;
+      if (isAllowedSingleFlag(flag, &reason))
       {
          allowed.push_back(flag);
          continue;
       }
 
-      // a value after a dropped option goes with it, rather than being
-      // reported (and dropped) on its own
-      std::string rejected = flag;
-      if (boost::algorithm::starts_with(flag, "-") && i + 1 < flags.size() && isPlainValue(flags[i + 1]))
-         rejected += " " + flags[++i];
+      RejectedCompileFlag rejected;
+      rejected.flag = flag;
+      rejected.reason = !match.reason.empty() ? match.reason : reason;
+      if (rejected.reason.empty())
+      {
+         rejected.reason = isPlainValue(flag)
+               ? "it is neither a flag nor the value of a supported option"
+               : "only flags that affect how files are parsed are supported";
+      }
+
+      // an option's value goes with it, rather than being reported (and
+      // dropped) on its own
+      if (takesSeparateValue(flag) && i + 1 < flags.size() && isPlainValue(flags[i + 1]))
+         rejected.flag += " " + flags[++i];
 
       if (pRejected != nullptr)
          pRejected->push_back(rejected);

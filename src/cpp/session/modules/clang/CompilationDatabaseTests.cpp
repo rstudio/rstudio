@@ -62,6 +62,18 @@ protected:
    FilePath src_;
 };
 
+// The entries filterCompileFlags() rejects, as they're reported
+std::vector<std::string> rejectedFlags(const std::vector<std::string>& flags)
+{
+   std::vector<RejectedCompileFlag> rejected;
+   filterCompileFlags(flags, &rejected);
+
+   std::vector<std::string> result;
+   for (const RejectedCompileFlag& entry : rejected)
+      result.push_back(entry.flag);
+   return result;
+}
+
 TEST_F(CompileFlagsTest, FindsFileInSourceDirectory)
 {
    FilePath file = flagsFile(src_);
@@ -193,15 +205,23 @@ TEST_F(CompileFlagsTest, AllowsFlagsThatShapeTheParse)
       "-fmodule-map-file=x.modulemap", "--gcc-toolchain=gcc",
       "-std=c++20", "-stdlib=libc++", "-xc++", "-x", "c++-header",
       "--target=x86_64-pc-linux-gnu", "-target", "aarch64-linux-gnu", "-arch", "arm64",
-      "-march=haswell", "-mavx2", "-mno-sse4.2", "-m64",
-      "-Wall", "-Wno-unused-parameter", "-Werror=format", "-Wframe-larger-than=4096", "-w",
+      "-march=haswell", "-mavx2", "-mno-sse4.2", "-msse4", "-mno-sse4", "-m64",
+      "-W", "-Wall", "-Wno-unused-parameter", "-Werror=format", "-Wframe-larger-than=4096", "-w",
       "-pedantic", "-ferror-limit=50", "-fopenmp", "-fopenmp=libomp", "-fno-exceptions",
+      "-fsanitize=address,undefined", "-fno-sanitize=alignment",
       "-fPIC", "-fvisibility=hidden", "-O2", "-g", "-pthread",
    };
 
-   std::vector<std::string> rejected;
+   std::vector<RejectedCompileFlag> rejected;
    EXPECT_EQ(filterCompileFlags(flags, &rejected), flags);
    EXPECT_TRUE(rejected.empty());
+}
+
+TEST_F(CompileFlagsTest, RejectsNegatedFeaturesThatArentListed)
+{
+   // '-fno-' and '-mno-' only allow the names their positive forms do
+   std::vector<std::string> flags = {"-fno-foo", "-mno-foo", "-ffoo", "-mfoo"};
+   EXPECT_EQ(rejectedFlags(flags), flags);
 }
 
 TEST_F(CompileFlagsTest, RejectsFlagsThatReachBeyondTheParse)
@@ -228,34 +248,76 @@ TEST_F(CompileFlagsTest, RejectsFlagsThatReachBeyondTheParse)
       "other.cpp",
    };
 
-   std::vector<std::string> rejected;
-   EXPECT_TRUE(filterCompileFlags(flags, &rejected).empty());
-   EXPECT_EQ(rejected, expected);
+   EXPECT_TRUE(filterCompileFlags(flags).empty());
+   EXPECT_EQ(rejectedFlags(flags), expected);
+}
+
+TEST_F(CompileFlagsTest, ReportsValueOnlyWithAnOptionThatTakesOne)
+{
+   // neither takes the argument after it, which is reported on its own
+   std::vector<std::string> flags = {"-ftime-trace", "other.cpp", "-fplugin=x.so", "src/extra.c"};
+   EXPECT_EQ(rejectedFlags(flags), flags);
+
+   std::vector<RejectedCompileFlag> rejected;
+   filterCompileFlags(flags, &rejected);
+   ASSERT_EQ(rejected.size(), 4u);
+   EXPECT_EQ(rejected[0].reason, "only flags that affect how files are parsed are supported");
+   EXPECT_EQ(rejected[1].reason, "it is neither a flag nor the value of a supported option");
+}
+
+TEST_F(CompileFlagsTest, SaysWhyASupportedOptionWasRejected)
+{
+   std::vector<std::string> flags = {
+      "-I", "-DFOO", "-x", "ast", "-std", "c++17", "-std=", "--gcc-toolchain", "gcc",
+      "--sysroot=", "-I-", "-D",
+   };
+
+   std::vector<RejectedCompileFlag> rejected;
+   EXPECT_EQ(filterCompileFlags(flags, &rejected), std::vector<std::string>{"-DFOO"});
+
+   std::vector<std::pair<std::string, std::string>> actual;
+   for (const RejectedCompileFlag& entry : rejected)
+      actual.emplace_back(entry.flag, entry.reason);
+
+   std::vector<std::pair<std::string, std::string>> expected = {
+      {"-I", "'-I' needs a value; one on the next line can't begin with '-' or '@'"},
+      {"-x ast", "'-x' doesn't support the value 'ast'"},
+      {"-std c++17", "'-std' needs a value after an '=', as in '-std=<value>'"},
+      {"-std=", "'-std' needs a value after an '=', as in '-std=<value>'"},
+      {"--gcc-toolchain gcc", "'--gcc-toolchain' needs a value after an '=', as in '--gcc-toolchain=<value>'"},
+      {"--sysroot=", "'--sysroot' needs a value after an '=', as in '--sysroot=<value>'"},
+      {"-I-", "clang doesn't support '-I-'; use '-iquote' instead"},
+      {"-D", "'-D' needs a value"},
+   };
+   EXPECT_EQ(actual, expected);
+}
+
+TEST_F(CompileFlagsTest, DoesNotResolveIDashAsAPath)
+{
+   std::vector<std::string> flags = {"-I-"};
+   EXPECT_EQ(resolveCompileFlagPaths(flags, pkg_), flags);
 }
 
 TEST_F(CompileFlagsTest, KeepsAllowedFlagsAroundRejectedOnes)
 {
    std::vector<std::string> flags = {"-DFOO", "-o", "out.o", "-Wall"};
    std::vector<std::string> expected = {"-DFOO", "-Wall"};
-   std::vector<std::string> rejected;
-   EXPECT_EQ(filterCompileFlags(flags, &rejected), expected);
-   EXPECT_EQ(rejected, std::vector<std::string>{"-o out.o"});
+   EXPECT_EQ(filterCompileFlags(flags), expected);
+   EXPECT_EQ(rejectedFlags(flags), std::vector<std::string>{"-o out.o"});
 }
 
 TEST_F(CompileFlagsTest, ValueInNextArgumentMustNotLookLikeAnOption)
 {
    // clang would take '-fplugin=...' as the path, but we don't, so that
    // nothing we pass on is an option we haven't checked
-   std::vector<std::string> rejected;
-   EXPECT_TRUE(filterCompileFlags({"-I", "-fplugin=plugin.so"}, &rejected).empty());
-   std::vector<std::string> expected = {"-I", "-fplugin=plugin.so"};
-   EXPECT_EQ(rejected, expected);
+   std::vector<std::string> flags = {"-I", "-fplugin=plugin.so"};
+   EXPECT_TRUE(filterCompileFlags(flags).empty());
+   EXPECT_EQ(rejectedFlags(flags), flags);
 
    // nor a response file, nor nothing at all
-   rejected.clear();
-   EXPECT_TRUE(filterCompileFlags({"-include", "@more-flags.txt", "-D"}, &rejected).empty());
-   expected = {"-include", "@more-flags.txt", "-D"};
-   EXPECT_EQ(rejected, expected);
+   flags = {"-include", "@more-flags.txt", "-D"};
+   EXPECT_TRUE(filterCompileFlags(flags).empty());
+   EXPECT_EQ(rejectedFlags(flags), flags);
 }
 
 TEST_F(CompileFlagsTest, LeavesSysrootRelativePathsAlone)

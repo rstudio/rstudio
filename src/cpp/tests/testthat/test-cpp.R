@@ -289,6 +289,11 @@ test_that("problems with compile_flags.txt are reported, not swallowed", {
     expect_equal(diagnostics[[1]]$position$line, 1)
     expect_equal(diagnostics[[1]]$severity, 2)
 
+    # a supported option is told apart from an unsupported one
+    diagnostics <- lint("-D")
+    expect_length(diagnostics, 1L)
+    expect_match(diagnostics[[1]]$message, "was ignored; '-D' needs a value", fixed = TRUE)
+
     # a bad value is quoted apart from its option, which the parse still survives
     diagnostics <- lint("-fsanitize=bogus")
     expect_length(diagnostics, 1L)
@@ -332,4 +337,20 @@ test_that("compile_flags.txt flags that aren't allowed are dropped, and the rest
     expect_match(messages[[3]], "'-Xclang plugin.so'", fixed = TRUE)
     expect_match(messages[[4]], "'-o out.o'", fixed = TRUE)
     expect_equal(vapply(diagnostics, `[[`, 0, "severity"), rep(2, 4))
+})
+
+test_that("compile_flags.txt problems aren't reported on files that aren't indexed", {
+    skip_if_not(.rs.isClangAvailable())
+
+    dir <- tempfile("cpp-unindexed-")
+    dir.create(dir)
+    on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+
+    # no Rcpp and no package, so no compile args, and the flags never apply
+    path <- file.path(dir, "plain.cpp")
+    writeLines("int f() { return 1; }", path)
+    writeLines(c("-o", "out.o", "-std=c++99"), file.path(dir, "compile_flags.txt"))
+
+    diagnostics <- .rs.invokeRpc("get_cpp_diagnostics", path)
+    expect_length(diagnostics, 0L)
 })
