@@ -44,7 +44,7 @@ import desktop from '../native/desktop.node';
 import { setDefaultApplicationForRFiles } from './default-file-handler';
 import { appState } from './app-state';
 import { clipboardWritesSettled, queueClipboardWrite, readClipboardText, readClipboardType } from './clipboard-queue';
-import { defaultR, detectREnvironmentAsync, kRQueryTimeoutMs, rememberRChoice, rExecutableProblem } from './detect-r';
+import { defaultR, detectREnvironmentAsync, kRQueryTimeoutMs, rExecutableProblem, storeRChoice } from './detect-r';
 import { rChoiceApplies, savedRChoice } from './r-choice';
 import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
@@ -1370,12 +1370,9 @@ export class GwtCallback extends EventEmitter {
       return problem;
     }
 
-    const defaultPath = await defaultR();
-    if (request !== this.defaultRVersionRequests) {
-      return '';
-    }
-
-    rememberRChoice(rPath, defaultPath);
+    // kept before looking for the default R (see storeRChoice), which a
+    // later request then can't be overwritten by
+    await storeRChoice(rPath);
     return '';
   }
 

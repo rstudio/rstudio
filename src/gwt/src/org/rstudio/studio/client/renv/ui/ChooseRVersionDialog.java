@@ -19,7 +19,6 @@ import java.util.List;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -151,14 +150,8 @@ public class ChooseRVersionDialog extends ModalDialog<RVersionChooser.Choice>
    private int indexOf(RVersionChooser.Choice choice)
    {
       for (int i = 0; i < choices_.size(); i++)
-      {
-         RVersionChooser.Choice candidate = choices_.get(i);
-         if (candidate.useDefault == choice.useDefault &&
-             StringUtil.equals(candidate.installation.binary, choice.installation.binary))
-         {
+         if (choices_.get(i).sameAs(choice))
             return i;
-         }
-      }
       return -1;
    }
 

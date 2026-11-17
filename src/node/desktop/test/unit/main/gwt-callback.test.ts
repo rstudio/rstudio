@@ -152,21 +152,19 @@ describe('DesktopCallback', () => {
 
     it('stores an R that runs as the one RStudio uses', async () => {
       sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{} as never, null]);
-      sinon.stub(DetectR, 'defaultR').resolves('/usr/local/bin/R');
-      const remember = sinon.stub(DetectR, 'rememberRChoice');
+      const store = sinon.stub(DetectR, 'storeRChoice').resolves();
 
       assert.equal(await callback.setDefaultRVersion(rPath), '');
-      assert.isTrue(remember.calledOnceWithExactly(rPath, '/usr/local/bin/R'));
+      assert.isTrue(store.calledOnceWithExactly(rPath));
     });
 
     it('stores nothing for an R that is missing or fails to run', async () => {
       sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([null as never, new Error('boom')]);
-      sinon.stub(DetectR, 'defaultR').resolves('');
-      const remember = sinon.stub(DetectR, 'rememberRChoice');
+      const store = sinon.stub(DetectR, 'storeRChoice').resolves();
 
       assert.include(await callback.setDefaultRVersion(rPath), 'boom');
       assert.isNotEmpty(await callback.setDefaultRVersion('/no/such/R'));
-      assert.isFalse(remember.called);
+      assert.isFalse(store.called);
     });
 
     it('lets a later request decide what is stored', async () => {
@@ -175,8 +173,7 @@ describe('DesktopCallback', () => {
       const detect = sinon.stub(DetectR, 'detectREnvironmentAsync');
       detect.onFirstCall().returns(new Promise((resolve) => (answerFirst = resolve)) as never);
       detect.onSecondCall().resolves([{} as never, null]);
-      sinon.stub(DetectR, 'defaultR').resolves('');
-      const remember = sinon.stub(DetectR, 'rememberRChoice');
+      const store = sinon.stub(DetectR, 'storeRChoice').resolves();
 
       const first = callback.setDefaultRVersion(rPath);
       const second = callback.setDefaultRVersion(rPath);
@@ -184,13 +181,12 @@ describe('DesktopCallback', () => {
       answerFirst!([{}, null]);
       assert.equal(await first, '');
 
-      assert.isTrue(remember.calledOnce);
+      assert.isTrue(store.calledOnce);
     });
 
     it('is registered for the client', async () => {
       sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{} as never, null]);
-      sinon.stub(DetectR, 'defaultR').resolves('');
-      sinon.stub(DetectR, 'rememberRChoice');
+      sinon.stub(DetectR, 'storeRChoice').resolves();
 
       assert.equal(await invoke('desktop_set_default_r_version', rPath), '');
     });

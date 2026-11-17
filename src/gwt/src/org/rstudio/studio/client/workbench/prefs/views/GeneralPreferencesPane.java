@@ -109,6 +109,11 @@ public class GeneralPreferencesPane extends PreferencesPane
                      rVersionChoice_,
                      choice ->
                      {
+                        // keeping the R shown changes nothing (and mustn't
+                        // replace the choice the desktop keeps)
+                        if (choice.sameAs(rVersionChoice_))
+                           return;
+
                         rVersionChoice_ = choice;
                         rVersionChanged_ = true;
                         rVersion_.setText(RVersionChooser.describe(choice, false));

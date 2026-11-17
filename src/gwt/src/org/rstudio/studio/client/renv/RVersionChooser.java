@@ -17,6 +17,7 @@ package org.rstudio.studio.client.renv;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsObject;
@@ -55,8 +56,37 @@ public class RVersionChooser
          this.useDefault = useDefault;
       }
 
+      public boolean sameAs(Choice other)
+      {
+         return other != null &&
+                useDefault == other.useDefault &&
+                sameExecutable(installation.binary, other.installation.binary);
+      }
+
       public final RVersionInstall installation;
       public final boolean useDefault;
+   }
+
+   /**
+    * Whether two paths name the same R. On Windows, where the installations
+    * listed name bin\R.exe and the desktop keeps bin\x64\Rterm.exe, case,
+    * separators and the executable's name don't matter, and bin\R.exe runs
+    * the 64-bit R.
+    */
+   public static boolean sameExecutable(String a, String b)
+   {
+      return StringUtil.equals(executableIdentity(a), executableIdentity(b));
+   }
+
+   private static String executableIdentity(String binary)
+   {
+      String path = StringUtil.notNull(binary);
+      if (!BrowseCap.isWindowsDesktop())
+         return path;
+
+      path = path.replace('\\', '/').toLowerCase();
+      String dir = path.substring(0, Math.max(0, path.lastIndexOf('/')));
+      return dir.endsWith("/bin") ? dir + "/x64" : dir;
    }
 
    @Inject
