@@ -234,23 +234,43 @@ export function chosenRForStartup(platform = process.platform): { path?: string;
   return { unusable: { path: choice.path, reason } };
 }
 
+/** How long describing an R RStudio isn't running may take. */
+export const kRQueryTimeoutMs = 30000;
+
 /**
  * The R RStudio uses when none was chosen in RStudio: the R that
  * RSTUDIO_WHICH_R named at launch, or else the platform's default
- * installation. '' when there is none that runs.
+ * installation, the first of the candidates startup would try that runs.
+ * '' when there is none. Queried in the background, and bounded: startup
+ * may never have run it, and an R that hangs must not hang RStudio.
  */
-export function defaultR(platform = process.platform): string {
+export async function defaultR(timeoutMs = kRQueryTimeoutMs, platform = process.platform): Promise<string> {
   const rstudioWhichR = launchRStudioWhichR();
   if (rstudioWhichR) {
     return resolveRHome(rstudioWhichR, platform);
   }
 
-  if (platform === 'win32') {
-    return registryRCandidatesWin32().find((candidate) => isValidBinary(candidate)) ?? '';
+  const candidates = platform === 'win32' ? registryRCandidatesWin32() : posixRCandidates(platform);
+  return firstRunningR(candidates, timeoutMs);
+}
+
+/**
+ * The first of the given R executables that answers RStudio's query within
+ * the timeout, or '' when none does.
+ */
+export async function firstRunningR(candidates: string[], timeoutMs: number): Promise<string> {
+  for (const candidate of candidates) {
+    if (!existsSync(candidate)) {
+      continue;
+    }
+
+    const [, error] = await detectREnvironmentAsync(candidate, timeoutMs);
+    if (!error) {
+      return candidate;
+    }
   }
 
-  const [rPath, error] = scanForRPosix(defaultRLocationsPosix(), platform);
-  return error ? '' : rPath;
+  return '';
 }
 
 /**
@@ -258,8 +278,13 @@ export function defaultR(platform = process.platform): string {
  * (see defaultR) means following the default from then on, rather than
  * holding on to the R it is now.
  */
-export function storeRChoice(rPath: string, platform = process.platform): void {
-  if (sameRExecutable(rPath, defaultR(platform), platform)) {
+export async function storeRChoice(rPath: string, platform = process.platform): Promise<void> {
+  rememberRChoice(rPath, await defaultR(kRQueryTimeoutMs, platform), platform);
+}
+
+/** As storeRChoice(), given the default R (from defaultR()). */
+export function rememberRChoice(rPath: string, defaultPath: string, platform = process.platform): void {
+  if (sameRExecutable(rPath, defaultPath, platform)) {
     clearRChoice(platform);
   } else {
     saveRChoice(rPath, platform);
@@ -398,7 +423,16 @@ function storedRCandidatesWin32(): RCandidateWin32[] {
 
   const rBinDir = options.rBinDir();
   if (rBinDir) {
-    candidates.push({ path: fixWindowsRExecutablePath(`${rBinDir}/${kWindowsRExe}`), validate: true });
+    // with no default installation asked for, the stored path is the chosen
+    // R, which gives way to the default installation once RSTUDIO_WHICH_R
+    // has changed since it was chosen (see rChoiceApplies)
+    const path = fixWindowsRExecutablePath(`${rBinDir}/${kWindowsRExe}`);
+    const askedForDefault = options.useDefault32BitR() || options.useDefault64BitR();
+    if (askedForDefault || rChoiceApplies({ path, rstudioWhichR: options.rstudioWhichRWhenChosen() })) {
+      candidates.push({ path, validate: true });
+    } else {
+      candidates.push(...registryRCandidatesWin32().map((candidate) => ({ path: candidate, validate: true })));
+    }
   }
 
   return candidates;
@@ -1011,9 +1045,10 @@ function rCandidates(): string[] {
   return chosen ? [choice.path, ...fallbacks] : fallbacks;
 }
 
-function posixRCandidates(): string[] {
+// the R executables scanForRPosix() tries, in order
+function posixRCandidates(platform = process.platform): string[] {
   const candidates = defaultRLocationsPosix();
-  if (process.platform !== 'darwin') {
+  if (platform !== 'darwin') {
     const rLocation = rOnPathLinux();
     if (rLocation) {
       candidates.unshift(rLocation);

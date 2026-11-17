@@ -591,11 +591,18 @@ public class GeneralPreferencesPane extends PreferencesPane
    // the user's consent.
    private void applyRVersionChoice(RVersionChooser.Choice choice)
    {
+      // checking the R takes a while; a choice applied since then supersedes
+      // this one, which is then neither reported nor offered
+      int request = ++rVersionApplyRequests_;
+
       String caption = renvConstants_.chooseRVersionCaption();
       rVersionSwitcher_.makeOrthogonal(
             choice.installation,
             () -> Desktop.getFrame().setDefaultRVersion(choice.installation.binary, error ->
             {
+               if (request != rVersionApplyRequests_)
+                  return;
+
                if (!StringUtil.isNullOrEmpty(error))
                   globalDisplay_.showErrorMessage(caption, error);
                else if (!choice.installation.current)
@@ -865,6 +872,8 @@ public class GeneralPreferencesPane extends PreferencesPane
    // (it is then stored when the change is applied)
    private RVersionChooser.Choice rVersionChoice_;
    private boolean rVersionChanged_;
+   // shared by every Global Options dialog, as the desktop keeps one choice
+   private static int rVersionApplyRequests_;
    private final RVersionChooser rVersionChooser_;
    private final RVersionSwitcher rVersionSwitcher_;
    private final GlobalDisplay globalDisplay_;

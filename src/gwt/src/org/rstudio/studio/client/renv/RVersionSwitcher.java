@@ -189,9 +189,15 @@ public class RVersionSwitcher
                Desktop.getFrame().makeROrthogonal(installed.home, error ->
                {
                   if (StringUtil.isNullOrEmpty(error))
+                  {
+                     // a switch to it next (Global Options offers one) needn't ask again
+                     installed.orthogonal = true;
                      onReady.execute();
+                  }
                   else
+                  {
                      onFailed.execute(error);
+                  }
                });
             },
             true);

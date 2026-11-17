@@ -27,6 +27,7 @@ import {
   defaultR,
   detectREnvironment,
   detectREnvironmentAsync,
+  firstRunningR,
   frameworkVersionHome,
   parseRQueryResult,
   promptUserForR,
@@ -605,25 +606,37 @@ describe('DetectR with an R chosen in RStudio', () => {
     assert.isTrue(options.setRExecutablePath.calledOnceWithExactly(''));
   });
 
-  it('stores an R other than the default as the chosen R', () => {
+  it('stores an R other than the default as the chosen R', async () => {
     const fakeR = writeFakeR('4.4.1');
     const options = fakeROptions();
 
-    storeRChoice(fakeR);
+    await storeRChoice(fakeR);
 
     assert.isTrue(options.setRExecutablePath.calledOnceWithExactly(fakeR));
   });
 
-  it('follows the default R from then on when the default R is chosen', function () {
+  it('follows the default R from then on when the default R is chosen', async function () {
     const options = fakeROptions();
-    const rPath = defaultR();
+    const rPath = await defaultR();
     if (!rPath) {
       this.skip();
     }
 
-    storeRChoice(rPath);
+    await storeRChoice(rPath);
 
     assert.isTrue(options.setRExecutablePath.calledOnceWithExactly(''));
     assert.isTrue(options.setRStudioWhichRWhenChosen.calledOnceWithExactly(''));
+  });
+
+  it('passes over a candidate for the default R that never answers', async () => {
+    const fakeR = writeFakeR('4.4.1');
+    const hangingR = join(dir, 'hanging-R');
+    writeFileSync(hangingR, '#!/bin/sh\nsleep 5\n', { mode: 0o755 });
+
+    const started = Date.now();
+    const rPath = await firstRunningR([join(dir, 'missing-R'), hangingR, fakeR], 250);
+
+    assert.equal(rPath, fakeR);
+    assert.isBelow(Date.now() - started, 4000);
   });
 });

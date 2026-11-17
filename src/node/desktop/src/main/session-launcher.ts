@@ -37,6 +37,7 @@ import LogOptions from './log-options';
 import { closeAllSatellites, MainWindow } from './main-window';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { prepareEnvironment, storeRChoice, UnusableRChoice } from './detect-r';
+import { sameRExecutable, savedRChoice } from './r-choice';
 import { EXIT_FAILURE } from './program-status';
 import { waitForUrlWithTimeout } from './url-utils';
 import { createStandaloneErrorDialog, getCurrentlyUniqueFolderName, isAutomated, showWindowForAutomation, userLogPath } from './utils';
@@ -613,6 +614,7 @@ export class SessionLauncher {
     // update the main window's reference to the process object
     this.mainWindow?.setSessionProcess(this.sessionProcess);
     if (reload) {
+      const launched = this.sessionProcess;
       waitForUrlWithTimeout(launchContext.url, 50, 25, 10)
         .then((error: Err) => {
           if (error) {
@@ -623,6 +625,11 @@ export class SessionLauncher {
           logger().logError(error);
         })
         .finally(() => {
+          // a later launch (going back to the previous R after this session
+          // failed, say) supersedes this one, and must keep the window
+          if (this.sessionProcess !== launched) {
+            return;
+          }
           this.nextSessionUrl = launchContext.url;
           setImmediate(this.onReloadFrameForNextSession.bind(this));
         });
@@ -669,12 +676,14 @@ export class SessionLauncher {
     this.switchedRToStore = '';
     this.rBeforeSwitch = '';
 
-    storeRChoice(rPath);
+    storeRChoice(rPath).catch((error: unknown) => logger().logError(safeError(error)));
   }
 
   /**
    * Go back to the R in use before a switch whose session failed to start,
-   * from the launch error page. The R that failed is not stored.
+   * from the launch error page. The R that failed is not kept: a switch
+   * stores it only once a session has started with it, but Global Options
+   * stores the R chosen there before offering the switch.
    */
   restartWithPreviousR(): void {
     const rPath = this.rBeforeSwitch;
@@ -687,6 +696,13 @@ export class SessionLauncher {
     if (error) {
       logger().logError(error);
       return;
+    }
+
+    // a choice made since (of yet another R) is left alone
+    const failedR = this.rPath;
+    const saved = savedRChoice();
+    if (saved !== null && sameRExecutable(saved.path, failedR)) {
+      storeRChoice(rPath).catch((storeError: unknown) => logger().logError(safeError(storeError)));
     }
 
     this.rBeforeSwitch = '';

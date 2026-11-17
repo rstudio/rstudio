@@ -44,7 +44,7 @@ import desktop from '../native/desktop.node';
 import { setDefaultApplicationForRFiles } from './default-file-handler';
 import { appState } from './app-state';
 import { clipboardWritesSettled, queueClipboardWrite, readClipboardText, readClipboardType } from './clipboard-queue';
-import { defaultR, detectREnvironment, detectREnvironmentAsync, rExecutableProblem, storeRChoice } from './detect-r';
+import { defaultR, detectREnvironmentAsync, kRQueryTimeoutMs, rememberRChoice, rExecutableProblem } from './detect-r';
 import { rChoiceApplies, savedRChoice } from './r-choice';
 import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
@@ -132,15 +132,16 @@ export interface RDescription {
 }
 
 /**
- * The given R executable with its version, as remembered from querying it;
- * both are '' for an empty path.
+ * The given R executable with its version (from querying it, normally
+ * remembered from before, and bounded in case it hangs); both are '' for an
+ * empty path.
  */
-function describeR(rPath: string): RDescription {
+async function describeR(rPath: string): Promise<RDescription> {
   if (!rPath) {
     return { path: '', version: '' };
   }
 
-  const [environment, error] = detectREnvironment(rPath);
+  const [environment, error] = await detectREnvironmentAsync(rPath, kRQueryTimeoutMs);
   return { path: rPath, version: error ? '' : environment.version };
 }
 
@@ -163,6 +164,10 @@ export class GwtCallback extends EventEmitter {
   pendingRVersion = '';
   /** the R executables setPendingRVersion() found usable, which a quit may then name */
   preparedRVersions = new Set<string>();
+
+  // counts setDefaultRVersion() requests, so that one checked after a later
+  // request was made doesn't overwrite the later choice
+  private defaultRVersionRequests = 0;
 
   private hasFontConfig = false;
   private owners = new Set<GwtWindow>();
@@ -602,7 +607,7 @@ export class GwtCallback extends EventEmitter {
       return '';
     });
 
-    ipcMain.handle('desktop_get_r_choice', () => this.getRChoice());
+    ipcMain.handle('desktop_get_r_choice', async () => this.getRChoice());
 
     ipcMain.handle('desktop_set_default_r_version', async (event, rExecutablePath: string) => {
       return this.setDefaultRVersion(rExecutablePath);
@@ -1353,13 +1358,24 @@ export class GwtCallback extends EventEmitter {
    */
   async setDefaultRVersion(rExecutablePath: string): Promise<string> {
     const rPath = preparedRExecutablePath(rExecutablePath);
+    const request = ++this.defaultRVersionRequests;
 
+    // checking takes a while; a later request decides what is kept, and its
+    // client ignores the answers to earlier ones
     const problem = await checkRExecutable(rPath);
+    if (request !== this.defaultRVersionRequests) {
+      return '';
+    }
     if (problem) {
       return problem;
     }
 
-    storeRChoice(rPath);
+    const defaultPath = await defaultR();
+    if (request !== this.defaultRVersionRequests) {
+      return '';
+    }
+
+    rememberRChoice(rPath, defaultPath);
     return '';
   }
 
@@ -1368,15 +1384,16 @@ export class GwtCallback extends EventEmitter {
    * uses), and the default R, each as its executable and R version; an
    * entry is empty when there is no such R.
    */
-  getRChoice(): Record<string, RDescription> {
+  async getRChoice(): Promise<Record<string, RDescription>> {
     const choice = savedRChoice();
     const chosen = choice !== null && rChoiceApplies(choice) ? choice.path : '';
 
-    return {
-      current: describeR(this.mainWindow.sessionLauncher?.rPath ?? ''),
-      chosen: describeR(chosen),
-      default: describeR(defaultR()),
-    };
+    const [current, chosenR, defaultRPath] = await Promise.all([
+      describeR(this.mainWindow.sessionLauncher?.rPath ?? ''),
+      describeR(chosen),
+      defaultR(),
+    ]);
+    return { current, chosen: chosenR, default: await describeR(defaultRPath) };
   }
 
   /**

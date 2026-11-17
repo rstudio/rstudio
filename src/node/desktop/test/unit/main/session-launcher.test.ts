@@ -32,6 +32,7 @@ import { appState, clearApplicationSingleton, setApplication } from '../../../sr
 import { MainWindow } from '../../../src/main/main-window';
 import { GwtCallback } from '../../../src/main/gwt-callback';
 import * as DetectR from '../../../src/main/detect-r';
+import * as RChoice from '../../../src/main/r-choice';
 
 function getNewLauncher(): SessionLauncher {
   return new SessionLauncher(new FilePath(), new FilePath(), new FilePath(), new ApplicationLaunch(), null);
@@ -160,7 +161,7 @@ describe('SessionLauncher', () => {
       const gwtCallback = new EventEmitter();
       appState().gwtCallback = gwtCallback as unknown as GwtCallback;
 
-      const store = sinon.stub(DetectR, 'storeRChoice');
+      const store = sinon.stub(DetectR, 'storeRChoice').resolves();
       return { launcher, gwtCallback, store };
     }
 
@@ -218,6 +219,7 @@ describe('SessionLauncher', () => {
       const prepare = sinon.stub(DetectR, 'prepareEnvironment').returns(null);
       const { launcher, gwtCallback, store } = launcherWithPendingR('/opt/R/4.4.1/bin/R');
       const relaunch = sinon.stub(launcher, 'launchNextSession').resolves(null);
+      sinon.stub(RChoice, 'savedRChoice').returns(null);
 
       launcher.applyPendingRVersion();
       launcher.restartWithPreviousR();
@@ -228,6 +230,26 @@ describe('SessionLauncher', () => {
 
       // the session that now starts is not the one switched to
       gwtCallback.emit(GwtCallback.WORKBENCH_INITIALIZED);
+      assert.isFalse(store.called);
+    });
+
+    it('puts back the R in use before, when the R that failed was already kept', () => {
+      // Global Options keeps the R chosen there before offering the switch
+      sinon.stub(DetectR, 'prepareEnvironment').returns(null);
+      const { launcher, store } = launcherWithPendingR('/opt/R/4.4.1/bin/R');
+      sinon.stub(launcher, 'launchNextSession').resolves(null);
+      const saved = sinon.stub(RChoice, 'savedRChoice').returns({ path: '/opt/R/4.4.1/bin/R', rstudioWhichR: '' });
+
+      launcher.applyPendingRVersion();
+      launcher.restartWithPreviousR();
+
+      assert.isTrue(store.calledOnceWithExactly('/opt/R/4.3.3/bin/R'));
+
+      // a choice made since, of yet another R, is left alone
+      store.resetHistory();
+      saved.returns({ path: '/opt/R/4.5.0/bin/R', rstudioWhichR: '' });
+      launcher.applyPendingRVersion();
+      launcher.restartWithPreviousR();
       assert.isFalse(store.called);
     });
 

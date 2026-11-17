@@ -1000,6 +1000,7 @@
          "C:/R"
       )
       homes <- list.files(roots[nzchar(roots)], pattern = "^R-", full.names = TRUE)
+      homes <- unique(c(normalizePath(homes, winslash = "/", mustWork = FALSE), .rs.rInstallations.registryHomes()))
       lapply(homes, function(home) c(home, file.path(home, "bin", "R.exe")))
    }
    else if (.rs.platform.isMacos)
@@ -1027,6 +1028,39 @@
    .rs.rInstallations.rows(lapply(entries, function(entry) {
       list(path = entry[[1L]], home = entry[[1L]], binary = entry[[2L]])
    }))
+})
+
+#' The homes of the R installations recorded in the Windows registry, as R's
+#' installer records them (under R-core, for all users or the current one,
+#' by version), wherever they were installed.
+#'
+#' @param read The function reading a registry key, as utils::readRegistry.
+.rs.addFunction("rInstallations.registryHomes", function(read = utils::readRegistry)
+{
+   homes <- character()
+   for (hive in c("HLM", "HCU"))
+   {
+      for (key in c("SOFTWARE\\R-core\\R", "SOFTWARE\\R-core\\R64"))
+      {
+         for (view in c("64-bit", "32-bit"))
+         {
+            entries <- .rs.tryCatch(read(key, hive = hive, maxdepth = 2L, view = view))
+            if (inherits(entries, "error") || !is.list(entries))
+               next
+
+            # the key's own InstallPath names the current version; each
+            # version has a subkey of its own
+            for (entry in c(list(entries), Filter(is.list, entries)))
+            {
+               path <- entry[["InstallPath"]]
+               if (is.character(path) && length(path) == 1L && nzchar(path))
+                  homes <- c(homes, normalizePath(path, winslash = "/", mustWork = FALSE))
+            }
+         }
+      }
+   }
+
+   unique(homes)
 })
 
 #' The R installations at the user-mode roots chosen in RStudio's install
@@ -1198,18 +1232,20 @@
 #' @param installed The R installations, as from rInstallations.list().
 #' @param current The home of the R in use.
 #' @param architecture The architecture native here, when that is a choice.
+#' @param arch The R_ARCH of the R in use (see rInstallations.isCurrent()).
 .rs.addFunction("rInstallations.forChooser", function(minimum,
                                                        installed = .rs.rInstallations.cached(refresh = TRUE),
                                                        current = R.home(),
-                                                       architecture = .rs.rInstallations.preferredArchitecture())
+                                                       architecture = .rs.rInstallations.preferredArchitecture(),
+                                                       arch = Sys.getenv("R_ARCH"))
 {
    # an installation rig reports without a home is located through its binary
    missingHome <- !nzchar(installed$home)
    installed$home[missingHome] <- vapply(installed$binary[missingHome], .rs.rig.rHome, character(1), USE.NAMES = FALSE)
 
-   currentHome <- normalizePath(current, winslash = "/", mustWork = FALSE)
-   homes <- normalizePath(installed$home, winslash = "/", mustWork = FALSE)
-   isCurrent <- nzchar(installed$home) & homes == currentHome
+   isCurrent <- vapply(seq_len(nrow(installed)), function(i) {
+      .rs.rInstallations.isCurrent(installed$binary[[i]], installed$home[[i]], current, arch)
+   }, logical(1))
 
    if (!any(isCurrent))
    {
@@ -1217,7 +1253,10 @@
       if (!nzchar(version))
          version <- as.character(getRversion())
 
-      binary <- file.path(current, "bin", if (.rs.platform.isWindows) "R.exe" else "R")
+      binary <- if (.rs.platform.isWindows)
+         file.path(current, "bin", sub("^/", "", arch), "R.exe")
+      else
+         file.path(current, "bin", "R")
       row <- data.frame(
          version = version,
          path    = current,
@@ -1240,6 +1279,32 @@
    lapply(newest, function(i) {
       .rs.rInstallations.chooserEntry(as.list(installed[i, ]), isCurrent[[i]], architecture)
    })
+})
+
+#' Whether the R executable 'binary' of the installation at 'home' runs the
+#' R in use, whose home is 'current'. On Windows an installation can hold a
+#' 64-bit and a 32-bit R ('bin/x64' and 'bin/i386'), told apart by 'arch'
+#' (the R_ARCH of the R in use); 'bin/R.exe' runs the 64-bit one.
+.rs.addFunction("rInstallations.isCurrent", function(binary,
+                                                     home,
+                                                     current = R.home(),
+                                                     arch = Sys.getenv("R_ARCH"))
+{
+   if (!nzchar(home))
+      return(FALSE)
+
+   sameHome <- identical(
+      normalizePath(home, winslash = "/", mustWork = FALSE),
+      normalizePath(current, winslash = "/", mustWork = FALSE)
+   )
+   if (!sameHome)
+      return(FALSE)
+
+   binaryArch <- basename(dirname(binary))
+   if (!binaryArch %in% c("x64", "i386"))
+      return(!identical(arch, "/i386"))
+
+   identical(arch, paste0("/", binaryArch))
 })
 
 #' An R installation (a row of rInstallations.list()) as
@@ -1276,10 +1341,7 @@
    if (!nzchar(version))
       return(NULL)
 
-   isCurrent <- identical(
-      normalizePath(home, winslash = "/", mustWork = FALSE),
-      normalizePath(current, winslash = "/", mustWork = FALSE)
-   )
+   isCurrent <- .rs.rInstallations.isCurrent(binary, home, current)
 
    installation <- list(version = version, path = home, binary = binary, home = home)
    entry <- .rs.rInstallations.chooserEntry(installation, isCurrent, architecture)

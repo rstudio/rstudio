@@ -409,6 +409,63 @@ test_that("the R in use is offered for choosing R even when it was found nowhere
 
 })
 
+test_that("the R in use is told apart from the other architecture of its installation", {
+
+   home <- "C:/Program Files/R/R-4.1.3"
+
+   # a 64-bit session: bin/x64 and bin/R.exe run it, bin/i386 doesn't
+   expect_true(.rs.rInstallations.isCurrent(file.path(home, "bin/x64/R.exe"), home, home, arch = "/x64"))
+   expect_true(.rs.rInstallations.isCurrent(file.path(home, "bin/R.exe"), home, home, arch = "/x64"))
+   expect_false(.rs.rInstallations.isCurrent(file.path(home, "bin/i386/R.exe"), home, home, arch = "/x64"))
+
+   # a 32-bit session
+   expect_true(.rs.rInstallations.isCurrent(file.path(home, "bin/i386/R.exe"), home, home, arch = "/i386"))
+   expect_false(.rs.rInstallations.isCurrent(file.path(home, "bin/R.exe"), home, home, arch = "/i386"))
+
+   # elsewhere there is one R per installation
+   expect_true(.rs.rInstallations.isCurrent("/opt/R/4.4.1/bin/R", "/opt/R/4.4.1/lib/R", "/opt/R/4.4.1/lib/R", arch = ""))
+   expect_false(.rs.rInstallations.isCurrent("/opt/R/4.4.1/bin/R", "/opt/R/4.4.1/lib/R", "/opt/R/4.5.0/lib/R", arch = ""))
+   expect_false(.rs.rInstallations.isCurrent("/opt/R/4.4.1/bin/R", "", "/opt/R/4.4.1/lib/R", arch = ""))
+
+})
+
+test_that("R installations recorded in the Windows registry are found wherever they are", {
+
+   # what utils::readRegistry() reports for the R-core keys: the key's own
+   # values (the current version), and a subkey per version
+   registry <- list(
+      HLM = list(
+         "SOFTWARE\\R-core\\R64" = list(
+            "Current Version" = "4.5.0",
+            InstallPath = "C:\\Program Files\\R\\R-4.5.0",
+            "4.5.0" = list(InstallPath = "C:\\Program Files\\R\\R-4.5.0"),
+            "4.3.3" = list(InstallPath = "D:\\R\\R-4.3.3")
+         )
+      ),
+      HCU = list(
+         "SOFTWARE\\R-core\\R" = list(
+            "4.4.1" = list(InstallPath = "C:\\Users\\me\\R\\R-4.4.1")
+         )
+      )
+   )
+
+   read <- function(key, hive, maxdepth, view) {
+      entries <- registry[[hive]][[key]]
+      if (is.null(entries))
+         stop("cannot open key")
+      entries
+   }
+
+   homes <- .rs.rInstallations.registryHomes(read)
+   expect_setequal(
+      gsub("\\\\", "/", homes),
+      c("C:/Program Files/R/R-4.5.0", "D:/R/R-4.3.3", "C:/Users/me/R/R-4.4.1")
+   )
+
+   expect_identical(.rs.rInstallations.registryHomes(function(...) stop("no registry")), character())
+
+})
+
 test_that("an R executable the user browsed to is described as the chooser lists it", {
 
    skip_on_os("windows")
