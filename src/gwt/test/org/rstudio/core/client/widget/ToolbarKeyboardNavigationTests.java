@@ -19,6 +19,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Visibility;
+import com.google.gwt.dom.client.StyleInjector;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.ui.Button;
@@ -250,6 +251,9 @@ public class ToolbarKeyboardNavigationTests extends GWTTestCase
    {
       LeftRightToggleButton toggle = new LeftRightToggleButton("left", "right", true);
       RootPanel.get().add(toggle);
+      // The widget's styles are injected later in the event loop unless flushed;
+      // whether an earlier test already loaded them depends on test order.
+      StyleInjector.flush();
 
       toggle.setEnabled(false);
       assertEquals("0.4", DomUtils.getComputedStyles(toggle.getElement()).getOpacity());
