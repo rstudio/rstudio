@@ -343,6 +343,12 @@ export async function storeRChoice(rPath: string, platform = process.platform): 
  */
 export async function storeChosenR(rPath: string, useDefault: boolean, platform = process.platform): Promise<void> {
   if (useDefault) {
+    // Windows keeps the stored path to fall back on when no default 64-bit
+    // installation is found (see clearRChoice), which must then be the
+    // default R rather than an R chosen before
+    if (platform === 'win32') {
+      saveRChoice(rPath, platform);
+    }
     clearRChoice(platform);
   } else if (platform === 'win32') {
     saveRChoice(rPath, platform);

@@ -754,6 +754,15 @@ describe('DetectR on Windows with an R chosen in RStudio', () => {
     );
   });
 
+  it('falls back on the default R, not an R chosen before, once the default R is chosen', async () => {
+    const options = fakeROptions({ path: kStoredR, rstudioWhichR: launchRStudioWhichR() });
+
+    await storeChosenR('C:/R/R-4.5.0/bin/x64/Rterm.exe', true, 'win32');
+
+    assert.isTrue(options.useDefault64BitR());
+    assert.equal(options.rExecutablePath(), 'C:/R/R-4.5.0/bin/x64/Rterm.exe');
+  });
+
   it('tries the default installations instead once RSTUDIO_WHICH_R has changed since the choice', () => {
     const registryR = registryDefault();
     fakeROptions({ path: kStoredR, rstudioWhichR: `${launchRStudioWhichR()}-before` });
