@@ -19,7 +19,7 @@ import { existsSync, readdirSync } from 'fs';
 import { kProjectNone, kRStudioInitialProject, kRStudioInitialWorkingDir } from '../core/r-user-data';
 import { MainWindow } from './main-window';
 import { isAutomated } from './utils';
-import { launchRStudioWhichR } from './r-choice';
+import { launchEnvironment } from '../core/environment';
 import { app } from 'electron';
 
 // every launch states exactly one intent: open this project file, start in this directory
@@ -76,22 +76,14 @@ export class ApplicationLaunch {
       argv.push('--no-sandbox');
     }
 
-    // this instance may have been started by opening a project or a file, which leaves these
-    // variables set in our own environment; give the new session a copy without them
-    const env = { ...process.env };
+    // the new instance starts from the environment this one was launched with, not the one
+    // startup prepared for this instance's R: it would take this R's library path as the
+    // user's own, and the R Windows startup exports as RSTUDIO_WHICH_R as the user's choice
+    // (which supersedes the R chosen in RStudio, see rChoiceApplies). This instance may also
+    // have been started by opening a project or a file, which leaves these variables set
+    const env = launchEnvironment();
     delete env[kRStudioInitialProject];
     delete env[kRStudioInitialWorkingDir];
-
-    // Windows startup exports the R it picked as RSTUDIO_WHICH_R; the new
-    // instance must see the value this one was launched with, or it would
-    // take the R picked here as the user's RSTUDIO_WHICH_R (which supersedes
-    // the R chosen in RStudio, see rChoiceApplies)
-    const rstudioWhichR = launchRStudioWhichR();
-    if (rstudioWhichR) {
-      env.RSTUDIO_WHICH_R = rstudioWhichR;
-    } else {
-      delete env.RSTUDIO_WHICH_R;
-    }
 
     if ('noProject' in options) {
       // ask for no project explicitly, so the session doesn't restore the last one; with no

@@ -22,11 +22,10 @@ import path from 'path';
 import childProcess, { ChildProcess, SpawnOptions } from 'child_process';
 import { app } from 'electron';
 
-import { getenv, setenv } from '../../../src/core/environment';
+import { getenv, launchEnvironment, setenv } from '../../../src/core/environment';
 import { kProjectNone, kRStudioInitialProject, kRStudioInitialWorkingDir } from '../../../src/core/r-user-data';
 import { ApplicationLaunch, resolveProjectFile } from '../../../src/main/application-launch';
 import { MainWindow } from '../../../src/main/main-window';
-import { launchRStudioWhichR } from '../../../src/main/r-choice';
 import { createSinonStubInstance, restore, saveAndClear } from '../unit-utils';
 
 describe('ApplicationLaunch', () => {
@@ -172,13 +171,18 @@ describe('ApplicationLaunch', () => {
     assert.equal(getenv(kRStudioInitialWorkingDir), dir);
   });
 
-  it('launchRStudio passes on RSTUDIO_WHICH_R as this instance was launched with it', () => {
+  it('launchRStudio passes on the environment this instance was launched with, not the one prepared for its R', () => {
     const spawnStub = sinon.stub(childProcess, 'spawn').returns({ unref: sinon.stub() } as unknown as ChildProcess);
-    const saved = { RSTUDIO_WHICH_R: '' };
+    const libraryPath = process.platform === 'darwin' ? 'DYLD_FALLBACK_LIBRARY_PATH' : 'LD_LIBRARY_PATH';
+    const saved = { RSTUDIO_WHICH_R: '', R_HOME: '', [libraryPath]: '' };
     saveAndClear(saved);
 
-    // as Windows startup sets it, to the R it picked
-    setenv('RSTUDIO_WHICH_R', path.join(os.tmpdir(), 'picked', 'R.exe'));
+    // as startup prepares them for the R this instance runs (Windows exports
+    // the R it picked as RSTUDIO_WHICH_R)
+    const rHome = path.join(os.tmpdir(), 'running-r');
+    setenv('RSTUDIO_WHICH_R', path.join(rHome, 'bin', 'R.exe'));
+    setenv('R_HOME', rHome);
+    setenv(libraryPath, path.join(rHome, 'lib'));
     try {
       ApplicationLaunch.init().launchRStudio({ noProject: true });
     } finally {
@@ -186,11 +190,9 @@ describe('ApplicationLaunch', () => {
     }
 
     const env = (spawnStub.firstCall.args[2] as SpawnOptions).env ?? {};
-    const launched = launchRStudioWhichR();
-    if (launched) {
-      assert.equal(env.RSTUDIO_WHICH_R, launched);
-    } else {
-      assert.notProperty(env, 'RSTUDIO_WHICH_R');
+    const launched = launchEnvironment();
+    for (const name of ['RSTUDIO_WHICH_R', 'R_HOME', libraryPath]) {
+      assert.equal(env[name], launched[name], name);
     }
   });
 
