@@ -22,6 +22,7 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FocusWidget;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
@@ -222,6 +223,31 @@ public class ToolbarKeyboardNavigationTests extends GWTTestCase
       press(b, KeyCodes.KEY_LEFT);
       Element right = toggle.getElement().getElementsByTagName("button").getItem(1);
       assertEquals(right, DomUtils.getActiveElement());
+   }
+
+   // A search box's clear button sits in the same widget as its field; it
+   // stays the field's Tab neighbor rather than joining the next group.
+   public void testControlsBesideFieldInItsWidgetKeepTabStops()
+   {
+      Toolbar toolbar = new Toolbar("Test");
+      Button a = button(toolbar, "a");
+      FlowPanel search = toolbar.addLeftWidget(new FlowPanel());
+      TextBox field = new TextBox();
+      Button clear = new Button("clear");
+      search.add(field);
+      search.add(clear);
+      Button b = button(toolbar, "b");
+      Button c = button(toolbar, "c");
+      attach(toolbar);
+
+      c.setFocus(true);
+      assertTabStops(new FocusWidget[] {a, field, clear, b, c},
+            new boolean[] {true, true, true, false, true});
+
+      // Only the field itself keeps the arrow keys.
+      clear.setFocus(true);
+      press(clear, KeyCodes.KEY_RIGHT);
+      assertFocused(b);
    }
 
    public void testFocusFirstTabStopReturnsToLastFocused()

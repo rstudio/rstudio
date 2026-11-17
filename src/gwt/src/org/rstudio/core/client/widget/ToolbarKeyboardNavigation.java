@@ -41,6 +41,8 @@ import jsinterop.base.Js;
  *
  * A text field keeps those keys for editing, so it can't be arrowed out of. It
  * has a Tab stop of its own and splits the items around it into separate groups.
+ * Controls in the same toolbar widget as a field, such as a search box's clear
+ * button, keep their own Tab stops too.
  */
 class ToolbarKeyboardNavigation
 {
@@ -72,6 +74,16 @@ class ToolbarKeyboardNavigation
       root.removeEventListener("keydown", keyDownListener_);
       root.removeEventListener("focusin", focusInListener_);
       observer_.disconnect();
+   }
+
+   /**
+    * Mark a widget the toolbar holds, so that the controls of a widget with a
+    * text field, such as a search box's clear button, can keep their own Tab
+    * stops beside the field.
+    */
+   static void markWidget(Element widget)
+   {
+      widget.setAttribute(WIDGET, "");
    }
 
    /**
@@ -215,17 +227,27 @@ class ToolbarKeyboardNavigation
          el.setTabIndex(tabIndex);
    }
 
-   private static List<List<Element>> getGroups(List<Element> items)
+   // A text field, and any control in the same toolbar widget as one, is a
+   // group of its own; runs of other items between them form the rest.
+   private List<List<Element>> getGroups(List<Element> items)
    {
+      List<Element> fieldWidgets = new ArrayList<>();
+      for (Element item : items)
+      {
+         Element widget = getWidget(item);
+         if (widget != null && isTextField(item))
+            fieldWidgets.add(widget);
+      }
+
       List<List<Element>> groups = new ArrayList<>();
       List<Element> group = null;
       for (Element item : items)
       {
-         if (isTextField(item))
+         if (isTextField(item) || fieldWidgets.contains(getWidget(item)))
          {
-            List<Element> field = new ArrayList<>();
-            field.add(item);
-            groups.add(field);
+            List<Element> alone = new ArrayList<>();
+            alone.add(item);
+            groups.add(alone);
             group = null;
             continue;
          }
@@ -255,6 +277,16 @@ class ToolbarKeyboardNavigation
          items.add(el);
       }
       return items;
+   }
+
+   private Element getWidget(Element item)
+   {
+      for (Element e = item; e != null && e != root_; e = e.getParentElement())
+      {
+         if (e.hasAttribute(WIDGET))
+            return e;
+      }
+      return null;
    }
 
    // Checks display rather than size, so the answer doesn't change while the
@@ -296,4 +328,5 @@ class ToolbarKeyboardNavigation
    // Marks an item whose tabindex this class set, so -1 doesn't exclude it.
    private static final String MANAGED = "data-rs-toolbar-item";
    private static final String LAST_FOCUSED = "data-rs-toolbar-last-focused";
+   private static final String WIDGET = "data-rs-toolbar-widget";
 }

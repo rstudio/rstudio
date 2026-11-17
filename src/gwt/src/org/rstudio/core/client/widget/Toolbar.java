@@ -300,6 +300,7 @@ public class Toolbar extends ResizeComposite implements HasResizeHandlers
    
    public <TWidget extends Widget> TWidget addLeftWidget(TWidget widget)
    {
+      ToolbarKeyboardNavigation.markWidget(widget.getElement());
       leftToolbarPanel_.add(widget);
       invalidateSeparators();
       return widget;
@@ -318,6 +319,7 @@ public class Toolbar extends ResizeComposite implements HasResizeHandlers
    public <TWidget extends Widget> TWidget insertWidget(TWidget widget, TWidget beforeWidget)
    {
       int beforeIndex = leftToolbarPanel_.getWidgetIndex(beforeWidget);
+      ToolbarKeyboardNavigation.markWidget(widget.getElement());
       leftToolbarPanel_.insert(widget, beforeIndex);
       invalidateSeparators();
       return widget;
@@ -391,6 +393,7 @@ public class Toolbar extends ResizeComposite implements HasResizeHandlers
    
    public <TWidget extends Widget> TWidget addRightWidget(TWidget widget)
    {
+      ToolbarKeyboardNavigation.markWidget(widget.getElement());
       rightToolbarPanel_.add(widget);
       invalidateSeparators();
       return widget;

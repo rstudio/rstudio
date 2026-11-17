@@ -104,6 +104,29 @@ test.describe('Toolbar keyboard navigation (#5960)', () => {
     await expect(input, 'Left arrow reaches the box from after it').toBeFocused();
   });
 
+  test('Tab goes from the Go to File box to its clear button', async ({
+    rstudioPage: page,
+  }) => {
+    // Arrow away from the button group's first item, so a clear button wrongly
+    // folded into that group would not be its Tab stop.
+    await page.locator(PANE_LAYOUT_BUTTON).focus();
+    await page.keyboard.press('ArrowRight');
+
+    // Text no file matches, so no suggestion list is open for Tab to accept.
+    const input = page.locator(GO_TO_FILE_INPUT);
+    await input.focus();
+    await input.pressSequentially('zqxjzqxj');
+    const clear = page.locator('#rstudio_code_search_widget button:visible');
+    await expect(clear).toHaveCount(1);
+    try {
+      await page.keyboard.press('Tab');
+      await expect(clear).toBeFocused();
+    } finally {
+      await input.fill('');
+      await page.keyboard.press('Escape');
+    }
+  });
+
   test('Home and End reach the ends without wrapping', async ({ rstudioPage: page }) => {
     await page.locator(PANE_LAYOUT_BUTTON).focus();
     await page.keyboard.press('Home');
