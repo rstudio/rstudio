@@ -171,7 +171,9 @@ $maxRetries = 5
 for ($retry = 0; ; $retry++) {
     try {
         $response = Publish-BuildFile -uri $url -headers $headers `
-            -createMessage "Add $flower build $version in $build" -updateMessage "Update $flower build $version in $build" -content $base64
+            -createMessage "Add $flower build $version in $build" `
+            -updateMessage "Update $flower build $version in $build" `
+            -content $base64
         break
     } catch {
         $statusCode = Get-StatusCode $_
