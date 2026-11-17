@@ -532,6 +532,14 @@ test_that("only the R launcher of a macOS framework version is described as R", 
    writeLines("#!/bin/sh", rscript)
    Sys.chmod(rscript, "755")
    expect_null(.rs.rInstallations.describe(rscript, minimum = "3.6.0", architecture = NULL))
+
+   # nor is a launcher beside the version's home, which would otherwise be
+   # taken for the live installation (see rig.rHome)
+   old <- file.path(dirname(home), "Resources.old", "bin", "R")
+   dir.create(dirname(old), recursive = TRUE)
+   writeLines("#!/bin/sh", old)
+   Sys.chmod(old, "755")
+   expect_null(.rs.rInstallations.describe(old, minimum = "3.6.0", architecture = NULL))
    expect_null(.rs.rInstallations.describe(file.path(home, "bin"), minimum = "3.6.0", architecture = NULL))
 
 })

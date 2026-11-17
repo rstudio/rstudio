@@ -41,6 +41,7 @@ import {
   detectREnvironmentAsync,
   kRQueryTimeoutMs,
   prepareEnvironment,
+  rExecutableProblem,
   rSharedLibraryProblem,
   storeChosenR,
   storeRChoice,
@@ -763,6 +764,13 @@ export class SessionLauncher {
     }
 
     logger().logInfo(`Going back to R: ${rPath}`);
+
+    // as a switch checks it: still there, and running as itself
+    const executableProblem = rExecutableProblem(rPath);
+    if (executableProblem) {
+      logger().logError(new Error(executableProblem));
+      return executableProblem;
+    }
 
     // the default R may never have been queried (one RSTUDIO_WHICH_R or the
     // PATH names is taken as it is); query it in the background, bounded,

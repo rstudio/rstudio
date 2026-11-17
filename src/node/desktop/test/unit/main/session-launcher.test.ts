@@ -21,6 +21,8 @@ import { mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { restore, saveAndClear } from '../unit-utils';
+import i18next from 'i18next';
+import { initI18n } from '../../../src/main/i18n-manager';
 
 import { FilePath } from '../../../src/core/file-path';
 import { getenv, setenv } from '../../../src/core/environment';
@@ -44,6 +46,18 @@ describe('SessionLauncher', () => {
   const saveVars: Record<string, string> = {
     RS_LOCAL_PEER: '',
   };
+
+  // some messages asserted on come from the translations
+  before(async () => {
+    initI18n();
+    await new Promise<void>((resolve) => {
+      if (i18next.isInitialized) {
+        resolve();
+      } else {
+        i18next.on('initialized', () => resolve());
+      }
+    });
+  });
 
   beforeEach(() => {
     setApplication(new Application());
@@ -306,6 +320,7 @@ describe('SessionLauncher', () => {
       const store = sinon.stub(DetectR, 'storeRChoice').resolves();
       const storeChosen = sinon.stub(DetectR, 'storeChosenR').resolves();
       sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{ envVars: {} } as never, null]);
+      sinon.stub(DetectR, 'rExecutableProblem').returns(null);
       return { launcher, gwtCallback, store, storeChosen };
     }
 
@@ -504,6 +519,7 @@ describe('SessionLauncher', () => {
         relaunch: sinon.stub(launcher, 'launchNextSession').resolves(null),
         store: sinon.stub(DetectR, 'storeRChoice').resolves(),
         query: sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{ envVars: {} } as never, null]),
+        check: sinon.stub(DetectR, 'rExecutableProblem').returns(null),
       };
     }
 
@@ -533,6 +549,16 @@ describe('SessionLauncher', () => {
       assert.equal(await launcher.restartWithPreviousR(), '');
       assert.isFalse(prepare.called);
       assert.isFalse(relaunch.called);
+    });
+
+    it('reports a default R that is gone or would not run as itself, without querying it', async () => {
+      sinon.stub(DetectR, 'defaultR').resolves(kDefaultR);
+      const { launcher, prepare, query, check } = launcherWithStartupR(kChosenR);
+      check.returns(`${kDefaultR} does not exist`);
+
+      assert.include(await launcher.restartWithPreviousR(), 'does not exist');
+      assert.isFalse(query.called);
+      assert.isFalse(prepare.called);
     });
 
     it('reports a default R that does not answer, without preparing it', async () => {

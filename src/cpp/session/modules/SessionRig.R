@@ -1340,7 +1340,7 @@
       return(NULL)
    if (!.rs.platform.isWindows && file.access(binary, 1L) != 0L)
       return(NULL)
-   if (grepl("/R[.]framework/Versions/[^/]+/Resources/", binary) && !grepl("/Resources/bin/R$", binary))
+   if (grepl("/R[.]framework/Versions/", binary) && !grepl("/R[.]framework/Versions/[^/]+/Resources/bin/R$", binary))
       return(NULL)
 
    home <- .rs.rig.rHome(binary)

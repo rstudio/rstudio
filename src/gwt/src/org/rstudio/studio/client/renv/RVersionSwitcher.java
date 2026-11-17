@@ -88,6 +88,10 @@ public class RVersionSwitcher
    @Handler
    void onSwitchRVersion()
    {
+      // hidden elsewhere, but still reachable (from rstudioapi, say)
+      if (!isLocalDesktopSession(session_))
+         return;
+
       chooser_.choose(
             constants_.switchRVersionCaption(),
             constants_.switchRVersionButton(),

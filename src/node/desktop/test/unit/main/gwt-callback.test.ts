@@ -31,6 +31,8 @@ import os from 'os';
 import path from 'path';
 import { pathToFileURL } from 'url';
 import { createSinonStubInstance, StubbedClass } from '../unit-utils';
+import i18next from 'i18next';
+import { initI18n } from '../../../src/main/i18n-manager';
 
 import { FilePath } from '../../../src/core/file-path';
 import { clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
@@ -93,7 +95,17 @@ describe('DesktopCallback', () => {
   type InvokeHandler = (event: IpcMainInvokeEvent, ...args: unknown[]) => unknown;
   const invokeHandlers = new Map<string, InvokeHandler>();
 
-  before(() => {
+  before(async () => {
+    // some messages asserted on come from the translations
+    initI18n();
+    await new Promise<void>((resolve) => {
+      if (i18next.isInitialized) {
+        resolve();
+      } else {
+        i18next.on('initialized', () => resolve());
+      }
+    });
+
     mainWindow = createSinonStubInstance(MainWindow);
     const handle = sinon.spy(ipcMain, 'handle');
     callback = new GwtCallback(mainWindow);
