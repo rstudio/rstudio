@@ -145,16 +145,26 @@ class ToolbarKeyboardNavigation
 
    private Object onMutations(JsArray<MutationRecord> records, MutationObserver observer)
    {
-      // A widget moved out of the toolbar must not stay out of the Tab order.
+      // Text changes, such as a label ticking each second, can't change the
+      // items, so they don't warrant the rescan.
+      boolean itemsMayHaveChanged = false;
       for (MutationRecord record : Js.<MutationRecord[]>uncheckedCast(records))
       {
          if (!"childList".equals(record.type))
+         {
+            itemsMayHaveChanged = true;
             continue;
+         }
+         if (hasElement(record.addedNodes))
+            itemsMayHaveChanged = true;
+
+         // A widget moved out of the toolbar must not stay out of the Tab order.
          for (int i = 0; i < record.removedNodes.length; i++)
          {
             Node node = record.removedNodes.item(i);
             if (node.nodeType != Node.ELEMENT_NODE)
                continue;
+            itemsMayHaveChanged = true;
             Element removed = Js.uncheckedCast(node);
             if (!root_.isOrHasChild(removed))
                release(removed);
@@ -162,8 +172,19 @@ class ToolbarKeyboardNavigation
       }
 
       // Items come and go and get disabled; keep a Tab stop on each group.
-      updateTabStops(null);
+      if (itemsMayHaveChanged)
+         updateTabStops(null);
       return null;
+   }
+
+   private static boolean hasElement(elemental2.dom.NodeList<Node> nodes)
+   {
+      for (int i = 0; i < nodes.length; i++)
+      {
+         if (nodes.item(i).nodeType == Node.ELEMENT_NODE)
+            return true;
+      }
+      return false;
    }
 
    private void release(Element removed)

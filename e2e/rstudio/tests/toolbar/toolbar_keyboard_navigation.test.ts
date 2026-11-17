@@ -192,6 +192,44 @@ test.describe('Toolbar keyboard navigation (#5960)', () => {
     }
   });
 
+  test('a text change in a toolbar does not rescan its items', async ({
+    rstudioPage: page,
+  }) => {
+    // A label's text changing, as the Jobs toolbar's elapsed time does every
+    // second, can't change the items; an element added can. Count the style
+    // lookups the rescan makes on the toolbar's elements after each.
+    const lookups = await page.evaluate(async () => {
+      const toolbar = document.querySelector('[role="toolbar"][aria-label="Main"]')!;
+      const original = window.getComputedStyle;
+      let count = 0;
+      window.getComputedStyle = function (el: Element, pseudo?: string | null) {
+        if (toolbar.contains(el))
+          count++;
+        return original.call(window, el, pseudo);
+      };
+      const settle = () => new Promise((resolve) => setTimeout(resolve, 100));
+      const host = toolbar.querySelector('#rstudio_new_file_menubutton')!.parentElement!;
+      try {
+        const text = document.createTextNode('');
+        host.appendChild(text);
+        text.data = 'x';
+        text.remove();
+        await settle();
+        const afterText = count;
+
+        const span = document.createElement('span');
+        host.appendChild(span);
+        span.remove();
+        await settle();
+        return { afterText, afterElement: count - afterText };
+      } finally {
+        window.getComputedStyle = original;
+      }
+    });
+    expect(lookups.afterText).toBe(0);
+    expect(lookups.afterElement, 'adding an element rescans').toBeGreaterThan(0);
+  });
+
   test('buttons added later join the toolbar, and leave it tabbable', async ({
     rstudioPage: page,
   }) => {
