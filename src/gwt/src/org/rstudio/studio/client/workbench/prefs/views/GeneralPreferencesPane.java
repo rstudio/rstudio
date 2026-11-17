@@ -117,6 +117,7 @@ public class GeneralPreferencesPane extends PreferencesPane
 
                         rVersionChoice_ = choice;
                         rVersionChanged_ = true;
+                        rVersionChosen_ = true;
                         rVersion_.setText(RVersionChooser.describe(choice, false));
                      }));
          rVersion_.setWidth("100%");
@@ -124,7 +125,8 @@ public class GeneralPreferencesPane extends PreferencesPane
          rVersion_.getElement().getStyle().setMarginLeft(2, Unit.PX);
          rVersionChooser_.choiceInUse(choice ->
          {
-            if (rVersionChanged_)
+            // too late for a field the user has chosen in (and maybe applied)
+            if (rVersionChosen_)
                return;
 
             rVersionChoice_ = choice;
@@ -896,6 +898,8 @@ public class GeneralPreferencesPane extends PreferencesPane
    // (it is then stored when the change is applied)
    private RVersionChooser.Choice rVersionChoice_;
    private boolean rVersionChanged_;
+   // the user chose an R in this dialog (rVersionChanged_ is cleared on apply)
+   private boolean rVersionChosen_;
    // shared by every Global Options dialog, as the desktop keeps one choice
    private static int rVersionApplyRequests_;
    private final RVersionChooser rVersionChooser_;

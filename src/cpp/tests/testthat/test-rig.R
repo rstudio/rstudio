@@ -503,6 +503,33 @@ test_that("an R executable the user browsed to is described as the chooser lists
 
 })
 
+test_that("only the R launcher of a macOS framework version is described as R", {
+
+   skip_on_os("windows")
+
+   # a framework version's home is taken from the path, so any file in it
+   # would otherwise pass for that version of R
+   root <- tempfile("r-framework-browsed-")
+   on.exit(unlink(root, recursive = TRUE), add = TRUE)
+   home <- file.path(root, "R.framework", "Versions", "4.4-arm64", "Resources")
+   dir.create(file.path(home, "library", "base"), recursive = TRUE)
+   dir.create(file.path(home, "include"))
+   header <- file.path(home, "include", "Rversion.h")
+   writeLines(c('#define R_MAJOR  "4"', '#define R_MINOR  "4.1"'), header)
+   dir.create(file.path(home, "bin"))
+   launcher <- file.path(home, "bin", "R")
+   writeLines("#!/bin/sh", launcher)
+   Sys.chmod(launcher, "755")
+
+   entry <- .rs.rInstallations.describe(launcher, minimum = "3.6.0", current = R.home(), architecture = NULL)
+   expect_identical(as.vector(entry$version), "4.4.1")
+   expect_identical(as.vector(entry$binary), launcher)
+
+   expect_null(.rs.rInstallations.describe(header, minimum = "3.6.0", architecture = NULL))
+   expect_null(.rs.rInstallations.describe(file.path(home, "bin"), minimum = "3.6.0", architecture = NULL))
+
+})
+
 test_that("only version numbers are accepted as R versions", {
 
    expect_true(.rs.rVersionIsValid("4.4"))

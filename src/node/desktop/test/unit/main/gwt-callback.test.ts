@@ -42,6 +42,9 @@ import * as RChoice from '../../../src/main/r-choice';
 import { MainWindow } from '../../../src/main/main-window';
 import desktop from '../../../src/native/desktop.node';
 
+// the stand-in R files below, removed once the suite is done
+const kFixtureRoot = mkdtempSync(path.join(os.tmpdir(), 'gwt-callback-test-'));
+
 // A stand-in R executable that exists on disk (querying it is stubbed). On
 // Windows the path must name bin\<arch>\Rterm.exe, or it is rewritten to one
 // (see fixWindowsRExecutablePath) that doesn't exist.
@@ -50,7 +53,7 @@ function standInRExecutable(): string {
     return process.execPath;
   }
 
-  const dir = mkdtempSync(path.join(os.tmpdir(), 'stand-in-r-'));
+  const dir = mkdtempSync(path.join(kFixtureRoot, 'stand-in-r-'));
   const executable = path.join(dir, 'bin', 'x64', 'Rterm.exe');
   mkdirSync(path.dirname(executable), { recursive: true });
   writeFileSync(executable, '');
@@ -60,7 +63,7 @@ function standInRExecutable(): string {
 // What querying a stand-in R reports (the query itself is stubbed): an R
 // home holding the shared library a session loads on macOS and Linux.
 function runningREnvironment(): never {
-  const home = mkdtempSync(path.join(os.tmpdir(), 'stand-in-r-home-'));
+  const home = mkdtempSync(path.join(kFixtureRoot, 'stand-in-r-home-'));
   mkdirSync(path.join(home, 'lib'));
   writeFileSync(path.join(home, 'lib', 'libR.dylib'), '');
   writeFileSync(path.join(home, 'lib', 'libR.so'), '');
@@ -108,6 +111,10 @@ describe('DesktopCallback', () => {
 
   afterEach(() => {
     sinon.restore();
+  });
+
+  after(() => {
+    rmSync(kFixtureRoot, { recursive: true, force: true });
   });
 
   it('can be constructed', () => {

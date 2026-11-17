@@ -1333,6 +1333,13 @@
                                                     current = R.home(),
                                                     architecture = .rs.rInstallations.preferredArchitecture())
 {
+   # only an executable can be R; any other file in a macOS framework would
+   # otherwise pass for its version (see rig.rHome)
+   if (!file.exists(binary) || dir.exists(binary))
+      return(NULL)
+   if (!.rs.platform.isWindows && file.access(binary, 1L) != 0L)
+      return(NULL)
+
    home <- .rs.rig.rHome(binary)
    if (!.rs.rInstallations.isHome(home))
       return(NULL)

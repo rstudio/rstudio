@@ -36,7 +36,15 @@ import { GwtCallback, PendingQuit } from './gwt-callback';
 import LogOptions from './log-options';
 import { closeAllSatellites, MainWindow } from './main-window';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
-import { defaultR, prepareEnvironment, storeChosenR, storeRChoice, UnusableRChoice } from './detect-r';
+import {
+  defaultR,
+  detectREnvironmentAsync,
+  kRQueryTimeoutMs,
+  prepareEnvironment,
+  storeChosenR,
+  storeRChoice,
+  UnusableRChoice,
+} from './detect-r';
 import { clearRChoice, rChoiceApplies, sameRExecutable, savedRChoice } from './r-choice';
 import { EXIT_FAILURE } from './program-status';
 import { waitForUrlWithTimeout } from './url-utils';
@@ -742,6 +750,17 @@ export class SessionLauncher {
     }
 
     logger().logInfo(`Going back to R: ${rPath}`);
+
+    // the default R may never have been queried (one RSTUDIO_WHICH_R or the
+    // PATH names is taken as it is); query it in the background, bounded,
+    // so that preparing it below reads the answer rather than running an R
+    // that may hang on the main process
+    const [, queryError] = await detectREnvironmentAsync(rPath, kRQueryTimeoutMs);
+    if (queryError) {
+      logger().logError(queryError);
+      return queryError.message;
+    }
+
     const error = prepareEnvironment(rPath);
     if (error) {
       logger().logError(error);

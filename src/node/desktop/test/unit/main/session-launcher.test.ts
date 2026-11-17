@@ -305,6 +305,7 @@ describe('SessionLauncher', () => {
       // going back keeps an R by its path; a switch keeps it as it was chosen
       const store = sinon.stub(DetectR, 'storeRChoice').resolves();
       const storeChosen = sinon.stub(DetectR, 'storeChosenR').resolves();
+      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{} as never, null]);
       return { launcher, gwtCallback, store, storeChosen };
     }
 
@@ -502,6 +503,7 @@ describe('SessionLauncher', () => {
         prepare: sinon.stub(DetectR, 'prepareEnvironment').returns(null),
         relaunch: sinon.stub(launcher, 'launchNextSession').resolves(null),
         store: sinon.stub(DetectR, 'storeRChoice').resolves(),
+        query: sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{} as never, null]),
       };
     }
 
@@ -531,6 +533,22 @@ describe('SessionLauncher', () => {
       assert.equal(await launcher.restartWithPreviousR(), '');
       assert.isFalse(prepare.called);
       assert.isFalse(relaunch.called);
+    });
+
+    it('reports a default R that does not answer, without preparing it', async () => {
+      sinon.stub(DetectR, 'defaultR').resolves(kDefaultR);
+      const { launcher, prepare, relaunch, query } = launcherWithStartupR(kChosenR);
+      query.resolves([{} as never, new Error(`${kDefaultR} did not answer`)]);
+
+      assert.include(await launcher.restartWithPreviousR(), 'did not answer');
+      assert.isTrue(query.calledOnceWith(kDefaultR));
+      assert.isFalse(prepare.called);
+      assert.isFalse(relaunch.called);
+
+      // the way back is still offered
+      query.resolves([{} as never, null]);
+      assert.equal(await launcher.restartWithPreviousR(), '');
+      assert.isTrue(prepare.calledOnceWithExactly(kDefaultR));
     });
 
     it('says so when the default R is the R that failed', async () => {
