@@ -55,8 +55,6 @@ public class ConsoleError extends Composite
       void runCommandWithDebug(String command);
    }
 
-   // Because we are adding interactive elements to the VirtualScroller the GWT bindings are lost.
-   // We need to programmatically find the elements and manipulate them through regular JS functions.
    public ConsoleError(UnhandledError error,
                        String errorClass, 
                        String command,
@@ -100,6 +98,8 @@ public class ConsoleError extends Composite
       if (errorClass != null)
          errorMessage.addStyleName(errorClass);
 
+      // The Console inserts only this widget's element, never attaching the widget,
+      // so the links' own GWT click handlers would not fire; listen on the root instead.
       EventListener onConsoleErrorClick = event ->
       {
          if (DOM.eventGetType(event) == Event.ONCLICK)
