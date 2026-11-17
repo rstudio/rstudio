@@ -26,7 +26,7 @@ import {
   nativeImage,
   webContents,
 } from 'electron';
-import { existsSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'fs';
 import os from 'os';
 import path from 'path';
 import { pathToFileURL } from 'url';
@@ -155,6 +155,26 @@ describe('DesktopCallback', () => {
 
       callback.setPendingQuit(PendingQuit.PendingQuitNone);
       assert.equal(callback.collectPendingRVersion(), '');
+    });
+
+    it('finds the R a quit names by the path it was prepared with, on windows', async function () {
+      if (process.platform !== 'win32') {
+        this.skip();
+      }
+      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{} as never, null]);
+
+      // the client names bin\R.exe; the R prepared and launched is the arch's Rterm.exe
+      const binDir = path.join(rDir, 'bin');
+      const archDir = path.join(binDir, process.arch === 'x64' ? 'x64' : 'i386');
+      mkdirSync(archDir, { recursive: true });
+      const chosen = path.join(binDir, 'R.exe');
+      const rterm = path.join(archDir, 'Rterm.exe');
+      writeFileSync(chosen, '');
+      writeFileSync(rterm, '');
+
+      assert.equal(await callback.setPendingRVersion(chosen), '');
+      assert.equal(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload, chosen), '');
+      assert.equal(callback.collectPendingRVersion(), rterm);
     });
   });
 
