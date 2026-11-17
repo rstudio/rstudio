@@ -16,7 +16,6 @@ package org.rstudio.studio.client.workbench.views.output.find;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.*;
@@ -488,27 +487,14 @@ public class FindOutputPane extends WorkbenchPane
       setReplaceModeToggleEnabled(false);
    }
 
-   // Disabling the toggle's buttons keeps them out of keyboard navigation; the
-   // toggle is also greyed out and blocks pointer input on its padding, and the
-   // click handler consults replaceModeToggleEnabled_ so the mode cannot be
-   // toggled while disabled. Only the find-to-replace direction is gated -- the
-   // replace-to-find toggle (showReplaceButton_) stays usable.
+   // Disabling the toggle keeps it out of keyboard navigation and greys it
+   // out; the click handler also consults replaceModeToggleEnabled_ so the mode
+   // cannot be toggled while disabled. Only the find-to-replace direction is
+   // gated -- the replace-to-find toggle (showReplaceButton_) stays usable.
    private void setReplaceModeToggleEnabled(boolean enabled)
    {
       replaceModeToggleEnabled_ = enabled;
       showFindButton_.setEnabled(enabled);
-
-      Element toggle = showFindButton_.getElement();
-      if (enabled)
-      {
-         toggle.getStyle().clearOpacity();
-         toggle.getStyle().clearProperty("pointerEvents");
-      }
-      else
-      {
-         toggle.getStyle().setOpacity(0.4);
-         toggle.getStyle().setProperty("pointerEvents", "none");
-      }
    }
 
    @Override

@@ -225,6 +225,20 @@ public class ToolbarKeyboardNavigationTests extends GWTTestCase
       assertEquals(right, DomUtils.getActiveElement());
    }
 
+   public void testDisabledToggleButtonLooksDisabled()
+   {
+      LeftRightToggleButton toggle = new LeftRightToggleButton("left", "right", true);
+      RootPanel.get().add(toggle);
+
+      toggle.setEnabled(false);
+      assertEquals("0.4", DomUtils.getComputedStyles(toggle.getElement()).getOpacity());
+      assertEquals("none",
+            DomUtils.getComputedStyles(toggle.getElement()).getProperty("pointerEvents"));
+
+      toggle.setEnabled(true);
+      assertEquals("1", DomUtils.getComputedStyles(toggle.getElement()).getOpacity());
+   }
+
    // A search box's clear button sits in the same widget as its field; it
    // stays the field's Tab neighbor rather than joining the next group.
    public void testControlsBesideFieldInItsWidgetKeepTabStops()
