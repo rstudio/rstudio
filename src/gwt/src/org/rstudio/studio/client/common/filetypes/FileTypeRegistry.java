@@ -258,9 +258,7 @@ public class FileTypeRegistry
                false, false, false, false, false, false, false, false);
 
    public static final TextFileType JULIA =
-         new TextFileType("julia", "Julia", EditorLanguage.LANG_JULIA, ".jl", new ImageResource2x(ICONS.iconJulia2x()),
-               WordWrap.DEFAULT, false, false, false, false,
-               false, false, false, false, false, false, false, false);
+         new JuliaFileType("julia", "Julia", EditorLanguage.LANG_JULIA, ".jl", new ImageResource2x(ICONS.iconJulia2x()));
 
    public static final TextFileType LISP =
          new TextFileType("lisp", "Lisp", EditorLanguage.LANG_LISP, ".lisp", new ImageResource2x(ICONS.iconLisp2x()),

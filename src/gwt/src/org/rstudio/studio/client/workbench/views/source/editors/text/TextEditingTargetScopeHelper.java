@@ -215,10 +215,11 @@ public class TextEditingTargetScopeHelper
       }
       else
       {
-         // when executing chunks in the R console, only R and Python chunks are
-         // executable
+         // when executing chunks in the R console, only R, Python and Julia
+         // chunks are executable
          return engine.equalsIgnoreCase("r") ||
-                engine.equalsIgnoreCase("python");
+                engine.equalsIgnoreCase("python") ||
+                engine.equalsIgnoreCase("julia");
       }
    }
    

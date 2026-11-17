@@ -209,6 +209,32 @@ public class DocumentMode
              isPositionInPythonMode(docDisplay, docDisplay.getSelectionEnd());
    }
 
+   // Julia Mode
+   public static boolean isPositionInJuliaMode(DocDisplay docDisplay,
+                                                Position position)
+   {
+      if (docDisplay.getFileType().isJulia())
+         return true;
+
+      return isPositionInMode(
+            docDisplay,
+            position,
+            FileType.JULIA_LANG_MODE);
+   }
+
+   public static boolean isCursorInJuliaMode(DocDisplay docDisplay)
+   {
+      return isPositionInJuliaMode(
+            docDisplay,
+            docDisplay.getCursorPosition());
+   }
+
+   public static boolean isSelectionInJuliaMode(DocDisplay docDisplay)
+   {
+      return isPositionInJuliaMode(docDisplay, docDisplay.getSelectionStart()) &&
+             isPositionInJuliaMode(docDisplay, docDisplay.getSelectionEnd());
+   }
+
    public static boolean isPositionInSqlMode(DocDisplay docDisplay,
                                              Position position)
    {

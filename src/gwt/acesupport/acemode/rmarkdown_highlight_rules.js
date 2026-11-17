@@ -24,6 +24,7 @@ var RHighlightRules = require("mode/r_highlight_rules").RHighlightRules;
 var c_cppHighlightRules = require("mode/c_cpp_highlight_rules").c_cppHighlightRules;
 var PerlHighlightRules = require("ace/mode/perl_highlight_rules").PerlHighlightRules;
 var PythonHighlightRules = require("mode/python_highlight_rules").PythonHighlightRules;
+var JuliaHighlightRules = require("mode/julia_highlight_rules").JuliaHighlightRules;
 var RubyHighlightRules = require("ace/mode/ruby_highlight_rules").RubyHighlightRules;
 var MarkdownHighlightRules = require("mode/markdown_highlight_rules").MarkdownHighlightRules;
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
@@ -111,6 +112,16 @@ var RMarkdownHighlightRules = function() {
       PythonHighlightRules,
       "python",
       this.$rePythonChunkStartString,
+      this.$reChunkEndString,
+      ["start", "listblock", "allowBlock"]
+   );
+
+   // Embed julia highlight rules
+   Utils.embedRules(
+      this,
+      JuliaHighlightRules,
+      "julia",
+      this.$reJuliaChunkStartString,
       this.$reChunkEndString,
       ["start", "listblock", "allowBlock"]
    );
@@ -296,6 +307,7 @@ oop.inherits(RMarkdownHighlightRules, TextHighlightRules);
    this.$reMarkdownChunkStartString   = engineRegex("block");
    this.$rePerlChunkStartString       = engineRegex("perl");
    this.$rePythonChunkStartString     = engineRegex("python");
+   this.$reJuliaChunkStartString      = engineRegex("julia");
    this.$reMermaidChunkStartString    = engineRegex("mermaid");
    this.$reDotChunkStartString        = engineRegex("dot");
    this.$reRubyChunkStartString       = engineRegex("ruby");

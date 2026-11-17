@@ -2728,6 +2728,12 @@ assign(x = ".rs.acCompletionTypes",
    excludeArgsFromObject <- .rs.setEncodingUnknownToUTF8(excludeArgsFromObject)
    filePath <- .rs.setEncodingUnknownToUTF8(filePath)
    
+   # If the R console is requesting completions, but the Julia REPL is
+   # active, then delegate to that. (Its readline() is on the stack, so this
+   # comes before the check below.)
+   if (isConsole && .rs.julia.replIsActive())
+      return(.rs.julia.getCompletions(line))
+
    # if base::readline() is on the stack, try to extract choices i.e. (yes/no)
    # and offer those as completions.
    readLineCompletions <- .rs.readlineCompletions(token)

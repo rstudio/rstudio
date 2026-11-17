@@ -219,6 +219,7 @@ class ClientEvent extends JavaScriptObject
    public static final String RInstallCompleted = "r_install_completed";
    public static final String RenvRestorePrompt = "renv_restore_prompt";
    public static final String QuitAborted = "quit_aborted";
+   public static final String JuliaEvent = "julia_event";
 
    protected ClientEvent()
    {

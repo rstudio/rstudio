@@ -487,6 +487,15 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                   onSendToConsoleImpl(event);
                });
       }
+      else if (StringUtil.equals(event.getLanguage(), ConsoleLanguageTracker.LANGUAGE_JULIA))
+      {
+         dependencyManager_.withJuliaConnectoR(
+               constants_.executingJuliaCodeProgressCaption(),
+               constants_.executingJuliaCodeProgressCaption(),
+               () -> {
+                  onSendToConsoleImpl(event);
+               });
+      }
       else
       {
          onSendToConsoleImpl(event);

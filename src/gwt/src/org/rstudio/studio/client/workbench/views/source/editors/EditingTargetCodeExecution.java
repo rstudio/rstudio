@@ -27,6 +27,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleExecutePendingInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.console.shell.ConsoleLanguageTracker;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobRunSelectionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.LauncherJobRunSelectionEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -126,9 +127,11 @@ public class EditingTargetCodeExecution
          else
          {
             // if no selection, follow UI pref to see what to execute
-            // (Python code is always submitted line-by-line for now as
-            // we need special code to understand Python code structure still)
-            if (DocumentMode.isCursorInPythonMode(docDisplay_))
+            // (Python and Julia code is always submitted line-by-line for now
+            // as we need special code to understand their code structure; the
+            // REPL waits for the rest of an incomplete statement)
+            if (DocumentMode.isCursorInPythonMode(docDisplay_) ||
+                DocumentMode.isCursorInJuliaMode(docDisplay_))
             {
                selectionRange = Range.fromPoints(
                      Position.create(row, 0),
@@ -284,13 +287,15 @@ public class EditingTargetCodeExecution
       
       // trim intelligently (don't trim blank lines for Python
       // since those lines could signal the end of a block)
-      if (!DocumentMode.isSelectionInPythonMode(docDisplay_))
+      if (DocumentMode.isSelectionInPythonMode(docDisplay_))
       {
-         code = StringUtil.trimBlankLines(code);
+         language = "Python";
       }
       else
       {
-         language = "Python";
+         code = StringUtil.trimBlankLines(code);
+         if (DocumentMode.isSelectionInJuliaMode(docDisplay_))
+            language = ConsoleLanguageTracker.LANGUAGE_JULIA;
       }
       
       // strip roxygen off the beginning of lines

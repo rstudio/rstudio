@@ -121,8 +121,9 @@ public:
       // the client has dropped on an interrupt meanwhile, since that drop
       // does not reach the server yet (#19257)
       //
-      // R is never at top level inside the reticulate REPL, which is
-      // nonetheless only ready for a chunk's code while it waits for input.
+      // R is never at top level inside the reticulate REPL (or the Julia
+      // REPL, which a chunk's code first leaves), which is nonetheless only
+      // ready for a chunk's code while it waits for input.
       // It counts as active from before its first prompt (as when the client
       // starts it right before running a Python chunk) and while it runs a
       // command; code sent then can still be on its way when that prompt
@@ -131,7 +132,7 @@ public:
       // callback) marks input executing until the handler returns, and the
       // prompt restored then does not notify modules: a chunk that arrives
       // meanwhile waits for the next console command.
-      if (module_context::isPythonReplActive())
+      if (module_context::getActiveLanguage() != "R")
       {
          if (console_input::executing())
             return Success();
@@ -339,6 +340,11 @@ private:
          const char * const kReplQuietOption = "reticulate.repl.quiet";
          std::string prefix;
 
+         // chunks run here are R or Python; a julia chunk runs with its
+         // knitr engine, never in the console's Julia REPL
+         if (module_context::getActiveLanguage() == "Julia")
+            prefix = "quit\n";
+
          bool isPythonActive = module_context::isPythonReplActive();
          if (isPythonActive && engine != "python")
          {
@@ -351,7 +357,7 @@ private:
          else if (!isPythonActive && engine == "python")
          {
             // switching from R -> Python: activate the Python REPL
-            prefix = "reticulate::repl_python()\n";
+            prefix += "reticulate::repl_python()\n";
 
             // suppress the banner
             prevReticulateReplQuiet_ = r::options::getOption<bool>(kReplQuietOption, false, false);

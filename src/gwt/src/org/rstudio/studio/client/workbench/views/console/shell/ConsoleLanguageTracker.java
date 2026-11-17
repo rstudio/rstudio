@@ -48,14 +48,17 @@ public class ConsoleLanguageTracker
    
    public static final String LANGUAGE_R      = "R";
    public static final String LANGUAGE_PYTHON = "Python";
+   public static final String LANGUAGE_JULIA  = "Julia";
 
-   // Console input that enters / leaves the reticulate REPL. The first entry
-   // of each is what the session enqueues in adaptToLanguage() and what
-   // batches of chunks embed to switch part-way; the rest are the other
-   // spellings reticulate honors, which the projection has to follow too.
-   // Mirrors isPythonReplEnter() / isPythonReplExit() in SessionConsoleInput.cpp.
-   private static final String[] REPL_ENTER_INPUTS = { "reticulate::repl_python()", "repl_python()" };
-   private static final String[] REPL_EXIT_INPUTS  = { "quit", "exit", "quit()", "exit()" };
+   // Console input that enters the reticulate REPL or the Julia REPL from R,
+   // and that leaves either for R. The first entry of each is what the
+   // session enqueues in adaptToLanguage() and what batches of chunks embed
+   // to switch part-way; the rest are the other spellings the REPLs honor,
+   // which the projection has to follow too. Mirrors isPythonReplEnter(),
+   // isJuliaReplEnter() and isReplExit() in SessionConsoleInput.cpp.
+   private static final String[] PYTHON_REPL_ENTER_INPUTS = { "reticulate::repl_python()", "repl_python()" };
+   private static final String[] JULIA_REPL_ENTER_INPUTS  = { ".rs.julia.repl()" };
+   private static final String[] REPL_EXIT_INPUTS         = { "quit", "exit", "quit()", "exit()" };
    
    @Inject
    public ConsoleLanguageTracker(Session session,
@@ -91,6 +94,12 @@ public class ConsoleLanguageTracker
    public void onConsoleActivatePython()
    {
       adaptToLanguage(LANGUAGE_PYTHON, null);
+   }
+
+   @Handler
+   public void onConsoleActivateJulia()
+   {
+      adaptToLanguage(LANGUAGE_JULIA, null);
    }
 
    public void adaptToLanguage(final String language,
@@ -136,6 +145,13 @@ public class ConsoleLanguageTracker
                   CONSTANTS.executingPythonCodeProgressCaption(),
                   adaptCommand::execute);
          }
+         else if (language.equals(LANGUAGE_JULIA))
+         {
+            depman_.withJuliaConnectoR(
+                  CONSTANTS.executingJuliaCodeProgressCaption(),
+                  CONSTANTS.executingJuliaCodeProgressCaption(),
+                  adaptCommand::execute);
+         }
          else
          {
             adaptCommand.execute();
@@ -153,30 +169,53 @@ public class ConsoleLanguageTracker
       adaptToLanguage(language, null);
    }
 
-   // Console input that moves the console to 'language': the same input the
-   // session enqueues in adaptToLanguage() (SessionModuleContext.cpp).
-   public static String consoleLanguageSwitch(String language)
+   // Console input that moves the console from language 'from' to 'to': the
+   // same input the session enqueues in adaptToLanguage()
+   // (languageSwitchInput() in SessionConsoleInput.cpp). The REPLs aren't
+   // nested, so one non-R language is reached from another by way of R.
+   public static String consoleLanguageSwitch(String from, String to)
    {
-      return StringUtil.equals(language, LANGUAGE_PYTHON)
-            ? REPL_ENTER_INPUTS[0]
-            : REPL_EXIT_INPUTS[0];
+      if (StringUtil.equals(from, to))
+         return "";
+
+      String enter = "";
+      if (StringUtil.equals(to, LANGUAGE_PYTHON))
+         enter = PYTHON_REPL_ENTER_INPUTS[0];
+      else if (StringUtil.equals(to, LANGUAGE_JULIA))
+         enter = JULIA_REPL_ENTER_INPUTS[0];
+
+      if (StringUtil.equals(from, LANGUAGE_R))
+         return enter;
+      else if (enter.isEmpty())
+         return REPL_EXIT_INPUTS[0];
+      else
+         return REPL_EXIT_INPUTS[0] + "\n" + enter;
    }
 
    // The language the console is in once 'input' has run, starting from
-   // 'language'. Follows the REPL through the input's lines the same way
+   // 'language'. Follows the REPLs through the input's lines the same way
    // the session does in fixupPendingConsoleInput() (SessionConsoleInput.cpp).
    public static String languageAfterInput(String language, String input)
    {
-      boolean python = StringUtil.equals(language, LANGUAGE_PYTHON);
+      String result = StringUtil.isNullOrEmpty(language) ? LANGUAGE_R : language;
       for (String line : StringUtil.notNull(input).split("\n"))
       {
-         if (python && isOneOf(line, REPL_EXIT_INPUTS))
-            python = false;
-         else if (!python && isOneOf(line, REPL_ENTER_INPUTS))
-            python = true;
+         if (!StringUtil.equals(result, LANGUAGE_R))
+         {
+            if (isOneOf(line, REPL_EXIT_INPUTS))
+               result = LANGUAGE_R;
+         }
+         else if (isOneOf(line, PYTHON_REPL_ENTER_INPUTS))
+         {
+            result = LANGUAGE_PYTHON;
+         }
+         else if (isOneOf(line, JULIA_REPL_ENTER_INPUTS))
+         {
+            result = LANGUAGE_JULIA;
+         }
       }
 
-      return python ? LANGUAGE_PYTHON : LANGUAGE_R;
+      return result;
    }
 
    private static boolean isOneOf(String line, String[] candidates)

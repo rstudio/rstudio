@@ -5479,6 +5479,8 @@ public class TextEditingTarget implements
          doCommentUncomment(display, "<!--", "-->");
       else if (DocumentMode.isSelectionInPythonMode(display))
          doCommentUncomment(display, "#", null);
+      else if (DocumentMode.isSelectionInJuliaMode(display))
+         doCommentUncomment(display, "#", null);
    }
 
    /**
@@ -5805,7 +5807,8 @@ public class TextEditingTarget implements
    void reflowComment(DocDisplay display)
    {
       if (DocumentMode.isSelectionInRMode(display) ||
-          DocumentMode.isSelectionInPythonMode(display))
+          DocumentMode.isSelectionInPythonMode(display) ||
+          DocumentMode.isSelectionInJuliaMode(display))
       {
          doReflowComment(display, "(#)");
       }
@@ -7489,16 +7492,17 @@ public class TextEditingTarget implements
             which);
 
       // Collect the code to run. The console runs R or, through the
-      // reticulate REPL, Python, so a batch mixing both has to switch
-      // languages in document order. The first chunk's language travels
-      // with the event, which adapts the console from whatever it is in
-      // now; later switches are written into the code itself, as the same
-      // console input the session enqueues for that. The session splits
-      // multi-line console input and runs it line by line, so the switches
-      // land in order.
+      // reticulate REPL or the Julia REPL, Python or Julia, so a batch mixing
+      // them has to switch languages in document order. The first chunk's
+      // language travels with the event, which adapts the console from
+      // whatever it is in now; later switches are written into the code
+      // itself, as the same console input the session enqueues for that.
+      // The session splits multi-line console input and runs it line by
+      // line, so the switches land in order.
       String firstLanguage = null;
       String language = null;
       boolean hasPython = false;
+      boolean hasJulia = false;
       StringBuilder builder = new StringBuilder();
       for (Scope scope : previousScopes)
       {
@@ -7509,9 +7513,10 @@ public class TextEditingTarget implements
          if (language == null)
             firstLanguage = chunkLanguage;
          else if (!StringUtil.equals(chunkLanguage, language))
-            builder.append(ConsoleLanguageTracker.consoleLanguageSwitch(chunkLanguage) + "\n\n");
+            builder.append(ConsoleLanguageTracker.consoleLanguageSwitch(language, chunkLanguage) + "\n\n");
          language = chunkLanguage;
          hasPython = hasPython || StringUtil.equals(chunkLanguage, ConsoleLanguageTracker.LANGUAGE_PYTHON);
+         hasJulia = hasJulia || StringUtil.equals(chunkLanguage, ConsoleLanguageTracker.LANGUAGE_JULIA);
 
          builder.append("# " + scope.getLabel() + "\n");
          builder.append(scopeHelper_.getSweaveChunkText(scope));
@@ -7551,20 +7556,39 @@ public class TextEditingTarget implements
          }
       };
 
-      // The console only checks for reticulate when the batch starts in
-      // Python; a batch that reaches Python later needs it just the same.
+      // The console only checks for reticulate (JuliaConnectoR) when the
+      // batch starts in Python (Julia); a batch that reaches the language
+      // later needs it just the same.
       boolean reachesPython = hasPython &&
             !StringUtil.equals(firstLanguage, ConsoleLanguageTracker.LANGUAGE_PYTHON);
+      boolean reachesJulia = hasJulia &&
+            !StringUtil.equals(firstLanguage, ConsoleLanguageTracker.LANGUAGE_JULIA);
+
+      final Command withJulia = () ->
+      {
+         if (reachesJulia)
+         {
+            dependencyManager_.withJuliaConnectoR(
+                  constants_.executeChunksJuliaProgressCaption(),
+                  constants_.executeChunksJuliaUserPrompt(),
+                  runChunks);
+         }
+         else
+         {
+            runChunks.execute();
+         }
+      };
+
       if (reachesPython)
       {
          dependencyManager_.withReticulate(
                constants_.executeChunksPythonProgressCaption(),
                constants_.executeChunksPythonUserPrompt(),
-               runChunks);
+               withJulia);
       }
       else
       {
-         runChunks.execute();
+         withJulia.execute();
       }
    }
 
@@ -7711,6 +7735,8 @@ public class TextEditingTarget implements
          return ConsoleLanguageTracker.LANGUAGE_R;
       else if (engine.equals("python"))
          return ConsoleLanguageTracker.LANGUAGE_PYTHON;
+      else if (engine.equals("julia"))
+         return ConsoleLanguageTracker.LANGUAGE_JULIA;
       else
          return null;
    }
@@ -7814,6 +7840,10 @@ public class TextEditingTarget implements
                {
                   language = "Python";
                   code = closePythonBlock(code);
+               }
+               else if (DocumentMode.isPositionInJuliaMode(primaryDisplay_, chunk.getBodyStart()))
+               {
+                  language = ConsoleLanguageTracker.LANGUAGE_JULIA;
                }
 
                events_.fireEvent(new SendToConsoleEvent(code, language, true));
@@ -8024,6 +8054,13 @@ public class TextEditingTarget implements
          primaryDisplay_.focus();
       }
 
+      // A Julia file runs in the Julia REPL.
+      if (fileType_.isJulia())
+      {
+         sourceJulia();
+         return;
+      }
+
       // If this is a Python file, use reticulate.
       if (fileType_.isPython())
       {
@@ -8179,6 +8216,18 @@ public class TextEditingTarget implements
          }
          events_.fireEvent(new SendToTerminalEvent("shiny run --reload --launch-browser --port=0 " + path + "\n", true));
       }, () -> {}, "Run Shiny Application");
+   }
+
+   private void sourceJulia()
+   {
+      saveThenExecute(null, true, () ->
+      {
+         // Julia doesn't expand '~'; in a Julia string, '\', '"' and '$' are special
+         String path = server_.resolveAliasedPath(FileSystemItem.createFile(getPath()));
+         path = path.replace("\\", "\\\\").replace("\"", "\\\"").replace("$", "\\$");
+         String command = "include(\"" + path + "\");";
+         events_.fireEvent(new SendToConsoleEvent(command, ConsoleLanguageTracker.LANGUAGE_JULIA, true));
+      });
    }
 
    private void sourcePython()

@@ -301,6 +301,11 @@ public class TextFileType extends EditableFileType
    {
       return EditorLanguage.LANG_PYTHON.equals(getEditorLanguage());
    }
+
+   public boolean isJulia()
+   {
+      return EditorLanguage.LANG_JULIA.equals(getEditorLanguage());
+   }
    
    public boolean isCpp()
    {
