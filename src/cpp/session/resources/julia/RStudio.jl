@@ -328,17 +328,20 @@ Returns Julia's working directory if the input changed it, and an empty
 string otherwise.
 """
 function evaluate(code::AbstractString, mode::AbstractString, width::Integer, color::Bool, cwd::AbstractString)
-   if isdir(cwd) && cwd != pwd()
-      cd(cwd)
-   end
-   before = pwd()
-
-   io = IOContext(stdout, :limit => true, :displaysize => (DISPLAY_LINES, Int(width)), :module => Main, :color => color)
-   errio = IOContext(stderr, :color => color)
-
    interrupted = 0
+   before = ""
    evaluation_task[] = current_task()
    try
+      # set up within the protected region too: pwd() throws once Julia's
+      # working directory has been deleted
+      if isdir(cwd) && cwd != pwd()
+         cd(cwd)
+      end
+      before = pwd()
+
+      io = IOContext(stdout, :limit => true, :displaysize => (DISPLAY_LINES, Int(width)), :module => Main, :color => color)
+      errio = IOContext(stderr, :color => color)
+
       interrupted += run_input(String(code), String(mode), io, errio)
    catch err
       # an interrupt that landed outside the input's own evaluation
