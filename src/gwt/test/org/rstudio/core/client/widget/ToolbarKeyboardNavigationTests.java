@@ -250,6 +250,16 @@ public class ToolbarKeyboardNavigationTests extends GWTTestCase
       assertFocused(b);
    }
 
+   public void testFocusFirstTabStopFailsWhenHidden()
+   {
+      Toolbar toolbar = new Toolbar("Test");
+      button(toolbar, "a");
+      attach(toolbar);
+      toolbar.setVisible(false);
+
+      assertFalse(toolbar.focusFirstTabStop());
+   }
+
    public void testFocusFirstTabStopReturnsToLastFocused()
    {
       Toolbar toolbar = attach(new Toolbar("Test"));

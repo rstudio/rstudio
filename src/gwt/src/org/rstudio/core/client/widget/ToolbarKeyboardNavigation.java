@@ -89,9 +89,6 @@ class ToolbarKeyboardNavigation
       widget.setAttribute(WIDGET, "");
    }
 
-   /**
-    * Focus the first Tab stop, which is the item last focused in the first group.
-    */
    boolean focusFirstTabStop()
    {
       updateTabStops(null);
@@ -100,7 +97,7 @@ class ToolbarKeyboardNavigation
          if (item.getTabIndex() == 0)
          {
             item.focus();
-            return true;
+            return DomUtils.hasFocus(item);
          }
       }
       return false;

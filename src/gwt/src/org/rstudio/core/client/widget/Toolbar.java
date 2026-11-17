@@ -264,10 +264,10 @@ public class Toolbar extends ResizeComposite implements HasResizeHandlers
    }
 
    /**
-    * Focus the toolbar's first Tab stop: the item focused last among those
-    * before any text field.
+    * Focus the toolbar's first Tab stop: a text field if the toolbar starts
+    * with one, else the item focused last in its first group of items.
     *
-    * @return Whether the toolbar had an item to focus
+    * @return Whether focus moved there; false if the toolbar is hidden or empty
     */
    public boolean focusFirstTabStop()
    {
