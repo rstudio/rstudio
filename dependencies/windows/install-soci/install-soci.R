@@ -88,8 +88,8 @@ downloadAndUnzip(sqlite_header_zip, sqlite_dir, sqlite_header_zip_url)
 # artifacts are placed relative to the current working directory)
 run(shQuote(normalizePath(file.path(script_dir, "build-sqlite.cmd"))))
 
-# clone repository if we dont already have it
-if (!file.exists(soci_base_name)) {
+# download and extract unless an earlier run already left the sources in place
+if (!file.exists(soci_base_name) && !file.exists(soci_install_dir)) {
    section("Downloading SOCI sources")
    download(soci_url, destfile = soci_archive)
    section("Unzipping SOCI sources")
@@ -98,12 +98,14 @@ if (!file.exists(soci_base_name)) {
 }
 
 # move extracted directory
-file.rename(soci_dir, soci_install_dir)
+if (file.exists(soci_dir))
+   file.rename(soci_dir, soci_install_dir)
 setwd(soci_install_dir)
 
-# create build directories
-unlink("build", recursive = TRUE)
+# create build directories, clearing only the architectures being built so an
+# ARM64 build keeps the x64 and x86 ones beside it
 dir.create("build", showWarnings = FALSE, recursive = TRUE)
+unlink(file.path("build", if (soci_arm64) "arm64" else c("x86", "x64")), recursive = TRUE)
 setwd("build")
 
 build <- function(arch, config) {

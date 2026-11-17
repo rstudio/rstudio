@@ -49,8 +49,8 @@ output_dir <- normalizePath(file.path(owd, ".."), winslash = "/")
 output_file <- file.path(output_dir, output_name)
 install_dir <- file.path(owd, "..", tools::file_path_sans_ext(output_name))
 
-# clear out the directory we'll create boost in
-unlink(install_dir, recursive = TRUE)
+# create the directory we'll build boost in; build() clears each architecture's
+# folder itself, so an ARM64 build keeps the x64 and 32-bit ones beside it
 dir.create(install_dir, recursive = TRUE, showWarnings = FALSE)
 install_dir <- normalizePath(install_dir)
 

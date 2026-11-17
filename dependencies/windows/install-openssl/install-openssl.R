@@ -52,10 +52,22 @@ build <- function(variant, arch, vcvars, target, test = TRUE) {
    setwd("..")
 }
 
-if (identical(Sys.getenv("OPENSSL_ARCH"), "arm64")) {
-   # the debug test suite takes hours without assembly; the release run covers it
-   build("debug",   "arm64", "arm64", "debug-VC-WIN64-ARM -d", test = FALSE)
-   build("release", "arm64", "arm64", "VC-WIN64-ARM")
+ARM64 <- identical(Sys.getenv("OPENSSL_ARCH"), "arm64")
+
+# native compiler on an ARM64 machine; elsewhere (or with RSTUDIO_ARM64_CROSS=1)
+# the x64-hosted cross compiler, as in make-install-winarm64.bat
+arm64_native <- function() {
+   arch <- toupper(c(Sys.getenv("PROCESSOR_ARCHITECTURE"), Sys.getenv("PROCESSOR_ARCHITEW6432")))
+   "ARM64" %in% arch && !identical(Sys.getenv("RSTUDIO_ARM64_CROSS"), "1")
+}
+
+if (ARM64) {
+   # cross-compiled tests can't run on the build machine; the debug test suite
+   # takes hours without assembly, so only a native release build runs them
+   native <- arm64_native()
+   vcvars <- if (native) "arm64" else "x64_arm64"
+   build("debug",   "arm64", vcvars, "debug-VC-WIN64-ARM -d", test = FALSE)
+   build("release", "arm64", vcvars, "VC-WIN64-ARM", test = native)
 } else {
    build("debug",   "32", "x86",   "debug-VC-WIN32 -d")
    build("debug",   "64", "amd64", "debug-VC-WIN64A -d")
@@ -66,7 +78,7 @@ if (identical(Sys.getenv("OPENSSL_ARCH"), "arm64")) {
 section("Building redistributible")
 unlink("dist", recursive = TRUE)
 dir.create(file.path("dist", NAME), recursive = TRUE)
-dirs <- list.files(pattern = sprintf("^build-%s-", NAME))
+dirs <- list.files(pattern = sprintf("^build-%s-.*%s$", NAME, if (ARM64) "-arm64" else ""))
 lapply(dirs, function(dir) {
    # DESTDIR staging mirrors the default install path, whose folder name comes
    # from the build machine's ProgramW6432 / ProgramFiles(x86), so find it
@@ -82,7 +94,7 @@ lapply(dirs, function(dir) {
 })
 
 setwd("dist")
-zipfile <- sprintf("%s.zip", NAME)
+zipfile <- sprintf("%s%s.zip", NAME, if (ARM64) "-arm64" else "")
 zip(zipfile = zipfile, files = NAME, extras = "-q")
 
 install <- function(name) {
@@ -94,7 +106,14 @@ install <- function(name) {
       fatal("failed to move %s to %s", shQuote(name), shQuote(target))
 }
 
-install(NAME)
+if (ARM64) {
+   # replace only the ARM64 folders, keeping the x64 and 32-bit ones beside them
+   dir.create(file.path(OWD, "..", NAME), showWarnings = FALSE)
+   for (sub in list.files(NAME))
+      install(file.path(NAME, sub))
+} else {
+   install(NAME)
+}
 install(zipfile)
 
 setwd("..")
