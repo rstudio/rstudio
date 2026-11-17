@@ -245,6 +245,33 @@ public class Toolbar extends ResizeComposite implements HasResizeHandlers
       initWidget(toolbarWrapper_);
 
       setStyleName(styles_.rstheme_toolbarWrapper());
+
+      keyboardNavigation_ = new ToolbarKeyboardNavigation(toolbarWrapper_.getElement());
+   }
+
+   @Override
+   protected void onLoad()
+   {
+      super.onLoad();
+      keyboardNavigation_.attach();
+   }
+
+   @Override
+   protected void onUnload()
+   {
+      keyboardNavigation_.detach();
+      super.onUnload();
+   }
+
+   /**
+    * Focus the toolbar's first Tab stop: the item focused last among those
+    * before any text field.
+    *
+    * @return Whether the toolbar had an item to focus
+    */
+   public boolean focusFirstTabStop()
+   {
+      return keyboardNavigation_.focusFirstTabStop();
    }
 
    protected void manageSeparators()
@@ -478,6 +505,7 @@ public class Toolbar extends ResizeComposite implements HasResizeHandlers
    private HorizontalPanel leftToolbarPanel_;
    private HorizontalPanel rightToolbarPanel_;
    private SimpleLayoutPanel toolbarWrapper_;
+   private final ToolbarKeyboardNavigation keyboardNavigation_;
    private final HandlerManager handlers_ = new HandlerManager(this);
    protected final ThemeStyles styles_ = ThemeResources.INSTANCE.themeStyles();
    private boolean separatorsInvalidated_ = false;
