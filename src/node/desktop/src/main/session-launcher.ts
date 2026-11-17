@@ -577,10 +577,17 @@ export class SessionLauncher {
     }
   }
 
-  async launchNextSession(reload: boolean): Promise<Err> {
+  /**
+   * Launch the session that follows one that has quit (or failed to start).
+   * `keepInitialProject` keeps the project this instance was launched to
+   * open, for a session that replaces a first one that never started.
+   */
+  async launchNextSession(reload: boolean, keepInitialProject = false): Promise<Err> {
     // unset the initial project environment variable it this doesn't
     // pollute future sessions
-    unsetenv(kRStudioInitialProject);
+    if (!keepInitialProject) {
+      unsetenv(kRStudioInitialProject);
+    }
 
     // disconnect the firstWorkbenchInitialized event so it doesn't occur
     // again when we launch the next session
@@ -745,7 +752,9 @@ export class SessionLauncher {
 
     let launchError: Err;
     try {
-      launchError = await this.launchNextSession(true);
+      // going to the default R replaces a first session that never
+      // started, which was to open the project this instance was launched to
+      launchError = await this.launchNextSession(true, !rBeforeSwitch);
     } catch (thrown: unknown) {
       launchError = safeError(thrown);
     }

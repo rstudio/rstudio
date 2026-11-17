@@ -19,6 +19,7 @@ import java.util.List;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -140,12 +141,19 @@ public class ChooseRVersionDialog extends ModalDialog<RVersionChooser.Choice>
    }
 
    // the given choice, or else the default R when nothing was chosen, or
-   // else the R in use
+   // else the R in use. A chosen R is never replaced by another: one that is
+   // now the default R is listed only as that, and one found nowhere else
+   // (browsed to, say) is offered as it is.
    private void select(RVersionChooser.Choice selected)
    {
       int index = selected == null ? -1 : indexOf(selected);
-      if (index < 0 && selected != null && selected.useDefault)
+      if (index < 0 && selected != null && (selected.useDefault || isDefaultR(selected.installation)))
          index = indexOfDefault();
+      if (index < 0 && selected != null && !StringUtil.isNullOrEmpty(selected.installation.binary))
+      {
+         add(selected);
+         index = choices_.size() - 1;
+      }
       if (index < 0)
          index = indexOfCurrent();
       if (index < 0 && !choices_.isEmpty())

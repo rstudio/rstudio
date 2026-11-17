@@ -23,7 +23,8 @@ import { join } from 'path';
 import { restore, saveAndClear } from '../unit-utils';
 
 import { FilePath } from '../../../src/core/file-path';
-import { getenv } from '../../../src/core/environment';
+import { getenv, setenv } from '../../../src/core/environment';
+import { kRStudioInitialProject } from '../../../src/core/r-user-data';
 
 import { launchFailedDetail, SessionLauncher } from '../../../src/main/session-launcher';
 import { ApplicationLaunch } from '../../../src/main/application-launch';
@@ -129,6 +130,25 @@ describe('SessionLauncher', () => {
 
       assert.isNotNull(error);
       assert.isFalse(mainWindow.workbenchInitialized);
+    });
+
+    it('keeps the project this instance was launched to open only when asked to', async () => {
+      const saved = { [kRStudioInitialProject]: '' };
+      saveAndClear(saved);
+      try {
+        const launcher = getNewLauncher();
+        launcher.mainWindow = fakeMainWindow();
+        stubLaunchSession(launcher);
+
+        setenv(kRStudioInitialProject, '/home/user/analysis/analysis.Rproj');
+        await launcher.launchNextSession(true, true);
+        assert.equal(getenv(kRStudioInitialProject), '/home/user/analysis/analysis.Rproj');
+
+        await launcher.launchNextSession(true);
+        assert.equal(getenv(kRStudioInitialProject), '');
+      } finally {
+        restore(saved);
+      }
     });
 
     it('preserves workbenchInitialized when not reloading', async () => {
@@ -344,7 +364,7 @@ describe('SessionLauncher', () => {
       await new Promise((resolve) => setImmediate(resolve));
 
       assert.isTrue(prepare.secondCall.calledWithExactly('/opt/R/4.3.3/bin/R'));
-      assert.isTrue(relaunch.calledOnceWithExactly(true));
+      assert.isTrue(relaunch.calledOnceWithExactly(true, false));
       assert.equal(launcher.rPath, '/opt/R/4.3.3/bin/R');
 
       // RStudio follows the default R, which wasn't the one that failed
@@ -478,7 +498,7 @@ describe('SessionLauncher', () => {
       assert.equal(await launcher.restartWithPreviousR(), '');
 
       assert.isTrue(prepare.calledOnceWithExactly(kDefaultR));
-      assert.isTrue(relaunch.calledOnceWithExactly(true));
+      assert.isTrue(relaunch.calledOnceWithExactly(true, true));
       assert.equal(launcher.rPath, kDefaultR);
       assert.isTrue(store.calledOnceWithExactly(kDefaultR));
 
@@ -549,9 +569,13 @@ describe('SessionLauncher', () => {
     });
 
     it('leaves a choice made while the dialog was up', async () => {
-      sinon.stub(RChoice, 'savedRChoice').returns({ path: '/opt/R/4.5.0/bin/R', rstudioWhichR: '' });
+      const saved = sinon.stub(RChoice, 'savedRChoice').returns({ path: kUnusable.path, rstudioWhichR: '' });
       const clear = sinon.stub(RChoice, 'clearRChoice');
-      answer(0);
+      sinon.stub(appState().modalTracker, 'trackElectronModalAsync').callsFake(async () => {
+        // the user chooses another R in Global Options, then answers
+        saved.returns({ path: '/opt/R/4.5.0/bin/R', rstudioWhichR: '' });
+        return { response: 0, checkboxChecked: false };
+      });
 
       await getNewLauncher().showUnusableRChoice(kUnusable);
 
