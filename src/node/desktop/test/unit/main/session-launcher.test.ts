@@ -272,6 +272,7 @@ describe('SessionLauncher', () => {
       launcher.mainWindow = {
         collectPendingRVersion: () => pending,
         clearErrorDisplayed: sinon.stub(),
+        setErrorDisplayed: sinon.stub(),
       } as unknown as MainWindow;
 
       const gwtCallback = new EventEmitter();
@@ -339,7 +340,7 @@ describe('SessionLauncher', () => {
       sinon.stub(DetectR, 'defaultR').resolves('/usr/local/bin/R');
 
       launcher.applyPendingRVersion();
-      launcher.restartWithPreviousR();
+      assert.equal(await launcher.restartWithPreviousR(), '');
       await new Promise((resolve) => setImmediate(resolve));
 
       assert.isTrue(prepare.secondCall.calledWithExactly('/opt/R/4.3.3/bin/R'));
@@ -362,13 +363,13 @@ describe('SessionLauncher', () => {
       sinon.stub(DetectR, 'defaultR').resolves('/opt/R/4.4.1/bin/R');
 
       launcher.applyPendingRVersion();
-      launcher.restartWithPreviousR();
+      assert.equal(await launcher.restartWithPreviousR(), '');
       await new Promise((resolve) => setImmediate(resolve));
 
       assert.isTrue(store.calledOnceWithExactly('/opt/R/4.3.3/bin/R'));
     });
 
-    it('puts back the R in use before, when the R that failed was already kept', () => {
+    it('puts back the R in use before, when the R that failed was already kept', async () => {
       // Global Options keeps the R chosen there before offering the switch
       sinon.stub(DetectR, 'prepareEnvironment').returns(null);
       const { launcher, store } = launcherWithPendingR('/opt/R/4.4.1/bin/R');
@@ -376,7 +377,7 @@ describe('SessionLauncher', () => {
       const saved = sinon.stub(RChoice, 'savedRChoice').returns({ path: '/opt/R/4.4.1/bin/R', rstudioWhichR: '' });
 
       launcher.applyPendingRVersion();
-      launcher.restartWithPreviousR();
+      await launcher.restartWithPreviousR();
 
       assert.isTrue(store.calledOnceWithExactly('/opt/R/4.3.3/bin/R'));
 
@@ -384,21 +385,177 @@ describe('SessionLauncher', () => {
       store.resetHistory();
       saved.returns({ path: '/opt/R/4.5.0/bin/R', rstudioWhichR: '' });
       launcher.applyPendingRVersion();
-      launcher.restartWithPreviousR();
+      await launcher.restartWithPreviousR();
       assert.isFalse(store.called);
     });
 
-    it('offers no way back once a session has started with the R switched to', () => {
+    it('offers no way back once a session has started with the R switched to', async () => {
       const prepare = sinon.stub(DetectR, 'prepareEnvironment').returns(null);
       const { launcher, gwtCallback } = launcherWithPendingR('/opt/R/4.4.1/bin/R');
       const relaunch = sinon.stub(launcher, 'launchNextSession').resolves(null);
 
       launcher.applyPendingRVersion();
       gwtCallback.emit(GwtCallback.WORKBENCH_INITIALIZED);
-      launcher.restartWithPreviousR();
 
+      assert.equal(await launcher.restartWithPreviousR(), '');
       assert.isTrue(prepare.calledOnce);
       assert.isFalse(relaunch.called);
+    });
+
+    it('reports when the R in use before cannot be prepared, and lets the user try again', async () => {
+      const prepare = sinon.stub(DetectR, 'prepareEnvironment');
+      prepare.onFirstCall().returns(null);
+      prepare.onSecondCall().returns(new Error('R is gone'));
+      prepare.onThirdCall().returns(null);
+      const { launcher, store } = launcherWithPendingR('/opt/R/4.4.1/bin/R');
+      const relaunch = sinon.stub(launcher, 'launchNextSession').resolves(null);
+      sinon.stub(RChoice, 'savedRChoice').returns(null);
+      sinon.stub(DetectR, 'defaultR').resolves('/usr/local/bin/R');
+
+      launcher.applyPendingRVersion();
+      assert.include(await launcher.restartWithPreviousR(), 'R is gone');
+      assert.isFalse(relaunch.called);
+      assert.equal(launcher.rPath, '/opt/R/4.4.1/bin/R');
+
+      assert.equal(await launcher.restartWithPreviousR(), '');
+      assert.isTrue(relaunch.calledOnce);
+      assert.equal(launcher.rPath, '/opt/R/4.3.3/bin/R');
+      assert.isFalse(store.called);
+    });
+
+    it('reports when the session cannot be launched, and lets the user try again', async () => {
+      sinon.stub(DetectR, 'prepareEnvironment').returns(null);
+      const { launcher, store } = launcherWithPendingR('/opt/R/4.4.1/bin/R');
+      const relaunch = sinon.stub(launcher, 'launchNextSession');
+      relaunch.onFirstCall().resolves(new Error('spawn failed'));
+      relaunch.onSecondCall().resolves(null);
+      sinon.stub(RChoice, 'savedRChoice').returns({ path: '/opt/R/4.4.1/bin/R', rstudioWhichR: '' });
+
+      launcher.applyPendingRVersion();
+      assert.include(await launcher.restartWithPreviousR(), 'spawn failed');
+      assert.equal(launcher.rPath, '/opt/R/4.4.1/bin/R');
+      assert.isTrue((launcher.mainWindow?.setErrorDisplayed as sinon.SinonStub).calledOnce);
+      assert.isFalse(store.called);
+
+      assert.equal(await launcher.restartWithPreviousR(), '');
+      assert.equal(launcher.rPath, '/opt/R/4.3.3/bin/R');
+      assert.isTrue(store.calledOnceWithExactly('/opt/R/4.3.3/bin/R'));
+    });
+  });
+
+  describe('a first session started with the R chosen in RStudio', () => {
+    const kChosenR = '/opt/R/4.4.1/bin/R';
+    const kDefaultR = '/usr/local/bin/R';
+
+    function launcherWithStartupR(rPath: string, pending = '') {
+      const launcher = getNewLauncher();
+      launcher.mainWindow = {
+        collectPendingRVersion: () => pending,
+        clearErrorDisplayed: sinon.stub(),
+        setErrorDisplayed: sinon.stub(),
+      } as unknown as MainWindow;
+      appState().gwtCallback = new EventEmitter() as unknown as GwtCallback;
+
+      sinon.stub(RChoice, 'savedRChoice').returns({ path: kChosenR, rstudioWhichR: RChoice.launchRStudioWhichR() });
+      launcher.setStartupR(rPath);
+
+      return {
+        launcher,
+        prepare: sinon.stub(DetectR, 'prepareEnvironment').returns(null),
+        relaunch: sinon.stub(launcher, 'launchNextSession').resolves(null),
+        store: sinon.stub(DetectR, 'storeRChoice').resolves(),
+      };
+    }
+
+    afterEach(() => {
+      sinon.restore();
+    });
+
+    it('goes back to the default R, which RStudio then follows', async () => {
+      sinon.stub(DetectR, 'defaultR').resolves(kDefaultR);
+      const { launcher, prepare, relaunch, store } = launcherWithStartupR(kChosenR);
+
+      assert.equal(await launcher.restartWithPreviousR(), '');
+
+      assert.isTrue(prepare.calledOnceWithExactly(kDefaultR));
+      assert.isTrue(relaunch.calledOnceWithExactly(true));
+      assert.equal(launcher.rPath, kDefaultR);
+      assert.isTrue(store.calledOnceWithExactly(kDefaultR));
+
+      // and only once
+      assert.equal(await launcher.restartWithPreviousR(), '');
+      assert.isTrue(relaunch.calledOnce);
+    });
+
+    it('offers nothing when the session runs an R other than the chosen one', async () => {
+      const { launcher, prepare, relaunch } = launcherWithStartupR(kDefaultR);
+
+      assert.equal(await launcher.restartWithPreviousR(), '');
+      assert.isFalse(prepare.called);
+      assert.isFalse(relaunch.called);
+    });
+
+    it('says so when the default R is the R that failed', async () => {
+      sinon.stub(DetectR, 'defaultR').resolves(kChosenR);
+      const { launcher, prepare, relaunch } = launcherWithStartupR(kChosenR);
+
+      assert.isNotEmpty(await launcher.restartWithPreviousR());
+      assert.isFalse(prepare.called);
+      assert.isFalse(relaunch.called);
+      assert.equal(launcher.rPath, kChosenR);
+    });
+
+    it('leaves the way back to a switch made since', async () => {
+      const defaultLookup = sinon.stub(DetectR, 'defaultR').resolves(kDefaultR);
+      const { launcher, prepare } = launcherWithStartupR(kChosenR, '/opt/R/4.5.0/bin/R');
+
+      launcher.applyPendingRVersion();
+      assert.equal(await launcher.restartWithPreviousR(), '');
+
+      assert.isTrue(prepare.secondCall.calledWithExactly(kChosenR));
+      assert.isFalse(defaultLookup.called);
+    });
+  });
+
+  describe('showUnusableRChoice', () => {
+    const kUnusable = { path: '/opt/R/external/bin/R', reason: 'it does not exist' };
+
+    function answer(response: number) {
+      sinon.stub(appState().modalTracker, 'trackElectronModalAsync').resolves({ response, checkboxChecked: false });
+    }
+
+    afterEach(() => {
+      sinon.restore();
+    });
+
+    it('forgets the choice when the user goes with the default R', async () => {
+      sinon.stub(RChoice, 'savedRChoice').returns({ path: kUnusable.path, rstudioWhichR: '' });
+      const clear = sinon.stub(RChoice, 'clearRChoice');
+      answer(0);
+
+      await getNewLauncher().showUnusableRChoice(kUnusable);
+
+      assert.isTrue(clear.calledOnce);
+    });
+
+    it('keeps the choice, to try again at the next launch, when the user asks to', async () => {
+      sinon.stub(RChoice, 'savedRChoice').returns({ path: kUnusable.path, rstudioWhichR: '' });
+      const clear = sinon.stub(RChoice, 'clearRChoice');
+      answer(1);
+
+      await getNewLauncher().showUnusableRChoice(kUnusable);
+
+      assert.isFalse(clear.called);
+    });
+
+    it('leaves a choice made while the dialog was up', async () => {
+      sinon.stub(RChoice, 'savedRChoice').returns({ path: '/opt/R/4.5.0/bin/R', rstudioWhichR: '' });
+      const clear = sinon.stub(RChoice, 'clearRChoice');
+      answer(0);
+
+      await getNewLauncher().showUnusableRChoice(kUnusable);
+
+      assert.isFalse(clear.called);
     });
   });
 

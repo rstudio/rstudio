@@ -199,10 +199,10 @@ export function rExecutableProblem(rPath: string): string | null {
 
 /**
  * What stops an R that answered RStudio's query from hosting a session on
- * macOS: the session is launched with R's shared library, which an R built
- * without one lacks (and looking for it then fails the launch outright,
- * before the launch error page can offer a way back). The message is for
- * the user; null when nothing does.
+ * macOS or Linux: the session loads R's shared library, which an R built
+ * without one (no --enable-R-shlib) lacks; on macOS, looking for it then
+ * fails the launch outright, before the launch error page can offer a way
+ * back. The message is for the user; null when nothing does.
  */
 export function rSharedLibraryProblem(
   rPath: string,
@@ -210,11 +210,11 @@ export function rSharedLibraryProblem(
   platform = process.platform,
 ): string | null {
   const home = environment.envVars['R_HOME'];
-  if (platform !== 'darwin' || !home) {
+  if (platform === 'win32' || !home) {
     return null;
   }
 
-  const library = join(home, 'lib', 'libR.dylib');
+  const library = join(home, 'lib', platform === 'darwin' ? 'libR.dylib' : 'libR.so');
   if (existsSync(library)) {
     return null;
   }
@@ -232,10 +232,11 @@ export interface UnusableRChoice {
 /**
  * The R chosen in RStudio, as `path`, when it decides which R startup uses
  * (see rChoiceApplies) and can still be used. A chosen R that can't be used
- * any more (removed by an upgrade, say) is forgotten, so that the default R
- * is used from then on, and returned as `unusable` so the user can be told.
- * Neither is set when no chosen R applies. Windows startup handles its stored
- * R itself, in promptUserForR().
+ * now is returned as `unusable`, so that startup uses the default R and the
+ * user can be told why. The choice is kept: the R may only be out of reach
+ * for now (on a volume not yet mounted, say), and the user decides whether
+ * to forget it. Neither is set when no chosen R applies. Windows startup
+ * handles its stored R itself, in promptUserForR().
  */
 export function chosenRForStartup(platform = process.platform): { path?: string; unusable?: UnusableRChoice } {
   const choice = savedRChoice(platform);
@@ -260,7 +261,6 @@ export function chosenRForStartup(platform = process.platform): { path?: string;
   }
 
   logger().logWarning(`The R chosen in RStudio cannot be used; using the default R instead: ${reason}`);
-  clearRChoice(platform);
   return { unusable: { path: choice.path, reason } };
 }
 
@@ -444,8 +444,9 @@ interface RCandidateWin32 {
  * The R executables the Windows startup prefers when the user is not asked,
  * in order: the default 32-bit or 64-bit installation when the options ask
  * for one (and it exists), then the executable stored in the options.
+ * Exported for tests.
  */
-function storedRCandidatesWin32(): RCandidateWin32[] {
+export function storedRCandidatesWin32(): RCandidateWin32[] {
   const options = ElectronDesktopOptions();
   const candidates: RCandidateWin32[] = [];
 
@@ -475,7 +476,8 @@ function storedRCandidatesWin32(): RCandidateWin32[] {
   if (rBinDir) {
     // with no default installation asked for, the stored path is the chosen
     // R, which gives way to the default installation once RSTUDIO_WHICH_R
-    // has changed since it was chosen (see rChoiceApplies)
+    // has changed since it was chosen (see rChoiceApplies); startup then
+    // forgets it, but the early query (startRDetection) runs before that
     const path = fixWindowsRExecutablePath(`${rBinDir}/${kWindowsRExe}`);
     const askedForDefault = options.useDefault32BitR() || options.useDefault64BitR();
     if (askedForDefault || rChoiceApplies({ path, rstudioWhichR: options.rstudioWhichRWhenChosen() })) {

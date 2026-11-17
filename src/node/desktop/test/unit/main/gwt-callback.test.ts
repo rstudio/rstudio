@@ -58,11 +58,12 @@ function standInRExecutable(): string {
 }
 
 // What querying a stand-in R reports (the query itself is stubbed): an R
-// home holding the shared library a session is launched with on macOS.
+// home holding the shared library a session loads on macOS and Linux.
 function runningREnvironment(): never {
   const home = mkdtempSync(path.join(os.tmpdir(), 'stand-in-r-home-'));
   mkdirSync(path.join(home, 'lib'));
   writeFileSync(path.join(home, 'lib', 'libR.dylib'), '');
+  writeFileSync(path.join(home, 'lib', 'libR.so'), '');
   return { version: '4.4.1', envVars: { R_HOME: home } } as never;
 }
 
@@ -161,8 +162,8 @@ describe('DesktopCallback', () => {
       assert.equal(callback.collectPendingRVersion(), '');
     });
 
-    it('refuses an R without the shared library a session needs on macOS', async function () {
-      if (process.platform !== 'darwin') {
+    it('refuses an R without the shared library a session needs on macOS and Linux', async function () {
+      if (process.platform === 'win32') {
         this.skip();
       }
 
@@ -170,7 +171,8 @@ describe('DesktopCallback', () => {
       const environment = { version: '4.4.1', envVars: { R_HOME: home } };
       sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([environment as never, null]);
 
-      assert.include(await callback.setPendingRVersion(rPath), 'libR.dylib');
+      const library = process.platform === 'darwin' ? 'libR.dylib' : 'libR.so';
+      assert.include(await callback.setPendingRVersion(rPath), library);
       rmSync(home, { recursive: true, force: true });
     });
 

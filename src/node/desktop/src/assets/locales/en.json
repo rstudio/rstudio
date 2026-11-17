@@ -62,6 +62,9 @@
     "previousRHeading": "Previous Version of R",
     "previousRMessage": "R failed to start after RStudio switched to another version of R. You can go back to the version of R used before:",
     "restartWithPreviousR": "Restart with Previous R",
+    "defaultRHeading": "Default Version of R",
+    "defaultRMessage": "R failed to start with the version of R chosen in RStudio. You can restart with the default version of R, which RStudio then uses from now on.",
+    "restartWithDefaultR": "Restart with Default R",
     "rLogo": "R Logo",
     "warning": "Warning",
     "rstudioVersion": "RStudio Version",
@@ -140,7 +143,10 @@
     "errorWasCausedByRAttemptingToLoadPackagesFromADifferentIncompatibleRVersion": "This error was very likely caused by R attempting to load packages from a different incompatible version of R on your system. Please remove other versions of R and/or remove environment variables that reference libraries from other versions of R before proceeding.",
     "chosenRUnusableTitle": "Chosen R Not Available",
     "chosenRUnusableMessage": "The version of R chosen in RStudio could not be used, so RStudio started with the default version of R instead.",
-    "chosenRUnusableDetail": "{{reason}}\n\nRStudio is now using {{rPath}}. To choose another version of R, use Tools > Global Options > General."
+    "chosenRUnusableDetail": "{{reason}}\n\nRStudio is now using {{rPath}}. Keep the chosen version of R to try it again the next time RStudio starts, or use the default version of R from now on.",
+    "chosenRUnusableUseDefault": "Use Default R",
+    "chosenRUnusableKeepChoice": "Keep Chosen R",
+    "noDefaultRToRestartWith": "RStudio found no other version of R to restart with: the default version of R is the one that failed to start, or none could be found."
   },
   "utilsTs": {
     "rsessionNotFoundError": "Could not find rsession executable. Try setting the \"RSTUDIO_CPP_BUILD_OUTPUT\" environment variable to the location where src/cpp was built.\n( Working directory: {{workingDirectory}} )"

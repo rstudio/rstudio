@@ -36,6 +36,7 @@ import {
   UnusableRChoice,
 } from './detect-r';
 import { GwtCallback } from './gwt-callback';
+import { forgetSupersededRChoice } from './r-choice';
 import { prepareInstanceSessionData, removeExitedInstanceSessionData } from './instance-session-data';
 import { PendingWindow } from './pending-window';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
@@ -515,6 +516,13 @@ export class Application implements AppState {
     await languageReady;
     startupCheckpoint('r-query-ready');
 
+    // here rather than before the early query (which passes over such a
+    // choice itself), as a launch that only hands its files to another
+    // instance never gets this far
+    if (forgetSupersededRChoice()) {
+      logger().logInfo('RSTUDIO_WHICH_R has changed since an R was chosen in RStudio; following it from now on');
+    }
+
     // on Windows, ask the user what version of R they'd like to use
     let rPath;
     if (process.platform === 'win32') {
@@ -600,7 +608,7 @@ export class Application implements AppState {
       this.appLaunch,
       windowAllClosedHandler,
     );
-    this.sessionLauncher.rPath = rPath;
+    this.sessionLauncher.setStartupR(rPath);
     if (unusableRChoice) {
       this.sessionLauncher.reportUnusableRChoice(unusableRChoice);
     }

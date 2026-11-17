@@ -47,6 +47,9 @@ const loadPageLocalization = () => {
       'previousRHeading',
       'previousRMessage',
       'restartWithPreviousR',
+      'defaultRHeading',
+      'defaultRMessage',
+      'restartWithDefaultR',
     ].map((id) => 'i18n-' + id);
 
     try {
@@ -75,6 +78,7 @@ const loadPageLocalization = () => {
               break;
             case 'copyProblemReport':
             case 'restartWithPreviousR':
+            case 'restartWithDefaultR':
               (document.getElementById(id) as HTMLInputElement).value = i18next.t('uiFolder.' + reducedId);
               break;
             default:
@@ -151,8 +155,30 @@ const addProblemReportEventListener = () => {
   });
 };
 
+// Restart with another R from the error page: a failure is reported below
+// the button, which can then be used again.
+const addRestartButtonListener = (buttonId: string, errorId: string) => {
+  const restartButton = document.getElementById(buttonId) as HTMLButtonElement;
+  const errorElement = document.getElementById(errorId) as HTMLElement;
+  restartButton.addEventListener('click', () => {
+    restartButton.disabled = true;
+    errorElement.hidden = true;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).desktop.restartWithPreviousR((error: string) => {
+      if (!error) {
+        return;
+      }
+
+      errorElement.textContent = error;
+      errorElement.hidden = false;
+      restartButton.disabled = false;
+    });
+  });
+};
+
 // A session that failed to start with an R just switched to can go back to
-// the R in use before; the section stays hidden otherwise.
+// the R in use before, and a first session started with the R chosen in
+// RStudio to the default R; the sections stay hidden otherwise.
 const addPreviousREventListener = () => {
   window.addEventListener('load', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -165,12 +191,15 @@ const addPreviousREventListener = () => {
       (document.getElementById('previous_r_section') as HTMLElement).hidden = false;
     });
 
-    const restartButton = document.getElementById('i18n-restartWithPreviousR') as HTMLButtonElement;
-    restartButton.addEventListener('click', () => {
-      restartButton.disabled = true;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).desktop.restartWithPreviousR();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).desktop.getStartupErrorInfo('!default_r_fallback', (fallback: string) => {
+      if (fallback === 'true') {
+        (document.getElementById('default_r_section') as HTMLElement).hidden = false;
+      }
     });
+
+    addRestartButtonListener('i18n-restartWithPreviousR', 'previous_r_error');
+    addRestartButtonListener('i18n-restartWithDefaultR', 'default_r_error');
   });
 };
 

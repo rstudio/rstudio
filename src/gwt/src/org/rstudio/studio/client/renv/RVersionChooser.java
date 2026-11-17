@@ -31,6 +31,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -75,13 +76,19 @@ public class RVersionChooser
     */
    public static boolean sameExecutable(String a, String b)
    {
-      return StringUtil.equals(executableIdentity(a), executableIdentity(b));
+      return sameExecutable(a, b, BrowseCap.isWindowsDesktop());
    }
 
-   private static String executableIdentity(String binary)
+   // as above, with the platform given (for tests)
+   static boolean sameExecutable(String a, String b, boolean windows)
+   {
+      return StringUtil.equals(executableIdentity(a, windows), executableIdentity(b, windows));
+   }
+
+   private static String executableIdentity(String binary, boolean windows)
    {
       String path = StringUtil.notNull(binary);
-      if (!BrowseCap.isWindowsDesktop())
+      if (!windows)
          return path;
 
       path = path.replace('\\', '/').toLowerCase();
@@ -110,37 +117,60 @@ public class RVersionChooser
       ProgressIndicator indicator = globalDisplay_.getProgressIndicator(caption);
       indicator.onProgress(constants_.findingRInstallations());
 
+      // the desktop and the session each take a while to answer, and
+      // neither needs the other's answer, so both are asked at once
+      ChooserAnswers answers = new ChooserAnswers();
+      Command showWhenAnswered = () ->
+      {
+         if (answers.failed || answers.rChoice == null || answers.installed == null)
+            return;
+
+         indicator.onCompleted();
+         Choice start = selected != null ? selected : choiceFor(answers.rChoice);
+         new ChooseRVersionDialog(
+               caption,
+               okCaption,
+               defaultR(answers.rChoice),
+               answers.installed,
+               start,
+               onBrowsed -> browse(caption, onBrowsed),
+               onChosen::execute).showModal();
+      };
+
       Desktop.getFrame().getRChoice(rChoice ->
       {
-         server_.rigListRInstallations(new ServerRequestCallback<JsArrayLike<RVersionInstall>>()
-         {
-            @Override
-            public void onResponseReceived(JsArrayLike<RVersionInstall> response)
-            {
-               indicator.onCompleted();
-
-               List<RVersionInstall> installed = new ArrayList<>();
-               for (int i = 0; i < response.getLength(); i++)
-                  installed.add(response.getAt(i));
-
-               Choice start = selected != null ? selected : choiceFor(rChoice);
-               new ChooseRVersionDialog(
-                     caption,
-                     okCaption,
-                     defaultR(rChoice),
-                     installed,
-                     start,
-                     onBrowsed -> browse(caption, onBrowsed),
-                     onChosen::execute).showModal();
-            }
-
-            @Override
-            public void onError(ServerError error)
-            {
-               indicator.onError(error.getUserMessage());
-            }
-         });
+         answers.rChoice = rChoice != null ? rChoice : JsObject.createJsObject();
+         showWhenAnswered.execute();
       });
+
+      server_.rigListRInstallations(new ServerRequestCallback<JsArrayLike<RVersionInstall>>()
+      {
+         @Override
+         public void onResponseReceived(JsArrayLike<RVersionInstall> response)
+         {
+            List<RVersionInstall> installed = new ArrayList<>();
+            for (int i = 0; i < response.getLength(); i++)
+               installed.add(response.getAt(i));
+
+            answers.installed = installed;
+            showWhenAnswered.execute();
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            answers.failed = true;
+            indicator.onError(error.getUserMessage());
+         }
+      });
+   }
+
+   // what choose() waits for, which arrives in either order
+   private static class ChooserAnswers
+   {
+      JsObject rChoice;
+      List<RVersionInstall> installed;
+      boolean failed;
    }
 
    /**
@@ -150,7 +180,10 @@ public class RVersionChooser
     */
    public void choiceInUse(CommandWithArg<Choice> callback)
    {
-      Desktop.getFrame().getRChoice(rChoice -> callback.execute(choiceFor(rChoice)));
+      Desktop.getFrame().getRChoice(rChoice ->
+      {
+         callback.execute(rChoice == null ? null : choiceFor(rChoice));
+      });
    }
 
    /**
@@ -221,11 +254,13 @@ public class RVersionChooser
       return installation;
    }
 
+   // as the desktop describes them; on Windows, its paths for the same R
+   // can differ in their separators
    private static boolean sameR(JsObject a, JsObject b)
    {
       return a != null && b != null &&
              !StringUtil.isNullOrEmpty(a.getString("path")) &&
-             StringUtil.equals(a.getString("path"), b.getString("path"));
+             sameExecutable(a.getString("path"), b.getString("path"));
    }
 
    private void browse(String caption, CommandWithArg<RVersionInstall> onChosen)

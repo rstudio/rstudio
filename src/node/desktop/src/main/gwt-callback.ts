@@ -625,8 +625,8 @@ export class GwtCallback extends EventEmitter {
       return this.setDefaultRVersion(rExecutablePath);
     });
 
-    ipcMain.on('desktop_restart_with_previous_r', () => {
-      this.mainWindow.sessionLauncher?.restartWithPreviousR();
+    ipcMain.handle('desktop_restart_with_previous_r', async () => {
+      return (await this.mainWindow.sessionLauncher?.restartWithPreviousR()) ?? '';
     });
 
     ipcMain.on(

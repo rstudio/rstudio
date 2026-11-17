@@ -31,6 +31,7 @@ import {
   frameworkVersionHome,
   parseRQueryResult,
   promptUserForR,
+  rChooserLikely,
   rDetectionReady,
   rFromRStudioWhichR,
   RLaunchError,
@@ -41,9 +42,12 @@ import {
   scanForRPosix,
   startRDetection,
   storeRChoice,
+  storedRCandidatesWin32,
   windowsSessionPath,
 } from '../../../src/main/detect-r';
 import { launchRStudioWhichR } from '../../../src/main/r-choice';
+import desktop from '../../../src/native/desktop.node';
+import { kWindowsRExe } from '../../../src/ui/utils';
 import { fakeROptions } from './fake-r-options';
 
 describe('DetectR', () => {
@@ -534,6 +538,7 @@ describe('DetectR with an R chosen in RStudio', () => {
     mkdirSync(join(home, 'lib'), { recursive: true });
     if (sharedLibrary) {
       writeFileSync(join(home, 'lib', 'libR.dylib'), '');
+      writeFileSync(join(home, 'lib', 'libR.so'), '');
     }
 
     const fields = [version, home, '', '', '', '', '', '', 'aarch64-fake'];
@@ -589,7 +594,8 @@ describe('DetectR with an R chosen in RStudio', () => {
     assert.deepEqual(chosenRForStartup(), {});
   });
 
-  it('forgets a chosen R that is gone, and says why', () => {
+  // the user decides whether to forget it (see SessionLauncher.showUnusableRChoice)
+  it('passes over a chosen R that is gone, says why, and keeps the choice', () => {
     const missing = join(dir, 'missing', 'R');
     const options = fakeROptions({ path: missing, rstudioWhichR: launchRStudioWhichR() });
 
@@ -598,25 +604,22 @@ describe('DetectR with an R chosen in RStudio', () => {
     assert.isUndefined(chosen.path);
     assert.equal(chosen.unusable?.path, missing);
     assert.include(chosen.unusable?.reason, 'does not exist');
-    assert.isTrue(options.setRExecutablePath.calledOnceWithExactly(''));
+    assert.isFalse(options.setRExecutablePath.called);
+    assert.isFalse(options.setUseDefault64BitR.called);
   });
 
-  it('forgets a chosen R without the shared library a session needs on macOS', function () {
-    if (process.platform !== 'darwin') {
-      this.skip();
-    }
-
+  it('passes over a chosen R without the shared library a session needs', () => {
     const fakeR = writeFakeR('4.4.1', false);
     const options = fakeROptions({ path: fakeR, rstudioWhichR: launchRStudioWhichR() });
 
     const chosen = chosenRForStartup();
 
     assert.isUndefined(chosen.path);
-    assert.include(chosen.unusable?.reason, 'libR.dylib');
-    assert.isTrue(options.setRExecutablePath.calledOnceWithExactly(''));
+    assert.include(chosen.unusable?.reason, process.platform === 'darwin' ? 'libR.dylib' : 'libR.so');
+    assert.isFalse(options.setRExecutablePath.called);
   });
 
-  it('forgets a chosen R that fails to run, and says why', () => {
+  it('passes over a chosen R that fails to run, and says why', () => {
     const brokenR = join(dir, 'R');
     writeFileSync(brokenR, '#!/bin/sh\necho "Fatal error: broken" >&2\nexit 2\n', { mode: 0o755 });
     const options = fakeROptions({ path: brokenR, rstudioWhichR: launchRStudioWhichR() });
@@ -625,7 +628,7 @@ describe('DetectR with an R chosen in RStudio', () => {
 
     assert.isUndefined(chosen.path);
     assert.include(chosen.unusable?.reason, 'could not be run');
-    assert.isTrue(options.setRExecutablePath.calledOnceWithExactly(''));
+    assert.isFalse(options.setRExecutablePath.called);
   });
 
   it('stores an R other than the default as the chosen R, straight away', async () => {
@@ -677,5 +680,72 @@ describe('DetectR with an R chosen in RStudio', () => {
 
     assert.equal(rPath, fakeR);
     assert.isBelow(Date.now() - started, 4000);
+  });
+});
+
+// The Windows-only rules, run on every platform: the registry and the Ctrl key
+// are stubbed, and the stored R is a path that is never run.
+describe('DetectR on Windows with an R chosen in RStudio', () => {
+  const kStoredR = 'C:/R/R-4.4.1/bin/x64/Rterm.exe';
+  const vars: Record<string, string> = {
+    RSTUDIO_WHICH_R: '',
+    RSTUDIO_DESKTOP_PROMPT_FOR_R: '',
+  };
+  let dir = '';
+
+  beforeEach(() => {
+    saveAndClear(vars);
+    dir = mkdtempSync(join(tmpdir(), 'chosen-r-win32-test-'));
+    sinon.stub(desktop, 'isCtrlKeyDown').returns(false);
+  });
+
+  afterEach(() => {
+    sinon.restore();
+    restore(vars);
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  // the registry's default installation (32-bit, which is looked for on any
+  // architecture), at a home that exists
+  function registryDefault(): string {
+    sinon.stub(desktop, 'searchRegistryForDefaultInstallationOfR').returns(dir);
+    return `${dir}/bin/i386/${kWindowsRExe}`;
+  }
+
+  it('tries the stored R while the choice applies', () => {
+    registryDefault();
+    fakeROptions({ path: kStoredR, rstudioWhichR: launchRStudioWhichR() });
+
+    assert.deepEqual(
+      storedRCandidatesWin32().map((candidate) => candidate.path),
+      [kStoredR],
+    );
+  });
+
+  it('tries the default installations instead once RSTUDIO_WHICH_R has changed since the choice', () => {
+    const registryR = registryDefault();
+    fakeROptions({ path: kStoredR, rstudioWhichR: `${launchRStudioWhichR()}-before` });
+
+    const paths = storedRCandidatesWin32().map((candidate) => candidate.path);
+
+    assert.include(paths, registryR);
+    assert.notInclude(paths, kStoredR);
+  });
+
+  it('expects the chooser when a chosen R that RSTUDIO_WHICH_R gives way to is gone', () => {
+    process.env.RSTUDIO_WHICH_R = join(dir, 'R-from-environment', 'bin', 'R.exe');
+    fakeROptions({ path: join(dir, 'missing', 'bin', 'x64', kWindowsRExe), rstudioWhichR: launchRStudioWhichR() });
+
+    assert.isTrue(rChooserLikely());
+  });
+
+  it('expects no chooser when RSTUDIO_WHICH_R has superseded the chosen R', () => {
+    process.env.RSTUDIO_WHICH_R = join(dir, 'R-from-environment', 'bin', 'R.exe');
+    fakeROptions({
+      path: join(dir, 'missing', 'bin', 'x64', kWindowsRExe),
+      rstudioWhichR: `${launchRStudioWhichR()}-before`,
+    });
+
+    assert.isFalse(rChooserLikely());
   });
 });

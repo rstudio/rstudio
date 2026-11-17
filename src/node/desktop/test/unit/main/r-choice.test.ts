@@ -19,6 +19,7 @@ import sinon from 'sinon';
 
 import {
   clearRChoice,
+  forgetSupersededRChoice,
   launchRStudioWhichR,
   rChoiceApplies,
   sameRExecutable,
@@ -63,6 +64,39 @@ describe('RChoice', () => {
 
     it('compares against RSTUDIO_WHICH_R as RStudio was launched with it', () => {
       assert.isTrue(rChoiceApplies({ path: '/opt/R/4.4.1/bin/R', rstudioWhichR: launchRStudioWhichR() }));
+    });
+  });
+
+  describe('forgetSupersededRChoice', () => {
+    it('forgets a choice made while RSTUDIO_WHICH_R had another value', () => {
+      const options = fakeROptions({ path: '/opt/R/4.4.1/bin/R', rstudioWhichR: `${launchRStudioWhichR()}-before` });
+
+      assert.isTrue(forgetSupersededRChoice('linux'));
+      assert.isTrue(options.setRExecutablePath.calledOnceWithExactly(''));
+    });
+
+    it('keeps a choice that still applies', () => {
+      const options = fakeROptions({ path: '/opt/R/4.4.1/bin/R', rstudioWhichR: launchRStudioWhichR() });
+
+      assert.isFalse(forgetSupersededRChoice('linux'));
+      assert.isFalse(options.setRExecutablePath.called);
+    });
+
+    it('asks for the default installation on Windows', () => {
+      const options = fakeROptions({
+        path: 'C:/R/R-4.4.1/bin/x64/R.exe',
+        rstudioWhichR: `${launchRStudioWhichR()}-before`,
+      });
+
+      assert.isTrue(forgetSupersededRChoice('win32'));
+      assert.isTrue(options.setUseDefault64BitR.calledOnceWithExactly(true));
+    });
+
+    it('has nothing to forget with no choice saved', () => {
+      const options = fakeROptions();
+
+      assert.isFalse(forgetSupersededRChoice('darwin'));
+      assert.isFalse(options.setRExecutablePath.called);
     });
   });
 

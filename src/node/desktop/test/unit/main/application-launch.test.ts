@@ -26,6 +26,7 @@ import { getenv, setenv } from '../../../src/core/environment';
 import { kProjectNone, kRStudioInitialProject, kRStudioInitialWorkingDir } from '../../../src/core/r-user-data';
 import { ApplicationLaunch, resolveProjectFile } from '../../../src/main/application-launch';
 import { MainWindow } from '../../../src/main/main-window';
+import { launchRStudioWhichR } from '../../../src/main/r-choice';
 import { createSinonStubInstance, restore, saveAndClear } from '../unit-utils';
 
 describe('ApplicationLaunch', () => {
@@ -169,6 +170,28 @@ describe('ApplicationLaunch', () => {
     // and our own environment is left alone
     assert.equal(getenv(kRStudioInitialProject), path.join(dir, 'test.Rproj'));
     assert.equal(getenv(kRStudioInitialWorkingDir), dir);
+  });
+
+  it('launchRStudio passes on RSTUDIO_WHICH_R as this instance was launched with it', () => {
+    const spawnStub = sinon.stub(childProcess, 'spawn').returns({ unref: sinon.stub() } as unknown as ChildProcess);
+    const saved = { RSTUDIO_WHICH_R: '' };
+    saveAndClear(saved);
+
+    // as Windows startup sets it, to the R it picked
+    setenv('RSTUDIO_WHICH_R', path.join(os.tmpdir(), 'picked', 'R.exe'));
+    try {
+      ApplicationLaunch.init().launchRStudio({ noProject: true });
+    } finally {
+      restore(saved);
+    }
+
+    const env = (spawnStub.firstCall.args[2] as SpawnOptions).env ?? {};
+    const launched = launchRStudioWhichR();
+    if (launched) {
+      assert.equal(env.RSTUDIO_WHICH_R, launched);
+    } else {
+      assert.notProperty(env, 'RSTUDIO_WHICH_R');
+    }
   });
 
   it('Resolve Empty Project File Path', () => {

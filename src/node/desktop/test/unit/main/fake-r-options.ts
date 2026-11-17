@@ -13,6 +13,7 @@
  *
  */
 
+import path from 'path';
 import sinon from 'sinon';
 
 import * as DesktopOptions from '../../../src/main/preferences/electron-desktop-options';
@@ -23,6 +24,7 @@ export interface FakeROptions {
   useDefault64BitR: sinon.SinonStub;
   rExecutablePath: sinon.SinonStub;
   rstudioWhichRWhenChosen: sinon.SinonStub;
+  rBinDir: sinon.SinonStub;
   setUseDefault32BitR: sinon.SinonStub;
   setUseDefault64BitR: sinon.SinonStub;
   setRExecutablePath: sinon.SinonStub;
@@ -48,6 +50,7 @@ export function fakeROptions(
     useDefault64BitR: sinon.stub().callsFake(() => state.useDefault64BitR),
     rExecutablePath: sinon.stub().callsFake(() => state.rExecutablePath),
     rstudioWhichRWhenChosen: sinon.stub().callsFake(() => state.rstudioWhichRWhenChosen),
+    rBinDir: sinon.stub().callsFake(() => (state.rExecutablePath ? path.dirname(state.rExecutablePath) : '')),
     setUseDefault32BitR: sinon.stub().callsFake((value: boolean) => (state.useDefault32BitR = value)),
     setUseDefault64BitR: sinon.stub().callsFake((value: boolean) => (state.useDefault64BitR = value)),
     setRExecutablePath: sinon.stub().callsFake((value: string) => (state.rExecutablePath = value)),

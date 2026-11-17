@@ -314,11 +314,16 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_prepare_show_ppt_presentation');
     },
 
+    // with no answer, the client goes on as if no R were known, rather than
+    // waiting forever
     getRChoice: (callback: VoidCallback<Record<string, unknown>>) => {
       ipcRenderer
         .invoke('desktop_get_r_choice')
         .then((choice) => callback(choice))
-        .catch((error) => reportIpcError('getRChoice', error));
+        .catch((error) => {
+          reportIpcError('getRChoice', error);
+          callback({});
+        });
     },
 
     setDefaultRVersion: (rExecutablePath: string, callback: VoidCallback<string>) => {
@@ -331,8 +336,14 @@ export function getDesktopBridge() {
         });
     },
 
-    restartWithPreviousR: () => {
-      ipcRenderer.send('desktop_restart_with_previous_r');
+    restartWithPreviousR: (callback: VoidCallback<string>) => {
+      ipcRenderer
+        .invoke('desktop_restart_with_previous_r')
+        .then((error) => callback(error))
+        .catch((error) => {
+          reportIpcError('restartWithPreviousR', error);
+          callback(String(error) || 'restartWithPreviousR failed');
+        });
     },
 
     openMinimalWindow: (name: string, url: string, width: number, height: number) => {

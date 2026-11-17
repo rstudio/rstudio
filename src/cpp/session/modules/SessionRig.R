@@ -1398,7 +1398,10 @@
 })
 
 #' The home directory of the R installation with the given binary.
-.rs.addFunction("rig.rHome", function(binary)
+#'
+#' @param binary The R executable.
+#' @param windows Whether it is a Windows executable.
+.rs.addFunction("rig.rHome", function(binary, windows = .rs.platform.isWindows)
 {
    # the launcher script of a macOS framework install reports the
    # framework's current default version rather than its own, so derive the
@@ -1409,6 +1412,17 @@
 
    if (!file.exists(binary))
       return("")
+
+   # Windows' Rterm.exe and Rgui.exe (in bin/x64 or bin/i386, the executable
+   # the desktop keeps) don't take R's subcommands: asked for RHOME, they
+   # start R instead. Their home is the directory holding 'bin'.
+   if (windows && tolower(basename(binary)) %in% c("rterm.exe", "rgui.exe"))
+   {
+      bin <- dirname(binary)
+      if (tolower(basename(bin)) %in% c("x64", "i386"))
+         bin <- dirname(bin)
+      return(dirname(bin))
+   }
 
    # bounded: the binary may be any executable the user browsed to
    home <- .rs.tryCatch(suppressWarnings(system2(binary, "RHOME", stdout = TRUE, stderr = FALSE, timeout = 10)))

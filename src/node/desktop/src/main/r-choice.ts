@@ -71,6 +71,24 @@ export function rChoiceApplies(choice: RChoice, rstudioWhichR = kLaunchRStudioWh
 }
 
 /**
+ * Forget a saved choice that RSTUDIO_WHICH_R has superseded (see
+ * rChoiceApplies), so that it doesn't apply again should the variable go
+ * back to its old value: after `rig default 4.6` and then `rig default 4.5`,
+ * the user expects 4.5, not an R chosen in RStudio before either. Run once
+ * at startup, before anything reads the choice. Returns whether a choice was
+ * forgotten.
+ */
+export function forgetSupersededRChoice(platform = process.platform): boolean {
+  const choice = savedRChoice(platform);
+  if (choice === null || rChoiceApplies(choice)) {
+    return false;
+  }
+
+  clearRChoice(platform);
+  return true;
+}
+
+/**
  * Whether two paths name the same R executable, as the paths they are:
  * a link (rig's /usr/local/bin/R, say) is not the R it points to, as it
  * follows whichever R it is pointed at next. On Windows, case and

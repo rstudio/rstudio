@@ -610,6 +610,27 @@ test_that("the home of a macOS framework install is derived from its path", {
    
 })
 
+test_that("the home of a Windows Rterm.exe or Rgui.exe is derived from its path", {
+
+   # never run: asked for RHOME, these start R
+   home <- normalizePath(tempfile("R-4.5.0-"), winslash = "/", mustWork = FALSE)
+   on.exit(unlink(home, recursive = TRUE), add = TRUE)
+   dir.create(file.path(home, "bin", "x64"), recursive = TRUE)
+   rterm <- file.path(home, "bin", "x64", "Rterm.exe")
+   rgui <- file.path(home, "bin", "x64", "Rgui.exe")
+   file.create(rterm, rgui)
+
+   expect_identical(.rs.rig.rHome(rterm, windows = TRUE), home)
+   expect_identical(.rs.rig.rHome(rgui, windows = TRUE), home)
+
+   # as R 4.1 and earlier lay out a 32-bit build
+   dir.create(file.path(home, "bin", "i386"))
+   rterm32 <- file.path(home, "bin", "i386", "RTerm.exe")
+   file.create(rterm32)
+   expect_identical(.rs.rig.rHome(rterm32, windows = TRUE), home)
+
+})
+
 test_that("macOS framework versions that run the default R are recognized", {
 
    root <- tempfile("r-framework-")

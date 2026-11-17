@@ -19,6 +19,7 @@ import { existsSync, readdirSync } from 'fs';
 import { kProjectNone, kRStudioInitialProject, kRStudioInitialWorkingDir } from '../core/r-user-data';
 import { MainWindow } from './main-window';
 import { isAutomated } from './utils';
+import { launchRStudioWhichR } from './r-choice';
 import { app } from 'electron';
 
 // every launch states exactly one intent: open this project file, start in this directory
@@ -80,6 +81,17 @@ export class ApplicationLaunch {
     const env = { ...process.env };
     delete env[kRStudioInitialProject];
     delete env[kRStudioInitialWorkingDir];
+
+    // Windows startup exports the R it picked as RSTUDIO_WHICH_R; the new
+    // instance must see the value this one was launched with, or it would
+    // take the R picked here as the user's RSTUDIO_WHICH_R (which supersedes
+    // the R chosen in RStudio, see rChoiceApplies)
+    const rstudioWhichR = launchRStudioWhichR();
+    if (rstudioWhichR) {
+      env.RSTUDIO_WHICH_R = rstudioWhichR;
+    } else {
+      delete env.RSTUDIO_WHICH_R;
+    }
 
     if ('noProject' in options) {
       // ask for no project explicitly, so the session doesn't restore the last one; with no
