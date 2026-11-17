@@ -51,9 +51,14 @@ set COPILOT_VERSION=1.570.0
 set SUMATRA_VERSION=3.1.2
 set WINUTILS_VERSION=1.0
 
+set ARM64=0
 set CLEAN=0
 set QUIET=0
 for %%A in (%*) do (
+
+  if /I "%%A" == "arm64" (
+    set ARM64=1
+  )
 
   if /I "%%A" == "clean" (
     set CLEAN=1
@@ -157,6 +162,11 @@ set PANDOC_OUTPUT=pandoc
 set LIBCLANG_URL=libclang-windows-%LIBCLANG_VERSION%.zip
 set LIBCLANG_FOLDER=libclang\%LIBCLANG_VERSION%
 set LIBCLANG_OUTPUT=
+
+:: ARM64 libclang (with 'arm64'): LLVM's own Windows ARM64 release of the same version
+set LIBCLANG_ARM64_ZIP=LLVM-%LIBCLANG_VERSION%-woa64.zip
+set LIBCLANG_ARM64_URL=https://github.com/llvm/llvm-project/releases/download/llvmorg-%LIBCLANG_VERSION%/%LIBCLANG_ARM64_ZIP%
+set LIBCLANG_ARM64_SHA256=ecdac7fde2a5f745a8a1806c389c1278cb47b127e36bea99ff54a9765072485b
 
 
 set NODEBUILD_VERSION=%RSTUDIO_NODE_VERSION%
@@ -307,3 +317,59 @@ call "%WINDOWS_SCRIPTS_DIR%install-soci.cmd"
 :: The i18n helper scripts live relative to the source tree; run from there.
 cd /d "%WINDOWS_SCRIPTS_DIR%"
 %RUN% install-i18n-dependencies
+
+if not "%ARM64%" == "1" goto :eof
+
+:: ARM64 libraries for the ARM64 rsession (make-package.bat arm64), built beside
+:: the x64 ones: natively on an ARM64 machine, cross-compiled on an x64 one.
+:: The Boost and OpenSSL scripts install into the source tree's dependencies folder.
+echo -- Installing ARM64 dependencies
+set BOOST_ARCH=arm64
+set OPENSSL_ARCH=arm64
+set SOCI_ARCH=arm64
+
+if exist "%WINDOWS_SCRIPTS_DIR%boost-%BOOST_VERSION%-win-msvc%MSVC_TOOLSET_VERSION%-release-static\boostarm64\lib" (
+  echo -- ARM64 Boost is already installed
+) else (
+  pushd "%WINDOWS_SCRIPTS_DIR%install-boost"
+  R --vanilla -s -f install-boost.R --args debug static
+  if ERRORLEVEL 1 exit /b 1
+  R --vanilla -s -f install-boost.R --args release static
+  if ERRORLEVEL 1 exit /b 1
+  popd
+)
+
+if exist "%WINDOWS_SCRIPTS_DIR%openssl-%OPENSSL_VERSION%\openssl-%OPENSSL_VERSION%-release-arm64\lib\libcrypto.lib" (
+  echo -- ARM64 OpenSSL is already installed
+) else (
+  pushd "%WINDOWS_SCRIPTS_DIR%install-openssl"
+  R --vanilla -s -f install-openssl.R
+  if ERRORLEVEL 1 exit /b 1
+  popd
+)
+
+call "%WINDOWS_SCRIPTS_DIR%install-soci.cmd"
+if ERRORLEVEL 1 exit /b 1
+
+set "LIBCLANG_ARM64_DIR=%COMMON_INSTALL_DIR%\libclang\%LIBCLANG_VERSION%\arm64"
+if exist "%LIBCLANG_ARM64_DIR%\libclang.dll" (
+  echo -- ARM64 libclang is already installed
+  goto :eof
+)
+echo -- Downloading %LIBCLANG_ARM64_ZIP%
+cd /d "%COMMON_INSTALL_DIR%"
+curl -fL -o "%LIBCLANG_ARM64_ZIP%" "%LIBCLANG_ARM64_URL%"
+if ERRORLEVEL 1 exit /b 1
+powershell -NoProfile -Command "if ((Get-FileHash -Algorithm SHA256 '%LIBCLANG_ARM64_ZIP%').Hash -ne '%LIBCLANG_ARM64_SHA256%') { exit 1 }"
+if ERRORLEVEL 1 (
+  echo ^^!^^! ERROR: %LIBCLANG_ARM64_ZIP% does not match its SHA-256 %LIBCLANG_ARM64_SHA256%
+  exit /b 1
+)
+:: only libclang.dll is needed from the full LLVM toolchain
+7z e "%LIBCLANG_ARM64_ZIP%" -o"%LIBCLANG_ARM64_DIR%" libclang.dll -r -y
+if ERRORLEVEL 1 exit /b 1
+if not exist "%LIBCLANG_ARM64_DIR%\libclang.dll" (
+  echo ^^!^^! ERROR: libclang.dll not found in %LIBCLANG_ARM64_ZIP%
+  exit /b 1
+)
+del "%LIBCLANG_ARM64_ZIP%"
