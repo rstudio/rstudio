@@ -157,18 +157,19 @@ describe('DesktopCallback', () => {
       assert.equal(callback.collectPendingRVersion(), '');
     });
 
-    it('finds the R a quit names by the path it was prepared with, on windows', async function () {
-      if (process.platform !== 'win32') {
+    it('finds the R a quit names by the path it was prepared with, on x64 windows', async function () {
+      // the desktop app is built for x64 only, and runs emulated on ARM64 Windows
+      if (process.platform !== 'win32' || process.arch !== 'x64') {
         this.skip();
       }
       sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{} as never, null]);
 
-      // the client names bin\R.exe; the R prepared and launched is the arch's Rterm.exe
+      // the client names bin\R.exe; the R prepared and launched is bin\x64\Rterm.exe
       const binDir = path.join(rDir, 'bin');
-      const archDir = path.join(binDir, process.arch === 'x64' ? 'x64' : 'i386');
-      mkdirSync(archDir, { recursive: true });
+      const x64Dir = path.join(binDir, 'x64');
+      mkdirSync(x64Dir, { recursive: true });
       const chosen = path.join(binDir, 'R.exe');
-      const rterm = path.join(archDir, 'Rterm.exe');
+      const rterm = path.join(x64Dir, 'Rterm.exe');
       writeFileSync(chosen, '');
       writeFileSync(rterm, '');
 
