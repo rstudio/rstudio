@@ -269,7 +269,10 @@ namespace {
 // The flags a compile_flags.txt may supply: those that shape how a file is
 // parsed and diagnosed (macros, include paths, the language and target,
 // warnings). Anything else, such as an option that loads a plugin, writes a
-// file, or passes arguments on to another tool, is dropped and reported.
+// file, or passes arguments on to another tool, is dropped and reported. A
+// few common code generation flags are let through too, though they don't
+// change the parse, so that a build's flags can be pasted in without a
+// warning for each.
 
 // How an option takes its value: joined to it ('-Iinc'), after an '='
 // ('--sysroot=sys'), or never, so only as the next argument ('-arch arm64')
@@ -327,11 +330,12 @@ const char* const kShadowingOptions[] = { "-include-pch", "-iframeworkwithsysroo
 // Options that take their value only after an '=', as in '-std=c++17'
 const std::set<std::string> kSettingOptions = {
    "--target", "-std", "-stdlib",
-   "-march", "-mcpu", "-mtune", "-mabi", "-mfpu", "-mfloat-abi",
+   "-march", "-mcpu", "-mtune", "-mabi", "-mfpu", "-mfpmath", "-mfloat-abi",
    "-mmacos-version-min", "-mmacosx-version-min",
    "-fbracket-depth", "-fcf-protection", "-fconstexpr-backtrace-limit",
    "-fconstexpr-depth", "-fconstexpr-steps", "-fdiagnostics-color", "-ferror-limit",
-   "-fexec-charset", "-fgnuc-version", "-finput-charset", "-fmacro-backtrace-limit",
+   "-fexec-charset", "-ffile-prefix-map", "-ffp-contract", "-fgnuc-version",
+   "-finput-charset", "-fmacro-backtrace-limit",
    "-fms-compatibility-version", "-fmsc-version", "-fnew-alignment", "-fno-sanitize", "-fopenmp",
    "-fopenmp-version", "-fsanitize", "-fspell-checking-limit",
    "-ftemplate-backtrace-limit", "-ftemplate-depth", "-fvisibility",
@@ -346,28 +350,31 @@ const std::set<std::string> kStandaloneFlags = {
    "-g", "-g0", "-g1", "-g2", "-g3", "-ggdb",
 };
 
-// Language and diagnostic features, as '-f<name>' or '-fno-<name>'
+// Language, diagnostic, and common code generation features, as '-f<name>' or
+// '-fno-<name>'
 const std::set<std::string> kFeatureFlags = {
    "PIC", "PIE", "access-control", "aligned-allocation", "asm-blocks", "blocks",
    "borland-extensions", "builtin", "caret-diagnostics", "cf-protection", "char8_t",
-   "color-diagnostics", "common", "coroutines", "cxx-exceptions", "declspec",
+   "color-diagnostics", "common", "coroutines", "cxx-exceptions", "data-sections", "declspec",
    "delayed-template-parsing", "diagnostics-color", "diagnostics-fixit-info",
    "diagnostics-show-option", "diagnostics-show-template-tree", "digraphs",
    "dollars-in-identifiers", "elide-constructors", "elide-type", "exceptions",
-   "fast-math", "finite-math-only", "freestanding", "gnu-inline-asm", "gnu-keywords",
-   "gnu89-inline", "math-errno", "ms-compatibility", "ms-extensions", "objc-arc",
-   "openmp", "operator-names", "pic", "pie", "rtti", "short-enums", "short-wchar",
+   "fast-math", "finite-math-only", "freestanding", "function-sections", "gnu-inline-asm",
+   "gnu-keywords", "gnu89-inline", "math-errno", "ms-compatibility", "ms-extensions",
+   "objc-arc", "omit-frame-pointer", "openmp", "operator-names", "pic", "pie", "rtti",
+   "short-enums", "short-wchar",
    "show-column", "show-source-location", "signed-char", "sized-deallocation",
    "spell-checking", "stack-clash-protection", "stack-protector", "stack-protector-all",
    "stack-protector-strong", "strict-aliasing", "threadsafe-statics", "trigraphs",
    "unsigned-char", "visibility-inlines-hidden",
 };
 
-// Instruction set extensions, as '-m<name>' or '-mno-<name>'
+// Instruction set extensions and other target features, as '-m<name>' or
+// '-mno-<name>'
 const std::set<std::string> kTargetFeatureFlags = {
    "aes", "avx", "avx2", "avx512bw", "avx512cd", "avx512dq", "avx512f", "avx512vl",
    "bmi", "bmi2", "f16c", "fma", "lzcnt", "pclmul", "popcnt", "sha", "sse", "sse2",
-   "sse3", "sse4", "sse4.1", "sse4.2", "ssse3",
+   "sse3", "sse4", "sse4.1", "sse4.2", "ssse3", "stackrealign",
 };
 
 // Options we don't support that clang reads the next argument as the value

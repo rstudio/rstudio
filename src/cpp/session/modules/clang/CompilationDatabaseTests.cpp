@@ -210,6 +210,10 @@ TEST_F(CompileFlagsTest, AllowsFlagsThatShapeTheParse)
       "-pedantic", "-ferror-limit=50", "-fopenmp", "-fopenmp=libomp", "-fno-exceptions",
       "-fsanitize=address,undefined", "-fno-sanitize=alignment",
       "-fPIC", "-fvisibility=hidden", "-O2", "-g", "-pthread",
+
+      // code generation flags let through so a build's flags can be pasted in
+      "-fno-omit-frame-pointer", "-ffunction-sections", "-fdata-sections", "-ffp-contract=fast",
+      "-mfpmath=sse", "-mstackrealign", "-ffile-prefix-map=/build=.",
    };
 
    std::vector<RejectedCompileFlag> rejected;
