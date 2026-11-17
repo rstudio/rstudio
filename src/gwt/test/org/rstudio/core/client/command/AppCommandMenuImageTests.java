@@ -69,8 +69,9 @@ public class AppCommandMenuImageTests extends GWTTestCase
 
    public void testLayoutElementsArePresentational()
    {
-      // Chrome exposes table parts without a role as nameless generic nodes,
-      // which VoiceOver announces as "group" after the menu item's text.
+      // Chrome exposes layout elements without a role, such as table parts and
+      // the right image's floated <div>, as nameless generic nodes, which
+      // VoiceOver announces as "group" after the menu item's text.
       ImageResource2x rightImage =
             new ImageResource2x(ThemeResources.INSTANCE.executeChunk2x());
       String[] labels = {
@@ -83,14 +84,23 @@ public class AppCommandMenuImageTests extends GWTTestCase
          Element label = Document.get().createDivElement();
          label.setInnerHTML(html);
          assertEquals(1, label.getElementsByTagName("tbody").getLength());
-         for (String tag : new String[] { "table", "tbody", "tr", "td" })
+         NodeList<Element> elements = label.getElementsByTagName("*");
+         for (int i = 0; i < elements.getLength(); i++)
          {
-            NodeList<Element> elements = label.getElementsByTagName(tag);
-            assertTrue(tag, elements.getLength() > 0);
-            for (int i = 0; i < elements.getLength(); i++)
-               assertEquals(tag, "presentation", elements.getItem(i).getAttribute("role"));
+            Element el = elements.getItem(i);
+            if (el.getTagName().equalsIgnoreCase("img") || isHidden(el, label))
+               continue;
+            assertEquals(el.getTagName(), "presentation", el.getAttribute("role"));
          }
       }
+   }
+
+   private static boolean isHidden(Element el, Element root)
+   {
+      for (; el != root; el = el.getParentElement())
+         if ("true".equals(el.getAttribute("aria-hidden")))
+            return true;
+      return false;
    }
 
    @Override

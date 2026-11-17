@@ -680,8 +680,8 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       if (iconOffsetY != null)
          topOffset += iconOffsetY;
       // Every layout element gets role="presentation": Chrome exposes table parts
-      // without one as nameless generic nodes, which VoiceOver announces as
-      // "group". The <tbody> is written explicitly so the browser doesn't insert
+      // and floated <div>s without one as nameless generic nodes, which VoiceOver
+      // announces as "group". The <tbody> is written explicitly so the browser doesn't insert
       // one without a role.
       String presentation = " role=\"presentation\"";
       text.append("<table" + presentation + " ");
@@ -722,11 +722,15 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       if (rightImage != null)
       {
          SafeHtml imageHtml = createRightImageHtml(rightImage, rightImageDesc);
-         text.append("<td" + presentation + " align=right width=\"25\"><div style=\"width: 25px; float: right; margin-top: -7px; margin-bottom: -10px;\">" + imageHtml.asString() + "</div></td>");
+         text.append("<td" + presentation + " align=right width=\"25\">" +
+                     "<div" + presentation + " style=\"width: 25px; float: right; " +
+                     "margin-top: -7px; margin-bottom: -10px;\">" +
+                     imageHtml.asString() + "</div></td>");
       }
       else if (!StringUtil.isNullOrEmpty(shortcut))
       {
-         text.append("<td" + presentation + " align=right nowrap>&nbsp;&nbsp;&nbsp;&nbsp;" + shortcut + "</td>");
+         text.append("<td" + presentation + " align=right nowrap>" +
+                     "&nbsp;&nbsp;&nbsp;&nbsp;" + shortcut + "</td>");
       }
       else
       {
