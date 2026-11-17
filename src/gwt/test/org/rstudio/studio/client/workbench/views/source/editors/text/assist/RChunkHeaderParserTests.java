@@ -44,6 +44,18 @@ public class RChunkHeaderParserTests extends GWTTestCase
       assertTrue(pieces.get("echo").contentEquals("TRUE"));
    }
 
+   public void testLongerFence()
+   {
+      // the editor takes a fence of more than three backticks for a chunk,
+      // and space before the brace
+      Map<String, String> pieces = RChunkHeaderParser.parse("````{julia}");
+      assertEquals("\"julia\"", pieces.get("engine"));
+
+      pieces = RChunkHeaderParser.parse("``` {python label}");
+      assertEquals("\"python\"", pieces.get("engine"));
+      assertEquals("\"label\"", pieces.get("label"));
+   }
+
    public void testCommaBeforeChunkLabel()
    {
       String header = "```{r, label, echo=TRUE}";

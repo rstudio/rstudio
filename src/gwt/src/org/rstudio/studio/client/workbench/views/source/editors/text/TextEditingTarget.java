@@ -7819,11 +7819,19 @@ public class TextEditingTarget implements
                                            range.getStart().getColumn()),
                      true);
             }
-            // the chunk's language comes from its header: a Quarto option
-            // atop its body isn't in the language's mode
+            // the chunk's language comes from its header, as a Quarto option
+            // atop its body isn't in the language's mode; but the header
+            // parser takes some headers (e.g. four-backtick fences) for R's
             String language = chunkConsoleLanguage(chunk);
-            if (language == null)
-               language = ConsoleLanguageTracker.LANGUAGE_R;
+            if (language == null || StringUtil.equals(language, ConsoleLanguageTracker.LANGUAGE_R))
+            {
+               if (DocumentMode.isPositionInPythonMode(primaryDisplay_, chunk.getBodyStart()))
+                  language = ConsoleLanguageTracker.LANGUAGE_PYTHON;
+               else if (DocumentMode.isPositionInJuliaMode(primaryDisplay_, chunk.getBodyStart()))
+                  language = ConsoleLanguageTracker.LANGUAGE_JULIA;
+               else
+                  language = ConsoleLanguageTracker.LANGUAGE_R;
+            }
 
             if (!range.isEmpty())
             {
