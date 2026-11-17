@@ -260,7 +260,12 @@ public class HelpInfo extends JavaScriptObject
          return this.type ? this.type[0] : 0;
       }-*/;
 
-      public final ParsedInfo toParsedInfo() 
+      // whether the handler has more help for F1 to show; unless it says not
+      public final native boolean hasMoreHelp() /*-{
+         return this.has_help ? !!this.has_help[0] : true;
+      }-*/;
+
+      public final ParsedInfo toParsedInfo()
       {
          // values
          HashMap<String,String> values = new HashMap<>();
@@ -284,7 +289,7 @@ public class HelpInfo extends JavaScriptObject
                                values,
                                args,
                                null,
-                               true, 
+                               hasMoreHelp(),
                                getType());
       }
       

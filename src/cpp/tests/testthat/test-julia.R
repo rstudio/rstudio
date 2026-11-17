@@ -53,6 +53,47 @@ test_that("bytes that aren't UTF-8 aren't held back", {
 })
 
 test_that("the help handler only answers completion help", {
-   expect_identical(.rs.julia.helpHandler("url", "println", ""), "")
-   expect_null(.rs.julia.helpHandler("parameter", NULL, ""))
+   expect_identical(.rs.julia.helpHandler("url", "println", "Main"), "")
+   expect_null(.rs.julia.helpHandler("parameter", NULL, "Main"))
+
+   # a completion that isn't a binding, such as a field, has no help to find
+   expect_null(.rs.julia.helpHandler("completion", "length", ""))
+})
+
+test_that("completions and their help come from Julia", {
+   skip_if_not_installed("JuliaConnectoR")
+   skip_if(is.null(.rs.julia.executable()), "Julia isn't installed")
+   skip_if(.rs.julia.isFirstStart(), "Julia's first start installs packages")
+
+   .rs.julia.start()
+   on.exit(.rs.julia.stop(), add = TRUE)
+
+   types <- .rs.acCompletionTypes
+
+   # a module's member, typed so that the client asks the help handler
+   completions <- .rs.julia.getCompletions("Base.Mat")
+   expect_identical(completions$token, "Mat")
+   expect_identical(completions$helpHandler, .rs.scalar(".rs.julia.helpHandler"))
+   math <- match("Math", completions$results)
+   expect_false(is.na(math))
+   expect_identical(completions$packages[[math]], "Base")
+   expect_identical(completions$type[[math]], types$ENVIRONMENT)
+
+   # a mutating function, and a macro, which isn't called with parentheses
+   completions <- .rs.julia.getCompletions("pushfirs")
+   expect_identical(completions$type[completions$results == "pushfirst!"], types$FUNCTION)
+   completions <- .rs.julia.getCompletions("@tim")
+   expect_identical(completions$type[completions$results == "@time"], types$UNKNOWN)
+
+   # documentation, headed by the signature it begins with
+   help <- .rs.julia.helpHandler("completion", "println", "Main")
+   expect_identical(help$signature, "println([io::IO], xs...)")
+   expect_identical(help$title, "")
+   expect_match(help$description, "followed by a newline")
+   expect_false(help$has_help)
+
+   # or, without one, by the topic
+   help <- .rs.julia.helpHandler("completion", "Math", "Base")
+   expect_identical(help$signature, "")
+   expect_identical(help$title, "Math")
 })

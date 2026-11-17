@@ -338,7 +338,8 @@
 #'
 #' @param type The help wanted: "completion", "parameter" or "url".
 #' @param topic The completion's name.
-#' @param source The module the completion comes from; empty for Main.
+#' @param source The module to look up its documentation in, as
+#'   RStudio.completions gives it; empty when it has none.
 .rs.addFunction("julia.helpHandler", function(type, topic, source, ...)
 {
    # Julia's documentation is only shown in the completion popup; there is
@@ -346,7 +347,7 @@
    if (identical(type, "url"))
       return("")
 
-   if (!identical(type, "completion"))
+   if (!identical(type, "completion") || !nzchar(source))
       return(NULL)
 
    # Julia can only be asked while it is idle at the prompt
@@ -355,13 +356,19 @@
       error = function(e) NULL
    )
 
-   if (!is.character(result) || length(result) != 2L)
+   if (!is.character(result) || length(result) != 2L || !nzchar(result[[2L]]))
       return(NULL)
 
+   # the popup heads the help with the signature, or else the title; a
+   # docstring has no title of its own
+   signature <- result[[1L]]
+   title <- if (nzchar(signature)) "" else topic
+
    list(
-      title       = topic,
-      signature   = result[[1L]],
-      description = result[[2L]]
+      title       = title,
+      signature   = signature,
+      description = result[[2L]],
+      has_help    = FALSE
    )
 })
 

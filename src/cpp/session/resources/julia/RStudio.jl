@@ -54,15 +54,14 @@ end
 # with R's own. Callers pass parts rather than interpolating them: building a
 # string allocates, and an allocation is where an interrupt can land. One
 # landing here is dropped, so that tracing can't change where interrupts go;
-# `finish_evaluation` then waits out its grace period.
+# `finish_evaluation` then waits out its grace period. So is a failed write.
 function debug(parts...)
    debugging[] || return
    try
       t = time()
       stamp = Libc.strftime("%H:%M:%S", t) * "." * lpad(floor(Int, 1000 * (t % 1)), 3, '0')
       println(stderr, "[julia-debug Julia ", stamp, "] ", parts...)
-   catch err
-      err isa InterruptException || rethrow()
+   catch
    end
 end
 
@@ -176,9 +175,9 @@ end
 
 Completions for the end of `line`, as the Julia REPL offers them on Tab: the
 token they replace, then their names, then their kinds ("function",
-"module", "keyword", "path" or "other"), then the modules they come from
-("" for Main and for completions that aren't names), all in one vector of
-strings, which JuliaConnectoR translates (it passes a tuple as a proxy).
+"module", "keyword", "path" or "other"), then the modules to look up their
+documentation in (see `documentation`), all in one vector of strings, which
+JuliaConnectoR translates (it passes a tuple as a proxy).
 """
 function completions(line::AbstractString)
    line = String(line)
@@ -198,10 +197,23 @@ function completions(line::AbstractString)
       text =hasfield(typeof(result), :completion) ? result.completion : C.completion_text(result)
       push!(names, text)
       push!(kinds, completion_kind(result))
-      push!(sources, result isa C.ModuleCompletion && result.parent !== Main ? string(result.parent) : "")
+      push!(sources, completion_source(result))
    end
 
    return String[token; names; kinds; sources]
+end
+
+# The module to look up a completion's documentation in, as `string` names it;
+# "" for one that isn't a binding, such as a field, whose name alone would
+# find some other binding's documentation.
+function completion_source(result)
+   C = REPL.REPLCompletions
+   if result isa C.ModuleCompletion
+      return string(result.parent)
+   elseif result isa C.KeywordCompletion
+      return "Main"
+   end
+   return ""
 end
 
 function completion_kind(result)
@@ -230,26 +242,68 @@ end
 """
     documentation(name, source)
 
-The documentation for `name` from module `source` ("" for Main), as `?name`
-shows it at the Julia REPL: the signature it begins with, if any, and then the
-rest, as markdown.
+The documentation for `name` in the module `source` names (as `completions`
+gives it), as `?name` shows it at the Julia REPL: the signature it begins
+with, if any, and then the rest, as markdown. Both are empty when `source`
+names no module.
 """
 function documentation(name::AbstractString, source::AbstractString)
-   topic = isempty(source) ? String(name) : string(source, ".", name)
-   docs = Core.eval(Main, REPL.helpmode(devnull, topic, Main))
+   name = String(name)
+   mod = find_module(String(source))
+   mod === nothing && return String["", ""]
+
+   docs = Core.eval(mod, REPL.helpmode(devnull, name, mod))
    text = sprint(show, MIME("text/markdown"), docs)
 
    # cross-references only resolve in Documenter's builds
    text = replace(text, r"\[([^\]]*)\]\(@ref[^)]*\)" => s"\1")
 
+   # a leading code block that isn't a signature, such as an example, stays;
+   # one of several signatures stays too, with the others
    signature = ""
-   m = match(r"^```julia\n([^\n]*)\n```\n*", text)
+   m = match(r"^```julia\n((?:[^\n]*\n)*?)```\n*", text)
    if m !== nothing
-      signature = String(m.captures[1])
-      text = replace(text, m.match => ""; count = 1)
+      lines = split(chomp(m.captures[1]), '\n')
+      if is_signature(lines[1], name)
+         signature = String(lines[1])
+         if length(lines) == 1
+            text = replace(text, m.match => ""; count = 1)
+         end
+      end
    end
 
    return String[signature, text]
+end
+
+# Does `line` show how `name` is used: called, or alone (as a keyword is)?
+function is_signature(line::AbstractString, name::String)
+   return line == name || startswith(line, name * "(") || startswith(line, name * "{")
+end
+
+# The module that `path` names, as `string` gives a module's name, or nothing.
+# A package's module is found among those loaded, as it may be bound in Main
+# under another name, or not at all.
+function find_module(path::String)
+   isempty(path) && return nothing
+
+   parts = split(path, '.')
+   root = Symbol(parts[1])
+   mod = root === :Main ? Main : nothing
+   if mod === nothing
+      loaded = Base.loaded_modules_array()
+      index = findfirst(m -> nameof(m) === root, loaded)
+      index === nothing && return nothing
+      mod = loaded[index]
+   end
+
+   for part in parts[2:end]
+      name = Symbol(part)
+      isdefined(mod, name) || return nothing
+      mod = getglobal(mod, name)
+      mod isa Module || return nothing
+   end
+
+   return mod
 end
 
 """
@@ -281,14 +335,14 @@ function evaluate(code::AbstractString, mode::AbstractString, width::Integer, co
       err isa InterruptException || rethrow()
       interrupted += 1
    finally
-      # R sends interrupts until `finish_evaluation` tells it to stop; from
-      # here on, they wait for it to count them
+      # R sends interrupts until `finish_evaluation` tells it to stop: from
+      # here on they wait for it to count them, and it is told even when the
+      # input's error couldn't be reported
       Base.sigatomic_begin()
       evaluation_task[] = nothing
+      debug("evaluation over; ", interrupted, " interrupt(s) received")
+      finish_evaluation(interrupted)
    end
-
-   debug("evaluation over; ", interrupted, " interrupt(s) received")
-   finish_evaluation(interrupted)
 
    flush(stdout)
    flush(stderr)
