@@ -74,6 +74,13 @@ interrupts R sent during the evaluation. `communicator` is JuliaConnectoR's
 connection to R.
 """
 function init(done, communicator)
+   # leave R's process group: RStudio interrupts R by signalling the whole
+   # group, and a SIGINT that Julia doesn't expect breaks its connection to
+   # R. R sends Julia its own (see .rs.julia.interrupt in SessionJulia.R)
+   if Sys.isunix()
+      ccall(:setpgid, Cint, (Cint, Cint), 0, 0)
+   end
+
    evaluation_done[] = done
    forward_output(communicator)
 
