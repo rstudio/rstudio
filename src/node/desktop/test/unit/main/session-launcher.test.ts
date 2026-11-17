@@ -33,6 +33,7 @@ import { MainWindow } from '../../../src/main/main-window';
 import { GwtCallback } from '../../../src/main/gwt-callback';
 import * as DetectR from '../../../src/main/detect-r';
 import * as RChoice from '../../../src/main/r-choice';
+import * as UrlUtils from '../../../src/main/url-utils';
 
 function getNewLauncher(): SessionLauncher {
   return new SessionLauncher(new FilePath(), new FilePath(), new FilePath(), new ApplicationLaunch(), null);
@@ -141,6 +142,99 @@ describe('SessionLauncher', () => {
       assert.isNotNull(error);
       assert.isTrue(mainWindow.workbenchInitialized);
     });
+
+    // A reload waits for the new session's URL before loading it; by then
+    // the session may have exited (leaving the launch error page up), or a
+    // later launch (going back to the previous R) may have replaced it.
+    describe('loading the page of a reloaded session', () => {
+      interface FakeProcess {
+        exitCode: number | null;
+        signalCode: string | null;
+      }
+
+      interface Setup {
+        launcher: SessionLauncher;
+        loaded: string[];
+        processes: FakeProcess[];
+        answerWait: Array<() => void>;
+      }
+
+      function setup(): Setup {
+        const launcher = getNewLauncher();
+        const loaded: string[] = [];
+        launcher.mainWindow = {
+          workbenchInitialized: true,
+          setSessionProcess: sinon.stub(),
+          collectPendingRVersion: () => '',
+          loadUrl: async (url: string) => {
+            loaded.push(url);
+          },
+        } as unknown as MainWindow;
+
+        const contexts = sinon.stub(launcher, 'buildLaunchContext');
+        contexts.onFirstCall().resolves({ host: '', port: 1, url: 'http://failed/', argList: [] });
+        contexts.onSecondCall().resolves({ host: '', port: 2, url: 'http://recovered/', argList: [] });
+
+        const processes: FakeProcess[] = [
+          { exitCode: null, signalCode: null },
+          { exitCode: null, signalCode: null },
+        ];
+        const launch = sinon.stub(launcher as unknown as { launchSession: () => unknown }, 'launchSession');
+        launch.onFirstCall().returns(processes[0]);
+        launch.onSecondCall().returns(processes[1]);
+
+        const answerWait: Array<() => void> = [];
+        sinon
+          .stub(UrlUtils, 'waitForUrlWithTimeout')
+          .callsFake(async () => new Promise((resolve) => answerWait.push(() => resolve(null))));
+
+        return { launcher, loaded, processes, answerWait };
+      }
+
+      async function settle(): Promise<void> {
+        for (let i = 0; i < 5; i++) {
+          await new Promise((resolve) => setImmediate(resolve));
+        }
+      }
+
+      afterEach(() => {
+        sinon.restore();
+      });
+
+      it('loads the page of the session that is running', async () => {
+        const { launcher, loaded, answerWait } = setup();
+
+        await launcher.launchNextSession(true);
+        answerWait[0]();
+        await settle();
+
+        assert.deepEqual(loaded, ['http://failed/']);
+      });
+
+      it('keeps the launch error page when the session has exited', async () => {
+        const { launcher, loaded, processes, answerWait } = setup();
+
+        await launcher.launchNextSession(true);
+        processes[0].exitCode = 1;
+        answerWait[0]();
+        await settle();
+
+        assert.deepEqual(loaded, []);
+      });
+
+      it('loads only the page of a later launch that replaced it', async () => {
+        const { launcher, loaded, answerWait } = setup();
+
+        await launcher.launchNextSession(true);
+        await launcher.launchNextSession(true);
+        answerWait[1]();
+        await settle();
+        answerWait[0]();
+        await settle();
+
+        assert.deepEqual(loaded, ['http://recovered/']);
+      });
+    });
   });
 
   describe('applyPendingRVersion', () => {
@@ -228,9 +322,13 @@ describe('SessionLauncher', () => {
       assert.isTrue(relaunch.calledOnceWithExactly(true));
       assert.equal(launcher.rPath, '/opt/R/4.3.3/bin/R');
 
+      // with nothing chosen, the R that failed may have been the default R
+      // chosen in Global Options, so the R in use before is kept instead
+      assert.isTrue(store.calledOnceWithExactly('/opt/R/4.3.3/bin/R'));
+
       // the session that now starts is not the one switched to
       gwtCallback.emit(GwtCallback.WORKBENCH_INITIALIZED);
-      assert.isFalse(store.called);
+      assert.isFalse(store.calledWith('/opt/R/4.4.1/bin/R'));
     });
 
     it('puts back the R in use before, when the R that failed was already kept', () => {

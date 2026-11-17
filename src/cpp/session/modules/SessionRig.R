@@ -1253,10 +1253,10 @@
       if (!nzchar(version))
          version <- as.character(getRversion())
 
-      binary <- if (.rs.platform.isWindows)
+      binary <- if (.rs.platform.isWindows && nzchar(arch))
          file.path(current, "bin", sub("^/", "", arch), "R.exe")
       else
-         file.path(current, "bin", "R")
+         file.path(current, "bin", if (.rs.platform.isWindows) "R.exe" else "R")
       row <- data.frame(
          version = version,
          path    = current,
@@ -1410,7 +1410,8 @@
    if (!file.exists(binary))
       return("")
 
-   home <- .rs.tryCatch(system2(binary, "RHOME", stdout = TRUE, stderr = FALSE))
+   # bounded: the binary may be any executable the user browsed to
+   home <- .rs.tryCatch(suppressWarnings(system2(binary, "RHOME", stdout = TRUE, stderr = FALSE, timeout = 10)))
    if (inherits(home, "error"))
       return("")
 

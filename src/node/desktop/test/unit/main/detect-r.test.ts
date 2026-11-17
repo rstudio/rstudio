@@ -606,17 +606,20 @@ describe('DetectR with an R chosen in RStudio', () => {
     assert.isTrue(options.setRExecutablePath.calledOnceWithExactly(''));
   });
 
-  it('stores an R other than the default as the chosen R', async () => {
+  it('stores an R other than the default as the chosen R, straight away', async () => {
     const fakeR = writeFakeR('4.4.1');
     const options = fakeROptions();
 
-    await storeRChoice(fakeR);
+    const storing = storeRChoice(fakeR);
+    assert.equal(options.rExecutablePath(), fakeR);
+    await storing;
 
-    assert.isTrue(options.setRExecutablePath.calledOnceWithExactly(fakeR));
+    assert.equal(options.rExecutablePath(), fakeR);
+    assert.equal(options.rstudioWhichRWhenChosen(), launchRStudioWhichR());
   });
 
   it('follows the default R from then on when the default R is chosen', async function () {
-    const options = fakeROptions();
+    const options = fakeROptions({ path: '/opt/R/4.4.1/bin/R' });
     const rPath = await defaultR();
     if (!rPath) {
       this.skip();
@@ -624,8 +627,22 @@ describe('DetectR with an R chosen in RStudio', () => {
 
     await storeRChoice(rPath);
 
-    assert.isTrue(options.setRExecutablePath.calledOnceWithExactly(''));
-    assert.isTrue(options.setRStudioWhichRWhenChosen.calledOnceWithExactly(''));
+    assert.equal(options.rExecutablePath(), '');
+    assert.equal(options.rstudioWhichRWhenChosen(), '');
+  });
+
+  it('leaves a choice made while the default R was looked for', async function () {
+    const options = fakeROptions();
+    const rPath = await defaultR();
+    if (!rPath) {
+      this.skip();
+    }
+
+    const storing = storeRChoice(rPath);
+    options.setRExecutablePath('/opt/R/4.5.0/bin/R');
+    await storing;
+
+    assert.equal(options.rExecutablePath(), '/opt/R/4.5.0/bin/R');
   });
 
   it('passes over a candidate for the default R that never answers', async () => {

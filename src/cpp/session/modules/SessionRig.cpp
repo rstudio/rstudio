@@ -396,9 +396,13 @@ Error rigDescribeRInstallation(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   // the desktop's file dialog gives a path under the home directory as ~/...,
+   // and the desktop checks the executable it is handed back as a plain path
+   std::string resolvedBinary = module_context::resolveAliasedPath(binary).getAbsolutePath();
+
    json::Value installation;
    error = r::exec::RFunction(".rs.rInstallations.describe")
-         .addParam("binary", binary)
+         .addParam("binary", resolvedBinary)
          .addParam("minimum", RSTUDIO_R_VERSION_REQUIRED)
          .call(&installation);
    if (error)

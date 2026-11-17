@@ -250,8 +250,19 @@ export async function defaultR(timeoutMs = kRQueryTimeoutMs, platform = process.
     return resolveRHome(rstudioWhichR, platform);
   }
 
-  const candidates = platform === 'win32' ? registryRCandidatesWin32() : posixRCandidates(platform);
-  return firstRunningR(candidates, timeoutMs);
+  if (platform === 'win32') {
+    return firstRunningR(registryRCandidatesWin32(), timeoutMs);
+  }
+
+  // as in scanForRPosix(), the R on the PATH is taken as it is on Linux
+  if (platform !== 'darwin') {
+    const rOnPath = rOnPathLinux();
+    if (rOnPath) {
+      return rOnPath;
+    }
+  }
+
+  return firstRunningR(defaultRLocationsPosix(), timeoutMs);
 }
 
 /**
@@ -279,7 +290,16 @@ export async function firstRunningR(candidates: string[], timeoutMs: number): Pr
  * holding on to the R it is now.
  */
 export async function storeRChoice(rPath: string, platform = process.platform): Promise<void> {
-  rememberRChoice(rPath, await defaultR(kRQueryTimeoutMs, platform), platform);
+  // kept straight away, so that quitting while the default R is looked for
+  // keeps it; following the default instead is settled after, unless
+  // another R was chosen in the meantime
+  saveRChoice(rPath, platform);
+
+  const defaultPath = await defaultR(kRQueryTimeoutMs, platform);
+  const saved = savedRChoice(platform);
+  if (saved !== null && sameRExecutable(saved.path, rPath, platform)) {
+    rememberRChoice(rPath, defaultPath, platform);
+  }
 }
 
 /** As storeRChoice(), given the default R (from defaultR()). */

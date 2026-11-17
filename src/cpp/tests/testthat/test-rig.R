@@ -388,7 +388,7 @@ test_that("the R in use is offered for choosing R even when it was found nowhere
       stringsAsFactors = FALSE
    )
 
-   offered <- .rs.rInstallations.forChooser("3.6.0", installed, current = home, architecture = NULL)
+   offered <- .rs.rInstallations.forChooser("3.6.0", installed, current = home, architecture = NULL, arch = "")
 
    expect_length(offered, 2L)
    expect_identical(as.vector(offered[[1L]]$version), "4.5.1")
