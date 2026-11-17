@@ -95,6 +95,9 @@ public class ConsoleError extends Composite
          VirtualConsole console = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(errorMessage.getElement());
          String message = error.getErrorMessage();
          console.submit(message);
+
+         // the message is complete, so show any text a stray escape held back
+         console.flushPartialAnsiCode();
       }
       
       if (errorClass != null)

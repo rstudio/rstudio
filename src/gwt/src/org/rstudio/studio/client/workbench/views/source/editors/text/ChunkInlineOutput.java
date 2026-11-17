@@ -86,6 +86,11 @@ public class ChunkInlineOutput extends MiniPopupPanel
    public void setState(State state)
    {
       state_ = state;
+
+      // no more output will reach the chunk, so show anything the console
+      // was still waiting on
+      if (state == State.Finished)
+         vconsole_.flushPartialAnsiCode();
    }
    
    @Override
