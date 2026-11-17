@@ -113,9 +113,17 @@ public:
    std::vector<std::string> commandLineDiagnostics(const std::string& filename,
                                                    std::vector<std::string> args);
 
+   // whether libclang can parse the file with these args at all; some, such
+   // as a CPU named for another architecture, stop it before it reads a
+   // line. Checked against an empty copy of the file, as above.
+   bool canParseWithArgs(const std::string& filename, std::vector<std::string> args);
+
    Cursor referencedCursorForFileLocation(const FileLocation& loc);
 
 private:
+
+   CXTranslationUnit parseEmptyFile(const std::string& filename,
+                                    std::vector<std::string> args);
 
    UnsavedFiles unsavedFiles_;
 

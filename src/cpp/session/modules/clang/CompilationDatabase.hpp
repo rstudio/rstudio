@@ -16,6 +16,7 @@
 #ifndef SESSION_MODULES_CLANG_COMPILATION_DATABASE_HPP
 #define SESSION_MODULES_CLANG_COMPILATION_DATABASE_HPP
 
+#include <functional>
 #include <map>
 #include <set>
 #include <string>
@@ -100,6 +101,9 @@ private:
    CompilationConfig configForSourceCpp(const std::string& cppPkg,
                                         core::FilePath srcFile);
 
+   static std::vector<std::string> generatedArgsForConfig(const core::FilePath& filePath,
+                                                          const CompilationConfig& config);
+
    std::vector<std::string> argsForRCmdSHLIB(core::system::Options env,
                                              core::FilePath srcFile);
 
@@ -171,7 +175,21 @@ std::vector<std::string> filterCompileFlags(const std::vector<std::string>& flag
                                             std::vector<RejectedCompileFlag>* pRejected = nullptr);
 std::vector<std::string> resolveCompileFlagPaths(const std::vector<std::string>& flags,
                                                  const core::FilePath& dir);
-std::vector<std::string> compileFlagsForSource(const core::FilePath& srcFile);
+
+// Drops the flags that stop libclang from parsing anything at all (a CPU or
+// other target setting for another architecture, say), and puts them in
+// pRejected. 'parses' says whether libclang can parse with the generated
+// args followed by the given flags.
+std::vector<std::string> dropUnparseableCompileFlags(
+      const std::vector<std::string>& flags,
+      const std::function<bool(const std::vector<std::string>&)>& parses,
+      std::vector<RejectedCompileFlag>* pRejected = nullptr);
+
+// The flags from the source's compile_flags.txt that libclang is given, after
+// the generated args; the entries it isn't given go in pRejected
+std::vector<std::string> compileFlagsForSource(const core::FilePath& srcFile,
+                                               const std::vector<std::string>& generatedArgs,
+                                               std::vector<RejectedCompileFlag>* pRejected = nullptr);
 std::vector<std::string> systemIncludeArgs(const std::vector<std::string>& includes);
 void removeOrphanedUserFlagsPchs(const core::FilePath& platformPath,
                                  const std::string& pkgName);

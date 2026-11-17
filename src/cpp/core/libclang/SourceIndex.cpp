@@ -445,12 +445,11 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
    }
 }
 
-std::vector<std::string> SourceIndex::commandLineDiagnostics(const std::string& filename,
-                                                             std::vector<std::string> args)
+CXTranslationUnit SourceIndex::parseEmptyFile(const std::string& filename,
+                                              std::vector<std::string> args)
 {
-   std::vector<std::string> messages;
-
-   // parse the same way getTranslationUnit() would, but with the file empty
+   // parse the same way getTranslationUnit() would, but with the file empty;
+   // libclang copies an unsaved file's contents, so the result can outlive it
    SdkEnvironmentScope sdkScope;
    removeMismatchedStdArgs(filename, &args);
    core::system::ProcessArgs argsArray(args);
@@ -458,14 +457,32 @@ std::vector<std::string> SourceIndex::commandLineDiagnostics(const std::string& 
    UnsavedFiles emptyFile;
    emptyFile.update(filename, "", false);
 
-   CXTranslationUnit tu = clang().parseTranslationUnit(
-                         index_,
-                         filename.c_str(),
-                         argsArray.args(),
-                         gsl::narrow_cast<int>(argsArray.argCount()),
-                         emptyFile.unsavedFilesArray(),
-                         emptyFile.numUnsavedFiles(),
-                         CXTranslationUnit_None);
+   return clang().parseTranslationUnit(
+            index_,
+            filename.c_str(),
+            argsArray.args(),
+            gsl::narrow_cast<int>(argsArray.argCount()),
+            emptyFile.unsavedFilesArray(),
+            emptyFile.numUnsavedFiles(),
+            CXTranslationUnit_None);
+}
+
+bool SourceIndex::canParseWithArgs(const std::string& filename, std::vector<std::string> args)
+{
+   CXTranslationUnit tu = parseEmptyFile(filename, args);
+   if (tu == nullptr)
+      return false;
+
+   clang().disposeTranslationUnit(tu);
+   return true;
+}
+
+std::vector<std::string> SourceIndex::commandLineDiagnostics(const std::string& filename,
+                                                             std::vector<std::string> args)
+{
+   std::vector<std::string> messages;
+
+   CXTranslationUnit tu = parseEmptyFile(filename, args);
    if (tu == nullptr)
       return messages;
 

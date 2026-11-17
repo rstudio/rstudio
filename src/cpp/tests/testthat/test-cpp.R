@@ -300,11 +300,42 @@ test_that("problems with compile_flags.txt are reported, not swallowed", {
     expect_match(diagnostics[[1]]$message, "unsupported argument 'bogus'")
     expect_equal(diagnostics[[1]]$position$line, 1)
 
-    # an invalid value makes libclang fail to parse the file at all
+    # an invalid value would make libclang fail to parse the file at all, so
+    # it isn't passed on
     diagnostics <- lint("-std=c++99")
     expect_length(diagnostics, 1L)
-    expect_match(diagnostics[[1]]$message, "check the flags in .*compile_flags.txt")
-    expect_equal(diagnostics[[1]]$severity, 3)
+    expect_match(diagnostics[[1]]$message, "'-std=c++99' in ", fixed = TRUE)
+    expect_match(diagnostics[[1]]$message, "was ignored; libclang can't parse the file with it", fixed = TRUE)
+    expect_equal(diagnostics[[1]]$severity, 2)
+})
+
+test_that("compile_flags.txt flags that stop libclang from parsing are dropped, and the rest kept", {
+    skip_if_not_installed("Rcpp")
+    skip_if_not(.rs.isClangAvailable())
+
+    op <- options(rstudio.libclang.usePrecompiledHeaders = FALSE)
+    on.exit(options(op), add = TRUE)
+
+    dir <- tempfile("cpp-unparseable-flags-")
+    dir.create(dir)
+    on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+
+    path <- file.path(dir, "ok.cpp")
+    writeLines(c(
+        "#include <Rcpp.h>",
+        "#ifndef FROM_FLAGS",
+        "#error FROM_FLAGS is not defined",
+        "#endif"
+    ), path)
+
+    # no target has a CPU by that name, so clang can't set one up with it
+    writeLines(c("-DFROM_FLAGS", "-mtune=no-such-cpu"), file.path(dir, "compile_flags.txt"))
+    diagnostics <- .rs.invokeRpc("get_cpp_diagnostics", path)
+
+    expect_length(diagnostics, 1L)
+    expect_match(diagnostics[[1]]$message, "'-mtune=no-such-cpu' in .*compile_flags.txt was ignored")
+    expect_equal(diagnostics[[1]]$severity, 2)
+    expect_equal(diagnostics[[1]]$position$line, 1)
 })
 
 test_that("compile_flags.txt flags that aren't allowed are dropped, and the rest kept", {

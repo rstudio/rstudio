@@ -18,7 +18,9 @@
 #include <algorithm>
 #include <cstring>
 #include <map>
+#include <numeric>
 #include <set>
+#include <tuple>
 #include <gsl/gsl-lite.hpp>
 
 #include <boost/format.hpp>
@@ -212,8 +214,25 @@ struct SourceCppFileInfo
    bool disableIndexing;
 };
 
-// Flags last read from each 'compile_flags.txt', keyed by the file's path
-std::map<std::string, std::vector<std::string>> s_compileFlagsCache;
+// What each 'compile_flags.txt' supplied when last read, keyed by the file's
+// path
+struct CompileFlagsRecord
+{
+   std::vector<std::string> flags;   // the flags last passed on, which a PCH may be built from
+   bool usable = true;               // false once libclang can't parse with any of them
+};
+std::map<std::string, CompileFlagsRecord> s_compileFlagsCache;
+
+// The flags libclang can parse with, for a file's extension, its generated
+// args, and the flags from its 'compile_flags.txt'. Finding them takes an
+// empty-file parse, and about one more per flag when they can't all be used.
+struct UsableCompileFlags
+{
+   std::vector<std::string> flags;
+   std::vector<RejectedCompileFlag> rejected;
+};
+typedef std::tuple<std::string, std::vector<std::string>, std::vector<std::string>> UsableCompileFlagsKey;
+std::map<UsableCompileFlagsKey, UsableCompileFlags> s_usableCompileFlags;
 
 } // anonymous namespace
 
@@ -554,6 +573,13 @@ bool takesSeparateValue(const std::string& flag)
    return false;
 }
 
+// Whether a flag picks the target, rather than a setting for it
+bool selectsTarget(const std::string& flag)
+{
+   return flag == "-target" || flag == "-arch" || flag == "-m32" || flag == "-m64" ||
+          boost::algorithm::starts_with(flag, "--target=");
+}
+
 } // anonymous namespace
 
 std::vector<std::string> filterCompileFlags(const std::vector<std::string>& flags,
@@ -649,11 +675,126 @@ std::vector<std::string> resolveCompileFlagPaths(const std::vector<std::string>&
    return resolved;
 }
 
+// A flag can be allowed and still stop libclang from parsing anything, which
+// would cost every diagnostic for the file: clang can't set up the target
+// for a CPU or FP unit named for another architecture ('-mtune=haswell' or
+// '-mfpmath=sse' on arm64), or for a value that's simply invalid. libclang
+// only says that it failed, not why, so we find such flags by adding the
+// flags one at a time to a parse of an empty file.
+std::vector<std::string> dropUnparseableCompileFlags(
+      const std::vector<std::string>& flags,
+      const std::function<bool(const std::vector<std::string>&)>& parses,
+      std::vector<RejectedCompileFlag>* pRejected)
+{
+   if (flags.empty() || parses(flags))
+      return flags;
+
+   // if the generated args can't be parsed with either, the flags aren't
+   // what's stopping it
+   if (!parses({}))
+      return flags;
+
+   // an option with its value in the next argument is one entry
+   std::vector<std::vector<std::string>> entries;
+   for (std::size_t i = 0; i < flags.size(); i++)
+   {
+      std::vector<std::string> entry = { flags[i] };
+      CompileFlagMatch match;
+      if (matchCompileFlagOption(flags, i, &match) && match.separate)
+         entry.push_back(flags[++i]);
+
+      entries.push_back(entry);
+   }
+
+   // the entries that pick the target go first, so that when a setting
+   // doesn't suit the target ('-mtune=cortex-a72' with an x86 '--target='),
+   // the setting is what's dropped
+   std::vector<std::size_t> order(entries.size());
+   std::iota(order.begin(), order.end(), 0);
+   std::stable_partition(order.begin(), order.end(), [&](std::size_t i) {
+      return selectsTarget(entries[i][0]);
+   });
+
+   std::vector<bool> keep(entries.size(), false);
+   std::vector<std::string> kept;
+   for (std::size_t i : order)
+   {
+      std::vector<std::string> trial = kept;
+      trial.insert(trial.end(), entries[i].begin(), entries[i].end());
+      if (parses(trial))
+      {
+         kept = trial;
+         keep[i] = true;
+      }
+   }
+
+   // clang reads the target from wherever it appears, so the kept flags go
+   // back in the file's order
+   std::vector<std::string> result;
+   for (std::size_t i = 0; i < entries.size(); i++)
+   {
+      if (keep[i])
+      {
+         result.insert(result.end(), entries[i].begin(), entries[i].end());
+      }
+      else if (pRejected != nullptr)
+      {
+         RejectedCompileFlag rejected;
+         rejected.flag = core::algorithm::join(entries[i], " ");
+         rejected.reason = "libclang can't parse the file with it; check that its value is valid for this platform";
+         pRejected->push_back(rejected);
+      }
+   }
+
+   return result;
+}
+
+namespace {
+
+// dropUnparseableCompileFlags() for a source's flags, worked out once for
+// each distinct set
+UsableCompileFlags usableCompileFlags(const FilePath& srcFile,
+                                      const std::vector<std::string>& generatedArgs,
+                                      const std::vector<std::string>& flags)
+{
+   UsableCompileFlagsKey key(srcFile.getExtensionLowerCase(), generatedArgs, flags);
+   auto it = s_usableCompileFlags.find(key);
+   if (it != s_usableCompileFlags.end())
+      return it->second;
+
+   std::string filename = srcFile.getAbsolutePath();
+   bool generatedArgsParse = true;
+   auto parses = [&](const std::vector<std::string>& trial) {
+      std::vector<std::string> args = generatedArgs;
+      args.insert(args.end(), trial.begin(), trial.end());
+      bool parsed = sourceIndex().canParseWithArgs(filename, args);
+      if (trial.empty() && !parsed)
+         generatedArgsParse = false;
+
+      return parsed;
+   };
+
+   UsableCompileFlags usable;
+   usable.flags = dropUnparseableCompileFlags(flags, parses, &usable.rejected);
+
+   // when nothing parses for this source (say, it isn't on disk, which
+   // libclang requires), its flags were kept untested, which mustn't stand
+   // for the other sources sharing the key
+   if (generatedArgsParse)
+      s_usableCompileFlags.emplace(key, usable);
+
+   return usable;
+}
+
+} // anonymous namespace
+
 // Extra compiler flags from a 'compile_flags.txt', following the clangd
 // convention of one argument per line. We look in the source file's directory
 // and its parents, up to the project directory, so a project can append to or
 // override the flags we generate (the last occurrence of a flag wins).
-std::vector<std::string> compileFlagsForSource(const FilePath& srcFile)
+std::vector<std::string> compileFlagsForSource(const FilePath& srcFile,
+                                               const std::vector<std::string>& generatedArgs,
+                                               std::vector<RejectedCompileFlag>* pRejected)
 {
    FilePath flagsFile = compileFlagsFileForSource(srcFile);
    if (flagsFile.isEmpty())
@@ -661,18 +802,39 @@ std::vector<std::string> compileFlagsForSource(const FilePath& srcFile)
 
    // a file with no allowed flags in it is the same as no file, so it keeps
    // sharing the default precompiled header; the diagnostics report the rest
-   std::vector<std::string> flags = filterCompileFlags(readCompileFlags(flagsFile));
+   std::vector<std::string> flags = filterCompileFlags(readCompileFlags(flagsFile), pRejected);
    if (flags.empty())
       return {};
 
    // relative paths in the file resolve against its directory, as in clangd
    flags = resolveCompileFlagPaths(flags, flagsFile.getParent());
 
+   // only a file with generated args is ever parsed
+   if (!generatedArgs.empty())
+   {
+      UsableCompileFlags usable = usableCompileFlags(srcFile, generatedArgs, flags);
+      if (pRejected != nullptr)
+         pRejected->insert(pRejected->end(), usable.rejected.begin(), usable.rejected.end());
+
+      flags = usable.flags;
+   }
+
    // the file is small, so re-reading it is cheaper and more reliable than
-   // watching its timestamp; we only remember it to report changes
+   // watching its timestamp; we only remember it to report changes, and to
+   // find the PCH built from it
    std::string key = flagsFile.getAbsolutePath();
    auto it = s_compileFlagsCache.find(key);
-   if (it == s_compileFlagsCache.end() || it->second != flags)
+
+   // none libclang can parse with is the same as none allowed
+   if (flags.empty())
+   {
+      if (it != s_compileFlagsCache.end())
+         it->second.usable = false;
+
+      return {};
+   }
+
+   if (it == s_compileFlagsCache.end() || it->second.flags != flags || !it->second.usable)
    {
       if (verbose(1))
       {
@@ -681,29 +843,33 @@ std::vector<std::string> compileFlagsForSource(const FilePath& srcFile)
          std::cerr << std::endl;
       }
 
-      s_compileFlagsCache[key] = flags;
+      CompileFlagsRecord record;
+      record.flags = flags;
+      s_compileFlagsCache[key] = record;
    }
 
    return flags;
 }
 
 // A user-flags PCH would otherwise outlive its 'compile_flags.txt': once the
-// file is gone (or has no allowed flags left) its sources share the default PCH again, and
-// nothing else touches the variant. So drop the variants built from any
-// flags file we have read that no longer supplies flags.
+// file is gone (or has no flags left that libclang is given) its sources
+// share the default PCH again, and nothing else touches the variant. So drop
+// the variants built from any flags file we have read that no longer
+// supplies flags.
 void removeOrphanedUserFlagsPchs(const FilePath& platformPath,
                                  const std::string& pkgName)
 {
    for (auto it = s_compileFlagsCache.begin(); it != s_compileFlagsCache.end(); )
    {
       FilePath flagsFile(it->first);
-      if (flagsFile.exists() && !filterCompileFlags(readCompileFlags(flagsFile)).empty())
+      if (flagsFile.exists() && it->second.usable &&
+          !filterCompileFlags(readCompileFlags(flagsFile)).empty())
       {
          ++it;
          continue;
       }
 
-      std::string suffix = userFlagsPchSuffix(it->second);
+      std::string suffix = userFlagsPchSuffix(it->second.flags);
       std::vector<FilePath> children;
       Error error = platformPath.getChildren(children);
       if (error)
@@ -1636,6 +1802,13 @@ std::vector<std::string> ClangCompilationDatabase::generatedCompileArgs(
    if (!configForTranslationUnit(filePath, &config))
       return std::vector<std::string>();
 
+   return generatedArgsForConfig(filePath, config);
+}
+
+std::vector<std::string> ClangCompilationDatabase::generatedArgsForConfig(
+      const FilePath& filePath,
+      const CompilationConfig& config)
+{
    std::vector<std::string> args = config.args;
 
    // force C++ for a .h file in a C++ config, as compileArgsForTranslationUnit() does
@@ -1670,7 +1843,8 @@ std::vector<std::string> ClangCompilationDatabase::compileArgsForTranslationUnit
 
    // any user-provided flags; these also feed into the precompiled header,
    // since libclang rejects a PCH built with different language options
-   std::vector<std::string> userFlags = compileFlagsForSource(filePath);
+   std::vector<std::string> userFlags =
+         compileFlagsForSource(filePath, generatedArgsForConfig(filePath, config));
 
    // add precompiled headers if necessary
    if (usePrecompiledHeaders && usePrecompiledHeaders_ &&
