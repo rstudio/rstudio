@@ -14,6 +14,7 @@
  */
 
 import { changeLanguage, initI18n } from '../../main/i18n-manager';
+import { kMissingTemplateValue } from '../../core/template-filter';
 import i18next from 'i18next';
 
 const loadPageLocalization = () => {
@@ -43,6 +44,9 @@ const loadPageLocalization = () => {
       'furtherTroubleshootingHelpCanBeFound',
       'troubleshootingRstudioStartup',
       'copyProblemReport',
+      'previousRHeading',
+      'previousRMessage',
+      'restartWithPreviousR',
     ].map((id) => 'i18n-' + id);
 
     try {
@@ -70,6 +74,7 @@ const loadPageLocalization = () => {
               });
               break;
             case 'copyProblemReport':
+            case 'restartWithPreviousR':
               (document.getElementById(id) as HTMLInputElement).value = i18next.t('uiFolder.' + reducedId);
               break;
             default:
@@ -146,5 +151,29 @@ const addProblemReportEventListener = () => {
   });
 };
 
+// A session that failed to start with an R just switched to can go back to
+// the R in use before; the section stays hidden otherwise.
+const addPreviousREventListener = () => {
+  window.addEventListener('load', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).desktop.getStartupErrorInfo('!previous_r', (rPath: string) => {
+      if (!rPath || rPath === kMissingTemplateValue) {
+        return;
+      }
+
+      (document.getElementById('previous_r') as HTMLElement).textContent = rPath;
+      (document.getElementById('previous_r_section') as HTMLElement).hidden = false;
+    });
+
+    const restartButton = document.getElementById('i18n-restartWithPreviousR') as HTMLButtonElement;
+    restartButton.addEventListener('click', () => {
+      restartButton.disabled = true;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).desktop.restartWithPreviousR();
+    });
+  });
+};
+
 loadPageLocalization();
 addProblemReportEventListener();
+addPreviousREventListener();

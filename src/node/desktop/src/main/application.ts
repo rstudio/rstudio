@@ -26,12 +26,14 @@ import { appState, AppState, getEventBus } from './app-state';
 import { ApplicationLaunch } from './application-launch';
 import { ArgsManager } from './args-manager';
 import {
+  chosenRForStartup,
   prepareEnvironment,
   promptUserForR,
   rChooserLikely,
   rDetectionReady,
   scanForR,
   showRNotFoundError,
+  UnusableRChoice,
 } from './detect-r';
 import { GwtCallback } from './gwt-callback';
 import { prepareInstanceSessionData, removeExitedInstanceSessionData } from './instance-session-data';
@@ -550,8 +552,17 @@ export class Application implements AppState {
       rPath = path;
     }
 
-    // if we don't have an R path at this point, try scanning for R
+    // on macOS and Linux, an R chosen in RStudio comes first (Windows
+    // startup looked at its own above)
     startupCheckpoint('r-detect-begin');
+    let unusableRChoice: UnusableRChoice | undefined;
+    if (!rPath) {
+      const chosen = chosenRForStartup();
+      rPath = chosen.path;
+      unusableRChoice = chosen.unusable;
+    }
+
+    // if we don't have an R path at this point, try scanning for R
     if (!rPath) {
       logger().logDebug('No rPath found, scanning for R');
       const [scannedPath, error] = scanForR();
@@ -589,6 +600,10 @@ export class Application implements AppState {
       this.appLaunch,
       windowAllClosedHandler,
     );
+    this.sessionLauncher.rPath = rPath;
+    if (unusableRChoice) {
+      this.sessionLauncher.reportUnusableRChoice(unusableRChoice);
+    }
     this.sessionLauncher.launchFirstSession(installPath, !app.isPackaged);
 
     this.setDockMenu();

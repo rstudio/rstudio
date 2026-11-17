@@ -15,6 +15,7 @@
 
 import { describe } from 'mocha';
 import { assert } from 'chai';
+import sinon from 'sinon';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { dirname, join } from 'path';
@@ -22,6 +23,8 @@ import { restore, saveAndClear } from '../unit-utils';
 import i18next from 'i18next';
 import { initI18n } from '../../../src/main/i18n-manager';
 import {
+  chosenRForStartup,
+  defaultR,
   detectREnvironment,
   detectREnvironmentAsync,
   frameworkVersionHome,
@@ -36,8 +39,11 @@ import {
   resolveRHome,
   scanForRPosix,
   startRDetection,
+  storeRChoice,
   windowsSessionPath,
 } from '../../../src/main/detect-r';
+import { launchRStudioWhichR } from '../../../src/main/r-choice';
+import { fakeROptions } from './fake-r-options';
 
 describe('DetectR', () => {
   const vars: Record<string, string> = {
@@ -513,5 +519,111 @@ describe('DetectR', () => {
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+});
+
+describe('DetectR with an R chosen in RStudio', () => {
+  let dir = '';
+
+  // a stand-in R that answers the version query the way R would (\036 is
+  // the marker, \037 the field separator)
+  function writeFakeR(version: string): string {
+    const fields = [version, `/opt/fake-r-${version}`, '', '', '', '', '', '', 'aarch64-fake'];
+    const fakeR = join(dir, 'R');
+    writeFileSync(fakeR, `#!/bin/sh\nprintf '\\036${fields.join('\\037')}\\037'\n`, { mode: 0o755 });
+    return fakeR;
+  }
+
+  before(async () => {
+    initI18n();
+    await new Promise<void>((resolve) => {
+      if (i18next.isInitialized) {
+        resolve();
+      } else {
+        i18next.on('initialized', () => resolve());
+      }
+    });
+  });
+
+  beforeEach(function () {
+    // startup on Windows takes its stored R in promptUserForR()
+    if (process.platform === 'win32') {
+      this.skip();
+    }
+    dir = mkdtempSync(join(tmpdir(), 'chosen-r-test-'));
+  });
+
+  afterEach(() => {
+    sinon.restore();
+    if (dir) {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('starts with the chosen R while RSTUDIO_WHICH_R is as it was when it was chosen', () => {
+    const fakeR = writeFakeR('4.4.1');
+    const options = fakeROptions({ path: fakeR, rstudioWhichR: launchRStudioWhichR() });
+
+    assert.deepEqual(chosenRForStartup(), { path: fakeR });
+    assert.isFalse(options.setRExecutablePath.called);
+  });
+
+  it('leaves the choice to RSTUDIO_WHICH_R when it was set since', () => {
+    const fakeR = writeFakeR('4.4.1');
+    const options = fakeROptions({ path: fakeR, rstudioWhichR: `${launchRStudioWhichR()}-before` });
+
+    assert.deepEqual(chosenRForStartup(), {});
+    assert.isFalse(options.setRExecutablePath.called);
+  });
+
+  it('has nothing to say when no R was chosen', () => {
+    fakeROptions();
+    assert.deepEqual(chosenRForStartup(), {});
+  });
+
+  it('forgets a chosen R that is gone, and says why', () => {
+    const missing = join(dir, 'missing', 'R');
+    const options = fakeROptions({ path: missing, rstudioWhichR: launchRStudioWhichR() });
+
+    const chosen = chosenRForStartup();
+
+    assert.isUndefined(chosen.path);
+    assert.equal(chosen.unusable?.path, missing);
+    assert.include(chosen.unusable?.reason, 'does not exist');
+    assert.isTrue(options.setRExecutablePath.calledOnceWithExactly(''));
+  });
+
+  it('forgets a chosen R that fails to run, and says why', () => {
+    const brokenR = join(dir, 'R');
+    writeFileSync(brokenR, '#!/bin/sh\necho "Fatal error: broken" >&2\nexit 2\n', { mode: 0o755 });
+    const options = fakeROptions({ path: brokenR, rstudioWhichR: launchRStudioWhichR() });
+
+    const chosen = chosenRForStartup();
+
+    assert.isUndefined(chosen.path);
+    assert.include(chosen.unusable?.reason, 'could not be run');
+    assert.isTrue(options.setRExecutablePath.calledOnceWithExactly(''));
+  });
+
+  it('stores an R other than the default as the chosen R', () => {
+    const fakeR = writeFakeR('4.4.1');
+    const options = fakeROptions();
+
+    storeRChoice(fakeR);
+
+    assert.isTrue(options.setRExecutablePath.calledOnceWithExactly(fakeR));
+  });
+
+  it('follows the default R from then on when the default R is chosen', function () {
+    const options = fakeROptions();
+    const rPath = defaultR();
+    if (!rPath) {
+      this.skip();
+    }
+
+    storeRChoice(rPath);
+
+    assert.isTrue(options.setRExecutablePath.calledOnceWithExactly(''));
+    assert.isTrue(options.setRStudioWhichRWhenChosen.calledOnceWithExactly(''));
   });
 });

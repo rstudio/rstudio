@@ -59,6 +59,9 @@
     "errorStartingR": "Erreur de démarrage de R",
     "problemReportCopiedToClipboard": "Rapport d'erreur copié dans le presse-papiers.",
     "couldNotCopyProblemReportToClipboard": "Impossible de copier le rapport d'erreur dans le presse-papiers.",
+    "previousRHeading": "Version précédente de R",
+    "previousRMessage": "R n'a pas démarré après que RStudio est passé à une autre version de R. Vous pouvez revenir à la version de R utilisée auparavant :",
+    "restartWithPreviousR": "Redémarrer avec la version précédente de R",
     "rLogo": "Logo de R",
     "warning": "Avertissement",
     "rstudioVersion": "Version de RStudio",
@@ -133,7 +136,10 @@
   },
   "sessionLauncherTs": {
     "rSessionFatalError": "La session R a eu une erreur fatale.",
-    "errorWasCausedByRAttemptingToLoadPackagesFromADifferentIncompatibleRVersion": "Cette erreur a très probablement été causée par la tentative de R de charger des paquets à partir d'une autre version incompatible de R sur votre système. Veuillez supprimer les autres versions de R et/ou supprimer les variables d'environnement qui font référence aux bibliothèques d'autres versions de R avant de poursuivre."
+    "errorWasCausedByRAttemptingToLoadPackagesFromADifferentIncompatibleRVersion": "Cette erreur a très probablement été causée par la tentative de R de charger des paquets à partir d'une autre version incompatible de R sur votre système. Veuillez supprimer les autres versions de R et/ou supprimer les variables d'environnement qui font référence aux bibliothèques d'autres versions de R avant de poursuivre.",
+    "chosenRUnusableTitle": "Version de R choisie indisponible",
+    "chosenRUnusableMessage": "La version de R choisie dans RStudio n'a pas pu être utilisée ; RStudio a donc démarré avec la version de R par défaut.",
+    "chosenRUnusableDetail": "{{reason}}\n\nRStudio utilise désormais {{rPath}}. Pour choisir une autre version de R, utilisez Outils > Options globales > Général."
   },
   "utilsTs": {
     "rsessionNotFoundError": "Impossible de trouver l'exécutable rsession. Essayez de définir la variable d'environnement \"RSTUDIO_CPP_BUILD_OUTPUT\" à l'emplacement où src/cpp a été construit.\n( Répertoire de travail : {{workingDirectory}} )"

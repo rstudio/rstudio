@@ -488,4 +488,9 @@ export class MainWindow extends GwtWindow {
   setErrorDisplayed(): void {
     this.isErrorDisplayed = true;
   }
+
+  // a session launched from the error page loads (and retries) as usual
+  clearErrorDisplayed(): void {
+    this.isErrorDisplayed = false;
+  }
 }

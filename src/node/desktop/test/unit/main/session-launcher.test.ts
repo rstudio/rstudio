@@ -32,8 +32,6 @@ import { appState, clearApplicationSingleton, setApplication } from '../../../sr
 import { MainWindow } from '../../../src/main/main-window';
 import { GwtCallback } from '../../../src/main/gwt-callback';
 import * as DetectR from '../../../src/main/detect-r';
-import * as DesktopOptions from '../../../src/main/preferences/electron-desktop-options';
-import { DesktopOptionsImpl } from '../../../src/main/preferences/electron-desktop-options';
 
 function getNewLauncher(): SessionLauncher {
   return new SessionLauncher(new FilePath(), new FilePath(), new FilePath(), new ApplicationLaunch(), null);
@@ -149,21 +147,21 @@ describe('SessionLauncher', () => {
     // R stays in place when nothing is pending or the requested R fails.
     function launcherWithPendingR(pending: string): {
       launcher: SessionLauncher;
-      options: Record<string, sinon.SinonStub>;
+      gwtCallback: EventEmitter;
+      store: sinon.SinonStub;
     } {
       const launcher = getNewLauncher();
+      launcher.rPath = '/opt/R/4.3.3/bin/R';
       launcher.mainWindow = {
         collectPendingRVersion: () => pending,
+        clearErrorDisplayed: sinon.stub(),
       } as unknown as MainWindow;
 
-      const options = {
-        setRExecutablePath: sinon.stub(),
-        setUseDefault32BitR: sinon.stub(),
-        setUseDefault64BitR: sinon.stub(),
-      };
-      sinon.stub(DesktopOptions, 'ElectronDesktopOptions').returns(options as unknown as DesktopOptionsImpl);
+      const gwtCallback = new EventEmitter();
+      appState().gwtCallback = gwtCallback as unknown as GwtCallback;
 
-      return { launcher, options };
+      const store = sinon.stub(DetectR, 'storeRChoice');
+      return { launcher, gwtCallback, store };
     }
 
     afterEach(() => {
@@ -172,12 +170,14 @@ describe('SessionLauncher', () => {
 
     it('does nothing when no R version is pending', () => {
       const prepare = sinon.stub(DetectR, 'prepareEnvironment');
-      const { launcher, options } = launcherWithPendingR('');
+      const { launcher, gwtCallback, store } = launcherWithPendingR('');
 
       launcher.applyPendingRVersion();
+      gwtCallback.emit(GwtCallback.WORKBENCH_INITIALIZED);
 
       assert.isFalse(prepare.called);
-      assert.isFalse(options.setRExecutablePath.called);
+      assert.isFalse(store.called);
+      assert.equal(launcher.rPath, '/opt/R/4.3.3/bin/R');
     });
 
     it('prepares the environment for the pending R', () => {
@@ -187,51 +187,61 @@ describe('SessionLauncher', () => {
       launcher.applyPendingRVersion();
 
       assert.isTrue(prepare.calledOnceWithExactly('/opt/R/4.4.1/bin/R'));
+      assert.equal(launcher.rPath, '/opt/R/4.4.1/bin/R');
     });
 
-    it('keeps the switch to this run of RStudio on macOS and Linux', function () {
-      if (process.platform === 'win32') {
-        this.skip();
-      }
-
+    it('stores the switch as the chosen R once a session starts with it', () => {
       sinon.stub(DetectR, 'prepareEnvironment').returns(null);
-      const { launcher, options } = launcherWithPendingR('/opt/R/4.4.1/bin/R');
+      const { launcher, gwtCallback, store } = launcherWithPendingR('/opt/R/4.4.1/bin/R');
 
       launcher.applyPendingRVersion();
-
-      assert.isFalse(options.setRExecutablePath.called);
-    });
-
-    it('stores the switch as the chosen R on Windows once a session starts with it', function () {
-      if (process.platform !== 'win32') {
-        this.skip();
-      }
-
-      const gwtCallback = new EventEmitter();
-      appState().gwtCallback = gwtCallback as unknown as GwtCallback;
-
-      sinon.stub(DetectR, 'prepareEnvironment').returns(null);
-      const { launcher, options } = launcherWithPendingR('C:/R/R-4.4.1/bin/x64/R.exe');
-
-      launcher.applyPendingRVersion();
-      assert.isFalse(options.setRExecutablePath.called);
+      assert.isFalse(store.called);
 
       gwtCallback.emit(GwtCallback.WORKBENCH_INITIALIZED);
 
-      // the default installations would otherwise win over the stored path
-      assert.isTrue(options.setUseDefault32BitR.calledOnceWithExactly(false));
-      assert.isTrue(options.setUseDefault64BitR.calledOnceWithExactly(false));
-      assert.isTrue(options.setRExecutablePath.calledOnceWithExactly('C:/R/R-4.4.1/bin/x64/R.exe'));
+      assert.isTrue(store.calledOnceWithExactly('/opt/R/4.4.1/bin/R'));
     });
 
     it('keeps the current R when the pending one cannot be prepared', () => {
       const prepare = sinon.stub(DetectR, 'prepareEnvironment').returns(new Error('no such R'));
-      const { launcher, options } = launcherWithPendingR('/opt/R/missing/bin/R');
+      const { launcher, gwtCallback, store } = launcherWithPendingR('/opt/R/missing/bin/R');
 
       launcher.applyPendingRVersion();
+      gwtCallback.emit(GwtCallback.WORKBENCH_INITIALIZED);
 
       assert.isTrue(prepare.calledOnce);
-      assert.isFalse(options.setRExecutablePath.called);
+      assert.isFalse(store.called);
+      assert.equal(launcher.rPath, '/opt/R/4.3.3/bin/R');
+    });
+
+    it('goes back to the R in use before a switch whose session failed, without storing either', () => {
+      const prepare = sinon.stub(DetectR, 'prepareEnvironment').returns(null);
+      const { launcher, gwtCallback, store } = launcherWithPendingR('/opt/R/4.4.1/bin/R');
+      const relaunch = sinon.stub(launcher, 'launchNextSession').resolves(null);
+
+      launcher.applyPendingRVersion();
+      launcher.restartWithPreviousR();
+
+      assert.isTrue(prepare.secondCall.calledWithExactly('/opt/R/4.3.3/bin/R'));
+      assert.isTrue(relaunch.calledOnceWithExactly(true));
+      assert.equal(launcher.rPath, '/opt/R/4.3.3/bin/R');
+
+      // the session that now starts is not the one switched to
+      gwtCallback.emit(GwtCallback.WORKBENCH_INITIALIZED);
+      assert.isFalse(store.called);
+    });
+
+    it('offers no way back once a session has started with the R switched to', () => {
+      const prepare = sinon.stub(DetectR, 'prepareEnvironment').returns(null);
+      const { launcher, gwtCallback } = launcherWithPendingR('/opt/R/4.4.1/bin/R');
+      const relaunch = sinon.stub(launcher, 'launchNextSession').resolves(null);
+
+      launcher.applyPendingRVersion();
+      gwtCallback.emit(GwtCallback.WORKBENCH_INITIALIZED);
+      launcher.restartWithPreviousR();
+
+      assert.isTrue(prepare.calledOnce);
+      assert.isFalse(relaunch.called);
     });
   });
 

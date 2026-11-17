@@ -33,7 +33,7 @@ import EventEmitter from 'events';
 import { existsSync, statSync, writeFileSync } from 'fs';
 import { platform } from 'os';
 import i18next from 'i18next';
-import path, { dirname } from 'path';
+import path from 'path';
 import { fileURLToPath } from 'url';
 import { FilePath, tempFilename } from '../core/file-path';
 import { normalizeSeparatorsNative } from '../ui/utils';
@@ -42,19 +42,13 @@ import { isCentOS } from '../core/system';
 import { resolveTemplateVar } from '../core/template-filter';
 import desktop from '../native/desktop.node';
 import { setDefaultApplicationForRFiles } from './default-file-handler';
-import { ChooseRModalWindow } from '../ui/widgets/choose-r';
 import { appState } from './app-state';
 import { clipboardWritesSettled, queueClipboardWrite, readClipboardText, readClipboardType } from './clipboard-queue';
-import {
-  detectREnvironmentAsync,
-  findDefault32Bit,
-  findDefault64Bit,
-  findRInstallationsWin32,
-  frameworkVersionHome,
-} from './detect-r';
+import { defaultR, detectREnvironment, detectREnvironmentAsync, rExecutableProblem, storeRChoice } from './detect-r';
+import { rChoiceApplies, savedRChoice } from './r-choice';
 import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
-import { AuthorizationCancelledError, frameworkVersion, isOrthogonal, makeOrthogonal } from './r-framework';
+import { AuthorizationCancelledError, frameworkVersion, makeOrthogonal } from './r-framework';
 import { openMinimalWindow } from './minimal-window';
 import { electronUpdaterHost, Updater } from './updater';
 import { kProjectNone } from '../core/r-user-data';
@@ -98,23 +92,57 @@ export enum PendingQuit {
   PendingQuitRestartAndReload,
 }
 
-function formatSelectedVersionForUi(rBinDir: string) {
-  // binDir will have format <R_HOME>/bin/<arch>,
-  // so we need two dirname()s to get the home path
-  const rHome = dirname(dirname(rBinDir));
-
-  // return formatted string as appropriate
-  if (rBinDir.endsWith('x64')) {
-    return `[64-bit] ${rHome}`;
-  } else if (rBinDir.endsWith('i386')) {
-    return `[32-bit] ${rHome}`;
-  } else {
-    return rHome;
-  }
-}
-
 /** How long setPendingRVersion() lets the chosen R take to describe itself. */
 const kPendingRVersionTimeoutMs = 30000;
+
+/**
+ * Why the R executable at this path can't host a session, as a message for
+ * the user, or '' when it can: it is missing, would run the default R instead
+ * of itself, or does not answer (within kPendingRVersionTimeoutMs) when run.
+ */
+async function checkRExecutable(rPath: string): Promise<string> {
+  // the client escapes the message for display itself
+  const interpolation = { escapeValue: false };
+
+  try {
+    const problem = rExecutableProblem(rPath);
+    if (problem) {
+      return problem;
+    }
+
+    const [, error] = await detectREnvironmentAsync(rPath, kPendingRVersionTimeoutMs);
+    if (error) {
+      logger().logError(error);
+      return (
+        i18next.t('gwtCallbackTs.rExecutableFailed', { path: rPath, error: error.message, interpolation }) || rPath
+      );
+    }
+  } catch (error: unknown) {
+    logger().logError(error);
+    return safeError(error).message || rPath;
+  }
+
+  return '';
+}
+
+/** An R executable, and the version of R it runs ('' when unknown). */
+export interface RDescription {
+  path: string;
+  version: string;
+}
+
+/**
+ * The given R executable with its version, as remembered from querying it;
+ * both are '' for an empty path.
+ */
+function describeR(rPath: string): RDescription {
+  if (!rPath) {
+    return { path: '', version: '' };
+  }
+
+  const [environment, error] = detectREnvironment(rPath);
+  return { path: rPath, version: error ? '' : environment.version };
+}
 
 /** The files a GTK file manager (Nautilus, Nemo, Caja, Thunar) copied or cut. */
 const kGnomeCopiedFilesFormat = 'electron application/osclipboard;format="x-special/gnome-copied-files"';
@@ -574,59 +602,14 @@ export class GwtCallback extends EventEmitter {
       return '';
     });
 
-    ipcMain.handle('desktop_get_r_version', () => {
-      const options = ElectronDesktopOptions();
+    ipcMain.handle('desktop_get_r_choice', () => this.getRChoice());
 
-      if (options.useDefault32BitR()) {
-        const rHomeDir = findDefault32Bit();
-        if (rHomeDir) {
-          return `[32-bit] ${rHomeDir} [Default]`;
-        }
-      }
-
-      if (options.useDefault64BitR()) {
-        const rHomeDir = findDefault64Bit();
-        if (rHomeDir) {
-          return `[64-bit] ${rHomeDir} [Default]`;
-        }
-      }
-
-      const rBinDir = options.rBinDir();
-      return formatSelectedVersionForUi(rBinDir);
+    ipcMain.handle('desktop_set_default_r_version', async (event, rExecutablePath: string) => {
+      return this.setDefaultRVersion(rExecutablePath);
     });
 
-    ipcMain.handle('desktop_choose_r_version', async () => {
-      // discover available R installations
-      const rInstalls = findRInstallationsWin32();
-      if (rInstalls.length === 0) {
-        logger().logInfo('No R installations found via registry or common R install locations.');
-      }
-
-      // ask the user what version of R they'd like to use
-      const chooseRDialog = new ChooseRModalWindow(rInstalls, mainWindow.window);
-
-      const [data, error] = await chooseRDialog.showModal();
-      if (error) {
-        logger().logError(error);
-        return '';
-      }
-
-      // if the dialog was cancelled, the path may be null
-      if (data == null || data.binaryPath == null) {
-        return '';
-      }
-
-      // save options from dialog result
-      const options = ElectronDesktopOptions();
-      const path = data.binaryPath as string;
-      options.setUseDefault32BitR(data.useDefault32BitR || false);
-      options.setUseDefault64BitR(data.useDefault64BitR || false);
-      options.setRExecutablePath(path);
-
-      // return a formatted string for the client
-      const rBinDir = dirname(path);
-      logger().logDebug(`Using R: ${rBinDir}`);
-      return formatSelectedVersionForUi(rBinDir);
+    ipcMain.on('desktop_restart_with_previous_r', () => {
+      this.mainWindow.sessionLauncher?.restartWithPreviousR();
     });
 
     ipcMain.on(
@@ -1349,39 +1332,51 @@ export class GwtCallback extends EventEmitter {
   async setPendingRVersion(rExecutablePath: string): Promise<string> {
     const rPath = preparedRExecutablePath(rExecutablePath);
 
-    // the client escapes the message for display itself
-    const interpolation = { escapeValue: false };
-
-    try {
-      if (!existsSync(rPath)) {
-        return i18next.t('gwtCallbackTs.rExecutableMissing', { path: rPath, interpolation }) || rPath;
-      }
-
-      // a framework version that isn't orthogonal would run the default R
-      const home = frameworkVersionHome(rPath);
-      const version = home === null ? null : frameworkVersion(home);
-      if (version !== null && !isOrthogonal(version)) {
-        return i18next.t('gwtCallbackTs.rExecutableNotOrthogonal', { path: rPath, interpolation }) || rPath;
-      }
-
-      // queried in the background: R can take seconds to start. Bounded,
-      // because the client holds the quit for this answer (see
-      // ApplicationQuit.claimQuit) and an R that hangs must not hold it
-      // forever; a late answer prepares an R that no quit will name
-      const [, error] = await detectREnvironmentAsync(rPath, kPendingRVersionTimeoutMs);
-      if (error) {
-        logger().logError(error);
-        return (
-          i18next.t('gwtCallbackTs.rExecutableFailed', { path: rPath, error: error.message, interpolation }) || rPath
-        );
-      }
-    } catch (error: unknown) {
-      logger().logError(error);
-      return safeError(error).message || rPath;
+    // queried in the background: R can take seconds to start. Bounded,
+    // because the client holds the quit for this answer (see
+    // ApplicationQuit.claimQuit) and an R that hangs must not hold it
+    // forever; a late answer prepares an R that no quit will name
+    const problem = await checkRExecutable(rPath);
+    if (problem) {
+      return problem;
     }
 
     this.preparedRVersions.add(rPath);
     return '';
+  }
+
+  /**
+   * Make the given R the one RStudio uses from its next launch on, after
+   * checking that it runs as itself; an R that is the default R means using
+   * the default R from then on (see storeRChoice). Resolves to an error
+   * message when the R can't be used, and '' otherwise.
+   */
+  async setDefaultRVersion(rExecutablePath: string): Promise<string> {
+    const rPath = preparedRExecutablePath(rExecutablePath);
+
+    const problem = await checkRExecutable(rPath);
+    if (problem) {
+      return problem;
+    }
+
+    storeRChoice(rPath);
+    return '';
+  }
+
+  /**
+   * The R in use, the R chosen in RStudio (when it decides which R RStudio
+   * uses), and the default R, each as its executable and R version; an
+   * entry is empty when there is no such R.
+   */
+  getRChoice(): Record<string, RDescription> {
+    const choice = savedRChoice();
+    const chosen = choice !== null && rChoiceApplies(choice) ? choice.path : '';
+
+    return {
+      current: describeR(this.mainWindow.sessionLauncher?.rPath ?? ''),
+      chosen: describeR(chosen),
+      default: describeR(defaultR()),
+    };
   }
 
   /**

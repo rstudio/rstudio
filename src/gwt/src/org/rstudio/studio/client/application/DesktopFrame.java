@@ -170,9 +170,17 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void desktopRenderingEngine(CommandWithArg<String> callback);
    void setDesktopRenderingEngine(String engine);
 
-   // R version selection currently Win32 only
-   void getRVersion(CommandWithArg<String> callback);
-   void chooseRVersion(CommandWithArg<String> callback);
+   // the R in use, the R chosen in RStudio (when it decides which R is used)
+   // and the default R, under "current", "chosen" and "default", each with
+   // its executable ("path") and R version ("version"), both "" when there
+   // is no such R
+   void getRChoice(CommandWithArg<JsObject> callback);
+
+   // make the given R the one RStudio uses from its next launch on (an R that
+   // is the default R means following the default from then on); the
+   // callback receives an error message when that R can't be used, and ""
+   // otherwise
+   void setDefaultRVersion(String rExecutablePath, CommandWithArg<String> callback);
 
    void getDisplayDpi(CommandWithArg<String> callback);
 

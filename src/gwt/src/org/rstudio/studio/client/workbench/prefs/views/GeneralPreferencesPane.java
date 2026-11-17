@@ -41,6 +41,9 @@ import org.rstudio.studio.client.application.model.RVersionsInfo;
 import org.rstudio.studio.client.application.ui.RVersionSelectWidget;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.renv.RVersionChooser;
+import org.rstudio.studio.client.renv.RVersionSwitcher;
+import org.rstudio.studio.client.renv.RenvConstants;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -55,8 +58,6 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
@@ -66,6 +67,7 @@ public class GeneralPreferencesPane extends PreferencesPane
 {
    private final static PrefsConstants constants_ = GWT.create(PrefsConstants.class);
    private final static CoreClientConstants coreConstants_ = GWT.create(CoreClientConstants.class);
+   private final static RenvConstants renvConstants_ = GWT.create(RenvConstants.class);
 
    @Inject
    public GeneralPreferencesPane(RemoteFileSystemContext fsContext,
@@ -74,19 +76,26 @@ public class GeneralPreferencesPane extends PreferencesPane
                                  Session session,
                                  GlobalDisplay globalDisplay,
                                  WorkbenchContext context,
-                                 PreferencesDialogResources res)
+                                 PreferencesDialogResources res,
+                                 RVersionChooser rVersionChooser,
+                                 RVersionSwitcher rVersionSwitcher)
    {
       fsContext_ = fsContext;
       fileDialogs_ = fileDialogs;
       prefs_ = prefs;
       session_ = session;
+      globalDisplay_ = globalDisplay;
+      rVersionChooser_ = rVersionChooser;
+      rVersionSwitcher_ = rVersionSwitcher;
 
       RVersionsInfo versionsInfo = context.getRVersionsInfo();
       VerticalTabPanel basic = new VerticalTabPanel(ElementIds.GENERAL_BASIC_PREFS);
 
       basic.add(headerLabel(constants_.rSessionsTitle()));
-      if (BrowseCap.isWindowsDesktop())
+      if (RVersionSwitcher.isLocalDesktopSession(session))
       {
+         // the R chosen here is used from RStudio's next launch on, and the
+         // session can restart with it right away
          rVersion_ = new TextBoxWithButton(
                constants_.rVersionTitle(),
                "",
@@ -94,28 +103,27 @@ public class GeneralPreferencesPane extends PreferencesPane
                null,
                ElementIds.TextBoxButtonId.R_VERSION,
                true,
-               new ClickHandler()
-               {
-                  @Override
-                  public void onClick(ClickEvent event)
-                  {
-                     Desktop.getFrame().chooseRVersion(ver ->
+               event -> rVersionChooser_.choose(
+                     renvConstants_.chooseRVersionCaption(),
+                     coreConstants_.okayLabel(),
+                     rVersionChoice_,
+                     choice ->
                      {
-                        if (!StringUtil.isNullOrEmpty(ver))
-                        {
-                           rVersion_.setText(ver);
-
-                           globalDisplay.showMessage(MessageDialog.INFO,
-                                   constants_.rChangeVersionMessage(),
-                                   constants_.rQuitReOpenMessage());
-                        }
-                     });
-                  }
-               });
+                        rVersionChoice_ = choice;
+                        rVersionChanged_ = true;
+                        rVersion_.setText(RVersionChooser.describe(choice, false));
+                     }));
          rVersion_.setWidth("100%");
          rVersion_.setText(constants_.rVersionLoadingText());
          rVersion_.getElement().getStyle().setMarginLeft(2, Unit.PX);
-         Desktop.getFrame().getRVersion(version -> rVersion_.setText(version));
+         rVersionChooser_.choiceInUse(choice ->
+         {
+            if (rVersionChanged_)
+               return;
+
+            rVersionChoice_ = choice;
+            rVersion_.setText(choice == null ? "" : RVersionChooser.describe(choice, false));
+         });
          spaced(rVersion_);
          basic.add(rVersion_);
       }
@@ -577,10 +585,35 @@ public class GeneralPreferencesPane extends PreferencesPane
       return new ImageResource2x(PreferencesDialogBaseResources.INSTANCE.iconR2x());
    }
 
+   // Have RStudio use the chosen R from its next launch on, and offer to
+   // restart the session with it now. A macOS framework version that would
+   // run the default version of R instead of itself is updated first, with
+   // the user's consent.
+   private void applyRVersionChoice(RVersionChooser.Choice choice)
+   {
+      String caption = renvConstants_.chooseRVersionCaption();
+      rVersionSwitcher_.makeOrthogonal(
+            choice.installation,
+            () -> Desktop.getFrame().setDefaultRVersion(choice.installation.binary, error ->
+            {
+               if (!StringUtil.isNullOrEmpty(error))
+                  globalDisplay_.showErrorMessage(caption, error);
+               else if (!choice.installation.current)
+                  rVersionSwitcher_.offerRestartWith(choice);
+            }),
+            error -> globalDisplay_.showErrorMessage(caption, error));
+   }
+
    @Override
    public RestartRequirement onApply(UserPrefs prefs)
    {
       RestartRequirement restartRequirement = super.onApply(prefs);
+
+      if (rVersionChanged_ && rVersionChoice_ != null)
+      {
+         rVersionChanged_ = false;
+         applyRVersionChoice(rVersionChoice_);
+      }
 
       if (clipboardMonitoring_ != null &&
           desktopMonitoring_ != clipboardMonitoring_.getValue())
@@ -827,6 +860,15 @@ public class GeneralPreferencesPane extends PreferencesPane
    private SelectWidget showServerHomePage_;
    private SelectWidget saveWorkspace_;
    private TextBoxWithButton rVersion_;
+
+   // the R the field shows, and whether the user chose it in this dialog
+   // (it is then stored when the change is applied)
+   private RVersionChooser.Choice rVersionChoice_;
+   private boolean rVersionChanged_;
+   private final RVersionChooser rVersionChooser_;
+   private final RVersionSwitcher rVersionSwitcher_;
+   private final GlobalDisplay globalDisplay_;
+
    private TextBoxWithButton dirChooser_;
    private TextBoxWithButton defaultOpenProjectLocationChooser_;
    private TextBoxWithButton projectUserDataDirChooser_;

@@ -38,6 +38,7 @@ import { Application } from '../../../src/main/application';
 
 import { GwtCallback, PendingQuit } from '../../../src/main/gwt-callback';
 import * as DetectR from '../../../src/main/detect-r';
+import * as RChoice from '../../../src/main/r-choice';
 import { MainWindow } from '../../../src/main/main-window';
 import desktop from '../../../src/native/desktop.node';
 
@@ -142,6 +143,54 @@ describe('DesktopCallback', () => {
 
       callback.setPendingQuit(PendingQuit.PendingQuitNone);
       assert.equal(callback.collectPendingRVersion(), '');
+    });
+  });
+
+  describe('setDefaultRVersion', () => {
+    // a stand-in R that exists on disk; querying it is stubbed
+    const rPath = process.execPath;
+
+    it('stores an R that runs as the one RStudio uses', async () => {
+      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{} as never, null]);
+      const store = sinon.stub(DetectR, 'storeRChoice');
+
+      assert.equal(await callback.setDefaultRVersion(rPath), '');
+      assert.isTrue(store.calledOnceWithExactly(rPath));
+    });
+
+    it('stores nothing for an R that is missing or fails to run', async () => {
+      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([null as never, new Error('boom')]);
+      const store = sinon.stub(DetectR, 'storeRChoice');
+
+      assert.include(await callback.setDefaultRVersion(rPath), 'boom');
+      assert.isNotEmpty(await callback.setDefaultRVersion('/no/such/R'));
+      assert.isFalse(store.called);
+    });
+
+    it('is registered for the client', async () => {
+      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{} as never, null]);
+      sinon.stub(DetectR, 'storeRChoice');
+
+      assert.equal(await invoke('desktop_set_default_r_version', rPath), '');
+    });
+  });
+
+  describe('getRChoice', () => {
+    it('describes the chosen R only while it decides which R RStudio uses', async () => {
+      sinon.stub(DetectR, 'defaultR').returns('');
+      sinon.stub(DetectR, 'detectREnvironment').returns([{ version: '4.4.1' } as never, null]);
+      const saved = sinon.stub(RChoice, 'savedRChoice').returns({ path: '/opt/R/4.4.1/bin/R', rstudioWhichR: '' });
+      const applies = sinon.stub(RChoice, 'rChoiceApplies').returns(true);
+
+      const choice = (await invoke('desktop_get_r_choice')) as Record<string, { path: string; version: string }>;
+      assert.deepEqual(choice.chosen, { path: '/opt/R/4.4.1/bin/R', version: '4.4.1' });
+      assert.deepEqual(choice.default, { path: '', version: '' });
+
+      applies.returns(false);
+      assert.deepEqual(callback.getRChoice().chosen, { path: '', version: '' });
+
+      saved.returns(null);
+      assert.deepEqual(callback.getRChoice().chosen, { path: '', version: '' });
     });
   });
 

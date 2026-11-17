@@ -16,10 +16,8 @@ package org.rstudio.studio.client.renv;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ProgressIndicator;
-import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.renv.events.ProjectRVersionMismatchEvent;
 import org.rstudio.studio.client.renv.events.RInstallCompletedEvent;
@@ -30,7 +28,6 @@ import org.rstudio.studio.client.renv.model.RenvServerOperations;
 import org.rstudio.studio.client.renv.ui.InstallRDialog;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 import com.google.gwt.core.client.GWT;
@@ -51,14 +48,12 @@ public class RenvRVersionManager
    @Inject
    public RenvRVersionManager(EventBus events,
                               GlobalDisplay globalDisplay,
-                              Session session,
-                              ApplicationQuit quit,
+                              RVersionSwitcher switcher,
                               RenvServerOperations server)
    {
       events_ = events;
       globalDisplay_ = globalDisplay;
-      session_ = session;
-      quit_ = quit;
+      switcher_ = switcher;
       server_ = server;
 
       events_.addHandler(ProjectRVersionMismatchEvent.TYPE, this);
@@ -222,80 +217,23 @@ public class RenvRVersionManager
       });
    }
 
-   // Restart the session with the given R. A macOS framework version that
-   // would run the default version of R instead of itself is updated first,
-   // with the user's consent.
+   // The Console notice (and its offer) stays up until the quit is going
+   // ahead, as the user can still back out of it.
    private void switchToR(RVersionInstall installed)
    {
-      if (installed.orthogonal)
+      switcher_.switchTo(installed, new RVersionSwitcher.Observer()
       {
-         restartWithR(installed);
-         return;
-      }
-
-      globalDisplay_.showYesNoMessage(
-            GlobalDisplay.MSG_QUESTION,
-            constants_.updateRCaption(),
-            constants_.updateRMessage(installed.version),
-            () ->
-            {
-               Desktop.getFrame().makeROrthogonal(installed.home, error ->
-               {
-                  if (StringUtil.isNullOrEmpty(error))
-                     restartWithR(installed);
-                  else
-                     onSwitchFailed(installed, error);
-               });
-            },
-            true);
-   }
-
-   // Once the quit is going ahead, the desktop checks that the R runs and
-   // holds on to it for the relaunch; a quit that then fails clears it again.
-   // The Console notice (and its offer) stays up until then, as the user can
-   // still back out of the quit.
-   private void restartWithR(RVersionInstall installed)
-   {
-      String projectFile = session_.getSessionInfo().getActiveProjectFile();
-      RVersionSpec spec = RVersionSpec.create(installed.version, installed.home, "");
-
-      quit_.prepareForQuit(constants_.switchRVersionCaption(), saveChanges ->
-      {
-         // claim the quit before the desktop holds the R: held for a quit
-         // that cannot start, it would be used by the quit already under way
-         ApplicationQuit.QuitClaim claim = quit_.claimQuit();
-         if (claim == null)
+         @Override
+         public void onSwitchStarted()
          {
-            onSwitchFailed(installed, constants_.quitAlreadyInProgress());
-            return;
+            hideNotice();
          }
 
-         Desktop.getFrame().setPendingRVersion(installed.binary, error ->
+         @Override
+         public void onSwitchFailed(String error)
          {
-            if (!StringUtil.isNullOrEmpty(error))
-            {
-               claim.release();
-               onSwitchFailed(installed, error);
-               return;
-            }
-
-            // the claim may have been superseded while the R was checked (a
-            // stalled quit admits the next one, see QuitGate); the prepared
-            // R is used only by a quit that names it, so nothing is left for
-            // that other quit
-            if (!claim.performQuit(
-                  constants_.switchingRVersionProgress(installed.version),
-                  saveChanges,
-                  projectFile,
-                  spec,
-                  installed.binary))
-            {
-               onSwitchFailed(installed, constants_.quitAlreadyInProgress());
-               return;
-            }
-
-            hideNotice();
-         });
+            RenvRVersionManager.this.onSwitchFailed(installed, error);
+         }
       });
    }
 
@@ -336,8 +274,7 @@ public class RenvRVersionManager
 
    private final EventBus events_;
    private final GlobalDisplay globalDisplay_;
-   private final Session session_;
-   private final ApplicationQuit quit_;
+   private final RVersionSwitcher switcher_;
    private final RenvServerOperations server_;
 
    private static final RenvConstants constants_ = GWT.create(RenvConstants.class);

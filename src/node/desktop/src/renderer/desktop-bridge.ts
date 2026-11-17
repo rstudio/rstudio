@@ -314,19 +314,25 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_prepare_show_ppt_presentation');
     },
 
-    // R version selection currently Win32 only
-    getRVersion: (callback: VoidCallback<string>) => {
+    getRChoice: (callback: VoidCallback<Record<string, unknown>>) => {
       ipcRenderer
-        .invoke('desktop_get_r_version')
-        .then((rver) => callback(rver))
-        .catch((error) => reportIpcError('getRVersion', error));
+        .invoke('desktop_get_r_choice')
+        .then((choice) => callback(choice))
+        .catch((error) => reportIpcError('getRChoice', error));
     },
 
-    chooseRVersion: (callback: VoidCallback<string>) => {
+    setDefaultRVersion: (rExecutablePath: string, callback: VoidCallback<string>) => {
       ipcRenderer
-        .invoke('desktop_choose_r_version')
-        .then((rver) => callback(rver))
-        .catch((error) => reportIpcError('chooseRVersion', error));
+        .invoke('desktop_set_default_r_version', rExecutablePath)
+        .then((error) => callback(error))
+        .catch((error) => {
+          reportIpcError('setDefaultRVersion', error);
+          callback(String(error) || 'setDefaultRVersion failed');
+        });
+    },
+
+    restartWithPreviousR: () => {
+      ipcRenderer.send('desktop_restart_with_previous_r');
     },
 
     openMinimalWindow: (name: string, url: string, width: number, height: number) => {

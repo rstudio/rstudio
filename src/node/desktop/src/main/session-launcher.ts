@@ -14,7 +14,7 @@
  */
 
 import { ChildProcess, spawn } from 'child_process';
-import { app } from 'electron';
+import { app, dialog } from 'electron';
 import fs, { rmSync } from 'fs';
 
 import { getenv, setenv, unsetenv } from '../core/environment';
@@ -36,7 +36,7 @@ import { GwtCallback, PendingQuit } from './gwt-callback';
 import LogOptions from './log-options';
 import { closeAllSatellites, MainWindow } from './main-window';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
-import { prepareEnvironment } from './detect-r';
+import { prepareEnvironment, storeRChoice, UnusableRChoice } from './detect-r';
 import { EXIT_FAILURE } from './program-status';
 import { waitForUrlWithTimeout } from './url-utils';
 import { createStandaloneErrorDialog, getCurrentlyUniqueFolderName, isAutomated, showWindowForAutomation, userLogPath } from './utils';
@@ -214,8 +214,20 @@ export class SessionLauncher {
   // names this instance's development copies of the session binary
   private devSessionTag = '';
 
-  // an R switched to on Windows, stored once a session has started with it
+  // the R executable the session runs (the next one's, once a switch has
+  // prepared it)
+  rPath = '';
+
+  // an R switched to, stored once a session has started with it
   private switchedRToStore = '';
+
+  // the R in use before a switch, until a session starts with the R switched
+  // to: the launch error page offers to go back to it
+  private rBeforeSwitch = '';
+
+  // an R chosen in RStudio that startup could not use, to tell the user about
+  // once the workbench is up
+  private unusableRChoice?: UnusableRChoice;
 
   constructor(
     private sessionPath: FilePath,
@@ -280,6 +292,12 @@ export class SessionLauncher {
 
     this.mainWindow = new MainWindow(launchContext.url);
     this.mainWindow.sessionLauncher = this;
+
+    const unusable = this.unusableRChoice;
+    if (unusable) {
+      this.unusableRChoice = undefined;
+      appState().gwtCallback?.once(GwtCallback.WORKBENCH_INITIALIZED, () => this.showUnusableRChoice(unusable));
+    }
     this.mainWindow.setSessionProcess(this.sessionProcess);
     this.mainWindow.appLauncher = this.appLaunch;
     this.appLaunch.setActivationWindow(this.mainWindow);
@@ -473,6 +491,10 @@ export class SessionLauncher {
     vars.set('log_file', logFile);
     vars.set('log_content', logContent);
 
+    // a session that failed with an R just switched to can go back to the R
+    // in use before
+    vars.set('previous_r', this.rBeforeSwitch);
+
     appState().gwtCallback?.setErrorPageInfo(vars);
     this.mainWindow
       ?.loadUrl(ERROR_WINDOW_WEBPACK_ENTRY)
@@ -614,12 +636,11 @@ export class SessionLauncher {
    * for (already checked to run when it was requested). The current R is
    * kept if preparing fails anyway.
    *
-   * On Windows, the choice is also stored as the Choose R dialog stores one,
-   * so it holds for later launches too, and can be changed back the same
-   * way. It is stored only once a session has started with it: an R that
+   * The choice is stored as the R RStudio uses from then on (see
+   * storeRChoice), but only once a session has started with it: an R that
    * runs but can't host a session would otherwise fail every later launch.
-   * Elsewhere, RStudio has no stored choice of R to change back, so the
-   * switch lasts until RStudio quits.
+   * Until then, the launch error page offers to go back to the R in use
+   * before.
    */
   applyPendingRVersion(): void {
     const rPath = this.mainWindow?.collectPendingRVersion();
@@ -634,24 +655,81 @@ export class SessionLauncher {
       return;
     }
 
-    if (process.platform === 'win32') {
-      this.switchedRToStore = rPath;
-      appState().gwtCallback?.once(GwtCallback.WORKBENCH_INITIALIZED, () => this.storeSwitchedR(rPath));
-    }
+    this.rBeforeSwitch = this.rPath;
+    this.rPath = rPath;
+    this.switchedRToStore = rPath;
+    appState().gwtCallback?.once(GwtCallback.WORKBENCH_INITIALIZED, () => this.storeSwitchedR(rPath));
   }
 
   private storeSwitchedR(rPath: string): void {
-    // a later switch supersedes this one
+    // a later switch (or going back) supersedes this one
     if (this.switchedRToStore !== rPath) {
       return;
     }
     this.switchedRToStore = '';
+    this.rBeforeSwitch = '';
 
-    // the default installations take precedence over a stored path
-    const options = ElectronDesktopOptions();
-    options.setUseDefault32BitR(false);
-    options.setUseDefault64BitR(false);
-    options.setRExecutablePath(rPath);
+    storeRChoice(rPath);
+  }
+
+  /**
+   * Go back to the R in use before a switch whose session failed to start,
+   * from the launch error page. The R that failed is not stored.
+   */
+  restartWithPreviousR(): void {
+    const rPath = this.rBeforeSwitch;
+    if (!rPath) {
+      return;
+    }
+
+    logger().logInfo(`Going back to R: ${rPath}`);
+    const error = prepareEnvironment(rPath);
+    if (error) {
+      logger().logError(error);
+      return;
+    }
+
+    this.rBeforeSwitch = '';
+    this.switchedRToStore = '';
+    this.rPath = rPath;
+
+    this.mainWindow?.clearErrorDisplayed();
+    this.launchNextSession(true)
+      .then((launchError) => {
+        if (launchError) {
+          logger().logError(launchError);
+        }
+      })
+      .catch((launchError: unknown) => logger().logError(safeError(launchError)));
+  }
+
+  /**
+   * Have the user told, once the workbench is up, that the R chosen in
+   * RStudio could not be used, so the default R is used instead.
+   */
+  reportUnusableRChoice(choice: UnusableRChoice): void {
+    this.unusableRChoice = choice;
+  }
+
+  private showUnusableRChoice(choice: UnusableRChoice): void {
+    const window = this.mainWindow?.window;
+    const options = {
+      type: 'warning' as const,
+      title: i18next.t('sessionLauncherTs.chosenRUnusableTitle'),
+      message: i18next.t('sessionLauncherTs.chosenRUnusableMessage'),
+      detail: i18next.t('sessionLauncherTs.chosenRUnusableDetail', {
+        reason: choice.reason,
+        rPath: this.rPath,
+        interpolation: { escapeValue: false },
+      }),
+      buttons: [i18next.t('common.buttonOk')],
+    };
+
+    appState()
+      .modalTracker.trackElectronModalAsync(async () =>
+        window ? dialog.showMessageBox(window, options) : dialog.showMessageBox(options),
+      )
+      .catch((error: unknown) => logger().logError(safeError(error)));
   }
 
   onReloadFrameForNextSession(): void {

@@ -1187,6 +1187,106 @@
    )
 })
 
+#' The R installations to offer when choosing the version of R RStudio
+#' uses: those this build of RStudio supports, newest first, as a list of
+#' rows. 'current' marks the one in use, which is offered even when it was
+#' found nowhere else (e.g. an R the user browsed to). 'emulated' marks an
+#' installation that would not run natively here (an x86_64 R on an Apple
+#' silicon Mac), and 'orthogonal' is as for findInstalledRVersion().
+#'
+#' @param minimum The oldest version of R this build of RStudio supports.
+#' @param installed The R installations, as from rInstallations.list().
+#' @param current The home of the R in use.
+#' @param architecture The architecture native here, when that is a choice.
+.rs.addFunction("rInstallations.forChooser", function(minimum,
+                                                       installed = .rs.rInstallations.cached(refresh = TRUE),
+                                                       current = R.home(),
+                                                       architecture = .rs.rInstallations.preferredArchitecture())
+{
+   # an installation rig reports without a home is located through its binary
+   missingHome <- !nzchar(installed$home)
+   installed$home[missingHome] <- vapply(installed$binary[missingHome], .rs.rig.rHome, character(1), USE.NAMES = FALSE)
+
+   currentHome <- normalizePath(current, winslash = "/", mustWork = FALSE)
+   homes <- normalizePath(installed$home, winslash = "/", mustWork = FALSE)
+   isCurrent <- nzchar(installed$home) & homes == currentHome
+
+   if (!any(isCurrent))
+   {
+      version <- .rs.rInstallations.versionFromHome(current)
+      if (!nzchar(version))
+         version <- as.character(getRversion())
+
+      binary <- file.path(current, "bin", if (.rs.platform.isWindows) "R.exe" else "R")
+      row <- data.frame(
+         version = version,
+         path    = current,
+         binary  = binary,
+         home    = current,
+         stringsAsFactors = FALSE
+      )
+
+      installed <- rbind(row, installed)
+      isCurrent <- c(TRUE, isCurrent)
+   }
+
+   supported <- vapply(installed$version, .rs.rVersionSupported, logical(1), minimum = minimum, USE.NAMES = FALSE)
+   installed <- installed[supported, , drop = FALSE]
+   isCurrent <- isCurrent[supported]
+
+   versions <- lapply(installed$version, package_version)
+   newest <- order(do.call(c, versions), decreasing = TRUE)
+
+   lapply(newest, function(i) {
+      .rs.rInstallations.chooserEntry(as.list(installed[i, ]), isCurrent[[i]], architecture)
+   })
+})
+
+#' An R installation (a row of rInstallations.list()) as
+#' rInstallations.forChooser() lists it.
+.rs.addFunction("rInstallations.chooserEntry", function(installation, current, architecture)
+{
+   home <- installation$home
+   architectures <- if (is.null(architecture)) character() else .rs.rInstallations.architectures(home)
+   list(
+      version    = .rs.scalar(installation$version),
+      path       = .rs.scalar(installation$path),
+      binary     = .rs.scalar(installation$binary),
+      home       = .rs.scalar(home),
+      current    = .rs.scalar(current),
+      orthogonal = .rs.scalar(.rs.rInstallations.isOrthogonal(home)),
+      emulated   = .rs.scalar(length(architectures) > 0L && !(architecture %in% architectures))
+   )
+})
+
+#' The R installation the given R executable launches (one the user browsed
+#' to, say), as rInstallations.forChooser() lists them, with whether this
+#' build of RStudio supports it ('supported'); NULL when it isn't the
+#' executable of an R installation.
+.rs.addFunction("rInstallations.describe", function(binary,
+                                                    minimum,
+                                                    current = R.home(),
+                                                    architecture = .rs.rInstallations.preferredArchitecture())
+{
+   home <- .rs.rig.rHome(binary)
+   if (!.rs.rInstallations.isHome(home))
+      return(NULL)
+
+   version <- .rs.rInstallations.versionFromHome(home)
+   if (!nzchar(version))
+      return(NULL)
+
+   isCurrent <- identical(
+      normalizePath(home, winslash = "/", mustWork = FALSE),
+      normalizePath(current, winslash = "/", mustWork = FALSE)
+   )
+
+   installation <- list(version = version, path = home, binary = binary, home = home)
+   entry <- .rs.rInstallations.chooserEntry(installation, isCurrent, architecture)
+   entry$supported <- .rs.scalar(.rs.rVersionSupported(version, minimum))
+   entry
+})
+
 #' Find an installed R matching the requested version. Versions sharing the
 #' requested major.minor are considered a match; an exact match is preferred,
 #' then the newest patch release. A build for the preferred architecture is
