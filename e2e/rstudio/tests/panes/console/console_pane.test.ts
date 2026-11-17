@@ -1,5 +1,6 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { TIMEOUTS } from '@utils/constants';
+import { clearPref, setPref } from '@utils/commands';
 import {
   getConsoleCursorPosition,
   getConsoleScreenRowCount,
@@ -175,6 +176,22 @@ test.describe('Console pane', () => {
     await consoleActions.consolePane.tracebackBtn.click();
     await expect(consoleActions.consolePane.stackTrace).toBeHidden();
     await expect(consoleActions.consolePane.tracebackBtn).toHaveText('Show Traceback');
+  });
+
+  test('auto-expanded traceback offers Hide Traceback', async ({ rstudioPage: page }) => {
+    await setPref(page, 'auto_expand_error_tracebacks', true);
+    try {
+      await consoleActions.executeInConsole('g <- function() stop("boom"); f <- function() g(); f()');
+
+      await expect(consoleActions.consolePane.stackTrace).toBeVisible({ timeout: 10000 });
+      await expect(consoleActions.consolePane.tracebackBtn).toHaveText('Hide Traceback');
+
+      await consoleActions.consolePane.tracebackBtn.click();
+      await expect(consoleActions.consolePane.stackTrace).toBeHidden();
+      await expect(consoleActions.consolePane.tracebackBtn).toHaveText('Show Traceback');
+    } finally {
+      await clearPref(page, 'auto_expand_error_tracebacks');
+    }
   });
 
   test.describe('Find in Console', () => {
