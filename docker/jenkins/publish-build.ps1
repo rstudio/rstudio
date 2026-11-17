@@ -73,9 +73,8 @@ function Test-Retryable {
 
     $statusCode = Get-StatusCode $errorRecord
     if ($null -eq $statusCode) {
-        # WebException on Windows PowerShell; HttpRequestException on PowerShell 7
-        return $errorRecord.Exception.GetType().FullName -in
-            'System.Net.WebException', 'System.Net.Http.HttpRequestException'
+        # Jenkins runs this under Windows PowerShell 5.1, where request failures are WebExceptions
+        return $errorRecord.Exception -is [System.Net.WebException]
     }
     return ($statusCode -in 408, 409, 429) -or ($statusCode -ge 500)
 }
