@@ -352,8 +352,7 @@ public class BranchToolbarButton extends ToolbarMenuButton
          }
 
          String label = SafeHtmlUtils.htmlEscape(name) +
-               " <span class=\"" + ThemeStyles.INSTANCE.menuItemSubtitle() + "\"" +
-               " title=\"" + SafeHtmlUtils.htmlEscape(worktree.getPath()) + "\">" +
+               " <span class=\"" + ThemeStyles.INSTANCE.menuItemSubtitle() + "\">" +
                SafeHtmlUtils.htmlEscape(path) + "</span>";
 
          ImageResource2x check = worktree.isCurrent()
@@ -382,6 +381,10 @@ public class BranchToolbarButton extends ToolbarMenuButton
                                       Roles.getMenuitemradioRole(),
                                       worktree.isCurrent(),
                                       command);
+         // The full path goes on the item, not the subtitle <span>: Chrome
+         // exposes a titled <span> as a generic node, which VoiceOver announces
+         // as "group". On the item, it's the item's description.
+         item.setTitle(worktree.getPath());
          if (worktree == worktrees.get(0))
             ToolbarPopupMenu.nameWithSubheader(item, heading);
          menu.addItem(item);

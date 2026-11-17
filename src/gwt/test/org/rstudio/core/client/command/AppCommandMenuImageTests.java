@@ -19,6 +19,7 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.resources.client.ImageResource;
 
@@ -63,6 +64,39 @@ public class AppCommandMenuImageTests extends GWTTestCase
                : menuLabel(icon));
          Element iconCell = label.getElementsByTagName("td").getItem(0);
          assertEquals("true", iconCell.getAttribute("aria-hidden"));
+      }
+   }
+
+   public void testLayoutElementsArePresentational()
+   {
+      // Chrome exposes layout elements without a role, such as table parts and
+      // the right image's floated <div>, as nameless generic nodes, which
+      // VoiceOver announces as "group" after the menu item's text. Elements in
+      // the aria-hidden icon cell are checked too, in case it's ever unhidden.
+      ImageResource2x image =
+            new ImageResource2x(ThemeResources.INSTANCE.executeChunk2x());
+      String[] labels = {
+            AppCommand.formatMenuLabel(null, "Item", "Ctrl+K"),
+            AppCommand.formatMenuLabel(null, "Item", null),
+            AppCommand.formatMenuLabel(image, "Item", "Ctrl+K"),
+            AppCommand.formatMenuLabel(null, "Item", false, null, image, "Run"),
+            AppCommand.formatMenuLabelWithStyle(null, "Item", "Ctrl+K", "styled"),
+      };
+      for (String html : labels)
+      {
+         Element label = Document.get().createDivElement();
+         label.setInnerHTML(html);
+         assertEquals(1, label.getElementsByTagName("tbody").getLength());
+         NodeList<Element> elements = label.getElementsByTagName("*");
+         for (int i = 0; i < elements.getLength(); i++)
+         {
+            Element el = elements.getItem(i);
+            // images and the empty icon cell's <br/> are content, not layout
+            String tag = el.getTagName().toLowerCase();
+            if (tag.equals("img") || tag.equals("br"))
+               continue;
+            assertEquals(el.getTagName(), "presentation", el.getAttribute("role"));
+         }
       }
    }
 

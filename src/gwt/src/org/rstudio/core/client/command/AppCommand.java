@@ -679,7 +679,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       int topOffset = -2;
       if (iconOffsetY != null)
          topOffset += iconOffsetY;
-      text.append("<table role=\"presentation\"");
+      text.append("<table" + PRESENTATION + " ");
       if (label != null)
       {
          text.append("id=\"" + ElementIds.idFromLabel(label) + "_command\" ");
@@ -690,12 +690,14 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
          text.append("class='" + styleName + "' ");
       }
 
-      text.append("border=0 cellpadding=0 cellspacing=0 width='100%'><tr>");
+      text.append("border=0 cellpadding=0 cellspacing=0 width='100%'>" +
+                  "<tbody" + PRESENTATION + "><tr" + PRESENTATION + ">");
 
       // The icon cell is decorative: icons have empty alt text, and the <br/>
       // placeholder would otherwise add whitespace to the item's name.
-      text.append("<td width=\"25\" style=\"vertical-align: top\" aria-hidden=\"true\">" +
-                  "<div style=\"width: 25px; margin-top: " +
+      text.append("<td" + PRESENTATION + " width=\"25\" style=\"vertical-align: top\" " +
+                  "aria-hidden=\"true\">" +
+                  "<div" + PRESENTATION + " style=\"width: 25px; margin-top: " +
                   topOffset + "px; margin-bottom: -10px\">");
       if (icon != null)
       {
@@ -711,21 +713,25 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       label = StringUtil.notNull(label);
       if (!html)
          label = DomUtils.textToHtml(label);
-      text.append("<td>" + label + "</td>");
+      text.append("<td" + PRESENTATION + ">" + label + "</td>");
       if (rightImage != null)
       {
          SafeHtml imageHtml = createRightImageHtml(rightImage, rightImageDesc);
-         text.append("<td align=right width=\"25\"><div style=\"width: 25px; float: right; margin-top: -7px; margin-bottom: -10px;\">" + imageHtml.asString() + "</div></td>");
+         text.append("<td" + PRESENTATION + " align=right width=\"25\">" +
+                     "<div" + PRESENTATION + " style=\"width: 25px; float: right; " +
+                     "margin-top: -7px; margin-bottom: -10px;\">" +
+                     imageHtml.asString() + "</div></td>");
       }
       else if (!StringUtil.isNullOrEmpty(shortcut))
       {
-         text.append("<td align=right nowrap>&nbsp;&nbsp;&nbsp;&nbsp;" + shortcut + "</td>");
+         text.append("<td" + PRESENTATION + " align=right nowrap>" +
+                     "&nbsp;&nbsp;&nbsp;&nbsp;" + shortcut + "</td>");
       }
       else
       {
-         text.append("<td width=\"16\"></td>");
+         text.append("<td" + PRESENTATION + " width=\"16\"></td>");
       }
-      text.append("</tr></table>");
+      text.append("</tr></tbody></table>");
 
       return text.toString();
    }
@@ -836,6 +842,12 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    {
       return uri.equals(MENU_CHECK_URI) || uri.equals(MENU_CHECK_INVERTED_URI);
    }
+
+   // Every layout element in a menu label gets this role: Chrome exposes table
+   // parts and some <div>s, such as floated ones, without it as nameless generic
+   // nodes, which VoiceOver announces as "group". formatMenuLabel writes an
+   // explicit <tbody> so the browser doesn't insert one without the role.
+   private static final String PRESENTATION = " role=\"presentation\"";
 
    private static final String MENU_CHECK_URI =
          ThemeResources.INSTANCE.menuCheck2x().getSafeUri().asString();
