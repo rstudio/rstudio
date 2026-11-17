@@ -50,15 +50,17 @@ function set_debugging(enabled::Bool)
    return nothing
 end
 
-# Trace a message to stderr, which reaches the console in step with R's own.
-# An interrupt landing meanwhile is dropped, so that tracing can't change
-# where interrupts go; `finish_evaluation` then waits out its grace period.
-function debug(message)
+# Trace a message, given in parts, to stderr, which reaches the console in step
+# with R's own. Callers pass parts rather than interpolating them: building a
+# string allocates, and an allocation is where an interrupt can land. One
+# landing here is dropped, so that tracing can't change where interrupts go;
+# `finish_evaluation` then waits out its grace period.
+function debug(parts...)
    debugging[] || return
-   t = time()
-   stamp = Libc.strftime("%H:%M:%S", t) * "." * lpad(floor(Int, 1000 * (t % 1)), 3, '0')
    try
-      println(stderr, "[julia-debug Julia ", stamp, "] ", message)
+      t = time()
+      stamp = Libc.strftime("%H:%M:%S", t) * "." * lpad(floor(Int, 1000 * (t % 1)), 3, '0')
+      println(stderr, "[julia-debug Julia ", stamp, "] ", parts...)
    catch err
       err isa InterruptException || rethrow()
    end
@@ -174,8 +176,9 @@ end
 
 Completions for the end of `line`, as the Julia REPL offers them on Tab: the
 token they replace, then their names, then their kinds ("function",
-"module", "keyword", "path" or "other"), all in one vector of strings, which
-JuliaConnectoR translates (it passes a tuple as a proxy).
+"module", "keyword", "path" or "other"), then the modules they come from
+("" for Main and for completions that aren't names), all in one vector of
+strings, which JuliaConnectoR translates (it passes a tuple as a proxy).
 """
 function completions(line::AbstractString)
    line = String(line)
@@ -185,15 +188,20 @@ function completions(line::AbstractString)
 
    names = String[]
    kinds = String[]
+   sources = String[]
    for result in results
       # a call's method signatures: help, but not text to insert
       result isa C.MethodCompletion && continue
 
-      push!(names, result isa C.BslashCompletion ? result.completion : C.completion_text(result))
+      # newer Julia versions keep a backslash completion's text in a field
+      # that completion_text doesn't read
+      text =hasfield(typeof(result), :completion) ? result.completion : C.completion_text(result)
+      push!(names, text)
       push!(kinds, completion_kind(result))
+      push!(sources, result isa C.ModuleCompletion && result.parent !== Main ? string(result.parent) : "")
    end
 
-   return String[token; names; kinds]
+   return String[token; names; kinds; sources]
 end
 
 function completion_kind(result)
@@ -205,6 +213,9 @@ function completion_kind(result)
    elseif result isa C.PackageCompletion
       return "module"
    elseif result isa C.ModuleCompletion
+      # a macro is a function, but isn't called with parentheses
+      startswith(result.mod, "@") && return "other"
+
       name = Symbol(result.mod)
       value = try
          Base.invokelatest(isdefined, result.parent, name) ? Base.invokelatest(getglobal, result.parent, name) : nothing
@@ -214,6 +225,31 @@ function completion_kind(result)
       return value isa Function ? "function" : value isa Module ? "module" : "other"
    end
    return "other"
+end
+
+"""
+    documentation(name, source)
+
+The documentation for `name` from module `source` ("" for Main), as `?name`
+shows it at the Julia REPL: the signature it begins with, if any, and then the
+rest, as markdown.
+"""
+function documentation(name::AbstractString, source::AbstractString)
+   topic = isempty(source) ? String(name) : string(source, ".", name)
+   docs = Core.eval(Main, REPL.helpmode(devnull, topic, Main))
+   text = sprint(show, MIME("text/markdown"), docs)
+
+   # cross-references only resolve in Documenter's builds
+   text = replace(text, r"\[([^\]]*)\]\(@ref[^)]*\)" => s"\1")
+
+   signature = ""
+   m = match(r"^```julia\n([^\n]*)\n```\n*", text)
+   if m !== nothing
+      signature = String(m.captures[1])
+      text = replace(text, m.match => ""; count = 1)
+   end
+
+   return String[signature, text]
 end
 
 """
@@ -245,10 +281,13 @@ function evaluate(code::AbstractString, mode::AbstractString, width::Integer, co
       err isa InterruptException || rethrow()
       interrupted += 1
    finally
+      # R sends interrupts until `finish_evaluation` tells it to stop; from
+      # here on, they wait for it to count them
+      Base.sigatomic_begin()
       evaluation_task[] = nothing
    end
 
-   debug("evaluation over; $interrupted interrupt(s) received")
+   debug("evaluation over; ", interrupted, " interrupt(s) received")
    finish_evaluation(interrupted)
 
    flush(stdout)
@@ -315,21 +354,23 @@ end
 
 # R interrupts an evaluation by sending SIGINT. One that lands after the
 # evaluation, in JuliaConnectoR's own code, would break the connection to R:
-# so R is told that the evaluation is over, and stops sending them, while
-# they are deferred; any it sent before then is consumed here.
+# so, with interrupts deferred (see `evaluate`), R is told that the evaluation
+# is over and stops sending them; any it sent before then is consumed here.
 function finish_evaluation(received::Int)
    done = evaluation_done[]
-   done === nothing && return
+   if done === nothing
+      take_deferred_interrupt()
+      return
+   end
 
-   Base.sigatomic_begin()
    sent = try
       Int(first(Base.invokelatest(done)))
    catch
       Base.sigatomic_end()
       rethrow()
    end
+   debug("R sent ", sent, " interrupt(s)")
    received += take_deferred_interrupt()
-   debug("R sent $sent interrupt(s); $received received")
 
    # a signal R sent may still be on its way
    deadline = time() + INTERRUPT_GRACE
@@ -344,7 +385,7 @@ function finish_evaluation(received::Int)
    end
 
    if received < sent
-      debug("gave up waiting for $(sent - received) interrupt(s)")
+      debug("gave up waiting for ", sent - received, " interrupt(s)")
    end
 end
 

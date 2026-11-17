@@ -304,25 +304,64 @@
    if (!is.character(result) || length(result) == 0L)
       return(.rs.emptyCompletions(language = "Julia"))
 
-   # the token, then the completions' names, then their kinds
-   n <- (length(result) - 1L) %/% 2L
+   # the token, then the completions' names, kinds and modules
+   n <- (length(result) - 1L) %/% 3L
    token <- result[[1L]]
    names <- result[seq_len(n) + 1L]
    kinds <- result[seq_len(n) + 1L + n]
+   sources <- result[seq_len(n) + 1L + 2L * n]
 
+   # modules are typed as reticulate types Python's: for a PACKAGE, the client
+   # looks up R package help without asking the help handler
    types <- .rs.acCompletionTypes
    type <- rep(types$UNKNOWN, length(kinds))
    type[kinds == "function"] <- types$FUNCTION
-   type[kinds == "module"]   <- types$PACKAGE
+   type[kinds == "module"]   <- types$ENVIRONMENT
    type[kinds == "keyword"]  <- types$KEYWORD
    type[kinds == "path"]     <- types$FILE
 
    .rs.makeCompletions(
-      token    = token,
-      results  = names,
-      type     = type,
-      quote    = FALSE,
-      language = "Julia"
+      token       = token,
+      results     = names,
+      packages    = sources,
+      type        = type,
+      quote       = FALSE,
+      helpHandler = ".rs.julia.helpHandler",
+      language    = "Julia"
+   )
+})
+
+#' Julia Help for Completions
+#'
+#' The help handler for the Julia console's completions, called as reticulate's
+#' is (see the custom help RPCs in SessionHelp.R, and get_args).
+#'
+#' @param type The help wanted: "completion", "parameter" or "url".
+#' @param topic The completion's name.
+#' @param source The module the completion comes from; empty for Main.
+.rs.addFunction("julia.helpHandler", function(type, topic, source, ...)
+{
+   # Julia's documentation is only shown in the completion popup; there is
+   # no page for F1 to open
+   if (identical(type, "url"))
+      return("")
+
+   if (!identical(type, "completion"))
+      return(NULL)
+
+   # Julia can only be asked while it is idle at the prompt
+   result <- tryCatch(
+      .rs.julia.call("RStudio.documentation", topic, source),
+      error = function(e) NULL
+   )
+
+   if (!is.character(result) || length(result) != 2L)
+      return(NULL)
+
+   list(
+      title       = topic,
+      signature   = result[[1L]],
+      description = result[[2L]]
    )
 })
 

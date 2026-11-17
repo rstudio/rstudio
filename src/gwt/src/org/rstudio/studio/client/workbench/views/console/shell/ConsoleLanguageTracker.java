@@ -183,6 +183,8 @@ public class ConsoleLanguageTracker
          enter = PYTHON_REPL_ENTER_INPUTS[0];
       else if (StringUtil.equals(to, LANGUAGE_JULIA))
          enter = JULIA_REPL_ENTER_INPUTS[0];
+      else if (!StringUtil.equals(to, LANGUAGE_R))
+         return "";
 
       if (StringUtil.equals(from, LANGUAGE_R))
          return enter;

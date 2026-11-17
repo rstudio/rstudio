@@ -2170,9 +2170,11 @@ public class RCompletionManager implements CompletionManager
          if (qualifiedName.type == RCompletionType.DIRECTORY)
             value = value + "/";
          
+         // backticks quote names in R only
          if (!shouldQuote &&
              !RCompletionType.isFileType(qualifiedName.type) &&
-             !StringUtil.equals(qualifiedName.language, "Python"))
+             !StringUtil.equals(qualifiedName.language, "Python") &&
+             !StringUtil.equals(qualifiedName.language, "Julia"))
          {
             value = quoteIfNotSyntacticNameCompletion(qualifiedName);
          }
