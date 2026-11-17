@@ -24,6 +24,7 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FocusWidget;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
 
@@ -170,6 +171,25 @@ public class ToolbarKeyboardNavigationTests extends GWTTestCase
       d.setFocus(true);
       assertTabStops(new FocusWidget[] {a, b, field, c, d},
             new boolean[] {false, true, true, false, true});
+   }
+
+   // An empty contenteditable attribute makes an element editable too.
+   public void testContentEditableKeepsArrowKeys()
+   {
+      Toolbar toolbar = new Toolbar("Test");
+      Button a = button(toolbar, "a");
+      HTML editable = toolbar.addLeftWidget(new HTML());
+      editable.getElement().setAttribute("contenteditable", "");
+      editable.getElement().setTabIndex(0);
+      Button b = button(toolbar, "b");
+      Button c = button(toolbar, "c");
+      attach(toolbar);
+
+      Element el = editable.getElement();
+      el.focus();
+      press(el, KeyCodes.KEY_RIGHT, false);
+      assertEquals(el, DomUtils.getActiveElement());
+      assertTabStops(new FocusWidget[] {a, b, c}, new boolean[] {true, true, false});
    }
 
    public void testCheckBoxIsAnArrowItem()

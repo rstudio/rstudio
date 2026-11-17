@@ -337,7 +337,8 @@ class ToolbarKeyboardNavigation
          return true;
       if (tag.equals("input"))
          return !NON_TEXT_INPUT_TYPES.contains(el.getAttribute("type").toLowerCase());
-      return "true".equals(el.getAttribute("contenteditable"));
+      // Covers every editable form of the attribute: "", "true" and "plaintext-only".
+      return Js.isTruthy(Js.asPropertyMap(el).get("isContentEditable"));
    }
 
    private final Element root_;
@@ -346,7 +347,7 @@ class ToolbarKeyboardNavigation
    private final EventListener focusInListener_ = this::onFocusIn;
 
    private static final String CANDIDATES =
-         "button, input, select, textarea, a[href], [tabindex], [contenteditable=\"true\"]";
+         "button, input, select, textarea, a[href], [tabindex], [contenteditable]";
    private static final List<String> NON_TEXT_INPUT_TYPES = Arrays.asList(
          "button", "checkbox", "radio", "submit", "reset", "image", "color", "file");
    private static final String[] OBSERVED_ATTRIBUTES =
