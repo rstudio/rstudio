@@ -64,10 +64,8 @@ public class RegexUtil
    
    private static String WORD_CHARACTER = null;
    
-   // as the editor's modes take a chunk's start (see rmarkdown_highlight_rules.js):
-   // a fence can be longer than three backticks
    public static final Pattern RE_RMARKDOWN_CHUNK_BEGIN =
-         Pattern.create("^\\s*`{3,}\\s*\\{(.*?)\\}\\s*$", "");
+         Pattern.create("^\\s*```\\{(.*?)\\}\\s*$", "");
    
    public static final Pattern RE_RMARKDOWN_ENGINE_NAME =
          Pattern.create("^\\w+", "");

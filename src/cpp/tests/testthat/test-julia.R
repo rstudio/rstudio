@@ -74,8 +74,10 @@ test_that("completions and their help come from Julia", {
    skip_if(length(version) == 0L, "Julia's version can't be told")
    skip_if(numeric_version(version) < .rs.julia.minimumVersion, "Julia is older than the console supports")
 
-   # the test stops Julia when it's done; don't take a running session with it
+   # the test stops Julia when it's done; don't take a running session with it,
+   # whether the console's or one started through JuliaConnectoR directly
    skip_if(!is.null(.rs.julia.state$pid), "a Julia session is already running")
+   skip_if(!is.null(asNamespace("JuliaConnectoR")$pkgLocal$con), "a Julia session is already running")
 
    on.exit(.rs.julia.stop(), add = TRUE)
    .rs.julia.start()

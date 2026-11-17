@@ -7730,7 +7730,13 @@ public class TextEditingTarget implements
    // purpose: such chunks are typically meant to run in their own process.
    private String chunkConsoleLanguage(Scope scope)
    {
-      String engine = getEngineForRow(scope.getPreamble().getRow()).toLowerCase();
+      // the header parser knows three-backtick fences only; the editor takes
+      // longer ones for chunks too, and space before the brace
+      String header = primaryDisplay_.getLine(scope.getPreamble().getRow());
+      header = header.replaceFirst("^(\\s*)`{3,}\\s*\\{", "$1```{");
+
+      Map<String, String> options = RChunkHeaderParser.parse(header);
+      String engine = StringUtil.stringValue(options.get("engine")).toLowerCase();
       if (engine.equals("r"))
          return ConsoleLanguageTracker.LANGUAGE_R;
       else if (engine.equals("python"))
@@ -7819,19 +7825,11 @@ public class TextEditingTarget implements
                                            range.getStart().getColumn()),
                      true);
             }
-            // the chunk's language comes from its header, as a Quarto option
-            // atop its body isn't in the language's mode; but the header
-            // parser takes some headers (e.g. four-backtick fences) for R's
+            // the chunk's language comes from its header: a Quarto option
+            // atop its body isn't in the language's mode
             String language = chunkConsoleLanguage(chunk);
-            if (language == null || StringUtil.equals(language, ConsoleLanguageTracker.LANGUAGE_R))
-            {
-               if (DocumentMode.isPositionInPythonMode(primaryDisplay_, chunk.getBodyStart()))
-                  language = ConsoleLanguageTracker.LANGUAGE_PYTHON;
-               else if (DocumentMode.isPositionInJuliaMode(primaryDisplay_, chunk.getBodyStart()))
-                  language = ConsoleLanguageTracker.LANGUAGE_JULIA;
-               else
-                  language = ConsoleLanguageTracker.LANGUAGE_R;
-            }
+            if (language == null)
+               language = ConsoleLanguageTracker.LANGUAGE_R;
 
             if (!range.isEmpty())
             {
