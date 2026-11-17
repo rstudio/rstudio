@@ -18,6 +18,7 @@ import org.rstudio.core.client.dom.DomUtils;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.ui.Button;
@@ -292,6 +293,28 @@ public class ToolbarKeyboardNavigationTests extends GWTTestCase
       toolbar.setVisible(false);
 
       assertFalse(toolbar.focusFirstTabStop());
+   }
+
+   // Hiding the toolbar from outside, with visibility as with display, must not
+   // forget the button focused last.
+   public void testHidingToolbarKeepsLastFocused()
+   {
+      Toolbar toolbar = new Toolbar("Test");
+      button(toolbar, "a");
+      Button b = button(toolbar, "b");
+      FlowPanel container = new FlowPanel();
+      container.add(toolbar);
+      RootPanel.get().add(container);
+      b.setFocus(true);
+
+      // Any update while hidden, here the one focusFirstTabStop makes, must
+      // keep the remembered button.
+      container.getElement().getStyle().setVisibility(Visibility.HIDDEN);
+      toolbar.focusFirstTabStop();
+      container.getElement().getStyle().setVisibility(Visibility.VISIBLE);
+
+      assertTrue(toolbar.focusFirstTabStop());
+      assertFocused(b);
    }
 
    public void testFocusFirstTabStopReturnsToLastFocused()

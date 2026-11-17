@@ -91,16 +91,11 @@ class ToolbarKeyboardNavigation
 
    boolean focusFirstTabStop()
    {
-      updateTabStops(null);
-      for (Element item : getItems())
-      {
-         if (item.getTabIndex() == 0)
-         {
-            item.focus();
-            return DomUtils.hasFocus(item);
-         }
-      }
-      return false;
+      Element stop = updateTabStops(null);
+      if (stop == null)
+         return false;
+      stop.focus();
+      return DomUtils.hasFocus(stop);
    }
 
    private void onKeyDown(Event event)
@@ -206,8 +201,10 @@ class ToolbarKeyboardNavigation
 
    // Gives each group one Tab stop, on its last-focused item if that is still
    // an item, else on its first. A focused item becomes its group's stop.
-   private void updateTabStops(Element focused)
+   // Returns the first group's stop, or null if the toolbar has no items.
+   private Element updateTabStops(Element focused)
    {
+      Element firstStop = null;
       List<Element> items = getItems();
       for (List<Element> group : getGroups(items))
       {
@@ -219,6 +216,8 @@ class ToolbarKeyboardNavigation
          }
          if (stop == null)
             stop = group.get(0);
+         if (firstStop == null)
+            firstStop = stop;
 
          for (Element item : group)
          {
@@ -235,6 +234,7 @@ class ToolbarKeyboardNavigation
          if (!items.contains(marked.getItem(i)))
             marked.getItem(i).removeAttribute(LAST_FOCUSED);
       }
+      return firstStop;
    }
 
    // Writing an unchanged value would still notify the observer, which would
@@ -293,13 +293,15 @@ class ToolbarKeyboardNavigation
    private List<Element> getItems()
    {
       List<Element> items = new ArrayList<>();
+      boolean toolbarVisible =
+            !"hidden".equals(DomUtils.getComputedStyles(root_).getVisibility());
       NodeList<Element> candidates = DomUtils.querySelectorAll(root_, CANDIDATES);
       for (int i = 0; i < candidates.getLength(); i++)
       {
          Element el = candidates.getItem(i);
          if (el.getTabIndex() < 0 && !el.hasAttribute(MANAGED))
             continue;
-         if (el.hasAttribute("disabled") || !isDisplayed(el))
+         if (el.hasAttribute("disabled") || !isDisplayed(el, toolbarVisible))
             continue;
          items.add(el);
       }
@@ -317,10 +319,11 @@ class ToolbarKeyboardNavigation
    }
 
    // Checks display rather than size, so the answer doesn't change while the
-   // whole toolbar is hidden (as in a hidden pane).
-   private boolean isDisplayed(Element el)
+   // whole toolbar is hidden (as in a hidden pane). Visibility is inherited, so
+   // it counts only while the toolbar itself is visible.
+   private boolean isDisplayed(Element el, boolean toolbarVisible)
    {
-      if ("hidden".equals(DomUtils.getComputedStyles(el).getVisibility()))
+      if (toolbarVisible && "hidden".equals(DomUtils.getComputedStyles(el).getVisibility()))
          return false;
       for (Element e = el; e != null && e != root_; e = e.getParentElement())
       {
