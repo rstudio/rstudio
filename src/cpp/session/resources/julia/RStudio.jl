@@ -265,15 +265,25 @@ function documentation(name::AbstractString, source::AbstractString)
    if m !== nothing
       lines = split(chomp(m.captures[1]), '\n')
       if is_signature(lines[1], name)
-         signature = String(lines[1])
-         if length(lines) == 1
-            text = replace(text, m.match => ""; count = 1)
+         # the first signature, which can wrap over several lines
+         n = 1
+         while n < length(lines) && !balanced(join(lines[1:n]))
+            n += 1
+         end
+
+         if balanced(join(lines[1:n]))
+            signature = join(strip.(lines[1:n]), " ")
+            if n == length(lines)
+               text = replace(text, m.match => ""; count = 1)
+            end
          end
       end
    end
 
    return String[signature, text]
 end
+
+balanced(text) = count(==('('), text) == count(==(')'), text)
 
 # Does `line` show how `name` is used: called, or alone (as a keyword is)?
 function is_signature(line::AbstractString, name::String)

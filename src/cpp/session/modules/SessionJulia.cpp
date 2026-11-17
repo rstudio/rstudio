@@ -15,14 +15,24 @@
 
 #include "SessionJulia.hpp"
 
+#include <string>
+#include <vector>
+
 #include <boost/bind/bind.hpp>
 
 #include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
+
+#define R_NO_REMAP
+#include <Rinternals.h>
+
+// R's console read, as R's own REPL calls it (reticulate's REPL reads the same way)
+extern "C" int R_ReadConsole(const char*, unsigned char*, int, int);
 
 using namespace rstudio::core;
 
@@ -30,6 +40,33 @@ namespace rstudio {
 namespace session {
 namespace modules {
 namespace julia {
+
+namespace {
+
+// longer lines are truncated, with a warning (see RReadConsole)
+const int kReadConsoleBufferSize = 1 << 16;
+
+// Read a line of console input for the Julia REPL. Unlike readline(), this
+// keeps the line's leading and trailing whitespace, which can be part of a
+// Julia string, and adds the line to the console's history.
+SEXP rs_juliaReadConsole(SEXP promptSEXP)
+{
+   const char* prompt = Rf_translateChar(STRING_ELT(promptSEXP, 0));
+
+   // static: an interrupt longjmps out of the read, past any destructor here
+   static std::vector<unsigned char> buffer(kReadConsoleBufferSize, 0);
+   if (R_ReadConsole(prompt, &buffer[0], kReadConsoleBufferSize, 1) == 0)
+      return R_NilValue;
+
+   buffer[kReadConsoleBufferSize - 1] = '\0';
+   std::string line(reinterpret_cast<const char*>(&buffer[0]));
+   while (!line.empty() && (line.back() == '\n' || line.back() == '\r'))
+      line.pop_back();
+
+   return Rf_ScalarString(Rf_mkCharLenCE(line.c_str(), static_cast<int>(line.size()), CE_NATIVE));
+}
+
+} // anonymous namespace
 
 bool isReplActive()
 {
@@ -44,6 +81,8 @@ Error initialize()
 {
    using boost::bind;
    using namespace module_context;
+
+   RS_REGISTER_CALL_METHOD(rs_juliaReadConsole, 1);
 
    ExecBlock initBlock;
    initBlock.addFunctions()

@@ -62,6 +62,7 @@ public class JuliaFileType extends TextFileType
       juliaCommands.remove(commands.extractFunction());
       juliaCommands.remove(commands.extractLocalVariable());
       juliaCommands.remove(commands.reformatCode());
+      juliaCommands.remove(commands.reformatDocument());
       juliaCommands.remove(commands.renameInScope());
       juliaCommands.remove(commands.profileCode());
       juliaCommands.remove(commands.profileCodeWithoutFocus());

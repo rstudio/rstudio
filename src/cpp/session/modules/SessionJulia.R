@@ -188,7 +188,7 @@
 
    # the Julia REPL's continuation lines are indented under 'julia> '
    prompt <- if (continuing) "       " else "julia> "
-   contents <- readline(prompt)
+   contents <- .rs.julia.readConsole(prompt)
    trimmed <- .rs.trimWhitespace(contents)
 
    if (!continuing)
@@ -219,6 +219,24 @@
    state$buffer <- character()
    .rs.julia.evaluate(code, "julia")
    ""
+})
+
+#' Read a Line of Julia Input
+#'
+#' Unlike readline(), this keeps the line's leading and trailing whitespace,
+#' which can be part of a Julia string, and adds the line to the console's
+#' history, as R's own REPL does.
+#'
+#' @param prompt The prompt to show.
+#'
+#' @return The line, without its newline.
+.rs.addFunction("julia.readConsole", function(prompt)
+{
+   contents <- .Call("rs_juliaReadConsole", prompt, PACKAGE = "(embedding)")
+   if (is.null(contents))
+      return("")
+
+   contents
 })
 
 #' Julia REPL Mode of an Input Line
@@ -356,7 +374,7 @@
       error = function(e) NULL
    )
 
-   if (!is.character(result) || length(result) != 2L || !nzchar(result[[2L]]))
+   if (!is.character(result) || length(result) != 2L || !any(nzchar(result)))
       return(NULL)
 
    # the popup heads the help with the signature, or else the title; a
@@ -405,7 +423,9 @@
       error = function(e) {
          if (!connected)
             stop(e)
-         .rs.julia.stop()
+
+         # the connection is broken; Julia has likely gone with it
+         .rs.julia.stop(kill = FALSE)
          .rs.julia.isLoaded()
       }
    )
@@ -848,7 +868,11 @@
 #' Stop Julia
 #'
 #' Ends the Julia process; the next use of Julia starts a new one.
-.rs.addFunction("julia.stop", function()
+#'
+#' @param kill Whether to kill the process too, as a busy Julia won't notice
+#'   its connection closing. Only for a Julia known to be running: once it
+#'   has gone, its process ID may belong to another process.
+.rs.addFunction("julia.stop", function(kill = TRUE)
 {
    state <- .rs.julia.state
    pid <- state$pid
@@ -856,11 +880,10 @@
    state$partial <- list()
    .rs.julia.debug("stopping Julia (pid %s)", if (is.null(pid)) "unknown" else pid)
 
-   # closes the connection; a busy Julia won't notice, hence the kill
    if (requireNamespace("JuliaConnectoR", quietly = TRUE))
       tryCatch(JuliaConnectoR::stopJulia(), error = function(e) NULL)
 
-   if (!is.null(pid))
+   if (kill && !is.null(pid))
       tools::pskill(pid, tools::SIGKILL)
 
    invisible(NULL)
@@ -869,6 +892,6 @@
 .rs.addFunction("julia.onConnectionLost", function(reason = "Julia closed the connection")
 {
    .rs.julia.debug("connection lost: %s", reason)
-   .rs.julia.stop()
+   .rs.julia.stop(kill = FALSE)
    stop(sprintf("The Julia session ended (%s).", reason), call. = FALSE)
 })

@@ -282,9 +282,7 @@ public class EditingTargetCodeExecution
    {
       String code = codeExtractor_.extractCode(docDisplay_, range);
       String language = "R";
-     
-      setLastExecuted(range.getStart(), range.getEnd());
-      
+
       // trim intelligently (don't trim blank lines for Python
       // since those lines could signal the end of a block)
       if (DocumentMode.isSelectionInPythonMode(docDisplay_))
@@ -297,7 +295,9 @@ public class EditingTargetCodeExecution
          if (DocumentMode.isSelectionInJuliaMode(docDisplay_))
             language = ConsoleLanguageTracker.LANGUAGE_JULIA;
       }
-      
+
+      setLastExecuted(range.getStart(), range.getEnd(), language);
+
       // strip roxygen off the beginning of lines
       if (isRoxygenExampleRange(range))
       {
@@ -449,7 +449,7 @@ public class EditingTargetCodeExecution
 
             if (scope == null)
             {
-               events_.fireEvent(new SendToConsoleEvent(code, true));
+               events_.fireEvent(new SendToConsoleEvent(code, lastExecutedLanguage_, true));
             }
             else
             {
@@ -462,8 +462,15 @@ public class EditingTargetCodeExecution
    
    public void setLastExecuted(Position start, Position end)
    {
+      setLastExecuted(start, end, "R");
+   }
+
+   // 'language' is the one the code ran in, for Re-Run Previous to use again
+   public void setLastExecuted(Position start, Position end, String language)
+   {
       detachLastExecuted();
       lastExecutedCode_ = docDisplay_.createAnchoredSelection(start, end);
+      lastExecutedLanguage_ = language;
    }
 
    public void detachLastExecuted()
@@ -588,6 +595,7 @@ public class EditingTargetCodeExecution
    
    private boolean appendLinesAtEnd_;
    private AnchoredSelection lastExecutedCode_;
+   private String lastExecutedLanguage_ = "R";
    
    // Injected ----
    private EventBus events_;

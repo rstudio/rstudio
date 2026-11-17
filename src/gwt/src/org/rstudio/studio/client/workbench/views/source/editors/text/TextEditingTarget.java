@@ -7819,9 +7819,15 @@ public class TextEditingTarget implements
                                            range.getStart().getColumn()),
                      true);
             }
+            // the chunk's language comes from its header: a Quarto option
+            // atop its body isn't in the language's mode
+            String language = chunkConsoleLanguage(chunk);
+            if (language == null)
+               language = ConsoleLanguageTracker.LANGUAGE_R;
+
             if (!range.isEmpty())
             {
-               codeExecution.setLastExecuted(range.getStart(), range.getEnd());
+               codeExecution.setLastExecuted(range.getStart(), range.getEnd(), language);
             }
             if (fileType_.isRmd() &&
                 primaryDisplay_.showChunkOutputInline())
@@ -7833,18 +7839,8 @@ public class TextEditingTarget implements
             else if (!range.isEmpty())
             {
                String code = scopeHelper_.getSweaveChunkText(chunk);
-
-               // compute the language for this chunk
-               String language = "R";
-               if (DocumentMode.isPositionInPythonMode(primaryDisplay_, chunk.getBodyStart()))
-               {
-                  language = "Python";
+               if (StringUtil.equals(language, ConsoleLanguageTracker.LANGUAGE_PYTHON))
                   code = closePythonBlock(code);
-               }
-               else if (DocumentMode.isPositionInJuliaMode(primaryDisplay_, chunk.getBodyStart()))
-               {
-                  language = ConsoleLanguageTracker.LANGUAGE_JULIA;
-               }
 
                events_.fireEvent(new SendToConsoleEvent(code, language, true));
             }
