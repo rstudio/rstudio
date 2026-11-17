@@ -73,9 +73,6 @@ class ToolbarKeyboardNavigation
       elemental2.dom.Element root = Js.uncheckedCast(root_);
       root.removeEventListener("keydown", keyDownListener_);
       root.removeEventListener("focusin", focusInListener_);
-
-      // Handle what changed since the last callback; disconnecting discards it.
-      onMutations(observer_.takeRecords(), observer_);
       observer_.disconnect();
    }
 
@@ -154,6 +151,8 @@ class ToolbarKeyboardNavigation
             itemsMayHaveChanged = true;
 
          // A widget moved out of the toolbar must not stay out of the Tab order.
+         // That holds only while the toolbar is loaded: nothing observes it
+         // once detach() disconnects, and no caller moves a widget out then.
          for (int i = 0; i < record.removedNodes.length; i++)
          {
             Node node = record.removedNodes.item(i);
