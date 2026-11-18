@@ -148,12 +148,10 @@ std::string translate(SEXP charSEXP)
 
 // strings created for R are marked UTF-8, the encoding C++ strings are in.
 // marked native, R would misread non-ASCII text wherever the native encoding
-// is not UTF-8 (e.g. Windows with R < 4.2). the length is passed so that R
-// raises its error on an embedded nul, rather than R seeing a shorter string
-// than the one C++ code (or a check upstream) worked with
+// is not UTF-8 (e.g. Windows with R < 4.2)
 SEXP mkCharUtf8(const std::string& value)
 {
-   return Rf_mkCharLenCE(value.c_str(), static_cast<int>(value.size()), CE_UTF8);
+   return Rf_mkCharCE(value.c_str(), CE_UTF8);
 }
 
 bool hasNul(const std::string& value)
@@ -1422,7 +1420,9 @@ SEXP create(const std::string& value, Protect* pProtect)
    pProtect->add(strSEXP = Rf_allocVector(STRSXP, 1));
 
    // protection not required as long as we immediately assign into protected STRSXP
-   SET_STRING_ELT(strSEXP, 0, mkCharUtf8(value));
+   int size = static_cast<int>(value.size());
+   SEXP charSEXP = Rf_mkCharLenCE(value.c_str(), size, CE_UTF8);
+   SET_STRING_ELT(strSEXP, 0, charSEXP);
    return strSEXP;
 }
 

@@ -393,10 +393,21 @@ TEST(SessionRTest, RFunctionRefusesStringsWithEmbeddedNul) {
    json::Value jsonName;
    ASSERT_FALSE(jsonName.parse(R"({"y": "ok", "a\u0000b": "x"})"));
 
+   // the fixtures are built here, not in the protected callbacks below, so
+   // that an R error escaping a callback can't skip their destructors
    r::sexp::Protect protect;
    r::sexp::ListBuilder builder(&protect);
    builder.add("y", 1);
    builder.add(nul, 2);
+
+   std::vector<std::string> vector = { "ok", nul };
+   std::set<std::string> set = { nul };
+   std::vector<std::pair<std::string, std::string>> pairs = { { "y", "ok" }, { "x", nul } };
+   std::map<std::string, std::string> map = { { nul, "x" } };
+   std::map<std::string, std::vector<std::string>> mapOfVectors = { { "x", { "ok", nul } } };
+   std::map<std::string, SEXP> mapOfSEXPs = { { nul, R_NilValue } };
+   YAML::Node yamlMap = YAML::Load("x: \"a\\0b\"");
+   YAML::Node yamlSequence = YAML::Load("[\"ok\", \"a\\0b\"]");
 
    typedef std::function<void(r::exec::RFunction*)> AddParams;
    std::vector<std::pair<std::string, AddParams>> cases = {
@@ -406,13 +417,17 @@ TEST(SessionRTest, RFunctionRefusesStringsWithEmbeddedNul) {
       { "SEXP name", [&](r::exec::RFunction* pFunction) { pFunction->addParam(nul, R_NilValue); } },
       { "quoted name", [&](r::exec::RFunction* pFunction) { pFunction->addQuotedParam(nul, R_NilValue); } },
       { "after a valid param", [&](r::exec::RFunction* pFunction) { pFunction->addParam("ok").addParam(nul); } },
-      { "vector", [&](r::exec::RFunction* pFunction) { pFunction->addParam(std::vector<std::string>({ "ok", nul })); } },
-      { "set", [&](r::exec::RFunction* pFunction) { pFunction->addParam(std::set<std::string>({ nul })); } },
-      { "map name", [&](r::exec::RFunction* pFunction) { pFunction->addParam(std::map<std::string, std::string>({ { nul, "x" } })); } },
+      { "vector", [&](r::exec::RFunction* pFunction) { pFunction->addParam(vector); } },
+      { "set", [&](r::exec::RFunction* pFunction) { pFunction->addParam(set); } },
+      { "pairs", [&](r::exec::RFunction* pFunction) { pFunction->addParam(pairs); } },
+      { "map name", [&](r::exec::RFunction* pFunction) { pFunction->addParam(map); } },
+      { "map of vectors", [&](r::exec::RFunction* pFunction) { pFunction->addParam(mapOfVectors); } },
+      { "map of SEXPs", [&](r::exec::RFunction* pFunction) { pFunction->addParam(mapOfSEXPs); } },
       { "json value", [&](r::exec::RFunction* pFunction) { pFunction->addParam(jsonValue); } },
       { "json name", [&](r::exec::RFunction* pFunction) { pFunction->addParam(jsonName); } },
       { "list builder name", [&](r::exec::RFunction* pFunction) { pFunction->addParam(builder); } },
-      { "yaml", [&](r::exec::RFunction* pFunction) { pFunction->addParam(YAML::Load("x: \"a\\0b\"")); } },
+      { "yaml map", [&](r::exec::RFunction* pFunction) { pFunction->addParam(yamlMap); } },
+      { "yaml sequence", [&](r::exec::RFunction* pFunction) { pFunction->addParam(yamlSequence); } },
    };
 
    for (const auto& testCase : cases)
@@ -438,51 +453,29 @@ TEST(SessionRTest, RFunctionRefusesStringsWithEmbeddedNul) {
    builderOk.add("y", 1);
    builderOk.add("ab", 2);
 
-   SEXP resultSEXP = R_NilValue;
+   std::vector<std::string> vectorOk = { "ok", "ab" };
+   YAML::Node yamlOk = YAML::Load("[\"ok\", \"ab\"]");
+
+   // the result is protected within the callback, which R would unwind on an
+   // error; a Protect from outside would be left unprotecting the wrong objects
+   int length = 0;
    Error callError;
    Error error = r::exec::executeSafely([&]()
    {
+      r::sexp::Protect callProtect;
+      SEXP resultSEXP = R_NilValue;
       callError = r::exec::RFunction("base:::list")
             .addParam("ok")
-            .addParam("x", std::vector<std::string>({ "ok", "ab" }))
+            .addParam("x", vectorOk)
             .addParam(jsonOk)
             .addParam(builderOk)
-            .addParam(YAML::Load("x: \"ab\""))
-            .call(&resultSEXP, &protect);
+            .addParam(yamlOk)
+            .call(&resultSEXP, &callProtect);
+      length = r::sexp::length(resultSEXP);
    });
    ASSERT_FALSE(error) << error.asString();
    ASSERT_FALSE(callError) << callError.asString();
-   EXPECT_EQ(5, r::sexp::length(resultSEXP));
-}
-
-TEST(SessionRTest, CreateRaisesOnEmbeddedNul) {
-   // every string create() builds raises R's error on an embedded nul, as R
-   // does, rather than R seeing the string cut off at the nul
-   std::string nul("a\0b", 3);
-
-   json::Value jsonName;
-   ASSERT_FALSE(jsonName.parse(R"({"a\u0000b": "x"})"));
-
-   typedef std::function<void(r::sexp::Protect*)> Create;
-   std::vector<std::pair<std::string, Create>> cases = {
-      { "string", [&](r::sexp::Protect* pProtect) { r::sexp::create(nul, pProtect); } },
-      { "vector", [&](r::sexp::Protect* pProtect) { r::sexp::create(std::vector<std::string>({ "ok", nul }), pProtect); } },
-      { "set", [&](r::sexp::Protect* pProtect) { r::sexp::create(std::set<std::string>({ nul }), pProtect); } },
-      { "map value", [&](r::sexp::Protect* pProtect) { r::sexp::create(std::map<std::string, std::string>({ { "x", nul } }), pProtect); } },
-      { "map name", [&](r::sexp::Protect* pProtect) { r::sexp::create(std::map<std::string, std::string>({ { nul, "x" } }), pProtect); } },
-      { "json name", [&](r::sexp::Protect* pProtect) { r::sexp::create(jsonName, pProtect); } },
-   };
-
-   for (const auto& testCase : cases)
-   {
-      // the R error is caught here, where it can't escape the test
-      Error error = r::exec::executeSafely([&]()
-      {
-         r::sexp::Protect protect;
-         testCase.second(&protect);
-      });
-      EXPECT_TRUE(error) << testCase.first;
-   }
+   EXPECT_EQ(5, length);
 }
 
 #ifndef _WIN32
