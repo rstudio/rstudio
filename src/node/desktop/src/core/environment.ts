@@ -17,6 +17,19 @@ import process from 'process';
 
 export type Environment = Record<string, string>;
 
+// As RStudio was launched, before startup prepared the environment for its
+// R sessions (R_HOME, the library path, PATH, RSTUDIO_WHICH_R, ...).
+const kLaunchEnvironment: NodeJS.ProcessEnv = { ...process.env };
+
+/**
+ * A copy of the environment RStudio was launched with, for launching another
+ * instance: one that inherited what startup prepared for this instance's R
+ * would take it as the user's own, and mix it into its own R's.
+ */
+export function launchEnvironment(): NodeJS.ProcessEnv {
+  return { ...kLaunchEnvironment };
+}
+
 /**
  * Get value of process environment variable; returns empty string it not found.
  */

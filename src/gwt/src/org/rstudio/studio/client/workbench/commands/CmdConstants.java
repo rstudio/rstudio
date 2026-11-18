@@ -2480,6 +2480,14 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Restart R session and run all chunks") // $NON-NLS-1$
     String restartRRunAllChunksDesc();
     
+    // switchRVersion
+    @DefaultStringValue("Switch R Version") // $NON-NLS-1$
+    String switchRVersionLabel();
+    @DefaultStringValue("Switch R _Version...") // $NON-NLS-1$
+    String switchRVersionMenuLabel();
+    @DefaultStringValue("Restart the R session with another installed version of R") // $NON-NLS-1$
+    String switchRVersionDesc();
+    
     // terminateR
     @DefaultStringValue("Terminate R Session") // $NON-NLS-1$
     String terminateRLabel();

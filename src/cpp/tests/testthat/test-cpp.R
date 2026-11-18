@@ -282,12 +282,17 @@ test_that("problems with compile_flags.txt are reported, not swallowed", {
     expect_match(diagnostics[[1]]$message, "unknown warning option")
     expect_equal(diagnostics[[1]]$position$line, 1)
 
-    # the wording depends on the libclang: libclang 18 on Linux calls this an
-    # "unsupported option", Apple's and newer ones an "unknown argument"
+    # a flag that isn't allowed never reaches libclang; we report it ourselves
     diagnostics <- lint("--bogus-flag")
     expect_length(diagnostics, 1L)
-    expect_match(diagnostics[[1]]$message, "unknown argument|unsupported option")
-    expect_match(diagnostics[[1]]$message, "--bogus-flag", fixed = TRUE)
+    expect_match(diagnostics[[1]]$message, "'--bogus-flag' in .*compile_flags.txt was ignored")
+    expect_equal(diagnostics[[1]]$position$line, 1)
+    expect_equal(diagnostics[[1]]$severity, 2)
+
+    # a supported option is told apart from an unsupported one
+    diagnostics <- lint("-D")
+    expect_length(diagnostics, 1L)
+    expect_match(diagnostics[[1]]$message, "was ignored; '-D' needs a value", fixed = TRUE)
 
     # a bad value is quoted apart from its option, which the parse still survives
     diagnostics <- lint("-fsanitize=bogus")
@@ -300,4 +305,52 @@ test_that("problems with compile_flags.txt are reported, not swallowed", {
     expect_length(diagnostics, 1L)
     expect_match(diagnostics[[1]]$message, "check the flags in .*compile_flags.txt")
     expect_equal(diagnostics[[1]]$severity, 3)
+})
+
+test_that("compile_flags.txt flags that aren't allowed are dropped, and the rest kept", {
+    skip_if_not_installed("Rcpp")
+    skip_if_not(.rs.isClangAvailable())
+
+    op <- options(rstudio.libclang.usePrecompiledHeaders = FALSE)
+    on.exit(options(op), add = TRUE)
+
+    dir <- tempfile("cpp-dropped-flags-")
+    dir.create(dir)
+    on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+
+    path <- file.path(dir, "ok.cpp")
+    writeLines(c(
+        "#include <Rcpp.h>",
+        "#ifndef FROM_FLAGS",
+        "#error FROM_FLAGS is not defined",
+        "#endif"
+    ), path)
+
+    # passed on, '-Xclang -load' would make libclang try to load the plugin
+    flags <- c("-Xclang", "-load", "-Xclang", "plugin.so", "-DFROM_FLAGS", "-o", "out.o")
+    writeLines(flags, file.path(dir, "compile_flags.txt"))
+    diagnostics <- .rs.invokeRpc("get_cpp_diagnostics", path)
+
+    messages <- vapply(diagnostics, `[[`, "", "message")
+    expect_length(messages, 4L)
+    expect_match(messages, "was ignored", all = TRUE)
+    expect_match(messages[[3]], "'-Xclang plugin.so'", fixed = TRUE)
+    expect_match(messages[[4]], "'-o out.o'", fixed = TRUE)
+    expect_equal(vapply(diagnostics, `[[`, 0, "severity"), rep(2, 4))
+})
+
+test_that("compile_flags.txt problems aren't reported on files that aren't indexed", {
+    skip_if_not(.rs.isClangAvailable())
+
+    dir <- tempfile("cpp-unindexed-")
+    dir.create(dir)
+    on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+
+    # no Rcpp and no package, so no compile args, and the flags never apply
+    path <- file.path(dir, "plain.cpp")
+    writeLines("int f() { return 1; }", path)
+    writeLines(c("-o", "out.o", "-std=c++99"), file.path(dir, "compile_flags.txt"))
+
+    diagnostics <- .rs.invokeRpc("get_cpp_diagnostics", path)
+    expect_length(diagnostics, 0L)
 })

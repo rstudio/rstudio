@@ -108,3 +108,10 @@ tr .rightRight {
 .rstudio-themes-alternate .leftOn .rightRight {
    background: THEME_ALTERNATE_BACKGROUND;
 }
+
+/* Dims the whole toggle, cell backgrounds included; pointer-events also
+   keeps clicks on the cells' padding from reaching the click handlers. */
+.disabled {
+   opacity: 0.4;
+   pointer-events: none;
+}

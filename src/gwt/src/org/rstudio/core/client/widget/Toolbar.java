@@ -245,6 +245,33 @@ public class Toolbar extends ResizeComposite implements HasResizeHandlers
       initWidget(toolbarWrapper_);
 
       setStyleName(styles_.rstheme_toolbarWrapper());
+
+      keyboardNavigation_ = new ToolbarKeyboardNavigation(toolbarWrapper_.getElement());
+   }
+
+   @Override
+   protected void onLoad()
+   {
+      super.onLoad();
+      keyboardNavigation_.attach();
+   }
+
+   @Override
+   protected void onUnload()
+   {
+      keyboardNavigation_.detach();
+      super.onUnload();
+   }
+
+   /**
+    * Focus the toolbar's first Tab stop: a text field if the toolbar starts
+    * with one, else the item focused last in its first group of items.
+    *
+    * @return Whether focus moved there; false if the toolbar is hidden or empty
+    */
+   public boolean focusFirstTabStop()
+   {
+      return keyboardNavigation_.focusFirstTabStop();
    }
 
    protected void manageSeparators()
@@ -273,6 +300,7 @@ public class Toolbar extends ResizeComposite implements HasResizeHandlers
    
    public <TWidget extends Widget> TWidget addLeftWidget(TWidget widget)
    {
+      ToolbarKeyboardNavigation.markWidget(widget.getElement());
       leftToolbarPanel_.add(widget);
       invalidateSeparators();
       return widget;
@@ -291,6 +319,7 @@ public class Toolbar extends ResizeComposite implements HasResizeHandlers
    public <TWidget extends Widget> TWidget insertWidget(TWidget widget, TWidget beforeWidget)
    {
       int beforeIndex = leftToolbarPanel_.getWidgetIndex(beforeWidget);
+      ToolbarKeyboardNavigation.markWidget(widget.getElement());
       leftToolbarPanel_.insert(widget, beforeIndex);
       invalidateSeparators();
       return widget;
@@ -364,6 +393,7 @@ public class Toolbar extends ResizeComposite implements HasResizeHandlers
    
    public <TWidget extends Widget> TWidget addRightWidget(TWidget widget)
    {
+      ToolbarKeyboardNavigation.markWidget(widget.getElement());
       rightToolbarPanel_.add(widget);
       invalidateSeparators();
       return widget;
@@ -478,6 +508,7 @@ public class Toolbar extends ResizeComposite implements HasResizeHandlers
    private HorizontalPanel leftToolbarPanel_;
    private HorizontalPanel rightToolbarPanel_;
    private SimpleLayoutPanel toolbarWrapper_;
+   private final ToolbarKeyboardNavigation keyboardNavigation_;
    private final HandlerManager handlers_ = new HandlerManager(this);
    protected final ThemeStyles styles_ = ThemeResources.INSTANCE.themeStyles();
    private boolean separatorsInvalidated_ = false;

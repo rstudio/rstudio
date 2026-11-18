@@ -205,11 +205,15 @@ public class UserStateAccessor extends Prefs
       protected Platform() {} 
 
       public final native JavaScriptObject getWindows() /*-{
-         return this && this.windows || {"useDefault32BitR":false,"useDefault64BitR":true,"rBinDir":"","preferR64":true,"rExecutablePath":""};
+         return this && this.windows || {"useDefault32BitR":false,"useDefault64BitR":true,"rBinDir":"","preferR64":true,"rExecutablePath":"","rstudioWhichRWhenChosen":""};
       }-*/;
 
       public final native JavaScriptObject getMacos() /*-{
-         return this && this.macos || {"defaultFileHandlerPrompted":false};
+         return this && this.macos || {"defaultFileHandlerPrompted":false,"rExecutablePath":"","rstudioWhichRWhenChosen":""};
+      }-*/;
+
+      public final native JavaScriptObject getLinux() /*-{
+         return this && this.linux || {"rExecutablePath":"","rstudioWhichRWhenChosen":""};
       }-*/;
 
    }
