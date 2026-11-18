@@ -4409,9 +4409,6 @@ Error installPackage(const FilePath& packagePath,
    DLOG("Extracting package {} to {}",
         packagePath.getAbsolutePath(), stagingDir.getAbsolutePath());
 
-   // FilePath strings are UTF-8, but addParam() marks them native. Under R < 4.2
-   // on Windows, native is the system code page, so a non-ASCII path (a user
-   // name such as José) would name a different directory in R than here.
    r::exec::RFunction extract(".rs.chat.extractPackage");
    extract.addParam("zipfile", packagePath);
    extract.addParam("exdir", stagingDir);

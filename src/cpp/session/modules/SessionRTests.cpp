@@ -276,10 +276,17 @@ TEST(SessionRTest, StringsReachRMarkedUtf8) {
    ASSERT_FALSE(error);
    EXPECT_EQ("UTF-8", encoding);
 
+   FilePath filePath(value);
+
    encoding.clear();
-   error = r::exec::RFunction("base:::Encoding", FilePath(value)).call(&encoding);
+   error = r::exec::RFunction("base:::Encoding", filePath).call(&encoding);
    ASSERT_FALSE(error);
    EXPECT_EQ("UTF-8", encoding);
+
+   std::string path;
+   error = r::exec::RFunction("base:::identity", filePath).call(&path);
+   ASSERT_FALSE(error);
+   EXPECT_EQ(filePath.getAbsolutePath(), path);
 
    std::vector<std::string> encodings;
    std::vector<std::string> values = { value, value };
