@@ -247,7 +247,14 @@ void onDetectChanges(module_context::ChangeSource source)
       if (envir == R_EmptyEnv)
          continue;
 
-      SEXP symbol = Rf_install(CHAR(STRING_ELT(name, 0)));
+      // the name is the View() title, which can be any string; R raises an
+      // error making a symbol from one that's empty or too long, and no
+      // binding could have such a name
+      const char* nameChars = CHAR(STRING_ELT(name, 0));
+      if (!r::sexp::isSymbolName(nameChars))
+         continue;
+
+      SEXP symbol = Rf_install(nameChars);
       SEXP newObject = r::sexp::findVarInFrame(envir, symbol);
 
       // no object of that name, don't update

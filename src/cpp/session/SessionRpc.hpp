@@ -36,6 +36,15 @@ void handleRpcRequest(const core::json::JsonRpcRequest& request,
                       boost::shared_ptr<HttpConnection> ptrConnection,
                       http_methods::ConnectionType connectionType);
 
+// runs an RPC handler so that an R error escaping it -- raised by R code it
+// ran unprotected -- ends here rather than longjmping past the request, which
+// would leave the request unanswered; unless the handler had responded, it is
+// then completed with the error. the jump still skips the handler's own C++
+// destructors, so this is a backstop, not a substitute for protected R code
+void invokeRpcHandler(const core::json::JsonRpcAsyncFunction& handler,
+                      const core::json::JsonRpcRequest& request,
+                      const core::json::JsonRpcFunctionContinuation& continuation);
+
 void setRpcDelay(int delayMs);
 
 core::Error initialize();

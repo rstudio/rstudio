@@ -423,6 +423,16 @@ private:
       // chunk-specific options
       json::Object chunkOptions;
       Error optionsError = unit->parseOptions(&chunkOptions);
+
+      // R can't take code containing a nul character, so the options of a
+      // chunk with one can't be read, and the chunk would run with R (the
+      // default engine) whatever its own engine is. run an error in R instead
+      if (optionsError && r::sexp::containsNul(unit->code()))
+      {
+         unit->replaceCode("stop('This chunk contains a nul character, which R does not support.', call. = FALSE)\n");
+         optionsError = Success();
+      }
+
       ChunkOptions options(docQueue->defaultChunkOptions(), chunkOptions);
 
       // establish execution context for the unit

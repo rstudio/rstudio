@@ -13,7 +13,10 @@
  *
  */
 
+#include <exception>
 #include <string>
+
+#include <boost/make_shared.hpp>
 
 #include "SessionRpc.hpp"
 #include "SessionHttpMethods.hpp"
@@ -187,6 +190,70 @@ void registerRpcMethod(const core::json::JsonRpcAsyncMethod& method)
 
 namespace rpc {
 
+namespace {
+
+struct RpcHandlerInvocation
+{
+   const json::JsonRpcAsyncFunction* pHandler;
+   const json::JsonRpcRequest* pRequest;
+   json::JsonRpcFunctionContinuation continuation;
+
+   // a C++ exception must not unwind through R_ToplevelExec(), which would
+   // leave R's context stack pointing at its frame; it's rethrown after
+   std::exception_ptr exception;
+};
+
+void invokeRpcHandlerImpl(void* data)
+{
+   RpcHandlerInvocation* pInvocation = static_cast<RpcHandlerInvocation*>(data);
+   try
+   {
+      (*pInvocation->pHandler)(*pInvocation->pRequest, pInvocation->continuation);
+   }
+   catch (...)
+   {
+      pInvocation->exception = std::current_exception();
+   }
+}
+
+void recordResponse(boost::shared_ptr<bool> pResponded,
+                    const json::JsonRpcFunctionContinuation& continuation,
+                    const Error& error,
+                    json::JsonRpcResponse* pResponse)
+{
+   *pResponded = true;
+   continuation(error, pResponse);
+}
+
+} // anonymous namespace
+
+void invokeRpcHandler(const json::JsonRpcAsyncFunction& handler,
+                      const json::JsonRpcRequest& request,
+                      const json::JsonRpcFunctionContinuation& continuation)
+{
+   // an async handler may respond after this returns, so the flag is shared
+   boost::shared_ptr<bool> pResponded = boost::make_shared<bool>(false);
+   RpcHandlerInvocation invocation = {
+      &handler,
+      &request,
+      boost::bind(recordResponse, pResponded, continuation, _1, _2),
+      nullptr
+   };
+
+   Rboolean completed = R_ToplevelExec(invokeRpcHandlerImpl, &invocation);
+   if (invocation.exception)
+      std::rethrow_exception(invocation.exception);
+
+   if (completed || *pResponded)
+      return;
+
+   Error error = r::rCodeExecutionError(
+            "R error while handling '" + request.method + "': " + r::exec::getErrorMessage(),
+            ERROR_LOCATION);
+   json::JsonRpcResponse response;
+   continuation(error, &response);
+}
+
 void formatRpcRequest(SEXP name,
                       SEXP args,
                       core::json::JsonRpcRequest* pRequest)
@@ -313,22 +380,24 @@ void handleRpcRequest(const core::json::JsonRpcRequest& request,
       {
          boost::shared_ptr<rpc::AsyncRpcConnection> asyncConn =
                  boost::static_pointer_cast<rpc::AsyncRpcConnection>(ptrConnection);
-         handlerFunction(request,
-                         boost::bind(endHandleRpcRequestIndirect,
-                                     asyncConn->asyncHandle(),
-                                     _1,
-                                     _2));
+         invokeRpcHandler(handlerFunction,
+                          request,
+                          boost::bind(endHandleRpcRequestIndirect,
+                                      asyncConn->asyncHandle(),
+                                      _1,
+                                      _2));
       }
       // Sync rpc
       else if (reg.first)
       {
          // direct return
-         handlerFunction(request,
-                         boost::bind(endHandleRpcRequestDirect,
-                                     ptrConnection,
-                                     executeStartTime,
-                                     _1,
-                                     _2));
+         invokeRpcHandler(handlerFunction,
+                          request,
+                          boost::bind(endHandleRpcRequestDirect,
+                                      ptrConnection,
+                                      executeStartTime,
+                                      _1,
+                                      _2));
       }
       // registerAsyncRpc - http connection is still open, send the async response, then emit the event
       else
@@ -336,11 +405,12 @@ void handleRpcRequest(const core::json::JsonRpcRequest& request,
          std::string asyncHandle = core::system::generateUuid(true);
          sendJsonAsyncPendingResponse(request, ptrConnection, asyncHandle);
 
-         handlerFunction(request,
-                         boost::bind(endHandleRpcRequestIndirect,
-                                     asyncHandle,
-                                     _1,
-                                     _2));
+         invokeRpcHandler(handlerFunction,
+                          request,
+                          boost::bind(endHandleRpcRequestIndirect,
+                                      asyncHandle,
+                                      _1,
+                                      _2));
       }
    }
    else

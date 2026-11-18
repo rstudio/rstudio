@@ -56,9 +56,6 @@ namespace exec {
 
 namespace {
 
-// R's limit on the length of a symbol name (MAXIDSIZE, which R doesn't export)
-const std::size_t kMaxSymbolNameBytes = 10000;
-
 // was the R session interrupted?
 std::atomic<bool> s_wasInterrupted(false);
 
@@ -142,6 +139,16 @@ void parseStringImpl(void* data)
 
 Error parseString(const std::string& code, SEXP* pSEXP, sexp::Protect* pProtect)
 {
+   // R would raise an error making a string with an embedded nul, before the
+   // parse below runs protected; R code can't contain one in any case
+   if (sexp::containsNul(code))
+   {
+      Error error(errc::ExpressionParsingError, ERROR_LOCATION);
+      error.addProperty("code", code);
+      error.addProperty("reason", "code contains an embedded nul");
+      return error;
+   }
+
    // string to parse
    SEXP codeSEXP = sexp::create(code, pProtect);
 
@@ -480,8 +487,8 @@ bool RFunction::acceptParam(const std::string& name, bool valueContainsNul)
    // a nul and raises an R error if it's longer than R's limit on symbol names
    if (valueContainsNul || name.find('\0') != std::string::npos)
       paramProblem_ = "a string with an embedded nul";
-   else if (name.size() > kMaxSymbolNameBytes)
-      paramProblem_ = "a parameter name longer than " + std::to_string(kMaxSymbolNameBytes) + " bytes";
+   else if (name.size() > sexp::kMaxSymbolNameBytes)
+      paramProblem_ = "a parameter name longer than " + std::to_string(sexp::kMaxSymbolNameBytes) + " bytes";
    else
       return true;
 

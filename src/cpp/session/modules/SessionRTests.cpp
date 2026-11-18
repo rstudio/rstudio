@@ -39,6 +39,8 @@
 #include <r/RInterface.hpp>
 #include <r/RUtil.hpp>
 
+#include "../SessionRpc.hpp"
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -581,6 +583,243 @@ TEST(SessionRTest, RFunctionRefusesStringsWithEmbeddedNul) {
    ASSERT_FALSE(error) << error.asString();
    ASSERT_FALSE(callError) << callError.asString();
    EXPECT_EQ(5, length);
+}
+
+TEST(SessionRTest, LookupsTreatNamesRCantInstallAsUnbound) {
+   // R raises an error making a symbol from an empty name or one over 10000
+   // bytes, and cuts a name off at a nul; a lookup by such a name, as the
+   // linter makes for a long string it reads as a call, must find nothing
+   // rather than longjmp, or look up the name before the nul
+   Error error = r::exec::executeString(R"EOF(
+      assign(".rs.test.lookup", function() NULL, envir = globalenv())
+   )EOF");
+   ASSERT_FALSE(error);
+
+   BOOST_SCOPE_EXIT(void)
+   {
+      r::exec::executeString(R"EOF(
+         rm(".rs.test.lookup", envir = globalenv())
+      )EOF");
+   }
+   BOOST_SCOPE_EXIT_END
+
+   std::string bound = ".rs.test.lookup";
+   std::vector<std::string> names = {
+      std::string(),
+      bound + std::string("\0suffix", 7),
+      std::string(10001, 'a'),
+   };
+
+   for (const std::string& name : names)
+   {
+      EXPECT_FALSE(r::sexp::isSymbolName(name)) << name.size();
+
+      SEXP varSEXP = R_GlobalEnv;
+      SEXP varInNamespaceSEXP = R_GlobalEnv;
+      SEXP functionSEXP = R_GlobalEnv;
+      SEXP identitySEXP = R_GlobalEnv;
+      r::sexp::BindingType bindingType = r::sexp::BindingType::Normal;
+      bool active = true;
+      Error lookupError = r::exec::executeSafely([&]()
+      {
+         varSEXP = r::sexp::findVar(name, R_GlobalEnv);
+         varInNamespaceSEXP = r::sexp::findVar(name, "base");
+         functionSEXP = r::sexp::findFunction(name);
+         identitySEXP = r::sexp::getBindingIdentity(name, R_GlobalEnv, r::sexp::BindingType::Normal);
+         bindingType = r::sexp::getBindingType(name, R_GlobalEnv);
+         active = r::sexp::isActiveBinding(name, R_GlobalEnv);
+      });
+      EXPECT_FALSE(lookupError) << name.size() << ": " << lookupError.asString();
+      EXPECT_EQ(nullptr, varSEXP) << name.size();
+      EXPECT_EQ(nullptr, varInNamespaceSEXP) << name.size();
+      EXPECT_EQ(nullptr, functionSEXP) << name.size();
+      EXPECT_EQ(R_NilValue, identitySEXP) << name.size();
+      EXPECT_TRUE(bindingType == r::sexp::BindingType::Unbound) << name.size();
+      EXPECT_FALSE(active) << name.size();
+   }
+
+   // the name itself is still found
+   EXPECT_TRUE(r::sexp::isSymbolName(bound));
+   EXPECT_TRUE(r::sexp::isSymbolName(std::string(10000, 'a')));
+   EXPECT_NE(nullptr, r::sexp::findVar(bound, R_GlobalEnv));
+   EXPECT_NE(nullptr, r::sexp::findFunction(bound));
+}
+
+TEST(SessionRTest, LookupsCatchErrorsFromBindings) {
+   // reading an active binding calls its function, and R >= 4.6 forces a
+   // promise read with R_getVarEx(); an error from either must be caught, as
+   // when the data viewer re-reads an object it shows after it starts to
+   // fail, rather than longjmp past the lookup
+   Error error = r::exec::executeString(R"EOF(
+      makeActiveBinding(".rs.test.failingBinding", function() stop("binding failed"), globalenv())
+      delayedAssign(".rs.test.failingPromise", stop("promise failed"), assign.env = globalenv())
+      makeActiveBinding(".rs.test.workingBinding", function() 42L, globalenv())
+   )EOF");
+   ASSERT_FALSE(error);
+
+   BOOST_SCOPE_EXIT(void)
+   {
+      r::exec::executeString(R"EOF(
+         rm(list = c(".rs.test.failingBinding", ".rs.test.failingPromise", ".rs.test.workingBinding"),
+            envir = globalenv())
+      )EOF");
+   }
+   BOOST_SCOPE_EXIT_END
+
+   SEXP bindingSEXP = R_GlobalEnv;
+   SEXP bindingInFrameSEXP = R_GlobalEnv;
+   SEXP bindingFunctionSEXP = R_GlobalEnv;
+   SEXP promiseSEXP = R_GlobalEnv;
+   SEXP promiseFunctionSEXP = R_GlobalEnv;
+   int workingValue = 0;
+   Error lookupError = r::exec::executeSafely([&]()
+   {
+      bindingSEXP = r::sexp::findVar(".rs.test.failingBinding", R_GlobalEnv);
+      bindingInFrameSEXP = r::sexp::findVarInFrame(R_GlobalEnv, Rf_install(".rs.test.failingBinding"));
+      bindingFunctionSEXP = r::sexp::findFunction(".rs.test.failingBinding");
+      promiseSEXP = r::sexp::findVar(".rs.test.failingPromise", R_GlobalEnv);
+      promiseFunctionSEXP = r::sexp::findFunction(".rs.test.failingPromise");
+
+      SEXP workingSEXP = r::sexp::findVar(".rs.test.workingBinding", R_GlobalEnv);
+      if (workingSEXP != nullptr)
+         workingValue = r::sexp::asInteger(workingSEXP);
+   });
+   ASSERT_FALSE(lookupError) << lookupError.asString();
+
+   EXPECT_EQ(nullptr, bindingSEXP);
+   EXPECT_EQ(nullptr, bindingInFrameSEXP);
+   EXPECT_EQ(nullptr, bindingFunctionSEXP);
+   EXPECT_EQ(nullptr, promiseFunctionSEXP);
+
+   // R < 4.6 reads the promise without forcing it
+   EXPECT_TRUE(promiseSEXP == nullptr || TYPEOF(promiseSEXP) == PROMSXP);
+
+   // a binding that doesn't fail is still read
+   EXPECT_EQ(42, workingValue);
+}
+
+TEST(SessionRTest, ParseStringRefusesEmbeddedNul) {
+   // R would raise an error making the code's string, before the parse runs
+   // protected (#19697)
+   std::string code = std::string("1\0", 2) + "+ 1";
+
+   int value = 0;
+   Error evaluateError;
+   Error error = r::exec::executeSafely([&]()
+   {
+      evaluateError = r::exec::evaluateString(code, &value);
+   });
+   ASSERT_FALSE(error) << error.asString();
+   EXPECT_TRUE(evaluateError == r::errc::ExpressionParsingError) << evaluateError.asString();
+}
+
+TEST(SessionRTest, CreateKeepsTheProtectionStackShortForLongJson) {
+   // R's protection stack holds at most 500000 entries, and overflowing it
+   // is an R error; protecting every element of a long array or object
+   // while it was built overflowed it
+   const int n = 600000;
+   json::Array array;
+   for (int i = 0; i < n; i++)
+      array.push_back(json::Value("x"));
+
+   // parsed, as adding members one at a time checks each for a duplicate
+   std::string objectText = "{";
+   for (int i = 0; i < n; i++)
+   {
+      if (i > 0)
+         objectText += ",";
+      objectText += "\"k" + std::to_string(i) + "\":" + std::to_string(i);
+   }
+   objectText += "}";
+
+   json::Value object;
+   ASSERT_FALSE(object.parse(objectText));
+
+   int arrayLength = 0;
+   int objectLength = 0;
+   Error error = r::exec::executeSafely([&]()
+   {
+      r::sexp::Protect protect;
+      arrayLength = r::sexp::length(r::sexp::create(array, &protect));
+      objectLength = r::sexp::length(r::sexp::create(object, &protect));
+   });
+   ASSERT_FALSE(error) << error.asString();
+   EXPECT_EQ(n, arrayLength);
+   EXPECT_EQ(n, objectLength);
+}
+
+TEST(SessionRTest, InvokeRpcHandlerAnswersARequestAnRErrorInterrupted) {
+   // an R error raised by code a handler runs unprotected would longjmp past
+   // the request, leaving it unanswered; the dispatcher's backstop answers it
+   json::JsonRpcRequest request;
+   request.method = "test_r_error";
+
+   int responses = 0;
+   Error responseError;
+   json::JsonRpcFunctionContinuation continuation =
+      [&](const Error& error, json::JsonRpcResponse*)
+      {
+         responses++;
+         responseError = error;
+      };
+
+   // a handler that raises an R error before responding
+   json::JsonRpcAsyncFunction failing =
+      [](const json::JsonRpcRequest&, const json::JsonRpcFunctionContinuation&)
+      {
+         Rf_error("handler failed");
+      };
+
+   Error error = r::exec::executeSafely([&]()
+   {
+      session::rpc::invokeRpcHandler(failing, request, continuation);
+   });
+   ASSERT_FALSE(error) << error.asString();
+   EXPECT_EQ(1, responses);
+   EXPECT_TRUE(responseError == r::errc::CodeExecutionError) << responseError.asString();
+   EXPECT_NE(std::string::npos, responseError.getProperty("errormsg").find("handler failed"));
+
+   // a handler that responded before the error isn't answered again
+   json::JsonRpcAsyncFunction respondsThenFails =
+      [](const json::JsonRpcRequest&, const json::JsonRpcFunctionContinuation& respond)
+      {
+         json::JsonRpcResponse response;
+         respond(Success(), &response);
+         Rf_error("handler failed after responding");
+      };
+
+   responses = 0;
+   error = r::exec::executeSafely([&]()
+   {
+      session::rpc::invokeRpcHandler(respondsThenFails, request, continuation);
+   });
+   ASSERT_FALSE(error) << error.asString();
+   EXPECT_EQ(1, responses);
+   EXPECT_FALSE(responseError) << responseError.asString();
+
+   // an async handler that responds later isn't answered for it
+   json::JsonRpcAsyncFunction respondsLater =
+      [](const json::JsonRpcRequest&, const json::JsonRpcFunctionContinuation&)
+      {
+      };
+
+   responses = 0;
+   session::rpc::invokeRpcHandler(respondsLater, request, continuation);
+   EXPECT_EQ(0, responses);
+
+   // a C++ exception still reaches the caller, and leaves R usable
+   json::JsonRpcAsyncFunction throws =
+      [](const json::JsonRpcRequest&, const json::JsonRpcFunctionContinuation&)
+      {
+         throw std::runtime_error("handler threw");
+      };
+
+   EXPECT_THROW(session::rpc::invokeRpcHandler(throws, request, continuation), std::runtime_error);
+
+   int value = 0;
+   error = r::exec::evaluateString("1L + 1L", &value);
+   EXPECT_FALSE(error) << error.asString();
+   EXPECT_EQ(2, value);
 }
 
 #ifndef _WIN32

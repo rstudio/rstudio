@@ -61,9 +61,15 @@ SEXP findNamespace(const std::string& name);
 SEXP asNamespace(const std::string& name);
 SEXP getParentEnv(SEXP envSEXP);
 
-// promises
+// promises; an R error forcing the promise is caught, and yields R_NilValue
 SEXP forcePromise(SEXP objectSEXP);
-   
+
+// R raises an error making a symbol from a name that's empty or longer than
+// this (MAXIDSIZE, which R doesn't export), and cuts one off at a nul. the
+// lookups below that take a name as a string treat such a name as unbound
+constexpr std::size_t kMaxSymbolNameBytes = 10000;
+bool isSymbolName(const std::string& name);
+
 // binding classification
 enum class BindingType
 {
@@ -90,10 +96,13 @@ void listEnvironment(SEXP env,
                      bool includeLastDotValue,
                      std::vector<std::string>* pNames);
  
-// find a variable in a single environment frame (no inheritance)
+// find a variable in a single environment frame (no inheritance). reading a
+// binding can run R code -- an active binding's function, or (R >= 4.6) the
+// promise R forces -- and an R error from that is caught: the variable then
+// reads as unbound (nullptr)
 SEXP findVarInFrame(SEXP envSEXP, SEXP nameSEXP);
 
-// find variables in environments and namespaces
+// find variables in environments and namespaces, likewise
 SEXP findVar(SEXP nameSEXP, SEXP envSEXP);
 SEXP findVar(const std::string& name, SEXP envSEXP);
 SEXP findVar(const std::string& name, const std::string& ns = std::string());

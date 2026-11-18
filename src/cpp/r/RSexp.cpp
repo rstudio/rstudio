@@ -161,16 +161,115 @@ bool hasNul(const std::string& value)
 
 // names read from R arrive in C++ as UTF-8 (see translate()), but a symbol's
 // name is native; Rf_install() would take the UTF-8 bytes as native and, where
-// native is not UTF-8, name a different symbol than the one R bound
+// native is not UTF-8, name a different symbol than the one R bound. returns
+// nullptr for a name R can't make a symbol from (see isSymbolName())
 SEXP installUtf8(const std::string& name)
 {
+   if (!isSymbolName(name))
+      return nullptr;
+
    Protect protect;
    SEXP charSEXP;
    protect.add(charSEXP = mkCharUtf8(name));
    return Rf_installTrChar(charSEXP);
 }
 
+// R code that C++ runs while merely reading a binding (an active binding's
+// function, a promise being forced) runs with R errors and interrupts caught,
+// as one would otherwise longjmp past the C++ caller. they're caught by
+// R_tryCatch() rather than R_ToplevelExec(), which would print the error: a
+// lookup the IDE makes on its own shouldn't write to the console
+struct CaughtEvaluation
+{
+   SEXP (*evaluate)(CaughtEvaluation*);
+   SEXP firstSEXP;
+   SEXP secondSEXP;
+
+   // a protected list the result is stored in, so that it stays protected
+   // while tryCatch() unwinds; returned through R as a value instead, an
+   // unforced promise (as R < 4.6 reads one) could be forced on the way
+   SEXP holderSEXP;
+
+   bool unbound;
+   bool caught;
+};
+
+SEXP caughtEvaluationBody(void* data)
+{
+   CaughtEvaluation* pEvaluation = static_cast<CaughtEvaluation*>(data);
+   SEXP resultSEXP = pEvaluation->evaluate(pEvaluation);
+   if (resultSEXP == nullptr)
+      pEvaluation->unbound = true;
+   else
+      SET_VECTOR_ELT(pEvaluation->holderSEXP, 0, resultSEXP);
+   return R_NilValue;
+}
+
+SEXP caughtEvaluationHandler(SEXP, void* data)
+{
+   static_cast<CaughtEvaluation*>(data)->caught = true;
+   return R_NilValue;
+}
+
+// returns the result, or nullptr if an R error or interrupt was caught
+SEXP evaluateCaught(SEXP (*evaluate)(CaughtEvaluation*), SEXP firstSEXP, SEXP secondSEXP)
+{
+   static SEXP s_conditionsSEXP = nullptr;
+   if (s_conditionsSEXP == nullptr)
+   {
+      s_conditionsSEXP = Rf_allocVector(STRSXP, 2);
+      R_PreserveObject(s_conditionsSEXP);
+      SET_STRING_ELT(s_conditionsSEXP, 0, Rf_mkChar("error"));
+      SET_STRING_ELT(s_conditionsSEXP, 1, Rf_mkChar("interrupt"));
+   }
+
+   // the result is left unprotected on return, like the value of a plain
+   // lookup: it's reachable from its binding or, when forced, its promise
+   Protect protect;
+   SEXP holderSEXP;
+   protect.add(holderSEXP = Rf_allocVector(VECSXP, 1));
+
+   CaughtEvaluation evaluation = { evaluate, firstSEXP, secondSEXP, holderSEXP, false, false };
+   R_tryCatch(caughtEvaluationBody, &evaluation,
+              s_conditionsSEXP,
+              caughtEvaluationHandler, &evaluation,
+              nullptr, nullptr);
+
+   if (evaluation.caught || evaluation.unbound)
+      return nullptr;
+
+   return VECTOR_ELT(holderSEXP, 0);
+}
+
+SEXP forcePromiseImpl(CaughtEvaluation* pEvaluation)
+{
+   // Rf_eval ignores the environment argument for promises; the promise's
+   // own stored environment is used for evaluation
+   return Rf_eval(pEvaluation->firstSEXP, R_BaseEnv);
+}
+
+SEXP findVarInFrameImpl(CaughtEvaluation* pEvaluation)
+{
+   return runtime::findVarInFrame(pEvaluation->firstSEXP, pEvaluation->secondSEXP);
+}
+
+// whether reading this binding can run R code: an active binding calls its
+// function, R_getVarEx() (R >= 4.6) forces a promise, and it raises an error
+// for a missing argument
+bool readingRunsCode(SEXP symSEXP, SEXP envSEXP)
+{
+   int bindingType = runtime::getBindingType(symSEXP, envSEXP);
+   return bindingType == runtime::kBindingTypeActive ||
+          bindingType == runtime::kBindingTypeDelayed ||
+          bindingType == runtime::kBindingTypeMissing;
+}
+
 } // anonymous namespace
+
+bool isSymbolName(const std::string& name)
+{
+   return !name.empty() && name.size() <= kMaxSymbolNameBytes && !hasNul(name);
+}
 
 std::string asString(SEXP object)
 {
@@ -315,9 +414,8 @@ SEXP forcePromise(SEXP objectSEXP)
    if (TYPEOF(objectSEXP) != PROMSXP)
       return objectSEXP;
 
-   // NOTE: Rf_eval ignores the environment argument for promises;
-   // the promise's own stored environment is used for evaluation.
-   return ::Rf_eval(objectSEXP, R_BaseEnv);
+   SEXP valueSEXP = evaluateCaught(forcePromiseImpl, objectSEXP, nullptr);
+   return valueSEXP == nullptr ? R_NilValue : valueSEXP;
 }
 
 SEXP findNamespace(const std::string& package)
@@ -479,6 +577,9 @@ SEXP findBindingFrame(SEXP sym, SEXP env)
 BindingType getBindingType(const std::string& name, SEXP env)
 {
    SEXP sym = installUtf8(name);
+   if (sym == nullptr)
+      return BindingType::Unbound;
+
    int bt = runtime::getBindingType(sym, env);
 
    // .Last.value lives in baseenv (SET_SYMVALUE on R_LastvalueSymbol), not
@@ -514,6 +615,8 @@ BindingType getBindingType(const std::string& name, SEXP env)
 SEXP getBindingIdentity(const std::string& name, SEXP env, BindingType type)
 {
    SEXP sym = installUtf8(name);
+   if (sym == nullptr)
+      return R_NilValue;
 
    switch (type)
    {
@@ -635,6 +738,9 @@ bool isActiveBinding(SEXP nameSEXP, SEXP envSEXP)
 bool isActiveBinding(const std::string& name, SEXP envSEXP)
 {
    SEXP nameSEXP = installUtf8(name);
+   if (nameSEXP == nullptr)
+      return false;
+
    return isActiveBinding(nameSEXP, envSEXP);
 }
 
@@ -657,17 +763,29 @@ SEXP functionBody(SEXP functionSEXP)
 
 SEXP findVarInFrame(SEXP envSEXP, SEXP nameSEXP)
 {
+   if (readingRunsCode(nameSEXP, envSEXP))
+      return evaluateCaught(findVarInFrameImpl, envSEXP, nameSEXP);
+
    return runtime::findVarInFrame(envSEXP, nameSEXP);
 }
 
 SEXP findVar(SEXP nameSEXP, SEXP envSEXP)
 {
+   // find the binding's frame without reading it, to see whether reading it
+   // can run R code; most bindings can't, and are read as before
+   SEXP frameSEXP = findBindingFrame(nameSEXP, envSEXP);
+   if (frameSEXP != R_EmptyEnv && readingRunsCode(nameSEXP, frameSEXP))
+      return evaluateCaught(findVarInFrameImpl, frameSEXP, nameSEXP);
+
    return runtime::findVar(nameSEXP, envSEXP);
 }
 
 SEXP findVar(const std::string& name, SEXP envSEXP)
 {
    SEXP nameSEXP = installUtf8(name);
+   if (nameSEXP == nullptr)
+      return nullptr;
+
    return findVar(nameSEXP, envSEXP);
 }
 
@@ -708,7 +826,9 @@ SEXP findFunction(const std::string& name, const std::string& ns)
    // we instead attempt to find the function by manually
    // walking through the environment (and its enclosing environments)
    SEXP nameSEXP = installUtf8(name);
-   
+   if (nameSEXP == nullptr)
+      return nullptr;
+
    // Search through frames until we find the global environment.
    while (env != R_EmptyEnv)
    {
@@ -724,7 +844,7 @@ SEXP findFunction(const std::string& name, const std::string& ns)
                return resultSEXP;
             else if (TYPEOF(resultSEXP) == PROMSXP)
             {
-               protect.add(resultSEXP = Rf_eval(resultSEXP, env));
+               protect.add(resultSEXP = forcePromise(resultSEXP));
                if (Rf_isFunction(resultSEXP))
                   return resultSEXP;
             }
@@ -740,7 +860,7 @@ SEXP findFunction(const std::string& name, const std::string& ns)
             return resultSEXP;
          else if (TYPEOF(resultSEXP) == PROMSXP)
          {
-            protect.add(resultSEXP = Rf_eval(resultSEXP, env));
+            protect.add(resultSEXP = forcePromise(resultSEXP));
             if (Rf_isFunction(resultSEXP))
                return resultSEXP;
          }
@@ -1460,10 +1580,13 @@ SEXP create(const core::json::Array& value, Protect* pProtect)
    SEXP listSEXP;
    pProtect->add(listSEXP = Rf_allocVector(VECSXP, value.getSize()));
    
-   // add each array element to it
+   // add each array element to it. each is protected only until it's stored
+   // in the (protected) list, so that a long array can't overflow R's
+   // protection stack, whose overflow is an R error
    for (size_t i=0; i<value.getSize(); i++)
    {
-      SEXP valueSEXP = create(value[i], pProtect);
+      Protect elementProtect;
+      SEXP valueSEXP = create(value[i], &elementProtect);
       SET_VECTOR_ELT(listSEXP, i,  valueSEXP);
    }
    return listSEXP;
@@ -1485,9 +1608,10 @@ SEXP create(const core::json::Object& value, Protect* pProtect)
    {
       // set name
       SET_STRING_ELT(namesSEXP, index, mkCharUtf8(member.getName()));
-      
-      // set value
-      SEXP valueSEXP = create(member.getValue(), pProtect);
+
+      // set value, protected only until it's stored (as for arrays)
+      Protect elementProtect;
+      SEXP valueSEXP = create(member.getValue(), &elementProtect);
       SET_VECTOR_ELT(listSEXP, index,  valueSEXP);
       
       // increment element index
