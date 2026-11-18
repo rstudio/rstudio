@@ -7,17 +7,16 @@ import { ChatPaneActions } from '@actions/chat_pane.actions';
 import type { Locator, Page } from 'playwright';
 import { setupPositAssistantChat } from './_chat-setup';
 
-// Regression tests for rstudio/rstudio#19695. Suspending the session (or
-// restarting R) stops the Posit Assistant backend; the iframe's failed
-// reconnects used to raise a "connection lost" banner that the reloaded
-// iframe never cleared. They need a running backend, not a signed-in one.
-//
-// These locators search the main document only: the banner and the notice are
-// GWT widgets above the iframe, while the iframe has its own document.
+// Regression tests for rstudio/rstudio#19695: suspend and Restart R stop the
+// Posit Assistant backend, whose reconnect failures raised a "connection lost"
+// banner that outlived the resume. These need a running backend, not sign-in.
+// The locators search the GWT document, not the iframe's.
 const lostBanner = (page: Page): Locator =>
   page.getByText(/Connection to Posit Assistant was lost/);
 const suspendedNotice = (page: Page): Locator =>
   page.getByText(/The R session is suspended\. Posit Assistant will reconnect/);
+const restartingNotice = (page: Page): Locator =>
+  page.getByText(/Restarting R\. Posit Assistant will reconnect/);
 
 // The Posit Assistant client reports a lost connection on its 3rd failed
 // reconnect, one second apart. Watch well past that.
@@ -106,6 +105,8 @@ test.describe.serial('Posit Assistant across suspend and restart', {
     try {
       await restartSessionWithSentinel(page);
       await dismissBlockingModals(page);
+      // The held lookup keeps the pre-restart iframe, and its notice, in place
+      await expect(restartingNotice(page)).toBeVisible();
       await expectBannerNeverShown(page, RECONNECT_REPORT_WINDOW_MS, 'during restart');
     } finally {
       await page.unroute(/\/rpc\/chat_get_backend_status/);
@@ -113,6 +114,7 @@ test.describe.serial('Posit Assistant across suspend and restart', {
     expect(held, 'chat_get_backend_status calls held after restart').toBeGreaterThan(0);
 
     await chatActions.waitForChatReady();
+    await expect(restartingNotice(page)).toBeHidden({ timeout: 15000 });
     await expectBannerNeverShown(page, 3000, 'after restart');
   });
 });
