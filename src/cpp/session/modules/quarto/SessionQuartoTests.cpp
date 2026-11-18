@@ -20,6 +20,8 @@
 #include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 
+#include <r/RExec.hpp>
+
 #include <gtest/gtest.h>
 
 #include "SessionQuartoPreview.hpp"
@@ -152,6 +154,50 @@ TEST_F(ProjectTypeResolution, SiteAliasIsMigratedToWebsite)
    // 'site' is the legacy name for 'website'
    FilePath quartoYml = writeQuartoYml("site");
    EXPECT_EQ(resolvedType(quartoYml), "website");
+}
+
+TEST_F(ProjectTypeResolution, EditorOptionsWithANulAreSkipped)
+{
+   // a "\0" escape gives a string R can't hold; creating it raised an R error
+   // while the config was read at startup, which ended the session
+   FilePath quartoYml = projectDir_.completeChildPath("_quarto.yml");
+   writeStringToFile(
+      quartoYml,
+      "project:\n"
+      "  type: website\n"
+      "editor:\n"
+      "  mode: \"source\\0\"\n");
+
+   std::string type;
+   json::Object editor;
+   Error error = r::exec::executeSafely([&]()
+   {
+      readQuartoProjectConfig(quartoYml, &type, nullptr, nullptr, nullptr, nullptr, &editor);
+   });
+   ASSERT_FALSE(error) << error.asString();
+   EXPECT_EQ("website", type);
+   EXPECT_TRUE(editor.isEmpty());
+
+   // valid editor options are still read
+   writeStringToFile(
+      quartoYml,
+      "project:\n"
+      "  type: website\n"
+      "editor:\n"
+      "  mode: source\n");
+
+   type.clear();
+   editor = json::Object();
+   error = r::exec::executeSafely([&]()
+   {
+      readQuartoProjectConfig(quartoYml, &type, nullptr, nullptr, nullptr, nullptr, &editor);
+   });
+   ASSERT_FALSE(error) << error.asString();
+   EXPECT_EQ("website", type);
+
+   std::string mode;
+   EXPECT_FALSE(json::readObject(editor, "mode", mode));
+   EXPECT_EQ("source", mode);
 }
 
 TEST_F(ProjectTypeResolution, AuthoredExtensionResolvesToBaseType)

@@ -16,6 +16,10 @@
 #ifndef SESSION_RPC_HPP
 #define SESSION_RPC_HPP
 
+#include <atomic>
+
+#include <boost/shared_ptr.hpp>
+
 #include <shared_core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <session/SessionHttpConnection.hpp>
@@ -36,14 +40,26 @@ void handleRpcRequest(const core::json::JsonRpcRequest& request,
                       boost::shared_ptr<HttpConnection> ptrConnection,
                       http_methods::ConnectionType connectionType);
 
+// a request's response, shared by its continuation (which an async handler may
+// call after returning) and invokeRpcHandler()'s backstop: a continuation
+// claims it first, and drops a response if one was already claimed, then marks
+// it sent once it's sent (or, for an async request, enqueued)
+struct RpcDelivery
+{
+   std::atomic<bool> claimed { false };
+   std::atomic<bool> sent { false };
+};
+
 // runs an RPC handler so that an R error escaping it -- raised by R code it
 // ran unprotected -- ends here rather than longjmping past the request, which
-// would leave the request unanswered; unless the handler had responded, it is
-// then completed with the error. the jump still skips the handler's own C++
-// destructors, so this is a backstop, not a substitute for protected R code
+// would leave the request unanswered; unless a response was sent, the
+// continuation then sends the error. the jump still skips the handler's own
+// C++ destructors, so this is a backstop, not a substitute for protected R
+// code. off the main thread (offline requests), it just runs the handler
 void invokeRpcHandler(const core::json::JsonRpcAsyncFunction& handler,
                       const core::json::JsonRpcRequest& request,
-                      const core::json::JsonRpcFunctionContinuation& continuation);
+                      const core::json::JsonRpcFunctionContinuation& continuation,
+                      boost::shared_ptr<RpcDelivery> pDelivery);
 
 void setRpcDelay(int delayMs);
 

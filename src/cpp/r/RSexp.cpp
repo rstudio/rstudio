@@ -162,15 +162,24 @@ bool hasNul(const std::string& value)
 // names read from R arrive in C++ as UTF-8 (see translate()), but a symbol's
 // name is native; Rf_install() would take the UTF-8 bytes as native and, where
 // native is not UTF-8, name a different symbol than the one R bound. returns
-// nullptr for a name R can't make a symbol from (see isSymbolName())
+// nullptr for a name R can't make a symbol from (see isSymbolName()); R
+// checks the length of the native name, which can be shorter (or, with
+// escapes for characters native can't represent, longer) than the UTF-8 one
 SEXP installUtf8(const std::string& name)
 {
-   if (!isSymbolName(name))
+   if (name.empty() || hasNul(name))
       return nullptr;
 
    Protect protect;
    SEXP charSEXP;
    protect.add(charSEXP = mkCharUtf8(name));
+
+   const void* vmax = vmaxget();
+   bool installable = isSymbolName(Rf_translateChar(charSEXP));
+   vmaxset(vmax);
+   if (!installable)
+      return nullptr;
+
    return Rf_installTrChar(charSEXP);
 }
 
@@ -829,46 +838,32 @@ SEXP findFunction(const std::string& name, const std::string& ns)
    if (nameSEXP == nullptr)
       return nullptr;
 
-   // Search through frames until we find the global environment.
+   // Search through the frames, as R does for a function. Each binding is
+   // read once, and one whose R code (an active binding's function, or a
+   // promise) fails ends the search, as it would end R's: a binding further
+   // out would be a function R wouldn't find.
    while (env != R_EmptyEnv)
    {
-      // If we're searching the global environment, then
-      // try using 'findVar', as this will attempt a search
-      // of R's own internal global cache.
-      if (env == R_GlobalEnv)
-      {
-         SEXP resultSEXP = findVar(nameSEXP, R_GlobalEnv);
-         if (resultSEXP != nullptr)
-         {
-            if (Rf_isFunction(resultSEXP))
-               return resultSEXP;
-            else if (TYPEOF(resultSEXP) == PROMSXP)
-            {
-               protect.add(resultSEXP = forcePromise(resultSEXP));
-               if (Rf_isFunction(resultSEXP))
-                  return resultSEXP;
-            }
-         }
-      }
-      
-      // Otherwise, just perform a simple search through
-      // the current frame.
+      bool runsCode = readingRunsCode(nameSEXP, env);
       SEXP resultSEXP = findVarInFrame(env, nameSEXP);
-      if (resultSEXP != nullptr)
+      if (resultSEXP == nullptr && runsCode)
+         return nullptr;
+
+      if (resultSEXP != nullptr && TYPEOF(resultSEXP) == PROMSXP)
       {
-         if (Rf_isFunction(resultSEXP))
-            return resultSEXP;
-         else if (TYPEOF(resultSEXP) == PROMSXP)
-         {
-            protect.add(resultSEXP = forcePromise(resultSEXP));
-            if (Rf_isFunction(resultSEXP))
-               return resultSEXP;
-         }
+         resultSEXP = evaluateCaught(forcePromiseImpl, resultSEXP, nullptr);
+         if (resultSEXP == nullptr)
+            return nullptr;
+
+         protect.add(resultSEXP);
       }
-      
+
+      if (resultSEXP != nullptr && Rf_isFunction(resultSEXP))
+         return resultSEXP;
+
       env = getParentEnv(env);
    }
-   
+
    return nullptr;
 }   
    
@@ -1383,34 +1378,48 @@ SEXP create(const core::json::Value& value, Protect* pProtect)
 
 namespace {
 
-SEXP createYamlMap(const YAML::Node& node, Protect* pProtect)
+SEXP createYaml(const YAML::Node& node, std::vector<YAML::Node>* pAncestors, Protect* pProtect);
+
+// an alias can refer to a node that contains it (`a: &x [1, *x]`); R can't
+// represent the cycle, and following it would recurse until the stack overflowed
+bool isYamlAncestor(const YAML::Node& node, const std::vector<YAML::Node>& ancestors)
+{
+   for (const YAML::Node& ancestor : ancestors)
+   {
+      if (ancestor.is(node))
+         return true;
+   }
+   return false;
+}
+
+SEXP createYamlMap(const YAML::Node& node, std::vector<YAML::Node>* pAncestors, Protect* pProtect)
 {
    ListBuilder builder(pProtect);
- 
+
    for (auto it = node.begin();
         it != node.end();
         ++it)
    {
       std::string key = it->first.as<std::string>();
-      SEXP value = create(it->second, pProtect);
+      SEXP value = createYaml(it->second, pAncestors, pProtect);
       builder.add(key, value);
    }
-   
+
    return r::sexp::create(builder, pProtect);
 }
 
-SEXP createYamlSequence(const YAML::Node& node, Protect* pProtect)
+SEXP createYamlSequence(const YAML::Node& node, std::vector<YAML::Node>* pAncestors, Protect* pProtect)
 {
    ListBuilder builder(pProtect);
-   
+
    for (auto it = node.begin();
         it != node.end();
         ++it)
    {
-      SEXP value = create(*it, pProtect);
+      SEXP value = createYaml(*it, pAncestors, pProtect);
       builder.add(value);
    }
-   
+
    return r::sexp::create(builder, pProtect);
 }
 
@@ -1506,17 +1515,25 @@ SEXP createYamlScalar(const YAML::Node& node, Protect* pProtect)
    return r::sexp::create(text, pProtect);
 }
 
-} // end anonymous namespace
-
-SEXP create(const YAML::Node& node, Protect* pProtect)
+SEXP createYaml(const YAML::Node& node, std::vector<YAML::Node>* pAncestors, Protect* pProtect)
 {
    auto type = node.Type();
    switch (type)
    {
    case YAML::NodeType::Map:
-      return createYamlMap(node, pProtect);
    case YAML::NodeType::Sequence:
-      return createYamlSequence(node, pProtect);
+   {
+      // a cyclic alias becomes NULL
+      if (isYamlAncestor(node, *pAncestors))
+         return R_NilValue;
+
+      pAncestors->push_back(node);
+      SEXP valueSEXP = type == YAML::NodeType::Map ?
+               createYamlMap(node, pAncestors, pProtect) :
+               createYamlSequence(node, pAncestors, pProtect);
+      pAncestors->pop_back();
+      return valueSEXP;
+   }
    case YAML::NodeType::Scalar:
       return createYamlScalar(node, pProtect);
    case YAML::NodeType::Undefined:
@@ -1527,7 +1544,13 @@ SEXP create(const YAML::Node& node, Protect* pProtect)
    }
 }
 
+} // end anonymous namespace
 
+SEXP create(const YAML::Node& node, Protect* pProtect)
+{
+   std::vector<YAML::Node> ancestors;
+   return createYaml(node, &ancestors, pProtect);
+}
 
 SEXP create(const char* value, Protect* pProtect)
 {
@@ -1905,29 +1928,44 @@ bool containsNul(const core::json::Object& value)
    return false;
 }
 
-bool containsNul(const YAML::Node& node)
+namespace {
+
+bool yamlContainsNul(const YAML::Node& node, std::vector<YAML::Node>* pAncestors)
 {
    switch (node.Type())
    {
    case YAML::NodeType::Map:
-      for (auto it = node.begin(); it != node.end(); ++it)
-      {
-         if (containsNul(it->first) || containsNul(it->second))
-            return true;
-      }
-      return false;
    case YAML::NodeType::Sequence:
-      for (auto it = node.begin(); it != node.end(); ++it)
+   {
+      // a cyclic alias was, or is being, checked already (see createYaml())
+      if (isYamlAncestor(node, *pAncestors))
+         return false;
+
+      pAncestors->push_back(node);
+      bool found = false;
+      for (auto it = node.begin(); it != node.end() && !found; ++it)
       {
-         if (containsNul(*it))
-            return true;
+         if (node.IsMap())
+            found = yamlContainsNul(it->first, pAncestors) || yamlContainsNul(it->second, pAncestors);
+         else
+            found = yamlContainsNul(*it, pAncestors);
       }
-      return false;
+      pAncestors->pop_back();
+      return found;
+   }
    case YAML::NodeType::Scalar:
       return hasNul(node.Scalar());
    default:
       return false;
    }
+}
+
+} // anonymous namespace
+
+bool containsNul(const YAML::Node& node)
+{
+   std::vector<YAML::Node> ancestors;
+   return yamlContainsNul(node, &ancestors);
 }
 
 bool containsNul(const std::vector<std::string>& value)

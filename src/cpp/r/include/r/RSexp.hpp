@@ -65,8 +65,9 @@ SEXP getParentEnv(SEXP envSEXP);
 SEXP forcePromise(SEXP objectSEXP);
 
 // R raises an error making a symbol from a name that's empty or longer than
-// this (MAXIDSIZE, which R doesn't export), and cuts one off at a nul. the
-// lookups below that take a name as a string treat such a name as unbound
+// this in the native encoding (MAXIDSIZE, which R doesn't export), and cuts
+// one off at a nul; isSymbolName() checks the bytes Rf_install() would get.
+// the lookups below that take a (UTF-8) name treat such a name as unbound
 constexpr std::size_t kMaxSymbolNameBytes = 10000;
 bool isSymbolName(const std::string& name);
 

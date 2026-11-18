@@ -650,51 +650,99 @@ TEST(SessionRTest, LookupsCatchErrorsFromBindings) {
    // promise read with R_getVarEx(); an error from either must be caught, as
    // when the data viewer re-reads an object it shows after it starts to
    // fail, rather than longjmp past the lookup
+   // the failing binding counts its calls, and the promise records whether
+   // it was forced, so the test can tell a lookup that read them from one
+   // that didn't
    Error error = r::exec::executeString(R"EOF(
-      makeActiveBinding(".rs.test.failingBinding", function() stop("binding failed"), globalenv())
-      delayedAssign(".rs.test.failingPromise", stop("promise failed"), assign.env = globalenv())
+      # a function of the same name further out, which findFunction() must
+      # not return once the binding that shadows it fails, as R wouldn't;
+      # attached first, as checking for conflicts would read the binding
+      attach(list(.rs.test.failingBinding = function() NULL),
+             name = "rstudio-test-shadowed", warn.conflicts = FALSE)
+
+      assign(".rs.test.bindingCalls", 0L, envir = globalenv())
+      assign(".rs.test.promiseForced", FALSE, envir = globalenv())
+      makeActiveBinding(".rs.test.failingBinding", function() {
+         calls <- get(".rs.test.bindingCalls", envir = globalenv())
+         assign(".rs.test.bindingCalls", calls + 1L, envir = globalenv())
+         stop("binding failed")
+      }, globalenv())
+      delayedAssign(".rs.test.failingPromise", {
+         assign(".rs.test.promiseForced", TRUE, envir = globalenv())
+         stop("promise failed")
+      }, assign.env = globalenv())
       makeActiveBinding(".rs.test.workingBinding", function() 42L, globalenv())
    )EOF");
-   ASSERT_FALSE(error);
+   ASSERT_FALSE(error) << error.asString();
 
    BOOST_SCOPE_EXIT(void)
    {
       r::exec::executeString(R"EOF(
-         rm(list = c(".rs.test.failingBinding", ".rs.test.failingPromise", ".rs.test.workingBinding"),
+         detach("rstudio-test-shadowed")
+         rm(list = c(".rs.test.failingBinding", ".rs.test.failingPromise", ".rs.test.workingBinding",
+                     ".rs.test.bindingCalls", ".rs.test.promiseForced"),
             envir = globalenv())
       )EOF");
    }
    BOOST_SCOPE_EXIT_END
 
+   bool forcesPromises = false;
+   error = r::exec::evaluateString("getRversion() >= '4.6.0'", &forcesPromises);
+   ASSERT_FALSE(error);
+
+   // each lookup reads the failing binding once, and finds nothing; not
+   // even findFunction(), with a function of that name further out
    SEXP bindingSEXP = R_GlobalEnv;
    SEXP bindingInFrameSEXP = R_GlobalEnv;
    SEXP bindingFunctionSEXP = R_GlobalEnv;
-   SEXP promiseSEXP = R_GlobalEnv;
-   SEXP promiseFunctionSEXP = R_GlobalEnv;
-   int workingValue = 0;
    Error lookupError = r::exec::executeSafely([&]()
    {
       bindingSEXP = r::sexp::findVar(".rs.test.failingBinding", R_GlobalEnv);
       bindingInFrameSEXP = r::sexp::findVarInFrame(R_GlobalEnv, Rf_install(".rs.test.failingBinding"));
       bindingFunctionSEXP = r::sexp::findFunction(".rs.test.failingBinding");
+   });
+   ASSERT_FALSE(lookupError) << lookupError.asString();
+   EXPECT_EQ(nullptr, bindingSEXP);
+   EXPECT_EQ(nullptr, bindingInFrameSEXP);
+   EXPECT_EQ(nullptr, bindingFunctionSEXP);
+
+   int bindingCalls = 0;
+   error = r::exec::evaluateString(".rs.test.bindingCalls", &bindingCalls);
+   ASSERT_FALSE(error);
+   EXPECT_EQ(3, bindingCalls);
+
+   // R >= 4.6 forces a promise a lookup reads (R_getVarEx()), and the error
+   // is caught; earlier versions return the promise itself
+   SEXP promiseSEXP = R_GlobalEnv;
+   lookupError = r::exec::executeSafely([&]()
+   {
       promiseSEXP = r::sexp::findVar(".rs.test.failingPromise", R_GlobalEnv);
+   });
+   ASSERT_FALSE(lookupError) << lookupError.asString();
+
+   bool promiseForced = false;
+   error = r::exec::evaluateString(".rs.test.promiseForced", &promiseForced);
+   ASSERT_FALSE(error);
+   EXPECT_EQ(forcesPromises, promiseForced);
+   if (forcesPromises)
+      EXPECT_EQ(nullptr, promiseSEXP);
+   else
+      EXPECT_TRUE(promiseSEXP != nullptr && TYPEOF(promiseSEXP) == PROMSXP);
+
+   // findFunction() forces the promise, catching the error
+   SEXP promiseFunctionSEXP = R_GlobalEnv;
+   int workingValue = 0;
+   lookupError = r::exec::executeSafely([&]()
+   {
       promiseFunctionSEXP = r::sexp::findFunction(".rs.test.failingPromise");
 
+      // a binding that doesn't fail is still read
       SEXP workingSEXP = r::sexp::findVar(".rs.test.workingBinding", R_GlobalEnv);
       if (workingSEXP != nullptr)
          workingValue = r::sexp::asInteger(workingSEXP);
    });
    ASSERT_FALSE(lookupError) << lookupError.asString();
-
-   EXPECT_EQ(nullptr, bindingSEXP);
-   EXPECT_EQ(nullptr, bindingInFrameSEXP);
-   EXPECT_EQ(nullptr, bindingFunctionSEXP);
    EXPECT_EQ(nullptr, promiseFunctionSEXP);
-
-   // R < 4.6 reads the promise without forcing it
-   EXPECT_TRUE(promiseSEXP == nullptr || TYPEOF(promiseSEXP) == PROMSXP);
-
-   // a binding that doesn't fail is still read
    EXPECT_EQ(42, workingValue);
 }
 
@@ -748,38 +796,111 @@ TEST(SessionRTest, CreateKeepsTheProtectionStackShortForLongJson) {
    EXPECT_EQ(n, objectLength);
 }
 
+TEST(SessionRTest, CreateTurnsACyclicYamlAliasIntoNull) {
+   // an alias can refer to a node that contains it; following it recursed
+   // until the stack overflowed, crashing the session (as for a _quarto.yml
+   // read at startup)
+   YAML::Node node = YAML::Load("a: &x [1, *x]");
+
+   int outerLength = 0;
+   int innerLength = 0;
+   bool cycleIsNull = false;
+   bool nul = true;
+   Error error = r::exec::executeSafely([&]()
+   {
+      r::sexp::Protect protect;
+      SEXP listSEXP = r::sexp::create(node, &protect);
+      outerLength = r::sexp::length(listSEXP);
+      if (outerLength == 1)
+      {
+         SEXP innerSEXP = VECTOR_ELT(listSEXP, 0);
+         innerLength = r::sexp::length(innerSEXP);
+         cycleIsNull = innerLength == 2 && VECTOR_ELT(innerSEXP, 1) == R_NilValue;
+      }
+      nul = r::sexp::containsNul(node);
+   });
+   ASSERT_FALSE(error) << error.asString();
+   EXPECT_EQ(1, outerLength);
+   EXPECT_EQ(2, innerLength);
+   EXPECT_TRUE(cycleIsNull);
+   EXPECT_FALSE(nul);
+
+   // an alias to a node that doesn't contain it is still followed
+   YAML::Node shared = YAML::Load("a: &x [1, 2]\nb: *x");
+   int sharedLength = 0;
+   error = r::exec::executeSafely([&]()
+   {
+      r::sexp::Protect protect;
+      SEXP listSEXP = r::sexp::create(shared, &protect);
+      if (r::sexp::length(listSEXP) == 2)
+         sharedLength = r::sexp::length(VECTOR_ELT(listSEXP, 1));
+   });
+   ASSERT_FALSE(error) << error.asString();
+   EXPECT_EQ(2, sharedLength);
+}
+
 TEST(SessionRTest, InvokeRpcHandlerAnswersARequestAnRErrorInterrupted) {
    // an R error raised by code a handler runs unprotected would longjmp past
    // the request, leaving it unanswered; the dispatcher's backstop answers it
    json::JsonRpcRequest request;
    request.method = "test_r_error";
 
+   // a continuation following the dispatcher's delivery protocol: it claims
+   // the response, can be made to fail before sending it, and marks it sent
+   boost::shared_ptr<session::rpc::RpcDelivery> pDelivery;
    int responses = 0;
+   int failuresBeforeSending = 0;
    Error responseError;
    json::JsonRpcFunctionContinuation continuation =
       [&](const Error& error, json::JsonRpcResponse*)
       {
+         if (pDelivery->claimed.exchange(true))
+            return;
+
+         if (failuresBeforeSending > 0)
+         {
+            failuresBeforeSending--;
+            Rf_error("failed before sending");
+         }
+
          responses++;
          responseError = error;
+         pDelivery->sent = true;
       };
 
-   // a handler that raises an R error before responding
+   json::JsonRpcFunctionContinuation retained;
+   auto reset = [&]()
+   {
+      pDelivery = boost::make_shared<session::rpc::RpcDelivery>();
+      responses = 0;
+      failuresBeforeSending = 0;
+      responseError = Success();
+      retained = json::JsonRpcFunctionContinuation();
+   };
+
+   auto invoke = [&](const json::JsonRpcAsyncFunction& handler)
+   {
+      Error error = r::exec::executeSafely([&]()
+      {
+         session::rpc::invokeRpcHandler(handler, request, continuation, pDelivery);
+      });
+      EXPECT_FALSE(error) << error.asString();
+   };
+
+   // a handler that raises an R error before responding is answered with it
    json::JsonRpcAsyncFunction failing =
       [](const json::JsonRpcRequest&, const json::JsonRpcFunctionContinuation&)
       {
          Rf_error("handler failed");
       };
 
-   Error error = r::exec::executeSafely([&]()
-   {
-      session::rpc::invokeRpcHandler(failing, request, continuation);
-   });
-   ASSERT_FALSE(error) << error.asString();
+   reset();
+   invoke(failing);
    EXPECT_EQ(1, responses);
    EXPECT_TRUE(responseError == r::errc::CodeExecutionError) << responseError.asString();
    EXPECT_NE(std::string::npos, responseError.getProperty("errormsg").find("handler failed"));
 
-   // a handler that responded before the error isn't answered again
+   // one that responded before the error isn't answered again
    json::JsonRpcAsyncFunction respondsThenFails =
       [](const json::JsonRpcRequest&, const json::JsonRpcFunctionContinuation& respond)
       {
@@ -788,24 +909,65 @@ TEST(SessionRTest, InvokeRpcHandlerAnswersARequestAnRErrorInterrupted) {
          Rf_error("handler failed after responding");
       };
 
-   responses = 0;
-   error = r::exec::executeSafely([&]()
-   {
-      session::rpc::invokeRpcHandler(respondsThenFails, request, continuation);
-   });
-   ASSERT_FALSE(error) << error.asString();
+   reset();
+   invoke(respondsThenFails);
    EXPECT_EQ(1, responses);
    EXPECT_FALSE(responseError) << responseError.asString();
 
-   // an async handler that responds later isn't answered for it
-   json::JsonRpcAsyncFunction respondsLater =
-      [](const json::JsonRpcRequest&, const json::JsonRpcFunctionContinuation&)
+   // one whose response failed before it was sent (as when change detection
+   // fails ahead of sending) is answered with the error
+   json::JsonRpcAsyncFunction responds =
+      [](const json::JsonRpcRequest&, const json::JsonRpcFunctionContinuation& respond)
       {
+         json::JsonRpcResponse response;
+         respond(Success(), &response);
       };
 
-   responses = 0;
-   session::rpc::invokeRpcHandler(respondsLater, request, continuation);
+   reset();
+   failuresBeforeSending = 1;
+   invoke(responds);
+   EXPECT_EQ(1, responses);
+   EXPECT_NE(std::string::npos, responseError.getProperty("errormsg").find("failed before sending"));
+
+   // an async handler that responds after returning is answered once, by it
+   json::JsonRpcAsyncFunction retains =
+      [&](const json::JsonRpcRequest&, const json::JsonRpcFunctionContinuation& respond)
+      {
+         retained = respond;
+      };
+
+   reset();
+   invoke(retains);
    EXPECT_EQ(0, responses);
+
+   json::JsonRpcResponse lateResponse;
+   retained(Success(), &lateResponse);
+   EXPECT_EQ(1, responses);
+   EXPECT_FALSE(responseError) << responseError.asString();
+
+   // and one that keeps its continuation, then fails, isn't answered twice
+   json::JsonRpcAsyncFunction retainsThenFails =
+      [&](const json::JsonRpcRequest&, const json::JsonRpcFunctionContinuation& respond)
+      {
+         retained = respond;
+         Rf_error("handler failed after keeping its continuation");
+      };
+
+   reset();
+   invoke(retainsThenFails);
+   EXPECT_EQ(1, responses);
+
+   retained(Success(), &lateResponse);
+   EXPECT_EQ(1, responses);
+   EXPECT_TRUE(responseError == r::errc::CodeExecutionError) << responseError.asString();
+
+   // off the main thread (offline requests), the handler runs directly
+   reset();
+   std::thread([&]()
+   {
+      session::rpc::invokeRpcHandler(responds, request, continuation, pDelivery);
+   }).join();
+   EXPECT_EQ(1, responses);
 
    // a C++ exception still reaches the caller, and leaves R usable
    json::JsonRpcAsyncFunction throws =
@@ -814,10 +976,11 @@ TEST(SessionRTest, InvokeRpcHandlerAnswersARequestAnRErrorInterrupted) {
          throw std::runtime_error("handler threw");
       };
 
-   EXPECT_THROW(session::rpc::invokeRpcHandler(throws, request, continuation), std::runtime_error);
+   reset();
+   EXPECT_THROW(session::rpc::invokeRpcHandler(throws, request, continuation, pDelivery), std::runtime_error);
 
    int value = 0;
-   error = r::exec::evaluateString("1L + 1L", &value);
+   Error error = r::exec::evaluateString("1L + 1L", &value);
    EXPECT_FALSE(error) << error.asString();
    EXPECT_EQ(2, value);
 }

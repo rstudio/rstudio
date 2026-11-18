@@ -425,11 +425,13 @@ private:
       Error optionsError = unit->parseOptions(&chunkOptions);
 
       // R can't take code containing a nul character, so the options of a
-      // chunk with one can't be read, and the chunk would run with R (the
-      // default engine) whatever its own engine is. run an error in R instead
+      // chunk with one can't be read, and the chunk would run with the
+      // document's default engine whatever its own is. run an error in R
+      // instead, whatever the default engine
       if (optionsError && r::sexp::containsNul(unit->code()))
       {
          unit->replaceCode("stop('This chunk contains a nul character, which R does not support.', call. = FALSE)\n");
+         chunkOptions["engine"] = "r";
          optionsError = Success();
       }
 
