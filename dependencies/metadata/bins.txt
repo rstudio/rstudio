@@ -14,7 +14,7 @@ dependency(PANDOC
 dependency(RIG
    DEPNAME      "rig"
    REPOSITORY   "https://github.com/r-lib/rig"
-   REVISION     "v0.11.0"
+   REVISION     "v0.11.1"
    LICENSE      "MIT"
    LICENSE_PATH "LICENSE"
 )

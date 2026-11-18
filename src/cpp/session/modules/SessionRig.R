@@ -18,7 +18,7 @@
 # versions of R installed on this machine.
 
 # The rig release RStudio bundles. Keep dependencies/common/rig.cmake in sync.
-.rs.setVar("rig.pinnedVersion", "0.11.0")
+.rs.setVar("rig.pinnedVersion", "0.11.1")
 
 .rs.addFunction("rig.exeName", function()
 {
