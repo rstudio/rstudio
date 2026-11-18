@@ -37,8 +37,6 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
-#include <climits>
-#include <cmath>
 #include <ctime>
 #include <map>
 #include <queue>
@@ -1568,12 +1566,11 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
    json::readObject(options, "executionMode", executionMode);
    json::readObject(options, "expressionBoundaryHook", expressionBoundaryHook);
 
-   // Read as a number, so a fractional timeout still limits the request and
-   // one past int's range isn't read through getInt()
+   // Read as a number: getInt() would reject a fraction and assert on a
+   // value past int's range
    double timeoutValue = 0;
    json::readObject(options, "timeout", timeoutValue);
-   if (timeoutValue > 0)
-      timeout = static_cast<int>(std::min(std::ceil(timeoutValue), double(INT_MAX)));
+   timeout = chat_execution::timeoutFromOption(timeoutValue);
 
    if (executionMode != "interactive" && executionMode != "silent")
    {

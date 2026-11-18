@@ -15,6 +15,10 @@
 
 #include "ChatExecutionDeadline.hpp"
 
+#include <algorithm>
+#include <climits>
+#include <cmath>
+
 namespace rstudio {
 namespace session {
 namespace modules {
@@ -67,6 +71,15 @@ bool ExecutionDeadline::disarm()
 bool expiredInQueue(Clock::time_point queuedTime, int timeoutMs, Clock::time_point now)
 {
    return timeoutMs > 0 && now - queuedTime >= std::chrono::milliseconds(timeoutMs);
+}
+
+int timeoutFromOption(double timeoutMs)
+{
+   // Written as a negation so NaN also reads as no limit
+   if (!(timeoutMs > 0))
+      return 0;
+
+   return static_cast<int>(std::min(std::ceil(timeoutMs), static_cast<double>(INT_MAX)));
 }
 
 } // namespace execution

@@ -15,6 +15,9 @@
 
 #include "ChatExecutionDeadline.hpp"
 
+#include <climits>
+#include <cmath>
+
 #include <gtest/gtest.h>
 
 using namespace rstudio::session::modules::chat::execution;
@@ -155,6 +158,32 @@ TEST(ChatExecutionDeadline, ExpiredInQueueOnceTheTimeoutIsUsedUp)
 
    // A request dequeued long after its deadline
    EXPECT_TRUE(expiredInQueue(kQueued, 1000, kQueued + milliseconds(3200)));
+}
+
+TEST(ChatExecutionDeadline, TimeoutFromOptionKeepsWholeMilliseconds)
+{
+   EXPECT_EQ(timeoutFromOption(2000), 2000);
+   EXPECT_EQ(timeoutFromOption(1), 1);
+}
+
+TEST(ChatExecutionDeadline, TimeoutFromOptionRoundsAFractionUp)
+{
+   // Rounding down would turn 0.5 into "no limit"
+   EXPECT_EQ(timeoutFromOption(1500.5), 1501);
+   EXPECT_EQ(timeoutFromOption(0.5), 1);
+}
+
+TEST(ChatExecutionDeadline, TimeoutFromOptionClampsToIntRange)
+{
+   EXPECT_EQ(timeoutFromOption(2147483648.0), INT_MAX);
+   EXPECT_EQ(timeoutFromOption(1e12), INT_MAX);
+}
+
+TEST(ChatExecutionDeadline, TimeoutFromOptionReadsNonPositiveAsNoLimit)
+{
+   EXPECT_EQ(timeoutFromOption(0), 0);
+   EXPECT_EQ(timeoutFromOption(-5), 0);
+   EXPECT_EQ(timeoutFromOption(std::nan("")), 0);
 }
 
 TEST(ChatExecutionDeadline, NeverExpiredInQueueWithoutATimeout)

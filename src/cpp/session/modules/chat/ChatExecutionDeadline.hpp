@@ -64,6 +64,11 @@ private:
 // could start, so it should not start at all
 bool expiredInQueue(Clock::time_point queuedTime, int timeoutMs, Clock::time_point now);
 
+// The timeout option's value, read as a JSON number, in whole milliseconds:
+// a fraction rounds up rather than down to "no limit", and a value past
+// int's range is clamped. Non-positive means no limit (0).
+int timeoutFromOption(double timeoutMs);
+
 } // namespace execution
 } // namespace chat
 } // namespace modules
