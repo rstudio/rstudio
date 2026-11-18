@@ -21,8 +21,8 @@
 # Usage:
 #   cmake [-DWORK_DIR=<dir>] -P cmake/tests/test-fetch-git-revision.cmake
 #
-# WORK_DIR defaults to a folder in the current directory, and is removed
-# when every test passes.
+# The test works in a test-fetch-git-revision folder inside WORK_DIR (by
+# default, the current directory), and removes it when every test passes.
 
 cmake_minimum_required(VERSION 3.25)
 
@@ -34,15 +34,21 @@ get_filename_component(
 find_program(GIT_EXECUTABLE git REQUIRED)
 
 if("${WORK_DIR}" STREQUAL "")
-   set(WORK_DIR "${CMAKE_CURRENT_BINARY_DIR}/test-fetch-git-revision")
+   set(WORK_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 endif()
-file(REMOVE_RECURSE "${WORK_DIR}")
-file(MAKE_DIRECTORY "${WORK_DIR}")
+get_filename_component(
+   WORK_DIR
+   "${WORK_DIR}"
+   ABSOLUTE
+   BASE_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+set(TEST_DIR "${WORK_DIR}/test-fetch-git-revision")
+file(REMOVE_RECURSE "${TEST_DIR}")
+file(MAKE_DIRECTORY "${TEST_DIR}")
 
 # Keep the user's git config (commit signing, hooks, protocol version) out of
 # the test. Allow file:// submodules, which git blocks by default, and let
 # the local server hand out unadvertised commits the way GitHub does.
-file(WRITE "${WORK_DIR}/gitconfig" [=[
+file(WRITE "${TEST_DIR}/gitconfig" [=[
 [user]
    name = test
    email = test@example.com
@@ -51,7 +57,7 @@ file(WRITE "${WORK_DIR}/gitconfig" [=[
 [uploadpack]
    allowReachableSHA1InWant = true
 ]=])
-set(ENV{GIT_CONFIG_GLOBAL} "${WORK_DIR}/gitconfig")
+set(ENV{GIT_CONFIG_GLOBAL} "${TEST_DIR}/gitconfig")
 set(ENV{GIT_CONFIG_NOSYSTEM} 1)
 
 
@@ -95,7 +101,9 @@ function(file_url PATH OUT_VAR)
 endfunction()
 
 
-# Runs fetch-git-revision.cmake, and stores its exit status in OUT_VAR.
+# Runs fetch-git-revision.cmake, and stores its exit status in OUT_VAR and
+# its output in OUT_VAR_OUTPUT. Further arguments are passed to the script,
+# after (and so overriding) the defaults here.
 function(fetch REPOSITORY REVISION SOURCE_DIR OUT_VAR)
    execute_process(
       COMMAND
@@ -106,6 +114,7 @@ function(fetch REPOSITORY REVISION SOURCE_DIR OUT_VAR)
          "-DSOURCE_DIR=${SOURCE_DIR}"
          -DRETRY_COUNT=1
          -DRETRY_DELAY=0
+         ${ARGN}
          -P "${FETCH_SCRIPT}"
       RESULT_VARIABLE _RESULT
       OUTPUT_VARIABLE _OUTPUT
@@ -131,15 +140,42 @@ function(expect_fetched STATUS_VAR WHAT)
 endfunction()
 
 
+# Stops unless the fetch() that stored its status in STATUS_VAR failed with
+# output matching PATTERN.
+function(expect_fetch_failed STATUS_VAR PATTERN WHAT)
+   if("${${STATUS_VAR}}" STREQUAL "0")
+      message(FATAL_ERROR "${WHAT} succeeded")
+   endif()
+   if(NOT "${${STATUS_VAR}_OUTPUT}" MATCHES "${PATTERN}")
+      message(FATAL_ERROR "${WHAT} did not report '${PATTERN}':\n${${STATUS_VAR}_OUTPUT}")
+   endif()
+endfunction()
+
+
 function(expect_marker DIR EXPECTED)
    file(READ "${DIR}/marker.txt" _MARKER)
    expect_equal("${_MARKER}" "${EXPECTED}" "${DIR}/marker.txt")
 endfunction()
 
 
+# Stops if the repository at DIR has COMMIT.
+function(expect_missing_commit DIR COMMIT WHAT)
+   execute_process(
+      COMMAND "${GIT_EXECUTABLE}" cat-file -e "${COMMIT}^{commit}"
+      WORKING_DIRECTORY "${DIR}"
+      RESULT_VARIABLE _RESULT
+      OUTPUT_QUIET
+      ERROR_QUIET)
+
+   if(_RESULT EQUAL 0)
+      message(FATAL_ERROR "${WHAT} (${COMMIT}) was downloaded to ${DIR}")
+   endif()
+endfunction()
+
+
 # A submodule repository: base, then the commit the dependency pins, then
 # a newer tip.
-set(SUB_DIR "${WORK_DIR}/sub")
+set(SUB_DIR "${TEST_DIR}/sub")
 file(MAKE_DIRECTORY "${SUB_DIR}")
 run_git("${SUB_DIR}" _IGNORED init --quiet)
 commit_marker("${SUB_DIR}" "base" _IGNORED)
@@ -149,17 +185,17 @@ file_url("${SUB_DIR}" SUB_URL)
 
 # The dependency itself, shaped the same way. Its pinned commit records the
 # submodule at the submodule's pinned commit.
-set(DEP_DIR "${WORK_DIR}/dep")
+set(DEP_DIR "${TEST_DIR}/dep")
 file(MAKE_DIRECTORY "${DEP_DIR}")
 run_git("${DEP_DIR}" _IGNORED init --quiet)
-commit_marker("${DEP_DIR}" "base" _IGNORED)
+commit_marker("${DEP_DIR}" "base" DEP_BASE)
 run_git("${DEP_DIR}" _IGNORED submodule --quiet add "${SUB_URL}" sub)
 run_git("${DEP_DIR}/sub" _IGNORED checkout --quiet "${SUB_PINNED}")
 commit_marker("${DEP_DIR}" "pinned" DEP_PINNED)
 commit_marker("${DEP_DIR}" "tip" DEP_TIP)
 file_url("${DEP_DIR}" DEP_URL)
 
-set(SOURCE_DIR "${WORK_DIR}/src")
+set(SOURCE_DIR "${TEST_DIR}/src")
 
 
 # A commit that is neither a tag nor a branch tip, with its submodule.
@@ -171,9 +207,9 @@ expect_equal("${HEAD}" "${DEP_PINNED}" "checked-out commit")
 expect_marker("${SOURCE_DIR}" "pinned")
 expect_marker("${SOURCE_DIR}/sub" "pinned")
 
-# Only the pinned commits were downloaded, not their history.
-run_git("${SOURCE_DIR}" SHALLOW rev-parse --is-shallow-repository)
-expect_equal("${SHALLOW}" "true" "dependency checkout is shallow")
+# Only the pinned commit was downloaded: not its parent, nor the branch tip.
+expect_missing_commit("${SOURCE_DIR}" "${DEP_BASE}" "the pinned commit's parent")
+expect_missing_commit("${SOURCE_DIR}" "${DEP_TIP}" "the branch tip")
 run_git("${SOURCE_DIR}/sub" SHALLOW rev-parse --is-shallow-repository)
 expect_equal("${SHALLOW}" "true" "submodule checkout is shallow")
 
@@ -184,15 +220,22 @@ expect_fetched(RESULT "fetching a new pin over an old checkout")
 expect_marker("${SOURCE_DIR}" "tip")
 
 
+# Without GIT_EXECUTABLE, the script finds git itself.
+fetch("${DEP_URL}" "${DEP_PINNED}" "${SOURCE_DIR}" RESULT -DGIT_EXECUTABLE=)
+expect_fetched(RESULT "fetching without GIT_EXECUTABLE")
+expect_marker("${SOURCE_DIR}" "pinned")
+
+
+# A retry count that isn't a number is rejected, and the checkout is kept.
+fetch("${DEP_URL}" "${DEP_TIP}" "${SOURCE_DIR}" RESULT -DRETRY_COUNT=OFF)
+expect_fetch_failed(RESULT "RETRY_COUNT must be a whole number" "fetching with RETRY_COUNT=OFF")
+expect_marker("${SOURCE_DIR}" "pinned")
+
+
 # A commit the server doesn't have fails, after its retries.
 fetch("${DEP_URL}" "0123456789abcdef0123456789abcdef01234567" "${SOURCE_DIR}" RESULT)
-if(RESULT EQUAL 0)
-   message(FATAL_ERROR "fetching a missing commit succeeded")
-endif()
-if(NOT RESULT_OUTPUT MATCHES "retrying in 0 seconds")
-   message(FATAL_ERROR "fetching a missing commit was not retried:\n${RESULT_OUTPUT}")
-endif()
+expect_fetch_failed(RESULT "retrying in 0 seconds" "fetching a missing commit")
 
 
-file(REMOVE_RECURSE "${WORK_DIR}")
+file(REMOVE_RECURSE "${TEST_DIR}")
 message(STATUS "fetch-git-revision.cmake: all tests passed")

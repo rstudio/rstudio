@@ -216,8 +216,9 @@ function(fetch)
          if(do_fetch)
             # Fetch just the pinned commit, instead of using GIT_SHALLOW: its
             # clone can only check out a commit that is still a tag or a
-            # branch tip (#19714).
-            find_package(Git REQUIRED)
+            # branch tip (#19714). Git is optional here, since a
+            # FETCHCONTENT_SOURCE_DIR_<NAME> override skips the download.
+            find_package(Git QUIET)
             FetchContent_Declare("${_NAME}"
                DOWNLOAD_COMMAND
                   "${CMAKE_COMMAND}"

@@ -14,7 +14,7 @@
 #
 
 # Populates SOURCE_DIR with REPOSITORY at REVISION, downloading only that
-# commit, plus the submodule commits it records, at depth 1.
+# commit, and initializes its submodules (recursively) at depth 1.
 #
 # This replaces FetchContent's GIT_SHALLOW, which clones every branch tip and
 # tag at depth 1 and then checks out the revision. That can't check out a
@@ -24,13 +24,13 @@
 # speaking git protocol v2).
 #
 # Usage:
-#   cmake -DGIT_EXECUTABLE=<git> -DREPOSITORY=<url> -DREVISION=<commit>
-#         -DSOURCE_DIR=<dir> [-DRETRY_COUNT=<n>] [-DRETRY_DELAY=<seconds>]
+#   cmake -DREPOSITORY=<url> -DREVISION=<commit> -DSOURCE_DIR=<dir>
+#         [-DGIT_EXECUTABLE=<git>] [-DRETRY_COUNT=<n>] [-DRETRY_DELAY=<seconds>]
 #         -P fetch-git-revision.cmake
 
 cmake_minimum_required(VERSION 3.25)
 
-foreach(_VAR GIT_EXECUTABLE REPOSITORY REVISION SOURCE_DIR)
+foreach(_VAR REPOSITORY REVISION SOURCE_DIR)
    if("${${_VAR}}" STREQUAL "")
       message(FATAL_ERROR "fetch-git-revision.cmake requires -D${_VAR}=<value>")
    endif()
@@ -42,6 +42,28 @@ if("${RETRY_COUNT}" STREQUAL "")
 endif()
 if("${RETRY_DELAY}" STREQUAL "")
    set(RETRY_DELAY 0)
+endif()
+
+# Check these before touching SOURCE_DIR. A count that isn't a number would
+# never end the retry loop.
+if(NOT RETRY_COUNT MATCHES "^[0-9]+$")
+   message(FATAL_ERROR "RETRY_COUNT must be a whole number of retries, not '${RETRY_COUNT}'")
+endif()
+if(NOT RETRY_DELAY MATCHES "^[0-9]+(\\.[0-9]+)?$")
+   message(FATAL_ERROR "RETRY_DELAY must be a number of seconds, not '${RETRY_DELAY}'")
+endif()
+
+# The caller passes git along when it finds it, but doesn't require it: a
+# build that supplies a dependency's sources with FETCHCONTENT_SOURCE_DIR_<NAME>
+# never runs this script, and so needn't have git installed.
+if(NOT GIT_EXECUTABLE)
+   # Search into another variable: find_program() won't search when the
+   # result variable was defined on the command line, even as empty.
+   find_program(_FOUND_GIT git)
+   if(NOT _FOUND_GIT)
+      message(FATAL_ERROR "git is required to fetch ${REPOSITORY}")
+   endif()
+   set(GIT_EXECUTABLE "${_FOUND_GIT}")
 endif()
 
 
