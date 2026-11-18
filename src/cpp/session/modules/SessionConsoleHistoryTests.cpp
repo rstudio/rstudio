@@ -34,22 +34,17 @@ namespace session {
 namespace tests {
 
 TEST(SessionConsoleHistoryTest, RHistsizeLimitsOnlyTheSavedHistory) {
-   std::string originalHistsize = core::system::getenv("R_HISTSIZE");
-   BOOST_SCOPE_EXIT(&originalHistsize)
-   {
-      if (originalHistsize.empty())
-         core::system::unsetenv("R_HISTSIZE");
-      else
-         core::system::setenv("R_HISTSIZE", originalHistsize);
-   }
-   BOOST_SCOPE_EXIT_END
+   // restores R_HISTSIZE, set or not, when the test ends
+   core::system::EnvironmentScope histsizeScope("R_HISTSIZE", "0");
 
-   FilePath historyPath, savedPath;
+   FilePath historyPath, longHistoryPath, savedPath;
    ASSERT_FALSE(FilePath::tempFilePath(historyPath));
+   ASSERT_FALSE(FilePath::tempFilePath(longHistoryPath));
    ASSERT_FALSE(FilePath::tempFilePath(savedPath));
-   BOOST_SCOPE_EXIT(&historyPath, &savedPath)
+   BOOST_SCOPE_EXIT(&historyPath, &longHistoryPath, &savedPath)
    {
       historyPath.remove();
+      longHistoryPath.remove();
       savedPath.remove();
    }
    BOOST_SCOPE_EXIT_END
@@ -57,30 +52,58 @@ TEST(SessionConsoleHistoryTest, RHistsizeLimitsOnlyTheSavedHistory) {
    const std::vector<std::string> commands {"first()", "second()", "third()"};
    ASSERT_FALSE(core::writeStringVectorToFile(historyPath, commands));
 
+   auto entriesOf = [](const r::session::ConsoleHistory& history)
+   {
+      return std::vector<std::string>(history.begin(), history.end());
+   };
+
+   // readStringVectorFromFile() appends, so read into a fresh vector each time
+   auto savedBy = [&savedPath](const r::session::ConsoleHistory& history)
+   {
+      std::vector<std::string> saved;
+      EXPECT_FALSE(history.saveToHistoryFile(savedPath));
+      EXPECT_FALSE(core::readStringVectorFromFile(savedPath, &saved));
+      return saved;
+   };
+
    // R_HISTSIZE=0 asks R to save no history; the session's history works as
    // usual. loading a history file into a capacity of 0 used to crash
-   core::system::setenv("R_HISTSIZE", "0");
-   r::session::ConsoleHistory history;
-   history.setCapacityFromRHistsize();
-   EXPECT_EQ(512, history.capacity());
+   r::session::ConsoleHistory zeroHistory;
+   zeroHistory.setCapacityFromRHistsize();
+   EXPECT_EQ(512, zeroHistory.capacity());
+   ASSERT_FALSE(zeroHistory.loadFromFile(historyPath, true));
+   EXPECT_EQ(commands, entriesOf(zeroHistory));
+   EXPECT_TRUE(savedBy(zeroHistory).empty());
 
-   ASSERT_FALSE(history.loadFromFile(historyPath, true));
-   EXPECT_EQ(commands, std::vector<std::string>(history.begin(), history.end()));
-
-   std::vector<std::string> saved;
-   ASSERT_FALSE(history.saveToHistoryFile(savedPath));
-   ASSERT_FALSE(core::readStringVectorFromFile(savedPath, &saved));
-   EXPECT_TRUE(saved.empty());
-
-   // like R, R_HISTSIZE is read when saving, and keeps the most recent commands
-   // (readStringVectorFromFile() appends, so clear before each read)
+   // a small value doesn't limit the session's history either, only what is
+   // saved, and like R it is read when saving
    core::system::setenv("R_HISTSIZE", "2");
-   ASSERT_FALSE(history.saveToHistoryFile(savedPath));
-   saved.clear();
-   ASSERT_FALSE(core::readStringVectorFromFile(savedPath, &saved));
-   EXPECT_EQ((std::vector<std::string> {"second()", "third()"}), saved);
+   r::session::ConsoleHistory smallHistory;
+   smallHistory.setCapacityFromRHistsize();
+   EXPECT_EQ(512, smallHistory.capacity());
+   ASSERT_FALSE(smallHistory.loadFromFile(historyPath, true));
+   EXPECT_EQ(commands, entriesOf(smallHistory));
 
-   // unset, negative, and invalid values mean R's default of 512
+   const std::vector<std::string> lastTwo {"second()", "third()"};
+   EXPECT_EQ(lastTwo, savedBy(smallHistory));
+   EXPECT_EQ(lastTwo, savedBy(zeroHistory));
+
+   // a value larger than the default raises the session's capacity
+   core::system::setenv("R_HISTSIZE", "1000");
+   r::session::ConsoleHistory largeHistory;
+   largeHistory.setCapacityFromRHistsize();
+   EXPECT_EQ(1000, largeHistory.capacity());
+
+   std::vector<std::string> longCommands;
+   for (int i = 1; i <= 600; i++)
+      longCommands.push_back("command" + std::to_string(i) + "()");
+   ASSERT_FALSE(core::writeStringVectorToFile(longHistoryPath, longCommands));
+   ASSERT_FALSE(largeHistory.loadFromFile(longHistoryPath, true));
+   ASSERT_EQ(600, largeHistory.size());
+
+   // unset, negative, and invalid values mean R's default of 512, for both the
+   // session's capacity and the commands saved
+   const std::vector<std::string> last512(longCommands.end() - 512, longCommands.end());
    for (const char* value : {"", "-1", "abc"})
    {
       if (*value)
@@ -91,18 +114,8 @@ TEST(SessionConsoleHistoryTest, RHistsizeLimitsOnlyTheSavedHistory) {
       r::session::ConsoleHistory defaultHistory;
       defaultHistory.setCapacityFromRHistsize();
       EXPECT_EQ(512, defaultHistory.capacity()) << "R_HISTSIZE=" << value;
-
-      ASSERT_FALSE(history.saveToHistoryFile(savedPath));
-      saved.clear();
-      ASSERT_FALSE(core::readStringVectorFromFile(savedPath, &saved));
-      EXPECT_EQ(commands, saved) << "R_HISTSIZE=" << value;
+      EXPECT_EQ(last512, savedBy(largeHistory)) << "R_HISTSIZE=" << value;
    }
-
-   // a value larger than the default also raises the session's capacity
-   core::system::setenv("R_HISTSIZE", "1000");
-   r::session::ConsoleHistory largeHistory;
-   largeHistory.setCapacityFromRHistsize();
-   EXPECT_EQ(1000, largeHistory.capacity());
 }
 
 } // namespace tests
