@@ -1,8 +1,8 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { sleep } from '@utils/constants';
-import { executeCommand } from '@utils/commands';
 import { restartSessionWithSentinel, waitForSessionRestart } from '@utils/project';
 import { dismissBlockingModals } from '@pages/modals.page';
+import { executeInConsole } from '@pages/console_pane.page';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
 import type { Locator, Page } from 'playwright';
 import { setupPositAssistantChat } from './_chat-setup';
@@ -10,9 +10,10 @@ import { setupPositAssistantChat } from './_chat-setup';
 // Regression tests for rstudio/rstudio#19695: suspend and Restart R stop the
 // Posit Assistant backend, whose reconnect failures raised a "connection lost"
 // banner that outlived the resume. These need a running backend, not sign-in.
-// The locators search the GWT document, not the iframe's.
+// The locators search the GWT document, not the iframe's. The banner's text
+// comes from Posit Assistant, so match it by RStudio's Restart button instead.
 const lostBanner = (page: Page): Locator =>
-  page.getByText(/Connection to Posit Assistant was lost/);
+  page.getByRole('button', { name: 'Restart Posit Assistant' });
 const suspendedNotice = (page: Page): Locator =>
   page.getByText(/The R session is suspended\. Posit Assistant will reconnect/);
 const restartingNotice = (page: Page): Locator =>
@@ -73,7 +74,9 @@ test.describe.serial('Posit Assistant across suspend and restart', {
     rstudioPage: page,
   }) => {
     await waitForClientStateQuiet(page);
-    await executeCommand(page, 'suspendSession');
+    // Not Session > Suspend: a forced suspend exits without delivering
+    // SUSPEND_SESSION, like an inactivity-timeout suspend does
+    await executeInConsole(page, '.rs.suspendSession(force = FALSE)', { wait: false });
 
     await expect(suspendedNotice(page)).toBeVisible({ timeout: 15000 });
 
