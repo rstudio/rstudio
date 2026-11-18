@@ -24,24 +24,38 @@ namespace execution {
 void ExecutionDeadline::arm(Clock::time_point queuedTime, int timeoutMs)
 {
    passed_ = false;
+   interrupted_ = false;
    if (timeoutMs > 0)
       deadline_ = queuedTime + std::chrono::milliseconds(timeoutMs);
    else
       deadline_ = boost::none;
 }
 
-bool ExecutionDeadline::check(Clock::time_point now)
+bool ExecutionDeadline::expired(Clock::time_point now)
 {
-   if (!deadline_ || passed_ || now < *deadline_)
+   if (deadline_ && now >= *deadline_)
+      passed_ = true;
+
+   return passed_;
+}
+
+bool ExecutionDeadline::takeInterrupt(Clock::time_point now)
+{
+   if (!deadline_ || interrupted_ || !expired(now))
       return false;
 
-   passed_ = true;
+   interrupted_ = true;
    return true;
 }
 
 bool ExecutionDeadline::passed() const
 {
    return passed_;
+}
+
+bool ExecutionDeadline::interrupted() const
+{
+   return interrupted_;
 }
 
 bool ExecutionDeadline::disarm()

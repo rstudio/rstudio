@@ -38,12 +38,18 @@ public:
    // Starts enforcing timeoutMs from queuedTime, forgetting any earlier pass
    void arm(Clock::time_point queuedTime, int timeoutMs);
 
-   // True for the first check at or after the deadline, so the caller
-   // interrupts R once; false before it, after it, and when disarmed
-   bool check(Clock::time_point now);
+   // Whether the deadline has passed by now; a pass is remembered
+   bool expired(Clock::time_point now);
 
-   // Whether a check found the deadline passed since the last arm
+   // True for the first call at or after the deadline, so the caller
+   // interrupts R once; false before it, after it, and when disarmed
+   bool takeInterrupt(Clock::time_point now);
+
+   // Whether the deadline was found passed since the last arm
    bool passed() const;
+
+   // Whether takeInterrupt asked for an interrupt since the last arm
+   bool interrupted() const;
 
    // Stops enforcing the deadline; returns passed()
    bool disarm();
@@ -51,6 +57,7 @@ public:
 private:
    boost::optional<Clock::time_point> deadline_;
    bool passed_ = false;
+   bool interrupted_ = false;
 };
 
 // Whether a request queued at queuedTime used up its whole timeout before it

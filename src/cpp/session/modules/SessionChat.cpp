@@ -388,17 +388,19 @@ void checkExecutionDeadline()
    boost::mutex::scoped_lock lock(s_executionTrackingMutex);
 
    // Not gated on s_currentTrackingId: an execution may have an empty one
-   if (!s_currentDeadline.check(std::chrono::steady_clock::now()))
+   if (!s_currentDeadline.takeInterrupt(std::chrono::steady_clock::now()))
       return;
 
    r::exec::setInterruptsPending(true);
    DLOG("Execution deadline passed for trackingId: {}", s_currentTrackingId);
 }
 
-// Stops enforcing the current execution's deadline; returns whether it passed
-bool disarmExecutionDeadline()
+// Stops enforcing the current execution's deadline; returns whether it
+// passed, and whether it interrupted R in pInterrupted
+bool disarmExecutionDeadline(bool* pInterrupted)
 {
    boost::mutex::scoped_lock lock(s_executionTrackingMutex);
+   *pInterrupted = s_currentDeadline.interrupted();
    return s_currentDeadline.disarm();
 }
 
@@ -1388,6 +1390,24 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
                      int timeout,
                      std::chrono::steady_clock::time_point queuedTime);
 
+// Answers a runtime/executeCode request that never ran, in the shape of an
+// execution result
+void sendNotRunResult(core::system::ProcessOperations& ops,
+                      const json::Value& requestId,
+                      const std::string& error,
+                      bool canceled,
+                      bool timedOut)
+{
+   json::Object result;
+   result["output"] = "";
+   result["error"] = error;
+   result["canceled"] = canceled;
+   result["timedOut"] = timedOut;
+   result["plots"] = json::Array();
+   result["executionTime"] = 0;
+   sendJsonRpcResponse(ops, requestId, result);
+}
+
 // Process pending execution requests from the queue
 void processPendingExecution()
 {
@@ -1404,53 +1424,44 @@ void processPendingExecution()
       s_pendingExecutionQueue.pop();
    }
 
-   // Check for timeout - if request waited too long in queue, return error.
-   // A request whose own timeout ran out while it waited must not start
-   // either: the backend has already given up on it.
+   // A request never runs if it was canceled while it waited, if its own
+   // timeout ran out (the backend has already given up on it), or if it waited
+   // past the queue cap. It is answered here, before the console is marked
+   // busy, and its cancellation (if any) retired.
    auto now = std::chrono::steady_clock::now();
    auto waitTimeMs = std::chrono::duration_cast<std::chrono::milliseconds>(
       now - request.queuedTime).count();
    bool canceled = false;
    {
       boost::mutex::scoped_lock lock(s_executionTrackingMutex);
-      canceled = s_canceledTrackingIds.count(request.trackingId) > 0;
+      canceled = s_canceledTrackingIds.erase(request.trackingId) > 0;
    }
-
-   // A canceled request is answered as canceled (by executeCodeImpl), however
-   // long it waited
    bool deadlinePassed =
       chat_execution::expiredInQueue(request.queuedTime, request.timeout, now);
 
-   if (!canceled && (waitTimeMs > kMaxQueueWaitMs || deadlinePassed))
+   if (canceled || deadlinePassed || waitTimeMs > kMaxQueueWaitMs)
    {
-      WLOG("Execution request timed out after {}ms in queue for trackingId: {}",
-           waitTimeMs, request.trackingId);
-
-      // Send timeout response if backend is still alive. A request out of its
-      // own time gets the same result as one stopped while running.
-      boost::shared_ptr<core::system::ProcessOperations> pOps = request.weakOps.lock();
-      if (pOps && deadlinePassed)
+      if (!canceled)
       {
-         json::Object result;
-         result["output"] = "";
-         result["error"] = timedOutMessage(request.timeout) + " while waiting to run";
-         result["canceled"] = false;
-         result["timedOut"] = true;
-         result["plots"] = json::Array();
-         result["executionTime"] = 0;
-         sendJsonRpcResponse(*pOps, request.requestId, result);
+         WLOG("Execution request timed out after {}ms in queue for trackingId: {}",
+              waitTimeMs, request.trackingId);
+      }
+
+      // Send the response if backend is still alive
+      boost::shared_ptr<core::system::ProcessOperations> pOps = request.weakOps.lock();
+      if (pOps && canceled)
+      {
+         sendNotRunResult(*pOps, request.requestId, kExecutionCanceledError, true, false);
+      }
+      else if (pOps && deadlinePassed)
+      {
+         std::string message = timedOutMessage(request.timeout) + " while waiting to run";
+         sendNotRunResult(*pOps, request.requestId, message, false, true);
       }
       else if (pOps)
       {
          sendJsonRpcError(*pOps, request.requestId, kJsonRpcServerError,
             "Execution timed out. The R console was busy for too long.");
-      }
-
-      // The request never runs, so a cancellation recorded for it would
-      // otherwise linger
-      {
-         boost::mutex::scoped_lock lock(s_executionTrackingMutex);
-         s_canceledTrackingIds.erase(request.trackingId);
       }
 
       continuePendingExecutions(false);
@@ -1654,15 +1665,7 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
          s_canceledTrackingIds.erase(trackingId);
 
          // Return a response indicating cancellation
-         json::Object result;
-         result["output"] = "";
-         result["error"] = kExecutionCanceledError;
-         result["canceled"] = true;
-         result["timedOut"] = false;
-         result["plots"] = json::Array();
-         result["executionTime"] = 0;
-
-         sendJsonRpcResponse(ops, requestId, result);
+         sendNotRunResult(ops, requestId, kExecutionCanceledError, true, false);
          // Note: No need to unregister here as we never registered (this check is before registration)
          return;
       }
@@ -1795,8 +1798,7 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
             // Stop if the deadline has passed, whether or not background
             // processing has noticed yet, or its interrupt landed outside
             // the agent's code (e.g. while printing a result)
-            s_currentDeadline.check(std::chrono::steady_clock::now());
-            if (s_currentDeadline.passed())
+            if (s_currentDeadline.expired(std::chrono::steady_clock::now()))
             {
                timedOut = true;
                error = Error(boost::system::errc::timed_out, timedOutMessage(timeout), ERROR_LOCATION);
@@ -1954,10 +1956,13 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
 
    // The deadline bounds the agent's code, not the reporting below. Drop an
    // interrupt it raised that R never consumed, which would otherwise land on
-   // whatever R runs next, such as the user's next command.
-   if (disarmExecutionDeadline())
+   // whatever R runs next, such as the user's next command; an interrupt it
+   // didn't raise is left alone.
+   bool deadlineInterrupted = false;
+   if (disarmExecutionDeadline(&deadlineInterrupted))
    {
-      r::exec::setInterruptsPending(false);
+      if (deadlineInterrupted)
+         r::exec::setInterruptsPending(false);
 
       // The request ran out of time even if the last expression got to
       // finish (e.g. the interrupt landed in printing its result), or the

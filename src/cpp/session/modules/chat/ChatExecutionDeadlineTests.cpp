@@ -33,35 +33,49 @@ TEST(ChatExecutionDeadline, DoesNotPassBeforeTheTimeout)
    ExecutionDeadline deadline;
    deadline.arm(kQueued, 2000);
 
-   EXPECT_FALSE(deadline.check(kQueued));
-   EXPECT_FALSE(deadline.check(kQueued + milliseconds(1999)));
+   EXPECT_FALSE(deadline.takeInterrupt(kQueued));
+   EXPECT_FALSE(deadline.expired(kQueued + milliseconds(1999)));
+   EXPECT_FALSE(deadline.takeInterrupt(kQueued + milliseconds(1999)));
    EXPECT_FALSE(deadline.passed());
+   EXPECT_FALSE(deadline.interrupted());
 }
 
-TEST(ChatExecutionDeadline, PassesOnceAtTheTimeout)
+TEST(ChatExecutionDeadline, InterruptsOnceAtTheTimeout)
 {
    ExecutionDeadline deadline;
    deadline.arm(kQueued, 2000);
 
-   EXPECT_TRUE(deadline.check(kQueued + milliseconds(2000)));
+   EXPECT_TRUE(deadline.takeInterrupt(kQueued + milliseconds(2000)));
    EXPECT_TRUE(deadline.passed());
+   EXPECT_TRUE(deadline.interrupted());
 
    // Later checks don't ask for a second interrupt
-   EXPECT_FALSE(deadline.check(kQueued + milliseconds(5000)));
+   EXPECT_FALSE(deadline.takeInterrupt(kQueued + milliseconds(5000)));
    EXPECT_TRUE(deadline.passed());
 }
 
-TEST(ChatExecutionDeadline, PassesOnALateFirstCheck)
+TEST(ChatExecutionDeadline, InterruptsOnALateFirstCheck)
 {
    // Background processing polls R about every 50 ms, so the first check
    // usually comes after the deadline rather than exactly at it
    ExecutionDeadline deadline;
    deadline.arm(kQueued, 2000);
 
-   EXPECT_FALSE(deadline.check(kQueued + milliseconds(1990)));
-   EXPECT_TRUE(deadline.check(kQueued + milliseconds(2049)));
-   EXPECT_FALSE(deadline.check(kQueued + milliseconds(2099)));
+   EXPECT_FALSE(deadline.takeInterrupt(kQueued + milliseconds(1990)));
+   EXPECT_TRUE(deadline.takeInterrupt(kQueued + milliseconds(2049)));
+   EXPECT_FALSE(deadline.takeInterrupt(kQueued + milliseconds(2099)));
    EXPECT_TRUE(deadline.passed());
+}
+
+TEST(ChatExecutionDeadline, ExpiredRecordsAPassWithoutAnInterrupt)
+{
+   // Checking between expressions finds the pass without interrupting R
+   ExecutionDeadline deadline;
+   deadline.arm(kQueued, 2000);
+
+   EXPECT_TRUE(deadline.expired(kQueued + milliseconds(2010)));
+   EXPECT_TRUE(deadline.passed());
+   EXPECT_FALSE(deadline.interrupted());
 }
 
 TEST(ChatExecutionDeadline, CountsFromWhenTheRequestWasQueued)
@@ -71,8 +85,8 @@ TEST(ChatExecutionDeadline, CountsFromWhenTheRequestWasQueued)
    deadline.arm(kQueued, 2000);
 
    Clock::time_point started = kQueued + milliseconds(1500);
-   EXPECT_FALSE(deadline.check(started + milliseconds(499)));
-   EXPECT_TRUE(deadline.check(started + milliseconds(500)));
+   EXPECT_FALSE(deadline.takeInterrupt(started + milliseconds(499)));
+   EXPECT_TRUE(deadline.takeInterrupt(started + milliseconds(500)));
 }
 
 TEST(ChatExecutionDeadline, NonPositiveTimeoutSetsNoLimit)
@@ -82,9 +96,20 @@ TEST(ChatExecutionDeadline, NonPositiveTimeoutSetsNoLimit)
       ExecutionDeadline deadline;
       deadline.arm(kQueued, timeout);
 
-      EXPECT_FALSE(deadline.check(kQueued + std::chrono::hours(24))) << timeout;
+      EXPECT_FALSE(deadline.expired(kQueued + std::chrono::hours(24))) << timeout;
+      EXPECT_FALSE(deadline.takeInterrupt(kQueued + std::chrono::hours(24))) << timeout;
       EXPECT_FALSE(deadline.passed()) << timeout;
    }
+}
+
+TEST(ChatExecutionDeadline, ArmWithoutALimitReplacesAnActiveDeadline)
+{
+   ExecutionDeadline deadline;
+   deadline.arm(kQueued, 2000);
+   deadline.arm(kQueued, 0);
+
+   EXPECT_FALSE(deadline.expired(kQueued + milliseconds(5000)));
+   EXPECT_FALSE(deadline.takeInterrupt(kQueued + milliseconds(5000)));
 }
 
 TEST(ChatExecutionDeadline, DisarmStopsEnforcing)
@@ -93,31 +118,34 @@ TEST(ChatExecutionDeadline, DisarmStopsEnforcing)
    deadline.arm(kQueued, 2000);
 
    EXPECT_FALSE(deadline.disarm());
-   EXPECT_FALSE(deadline.check(kQueued + milliseconds(5000)));
+   EXPECT_FALSE(deadline.expired(kQueued + milliseconds(5000)));
+   EXPECT_FALSE(deadline.takeInterrupt(kQueued + milliseconds(5000)));
 }
 
 TEST(ChatExecutionDeadline, DisarmReportsAPass)
 {
    ExecutionDeadline deadline;
    deadline.arm(kQueued, 2000);
-   ASSERT_TRUE(deadline.check(kQueued + milliseconds(2000)));
+   ASSERT_TRUE(deadline.takeInterrupt(kQueued + milliseconds(2000)));
 
    EXPECT_TRUE(deadline.disarm());
    EXPECT_TRUE(deadline.passed());
+   EXPECT_TRUE(deadline.interrupted());
 }
 
 TEST(ChatExecutionDeadline, ArmForgetsAnEarlierPass)
 {
    ExecutionDeadline deadline;
    deadline.arm(kQueued, 2000);
-   ASSERT_TRUE(deadline.check(kQueued + milliseconds(2000)));
+   ASSERT_TRUE(deadline.takeInterrupt(kQueued + milliseconds(2000)));
    deadline.disarm();
 
    Clock::time_point next = kQueued + milliseconds(10000);
    deadline.arm(next, 2000);
    EXPECT_FALSE(deadline.passed());
-   EXPECT_FALSE(deadline.check(next + milliseconds(1000)));
-   EXPECT_TRUE(deadline.check(next + milliseconds(2000)));
+   EXPECT_FALSE(deadline.interrupted());
+   EXPECT_FALSE(deadline.takeInterrupt(next + milliseconds(1000)));
+   EXPECT_TRUE(deadline.takeInterrupt(next + milliseconds(2000)));
 }
 
 TEST(ChatExecutionDeadline, ExpiredInQueueOnceTheTimeoutIsUsedUp)
