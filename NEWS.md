@@ -11,7 +11,6 @@
 - ([#19555](https://github.com/rstudio/rstudio/issues/19555)): The branch filter in the History view of the Review Changes window now has a search box, and searches in the Git branch menus now ignore case.
 
 ### Fixed
-- ([#19697](https://github.com/rstudio/rstudio/issues/19697)): Fixed an issue where a request from the IDE carrying text with an embedded nul character could go unanswered, as R refuses such strings. The request now fails with an error.
 - ([#19674](https://github.com/rstudio/rstudio/issues/19674)): Fixed an issue where File > New File commands (e.g. New R Script) did nothing, and showed no error, when RStudio failed to create the document. An error message is now shown.
 - ([#18924](https://github.com/rstudio/rstudio/issues/18924)): Fixed more issues with malformed ANSI escape sequences in console output: text after an unterminated sequence at the end of an error message, a prompt, or the output of inline R code is no longer dropped; such text shown at the next prompt is no longer made part of the message or warning before it; and a color sequence with an unknown format or an unsupported sub-parameter (e.g. `ESC[38;3;1m` or `ESC[38;4:3;1m`) no longer resets the colors and styles in effect.
 - ([#10086](https://github.com/rstudio/rstudio/issues/10086)): Fixed an issue where moving the mouse between the "Show Traceback" and "Rerun with Debug" links on a Console error made them flicker.
