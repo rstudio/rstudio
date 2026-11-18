@@ -1036,8 +1036,8 @@ private:
       // build script to be executed
       std::string scriptPath;
       error = r::exec::RFunction(".rs.generateCommandScript")
-            .addUtf8Param(command)
-            .callUtf8(&scriptPath);
+            .addParam(command)
+            .call(&scriptPath);
       
       if (error)
       {
