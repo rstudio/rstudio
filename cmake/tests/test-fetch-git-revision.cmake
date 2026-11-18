@@ -258,8 +258,9 @@ expect_fetched(RESULT "fetching a new pin over an old checkout")
 expect_marker("${SOURCE_DIR}" "tip")
 
 
-# Without GIT_EXECUTABLE, the script finds git itself.
-fetch("${DEP_URL}" "${DEP_PINNED}" "${SOURCE_DIR}" RESULT -DGIT_EXECUTABLE=)
+# Without GIT_EXECUTABLE, the script finds git itself. (A fractional retry
+# delay is accepted too.)
+fetch("${DEP_URL}" "${DEP_PINNED}" "${SOURCE_DIR}" RESULT -DGIT_EXECUTABLE= -DRETRY_DELAY=.5)
 expect_fetched(RESULT "fetching without GIT_EXECUTABLE")
 expect_marker("${SOURCE_DIR}" "pinned")
 
@@ -267,6 +268,11 @@ expect_marker("${SOURCE_DIR}" "pinned")
 # A retry count that isn't a number is rejected, and the checkout is kept.
 fetch("${DEP_URL}" "${DEP_TIP}" "${SOURCE_DIR}" RESULT -DRETRY_COUNT=OFF)
 expect_fetch_failed(RESULT "RETRY_COUNT must be a whole number" "fetching with RETRY_COUNT=OFF")
+expect_marker("${SOURCE_DIR}" "pinned")
+
+# So is a TLS version that git would ignore.
+fetch("${DEP_URL}" "${DEP_TIP}" "${SOURCE_DIR}" RESULT -DTLS_VERSION=1.4)
+expect_fetch_failed(RESULT "TLS_VERSION must be one of" "fetching with TLS_VERSION=1.4")
 expect_marker("${SOURCE_DIR}" "pinned")
 
 

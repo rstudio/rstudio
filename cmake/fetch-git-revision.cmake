@@ -74,8 +74,8 @@ endif()
 # Variables that would point git at another repository, such as the ones
 # git sets for its hooks, must not redirect the commands below.
 foreach(_VAR
-   GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR
-   GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_DEFAULT_HASH)
+   GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR GIT_OBJECT_DIRECTORY
+   GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_QUARANTINE_PATH)
    unset(ENV{${_VAR}})
 endforeach()
 
@@ -85,6 +85,11 @@ if("${TLS_VERSION}" STREQUAL "")
    set(TLS_VERSION "$ENV{CMAKE_TLS_VERSION}")
 endif()
 if(NOT "${TLS_VERSION}" STREQUAL "")
+   # Git ignores a version it doesn't know, with only a warning, so reject
+   # one here as ExternalProject does.
+   if(NOT TLS_VERSION MATCHES "^1\\.[0-3]$")
+      message(FATAL_ERROR "TLS_VERSION must be one of 1.0, 1.1, 1.2 or 1.3, not '${TLS_VERSION}'")
+   endif()
    list(APPEND GIT_OPTIONS -c "http.sslVersion=tlsv${TLS_VERSION}")
 endif()
 if("${TLS_VERIFY}" STREQUAL "")
@@ -99,12 +104,13 @@ if(NOT "${TLS_VERIFY}" STREQUAL "")
 endif()
 
 # Create the repository with the object format the revision is written in,
-# whatever the user's default is.
+# whatever the user's default is. Versions of git that predate SHA-256
+# ignore GIT_DEFAULT_HASH, and only create SHA-1 repositories anyway.
 string(LENGTH "${REVISION}" _REVISION_LENGTH)
 if(_REVISION_LENGTH EQUAL 64)
-   set(OBJECT_FORMAT sha256)
+   set(ENV{GIT_DEFAULT_HASH} sha256)
 else()
-   set(OBJECT_FORMAT sha1)
+   set(ENV{GIT_DEFAULT_HASH} sha1)
 endif()
 
 
@@ -153,9 +159,7 @@ endfunction()
 file(REMOVE_RECURSE "${SOURCE_DIR}")
 file(MAKE_DIRECTORY "${SOURCE_DIR}")
 
-# (init.defaultObjectFormat is ignored by versions of git that predate it,
-# which only create SHA-1 repositories.)
-run_git(-c "init.defaultObjectFormat=${OBJECT_FORMAT}" init --quiet)
+run_git(init --quiet)
 run_git(remote add origin "${REPOSITORY}")
 run_git_with_retries(fetch --quiet --depth 1 --no-tags origin "${REVISION}")
 run_git(checkout --quiet --detach FETCH_HEAD)
