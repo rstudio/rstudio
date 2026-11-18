@@ -98,6 +98,7 @@ import org.rstudio.studio.client.projects.model.ProjectTemplateRegistryProvider;
 import org.rstudio.studio.client.projects.model.ProjectTemplateServerOperations;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.quarto.model.QuartoServerOperations;
+import org.rstudio.studio.client.renv.RVersionSwitcher;
 import org.rstudio.studio.client.renv.RenvRVersionManager;
 import org.rstudio.studio.client.renv.model.RenvServerOperations;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
@@ -309,6 +310,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(PaneManager.class).in(Singleton.class);
       bind(DependencyManager.class).asEagerSingleton();
       bind(RenvRVersionManager.class).asEagerSingleton();
+      bind(RVersionSwitcher.class).asEagerSingleton();
       bind(WorkbenchListManager.class).asEagerSingleton();
       bind(ApplicationQuit.class).asEagerSingleton();
       bind(ApplicationInterrupt.class).asEagerSingleton();

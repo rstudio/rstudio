@@ -47,6 +47,7 @@ public class LeftRightToggleButton extends Widget
       String rightRight();
       String leftOn();
       String rightOn();
+      String disabled();
    }
 
    interface Binder extends UiBinder<Element, LeftRightToggleButton>
@@ -56,15 +57,15 @@ public class LeftRightToggleButton extends Widget
                                 boolean leftIsOn)
    {
       setElement(GWT.<Binder>create(Binder.class).createAndBindUi(this));
-      Styles styles = GWT.<Resources>create(Resources.class).styles();
+      styles_ = GWT.<Resources>create(Resources.class).styles();
       left_.setInnerText(leftLabel);
       left_.addClassName(ThemeResources.INSTANCE.themeStyles().handCursor());
       right_.setInnerText(rightLabel);
       right_.addClassName(ThemeResources.INSTANCE.themeStyles().handCursor());
       if (leftIsOn)
-         addStyleName(styles.leftOn());
+         addStyleName(styles_.leftOn());
       else
-         addStyleName(styles.rightOn());
+         addStyleName(styles_.rightOn());
 
       setClassId();
       Roles.getButtonRole().setAriaPressedState(left_, leftIsOn ? PressedValue.TRUE : PressedValue.FALSE);
@@ -81,6 +82,13 @@ public class LeftRightToggleButton extends Widget
       ClassIds.assignClassId(right_, ClassIds.RIGHT_TOGGLE_BTN + "_"  + rightId);
    }
    
+   public void setEnabled(boolean enabled)
+   {
+      left_.setPropertyBoolean("disabled", !enabled);
+      right_.setPropertyBoolean("disabled", !enabled);
+      setStyleName(styles_.disabled(), !enabled);
+   }
+
    @Override
    public HandlerRegistration addClickHandler(ClickHandler handler)
    {
@@ -91,6 +99,8 @@ public class LeftRightToggleButton extends Widget
    {
       GWT.<Resources>create(Resources.class).styles().ensureInjected();
    }
+
+   private final Styles styles_;
 
    @UiField
    Element left_;

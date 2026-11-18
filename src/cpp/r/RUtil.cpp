@@ -513,7 +513,7 @@ void synchronizeLocaleFromR()
    std::string rLocale;
    Error error = r::exec::RFunction("base:::Sys.getlocale")
          .addParam("LC_ALL")
-         .callUtf8(&rLocale);
+         .call(&rLocale);
    if (error)
       LOG_ERROR(error);
 

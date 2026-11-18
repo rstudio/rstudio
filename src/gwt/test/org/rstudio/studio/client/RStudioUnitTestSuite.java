@@ -44,6 +44,7 @@ import org.rstudio.core.client.widget.ModalDialogTrackerTests;
 import org.rstudio.core.client.widget.RowTableTests;
 import org.rstudio.core.client.widget.SearchWidgetTests;
 import org.rstudio.core.client.widget.SlideLabelTests;
+import org.rstudio.core.client.widget.ToolbarKeyboardNavigationTests;
 import org.rstudio.core.client.widget.WidgetListBoxTests;
 import org.rstudio.core.client.widget.WizardTests;
 import org.rstudio.studio.client.application.ApplicationUtilsTests;
@@ -64,6 +65,8 @@ import org.rstudio.studio.client.projects.PackageNamePatternTests;
 import org.rstudio.studio.client.projects.model.ProjectMRUEntryTests;
 import org.rstudio.studio.client.projects.model.ProjectTemplateDescriptionTests;
 import org.rstudio.studio.client.projects.model.ProjectTemplateWidgetTests;
+import org.rstudio.studio.client.renv.RVersionChooserTests;
+import org.rstudio.studio.client.renv.ui.ChooseRVersionDialogTests;
 import org.rstudio.studio.client.rsconnect.ui.EnvironmentVariablesDialogTests;
 import org.rstudio.studio.client.server.ServerErrorCauseTests;
 import org.rstudio.studio.client.workbench.WorkbenchListManagerTests;
@@ -116,6 +119,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(CompletionPopupPanelTests.class);
       suite.addTestSuite(ModalDialogTrackerTests.class);
       suite.addTestSuite(SearchWidgetTests.class);
+      suite.addTestSuite(ToolbarKeyboardNavigationTests.class);
       suite.addTestSuite(LayoutGridTests.class);
       suite.addTestSuite(WidgetListBoxTests.class);
       suite.addTestSuite(FastSelectTableTests.class);
@@ -181,6 +185,8 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(ImageButtonColumnTests.class);
       suite.addTestSuite(TriStateCheckboxCellTests.class);
       suite.addTestSuite(ServerErrorCauseTests.class);
+      suite.addTestSuite(RVersionChooserTests.class);
+      suite.addTestSuite(ChooseRVersionDialogTests.class);
 
       return suite;
    }

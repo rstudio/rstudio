@@ -76,6 +76,11 @@ public:
    void asyncWrite(const boost::asio::const_buffer&, Socket::Handler) override {}
    void asyncWrite(const std::vector<boost::asio::const_buffer>&, Socket::Handler) override {}
 
+   void setContentLength(uintmax_t contentLength)
+   {
+      request_.setHeader("Content-Length", contentLength);
+   }
+
    int closeCount_ = 0;
    int continueParsingCount_ = 0;
 
@@ -110,7 +115,7 @@ public:
    void setBufferPredicate(const boost::function<bool(const http::Response&)>&) override {}
    void setFixedBufferHandlerSupportsPause(bool) override {}
    void resumeChunkProcessing() override {}
-   void disableHandlers() override {}
+   void disableHandlers() override { disableHandlersCount_++; }
    void close() override { closeCount_++; }
    void setStrand(boost::asio::io_context::strand*) override {}
 
@@ -160,6 +165,7 @@ public:
    }
 
    int closeCount_ = 0;
+   int disableHandlersCount_ = 0;
    std::string written_;
 
 private:
@@ -180,9 +186,9 @@ TEST(FormProxy, LiveDownstreamWritesFormData)
 
    pProxy->initialize();
 
-   EXPECT_TRUE(pProxy->queueData("--boundary\r\n"));
+   EXPECT_TRUE(pProxy->queueData("--boundary\r\n", false));
    pDownstream->drain();
-   EXPECT_TRUE(pProxy->queueData("file bytes"));
+   EXPECT_TRUE(pProxy->queueData("file bytes", false));
    pDownstream->drain();
 
    EXPECT_EQ(pDownstream->written_, "--boundary\r\nfile bytes");
@@ -207,7 +213,7 @@ TEST(FormProxy, SettledDownstreamKeepsAcceptingFormDataInsteadOfStalling)
 
    for (int i = 0; i < 100; i++)
    {
-      EXPECT_TRUE(pProxy->queueData(std::string(64, 'x')));
+      EXPECT_TRUE(pProxy->queueData(std::string(64, 'x'), false));
       pDownstream->drain();
    }
 
@@ -229,10 +235,52 @@ TEST(FormProxy, SettledDownstreamDoesNotCloseTheUpstreamConnection)
    auto pProxy = boost::make_shared<FormProxy>(pUpstream, pDownstream);
 
    pProxy->initialize();
-   pProxy->queueData("file bytes");
+   pProxy->queueData("file bytes", false);
    pDownstream->drain();
 
    EXPECT_EQ(pUpstream->closeCount_, 0);
+   EXPECT_EQ(pDownstream->closeCount_, 0);
+}
+
+// The upstream connection ends an upload whose client went away with a final
+// empty call marked complete, short of the Content-Length. The session is
+// still waiting for the rest, so the downstream connection has to close too;
+// the upstream connection closes itself.
+TEST(FormProxy, AbandonedUploadClosesTheDownstreamConnection)
+{
+   auto pUpstream = boost::make_shared<FakeUpstreamConnection>();
+   pUpstream->setContentLength(100);
+   auto pDownstream = boost::make_shared<FakeDownstreamClient>(/*settled=*/false);
+   auto pProxy = boost::make_shared<FormProxy>(pUpstream, pDownstream);
+
+   pProxy->initialize();
+   EXPECT_TRUE(pProxy->queueData(std::string(40, 'x'), false));
+   pDownstream->drain();
+   EXPECT_EQ(pDownstream->closeCount_, 0);
+
+   EXPECT_TRUE(pProxy->queueData(std::string(), true));
+   pDownstream->drain();
+
+   EXPECT_EQ(pDownstream->written_, std::string(40, 'x'));
+   EXPECT_EQ(pDownstream->closeCount_, 1);
+   EXPECT_EQ(pDownstream->disableHandlersCount_, 1);
+   EXPECT_EQ(pUpstream->closeCount_, 0);
+}
+
+TEST(FormProxy, CompleteUploadKeepsTheDownstreamConnection)
+{
+   auto pUpstream = boost::make_shared<FakeUpstreamConnection>();
+   pUpstream->setContentLength(50);
+   auto pDownstream = boost::make_shared<FakeDownstreamClient>(/*settled=*/false);
+   auto pProxy = boost::make_shared<FormProxy>(pUpstream, pDownstream);
+
+   pProxy->initialize();
+   EXPECT_TRUE(pProxy->queueData(std::string(40, 'x'), false));
+   pDownstream->drain();
+   EXPECT_TRUE(pProxy->queueData(std::string(10, 'y'), true));
+   pDownstream->drain();
+
+   EXPECT_EQ(pDownstream->written_, std::string(40, 'x') + std::string(10, 'y'));
    EXPECT_EQ(pDownstream->closeCount_, 0);
 }
 

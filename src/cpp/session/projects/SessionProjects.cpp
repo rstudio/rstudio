@@ -1305,7 +1305,7 @@ void startup(const std::string& firstProjectPath)
 
 SEXP rs_writeProjectFile(SEXP projectFilePathSEXP)
 {
-   std::string absolutePath = r::sexp::asUtf8String(projectFilePathSEXP);
+   std::string absolutePath = r::sexp::asString(projectFilePathSEXP);
    FilePath projectFilePath(absolutePath);
 
    Error error = r_util::writeProjectFile(
@@ -1341,7 +1341,7 @@ SEXP rs_addFirstRunDoc(SEXP projectFileAbsolutePathSEXP, SEXP docRelativePathsSE
 
 SEXP rs_requestOpenProject(SEXP projectFileSEXP, SEXP newSessionSEXP)
 {
-   std::string projectFile = r::sexp::asUtf8String(projectFileSEXP);
+   std::string projectFile = r::sexp::asString(projectFileSEXP);
    bool newSession = r::sexp::asLogical(newSessionSEXP);
 
    // opening projects in a new session is only supported in desktop, RSP
@@ -1454,7 +1454,7 @@ json::Array websiteOutputFormatsJson()
       std::vector<std::string> formats;
 
       Error error = r::exec::RFunction(".rs.getAllOutputFormats")
-            .addUtf8Param(projectContext().buildTargetPath())
+            .addParam(projectContext().buildTargetPath())
             .addParam(projectContext().defaultEncoding())
             .call(&formats);
 

@@ -73,7 +73,7 @@ Error getPlotTempdir(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
    std::string tempdir;
-   Error error = r::exec::RFunction("tempdir").callUtf8(&tempdir);
+   Error error = r::exec::RFunction("tempdir").call(&tempdir);
    if (error)
       LOG_ERROR(error);
    

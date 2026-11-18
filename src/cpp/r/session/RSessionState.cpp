@@ -788,7 +788,7 @@ void useBuiltPackagePath(const FilePath& srcPath)
    // this way, they can still use the installed package in that session, even if
    // it's not going to be available for other RStudio sessions
    Error error = r::exec::RFunction(".rs.prependLibraryPath")
-         .addUtf8Param(srcPath.getParent())
+         .addParam(srcPath.getParent())
          .call();
    if (error)
    {
@@ -877,7 +877,7 @@ Error finishPackageInstall(const std::string& builtPackagePath)
 void removeBuildLibraryPath(const std::string& buildLibraryPath)
 {
    Error error = r::exec::RFunction(".rs.removeBuildLibraryPath")
-         .addUtf8Param(buildLibraryPath)
+         .addParam(buildLibraryPath)
          .call();
    if (error)
       LOG_ERROR(error);

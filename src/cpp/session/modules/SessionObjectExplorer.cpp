@@ -124,7 +124,7 @@ void onShutdown(bool terminatedNormally)
    
    using namespace r::exec;
    Error error = RFunction(".rs.explorer.saveCache")
-         .addUtf8Param(explorerCacheDir())
+         .addParam(explorerCacheDir())
          .call();
    
    if (error)
@@ -189,7 +189,7 @@ void onDeferredInit(bool)
    
    using namespace r::exec;
    error = RFunction(".rs.explorer.restoreCache")
-         .addUtf8Param(explorerCacheDir())
+         .addParam(explorerCacheDir())
          .call();
    
    if (error)
@@ -271,7 +271,7 @@ void onDetectChanges(module_context::ChangeSource source)
       {
          // just refresh the View
          error = r::exec::RFunction(".rs.explorer.refresh")
-            .addUtf8Param(id)
+            .addParam(id)
             .addParam(entry)
             .call();
          if (error)
@@ -285,7 +285,7 @@ void onDetectChanges(module_context::ChangeSource source)
          // close it, because the object explorer is no longer 
          // the best way to show that object. 
          error = r::exec::RFunction(".rs.explorer.close")
-            .addUtf8Param(id)
+            .addParam(id)
             .addParam(entry)
             .call();
          if (error)
@@ -355,7 +355,7 @@ SEXP rs_environmentDescription(SEXP envSEXP)
 SEXP rs_explorerCacheDir()
 {
    r::sexp::Protect protect;
-   return r::sexp::createUtf8(explorerCacheDir(), &protect);
+   return r::sexp::create(explorerCacheDir(), &protect);
 }
 
 } // end anonymous namespace

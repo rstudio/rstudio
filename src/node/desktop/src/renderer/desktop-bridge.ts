@@ -314,19 +314,36 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_prepare_show_ppt_presentation');
     },
 
-    // R version selection currently Win32 only
-    getRVersion: (callback: VoidCallback<string>) => {
+    // with no answer, the client goes on as if no R were known, rather than
+    // waiting forever
+    getRChoice: (callback: VoidCallback<Record<string, unknown>>) => {
       ipcRenderer
-        .invoke('desktop_get_r_version')
-        .then((rver) => callback(rver))
-        .catch((error) => reportIpcError('getRVersion', error));
+        .invoke('desktop_get_r_choice')
+        .then((choice) => callback(choice))
+        .catch((error) => {
+          reportIpcError('getRChoice', error);
+          callback({});
+        });
     },
 
-    chooseRVersion: (callback: VoidCallback<string>) => {
+    setDefaultRVersion: (rExecutablePath: string, useDefault: boolean, callback: VoidCallback<string>) => {
       ipcRenderer
-        .invoke('desktop_choose_r_version')
-        .then((rver) => callback(rver))
-        .catch((error) => reportIpcError('chooseRVersion', error));
+        .invoke('desktop_set_default_r_version', rExecutablePath, useDefault)
+        .then((error) => callback(error))
+        .catch((error) => {
+          reportIpcError('setDefaultRVersion', error);
+          callback(String(error) || 'setDefaultRVersion failed');
+        });
+    },
+
+    restartWithPreviousR: (callback: VoidCallback<string>) => {
+      ipcRenderer
+        .invoke('desktop_restart_with_previous_r')
+        .then((error) => callback(error))
+        .catch((error) => {
+          reportIpcError('restartWithPreviousR', error);
+          callback(String(error) || 'restartWithPreviousR failed');
+        });
     },
 
     openMinimalWindow: (name: string, url: string, width: number, height: number) => {
@@ -454,9 +471,9 @@ export function getDesktopBridge() {
 
     // these answer with an error message, or '' on success; a failed call
     // still answers, so the client never waits on it forever
-    setPendingRVersion: (rExecutablePath: string, callback: VoidCallback<string>) => {
+    setPendingRVersion: (rExecutablePath: string, useDefault: boolean, callback: VoidCallback<string>) => {
       ipcRenderer
-        .invoke('desktop_set_pending_r_version', rExecutablePath)
+        .invoke('desktop_set_pending_r_version', rExecutablePath, useDefault)
         .then((error) => callback(error))
         .catch((error) => {
           reportIpcError('setPendingRVersion', error);

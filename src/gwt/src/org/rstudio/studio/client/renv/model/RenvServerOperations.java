@@ -21,6 +21,8 @@ import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOpe
 
 import com.google.gwt.core.client.JsArray;
 
+import jsinterop.base.JsArrayLike;
+
 public interface RenvServerOperations extends BuildServerOperations
 {
    void renvInit(String projDir, ServerRequestCallback<VoidResponse> requestCallback);
@@ -31,4 +33,11 @@ public interface RenvServerOperations extends BuildServerOperations
    void rigInstallRVersion(String version, String directory, ServerRequestCallback<String> requestCallback);
 
    void rigGetInstallDir(ServerRequestCallback<String> requestCallback);
+
+   // the installed versions of R RStudio can use, newest first (desktop only)
+   void rigListRInstallations(ServerRequestCallback<JsArrayLike<RVersionInstall>> requestCallback);
+
+   // the R installation the given R executable launches, with 'supported'
+   // set, or null when it isn't one (desktop only)
+   void rigDescribeRInstallation(String binary, ServerRequestCallback<RVersionInstall> requestCallback);
 }
