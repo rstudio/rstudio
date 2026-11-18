@@ -43,6 +43,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOu
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
@@ -321,14 +322,13 @@ public class ChunkOutputStream extends FlowPanel
          if (idx > 0)
          {
             renderConsoleOutput(
-                  StringUtil.substring(queuedError_, 0, idx), 
+                  StringUtil.substring(queuedError_, 0, idx),
                   ChunkConsolePage.CONSOLE_ERROR);
-            initializeOutput(RmdChunkOutputUnit.TYPE_ERROR);
          }
-         
+
          // leave messages following the error in the queue
          queuedError_ = StringUtil.substring(
-               queuedError_, 
+               queuedError_,
                idx + err.getErrorMessage().length());
       }
       else
@@ -336,9 +336,17 @@ public class ChunkOutputStream extends FlowPanel
          // flush any irrelevant messages from the stream
          flushQueuedErrors();
       }
-      
+
+      // the error box ends the current text block, so that text emitted after
+      // the error goes below the box rather than into the block above it
+      Element textEl = console_ != null ? console_.getElement() : null;
+      initializeOutput(RmdChunkOutputUnit.TYPE_ERROR);
+
+      // if the message wasn't cut from the queue above, it was already shown
+      // as text; move it into the box
+      Element errorEl = idx < 0 ? lastErrorGroup(textEl) : null;
+
       // TODO: Use Ace theme when appropriate.
-      Element errorEl = DomUtils.querySelector(getElement(), "." + VirtualConsole.RES.styles().groupError());
       ConsoleError error = new ConsoleError(err, null, null, this, errorEl);
       UserPrefs prefs =  RStudioGinjector.INSTANCE.getUserPrefs();
       error.setTracebackVisible(prefs.autoExpandErrorTracebacks().getValue());
@@ -380,10 +388,12 @@ public class ChunkOutputStream extends FlowPanel
    public void clearOutput()
    {
       clear();
-      
+
       if (vconsole_ != null)
          vconsole_.clear();
-      
+      vconsole_ = null;
+      console_ = null;
+
       lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
    }
 
@@ -392,14 +402,9 @@ public class ChunkOutputStream extends FlowPanel
    {
       // flush any remaining queued errors
       flushQueuedErrors();
-      
-      // normalize outputs
-      if (vconsole_ != null)
-      {
-         vconsole_.flushPartialAnsiCode();
-         vconsole_.normalizePreviousOutput();
-      }
-      
+
+      finishConsole();
+
       // reset last output types
       lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
    }
@@ -718,46 +723,57 @@ public class ChunkOutputStream extends FlowPanel
       }
       else if (lastOutputType_ == RmdChunkOutputUnit.TYPE_TEXT)
       {
-         // if switching from textual output, finish the current console and
-         // drop it, so that the next textual output gets a new console bound
-         // to its own <pre>; clearing it would erase the text already shown
-         if (vconsole_ != null)
-         {
-            vconsole_.flushPartialAnsiCode();
-            vconsole_.normalizePreviousOutput();
-         }
-         vconsole_ = null;
-         console_ = null;
+         finishConsole();
       }
-      
+
       lastOutputType_ = outputType;
    }
 
    private void initConsole()
    {
-      if (console_ == null)
-      {
-         console_ = new PreWidget();
-         console_.getElement().removeAttribute("tabIndex");
-         console_.getElement().getStyle().setMarginTop(0, Unit.PX);
-         console_.getElement().getStyle().setProperty("whiteSpace", "pre-wrap");
-      }
-      else
-      {
-         console_.getElement().setInnerHTML("");
-      }
+      console_ = new PreWidget();
+      console_.getElement().removeAttribute("tabIndex");
+      console_.getElement().getStyle().setMarginTop(0, Unit.PX);
+      console_.getElement().getStyle().setProperty("whiteSpace", "pre-wrap");
 
-      if (vconsole_ == null)
-      {
-         vconsole_ = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(console_.getElement());
-      }
-      else
-      {
-         vconsole_.clear();
-      }
+      vconsole_ = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(console_.getElement());
 
       // attach the console
       addWithOrdinal(console_, maxOrdinal_ + 1);
+   }
+
+   // Ends the current text block: settles its console's output and drops the
+   // console, so that the next text gets a new console bound to its own <pre>.
+   // Clearing the console instead would erase the text already shown.
+   private void finishConsole()
+   {
+      if (vconsole_ != null)
+      {
+         vconsole_.flushPartialAnsiCode();
+         vconsole_.normalizePreviousOutput();
+      }
+
+      vconsole_ = null;
+      console_ = null;
+   }
+
+   // With condition highlighting on, the console shows an error's message in
+   // its own group, the last one in the text block written before the error
+   // arrived. Earlier blocks hold the messages of earlier errors, and error
+   // boxes carry the same class, so look only in that block.
+   private Element lastErrorGroup(Element textEl)
+   {
+      if (textEl == null)
+         return null;
+
+      String groupError = VirtualConsole.RES.styles().groupError();
+      for (Node node = textEl.getLastChild(); node != null; node = node.getPreviousSibling())
+      {
+         if (Element.is(node) && Element.as(node).hasClassName(groupError))
+            return Element.as(node);
+      }
+
+      return null;
    }
    
    private void submit(String text, int type)
