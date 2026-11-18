@@ -194,6 +194,6 @@ if(EXISTS "${SOURCE_DIR}/.gitmodules")
       # shallow repositories in .git/modules.
       run_git(submodule --quiet deinit --all --force)
       file(REMOVE_RECURSE "${SOURCE_DIR}/.git/modules")
-      run_git_with_retries(submodule --quiet update --init --recursive)
+      run_git_with_retries(submodule --quiet update --init --recursive --no-recommend-shallow)
    endif()
 endif()

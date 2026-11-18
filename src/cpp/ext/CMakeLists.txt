@@ -62,7 +62,8 @@ set(FETCHCONTENT_QUIET TRUE)
 # VERSION:      The version of the dependency to be used.
 # REPOSITORY:   The (git) repository to be used when retrieving the dependency.
 # REVISION:     The (git) revision / commit hash to be used when retrieving the dependency.
-#               Any commit the repository can reach works; it need not be a tag or branch tip.
+#               It need not be a tag or branch tip, as long as the server sends commits by id
+#               (GitHub, and any server using git protocol v2, send any reachable commit).
 # CUSTOM:       Optional; when TRUE, the project is retrieved but not automatically added to the build.
 # ALWAYS_FETCH: Optional; when TRUE, it will always be downloaded instead of using a system package
 # PLATFORMS:    Optional; a list of platforms for which this dependency should be retrieved and built.
