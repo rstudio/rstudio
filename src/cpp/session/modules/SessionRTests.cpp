@@ -841,12 +841,14 @@ TEST(SessionRTest, CreateTurnsACyclicYamlAliasIntoNull) {
 
 TEST(SessionRTest, InvokeRpcHandlerAnswersARequestAnRErrorInterrupted) {
    // an R error raised by code a handler runs unprotected would longjmp past
-   // the request, leaving it unanswered; the dispatcher's backstop answers it
+   // the request, leaving it unanswered; the dispatcher's backstop answers it,
+   // and the error then carries on unwinding (here, to executeSafely())
    json::JsonRpcRequest request;
    request.method = "test_r_error";
 
-   // a continuation following the dispatcher's delivery protocol: it claims
-   // the response, can be made to fail before sending it, and marks it sent
+   // a continuation following the dispatcher's delivery protocol, as the
+   // dispatcher's own continuations do: it claims the response, can be made
+   // to fail before sending it, and marks it sent
    boost::shared_ptr<session::rpc::RpcDelivery> pDelivery;
    int responses = 0;
    int failuresBeforeSending = 0;
@@ -854,7 +856,7 @@ TEST(SessionRTest, InvokeRpcHandlerAnswersARequestAnRErrorInterrupted) {
    json::JsonRpcFunctionContinuation continuation =
       [&](const Error& error, json::JsonRpcResponse*)
       {
-         if (pDelivery->claimed.exchange(true))
+         if (!session::rpc::claimRpcDelivery(pDelivery.get()))
             return;
 
          if (failuresBeforeSending > 0)
@@ -865,7 +867,7 @@ TEST(SessionRTest, InvokeRpcHandlerAnswersARequestAnRErrorInterrupted) {
 
          responses++;
          responseError = error;
-         pDelivery->sent = true;
+         session::rpc::markRpcDeliverySent(pDelivery.get());
       };
 
    json::JsonRpcFunctionContinuation retained;
@@ -878,13 +880,14 @@ TEST(SessionRTest, InvokeRpcHandlerAnswersARequestAnRErrorInterrupted) {
       retained = json::JsonRpcFunctionContinuation();
    };
 
+   // returns whether an R error unwound past invokeRpcHandler()
    auto invoke = [&](const json::JsonRpcAsyncFunction& handler)
    {
       Error error = r::exec::executeSafely([&]()
       {
          session::rpc::invokeRpcHandler(handler, request, continuation, pDelivery);
       });
-      EXPECT_FALSE(error) << error.asString();
+      return !!error;
    };
 
    // a handler that raises an R error before responding is answered with it
@@ -895,7 +898,7 @@ TEST(SessionRTest, InvokeRpcHandlerAnswersARequestAnRErrorInterrupted) {
       };
 
    reset();
-   invoke(failing);
+   EXPECT_TRUE(invoke(failing));
    EXPECT_EQ(1, responses);
    EXPECT_TRUE(responseError == r::errc::CodeExecutionError) << responseError.asString();
    EXPECT_NE(std::string::npos, responseError.getProperty("errormsg").find("handler failed"));
@@ -910,7 +913,7 @@ TEST(SessionRTest, InvokeRpcHandlerAnswersARequestAnRErrorInterrupted) {
       };
 
    reset();
-   invoke(respondsThenFails);
+   EXPECT_TRUE(invoke(respondsThenFails));
    EXPECT_EQ(1, responses);
    EXPECT_FALSE(responseError) << responseError.asString();
 
@@ -925,9 +928,15 @@ TEST(SessionRTest, InvokeRpcHandlerAnswersARequestAnRErrorInterrupted) {
 
    reset();
    failuresBeforeSending = 1;
-   invoke(responds);
+   EXPECT_TRUE(invoke(responds));
    EXPECT_EQ(1, responses);
    EXPECT_NE(std::string::npos, responseError.getProperty("errormsg").find("failed before sending"));
+
+   // a response another thread has claimed, but not yet sent, is left to it
+   reset();
+   std::thread([&]() { session::rpc::claimRpcDelivery(pDelivery.get()); }).join();
+   EXPECT_TRUE(invoke(failing));
+   EXPECT_EQ(0, responses);
 
    // an async handler that responds after returning is answered once, by it
    json::JsonRpcAsyncFunction retains =
@@ -937,7 +946,7 @@ TEST(SessionRTest, InvokeRpcHandlerAnswersARequestAnRErrorInterrupted) {
       };
 
    reset();
-   invoke(retains);
+   EXPECT_FALSE(invoke(retains));
    EXPECT_EQ(0, responses);
 
    json::JsonRpcResponse lateResponse;
@@ -954,7 +963,7 @@ TEST(SessionRTest, InvokeRpcHandlerAnswersARequestAnRErrorInterrupted) {
       };
 
    reset();
-   invoke(retainsThenFails);
+   EXPECT_TRUE(invoke(retainsThenFails));
    EXPECT_EQ(1, responses);
 
    retained(Success(), &lateResponse);

@@ -41,21 +41,27 @@ void handleRpcRequest(const core::json::JsonRpcRequest& request,
                       http_methods::ConnectionType connectionType);
 
 // a request's response, shared by its continuation (which an async handler may
-// call after returning) and invokeRpcHandler()'s backstop: a continuation
-// claims it first, and drops a response if one was already claimed, then marks
-// it sent once it's sent (or, for an async request, enqueued)
+// call after returning, even from another thread) and invokeRpcHandler()'s
+// backstop. a continuation claims the response before sending it, and drops
+// it if it was claimed already; once sent (or, for an async request,
+// enqueued), it's marked sent
 struct RpcDelivery
 {
-   std::atomic<bool> claimed { false };
+   std::atomic<int> claimant { 0 };
    std::atomic<bool> sent { false };
 };
 
-// runs an RPC handler so that an R error escaping it -- raised by R code it
-// ran unprotected -- ends here rather than longjmping past the request, which
-// would leave the request unanswered; unless a response was sent, the
-// continuation then sends the error. the jump still skips the handler's own
-// C++ destructors, so this is a backstop, not a substitute for protected R
-// code. off the main thread (offline requests), it just runs the handler
+// returns true when the caller now owns the response and should send it
+bool claimRpcDelivery(RpcDelivery* pDelivery);
+void markRpcDeliverySent(RpcDelivery* pDelivery);
+
+// runs an RPC handler so that an R error (or interrupt) unwinding through it
+// -- raised by R code it ran unprotected -- doesn't leave the request
+// unanswered: unless a response was sent, the continuation sends the error,
+// and the unwinding then continues as it would have. it still skips the
+// handler's own C++ destructors, so this is a backstop, not a substitute for
+// protected R code. off the main thread (offline requests), it just runs the
+// handler
 void invokeRpcHandler(const core::json::JsonRpcAsyncFunction& handler,
                       const core::json::JsonRpcRequest& request,
                       const core::json::JsonRpcFunctionContinuation& continuation,

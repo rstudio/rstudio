@@ -430,7 +430,7 @@ private:
       // instead, whatever the default engine
       if (optionsError && r::sexp::containsNul(unit->code()))
       {
-         unit->replaceCode("stop('This chunk contains a nul character, which R does not support.', call. = FALSE)\n");
+         unit->replaceCode("base::stop('This chunk contains a nul character, which R does not support.', call. = FALSE)\n");
          chunkOptions["engine"] = "r";
          optionsError = Success();
       }

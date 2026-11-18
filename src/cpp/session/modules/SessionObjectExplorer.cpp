@@ -247,9 +247,12 @@ void onDetectChanges(module_context::ChangeSource source)
       if (envir == R_EmptyEnv)
          continue;
 
-      // the name is the View() title, which can be any string; R raises an
-      // error making a symbol from one that's empty or too long, and no
-      // binding could have such a name
+      // the name is the View() title, which can be any value; R raises an
+      // error reading one that isn't a string, or making a symbol from one
+      // that's empty or too long, and no binding could have such a name
+      if (TYPEOF(name) != STRSXP || Rf_length(name) == 0 || STRING_ELT(name, 0) == NA_STRING)
+         continue;
+
       const char* nameChars = CHAR(STRING_ELT(name, 0));
       if (!r::sexp::isSymbolName(nameChars))
          continue;

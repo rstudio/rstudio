@@ -60,14 +60,14 @@ void endHandleRpcRequestDirect(boost::shared_ptr<rpc::RpcDelivery> pDelivery,
                          json::JsonRpcResponse* pJsonRpcResponse)
 {
    // a second response would be written to a connection already answered
-   if (pDelivery->claimed.exchange(true))
+   if (!rpc::claimRpcDelivery(pDelivery.get()))
       return;
 
    // return error or result then continue waiting for requests
    if (executeError)
    {
       ptrConnection->sendJsonRpcError(executeError);
-      pDelivery->sent = true;
+      rpc::markRpcDeliverySent(pDelivery.get());
    }
    else
    {
@@ -87,7 +87,7 @@ void endHandleRpcRequestDirect(boost::shared_ptr<rpc::RpcDelivery> pDelivery,
 
       // send the response
       ptrConnection->sendJsonRpcResponse(*pJsonRpcResponse);
-      pDelivery->sent = true;
+      rpc::markRpcDeliverySent(pDelivery.get());
 
       // run after response if we have one (then detect changes again)
       if (pJsonRpcResponse->hasAfterResponse())
@@ -200,62 +200,108 @@ namespace rpc {
 
 namespace {
 
+// who claimed an RpcDelivery: the backstop, on the main thread, may release
+// only a claim the main thread made
+constexpr int kUnclaimed = 0;
+constexpr int kClaimedOnMainThread = 1;
+constexpr int kClaimedElsewhere = 2;
+
 struct RpcHandlerInvocation
 {
    const json::JsonRpcAsyncFunction* pHandler;
    const json::JsonRpcRequest* pRequest;
-   json::JsonRpcFunctionContinuation continuation;
+   const json::JsonRpcFunctionContinuation* pContinuation;
+   RpcDelivery* pDelivery;
 
-   // a C++ exception must not unwind through R_ToplevelExec(), which would
+   // a C++ exception must not unwind through R_UnwindProtect(), which would
    // leave R's context stack pointing at its frame; it's rethrown after
    std::exception_ptr exception;
 };
 
-void invokeRpcHandlerImpl(void* data)
+SEXP invokeRpcHandlerImpl(void* data)
 {
    RpcHandlerInvocation* pInvocation = static_cast<RpcHandlerInvocation*>(data);
    try
    {
-      (*pInvocation->pHandler)(*pInvocation->pRequest, pInvocation->continuation);
+      (*pInvocation->pHandler)(*pInvocation->pRequest, *pInvocation->pContinuation);
    }
    catch (...)
    {
       pInvocation->exception = std::current_exception();
    }
+   return R_NilValue;
+}
+
+// runs as an R error (or interrupt) unwinds through the handler, after which
+// R continues unwinding; this runs after R has left the handler's context, so
+// it can send the response
+void answerInterruptedRpc(void* data, Rboolean jump)
+{
+   if (!jump)
+      return;
+
+   RpcHandlerInvocation* pInvocation = static_cast<RpcHandlerInvocation*>(data);
+   RpcDelivery* pDelivery = pInvocation->pDelivery;
+   if (pDelivery->sent)
+      return;
+
+   // the handler's own response may have been claimed and then interrupted
+   // before it was sent; a claim made on another thread is left to it
+   int claimant = kClaimedOnMainThread;
+   pDelivery->claimant.compare_exchange_strong(claimant, kUnclaimed);
+
+   try
+   {
+      Error error = r::rCodeExecutionError(
+               "R error while handling '" + pInvocation->pRequest->method + "': " +
+               r::exec::getErrorMessage(),
+               ERROR_LOCATION);
+      json::JsonRpcResponse response;
+      (*pInvocation->pContinuation)(error, &response);
+   }
+   CATCH_UNEXPECTED_EXCEPTION
 }
 
 } // anonymous namespace
+
+bool claimRpcDelivery(RpcDelivery* pDelivery)
+{
+   int claimant = kUnclaimed;
+   return pDelivery->claimant.compare_exchange_strong(
+            claimant,
+            core::thread::isMainThread() ? kClaimedOnMainThread : kClaimedElsewhere);
+}
+
+void markRpcDeliverySent(RpcDelivery* pDelivery)
+{
+   pDelivery->sent = true;
+}
 
 void invokeRpcHandler(const json::JsonRpcAsyncFunction& handler,
                       const json::JsonRpcRequest& request,
                       const json::JsonRpcFunctionContinuation& continuation,
                       boost::shared_ptr<RpcDelivery> pDelivery)
 {
-   // offline requests are handled off the main thread without R, and
-   // R_ToplevelExec() there would race R on the main thread
+   // offline requests are handled off the main thread without R, which
+   // can't be entered there
    if (!core::thread::isMainThread())
    {
       handler(request, continuation);
       return;
    }
 
-   RpcHandlerInvocation invocation = { &handler, &request, continuation, nullptr };
-   Rboolean completed = R_ToplevelExec(invokeRpcHandlerImpl, &invocation);
+   // R_UnwindProtect() rather than R_ToplevelExec(): it neither stops the
+   // unwinding nor runs the handler in a context of its own, which would
+   // discard calling handlers R code registered meanwhile (as a notebook's
+   // first chunk does), and catch interrupts meant for running R code
+   RpcHandlerInvocation invocation = { &handler, &request, &continuation, pDelivery.get(), nullptr };
+   r::sexp::Protect protect;
+   SEXP tokenSEXP;
+   protect.add(tokenSEXP = R_MakeUnwindCont());
+   R_UnwindProtect(invokeRpcHandlerImpl, &invocation, answerInterruptedRpc, &invocation, tokenSEXP);
+
    if (invocation.exception)
       std::rethrow_exception(invocation.exception);
-
-   if (completed || pDelivery->sent)
-      return;
-
-   // the continuation may have been claimed, and then interrupted before
-   // anything was sent
-   pDelivery->claimed = false;
-
-   Error error = r::rCodeExecutionError(
-            "R error while handling '" + request.method + "': " + r::exec::getErrorMessage(),
-            ERROR_LOCATION);
-   json::JsonRpcResponse response;
-   continuation(error, &response);
 }
 
 void formatRpcRequest(SEXP name,
@@ -333,7 +379,7 @@ void endHandleRpcRequestIndirectImpl(
         json::JsonRpcResponse* pJsonRpcResponse)
 {
    // a second completion for the same handle would be dropped by the client
-   if (pDelivery != nullptr && pDelivery->claimed.exchange(true))
+   if (pDelivery != nullptr && !claimRpcDelivery(pDelivery))
       return;
 
    // pJsonRpcResponse may be a nullptr, so handle that safely
@@ -354,7 +400,7 @@ void endHandleRpcRequestIndirectImpl(
    module_context::enqueClientEvent(evt);
 
    if (pDelivery != nullptr)
-      pDelivery->sent = true;
+      markRpcDeliverySent(pDelivery);
 
    // run after response if we have one (then detect changes again)
    if (pJsonRpcResponse->hasAfterResponse())
