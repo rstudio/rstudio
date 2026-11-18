@@ -15,14 +15,15 @@
 
 # Tests fetch-git-revision.cmake against local repositories whose pinned
 # commits are neither tags nor branch tips, which FetchContent's GIT_SHALLOW
-# cannot check out (#19714). The pinned commit also records a submodule
-# pinned the same way.
+# cannot check out (#19714). The pinned commit also records a submodule,
+# with a submodule of its own, pinned the same way.
 #
 # Usage:
 #   cmake [-DWORK_DIR=<dir>] -P cmake/tests/test-fetch-git-revision.cmake
 #
-# The test works in a test-fetch-git-revision folder inside WORK_DIR (by
-# default, the current directory), and removes it when every test passes.
+# The test works in a new test-fetch-git-revision-<random> folder inside
+# WORK_DIR (by default, the current directory), and removes it when every
+# test passes.
 
 cmake_minimum_required(VERSION 3.25)
 
@@ -41,14 +42,19 @@ get_filename_component(
    "${WORK_DIR}"
    ABSOLUTE
    BASE_DIR "${CMAKE_CURRENT_BINARY_DIR}")
-set(TEST_DIR "${WORK_DIR}/test-fetch-git-revision")
-file(REMOVE_RECURSE "${TEST_DIR}")
+string(RANDOM LENGTH 8 ALPHABET "0123456789abcdef" TEST_SUFFIX)
+set(TEST_DIR "${WORK_DIR}/test-fetch-git-revision-${TEST_SUFFIX}")
+if(EXISTS "${TEST_DIR}")
+   message(FATAL_ERROR "${TEST_DIR} already exists")
+endif()
 file(MAKE_DIRECTORY "${TEST_DIR}")
 
 # Keep the user's git config (commit signing, hooks, protocol version) out of
-# the test. Allow file:// submodules, which git blocks by default, and let
-# the local server hand out unadvertised commits the way GitHub does.
-file(WRITE "${TEST_DIR}/gitconfig" [=[
+# the test, including on versions of git that predate GIT_CONFIG_GLOBAL.
+# Allow file:// submodules, which git blocks by default, and let the local
+# server hand out unadvertised commits the way GitHub does.
+set(TEST_HOME "${TEST_DIR}/home")
+file(WRITE "${TEST_HOME}/.gitconfig" [=[
 [user]
    name = test
    email = test@example.com
@@ -57,8 +63,18 @@ file(WRITE "${TEST_DIR}/gitconfig" [=[
 [uploadpack]
    allowReachableSHA1InWant = true
 ]=])
-set(ENV{GIT_CONFIG_GLOBAL} "${TEST_DIR}/gitconfig")
+set(ENV{HOME} "${TEST_HOME}")
+set(ENV{XDG_CONFIG_HOME} "${TEST_HOME}/.config")
+set(ENV{GIT_CONFIG_GLOBAL} "${TEST_HOME}/.gitconfig")
 set(ENV{GIT_CONFIG_NOSYSTEM} 1)
+
+# Don't let variables git sets for its hooks send the fixture's commits to
+# another repository.
+foreach(VAR
+   GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR
+   GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_DEFAULT_HASH)
+   unset(ENV{${VAR}})
+endforeach()
 
 
 # Runs git in DIR, stores its output in OUT_VAR, and stops if it fails.
@@ -173,12 +189,24 @@ function(expect_missing_commit DIR COMMIT WHAT)
 endfunction()
 
 
-# A submodule repository: base, then the commit the dependency pins, then
+# The submodule's own submodule: base, then the commit its parent pins, then
 # a newer tip.
+set(LEAF_DIR "${TEST_DIR}/leaf")
+file(MAKE_DIRECTORY "${LEAF_DIR}")
+run_git("${LEAF_DIR}" _IGNORED init --quiet)
+commit_marker("${LEAF_DIR}" "base" _IGNORED)
+commit_marker("${LEAF_DIR}" "pinned" LEAF_PINNED)
+commit_marker("${LEAF_DIR}" "tip" _IGNORED)
+file_url("${LEAF_DIR}" LEAF_URL)
+
+# The submodule, shaped the same way. Its pinned commit records the leaf
+# at the leaf's pinned commit.
 set(SUB_DIR "${TEST_DIR}/sub")
 file(MAKE_DIRECTORY "${SUB_DIR}")
 run_git("${SUB_DIR}" _IGNORED init --quiet)
-commit_marker("${SUB_DIR}" "base" _IGNORED)
+commit_marker("${SUB_DIR}" "base" SUB_BASE)
+run_git("${SUB_DIR}" _IGNORED submodule --quiet add "${LEAF_URL}" leaf)
+run_git("${SUB_DIR}/leaf" _IGNORED checkout --quiet "${LEAF_PINNED}")
 commit_marker("${SUB_DIR}" "pinned" SUB_PINNED)
 commit_marker("${SUB_DIR}" "tip" _IGNORED)
 file_url("${SUB_DIR}" SUB_URL)
@@ -206,12 +234,22 @@ run_git("${SOURCE_DIR}" HEAD rev-parse HEAD)
 expect_equal("${HEAD}" "${DEP_PINNED}" "checked-out commit")
 expect_marker("${SOURCE_DIR}" "pinned")
 expect_marker("${SOURCE_DIR}/sub" "pinned")
+expect_marker("${SOURCE_DIR}/sub/leaf" "pinned")
 
 # Only the pinned commit was downloaded: not its parent, nor the branch tip.
+# Submodules are shallow, without the history before their pinned commits.
 expect_missing_commit("${SOURCE_DIR}" "${DEP_BASE}" "the pinned commit's parent")
 expect_missing_commit("${SOURCE_DIR}" "${DEP_TIP}" "the branch tip")
-run_git("${SOURCE_DIR}/sub" SHALLOW rev-parse --is-shallow-repository)
-expect_equal("${SHALLOW}" "true" "submodule checkout is shallow")
+expect_missing_commit("${SOURCE_DIR}/sub" "${SUB_BASE}" "the submodule's pinned commit's parent")
+
+
+# A user whose git creates SHA-256 repositories by default can still fetch
+# a SHA-1 commit.
+set(ENV{GIT_DEFAULT_HASH} sha256)
+fetch("${DEP_URL}" "${DEP_PINNED}" "${SOURCE_DIR}" RESULT)
+unset(ENV{GIT_DEFAULT_HASH})
+expect_fetched(RESULT "fetching with GIT_DEFAULT_HASH=sha256")
+expect_marker("${SOURCE_DIR}" "pinned")
 
 
 # Moving the pin replaces the existing checkout.

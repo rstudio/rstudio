@@ -26,7 +26,12 @@
 # Usage:
 #   cmake -DREPOSITORY=<url> -DREVISION=<commit> -DSOURCE_DIR=<dir>
 #         [-DGIT_EXECUTABLE=<git>] [-DRETRY_COUNT=<n>] [-DRETRY_DELAY=<seconds>]
+#         [-DTLS_VERSION=<version>] [-DTLS_VERIFY=<bool>]
 #         -P fetch-git-revision.cmake
+#
+# TLS_VERSION and TLS_VERIFY default to the CMAKE_TLS_VERSION and
+# CMAKE_TLS_VERIFY environment variables, and are applied to git the way
+# FetchContent applies them to its git clone.
 
 cmake_minimum_required(VERSION 3.25)
 
@@ -49,7 +54,7 @@ endif()
 if(NOT RETRY_COUNT MATCHES "^[0-9]+$")
    message(FATAL_ERROR "RETRY_COUNT must be a whole number of retries, not '${RETRY_COUNT}'")
 endif()
-if(NOT RETRY_DELAY MATCHES "^[0-9]+(\\.[0-9]+)?$")
+if(NOT RETRY_DELAY MATCHES "^([0-9]+(\\.[0-9]*)?|\\.[0-9]+)$")
    message(FATAL_ERROR "RETRY_DELAY must be a number of seconds, not '${RETRY_DELAY}'")
 endif()
 
@@ -66,11 +71,47 @@ if(NOT GIT_EXECUTABLE)
    set(GIT_EXECUTABLE "${_FOUND_GIT}")
 endif()
 
+# Variables that would point git at another repository, such as the ones
+# git sets for its hooks, must not redirect the commands below.
+foreach(_VAR
+   GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR
+   GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_DEFAULT_HASH)
+   unset(ENV{${_VAR}})
+endforeach()
+
+# Options given to every git command
+set(GIT_OPTIONS)
+if("${TLS_VERSION}" STREQUAL "")
+   set(TLS_VERSION "$ENV{CMAKE_TLS_VERSION}")
+endif()
+if(NOT "${TLS_VERSION}" STREQUAL "")
+   list(APPEND GIT_OPTIONS -c "http.sslVersion=tlsv${TLS_VERSION}")
+endif()
+if("${TLS_VERIFY}" STREQUAL "")
+   set(TLS_VERIFY "$ENV{CMAKE_TLS_VERIFY}")
+endif()
+if(NOT "${TLS_VERIFY}" STREQUAL "")
+   if(TLS_VERIFY)
+      list(APPEND GIT_OPTIONS -c http.sslVerify=true)
+   else()
+      list(APPEND GIT_OPTIONS -c http.sslVerify=false)
+   endif()
+endif()
+
+# Create the repository with the object format the revision is written in,
+# whatever the user's default is.
+string(LENGTH "${REVISION}" _REVISION_LENGTH)
+if(_REVISION_LENGTH EQUAL 64)
+   set(OBJECT_FORMAT sha256)
+else()
+   set(OBJECT_FORMAT sha1)
+endif()
+
 
 # Runs git in SOURCE_DIR, and stops if it fails.
 function(run_git)
    execute_process(
-      COMMAND "${GIT_EXECUTABLE}" ${ARGN}
+      COMMAND "${GIT_EXECUTABLE}" ${GIT_OPTIONS} ${ARGN}
       WORKING_DIRECTORY "${SOURCE_DIR}"
       RESULT_VARIABLE _RESULT)
 
@@ -89,7 +130,7 @@ function(run_git_with_retries)
    set(_ATTEMPT 0)
    while(TRUE)
       execute_process(
-         COMMAND "${GIT_EXECUTABLE}" ${ARGN}
+         COMMAND "${GIT_EXECUTABLE}" ${GIT_OPTIONS} ${ARGN}
          WORKING_DIRECTORY "${SOURCE_DIR}"
          RESULT_VARIABLE _RESULT)
       if(_RESULT EQUAL 0)
@@ -112,7 +153,9 @@ endfunction()
 file(REMOVE_RECURSE "${SOURCE_DIR}")
 file(MAKE_DIRECTORY "${SOURCE_DIR}")
 
-run_git(init --quiet)
+# (init.defaultObjectFormat is ignored by versions of git that predate it,
+# which only create SHA-1 repositories.)
+run_git(-c "init.defaultObjectFormat=${OBJECT_FORMAT}" init --quiet)
 run_git(remote add origin "${REPOSITORY}")
 run_git_with_retries(fetch --quiet --depth 1 --no-tags origin "${REVISION}")
 run_git(checkout --quiet --detach FETCH_HEAD)

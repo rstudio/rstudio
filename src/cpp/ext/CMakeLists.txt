@@ -228,6 +228,8 @@ function(fetch)
                   "-DSOURCE_DIR=<SOURCE_DIR>"
                   "-DRETRY_COUNT=${CMAKE_EP_GIT_CLONE_RETRY_COUNT}"
                   "-DRETRY_DELAY=${CMAKE_EP_GIT_CLONE_RETRY_DELAY}"
+                  "-DTLS_VERSION=${CMAKE_TLS_VERSION}"
+                  "-DTLS_VERIFY=${CMAKE_TLS_VERIFY}"
                   -P "${FETCH_GIT_REVISION_SCRIPT}"
                SOURCE_SUBDIR  "${_SOURCE_SUBDIR}"
                EXCLUDE_FROM_ALL)
