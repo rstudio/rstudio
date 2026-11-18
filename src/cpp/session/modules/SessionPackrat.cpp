@@ -685,9 +685,9 @@ Error packratBootstrap(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   // convert to file path then to system encoding
+   // convert to file path
    FilePath dirPath = module_context::resolveAliasedPath(dir);
-   dir = string_utils::utf8ToSystem(dirPath.getAbsolutePath());
+   dir = dirPath.getAbsolutePath();
 
    // bootstrap
    r::exec::RFunction bootstrap("packrat:::init");
@@ -1049,7 +1049,7 @@ PackratContext packratContext()
    {
       FilePath projectDir = projects::projectContext().directory();
       std::string projectPath =
-         string_utils::utf8ToSystem(projectDir.getAbsolutePath());
+         projectDir.getAbsolutePath();
       
       // check and see if the project has been packified
       Error error = r::exec::RFunction(".rs.isPackified")

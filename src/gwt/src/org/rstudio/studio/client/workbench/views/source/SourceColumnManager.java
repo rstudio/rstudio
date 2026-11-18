@@ -1417,8 +1417,9 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       // No untitled doc to keep. Create one first, then close the rest in
       // its onSuccess -- this way the source pane never reaches zero tabs
       // and so never starts the HIDE animation that races a subsequent
-      // file.edit.
-      newDoc(FileTypeRegistry.R, new ResultCallback<EditingTarget, ServerError>()
+      // file.edit. A failure falls back to closing everything, so it needs
+      // no dialog.
+      getActive().newDoc(FileTypeRegistry.R, new ResultCallback<EditingTarget, ServerError>()
       {
          @Override
          public void onSuccess(EditingTarget target)
@@ -1435,7 +1436,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             // (or near-empty) pane rather than a wedged half-state.
             revertUnsavedTargets(() -> closeAllTabs(null, false, null));
          }
-      });
+      }, false);
    }
 
    @Override

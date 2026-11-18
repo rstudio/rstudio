@@ -92,7 +92,7 @@ class Worker : public ppe::Worker
       r::sexp::Protect protect;
       Error error = r::exec::RFunction(
          ".rs.getTemplateYamlFile", 
-           string_utils::utf8ToSystem(templateDir.getAbsolutePath()))
+           templateDir.getAbsolutePath())
          .call(&templateFile, &protect);
 
       // .rs.getTemplateDetails may return null if the template is not
@@ -156,7 +156,7 @@ Error getRmdTemplates(const json::JsonRpcRequest&,
       SEXP templateDetails;
       r::sexp::Protect protect;
       error = r::exec::RFunction(
-         ".rs.getTemplateDetails", string_utils::utf8ToSystem(templateYaml))
+         ".rs.getTemplateDetails", templateYaml)
          .call(&templateDetails, &protect);
       if (error)
          continue;

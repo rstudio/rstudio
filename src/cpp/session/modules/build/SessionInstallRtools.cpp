@@ -105,7 +105,7 @@ Error installRtools()
    // form path to destination file
    std::string rtoolsBinary = url.substr(url.find_last_of('/') + 1);
    FilePath installerPath = tempPath.completeChildPath(rtoolsBinary);
-   std::string destfile = string_utils::utf8ToSystem(installerPath.getAbsolutePath());
+   std::string destfile = installerPath.getAbsolutePath();
 
    // The Rtools installer can be a large file, so we want to increase the timeout option
    // and respect the user's original configured timeout settings

@@ -178,7 +178,7 @@ void PlotCapture::saveSnapshot()
    error = r::exec::RFunction(
          ".rs.saveNotebookGraphics",
          lastPlot_.get(),
-         string_utils::utf8ToSystem(outputFile.getAbsolutePath())).call();
+         outputFile.getAbsolutePath()).call();
    
    if (error)
       LOG_ERROR(error);
@@ -440,7 +440,7 @@ core::Error PlotCapture::setGraphicsOption()
    // the folder in which to place the rendered plots (this is a sibling of the
    // main chunk output folder)
    setOption.addParam(
-      string_utils::utf8ToSystem(plotFolder_.getAbsolutePath()) +
+      plotFolder_.getAbsolutePath() +
             "/" kPlotPrefix "%03d.png");
 
    // device dimensions

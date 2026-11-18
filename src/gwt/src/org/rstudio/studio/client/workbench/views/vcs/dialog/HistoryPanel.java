@@ -128,7 +128,7 @@ public class HistoryPanel extends Composite implements Display
       topToolbar_.addLeftWidget(refreshButton_); 
       
       searchText_ = new SearchWidget(constants_.searchVersionControlHistory(),
-                                     new MultiWordSuggestOracle(),
+                                     new SearchWidget.NoSuggestionsOracle(),
                                      new TextBoxWithCue(constants_.searchCapitalized()),
                                      null);
       topToolbar_.addRightWidget(searchText_);

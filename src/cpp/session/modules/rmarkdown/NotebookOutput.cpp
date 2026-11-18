@@ -184,7 +184,7 @@ Error fillOutputObject(const std::string& docId, const std::string& chunkId,
 
       Error error = r::exec::RFunction(
          ".rs.readDataCapture",
-         string_utils::utf8ToSystem(path.getAbsolutePath())).call(
+         path.getAbsolutePath()).call(
             &argsSEXP,
             &rProtect);
 

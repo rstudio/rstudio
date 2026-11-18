@@ -92,7 +92,7 @@ void ScriptJob::start()
       // prepare the environment for the script by exporting the current env
       setJobStatus(job_, "Preparing environment");
       r::exec::RFunction save("save.image");
-      save.addParam("file", string_utils::utf8ToSystem(import_.getAbsolutePath()));
+      save.addParam("file", import_.getAbsolutePath());
       save.addParam("safe", false); // no need to write a temp file
       error = save.call();
       if (error)
@@ -302,7 +302,7 @@ void ScriptJob::onCompleted(int exitStatus)
    {
       setJobStatus(job_, "Loading results");
       r::exec::RFunction load("base:::load");
-      load.addParam("file", string_utils::utf8ToSystem(export_.getAbsolutePath()));
+      load.addParam("file", export_.getAbsolutePath());
       if (spec_.exportEnv() == "R_GlobalEnv")
       {
          // user requested that results be loaded into the global environment

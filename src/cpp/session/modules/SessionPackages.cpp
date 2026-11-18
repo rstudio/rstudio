@@ -250,16 +250,14 @@ Error buildPackageStateJson(json::Object* pJson)
    if (packratContext.modeOn)
    {
       FilePath projectDir = projects::projectContext().directory();
-      error = r::exec::RFunction(".rs.listPackagesPackrat",
-                                 string_utils::utf8ToSystem(
-                                    projectDir.getAbsolutePath()))
+      error = r::exec::RFunction(".rs.listPackagesPackrat", projectDir.getAbsolutePath())
               .call(&packageListSEXP, &protect);
    }
    else if (renvActive)
    {
       FilePath projectDir = projects::projectContext().directory();
       error = r::exec::RFunction(".rs.renv.listPackages")
-            .addParam(string_utils::utf8ToSystem(projectDir.getAbsolutePath()))
+            .addParam(projectDir.getAbsolutePath())
             .call(&packageListSEXP, &protect);
    }
    else

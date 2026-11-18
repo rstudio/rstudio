@@ -42,11 +42,13 @@ public class ModalDialogTrackerTests extends GWTTestCase
       }
    }
 
-   public void testDialogIsMarkedModal()
+   public void testDialogIsNotMarkedModal()
    {
+      // In Chrome on macOS, aria-modal hides a dialog's suggestion lists, which are
+      // attached outside it, from VoiceOver (#19254)
       PopupPanel panel = new PopupPanel();
       Roles.getDialogRole().set(panel.getElement());
-      assertEquals("true", ariaModalWhenShown(panel));
+      assertEquals("", ariaModalWhenShown(panel));
    }
 
    public void testAlertDialogIsMarkedModal()
@@ -60,7 +62,6 @@ public class ModalDialogTrackerTests extends GWTTestCase
 
    public void testPanelWithoutDialogRoleIsNotMarkedModal()
    {
-      // aria-modal is only valid on dialog and alertdialog roles
       assertEquals("", ariaModalWhenShown(new PopupPanel()));
    }
 }

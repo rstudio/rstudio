@@ -721,7 +721,7 @@ FilePath tempFile(const std::string& prefix, const std::string& extension)
    Error error = r::exec::RFunction("tempfile", prefix).call(&filename);
    if (error)
       LOG_ERROR(error);
-   FilePath filePath(string_utils::systemToUtf8(r::util::fixPath(filename)) + "." + extension);
+   FilePath filePath(r::util::fixPath(filename) + "." + extension);
    return filePath;
 }
 

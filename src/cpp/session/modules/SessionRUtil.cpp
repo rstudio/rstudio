@@ -31,6 +31,7 @@
 #include <core/system/Xdg.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/Macros.hpp>
+#include <core/StringUtils.hpp>
 #include <core/YamlUtil.hpp>
 
 #ifdef _WIN32
@@ -273,14 +274,15 @@ protected:
       return true;
    }
    
+   // the child writes in the system encoding; strings reach R marked UTF-8
    void onStdout(const std::string& output)
    {
-      invokeCallback("stdout", output);
+      invokeCallback("stdout", string_utils::systemToUtf8(output));
    }
    
    void onStderr(const std::string& output)
    {
-      invokeCallback("stderr", output);
+      invokeCallback("stderr", string_utils::systemToUtf8(output));
    }
    
    void onCompleted(int exitStatus)
@@ -351,11 +353,11 @@ SEXP rs_runAsyncRProcess(SEXP codeSEXP,
 
 SEXP rs_systemToUtf8(SEXP stringSEXP)
 {
+   // asString() already converts from the string's encoding to UTF-8
    std::string text = r::sexp::asString(stringSEXP);
-   std::string asUtf8 = core::string_utils::systemToUtf8(text);
 
    r::sexp::Protect protect;
-   return r::sexp::createUtf8(asUtf8, &protect);
+   return r::sexp::createUtf8(text, &protect);
 }
 
 SEXP rs_utf8ToSystem(SEXP stringSEXP)
@@ -363,8 +365,8 @@ SEXP rs_utf8ToSystem(SEXP stringSEXP)
    std::string text = r::sexp::asUtf8String(stringSEXP);
    std::string asNative = core::string_utils::utf8ToSystem(text);
 
-   r::sexp::Protect protect;
-   return r::sexp::create(asNative, &protect);
+   // Rf_mkString() marks the result native; r::sexp::create() would mark it UTF-8
+   return Rf_mkString(asNative.c_str());
 }
 
 SEXP rs_runConsoleProcess(SEXP commandSEXP, SEXP captionSEXP)
