@@ -1,7 +1,7 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
-import { installDepIfPrompted, CONFIRM_BTN, NO_BTN } from '@pages/modals.page';
+import { installDepIfPrompted, CONFIRM_BTN, NEW_DOCUMENT_ERROR_MODAL, NO_BTN } from '@pages/modals.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { executeCommand } from '@utils/commands';
 import type { Page } from 'playwright';
@@ -27,6 +27,23 @@ const CPP_PROBE_TIMEOUT = 90000;
 // Source-document tabs; a successful create brings the count to 2 (see header).
 function sourceTabs(page: Page) {
   return page.locator("[class*='rstudio_source_panel'] [role='tab']");
+}
+
+const NEW_DOCUMENT_RPC = '**/rpc/new_document';
+
+// Fail the next `limit` new_document requests in transit; later ones go
+// through. The caller removes the route with page.unroute(NEW_DOCUMENT_RPC).
+async function abortNewDocuments(page: Page, limit: number): Promise<{ count: number }> {
+  const aborts = { count: 0 };
+  await page.route(NEW_DOCUMENT_RPC, async (route) => {
+    if (aborts.count < limit) {
+      aborts.count++;
+      await route.abort('failed');
+      return;
+    }
+    await route.continue();
+  });
+  return aborts;
 }
 
 test.describe('Create file types', () => {
@@ -101,6 +118,60 @@ test.describe('Create file types', () => {
     // already current), and the doc is created either way.
     await page.locator(NO_BTN).click({ timeout: 15000 }).catch(() => {});
     await consoleActions.resetSourcePane();
+  });
+
+  // A new_document RPC lost in transit (a Windows CI runner's
+  // net::ERR_NO_BUFFER_SPACE, run 44136608397) used to be dropped without a
+  // trace: no tab, no dialog. abortNewDocuments() reproduces that failure.
+
+  // newMarkdownDoc passes no result callback; newCDoc passes one that only
+  // handles success, as most New File commands do.
+  for (const command of ['newMarkdownDoc', 'newCDoc']) {
+    test(`reports a failed new_document from ${command}`, async ({ rstudioPage: page }) => {
+      const aborts = await abortNewDocuments(page, 1);
+      try {
+        const errorDialog = page.locator(NEW_DOCUMENT_ERROR_MODAL);
+        await executeCommand(page, command);
+        await expect(errorDialog).toBeVisible({ timeout: 20000 });
+        expect(aborts.count).toBe(1);
+        await errorDialog.locator(CONFIRM_BTN).click();
+        await expect(errorDialog).toBeHidden();
+        await expect(sourceTabs(page)).toHaveCount(1);
+      } finally {
+        await page.unroute(NEW_DOCUMENT_RPC);
+        await consoleActions.resetSourcePane();
+      }
+    });
+  }
+
+  test('newDocument() retries a failed new_document once', async ({ rstudioPage: page }) => {
+    const aborts = await abortNewDocuments(page, 1);
+    try {
+      await sourceActions.newDocument('newMarkdownDoc');
+      expect(aborts.count).toBe(1);
+      await expect(sourceTabs(page)).toHaveCount(2);
+      await expect(
+        sourceActions.sourcePane.footerTable.getByText('Markdown', { exact: true })
+      ).toBeVisible();
+    } finally {
+      await page.unroute(NEW_DOCUMENT_RPC);
+      await consoleActions.resetSourcePane();
+    }
+  });
+
+  test('newDocument() gives up when the retry fails too', async ({ rstudioPage: page }) => {
+    const aborts = await abortNewDocuments(page, 2);
+    try {
+      await expect(sourceActions.newDocument('newMarkdownDoc')).rejects.toThrow(
+        /newMarkdownDoc failed to create a document twice/
+      );
+      expect(aborts.count).toBe(2);
+      await expect(page.locator(NEW_DOCUMENT_ERROR_MODAL)).toHaveCount(0);
+      await expect(sourceTabs(page)).toHaveCount(1);
+    } finally {
+      await page.unroute(NEW_DOCUMENT_RPC);
+      await consoleActions.resetSourcePane();
+    }
   });
 
   // ---- Types that need an R package and/or a creation dialog ----

@@ -1,5 +1,5 @@
 import type { Locator, Page } from 'playwright';
-import { expect } from '@playwright/test';
+import { errors, expect } from '@playwright/test';
 import { SourcePane } from '../pages/source_pane.page';
 import { ConsolePaneActions } from './console_pane.actions';
 import { TIMEOUTS, sleep } from '../utils/constants';
@@ -7,6 +7,7 @@ import { rStringLiteral } from '../utils/r';
 import { executeCommand } from '../utils/commands';
 import { openFile } from '../utils/files';
 import { Ace, AceEditorElement } from '../utils/ace';
+import { CONFIRM_BTN, NEW_DOCUMENT_ERROR_MODAL } from '../pages/modals.page';
 
 export class SourcePaneActions {
   readonly page: Page;
@@ -329,7 +330,76 @@ export class SourcePaneActions {
   }
 
   /**
+   * Create a document with a "new file" command (e.g. 'newMarkdownDoc') and
+   * wait until it is the active document.
+   *
+   * The wait keys on the active document's id changing, not on the selected
+   * tab's title: the suite keeps an Untitled placeholder open, so a check for
+   * "Untitled" passes even when no document was created.
+   *
+   * A Windows CI runner can drop the new_document RPC at the transport layer
+   * (net::ERR_NO_BUFFER_SPACE in run 44136608397). The IDE reports the failure
+   * in an "Error Creating New Document" dialog, which is the signal to dismiss
+   * it and retry once.
+   *
+   * The retry can leave an extra document behind. The error is thought to be
+   * ephemeral port exhaustion, which fails the connect before the request
+   * reaches the session, but a transport error can't rule out a lost response
+   * instead. In that case the session already created the document, and it
+   * shows up as an extra tab after the next reload.
+   *
+   * Only for commands that create the document directly. A command that
+   * opens a wizard or a dependency prompt first needs its own handling.
+   */
+  async newDocument(commandId: string): Promise<void> {
+    const previousId = await this.page.evaluate(() => window.rstudio?.documents.active()?.id ?? null);
+    const errorDialog = this.page.locator(NEW_DOCUMENT_ERROR_MODAL);
+
+    for (let attempt = 1; ; attempt++) {
+      await executeCommand(this.page, commandId);
+
+      const outcome = await this.page
+        .waitForFunction(
+          ({ prevId, dialogSelector }) => {
+            const doc = window.rstudio?.documents.active() ?? null;
+            if (doc !== null && doc.id !== prevId)
+              return 'created';
+            if (document.querySelector(dialogSelector) !== null)
+              return 'failed';
+            return null;
+          },
+          { prevId: previousId, dialogSelector: NEW_DOCUMENT_ERROR_MODAL },
+          { timeout: TIMEOUTS.fileOpen, polling: 50 },
+        )
+        .then(
+          (handle) => handle.jsonValue(),
+          (err: unknown) => {
+            // Anything else (a closed page, a throwing predicate) is not a
+            // missing document; let it surface as itself.
+            if (err instanceof errors.TimeoutError)
+              return 'timeout';
+            throw err;
+          },
+        );
+
+      if (outcome === 'created')
+        return;
+
+      if (outcome === 'timeout')
+        throw new Error(`${commandId} opened no new document within ${TIMEOUTS.fileOpen}ms`);
+
+      const message = (await errorDialog.innerText().catch(() => '')).replace(/\s+/g, ' ').trim();
+      await errorDialog.locator(CONFIRM_BTN).click();
+      await expect(errorDialog).toBeHidden();
+      if (attempt >= 2)
+        throw new Error(`${commandId} failed to create a document twice; last error: ${message}`);
+      console.log(`newDocument: ${commandId} failed (${message}); retrying once`);
+    }
+  }
+
+  /**
    * Ensures the editor is in visual mode. If already in visual mode, does nothing.
+   * Throws when the active document has no visual mode to switch to.
    */
   async ensureVisualMode(): Promise<void> {
     const toggle = this.sourcePane.visualMdToggle;
@@ -341,11 +411,14 @@ export class SourcePaneActions {
     try {
       // Wait for the toggle to mount -- a freshly created template document
       // takes a moment before its editor toolbar is ready, and a 3s attribute
-      // read could race that. If it never appears, visual mode isn't supported.
-      await toggle.waitFor({ state: 'visible', timeout: 5000 });
+      // read could race that.
+      await toggle.waitFor({ state: 'visible', timeout: 10000 });
     } catch {
-      // Toggle not available -- visual mode not supported for this file type.
-      return;
+      // Every caller goes on to drive the visual editor, so returning here
+      // only moves the failure to a later, unrelated-looking step (run
+      // 44136608397 timed out on the Insert menu because the active tab was
+      // the Untitled R script placeholder, whose toggle is hidden).
+      throw new Error('ensureVisualMode: the active document has no visible visual-mode toggle; is it a markdown document?');
     }
 
     await toggle.click();
