@@ -82,6 +82,23 @@ public:
 
 };
 
+std::string packageInformationCommand(const std::vector<std::string>& packages)
+{
+   // The source index records only valid names; checking again here keeps
+   // the command well-formed whatever reaches the unindexed package list.
+   std::vector<std::string> args;
+   for (const std::string& package : packages)
+   {
+      if (isValidRPackageName(package))
+         args.push_back("'" + package + "'");
+   }
+
+   if (args.empty())
+      return std::string();
+
+   return ".rs.getPackageInformation(" + core::algorithm::join(args, ",") + ");";
+}
+
 namespace {
 
 void fillFormalInfo(const json::Array& formalNamesJson,
@@ -269,26 +286,14 @@ void AsyncPackageInformationProcess::update()
       }
    }
    
-   if (pkgs.empty())
+   std::string finalCmd = packageInformationCommand(pkgs);
+   if (finalCmd.empty())
    {
+      s_pkgsToUpdate_.clear();
       s_isUpdating_ = false;
       return;
    }
-   
-   std::stringstream ss;
-   ss << ".rs.getPackageInformation(";
-   ss << "'" << pkgs[0] << "'";
-   
-   if (pkgs.size() > 0)
-   {
-      for (auto it = pkgs.begin() + 1; it != pkgs.end(); ++it)
-      {
-         ss << ",'" << *it << "'";
-      }
-   }
-   ss << ");";
-   
-   std::string finalCmd = ss.str();
+
    DEBUG("Running command: '" << finalCmd << "'");
    
    boost::shared_ptr<AsyncPackageInformationProcess> pProcess(

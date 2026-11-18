@@ -37,13 +37,15 @@ namespace r_util {
 using namespace token_utils;
 using namespace token_cursor;
 
-namespace {
-
 bool isValidRPackageName(const std::string& pkgName)
 {
-   static const boost::regex rePkgName("[a-zA-Z][a-zA-Z0-9._]*");
+   // R's .standard_regexps()$valid_package_name, restricted to ASCII
+   // as "Writing R Extensions" requires.
+   static const boost::regex rePkgName("[a-zA-Z][a-zA-Z0-9.]*[a-zA-Z0-9]");
    return regex_utils::match(pkgName, rePkgName);
 }
+
+namespace {
 
 std::wstring removeQuoteDelims(const std::wstring& input)
 {
@@ -369,8 +371,7 @@ void libraryCallIndexer(const RTokenCursor& cursor,
    if (clone.isType(RToken::STRING))
    {
       std::string pkgName = string_utils::strippedOfQuotes(clone.contentAsUtf8());
-      if (isValidRPackageName(pkgName))
-         pIndex->addInferredPackage(pkgName);
+      pIndex->addInferredPackage(pkgName);
    }
    
    // If the package name is a symbol, then look forward and check for
@@ -378,8 +379,7 @@ void libraryCallIndexer(const RTokenCursor& cursor,
    else if (clone.isType(RToken::ID))
    {
       std::string pkgName = clone.contentAsUtf8();
-      if (isValidRPackageName(pkgName))
-         pIndex->addInferredPackage(pkgName);
+      pIndex->addInferredPackage(pkgName);
    }
 }
 
