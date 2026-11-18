@@ -207,6 +207,20 @@ TEST(SessionRTest, FailedHistoryLoadKeepsHistory) {
    }
 #endif
 
+   // a load that succeeds replaces the history with the file's commands
+   FilePath loadedPath;
+   ASSERT_FALSE(FilePath::tempFilePath(loadedPath));
+   ASSERT_FALSE(core::writeStringToFile(loadedPath, "third()\nfourth()\n"));
+   BOOST_SCOPE_EXIT(&loadedPath)
+   {
+      loadedPath.remove();
+   }
+   BOOST_SCOPE_EXIT_END
+
+   EXPECT_FALSE(history.loadFromFile(loadedPath, true));
+   EXPECT_EQ((std::vector<std::string> {"third()", "fourth()"}),
+             std::vector<std::string>(history.begin(), history.end()));
+
    // without verifyFile, a missing file means there is no prior history
    EXPECT_FALSE(history.loadFromFile(missingPath, false));
    EXPECT_EQ(0, history.size());
