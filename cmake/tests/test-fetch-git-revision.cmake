@@ -62,6 +62,8 @@ file(WRITE "${TEST_HOME}/.gitconfig" [=[
    allow = always
 [uploadpack]
    allowReachableSHA1InWant = true
+[core]
+   longpaths = true
 ]=])
 set(ENV{HOME} "${TEST_HOME}")
 set(ENV{XDG_CONFIG_HOME} "${TEST_HOME}/.config")
@@ -72,7 +74,8 @@ set(ENV{GIT_CONFIG_NOSYSTEM} 1)
 # another repository.
 foreach(VAR
    GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR GIT_OBJECT_DIRECTORY
-   GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_QUARANTINE_PATH GIT_DEFAULT_HASH)
+   GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_QUARANTINE_PATH GIT_DEFAULT_HASH
+   GIT_CONFIG_PARAMETERS GIT_CONFIG_COUNT)
    unset(ENV{${VAR}})
 endforeach()
 
@@ -194,7 +197,7 @@ endfunction()
 set(LEAF_DIR "${TEST_DIR}/leaf")
 file(MAKE_DIRECTORY "${LEAF_DIR}")
 run_git("${LEAF_DIR}" _IGNORED init --quiet)
-commit_marker("${LEAF_DIR}" "base" _IGNORED)
+commit_marker("${LEAF_DIR}" "base" LEAF_BASE)
 commit_marker("${LEAF_DIR}" "pinned" LEAF_PINNED)
 commit_marker("${LEAF_DIR}" "tip" _IGNORED)
 file_url("${LEAF_DIR}" LEAF_URL)
@@ -241,6 +244,7 @@ expect_marker("${SOURCE_DIR}/sub/leaf" "pinned")
 expect_missing_commit("${SOURCE_DIR}" "${DEP_BASE}" "the pinned commit's parent")
 expect_missing_commit("${SOURCE_DIR}" "${DEP_TIP}" "the branch tip")
 expect_missing_commit("${SOURCE_DIR}/sub" "${SUB_BASE}" "the submodule's pinned commit's parent")
+expect_missing_commit("${SOURCE_DIR}/sub/leaf" "${LEAF_BASE}" "the nested submodule's pinned commit's parent")
 
 
 # A user whose git creates SHA-256 repositories by default can still fetch
@@ -284,6 +288,22 @@ expect_marker("${SOURCE_DIR}" "pinned")
 fetch("${DEP_URL}" "${DEP_TIP}" "${SOURCE_DIR}" RESULT -DTLS_VERSION=1.4)
 expect_fetch_failed(RESULT "TLS_VERSION must be one of" "fetching with TLS_VERSION=1.4")
 expect_marker("${SOURCE_DIR}" "pinned")
+
+
+# A submodule whose server won't send its pinned commit by id (here, git
+# protocol version 0 without allowReachableSHA1InWant) is fetched with its
+# full history instead.
+run_git("${SUB_DIR}" _IGNORED config uploadpack.allowReachableSHA1InWant false)
+run_git("${TEST_DIR}" _IGNORED config --global protocol.version 0)
+fetch("${DEP_URL}" "${DEP_PINNED}" "${TEST_DIR}/src-full-submodules" RESULT)
+run_git("${TEST_DIR}" _IGNORED config --global --unset protocol.version)
+run_git("${SUB_DIR}" _IGNORED config --unset uploadpack.allowReachableSHA1InWant)
+expect_fetched(RESULT "fetching a submodule from a strict server")
+if(NOT RESULT_OUTPUT MATCHES "Shallow submodule update failed")
+   message(FATAL_ERROR "the shallow submodule update did not fall back:\n${RESULT_OUTPUT}")
+endif()
+expect_marker("${TEST_DIR}/src-full-submodules/sub" "pinned")
+expect_marker("${TEST_DIR}/src-full-submodules/sub/leaf" "pinned")
 
 
 # A submodule that can't be fetched fails the fetch, rather than leaving a
