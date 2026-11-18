@@ -65,6 +65,8 @@ import org.rstudio.studio.client.projects.PackageNamePatternTests;
 import org.rstudio.studio.client.projects.model.ProjectMRUEntryTests;
 import org.rstudio.studio.client.projects.model.ProjectTemplateDescriptionTests;
 import org.rstudio.studio.client.projects.model.ProjectTemplateWidgetTests;
+import org.rstudio.studio.client.renv.RVersionChooserTests;
+import org.rstudio.studio.client.renv.ui.ChooseRVersionDialogTests;
 import org.rstudio.studio.client.rsconnect.ui.EnvironmentVariablesDialogTests;
 import org.rstudio.studio.client.server.ServerErrorCauseTests;
 import org.rstudio.studio.client.workbench.WorkbenchListManagerTests;
@@ -183,6 +185,8 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(ImageButtonColumnTests.class);
       suite.addTestSuite(TriStateCheckboxCellTests.class);
       suite.addTestSuite(ServerErrorCauseTests.class);
+      suite.addTestSuite(RVersionChooserTests.class);
+      suite.addTestSuite(ChooseRVersionDialogTests.class);
 
       return suite;
    }

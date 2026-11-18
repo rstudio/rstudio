@@ -6,77 +6,13 @@ import { getVersion, openProject } from "@utils/commands";
 import { useSuiteSandbox } from "@utils/sandbox";
 import { rStringLiteral } from "@utils/r";
 import { captureResult } from "@utils/terminal";
+import { compareVersions, installedRVersions, isOrthogonal, majorMinor, otherR } from "@utils/r-installations";
 import { execFileSync } from "child_process";
 import { lstatSync, readdirSync, readFileSync } from "fs";
 import type { Page } from "playwright";
 
 const PROJECT_MENU = "#rstudio_project_menubutton_toolbar";
 const CONSOLE_PANE = "#rstudio_workbench_panel_console";
-
-interface InstalledR {
-  version: string;
-  binary: string;
-}
-
-// The R installations rig knows about on this machine, from both of rig's
-// modes (each lists only its own installations). Empty when rig is absent.
-function installedRVersions(): InstalledR[] {
-  const versions: InstalledR[] = [];
-  for (const mode of ["--admin", "--user"]) {
-    try {
-      const output = execFileSync("rig", ["list", "--json", mode], {
-        encoding: "utf-8",
-        stdio: ["ignore", "pipe", "ignore"],
-      });
-      for (const entry of JSON.parse(output) as InstalledR[]) {
-        if (entry.version && entry.binary)
-          versions.push(entry);
-      }
-    } catch {
-      // rig missing, or this mode has nothing to list
-    }
-  }
-  return versions;
-}
-
-function majorMinor(version: string): string {
-  return version.split(".").slice(0, 2).join(".");
-}
-
-function compareVersions(a: string, b: string): number {
-  const pa = a.split(".").map(Number);
-  const pb = b.split(".").map(Number);
-  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
-    const diff = (pa[i] ?? 0) - (pb[i] ?? 0);
-    if (diff !== 0)
-      return diff;
-  }
-  return 0;
-}
-
-// Whether an installation runs as itself when it isn't the default: false for
-// a macOS framework version whose launcher still names the framework's shared
-// home (see src/node/desktop/src/main/r-framework.ts), which RStudio offers
-// to update before switching to it.
-function isOrthogonal(binary: string): boolean {
-  if (!/\/R\.framework\/Versions\/[^/]+\/Resources\/bin\/R$/.test(binary))
-    return true;
-
-  try {
-    return !readFileSync(binary, "utf-8").includes("R.framework/Resources");
-  } catch {
-    return true;
-  }
-}
-
-// The newest installed R from a major.minor series other than the current
-// one, among those that do (or don't) run as themselves.
-function otherR(current: string, orthogonal: boolean): InstalledR | undefined {
-  return installedRVersions()
-    .filter((entry) => majorMinor(entry.version) !== majorMinor(current))
-    .filter((entry) => isOrthogonal(entry.binary) === orthogonal)
-    .sort((a, b) => compareVersions(b.version, a.version))[0];
-}
 
 // Shell startup files rig appends to (or creates, when none exist) to put its
 // quick-link directory on the PATH.
@@ -201,9 +137,11 @@ test.describe("renv lockfile R version", { tag: ["@desktop_only"] }, () => {
         (rPath) =>
           new Promise<string>((resolve) => {
             const desktop = (window as unknown as {
-              desktop: { setPendingRVersion(rPath: string, callback: (error: string) => void): void };
+              desktop: {
+                setPendingRVersion(rPath: string, useDefault: boolean, callback: (error: string) => void): void;
+              };
             }).desktop;
-            desktop.setPendingRVersion(rPath, resolve);
+            desktop.setPendingRVersion(rPath, false, resolve);
           }),
         originalR,
       );

@@ -43,6 +43,7 @@ namespace prefs {
 #define kPlatform "platform"
 #define kPlatformWindows "windows"
 #define kPlatformMacos "macos"
+#define kPlatformLinux "linux"
 #define kContextId "context_id"
 #define kAutoCreatedProfile "auto_created_profile"
 #define kTheme "theme"

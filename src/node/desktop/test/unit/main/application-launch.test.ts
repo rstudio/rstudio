@@ -22,7 +22,7 @@ import path from 'path';
 import childProcess, { ChildProcess, SpawnOptions } from 'child_process';
 import { app } from 'electron';
 
-import { getenv, setenv } from '../../../src/core/environment';
+import { getenv, launchEnvironment, setenv } from '../../../src/core/environment';
 import { kProjectNone, kRStudioInitialProject, kRStudioInitialWorkingDir } from '../../../src/core/r-user-data';
 import { ApplicationLaunch, resolveProjectFile } from '../../../src/main/application-launch';
 import { MainWindow } from '../../../src/main/main-window';
@@ -169,6 +169,31 @@ describe('ApplicationLaunch', () => {
     // and our own environment is left alone
     assert.equal(getenv(kRStudioInitialProject), path.join(dir, 'test.Rproj'));
     assert.equal(getenv(kRStudioInitialWorkingDir), dir);
+  });
+
+  it('launchRStudio passes on the environment this instance was launched with, not the one prepared for its R', () => {
+    const spawnStub = sinon.stub(childProcess, 'spawn').returns({ unref: sinon.stub() } as unknown as ChildProcess);
+    const libraryPath = process.platform === 'darwin' ? 'DYLD_FALLBACK_LIBRARY_PATH' : 'LD_LIBRARY_PATH';
+    const saved = { RSTUDIO_WHICH_R: '', R_HOME: '', [libraryPath]: '' };
+    saveAndClear(saved);
+
+    // as startup prepares them for the R this instance runs (Windows exports
+    // the R it picked as RSTUDIO_WHICH_R)
+    const rHome = path.join(os.tmpdir(), 'running-r');
+    setenv('RSTUDIO_WHICH_R', path.join(rHome, 'bin', 'R.exe'));
+    setenv('R_HOME', rHome);
+    setenv(libraryPath, path.join(rHome, 'lib'));
+    try {
+      ApplicationLaunch.init().launchRStudio({ noProject: true });
+    } finally {
+      restore(saved);
+    }
+
+    const env = (spawnStub.firstCall.args[2] as SpawnOptions).env ?? {};
+    const launched = launchEnvironment();
+    for (const name of ['RSTUDIO_WHICH_R', 'R_HOME', libraryPath]) {
+      assert.equal(env[name], launched[name], name);
+    }
   });
 
   it('Resolve Empty Project File Path', () => {

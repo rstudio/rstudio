@@ -31,6 +31,8 @@ import os from 'os';
 import path from 'path';
 import { pathToFileURL } from 'url';
 import { createSinonStubInstance, StubbedClass } from '../unit-utils';
+import i18next from 'i18next';
+import { initI18n } from '../../../src/main/i18n-manager';
 
 import { FilePath } from '../../../src/core/file-path';
 import { clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
@@ -38,8 +40,39 @@ import { Application } from '../../../src/main/application';
 
 import { GwtCallback, PendingQuit } from '../../../src/main/gwt-callback';
 import * as DetectR from '../../../src/main/detect-r';
+import * as RChoice from '../../../src/main/r-choice';
 import { MainWindow } from '../../../src/main/main-window';
 import desktop from '../../../src/native/desktop.node';
+
+// the stand-in R files below, removed once the suite is done
+const kFixtureRoot = mkdtempSync(path.join(os.tmpdir(), 'gwt-callback-test-'));
+
+// A stand-in R executable that exists on disk (querying it is stubbed). On
+// Windows the path must name bin\<arch>\Rterm.exe, or it is rewritten to one
+// (see fixWindowsRExecutablePath) that doesn't exist.
+function standInRExecutable(): string {
+  if (process.platform !== 'win32') {
+    return process.execPath;
+  }
+
+  const dir = mkdtempSync(path.join(kFixtureRoot, 'stand-in-r-'));
+  const executable = path.join(dir, 'bin', 'x64', 'Rterm.exe');
+  mkdirSync(path.dirname(executable), { recursive: true });
+  writeFileSync(executable, '');
+  return executable;
+}
+
+// What querying a stand-in R reports (the query itself is stubbed): an R
+// home holding the shared library a session loads on macOS and Linux.
+function runningREnvironment(): never {
+  const home = mkdtempSync(path.join(kFixtureRoot, 'stand-in-r-home-'));
+  mkdirSync(path.join(home, 'lib'));
+  writeFileSync(path.join(home, 'lib', 'libR.dylib'), '');
+  writeFileSync(path.join(home, 'lib', 'libR.so'), '');
+  return { version: '4.4.1', envVars: { R_HOME: home } } as never;
+}
+
+const kRunningR = runningREnvironment();
 
 function fakeBrowserWindow(state?: { visible?: boolean; minimized?: boolean; destroyed?: boolean }) {
   return {
@@ -62,7 +95,17 @@ describe('DesktopCallback', () => {
   type InvokeHandler = (event: IpcMainInvokeEvent, ...args: unknown[]) => unknown;
   const invokeHandlers = new Map<string, InvokeHandler>();
 
-  before(() => {
+  before(async () => {
+    // some messages asserted on come from the translations
+    initI18n();
+    await new Promise<void>((resolve) => {
+      if (i18next.isInitialized) {
+        resolve();
+      } else {
+        i18next.on('initialized', () => resolve());
+      }
+    });
+
     mainWindow = createSinonStubInstance(MainWindow);
     const handle = sinon.spy(ipcMain, 'handle');
     callback = new GwtCallback(mainWindow);
@@ -82,26 +125,17 @@ describe('DesktopCallback', () => {
     sinon.restore();
   });
 
+  after(() => {
+    rmSync(kFixtureRoot, { recursive: true, force: true });
+  });
+
   it('can be constructed', () => {
     assert.isNotEmpty(callback);
   });
 
   describe('setPendingRVersion', () => {
-    // a stand-in R that exists on disk; querying it is stubbed. It is an
-    // Rterm.exe whose folder isn't bin, which Windows leaves unrewritten
-    // (see fixWindowsRExecutablePath)
-    let rDir: string;
-    let rPath: string;
-
-    before(() => {
-      rDir = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'gwt-callback-r-')));
-      rPath = path.join(rDir, 'Rterm.exe');
-      writeFileSync(rPath, '');
-    });
-
-    after(() => {
-      rmSync(rDir, { recursive: true, force: true });
-    });
+    // a stand-in R that exists on disk; querying it is stubbed
+    const rPath = standInRExecutable();
 
     afterEach(() => {
       callback.collectPendingRVersion();
@@ -109,26 +143,39 @@ describe('DesktopCallback', () => {
     });
 
     it('hands over an R that runs, once the quit names it, and only once', async () => {
-      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{} as never, null]);
+      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([kRunningR, null]);
 
       assert.equal(await callback.setPendingRVersion(rPath), '');
       // prepared is not pending: a quit that does not name it leaves it alone
       assert.equal(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload), '');
-      assert.equal(callback.collectPendingRVersion(), '');
+      assert.isNull(callback.collectPendingRVersion());
 
       assert.equal(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload, rPath), '');
-      assert.equal(callback.collectPendingRVersion(), rPath);
-      assert.equal(callback.collectPendingRVersion(), '');
+      assert.deepEqual(callback.collectPendingRVersion(), { path: rPath, useDefault: false });
+      assert.isNull(callback.collectPendingRVersion());
+    });
+
+    it('hands over whether the R was chosen as the default R', async () => {
+      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([kRunningR, null]);
+
+      assert.equal(await invoke('desktop_set_pending_r_version', rPath, true), '');
+      assert.equal(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload, rPath), '');
+      assert.deepEqual(callback.collectPendingRVersion(), { path: rPath, useDefault: true });
+
+      // as the latest preparation of that R says
+      assert.equal(await invoke('desktop_set_pending_r_version', rPath, false), '');
+      assert.equal(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload, rPath), '');
+      assert.deepEqual(callback.collectPendingRVersion(), { path: rPath, useDefault: false });
     });
 
     it('refuses a quit naming an R that was not prepared', () => {
       assert.isNotEmpty(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload, '/no/such/R'));
       assert.equal(callback.collectPendingQuitRequest(), PendingQuit.PendingQuitNone);
-      assert.equal(callback.collectPendingRVersion(), '');
+      assert.isNull(callback.collectPendingRVersion());
     });
 
     it('has nothing pending by default', () => {
-      assert.equal(callback.collectPendingRVersion(), '');
+      assert.isNull(callback.collectPendingRVersion());
     });
 
     it('refuses an R that is missing or fails to run', async () => {
@@ -137,24 +184,38 @@ describe('DesktopCallback', () => {
       assert.isNotEmpty(await callback.setPendingRVersion(rPath));
       assert.isNotEmpty(await callback.setPendingRVersion('/no/such/R'));
       assert.isTrue(detect.calledOnce);
-      assert.equal(callback.collectPendingRVersion(), '');
+      assert.isNull(callback.collectPendingRVersion());
     });
 
     it('answers with an error rather than failing', async () => {
       sinon.stub(DetectR, 'detectREnvironmentAsync').rejects(new Error('boom'));
 
       assert.include(await callback.setPendingRVersion(rPath), 'boom');
-      assert.equal(callback.collectPendingRVersion(), '');
+      assert.isNull(callback.collectPendingRVersion());
+    });
+
+    it('refuses an R without the shared library a session needs on macOS and Linux', async function () {
+      if (process.platform === 'win32') {
+        this.skip();
+      }
+
+      const home = mkdtempSync(path.join(os.tmpdir(), 'stand-in-r-home-'));
+      const environment = { version: '4.4.1', envVars: { R_HOME: home } };
+      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([environment as never, null]);
+
+      const library = process.platform === 'darwin' ? 'libR.dylib' : 'libR.so';
+      assert.include(await callback.setPendingRVersion(rPath), library);
+      rmSync(home, { recursive: true, force: true });
     });
 
     it('forgets the R when the quit it was meant for is abandoned', async () => {
-      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{} as never, null]);
+      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([kRunningR, null]);
 
       assert.equal(await callback.setPendingRVersion(rPath), '');
       assert.equal(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload, rPath), '');
 
       callback.setPendingQuit(PendingQuit.PendingQuitNone);
-      assert.equal(callback.collectPendingRVersion(), '');
+      assert.isNull(callback.collectPendingRVersion());
     });
 
     it('finds the R a quit names by the path it was prepared with, on x64 windows', async function () {
@@ -162,10 +223,10 @@ describe('DesktopCallback', () => {
       if (process.platform !== 'win32' || process.arch !== 'x64') {
         this.skip();
       }
-      const detect = sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{} as never, null]);
+      const detect = sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([kRunningR, null]);
 
       // the client names bin\R.exe; the R prepared and launched is bin\x64\Rterm.exe
-      const binDir = path.join(rDir, 'bin');
+      const binDir = path.join(mkdtempSync(path.join(kFixtureRoot, 'stand-in-r-')), 'bin');
       const x64Dir = path.join(binDir, 'x64');
       mkdirSync(x64Dir, { recursive: true });
       const chosen = path.join(binDir, 'R.exe');
@@ -176,7 +237,80 @@ describe('DesktopCallback', () => {
       assert.equal(await callback.setPendingRVersion(chosen), '');
       assert.isTrue(detect.calledOnceWith(rterm));
       assert.equal(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload, chosen), '');
-      assert.equal(callback.collectPendingRVersion(), rterm);
+      assert.deepEqual(callback.collectPendingRVersion(), { path: rterm, useDefault: false });
+    });
+  });
+
+  describe('setDefaultRVersion', () => {
+    // a stand-in R that exists on disk; querying it is stubbed
+    const rPath = standInRExecutable();
+
+    it('stores an R that runs as the one RStudio uses', async () => {
+      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([kRunningR, null]);
+      const store = sinon.stub(DetectR, 'storeChosenR').resolves();
+
+      assert.equal(await callback.setDefaultRVersion(rPath), '');
+      assert.isTrue(store.calledOnceWithExactly(rPath, false));
+    });
+
+    it('stores the default R, chosen as such, to be followed', async () => {
+      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([kRunningR, null]);
+      const store = sinon.stub(DetectR, 'storeChosenR').resolves();
+
+      assert.equal(await invoke('desktop_set_default_r_version', rPath, true), '');
+      assert.isTrue(store.calledOnceWithExactly(rPath, true));
+    });
+
+    it('stores nothing for an R that is missing or fails to run', async () => {
+      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([null as never, new Error('boom')]);
+      const store = sinon.stub(DetectR, 'storeChosenR').resolves();
+
+      assert.include(await callback.setDefaultRVersion(rPath), 'boom');
+      assert.isNotEmpty(await callback.setDefaultRVersion('/no/such/R'));
+      assert.isFalse(store.called);
+    });
+
+    it('lets a later request decide what is stored', async () => {
+      // the first R takes longer to check than the second
+      let answerFirst: ((value: unknown) => void) | undefined;
+      const detect = sinon.stub(DetectR, 'detectREnvironmentAsync');
+      detect.onFirstCall().returns(new Promise((resolve) => (answerFirst = resolve)) as never);
+      detect.onSecondCall().resolves([kRunningR, null]);
+      const store = sinon.stub(DetectR, 'storeChosenR').resolves();
+
+      const first = callback.setDefaultRVersion(rPath);
+      const second = callback.setDefaultRVersion(rPath);
+      assert.equal(await second, '');
+      answerFirst!([kRunningR, null]);
+      assert.equal(await first, '');
+
+      assert.isTrue(store.calledOnce);
+    });
+
+    it('is registered for the client', async () => {
+      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([kRunningR, null]);
+      sinon.stub(DetectR, 'storeChosenR').resolves();
+
+      assert.equal(await invoke('desktop_set_default_r_version', rPath, false), '');
+    });
+  });
+
+  describe('getRChoice', () => {
+    it('describes the chosen R only while it decides which R RStudio uses', async () => {
+      sinon.stub(DetectR, 'defaultR').resolves('');
+      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{ version: '4.4.1' } as never, null]);
+      const saved = sinon.stub(RChoice, 'savedRChoice').returns({ path: '/opt/R/4.4.1/bin/R', rstudioWhichR: '' });
+      const applies = sinon.stub(RChoice, 'rChoiceApplies').returns(true);
+
+      const choice = (await invoke('desktop_get_r_choice')) as Record<string, { path: string; version: string }>;
+      assert.deepEqual(choice.chosen, { path: '/opt/R/4.4.1/bin/R', version: '4.4.1' });
+      assert.deepEqual(choice.default, { path: '', version: '' });
+
+      applies.returns(false);
+      assert.deepEqual((await callback.getRChoice()).chosen, { path: '', version: '' });
+
+      saved.returns(null);
+      assert.deepEqual((await callback.getRChoice()).chosen, { path: '', version: '' });
     });
   });
 
