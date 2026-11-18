@@ -57,10 +57,13 @@ TEST(SessionConsoleHistoryTest, RHistsizeLimitsOnlyTheSavedHistory) {
       return std::vector<std::string>(history.begin(), history.end());
    };
 
-   // readStringVectorFromFile() appends, so read into a fresh vector each time
+   // the file starts with a stale command each time, so a save that writes
+   // nothing can't pass; readStringVectorFromFile() appends, so read into a
+   // fresh vector
    auto savedBy = [&savedPath](const r::session::ConsoleHistory& history)
    {
       std::vector<std::string> saved;
+      EXPECT_FALSE(core::writeStringToFile(savedPath, "stale()\n"));
       EXPECT_FALSE(history.saveToHistoryFile(savedPath));
       EXPECT_FALSE(core::readStringVectorFromFile(savedPath, &saved));
       return saved;
@@ -100,6 +103,7 @@ TEST(SessionConsoleHistoryTest, RHistsizeLimitsOnlyTheSavedHistory) {
    ASSERT_FALSE(core::writeStringVectorToFile(longHistoryPath, longCommands));
    ASSERT_FALSE(largeHistory.loadFromFile(longHistoryPath, true));
    ASSERT_EQ(600, largeHistory.size());
+   EXPECT_EQ(longCommands, savedBy(largeHistory));
 
    // unset, negative, and invalid values mean R's default of 512, for both the
    // session's capacity and the commands saved
