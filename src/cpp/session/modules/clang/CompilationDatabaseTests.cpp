@@ -15,10 +15,6 @@
 
 #include <gtest/gtest.h>
 
-#include <algorithm>
-#include <functional>
-#include <set>
-
 #include <boost/scope_exit.hpp>
 
 #include <shared_core/FilePath.hpp>
@@ -353,7 +349,7 @@ TEST_F(CompileFlagsTest, RemovesUserFlagsPchOnceItsFlagsFileIsGone)
 {
    FilePath file = flagsFile(src_, "-DFOO\n");
    FilePath source = src_.completeChildPath("a.cpp");
-   std::vector<std::string> flags = compileFlagsForSource(source, {});
+   std::vector<std::string> flags = compileFlagsForSource(source);
    ASSERT_EQ(flags, std::vector<std::string>{"-DFOO"});
 
    // the PCH directory holds the default PCH and the variant for those flags
@@ -379,7 +375,7 @@ TEST_F(CompileFlagsTest, RemovesUserFlagsPchOnceItsFlagsFileIsGone)
 TEST_F(CompileFlagsTest, RemovesUserFlagsPchOnceNoFlagIsAllowed)
 {
    FilePath file = flagsFile(src_, "-DFOO\n");
-   std::vector<std::string> flags = compileFlagsForSource(src_.completeChildPath("a.cpp"), {});
+   std::vector<std::string> flags = compileFlagsForSource(src_.completeChildPath("a.cpp"));
    ASSERT_EQ(flags, std::vector<std::string>{"-DFOO"});
 
    FilePath platform = root_.completeChildPath("pch");
@@ -392,102 +388,6 @@ TEST_F(CompileFlagsTest, RemovesUserFlagsPchOnceNoFlagIsAllowed)
    writeStringToFile(file, "-o\nout.o\n");
    removeOrphanedUserFlagsPchs(platform, "Rcpp");
    EXPECT_FALSE(pch.exists());
-}
-
-TEST_F(CompileFlagsTest, RemovesUserFlagsPchOnceNoFlagParses)
-{
-   if (!core::libclang::clang().isLoaded())
-      GTEST_SKIP() << "libclang is not available";
-
-   // libclang won't parse a file that isn't on disk, even one given as unsaved
-   FilePath file = flagsFile(src_, "-DFOO\n");
-   FilePath source = src_.completeChildPath("a.cpp");
-   writeStringToFile(source, "");
-   std::vector<std::string> generated = {"-DBAR"};
-   std::vector<std::string> flags = compileFlagsForSource(source, generated);
-   ASSERT_EQ(flags, std::vector<std::string>{"-DFOO"});
-
-   FilePath platform = root_.completeChildPath("pch");
-   platform.ensureDirectory();
-   std::string variant = "Rcpp-std=gnu++17-flags-" + hash::crc32HexHash(algorithm::join(flags, "\n"));
-   FilePath pch = platform.completeChildPath(variant + ".pch");
-   writeStringToFile(pch, "");
-
-   // the flag is allowed, but no CPU has that name, so libclang can't parse
-   // with it and it isn't passed on
-   writeStringToFile(file, "-mtune=no-such-cpu\n");
-   std::vector<RejectedCompileFlag> rejected;
-   EXPECT_TRUE(compileFlagsForSource(source, generated, &rejected).empty());
-   ASSERT_EQ(rejected.size(), 1u);
-   EXPECT_EQ(rejected[0].flag, "-mtune=no-such-cpu");
-
-   removeOrphanedUserFlagsPchs(platform, "Rcpp");
-   EXPECT_FALSE(pch.exists());
-}
-
-// stands in for libclang: no file parses with any of 'fatal' among the flags
-std::function<bool(const std::vector<std::string>&)> parsesWithout(const std::set<std::string>& fatal)
-{
-   return [=](const std::vector<std::string>& flags) {
-      for (const std::string& flag : flags)
-      {
-         if (fatal.count(flag) > 0)
-            return false;
-      }
-      return true;
-   };
-}
-
-TEST_F(CompileFlagsTest, KeepsFlagsThatParse)
-{
-   std::vector<std::string> flags = {"-DFOO", "-mtune=haswell"};
-   std::vector<RejectedCompileFlag> rejected;
-   EXPECT_EQ(dropUnparseableCompileFlags(flags, parsesWithout({}), &rejected), flags);
-   EXPECT_TRUE(rejected.empty());
-}
-
-TEST_F(CompileFlagsTest, DropsFlagsThatStopTheParse)
-{
-   // an option with its value on the next line goes as one
-   std::vector<std::string> flags = {"-DFOO", "-mtune=haswell", "-arch", "bogus", "-Wall"};
-   std::vector<RejectedCompileFlag> rejected;
-   std::vector<std::string> kept =
-         dropUnparseableCompileFlags(flags, parsesWithout({"-mtune=haswell", "bogus"}), &rejected);
-
-   EXPECT_EQ(kept, (std::vector<std::string>{"-DFOO", "-Wall"}));
-   ASSERT_EQ(rejected.size(), 2u);
-   EXPECT_EQ(rejected[0].flag, "-mtune=haswell");
-   EXPECT_EQ(rejected[1].flag, "-arch bogus");
-   EXPECT_EQ(rejected[0].reason, "libclang can't parse the file with it; check that its value is valid for this platform");
-}
-
-TEST_F(CompileFlagsTest, DropsTheSettingThatDoesntSuitTheTarget)
-{
-   // on an arm64 host, an arm CPU suits the host but not the x86 target
-   // named after it; both parse alone, but not together
-   auto parses = [](const std::vector<std::string>& flags) {
-      bool x86 = std::find(flags.begin(), flags.end(), "--target=x86_64-linux-gnu") != flags.end();
-      bool armCpu = std::find(flags.begin(), flags.end(), "-mtune=cortex-a72") != flags.end();
-      return !(x86 && armCpu);
-   };
-
-   std::vector<std::string> flags = {"-mtune=cortex-a72", "--target=x86_64-linux-gnu", "-DFOO"};
-   std::vector<RejectedCompileFlag> rejected;
-   std::vector<std::string> kept = dropUnparseableCompileFlags(flags, parses, &rejected);
-
-   EXPECT_EQ(kept, (std::vector<std::string>{"--target=x86_64-linux-gnu", "-DFOO"}));
-   ASSERT_EQ(rejected.size(), 1u);
-   EXPECT_EQ(rejected[0].flag, "-mtune=cortex-a72");
-}
-
-TEST_F(CompileFlagsTest, KeepsFlagsWhenTheGeneratedArgsDontParse)
-{
-   // nothing parses, so the flags aren't to blame
-   auto parses = [](const std::vector<std::string>&) { return false; };
-   std::vector<std::string> flags = {"-DFOO", "-mtune=haswell"};
-   std::vector<RejectedCompileFlag> rejected;
-   EXPECT_EQ(dropUnparseableCompileFlags(flags, parses, &rejected), flags);
-   EXPECT_TRUE(rejected.empty());
 }
 
 TEST_F(CompileFlagsTest, SystemIncludeArgsAreSearchedInReportedOrder)

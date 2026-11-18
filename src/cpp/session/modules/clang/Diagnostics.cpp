@@ -189,21 +189,17 @@ json::Array getCppDiagnosticsJson(const FilePath& filePath)
    json::Array diagnosticsJson;
 
    // a bad flag in a compile_flags.txt is reported by clang against the
-   // command line rather than the file, so when one is in play we surface
-   // those at the top of the file instead of silently dropping them. One
-   // that would make the parse fail outright isn't passed on at all, and is
-   // reported along with the flags that aren't allowed.
-   std::string filename = filePath.getAbsolutePath();
+   // command line rather than the file (or makes the parse fail outright),
+   // so when one is in play we surface those at the top of the file instead
+   // of silently dropping them
    FilePath flagsFile = compileFlagsFileForSource(filePath);
    std::vector<RejectedCompileFlag> rejectedFlags;
-   bool hasUserFlags = false;
-   if (!flagsFile.isEmpty())
-   {
-      std::vector<std::string> generatedArgs = clangCompilationDatabase().generatedCompileArgs(filename);
-      hasUserFlags = !compileFlagsForSource(filePath, generatedArgs, &rejectedFlags).empty();
-   }
+   bool hasUserFlags =
+         !flagsFile.isEmpty() &&
+         !filterCompileFlags(readCompileFlags(flagsFile), &rejectedFlags).empty();
 
    // get diagnostics from translation unit
+   std::string filename = filePath.getAbsolutePath();
    TranslationUnit tu = sourceIndex().getTranslationUnit(filename, true);
 
    // the flags only apply to a file we index, so only such a file is told

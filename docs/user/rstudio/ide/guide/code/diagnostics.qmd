@@ -84,7 +84,7 @@ Only flags that affect how a file is parsed and diagnosed are supported:
 
 Other flags, such as output options (`-o`, `-MF`), response files (`@file`), and options that pass arguments on to other tools (`-Xclang`, `-mllvm`, `-Wl,`), are ignored, with a warning on the first line of the source file naming each one and saying why. As with clangd, an option's value can be given on the line after the option (`-I` followed by `inst/include`), provided it doesn't begin with `-` or `@`.
 
-Changes to `compile_flags.txt` take effect the next time diagnostics run; no restart is required. Problems with the flags themselves, such as an unknown warning or an invalid value, are reported as diagnostics on the first line of the source file. A flag that would stop libclang from parsing the file at all, such as `-mtune=` or `-mfpmath=` with a value meant for a different architecture, is ignored with a warning, so the rest of the file is still diagnosed.
+Changes to `compile_flags.txt` take effect the next time diagnostics run; no restart is required. Problems with the flags themselves, such as an unknown warning or an invalid value, are reported as diagnostics on the first line of the source file.
 
 In an R package, add `compile_flags.txt` to `.Rbuildignore` (for example, with `usethis::use_build_ignore("compile_flags.txt")`) so that `R CMD build` leaves it out of the package and `R CMD check` does not report it as a non-standard file.
 
