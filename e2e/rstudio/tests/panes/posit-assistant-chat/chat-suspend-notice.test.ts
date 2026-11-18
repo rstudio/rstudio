@@ -20,6 +20,16 @@ const suspendedNotice = (page: Page): Locator =>
 const restartingNotice = (page: Page): Locator =>
   page.getByText(/Restarting R\. Posit Assistant will reconnect/);
 
+const CHAT_IFRAME = "iframe[title='Posit Assistant']";
+
+/** The URL of the document currently loaded in the chat iframe ('' if none). */
+async function chatDocumentUrl(page: Page): Promise<string> {
+  return page.evaluate((selector) => {
+    const frame = document.querySelector(selector) as HTMLIFrameElement | null;
+    return frame?.contentDocument?.location.href ?? '';
+  }, CHAT_IFRAME);
+}
+
 // The Posit Assistant client reports a lost connection on its 3rd failed
 // reconnect, one second apart. Watch well past that.
 const RECONNECT_REPORT_WINDOW_MS = 8000;
@@ -161,17 +171,31 @@ test.describe.serial('Posit Assistant across suspend and restart', {
     await waitForClientStateQuiet(page);
     await page.route(/\/events\/get_events/, (route) => route.abort());
     try {
+      // The route only stops new polls. Wait for the in-flight one (held for
+      // up to 50s) to finish and the next to hit the block, or it could still
+      // deliver SUSPEND_SESSION.
+      await page.waitForEvent('requestfailed', {
+        predicate: (request) => request.url().includes('/events/get_events'),
+        timeout: 60000,
+      });
       await executeCommand(page, 'suspendSession');
       await expect(lostBanner(page)).toBeVisible({ timeout: 15000 });
     } finally {
       await page.unroute(/\/events\/get_events/);
     }
     await expect(suspendedNotice(page)).toBeHidden();
+    const suspendedDocumentUrl = await chatDocumentUrl(page);
 
     await waitForSessionRestart(page);
     await dismissBlockingModals(page);
 
-    await expect(lostBanner(page)).toBeHidden({ timeout: 30000 });
+    // With no overlay up, the banner is hidden as the reload starts, while the
+    // old document is still loaded; wait for the new one to finish loading
+    await page.waitForFunction(({ selector, before }) => {
+      const doc = (document.querySelector(selector) as HTMLIFrameElement | null)?.contentDocument;
+      return !!doc && doc.location.href !== before && doc.readyState === 'complete';
+    }, { selector: CHAT_IFRAME, before: suspendedDocumentUrl }, { timeout: 30000 });
+    await expect(lostBanner(page)).toBeHidden();
     await chatActions.waitForChatReady();
   });
 });
