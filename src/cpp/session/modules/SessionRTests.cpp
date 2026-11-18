@@ -468,16 +468,21 @@ TEST(SessionRTest, RFunctionRefusesStringsWithEmbeddedNul) {
    for (const auto& testCase : cases)
    {
       // run protected, so that an R error escaping the call fails this test
-      // instead of ending the test run
+      // instead of ending the test run. the result starts as something other
+      // than R's NULL, as a refused call must still set it: callers may pass
+      // it on before checking the error
+      SEXP resultSEXP = R_GlobalEnv;
       Error callError;
       Error error = r::exec::executeSafely([&]()
       {
+         r::sexp::Protect callProtect;
          r::exec::RFunction function("base:::list");
          testCase.second(&function);
-         callError = function.call();
+         callError = function.call(&resultSEXP, &callProtect);
       });
       EXPECT_FALSE(error) << testCase.first << ": " << error.asString();
       expectEmbeddedNulError(callError, testCase.first);
+      EXPECT_EQ(R_NilValue, resultSEXP) << testCase.first;
    }
 
    // R also raises an error building a call with a parameter name longer than

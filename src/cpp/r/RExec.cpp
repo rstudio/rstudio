@@ -569,6 +569,9 @@ Error RFunction::call(SEXP evalNS,
 
    if (!paramProblem_.empty())
    {
+      // callers may pass the result on before checking the error
+      *pResultSEXP = R_NilValue;
+
       std::string functionName = functionName_.empty() ? "<unknown>" : functionName_;
       Error error = rCodeExecutionError(
                "R function '" + functionName + "' was passed " + paramProblem_,
