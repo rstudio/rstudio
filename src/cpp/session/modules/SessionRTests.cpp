@@ -327,9 +327,9 @@ TEST(SessionRTest, JsonRpcRefusesStringsWithEmbeddedNul) {
    // as R would otherwise truncate them at the nul
    std::vector<std::string> inputs = {
       R"({"method": "test_embedded_nul", "params": ["a\u0000b"]})",
-      R"({"method": "test_embedded_nul", "kwparams": {"x": "a\u0000b"}})",
+      R"({"method": "test_embedded_nul", "kwparams": {"y": "ok", "x": "a\u0000b"}})",
       R"({"method": "test_embedded_nul", "params": [["a\u0000b"]]})",
-      R"({"method": "test_embedded_nul", "params": [{"x": "a\u0000b"}]})",
+      R"({"method": "test_embedded_nul", "params": ["ok", {"y": "ok", "x": "a\u0000b"}]})",
       R"({"method": "test_embedded_nul", "params": [{"a\u0000b": "x"}]})",
       R"({"method": "test_embedded_nul", "kwparams": {"a\u0000b": "x"}})",
    };
