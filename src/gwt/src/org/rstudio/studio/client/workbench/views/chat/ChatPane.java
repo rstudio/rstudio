@@ -296,7 +296,7 @@ public class ChatPane
       {
          mainPanel_.remove(suspendedOverlay_);
       }
-      hideFrameConnectionNotifications();
+      onFramePageReplaced();
 
       // Force a complete iframe reload by navigating to about:blank first
       // This kills the existing JavaScript context (stops WebSocket reconnection attempts)
@@ -332,7 +332,7 @@ public class ChatPane
       }
       else
       {
-         hideFrameConnectionNotifications();
+         onFramePageReplaced();
          frame_.setOnLoadAction(null);
          frame_.setUrl(url);
       }
@@ -400,7 +400,7 @@ public class ChatPane
             {
                mainPanel_.remove(suspendedOverlay_);
             }
-            hideFrameConnectionNotifications();
+            onFramePageReplaced();
             frame_.setUrl(url);
          }
       };
@@ -425,7 +425,7 @@ public class ChatPane
                mainPanel_.remove(suspendedOverlay_);
                frame_ = newFrame;
                pendingFrame_ = null;
-               hideFrameConnectionNotifications();
+               onFramePageReplaced();
                setFrameScrollTop(newFrame, savedScrollTop);
             }
             else
@@ -578,18 +578,9 @@ public class ChatPane
    @Override
    public void showConnectionLostNotification(String message)
    {
-      // While suspended, the frame reporting the error lost its backend on
-      // purpose and will be replaced on resume; the suspended notice stands.
-      if (suspendedOverlay_.getParent() == mainPanel_)
-      {
-         return;
-      }
-
-      // Don't overwrite higher-priority update notifications
-      if (currentNotificationType_ == NotificationType.UPDATING ||
-          currentNotificationType_ == NotificationType.UPDATE_ERROR ||
-          currentNotificationType_ == NotificationType.UPDATE_COMPLETE ||
-          currentNotificationType_ == NotificationType.UPDATE_CHECK_FAILURE)
+      // Don't overwrite higher-priority update notifications, and don't
+      // report failures that stopping the frame's backend made expected
+      if (isUpdateNotificationShowing() || frameBackendStopped_)
       {
          return;
       }
@@ -621,35 +612,50 @@ public class ChatPane
       }
    }
 
-   private void showSuspendedNotification(String notice)
+   @Override
+   public void expectFrameDisconnect()
    {
-      // Don't overwrite higher-priority update notifications
-      if (currentNotificationType_ == NotificationType.UPDATING ||
-          currentNotificationType_ == NotificationType.UPDATE_ERROR ||
-          currentNotificationType_ == NotificationType.UPDATE_COMPLETE ||
-          currentNotificationType_ == NotificationType.UPDATE_CHECK_FAILURE)
+      frameBackendStopped_ = true;
+   }
+
+   private boolean isUpdateNotificationShowing()
+   {
+      return currentNotificationType_ == NotificationType.UPDATING ||
+             currentNotificationType_ == NotificationType.UPDATE_ERROR ||
+             currentNotificationType_ == NotificationType.UPDATE_COMPLETE ||
+             currentNotificationType_ == NotificationType.UPDATE_CHECK_FAILURE;
+   }
+
+   /**
+    * Shows an informational notification with no buttons, unless an update
+    * notification (which takes priority) is showing.
+    */
+   private void showInfoNotification(NotificationType type, String text)
+   {
+      if (isUpdateNotificationShowing())
       {
          return;
       }
 
       setNotificationIcon(MessageDialogImages.INSTANCE.dialog_info2x());
-      updateMessageLabel_.setHTML(SafeHtmlUtils.htmlEscape(notice));
+      updateMessageLabel_.setHTML(SafeHtmlUtils.htmlEscape(text));
 
       new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
          .clear();
 
-      currentNotificationType_ = NotificationType.SESSION_SUSPENDED;
+      currentNotificationType_ = type;
       updateNotificationPanel_.setVisible(true);
       updateFrameLayout();
    }
 
    /**
-    * Hides the notifications that describe the connection of the page in the
-    * frame. Call whenever that page is replaced: a reloaded page connects on
-    * its own and only reports a failure if it has one.
+    * Call whenever the page in the frame is replaced. The notifications about
+    * the old page's connection no longer apply, and the new page connects to
+    * a running backend and reports its own failures.
     */
-   private void hideFrameConnectionNotifications()
+   private void onFramePageReplaced()
    {
+      frameBackendStopped_ = false;
       if (currentNotificationType_ == NotificationType.CONNECTION_LOST ||
           currentNotificationType_ == NotificationType.SESSION_SUSPENDED)
       {
@@ -660,24 +666,7 @@ public class ChatPane
    @Override
    public void showReadlineNotification()
    {
-      // Don't overwrite higher-priority update notifications
-      if (currentNotificationType_ == NotificationType.UPDATING ||
-          currentNotificationType_ == NotificationType.UPDATE_ERROR ||
-          currentNotificationType_ == NotificationType.UPDATE_COMPLETE ||
-          currentNotificationType_ == NotificationType.UPDATE_CHECK_FAILURE)
-      {
-         return;
-      }
-
-      setNotificationIcon(MessageDialogImages.INSTANCE.dialog_info2x());
-      updateMessageLabel_.setHTML(constants_.chatReadlineWaiting());
-
-      new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
-         .clear();
-
-      currentNotificationType_ = NotificationType.READLINE;
-      updateNotificationPanel_.setVisible(true);
-      updateFrameLayout();
+      showInfoNotification(NotificationType.READLINE, constants_.chatReadlineWaiting());
    }
 
    @Override
@@ -976,7 +965,10 @@ public class ChatPane
          mainPanel_.setWidgetTopBottom(suspendedOverlay_, 0, Unit.PX, 0, Unit.PX);
       }
 
-      showSuspendedNotification(notice);
+      // The session has stopped the backend, so the page's reconnect failures
+      // are expected until it is replaced on resume
+      frameBackendStopped_ = true;
+      showInfoNotification(NotificationType.SESSION_SUSPENDED, notice);
    }
 
    @Override
@@ -1420,6 +1412,7 @@ public class ChatPane
    private Timer pendingSwapTimer_;
    private Timer loadTimeoutTimer_;
    private HTML suspendedOverlay_;
+   private boolean frameBackendStopped_ = false;
    private Toolbar toolbar_;
    private ToolbarButton popOutButton_;
    private boolean listenerSetup_ = false;

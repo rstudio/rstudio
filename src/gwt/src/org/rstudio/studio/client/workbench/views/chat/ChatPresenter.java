@@ -126,6 +126,9 @@ public class ChatPresenter extends BasePresenter
       void showManifestUnavailable(String errorMessage);
       void showInstallationManagedNotInstalled();
       void showConnectionLostNotification(String message);
+      // The backend the page in the frame connects to is about to stop; its
+      // reconnect failures are expected until the page is replaced
+      void expectFrameDisconnect();
       void hideConnectionLostNotification();
       void showReadlineNotification();
       void hideReadlineNotification();
@@ -236,10 +239,6 @@ public class ChatPresenter extends BasePresenter
          public void onIframeError(String message)
          {
             Debug.log("Chat iframe error: " + message);
-            // Restart R stops the backend, so the iframe failing to reconnect
-            // is expected; the reloaded iframe replaces it once R is back.
-            if (restartingR_)
-               return;
             display_.showConnectionLostNotification(message);
          }
 
@@ -321,18 +320,11 @@ public class ChatPresenter extends BasePresenter
             int action = event.getAction().getType();
             if (action == SessionSerializationAction.SUSPEND_SESSION)
             {
-               backendPollGeneration_++; // invalidate existing poll callbacks
-               display_.hideReadlineNotification();
-               if (poppedOut_)
-               {
-                  // Save geometry; satellite stays open and shows its own
-                  // suspend overlay via SessionSerializationEvent forwarding
-                  updateSavedGeometry();
-               }
-               showSuspendedMessage();
+               onSessionSuspended();
             }
             else if (action == SessionSerializationAction.RESUME_SESSION)
             {
+               sessionSuspended_ = false;
                backendPollGeneration_++; // new lifecycle generation
 
                // Any pre-suspend initialization is stale — the server process
@@ -372,21 +364,16 @@ public class ChatPresenter extends BasePresenter
       // SUSPEND_SESSION, so the events poll finding the session unavailable
       // is the client's only sign that it has gone
       events_.addHandler(ServerUnavailableEvent.TYPE, (ServerUnavailableEvent event) ->
-         showSuspendedMessage());
+         onSessionSuspended());
 
+      // Restart R stops the backend whether or not SUSPEND_SESSION reaches
+      // the client (Desktop doesn't wait to deliver it). If the restart fails,
+      // the expectation lasts until the page is next replaced.
       events_.addHandler(RestartStatusEvent.TYPE, (RestartStatusEvent event) ->
       {
-         if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED)
-         {
-            restartingR_ = true;
-         }
-         // After a restart the resume handler reloads the iframe, and
-         // loadChatUI() ends the restart window. Only end it here when no
-         // reload is underway, e.g. when the restart failed.
-         else if (!initializing_)
-         {
-            restartingR_ = false;
-         }
+         restartingR_ = event.getStatus() == RestartStatusEvent.RESTART_INITIATED;
+         if (restartingR_)
+            display_.expectFrameDisconnect();
       });
 
       // Listen for satellite closed events
@@ -1393,8 +1380,23 @@ public class ChatPresenter extends BasePresenter
       });
    }
 
-   private void showSuspendedMessage()
+   // Runs once per suspension: on SUSPEND_SESSION, or on the first
+   // ServerUnavailableEvent of a forced suspend, which repeats while suspended
+   private void onSessionSuspended()
    {
+      if (sessionSuspended_)
+         return;
+      sessionSuspended_ = true;
+
+      backendPollGeneration_++; // invalidate existing poll callbacks
+      display_.hideReadlineNotification();
+      if (poppedOut_)
+      {
+         // Save geometry; satellite stays open and shows its own
+         // suspend overlay via SessionSerializationEvent forwarding
+         updateSavedGeometry();
+      }
+
       // Only dim the chat UI if it was actually loaded and running.
       // If chat was never initialized (e.g., sidebar hidden at startup),
       // there's nothing meaningful to dim.
@@ -1563,10 +1565,6 @@ public class ChatPresenter extends BasePresenter
          loadUrl += "&resume";
       }
 
-      // The old iframe, whose reconnect errors a restart made expected, is
-      // replaced from here on
-      restartingR_ = false;
-
       // Cache the URL and auth token for satellite use
       cachedUrl_ = loadUrl;
       cachedAuthToken_ = authToken;
@@ -1683,9 +1681,11 @@ public class ChatPresenter extends BasePresenter
    private String cachedUrl_ = null;
    private String cachedAuthToken_ = null;
 
-   // True from Session > Restart R being initiated until the iframe is
-   // reloaded against the restarted backend (or the restart fails)
+   // Session > Restart R is between RESTART_INITIATED and RESTART_COMPLETED
    private boolean restartingR_ = false;
+
+   // Set by SUSPEND_SESSION or ServerUnavailableEvent, cleared by RESUME_SESSION
+   private boolean sessionSuspended_ = false;
 
    private static final ChatConstants constants_ = com.google.gwt.core.client.GWT.create(ChatConstants.class);
 }
