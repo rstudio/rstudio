@@ -97,8 +97,44 @@ jobs:
           echo "number=${NUMBER}" >> "$GITHUB_OUTPUT"
           echo "branch-prefix=claude/${NUMBER}-${SLUG}-" >> "$GITHUB_OUTPUT"
 
-      - name: Generate token for GitHub App
+      # The ack doubles as a duplicate check: GitHub sometimes starts this
+      # workflow twice for one comment, which would relay it twice and get
+      # two replies. The reactions API answers 200 rather than 201 when this
+      # account's eyes reaction already exists, and only this workflow reacts
+      # as github-actions[bot] here, so a 200 means another run took the
+      # mention. A re-run always relays, and a failed reaction never blocks
+      # the relay. Reviews have no reactions API, so they get neither; there
+      # the only ack is Claude's reply.
+      - name: Acknowledge mention
         if: steps.mention.outputs.found == 'true'
+        id: ack
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          REPO: ${{ github.repository }}
+          NUMBER: ${{ steps.payload.outputs.number }}
+          COMMENT_ID: ${{ github.event.comment.id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          case "$EVENT_NAME" in
+            issue_comment) TARGET="issues/comments/${COMMENT_ID}" ;;
+            pull_request_review_comment) TARGET="pulls/comments/${COMMENT_ID}" ;;
+            issues) TARGET="issues/${NUMBER}" ;;
+            *) exit 0 ;;
+          esac
+
+          if ! RESPONSE=$(gh api --include --method POST "repos/${REPO}/${TARGET}/reactions" -f content=eyes); then
+            echo "::warning::Failed to add the eyes reaction"
+            exit 0
+          fi
+          STATUS=$(head -n 1 <<< "$RESPONSE" | awk '{ print $2 }')
+          if [ "$STATUS" = 200 ] && [ "$RUN_ATTEMPT" = 1 ]; then
+            echo "::notice::Another run already relayed this mention; skipping."
+            echo "duplicate=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Generate token for GitHub App
+        if: steps.mention.outputs.found == 'true' && steps.ack.outputs.duplicate != 'true'
         id: generate-token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
@@ -109,7 +145,7 @@ jobs:
           permission-contents: write
 
       - name: Relay to rstudio-pro
-        if: steps.mention.outputs.found == 'true'
+        if: steps.mention.outputs.found == 'true' && steps.ack.outputs.duplicate != 'true'
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
           EVENT_NAME: ${{ github.event_name }}
@@ -130,26 +166,3 @@ jobs:
             -f "client_payload[review_id]=${REVIEW_ID}" \
             -f "client_payload[actor]=${ACTOR}" \
             -f "client_payload[branch_prefix]=${BRANCH_PREFIX}"
-
-      # Runs after the dispatch so a failed reaction never blocks the relay.
-      # Reviews have no reactions API; there the only ack is Claude's reply.
-      - name: Acknowledge mention
-        if: steps.mention.outputs.found == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          EVENT_NAME: ${{ github.event_name }}
-          REPO: ${{ github.repository }}
-          NUMBER: ${{ steps.payload.outputs.number }}
-          COMMENT_ID: ${{ github.event.comment.id }}
-        run: |
-          case "$EVENT_NAME" in
-            issue_comment)
-              gh api "repos/${REPO}/issues/comments/${COMMENT_ID}/reactions" -f content=eyes
-              ;;
-            pull_request_review_comment)
-              gh api "repos/${REPO}/pulls/comments/${COMMENT_ID}/reactions" -f content=eyes
-              ;;
-            issues)
-              gh api "repos/${REPO}/issues/${NUMBER}/reactions" -f content=eyes
-              ;;
-          esac
