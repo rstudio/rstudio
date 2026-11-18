@@ -135,6 +135,9 @@ $versionMeta = Join-Path -Path $root -ChildPath "version"
 $flower = Get-Content (Join-Path -Path $versionMeta -ChildPath "RELEASE") | Out-String
 $flower = URLize -string $flower
 $commit = git rev-parse HEAD
+if ($LASTEXITCODE -ne 0) {
+    throw "git rev-parse HEAD failed (exit $LASTEXITCODE) in $PWD; is the workspace a git checkout?"
+}
 
 $versionStem = URLize -string $version
 
