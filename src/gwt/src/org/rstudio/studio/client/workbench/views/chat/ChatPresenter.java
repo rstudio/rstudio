@@ -24,7 +24,6 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
-import org.rstudio.studio.client.application.events.ServerUnavailableEvent;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -320,17 +319,26 @@ public class ChatPresenter extends BasePresenter
             int action = event.getAction().getType();
             if (action == SessionSerializationAction.SUSPEND_SESSION)
             {
+               backendPollGeneration_++; // invalidate existing poll callbacks
+               display_.hideReadlineNotification();
                if (poppedOut_)
                {
                   // Save geometry; satellite stays open and shows its own
                   // suspend overlay via SessionSerializationEvent forwarding
                   updateSavedGeometry();
                }
-               onSessionSuspended();
+               // Only dim the chat UI if Posit Assistant was actually loaded and
+               // running. If chat was never initialized (e.g., sidebar hidden at
+               // startup) or another provider is selected, nothing will reconnect.
+               if (cachedUrl_ != null && paiUtil_.isChatProviderPosit())
+               {
+                  display_.showSuspendedMessage(restartingR_
+                     ? constants_.chatRestartingRNotice()
+                     : constants_.chatSessionSuspendedNotice());
+               }
             }
             else if (action == SessionSerializationAction.RESUME_SESSION)
             {
-               sessionSuspended_ = false;
                backendPollGeneration_++; // new lifecycle generation
 
                // Any pre-suspend initialization is stale — the server process
@@ -365,12 +373,6 @@ public class ChatPresenter extends BasePresenter
             }
          }
       });
-
-      // A forced suspend (e.g. Session > Suspend) exits without delivering
-      // SUSPEND_SESSION, so the events poll finding the session unavailable
-      // is the client's only sign that it has gone
-      events_.addHandler(ServerUnavailableEvent.TYPE, (ServerUnavailableEvent event) ->
-         onSessionSuspended());
 
       // Restart R stops the backend whether or not SUSPEND_SESSION reaches
       // the client (Desktop doesn't wait to deliver it). If the restart fails,
@@ -1386,30 +1388,6 @@ public class ChatPresenter extends BasePresenter
       });
    }
 
-   // Runs once per suspension: on SUSPEND_SESSION, or on the first
-   // ServerUnavailableEvent of a forced suspend, which repeats while suspended
-   private void onSessionSuspended()
-   {
-      if (sessionSuspended_)
-         return;
-      sessionSuspended_ = true;
-
-      // No geometry save here: it dirties client state, and after a forced
-      // suspend the next client-state push would resume the session
-      backendPollGeneration_++; // invalidate existing poll callbacks
-      display_.hideReadlineNotification();
-
-      // Only dim the chat UI if it was actually loaded and running.
-      // If chat was never initialized (e.g., sidebar hidden at startup),
-      // there's nothing meaningful to dim.
-      if (cachedUrl_ != null)
-      {
-         display_.showSuspendedMessage(restartingR_
-            ? constants_.chatRestartingRNotice()
-            : constants_.chatSessionSuspendedNotice());
-      }
-   }
-
    private void pollForBackendUrl()
    {
       pollForBackendUrl(0, backendPollGeneration_);
@@ -1685,9 +1663,6 @@ public class ChatPresenter extends BasePresenter
 
    // Session > Restart R is between RESTART_INITIATED and RESTART_COMPLETED
    private boolean restartingR_ = false;
-
-   // Set by SUSPEND_SESSION or ServerUnavailableEvent, cleared by RESUME_SESSION
-   private boolean sessionSuspended_ = false;
 
    private static final ChatConstants constants_ = com.google.gwt.core.client.GWT.create(ChatConstants.class);
 }

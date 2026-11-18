@@ -965,9 +965,7 @@ public class ChatPane
          mainPanel_.setWidgetTopBottom(suspendedOverlay_, 0, Unit.PX, 0, Unit.PX);
       }
 
-      // The session has stopped the backend, so the page's reconnect failures
-      // are expected until it is replaced on resume
-      frameBackendStopped_ = true;
+      expectFrameDisconnect();
       showInfoNotification(NotificationType.SESSION_SUSPENDED, notice);
    }
 
