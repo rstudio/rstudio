@@ -357,9 +357,11 @@ TEST(SessionRTest, JsonRpcRefusesStringsWithEmbeddedNul) {
       &request);
    ASSERT_FALSE(error);
 
+   Error handlerError;
    json::JsonRpcResponse response;
-   error = handler(request, &response);
+   error = r::exec::executeSafely([&]() { handlerError = handler(request, &response); });
    ASSERT_FALSE(error) << error.asString();
+   ASSERT_FALSE(handlerError) << handlerError.asString();
    EXPECT_EQ(2, response.result().getInt());
 }
 
