@@ -37,6 +37,8 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <climits>
+#include <cmath>
 #include <ctime>
 #include <map>
 #include <queue>
@@ -1565,7 +1567,13 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
    json::readObject(options, "capturePlot", capturePlot);
    json::readObject(options, "executionMode", executionMode);
    json::readObject(options, "expressionBoundaryHook", expressionBoundaryHook);
-   json::readObject(options, "timeout", timeout);
+
+   // Read as a number, so a fractional timeout still limits the request and
+   // one past int's range isn't read through getInt()
+   double timeoutValue = 0;
+   json::readObject(options, "timeout", timeoutValue);
+   if (timeoutValue > 0)
+      timeout = static_cast<int>(std::min(std::ceil(timeoutValue), double(INT_MAX)));
 
    if (executionMode != "interactive" && executionMode != "silent")
    {
