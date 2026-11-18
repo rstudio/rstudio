@@ -228,6 +228,12 @@ TEST(NegotiatedCapabilities, UnmanagedAdvertisesEverything)
    EXPECT_EQ(negotiatedCapabilities(false), rstudioCapabilities());
 }
 
+TEST(NegotiatedCapabilities, AdvertisesExecuteCodeTimeout)
+{
+   // Tells the backend that RStudio enforces runtime/executeCode's timeout
+   EXPECT_TRUE(advertises(rstudioCapabilities(), "runtime/executeCode/timeout"));
+}
+
 TEST(NegotiatedCapabilities, ManagedWithholdsCheckForUpdates)
 {
    std::vector<std::string> negotiated = negotiatedCapabilities(true);

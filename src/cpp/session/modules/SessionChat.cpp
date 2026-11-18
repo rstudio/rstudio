@@ -26,6 +26,7 @@
 #include "chat/ChatSlots.hpp"
 #include "chat/ChatStaticFiles.hpp"
 #include "chat/ChatBackendStdout.hpp"
+#include "chat/ChatExecutionDeadline.hpp"
 #include "chat/ChatUpdateThrottle.hpp"
 
 #ifndef _WIN32
@@ -270,6 +271,7 @@ namespace chat_installation = rstudio::session::modules::chat::installation;
 namespace chat_selector = rstudio::session::modules::chat::selector;
 namespace chat_slots = rstudio::session::modules::chat::slots;
 namespace chat_staticfiles = rstudio::session::modules::chat::staticfiles;
+namespace chat_execution = rstudio::session::modules::chat::execution;
 
 // Constants used throughout
 using chat_constants::kProtocolVersion;
@@ -362,6 +364,45 @@ SEXP rs_chatNormalizePath(SEXP pathSEXP)
 boost::mutex& s_executionTrackingMutex = make_leaked<boost::mutex>();
 std::string& s_currentTrackingId = make_leaked<std::string>();  // Empty string when not executing
 std::set<std::string>& s_canceledTrackingIds = make_leaked<std::set<std::string>>();  // TrackingIds that have been canceled
+
+// The current execution's time limit, from its timeout option
+chat_execution::ExecutionDeadline& s_currentDeadline =
+   make_leaked<chat_execution::ExecutionDeadline>();
+
+std::string timedOutMessage(int timeoutMs)
+{
+   return fmt::format("Execution timed out after {} ms", timeoutMs);
+}
+
+bool currentDeadlinePassed()
+{
+   boost::mutex::scoped_lock lock(s_executionTrackingMutex);
+   return s_currentDeadline.passed();
+}
+
+// Interrupts R once the current execution's deadline passes. Runs during
+// background processing, which R's event polling reaches while agent code
+// evaluates, so the interrupt lands where a runtime/cancelExecution one would.
+void checkExecutionDeadline()
+{
+   boost::mutex::scoped_lock lock(s_executionTrackingMutex);
+
+   if (s_currentTrackingId.empty())
+      return;
+
+   if (!s_currentDeadline.check(std::chrono::steady_clock::now()))
+      return;
+
+   r::exec::setInterruptsPending(true);
+   DLOG("Execution deadline passed for trackingId: {}", s_currentTrackingId);
+}
+
+// Stops enforcing the current execution's deadline; returns whether it passed
+bool disarmExecutionDeadline()
+{
+   boost::mutex::scoped_lock lock(s_executionTrackingMutex);
+   return s_currentDeadline.disarm();
+}
 
 // ============================================================================
 // Streaming Output Notification Queue with Lifecycle Management
@@ -1342,7 +1383,8 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
                      bool capturePlot,
                      bool silentExecution,
                      const std::string& expressionBoundaryHook,
-                     int timeout);
+                     int timeout,
+                     std::chrono::steady_clock::time_point queuedTime);
 
 // Process pending execution requests from the queue
 void processPendingExecution()
@@ -1360,12 +1402,16 @@ void processPendingExecution()
       s_pendingExecutionQueue.pop();
    }
 
-   // Check for timeout - if request waited too long in queue, return error
+   // Check for timeout - if request waited too long in queue, return error.
+   // A request whose own timeout ran out while it waited must not start
+   // either: the backend has already given up on it.
    auto now = std::chrono::steady_clock::now();
    auto waitTimeMs = std::chrono::duration_cast<std::chrono::milliseconds>(
       now - request.queuedTime).count();
+   bool deadlinePassed =
+      chat_execution::expiredInQueue(request.queuedTime, request.timeout, now);
 
-   if (waitTimeMs > kMaxQueueWaitMs)
+   if (waitTimeMs > kMaxQueueWaitMs || deadlinePassed)
    {
       WLOG("Execution request timed out after {}ms in queue for trackingId: {}",
            waitTimeMs, request.trackingId);
@@ -1402,7 +1448,7 @@ void processPendingExecution()
    executeCodeImpl(request.weakOps.lock(), request.requestId, request.code,
                    request.trackingId, request.captureOutput, request.capturePlot,
                    request.silentExecution, request.expressionBoundaryHook,
-                   request.timeout);
+                   request.timeout, request.queuedTime);
 
    // Schedule next request if queued, or clear busy state
    {
@@ -1464,7 +1510,11 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
    bool captureOutput = true, capturePlot = false;
    std::string executionMode = "interactive";
    std::string expressionBoundaryHook;
-   int timeout = 30000;
+
+   // Milliseconds the whole request may take, queue wait included. Absent or
+   // non-positive means no limit: none was ever enforced, so a peer that
+   // omits it may expect long-running code to finish.
+   int timeout = 0;
    json::readObject(options, "captureOutput", captureOutput);
    json::readObject(options, "capturePlot", capturePlot);
    json::readObject(options, "executionMode", executionMode);
@@ -1536,7 +1586,8 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
                      bool capturePlot,
                      bool silentExecution,
                      const std::string& expressionBoundaryHook,
-                     int timeout)
+                     int timeout,
+                     std::chrono::steady_clock::time_point queuedTime)
 {
    if (!pOps)
    {
@@ -1548,8 +1599,9 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
 
    DLOG("Executing code for trackingId: {}", trackingId);
 
-   // Track if execution was canceled (for response field)
+   // Track if execution was canceled or stopped by its timeout (for response fields)
    bool wasCanceled = false;
+   bool timedOut = false;
 
    // Check if this request was already canceled (pre-cancellation of queued request)
    // and register tracking ID for cancellation support
@@ -1577,6 +1629,7 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
 
       // Register as current execution
       s_currentTrackingId = trackingId;
+      s_currentDeadline.arm(queuedTime, timeout);
    }
 
    // Register this execution as active to enable notification filtering
@@ -1697,6 +1750,15 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
                             kExecutionCanceledError, ERROR_LOCATION);
                break;
             }
+
+            // The deadline's interrupt may have landed outside the agent's
+            // code (e.g. while printing a result), so stop here too
+            if (s_currentDeadline.passed())
+            {
+               timedOut = true;
+               error = Error(boost::system::errc::timed_out, timedOutMessage(timeout), ERROR_LOCATION);
+               break;
+            }
          }
 
          SEXP exprSEXP = VECTOR_ELT(parsedSEXP, i);
@@ -1754,6 +1816,12 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
                 TYPEOF(messageSEXP) == STRSXP && Rf_length(messageSEXP) > 0)
             {
                errorMsg = CHAR(STRING_ELT(messageSEXP, 0));
+            }
+
+            if (Rf_inherits(evalResultSEXP, "interrupt") && currentDeadlinePassed())
+            {
+               timedOut = true;
+               errorMsg = timedOutMessage(timeout);
             }
 
             SEXP conditionsSEXP = Rf_getAttrib(
@@ -1840,6 +1908,12 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
                                     true, exprVisible, R_NilValue, conditionsSEXP);
       }
    }
+
+   // The deadline bounds the agent's code, not the reporting below. Drop an
+   // interrupt it raised that R never consumed, which would otherwise land on
+   // whatever R runs next, such as the user's next command.
+   if (disarmExecutionDeadline())
+      r::exec::setInterruptsPending(false);
 
    // Handle parse/runtime errors
    // We need to both:
@@ -2037,6 +2111,7 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    result["output"] = execContext.getOutput();
    result["error"] = execContext.getError();
    result["canceled"] = wasCanceled;
+   result["timedOut"] = timedOut;
    result["plots"] = plotsArray;
    result["executionTime"] = executionTime;
 
@@ -3671,6 +3746,8 @@ void onProjectOptionsUpdated()
 
 void onBackgroundProcessing(bool isIdle)
 {
+   checkExecutionDeadline();
+
    std::vector<PendingNotification> toProcess;
 
    // Phase 1: Extract notifications to process (hold lock briefly)
