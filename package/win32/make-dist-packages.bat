@@ -57,7 +57,11 @@ if not defined QUICK (
 if not defined NOZIP (
     if "%CMAKE_BUILD_TYPE%" == "RelWithDebInfo" (
         echo Creating ZIP package...
-        cpack -C "%CMAKE_BUILD_TYPE%" -G ZIP
+        cpack -C "%CMAKE_BUILD_TYPE%" -G ZIP || (
+            echo ERROR: cpack failed to create the ZIP package
+            popd
+            goto :error
+        )
         if not defined RSTUDIO_DOCKER_DEVELOPMENT_BUILD (
             move "%PKG_TEMP_DIR%\*.zip" "%BUILD_DIR%"
         )
