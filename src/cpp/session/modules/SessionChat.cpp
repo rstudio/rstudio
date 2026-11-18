@@ -1972,9 +1972,10 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
       // The request ran out of time even if the last expression got to
       // finish (e.g. the interrupt landed in printing its result), or the
       // agent's code turned the interrupt into an error of its own, whose
-      // message is kept
+      // message is kept. An error without a message is the interrupt landing
+      // outside safeEval's handlers (e.g. right as a system() call returns).
       timedOut = true;
-      if (!error)
+      if (!error || error.getMessage().empty())
          error = Error(boost::system::errc::timed_out, timedOutMessage(timeout), ERROR_LOCATION);
    }
 
