@@ -38,6 +38,8 @@ set GNUGREP_VERSION=3.0
 :: Build name of RStudio's GWT fork SDK; see src/gwt/tools/build-gwt-README.md.
 set GWT_VERSION=2.13.1-parrot-balsam-1
 set LIBCLANG_VERSION=13.0.1
+:: LLVM 13 can't read the ARM64 Rtools headers, and its ARM64 build aborts on failed asserts
+set LIBCLANG_ARM64_VERSION=23.1.6
 set MATHJAX_VERSION=2.7.9
 set MATHJAX4_VERSION=4.1.3
 REM The MSVC toolset used for Boost prebuilts (145 = Visual Studio 2026).
@@ -163,10 +165,11 @@ set LIBCLANG_URL=libclang-windows-%LIBCLANG_VERSION%.zip
 set LIBCLANG_FOLDER=libclang\%LIBCLANG_VERSION%
 set LIBCLANG_OUTPUT=
 
-:: ARM64 libclang (with 'arm64'): LLVM's own Windows ARM64 release of the same version
-set LIBCLANG_ARM64_ZIP=LLVM-%LIBCLANG_VERSION%-woa64.zip
-set LIBCLANG_ARM64_URL=https://github.com/llvm/llvm-project/releases/download/llvmorg-%LIBCLANG_VERSION%/%LIBCLANG_ARM64_ZIP%
-set LIBCLANG_ARM64_SHA256=ecdac7fde2a5f745a8a1806c389c1278cb47b127e36bea99ff54a9765072485b
+:: ARM64 libclang (with 'arm64'): from LLVM's own Windows ARM64 release
+set LIBCLANG_ARM64_NAME=clang+llvm-%LIBCLANG_ARM64_VERSION%-aarch64-pc-windows-msvc
+set LIBCLANG_ARM64_ARCHIVE=%LIBCLANG_ARM64_NAME%.tar.xz
+set LIBCLANG_ARM64_URL=https://github.com/llvm/llvm-project/releases/download/llvmorg-%LIBCLANG_ARM64_VERSION%/clang%%2Bllvm-%LIBCLANG_ARM64_VERSION%-aarch64-pc-windows-msvc.tar.xz
+set LIBCLANG_ARM64_SHA256=fa5a25df6a1405fdfb9942f4d5cc73bfc3b8b31cfd43ee2fbd43bd2e3168be01
 
 
 set NODEBUILD_VERSION=%RSTUDIO_NODE_VERSION%
@@ -351,25 +354,27 @@ if exist "%WINDOWS_SCRIPTS_DIR%openssl-%OPENSSL_VERSION%\openssl-%OPENSSL_VERSIO
 call "%WINDOWS_SCRIPTS_DIR%install-soci.cmd"
 if ERRORLEVEL 1 exit /b 1
 
-set "LIBCLANG_ARM64_DIR=%COMMON_INSTALL_DIR%\libclang\%LIBCLANG_VERSION%\arm64"
+set "LIBCLANG_ARM64_DIR=%COMMON_INSTALL_DIR%\libclang\%LIBCLANG_ARM64_VERSION%\arm64"
 if exist "%LIBCLANG_ARM64_DIR%\libclang.dll" (
   echo -- ARM64 libclang is already installed
   goto :eof
 )
-echo -- Downloading %LIBCLANG_ARM64_ZIP%
+echo -- Downloading %LIBCLANG_ARM64_ARCHIVE%
 cd /d "%COMMON_INSTALL_DIR%"
-curl -fL -o "%LIBCLANG_ARM64_ZIP%" "%LIBCLANG_ARM64_URL%"
+curl -fL -o "%LIBCLANG_ARM64_ARCHIVE%" "%LIBCLANG_ARM64_URL%"
 if ERRORLEVEL 1 exit /b 1
-powershell -NoProfile -Command "if ((Get-FileHash -Algorithm SHA256 '%LIBCLANG_ARM64_ZIP%').Hash -ne '%LIBCLANG_ARM64_SHA256%') { exit 1 }"
+powershell -NoProfile -Command "if ((Get-FileHash -Algorithm SHA256 '%LIBCLANG_ARM64_ARCHIVE%').Hash -ne '%LIBCLANG_ARM64_SHA256%') { exit 1 }"
 if ERRORLEVEL 1 (
-  echo ^^!^^! ERROR: %LIBCLANG_ARM64_ZIP% does not match its SHA-256 %LIBCLANG_ARM64_SHA256%
+  echo ^^!^^! ERROR: %LIBCLANG_ARM64_ARCHIVE% does not match its SHA-256 %LIBCLANG_ARM64_SHA256%
   exit /b 1
 )
-:: only libclang.dll is needed from the full LLVM toolchain
-7z e "%LIBCLANG_ARM64_ZIP%" -o"%LIBCLANG_ARM64_DIR%" libclang.dll -r -y
+:: only libclang.dll is needed from the full LLVM toolchain; Windows' own tar,
+:: not one found on PATH, reads .tar.xz without unpacking the whole archive
+if not exist "%LIBCLANG_ARM64_DIR%" mkdir "%LIBCLANG_ARM64_DIR%"
+"%SystemRoot%\System32\tar.exe" -xf "%LIBCLANG_ARM64_ARCHIVE%" --strip-components=2 -C "%LIBCLANG_ARM64_DIR%" "%LIBCLANG_ARM64_NAME%/bin/libclang.dll"
 if ERRORLEVEL 1 exit /b 1
 if not exist "%LIBCLANG_ARM64_DIR%\libclang.dll" (
-  echo ^^!^^! ERROR: libclang.dll not found in %LIBCLANG_ARM64_ZIP%
+  echo ^^!^^! ERROR: libclang.dll not found in %LIBCLANG_ARM64_ARCHIVE%
   exit /b 1
 )
-del "%LIBCLANG_ARM64_ZIP%"
+del "%LIBCLANG_ARM64_ARCHIVE%"

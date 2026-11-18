@@ -140,8 +140,9 @@ endforeach()
 
 # verify libclang is installed (Windows only)
 if(WIN32)
-   # the same version as x64; LLVM published it for Windows ARM64 as LLVM-13.0.1-woa64.zip
-   set(LIBCLANG_ARM64_VERSION "13.0.1")
+   # not x64's 13.0.1: LLVM 13 can't read the ARM64 Rtools headers, and its
+   # ARM64 build aborts on failed asserts; keep in step with install-dependencies.cmd
+   set(LIBCLANG_ARM64_VERSION "23.1.6")
    set(LIBCLANG_ARM64_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/${LIBCLANG_ARM64_VERSION}/arm64")
    if(RSTUDIO_WINDOWS_ARM64)
       set(LIBCLANG_VERSION "${LIBCLANG_ARM64_VERSION}")
