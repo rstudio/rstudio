@@ -46,12 +46,10 @@ public:
    typedef boost::circular_buffer<std::string>::const_iterator const_iterator;
    typedef RSTUDIO_BOOST_SIGNAL<void (const std::string&, bool)> AddSignal;
 
-private:
+   // the session's history is consoleHistory(); tests use their own instance
    ConsoleHistory();
-   friend ConsoleHistory& consoleHistory();
    // COPYING: boost::noncopyable
-      
-public:   
+
    void setCapacity(int capacity);
 
    void setCapacityFromRHistsize();
@@ -86,7 +84,11 @@ public:
    core::Error loadFromFile(const core::FilePath& filePath, bool verifyFile);
    // atomic should be false for files that belong to the user, like .Rhistory
    core::Error saveToFile(const core::FilePath& filePath, bool atomic) const;
-   
+
+   // saves a user's history file (.Rhistory on quit, savehistory()) as R does:
+   // only the most recent R_HISTSIZE commands, read at the time of saving
+   core::Error saveToHistoryFile(const core::FilePath& filePath) const;
+
    RSTUDIO_BOOST_CONNECTION connectOnAdd(const AddSignal::slot_function_type& slot)
    {
       return onAdd_.connect(slot);

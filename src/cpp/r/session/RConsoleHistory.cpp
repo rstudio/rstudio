@@ -15,6 +15,10 @@
 
 #include <r/session/RConsoleHistory.hpp>
 
+#include <algorithm>
+#include <cstddef>
+#include <vector>
+
 #include <boost/function.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/bind/bind.hpp>
@@ -32,20 +36,35 @@ using namespace boost::placeholders;
 
 namespace rstudio {
 namespace r {
-namespace session {   
-   
+namespace session {
+
+namespace {
+
+// R's default for R_HISTSIZE
+const int kDefaultHistorySize = 512;
+
+// R_HISTSIZE as R reads it: R ignores a negative or invalid value
+int rHistorySize()
+{
+   std::string histSize = core::system::getenv("R_HISTSIZE");
+   int size = safe_convert::stringTo<int>(histSize, kDefaultHistorySize);
+   return size < 0 ? kDefaultHistorySize : size;
+}
+
+} // anonymous namespace
+
 ConsoleHistory& consoleHistory()
 {
    static ConsoleHistory instance;
    return instance;
 }
-   
+
 ConsoleHistory::ConsoleHistory()
    : removeDuplicates_(true)
 {
-   setCapacity(512);
+   setCapacity(kDefaultHistorySize);
 }
-   
+
 void ConsoleHistory::setCapacity(int capacity)
 {
    historyBuffer_.set_capacity(capacity);
@@ -53,11 +72,10 @@ void ConsoleHistory::setCapacity(int capacity)
 
 void ConsoleHistory::setCapacityFromRHistsize()
 {
-   std::string histSize = core::system::getenv("R_HISTSIZE");
-   if (!histSize.empty())
-   {
-      setCapacity(safe_convert::stringTo<int>(histSize, capacity()));
-   }
+   // in R, R_HISTSIZE limits only the commands saved to a history file, not
+   // those kept during the session (see saveToHistoryFile()), so a smaller
+   // value doesn't shrink the session's history
+   setCapacity(std::max(kDefaultHistorySize, rHistorySize()));
 }
 
 void ConsoleHistory::setRemoveDuplicates(bool removeDuplicates)
@@ -179,6 +197,21 @@ Error ConsoleHistory::saveToFile(const FilePath& filePath, bool atomic) const
                                                       historyBuffer_,
                                                       core::stringifyString,
                                                       atomic);
+}
+
+Error ConsoleHistory::saveToHistoryFile(const FilePath& filePath) const
+{
+   std::size_t count = std::min(static_cast<std::size_t>(rHistorySize()),
+                                historyBuffer_.size());
+   std::vector<std::string> commands(
+            historyBuffer_.end() - static_cast<std::ptrdiff_t>(count),
+            historyBuffer_.end());
+
+   return core::writeCollectionToFile<std::vector<std::string> >(
+                                                      filePath,
+                                                      commands,
+                                                      core::stringifyString,
+                                                      false /* atomic */);
 }
 
 void ConsoleHistory::safeRemove(int index)

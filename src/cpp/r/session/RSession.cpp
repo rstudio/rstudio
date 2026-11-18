@@ -207,7 +207,7 @@ SEXP rs_loadHistory(SEXP sFile)
 SEXP rs_saveHistory(SEXP sFile)
 {
    std::string file = R_ExpandFileName(r::sexp::asString(sFile).c_str());
-   consoleHistory().saveToFile(FilePath(file), false /* atomic */);
+   consoleHistory().saveToHistoryFile(FilePath(file));
    return R_NilValue;
 }
 
