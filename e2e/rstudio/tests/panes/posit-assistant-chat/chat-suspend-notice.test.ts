@@ -93,12 +93,15 @@ test.describe.serial('Posit Assistant across suspend and restart', {
   test('a slow Restart R does not leave a "connection lost" banner', async ({
     rstudioPage: page,
   }) => {
-    // Hold the post-restart backend lookup so the pre-restart iframe outlives
-    // the reconnect-report threshold, as it does when a restart is slow.
+    // Hold the post-restart backend lookup until the checks below are done, so
+    // the pre-restart iframe outlives the reconnect-report threshold, as it
+    // does when a restart is slow.
     let held = 0;
+    let release!: () => void;
+    const released = new Promise<void>((resolve) => { release = resolve; });
     await page.route(/\/rpc\/chat_get_backend_status/, async (route) => {
       held++;
-      await sleep(RECONNECT_REPORT_WINDOW_MS);
+      await released;
       await route.continue().catch(() => undefined);
     });
 
@@ -109,6 +112,7 @@ test.describe.serial('Posit Assistant across suspend and restart', {
       await expect(restartingNotice(page)).toBeVisible();
       await expectBannerNeverShown(page, RECONNECT_REPORT_WINDOW_MS, 'during restart');
     } finally {
+      release();
       await page.unroute(/\/rpc\/chat_get_backend_status/);
     }
     expect(held, 'chat_get_backend_status calls held after restart').toBeGreaterThan(0);
