@@ -48,6 +48,9 @@
    # interrupts received while waiting on the current call
    interrupts = 0L,
 
+   # when the last of those was acted on, in seconds (see .rs.julia.interrupt)
+   lastInterrupt = -Inf,
+
    # the Julia process, as of when the console's helpers were loaded into it
    pid        = NULL,
    version    = NULL,
@@ -405,6 +408,14 @@
       )
    }
 
+   # Julia starts with the console's own server, unless the user chose a
+   # server to share (see ?JULIACONNECTOR_SERVER); see .rs.julia.useConsoleServer
+   if (!nzchar(Sys.getenv("JULIACONNECTOR_SERVER")))
+   {
+      original <- .rs.julia.useConsoleServer()
+      on.exit(.rs.replaceBinding("juliaConnection", "JuliaConnectoR", original), add = TRUE)
+   }
+
    # a Julia that has since gone away (say, it was killed) leaves
    # JuliaConnectoR holding a dead connection
    connected <- !is.null(asNamespace("JuliaConnectoR")$pkgLocal$con)
@@ -454,7 +465,8 @@
    info <- .rs.julia.call(
       "RStudio.init",
       .rs.julia.onEvaluationDone,
-      asNamespace("JuliaConnectoR")$pkgLocal$communicator
+      asNamespace("JuliaConnectoR")$pkgLocal$communicator,
+      Sys.getpid()
    )
 
    state <- .rs.julia.state
@@ -579,6 +591,162 @@
    }
 
    NULL
+})
+
+#' Have JuliaConnectoR Start the Console's Julia Server
+#'
+#' While the console starts Julia, JuliaConnectoR's juliaConnection() is
+#' replaced by one that starts Julia with RStudio's serve.jl in place of
+#' JuliaConnectoR's main.jl. Julia started through JuliaConnectoR directly,
+#' outside the console, is left alone.
+#'
+#' @return JuliaConnectoR's own juliaConnection(), to restore once the
+#'   console has started Julia.
+.rs.addFunction("julia.useConsoleServer", function()
+{
+   jc <- asNamespace("JuliaConnectoR")
+   required <- c("juliaConnection", "getJuliaExecutablePath", "getJuliaEnv")
+   found <- vapply(mget(required, envir = jc, ifnotfound = list(NULL)), is.function, logical(1L))
+   if (!all(found))
+   {
+      stop(
+         sprintf("The Julia console doesn't support JuliaConnectoR %s.", utils::packageVersion("JuliaConnectoR")),
+         call. = FALSE
+      )
+   }
+
+   .rs.replaceBinding("juliaConnection", "JuliaConnectoR", .rs.julia.connectoRConnection)
+})
+
+#' Connect to the Console's New Julia Server
+#'
+#' Stands in for JuliaConnectoR's juliaConnection() while the console starts
+#' Julia; see .rs.julia.useConsoleServer.
+#'
+#' @return As juliaConnection(): a list of the server's `port` and the
+#'   connection to it (`con`).
+.rs.addFunction("julia.connectoRConnection", function()
+{
+   token <- paste0(.rs.createUUID(), .rs.createUUID())
+   port <- .rs.julia.runServer(token)
+
+   args <- list(
+      host     = "127.0.0.1",
+      port     = port,
+      blocking = TRUE,
+      server   = FALSE,
+      open     = "r+b",
+      timeout  = 2
+   )
+
+   # as JuliaConnectoR's own connection does, where R supports it
+   if (getRversion() >= "4.3.0")
+      args$options <- "no-delay"
+
+   con <- do.call(socketConnection, args)
+   writeBin(charToRaw(token), con)
+
+   list(port = port, con = con)
+})
+
+#' Start the Console's Julia Server
+#'
+#' Starts Julia as JuliaConnectoR's runJuliaServer() does for a single
+#' client, but with RStudio's serve.jl in place of JuliaConnectoR's main.jl.
+#'
+#' @param token The token a client must send before anything else.
+#'
+#' @return The port the server listens on.
+.rs.addFunction("julia.runServer", function(token)
+{
+   jc <- asNamespace("JuliaConnectoR")
+
+   options <- Sys.getenv("JULIACONNECTOR_JULIAOPTS")
+   if (nzchar(options))
+      message("Starting Julia ... (with opts: ", options, ")")
+   else
+      message("Starting Julia ...")
+
+   script <- file.path(
+      .Call("rs_rResourcesPath", PACKAGE = "(embedding)"),
+      "julia",
+      "serve.jl"
+   )
+
+   connectorDir <- system.file("Julia", package = "JuliaConnectoR", mustWork = TRUE)
+   portFile <- tempfile("juliaPort")
+   outputFile <- tempfile("juliaStartup")
+   on.exit(unlink(c(portFile, outputFile)), add = TRUE)
+
+   # serve.jl takes it out of Julia's environment once it has read it
+   Sys.setenv(RSTUDIO_JULIA_TOKEN = token)
+   on.exit(Sys.unsetenv("RSTUDIO_JULIA_TOKEN"), add = TRUE)
+
+   # Julia 1.12's default of one default and one interactive thread (the main
+   # one), plus an interactive thread for the output forwarders (see
+   # RStudio.start_forwarder), where tasks user code spawns don't hold them up
+   if (!nzchar(Sys.getenv("JULIA_NUM_THREADS")))
+   {
+      Sys.setenv(JULIA_NUM_THREADS = "1,2")
+      on.exit(Sys.unsetenv("JULIA_NUM_THREADS"), add = TRUE)
+   }
+
+   args <- c(shQuote(script), shQuote(connectorDir), "11980", shQuote(portFile))
+   if (nzchar(options))
+      args <- c(options, "--", args)
+
+   system2(
+      command = jc$getJuliaExecutablePath(),
+      args    = args,
+      wait    = FALSE,
+      stdout  = outputFile,
+      stderr  = outputFile,
+      env     = jc$getJuliaEnv()
+   )
+
+   # as runJuliaServer(): Julia can be quiet for a while as it precompiles,
+   # though not for too long, and its start is given up on eventually
+   silenceLimit <- as.numeric(Sys.getenv("JULIACONNECTOR_SILENCE_TIMEOUT", 60))
+   timeLimit <- as.numeric(Sys.getenv("JULIACONNECTOR_MAX_TIMEOUT", 300))
+   started <- Sys.time()
+   lastOutput <- started
+   outputSize <- 0
+
+   while (!file.exists(portFile))
+   {
+      Sys.sleep(0.2)
+
+      now <- Sys.time()
+      size <- file.size(outputFile)
+      if (!is.na(size) && size > outputSize)
+      {
+         outputSize <- size
+         lastOutput <- now
+      }
+
+      silent <- difftime(now, lastOutput, units = "secs") >= silenceLimit
+      late <- difftime(now, started, units = "secs") >= timeLimit
+      if (silent || late)
+      {
+         reason <- if (silent)
+            sprintf("Julia was silent for %s seconds as it started.", silenceLimit)
+         else
+            sprintf("Julia didn't start within %s seconds.", timeLimit)
+
+         # on Windows, a Julia still running holds the file open
+         output <- tryCatch(
+            suppressWarnings(readLines(outputFile, warn = FALSE, encoding = "UTF-8")),
+            error = function(e) character()
+         )
+
+         if (length(output))
+            reason <- paste(c(reason, "Julia's output:", output), collapse = "\n")
+
+         stop(reason, call. = FALSE)
+      }
+   }
+
+   as.integer(readLines(portFile, n = 1L, warn = FALSE))
 })
 
 .rs.addFunction("julia.describe", function()
@@ -820,18 +988,26 @@
 #' are left to finish. Code that never reaches a point where Julia can be
 #' interrupted keeps running, so a third interrupt stops Julia altogether.
 #'
-#' Windows has no SIGINT for another process, and R can't resume a call
-#' interrupted there, so an interrupt stops Julia.
+#' Windows has no SIGINT for another process. Julia shares R's console there,
+#' though, and RStudio's interrupt sends CTRL_BREAK to the whole console, so
+#' Julia is interrupted already; it ignores the event outside an evaluation
+#' (see RStudio.install_console_handler).
 .rs.addFunction("julia.interrupt", function()
 {
    state <- .rs.julia.state
    .rs.julia.debug("interrupted (evaluating: %s)", state$evaluating)
 
-   if (identical(.Platform$OS.type, "windows"))
+   # one interrupt request reaches R twice, a moment apart: RStudio sets R's
+   # interrupt flag and signals the session's process group too. Acting on
+   # both would send Julia a second SIGINT, which can land after the
+   # evaluation, and count a second strike towards stopping Julia
+   now <- proc.time()[["elapsed"]]
+   if (now - state$lastInterrupt < 0.25)
    {
-      .rs.julia.stop()
-      stop("Julia can't be interrupted on Windows, and was stopped.", call. = FALSE)
+      .rs.julia.debug("interrupted again within 250ms; taken as the same request")
+      return(invisible(NULL))
    }
+   state$lastInterrupt <- now
 
    state$interrupts <- state$interrupts + 1L
    if (state$interrupts >= 3L)
@@ -840,7 +1016,7 @@
       stop("Julia did not respond to the interrupt, and was stopped.", call. = FALSE)
    }
 
-   if (state$evaluating && !is.null(state$pid))
+   if (state$evaluating && !is.null(state$pid) && !identical(.Platform$OS.type, "windows"))
    {
       state$sigints <- state$sigints + 1L
       .rs.julia.debug("sending SIGINT %d to Julia (pid %d)", state$sigints, state$pid)
@@ -872,8 +1048,9 @@
 #' Ends the Julia process; the next use of Julia starts a new one.
 #'
 #' @param kill Whether to kill the process too, as a busy Julia won't notice
-#'   its connection closing. Only for a Julia known to be running: once it
-#'   has gone, its process ID may belong to another process.
+#'   its connection closing; with its process group, on Unix, so the commands
+#'   it runs end too. Only for a Julia known to be running: once it has gone,
+#'   its process ID may belong to another process.
 .rs.addFunction("julia.stop", function(kill = TRUE)
 {
    state <- .rs.julia.state
@@ -887,7 +1064,7 @@
 
    # a call can be cut short by Julia having gone, too
    if (kill && !is.null(pid) && .rs.julia.isJuliaProcess(pid))
-      tools::pskill(pid, tools::SIGKILL)
+      .Call("rs_juliaKill", pid, PACKAGE = "(embedding)")
 
    invisible(NULL)
 })

@@ -69,6 +69,38 @@ enum ChunkExecState
    ChunkExecCancelled = 2
 };
 
+// The console language that runs a chunk with this (lowercase) engine; one
+// with no console of its own runs through R
+std::string consoleLanguage(const std::string& engine)
+{
+   if (engine == "python")
+      return "Python";
+   else if (engine == "julia")
+      return "Julia";
+   else
+      return "R";
+}
+
+// Does the console run a chunk with this engine, rather than a knitr engine
+// that RStudio calls?
+bool isConsoleEngine(const std::string& engine)
+{
+   return engine == "r" || engine == "python" || engine == "julia";
+}
+
+// A Julia string literal with the given contents
+std::string juliaStringLiteral(const std::string& value)
+{
+   std::string literal = "\"";
+   for (char c : value)
+   {
+      if (c == '\\' || c == '"' || c == '$')
+         literal += '\\';
+      literal += c;
+   }
+   return literal + "\"";
+}
+
 // represents the global queue of work 
 class NotebookQueue : boost::noncopyable
 {
@@ -76,6 +108,8 @@ public:
    NotebookQueue() 
    {
       prevReticulateReplQuiet_ = false;
+      prevJuliaReplQuiet_ = false;
+      juliaReplQuietSet_ = false;
       // launch a thread to process console input
       pInput_ = 
          boost::make_shared<core::thread::ThreadsafeQueue<std::string> >();
@@ -121,9 +155,8 @@ public:
       // the client has dropped on an interrupt meanwhile, since that drop
       // does not reach the server yet (#19257)
       //
-      // R is never at top level inside the reticulate REPL (or the Julia
-      // REPL, which a chunk's code first leaves), which is nonetheless only
-      // ready for a chunk's code while it waits for input.
+      // R is never at top level inside the reticulate or Julia REPL, which
+      // is nonetheless only ready for a chunk's code while it waits for input.
       // It counts as active from before its first prompt (as when the client
       // starts it right before running a Python chunk) and while it runs a
       // command; code sent then can still be on its way when that prompt
@@ -336,32 +369,53 @@ private:
       else 
       {
          // if we're switching the console between languages, call the
-         // appropriate R code to make that happen
-         const char * const kReplQuietOption = "reticulate.repl.quiet";
+         // appropriate R code to make that happen: a Python or Julia REPL is
+         // left by way of R, and entered with its banner suppressed
+         const char * const kReticulateQuietOption = "reticulate.repl.quiet";
+         const char * const kJuliaQuietOption = "rstudio.julia.repl.quiet";
          std::string prefix;
 
-         // chunks run here are R or Python; a julia chunk runs with its
-         // knitr engine, never in the console's Julia REPL
-         if (module_context::getActiveLanguage() == "Julia")
-            prefix = "quit\n";
-
-         bool isPythonActive = module_context::isPythonReplActive();
-         if (isPythonActive && engine != "python")
+         std::string activeLanguage = module_context::getActiveLanguage();
+         std::string chunkLanguage = consoleLanguage(engine);
+         if (activeLanguage != chunkLanguage)
          {
-            // switching from Python -> R: deactivate the Python REPL
-            prefix = "quit\n";
+            if (activeLanguage == "Python")
+            {
+               prefix += "quit\n";
+               r::options::setOption(kReticulateQuietOption, prevReticulateReplQuiet_);
+            }
+            else if (activeLanguage == "Julia")
+            {
+               prefix += "quit\n";
 
-            // reverse out changes to the banner option
-            r::options::setOption(kReplQuietOption, prevReticulateReplQuiet_);
-         }
-         else if (!isPythonActive && engine == "python")
-         {
-            // switching from R -> Python: activate the Python REPL
-            prefix += "reticulate::repl_python()\n";
+               // restore the option only if a chunk replaced it: leaving a
+               // REPL the user entered by hand leaves their setting alone
+               if (juliaReplQuietSet_)
+               {
+                  r::options::setOption(kJuliaQuietOption, prevJuliaReplQuiet_);
+                  juliaReplQuietSet_ = false;
+               }
+            }
 
-            // suppress the banner
-            prevReticulateReplQuiet_ = r::options::getOption<bool>(kReplQuietOption, false, false);
-            r::options::setOption(kReplQuietOption, true);
+            if (chunkLanguage == "Python")
+            {
+               prefix += "reticulate::repl_python()\n";
+               prevReticulateReplQuiet_ = r::options::getOption<bool>(kReticulateQuietOption, false, false);
+               r::options::setOption(kReticulateQuietOption, true);
+            }
+            else if (chunkLanguage == "Julia")
+            {
+               // synchronize with isJuliaReplEnter() in SessionConsoleInput.cpp
+               prefix += ".rs.julia.repl()\n";
+
+               // the user's own setting, unless a chunk already replaced it
+               if (!juliaReplQuietSet_)
+               {
+                  prevJuliaReplQuiet_ = r::options::getOption<bool>(kJuliaQuietOption, false, false);
+                  juliaReplQuietSet_ = true;
+               }
+               r::options::setOption(kJuliaQuietOption, true);
+            }
          }
 
          // send code to console 
@@ -462,11 +516,11 @@ private:
          engine = "r";
 
       // look up the working directory of the document as long as we
-      // aren't in an R or Python setup chunk, which always computes paths
-      // relative to the document so that relative paths in the setup chunk,
-      // such as those used in root.dir, have a reliable origin
+      // aren't in an R, Python or Julia setup chunk, which always computes
+      // paths relative to the document so that relative paths in the setup
+      // chunk, such as those used in root.dir, have a reliable origin
       core::FilePath workingDir;
-      if (label != "setup" || (engine != "r" && engine != "python"))
+      if (label != "setup" || !isConsoleEngine(engine))
          workingDir = docQueue->workingDir();
 
       // is there external code for this chunk? if so, replace the chunk's
@@ -500,7 +554,7 @@ private:
 
       // if the file can't be read, fail with an error as knitr does rather
       // than run the chunk's own code; output written before the chunk's input
-      // reaches R never shows in the chunk, so for R and Python the error is
+      // reaches R never shows in the chunk, so for R, Python and Julia the error is
       // raised as the chunk's input (the message is converted from the system
       // encoding, as the legacy Windows session isn't UTF-8)
       std::string codeFileMessage;
@@ -523,6 +577,10 @@ private:
                                   : "OSError";
             unit->replaceCode("raise " + exception + "('" + escaped + "')\n");
          }
+         else if (engine == "julia")
+         {
+            unit->replaceCode("error(" + juliaStringLiteral(codeFileMessage) + ")\n");
+         }
       }
 
       // skip unit if it has no code to execute (an unreadable file is still
@@ -532,7 +590,7 @@ private:
          return skipUnit();
       }
 
-      if (engine == "r" || engine == "python")
+      if (isConsoleEngine(engine))
       {
          // establish execution context unless we're an inline chunk
          if (unit->execScope() != ExecScopeInline)
@@ -604,7 +662,7 @@ private:
       if (error)
          return skipUnit();
 
-      if (engine == "r" || engine == "python")
+      if (isConsoleEngine(engine))
       {
          error = executeCurrentUnit(ExprModeNew);
          if (error)
@@ -807,6 +865,11 @@ private:
 
    // previous value for reticulate.repl.quiet
    bool prevReticulateReplQuiet_;
+
+   // previous value for rstudio.julia.repl.quiet, and whether a chunk
+   // replaced it (and it is still to be restored)
+   bool prevJuliaReplQuiet_;
+   bool juliaReplQuietSet_;
 
    // the documents with active queues
    std::list<boost::shared_ptr<NotebookDocQueue> > queue_;

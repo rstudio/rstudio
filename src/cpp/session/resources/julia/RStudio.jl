@@ -30,11 +30,12 @@ const DISPLAY_LINES = 40
 # Tells R that an evaluation is over (see `finish_evaluation`).
 const evaluation_done = Ref{Any}(nothing)
 
-# The task evaluating input, while it is (see `redirect_interrupt`).
-const evaluation_task = Ref{Union{Task, Nothing}}(nothing)
-
 # How long to wait for an interrupt R sent that hasn't landed yet, in seconds.
 const INTERRUPT_GRACE = 0.25
+
+# On Windows, whether a console interrupt may reach Julia (see
+# `install_console_handler`): only during an evaluation.
+const accept_interrupts = Threads.Atomic{Bool}(false)
 
 # Whether to trace the console's side of things (see `debug`).
 const debugging = Ref(false)
@@ -66,23 +67,32 @@ function debug(parts...)
 end
 
 """
-    init(done, communicator)
+    init(done, communicator, rpid)
 
 Prepare a freshly started Julia process for the console. `done` is an R
 function, called when an evaluation is over; it returns the number of
 interrupts R sent during the evaluation. `communicator` is JuliaConnectoR's
-connection to R.
+connection to R, and `rpid` R's process ID.
 """
-function init(done, communicator)
+function init(done, communicator, rpid)
    # leave R's process group: RStudio interrupts R by signalling the whole
    # group, and a SIGINT that Julia doesn't expect breaks its connection to
    # R. R sends Julia its own (see .rs.julia.interrupt in SessionJulia.R)
    if Sys.isunix()
       ccall(:setpgid, Cint, (Cint, Cint), 0, 0)
+      start_watchdog(Int(rpid))
+   elseif Sys.iswindows()
+      install_console_handler()
    end
 
    evaluation_done[] = done
    forward_output(communicator)
+
+   # serve.jl has every message JuliaConnectoR writes (a result, a failure, a
+   # callback) wait for the output written before it; see drain_output
+   if isdefined(Main, :rstudio_before_message)
+      Main.rstudio_before_message[] = drain_output
+   end
 
    # Pkg warns that its REPL mode is for interactive use, since Julia runs
    # here as a script; the console's ']' commands are typed interactively
@@ -94,17 +104,81 @@ function init(done, communicator)
    return [string(VERSION), string(getpid()), joinpath(Sys.BINDIR, Base.julia_exename())]
 end
 
+# Run on a thread of the console's, which Julia adopts; nonzero means handled.
+# Only CTRL_C_EVENT (0) and CTRL_BREAK_EVENT (1) are interrupts: the console
+# closing, logoff and shutdown go on to Julia's handler.
+function console_event(event::UInt32)::Cint
+   return event <= 1 && !accept_interrupts[] ? Cint(1) : Cint(0)
+end
+
+"""
+    install_console_handler()
+
+Let only interrupts meant for an evaluation reach Julia, on Windows. Julia
+shares R's console there (system2() starts it without one of its own), and
+RStudio interrupts R by sending CTRL_BREAK to the whole console: that reaches
+Julia too, which interrupts an evaluation as it should, but one landing while
+Julia waits for R breaks JuliaConnectoR's connection. Windows calls the
+console's handlers newest first, so this one, added after Julia's own, drops
+the event unless an evaluation is running. (Windows has no SIGINT for
+another process, so R sends nothing itself; see .rs.julia.interrupt.)
+"""
+function install_console_handler()
+   # a 32-bit handler needs stdcall, which @cfunction can't declare
+   Sys.WORD_SIZE == 64 || return
+
+   handler = @cfunction(console_event, Cint, (UInt32,))
+   ccall((:SetConsoleCtrlHandler, "kernel32"), stdcall, Cint, (Ptr{Cvoid}, Cint), handler, 1)
+   return nothing
+end
+
+"""
+    start_watchdog(rpid)
+
+Make sure Julia ends with R. An idle Julia ends when its connection to R
+closes, but a busy one doesn't read it, and nothing else ends it: Julia isn't
+R's child (system2() starts it through a shell), nor in R's process group. So
+a shell in Julia's process group waits for R to go, then kills the group. It
+ignores the interrupts R sends the group, and Julia ends it on a normal exit;
+if Julia is killed instead, the group outlives it with the watchdog in it, so
+the ID the watchdog kills can't have gone to another process.
+"""
+function start_watchdog(rpid::Int)
+   pgid = ccall(:getpgrp, Cint, ())
+   pgid == getpid() || return
+
+   # 'kill -s KILL': dash (/bin/sh on Debian and Ubuntu) rejects the '--'
+   # in 'kill -KILL -- -pgid', and the group would be left running
+   script = """
+      trap '' INT
+      while kill -0 $rpid 2>/dev/null; do sleep 1; done
+      kill -s KILL -- -$pgid
+      """
+   watchdog = run(pipeline(`/bin/sh -c $script`; stdin = devnull, stdout = devnull, stderr = devnull); wait = false)
+
+   atexit() do
+      try
+         kill(watchdog)
+      catch
+      end
+   end
+end
+
 """
     forward_output(communicator)
 
 Send stdout and stderr to R, in place of JuliaConnectoR's forwarding.
 
-SIGINT lands in whichever task is running, which during an evaluation that
-prints is often the one forwarding its output. JuliaConnectoR's would die
-there, and output would stop; the evaluation then blocks once the pipe fills,
-and never sees the interrupt. These pass it on to the evaluation instead, and
-write each message with interrupts deferred, as one cut short would break the
-connection.
+An interrupt lands in whichever task is running on the main thread. One that
+landed in a forwarding task would end it (as JuliaConnectoR's forwarding
+does), or, passed on to the evaluation with schedule(), race the event loop
+waking the evaluation from a write, which ends the forwarding too: either way
+the evaluation then blocks once its output fills the pipe, and never sees the
+interrupt. So the forwarders run on a thread other than the main one, where no
+interrupt is delivered, and defer interrupts besides; without a spare thread,
+they run on the main thread, and an interrupt waits for the evaluation's task.
+Messages to R then wait for the output before them to be forwarded (see
+`drain_output`).
 """
 function forward_output(communicator)
    RConnector = parentmodule(typeof(communicator))
@@ -112,8 +186,8 @@ function forward_output(communicator)
    # JuliaConnectoR's pipes; closing them ends its forwarding tasks
    previous = (stdout, stderr)
 
-   out, _ = redirect_stdout()
-   err, _ = redirect_stderr()
+   out, out_writer = redirect_stdout()
+   err, err_writer = redirect_stderr()
    Logging.global_logger(Logging.SimpleLogger(stderr))
 
    for stream in previous
@@ -123,46 +197,155 @@ function forward_output(communicator)
       end
    end
 
-   @async forward(RConnector, communicator, out, RConnector.STDOUT_INDICATOR)
-   @async forward(RConnector, communicator, err, RConnector.STDERR_INDICATOR)
+   empty!(forwarders)
+   for (pipe, writer, indicator) in ((out, out_writer, RConnector.STDOUT_INDICATOR), (err, err_writer, RConnector.STDERR_INDICATOR))
+      f = Forwarder(pipe, writer, indicator)
+      f.task = start_forwarder(() -> forward(RConnector, communicator, f))
+      push!(forwarders, f)
+   end
    return nothing
 end
 
-function forward(RConnector, communicator, pipe, indicator)
-   while isopen(communicator.io) && isopen(pipe)
-      bytes = try
-         readavailable(pipe)
-      catch err
-         err isa InterruptException || rethrow()
-         redirect_interrupt()
-         continue
-      end
+# Start a forwarder off the main thread (thread 1, which interrupts are
+# delivered to). Best is an interactive thread of its own (R starts Julia with
+# one; see .rs.julia.runServer): tasks that user code spawns run on the
+# default threads, where a long computation that never yields would hold the
+# forwarder up. Failing that, the pool the main thread isn't in; failing that,
+# the main thread itself.
+function start_forwarder(forward::Function)
+   for tid in 2:Threads.maxthreadid()
+      Threads.threadpool(tid) === :interactive || continue
+      task = Task(forward)
+      task.sticky = true
+      ccall(:jl_set_task_tid, Cint, (Any, Cint), task, tid - 1)
+      return schedule(task)
+   end
 
-      isempty(bytes) && continue
+   main = Threads.threadpool(1)
+   if main !== :default && Threads.nthreads(:default) > 0
+      return Threads.@spawn :default forward()
+   elseif main !== :interactive && Threads.nthreads(:interactive) > 0
+      return Threads.@spawn :interactive forward()
+   else
+      return @async forward()
+   end
+end
+
+# One output stream's forwarding: the pipe it reads, the stream writing to that
+# pipe, and the sync marks (see `drain_output`) written to it and forwarded.
+mutable struct Forwarder
+   const pipe::Base.PipeEndpoint
+   const writer::IO
+   const indicator::UInt8
+   const synced::Threads.Atomic{Int}
+   const ack::Base.Event
+   marked::Int
+   task::Union{Task, Nothing}
+end
+
+Forwarder(pipe, writer, indicator) =
+   Forwarder(pipe, writer, indicator, Threads.Atomic{Int}(0), Base.Event(true), 0, nothing)
+
+const forwarders = Forwarder[]
+
+# Marks a point in a stream's output (see `drain_output`). It starts with a
+# NUL, which R drops from output anyway, so output is only held back (in case
+# a mark was split across reads) when it ends with one.
+const SYNC_MARK = Vector{UInt8}(codeunits("\0RStudio.drain_output\0"))
+
+# How long to wait for the output to be forwarded, in seconds.
+const DRAIN_TIMEOUT = 5.0
+
+"""
+    drain_output()
+
+Wait until the output written so far has been sent to R. The forwarders run
+on a thread of their own, where the yield() with which JuliaConnectoR lets
+output go ahead of a result doesn't let them run first; so the end of an
+evaluation, and every message to R (see serve.jl), waits for them, lest it
+overtake the output. A mark is written to each stream, and its forwarder
+acknowledges the mark once the output before it has been sent.
+"""
+function drain_output()
+   Libc.flush_cstdio()
+
+   pending = Forwarder[]
+   for f in forwarders
+      (f.task === nothing || istaskdone(f.task)) && continue
+
+      # one that hasn't caught up with an earlier mark is held up somehow:
+      # waiting for it again would hold up every message
+      f.synced[] < f.marked && continue
 
       try
-         Base.disable_sigint() do
-            RConnector.write_output_message(communicator, bytes, indicator)
-         end
+         write(f.writer, SYNC_MARK)
+         f.marked += 1
+         push!(pending, f)
       catch err
-         err isa InterruptException || rethrow()
-         redirect_interrupt()
+         debug("couldn't mark the output: ", typeof(err))
+      end
+   end
+   isempty(pending) && return
+
+   # wakes the wait below when the time is up
+   timer = Timer(_ -> foreach(f -> notify(f.ack), pending), DRAIN_TIMEOUT)
+   deadline = time() + DRAIN_TIMEOUT
+   try
+      for f in pending
+         while f.synced[] < f.marked && time() < deadline
+            wait(f.ack)
+         end
+         if f.synced[] < f.marked
+            debug("output not forwarded within ", DRAIN_TIMEOUT, "s")
+         end
+      end
+   finally
+      close(timer)
+   end
+end
+
+# JuliaConnectoR's messages are written under its lock, so the forwarders'
+# output can't interleave with a result written from the main thread.
+function forward(RConnector, communicator, f::Forwarder)
+   Base.disable_sigint() do
+      held = UInt8[]
+      while isopen(communicator.io) && isopen(f.pipe)
+         bytes = readavailable(f.pipe)
+         isempty(bytes) && continue
+         held = forward_chunk(RConnector, communicator, f, isempty(held) ? bytes : vcat(held, bytes))
       end
    end
 end
 
-# An interrupt meant for the evaluation landed in another task; pass it on.
-function redirect_interrupt()
-   task = evaluation_task[]
-   if task !== nothing && task !== current_task() && !istaskdone(task)
-      debug("interrupt landed in the output forwarder; passing it on to the evaluation")
-      try
-         schedule(task, InterruptException(); error = true)
-      catch
-      end
-   else
-      debug("interrupt landed in the output forwarder, with no evaluation to pass it on to")
+# Send output up to each sync mark in it, acknowledging the mark. Returns the
+# end of the output if it could be the start of a mark split across reads,
+# which is held back until more is read.
+function forward_chunk(RConnector, communicator, f::Forwarder, bytes::Vector{UInt8})
+   start = 1
+   while (range = findnext(SYNC_MARK, bytes, start)) !== nothing
+      send_output(RConnector, communicator, f, bytes, start, first(range) - 1)
+      start = last(range) + 1
+      Threads.atomic_add!(f.synced, 1)
+      notify(f.ack)
    end
+
+   held = partial_mark_length(bytes, start)
+   send_output(RConnector, communicator, f, bytes, start, length(bytes) - held)
+   return bytes[end - held + 1:end]
+end
+
+function send_output(RConnector, communicator, f::Forwarder, bytes, first, last)
+   first <= last || return
+   RConnector.write_output_message(communicator, bytes[first:last], f.indicator)
+end
+
+# The length of the longest end of `bytes` (from `start` on) that begins a mark.
+function partial_mark_length(bytes::Vector{UInt8}, start::Int)
+   n = length(bytes)
+   for k in min(length(SYNC_MARK) - 1, n - start + 1):-1:1
+      view(bytes, n - k + 1:n) == view(SYNC_MARK, 1:k) && return k
+   end
+   return 0
 end
 
 """
@@ -337,7 +520,7 @@ string otherwise.
 function evaluate(code::AbstractString, mode::AbstractString, width::Integer, color::Bool, cwd::AbstractString)
    interrupted = 0
    before = ""
-   evaluation_task[] = current_task()
+   accept_interrupts[] = true
    try
       # set up within the protected region too; and move first, as pwd()
       # throws while Julia's working directory is one that has been deleted.
@@ -364,13 +547,15 @@ function evaluate(code::AbstractString, mode::AbstractString, width::Integer, co
       # here on they wait for it to count them, and it is told even when the
       # input's error couldn't be reported
       Base.sigatomic_begin()
-      evaluation_task[] = nothing
+      accept_interrupts[] = false
       debug("evaluation over; ", interrupted, " interrupt(s) received")
+      try
+         drain_output()
+      catch err
+         debug("couldn't drain the output: ", typeof(err))
+      end
       finish_evaluation(interrupted)
    end
-
-   flush(stdout)
-   flush(stderr)
 
    # an interrupt during setup leaves no input to have moved Julia; nor is
    # there a directory to follow once the input has deleted Julia's own

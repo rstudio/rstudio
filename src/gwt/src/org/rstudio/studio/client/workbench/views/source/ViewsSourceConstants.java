@@ -184,6 +184,7 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
     String creatingRNotebooks();
     String cantExecuteJobDesc(String jobDesc);
     String executingPythonChunks();
+    String executingJuliaChunks();
     String executingChunks();
     String runChunk();
     String jobChunkCurrentlyExecuting(String jobDesc);

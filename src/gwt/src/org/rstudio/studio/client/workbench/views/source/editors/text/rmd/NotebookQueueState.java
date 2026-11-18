@@ -583,6 +583,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
    private void withQueueDependencies(Command command)
    {
       boolean requiresPython = false;
+      boolean requiresJulia = false;
       
       for (NotebookQueueUnit unit : JsUtil.asIterable(queue_.getUnits()))
       {
@@ -599,23 +600,23 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
          if (!chunkOptions.containsKey("engine"))
             continue;
          
-         // the chunk header parser preserves quotes around options,
-         // and since the engine is technically supplied as a string,
-         // we detect the different quoted variants here.
          String engine = chunkOptions.get("engine");
-         for (String python : new String[] { "python", "'python'", "\"python\"" })
-         {
-            if (StringUtil.equals(engine, python))
-            {
-               requiresPython = true;
-               break;
-            }
-         }
+         requiresPython = requiresPython || isEngine(engine, "python");
+         requiresJulia = requiresJulia || isEngine(engine, "julia");
          
          // break early if we can
-         if (requiresPython)
+         if (requiresPython && requiresJulia)
             break;
          
+      }
+      
+      Command withJulia = command;
+      if (requiresJulia)
+      {
+         withJulia = () -> RStudioGinjector.INSTANCE.getDependencyManager().withJuliaConnectoR(
+               constants_.executingChunks(),
+               constants_.executingJuliaChunks(),
+               command);
       }
       
       if (requiresPython)
@@ -623,12 +624,22 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
          RStudioGinjector.INSTANCE.getDependencyManager().withReticulate(
                constants_.executingChunks(),
                constants_.executingPythonChunks(),
-               command);
+               withJulia);
       }
       else
       {
-         command.execute();
+         withJulia.execute();
       }
+   }
+   
+   // the chunk header parser preserves quotes around options,
+   // and since the engine is technically supplied as a string,
+   // we detect the different quoted variants here.
+   private static boolean isEngine(String engine, String name)
+   {
+      return StringUtil.equals(engine, name) ||
+             StringUtil.equals(engine, "'" + name + "'") ||
+             StringUtil.equals(engine, "\"" + name + "\"");
    }
    
    private void executeQueue()

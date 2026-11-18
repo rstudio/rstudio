@@ -60,7 +60,11 @@ test_that("the help handler only answers completion help", {
    expect_null(.rs.julia.helpHandler("completion", "length", ""))
 })
 
-test_that("completions and their help come from Julia", {
+# Skip a test that needs a live Julia the console supports. The tests stop
+# Julia when they're done; don't take a running session with them, whether
+# the console's or one started through JuliaConnectoR directly.
+skipUnlessJulia <- function()
+{
    skip_if_not_installed("JuliaConnectoR")
    skip_if(is.null(.rs.julia.executable()), "Julia isn't installed")
    skip_if(.rs.julia.isFirstStart(), "Julia's first start installs packages")
@@ -74,10 +78,12 @@ test_that("completions and their help come from Julia", {
    skip_if(length(version) == 0L, "Julia's version can't be told")
    skip_if(numeric_version(version) < .rs.julia.minimumVersion, "Julia is older than the console supports")
 
-   # the test stops Julia when it's done; don't take a running session with it,
-   # whether the console's or one started through JuliaConnectoR directly
    skip_if(!is.null(.rs.julia.state$pid), "a Julia session is already running")
    skip_if(!is.null(asNamespace("JuliaConnectoR")$pkgLocal$con), "a Julia session is already running")
+}
+
+test_that("completions and their help come from Julia", {
+   skipUnlessJulia()
 
    on.exit(.rs.julia.stop(), add = TRUE)
    .rs.julia.start()
@@ -129,4 +135,115 @@ test_that("completions and their help come from Julia", {
    # the process is told apart from others, before it is ever killed
    expect_true(.rs.julia.isJuliaProcess(.rs.julia.state$pid))
    expect_false(.rs.julia.isJuliaProcess(Sys.getpid()))
+})
+
+test_that("output reaches R before the result that follows it", {
+   skipUnlessJulia()
+
+   on.exit(.rs.julia.stop(), add = TRUE)
+   .rs.julia.start()
+   skip_if(
+      JuliaConnectoR::juliaEval("Threads.nthreads(:interactive)") < 2,
+      "Julia has no interactive thread for the output (JULIA_NUM_THREADS is set)"
+   )
+
+   # a task user code spawns, busy on the default thread, doesn't hold up the
+   # output; it allocates, so as not to hold up the garbage collector too
+   JuliaConnectoR::juliaEval('
+      rstudio_test_busy = Threads.@spawn begin
+         t = time(); n = 0
+         while time() - t < 15; n += length(string(n)); end
+      end;
+   ')
+
+   # JuliaConnectoR used directly, on the console's connection: each result
+   # comes after its output, without waiting for the forwarders to time out
+   started <- Sys.time()
+   for (i in 1:10)
+   {
+      code <- sprintf('println("line %1$d"); %1$d', i)
+      output <- capture.output(value <- JuliaConnectoR::juliaEval(code))
+      expect_identical(output, sprintf("line %d", i))
+      expect_identical(value, i)
+   }
+   expect_lt(as.numeric(difftime(Sys.time(), started, units = "secs")), 5)
+})
+
+test_that("only the console starts Julia with serve.jl", {
+   skipUnlessJulia()
+
+   jc <- asNamespace("JuliaConnectoR")
+   original <- jc$juliaConnection
+   expect_false(identical(body(original), body(.rs.julia.connectoRConnection)))
+
+   on.exit(.rs.julia.stop(), add = TRUE)
+   .rs.julia.start()
+   expect_match(JuliaConnectoR::juliaEval("PROGRAM_FILE"), "serve[.]jl$")
+   expect_identical(jc$juliaConnection, original)
+
+   # JuliaConnectoR used directly, outside the console, is left alone
+   .rs.julia.stop()
+   expect_match(JuliaConnectoR::juliaEval("PROGRAM_FILE"), "main[.]jl$")
+})
+
+# Did the server close the connection within `timeout` seconds?
+isConnectionClosed <- function(con, timeout)
+{
+   socketSelect(list(con), timeout = timeout) && length(readBin(con, "raw", 1L)) == 0L
+}
+
+openTestConnection <- function(port)
+{
+   socketConnection("127.0.0.1", port, blocking = TRUE, open = "r+b", timeout = 2)
+}
+
+test_that("the console's Julia server serves the client that sends its token", {
+   skipUnlessJulia()
+
+   token <- paste0(.rs.createUUID(), .rs.createUUID())
+   port <- .rs.julia.runServer(token)
+
+   # one that connects first and says nothing doesn't hold up the others
+   silent <- openTestConnection(port)
+   on.exit(close(silent), add = TRUE)
+
+   # nor is one with the wrong token served
+   wrong <- openTestConnection(port)
+   on.exit(close(wrong), add = TRUE)
+   writeBin(charToRaw(paste(rev(strsplit(token, "")[[1L]]), collapse = "")), wrong)
+   expect_true(isConnectionClosed(wrong, 10))
+
+   # the client with the token is, and ends Julia when it leaves
+   right <- openTestConnection(port)
+   on.exit(close(right), add = TRUE)
+   writeBin(charToRaw(token), right)
+   expect_false(isConnectionClosed(right, 1))
+   writeBin(asNamespace("JuliaConnectoR")$BYEBYE, right)
+   expect_true(isConnectionClosed(right, 5))
+
+   # with the server gone, the silent one is closed too
+   expect_true(isConnectionClosed(silent, 5))
+})
+
+test_that("Julia ends with R, even while it's busy", {
+   # on Windows, the job R's system2() puts Julia in ends it with R instead
+   skip_on_os("windows")
+   skipUnlessJulia()
+
+   on.exit(.rs.julia.stop(kill = FALSE), add = TRUE)
+   .rs.julia.start()
+   pid <- .rs.julia.state$pid
+
+   # a watchdog like the one Julia started for R, for a process that ends
+   # while Julia is busy; Julia's process group goes with it
+   JuliaConnectoR::juliaEval("rstudio_test_sleep = run(`sleep 1`; wait = false)")
+   sleeper <- JuliaConnectoR::juliaEval("getpid(rstudio_test_sleep)")
+   .rs.julia.call("RStudio.start_watchdog", as.integer(sleeper))
+   expect_error(.rs.julia.evaluate("while true; sleep(0.01); end"), "The Julia session ended")
+
+   deadline <- Sys.time() + 5
+   while (.rs.julia.isJuliaProcess(pid) && Sys.time() < deadline)
+      Sys.sleep(0.1)
+
+   expect_false(.rs.julia.isJuliaProcess(pid))
 })

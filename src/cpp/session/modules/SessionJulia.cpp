@@ -18,7 +18,9 @@
 #include <string>
 #include <vector>
 
-#ifndef _WIN32
+#ifdef _WIN32
+# include <windows.h>
+#else
 # include <signal.h>
 # include <sys/types.h>
 #endif
@@ -84,6 +86,29 @@ SEXP rs_juliaInterrupt(SEXP pidSEXP)
    return R_NilValue;
 }
 
+// Kill Julia; on Unix, with its process group (see rs_juliaInterrupt), which
+// takes the commands it runs and its watchdog (RStudio.start_watchdog) too
+SEXP rs_juliaKill(SEXP pidSEXP)
+{
+   int pid = Rf_asInteger(pidSEXP);
+   if (pid <= 0)
+      return R_NilValue;
+
+#ifdef _WIN32
+   HANDLE hProcess = ::OpenProcess(PROCESS_TERMINATE, FALSE, static_cast<DWORD>(pid));
+   if (hProcess != nullptr)
+   {
+      ::TerminateProcess(hProcess, 1);
+      ::CloseHandle(hProcess);
+   }
+#else
+   if (::killpg(pid, SIGKILL) == -1)
+      ::kill(pid, SIGKILL);
+#endif
+
+   return R_NilValue;
+}
+
 } // anonymous namespace
 
 bool isReplActive()
@@ -102,6 +127,7 @@ Error initialize()
 
    RS_REGISTER_CALL_METHOD(rs_juliaReadConsole, 1);
    RS_REGISTER_CALL_METHOD(rs_juliaInterrupt, 1);
+   RS_REGISTER_CALL_METHOD(rs_juliaKill, 1);
 
    ExecBlock initBlock;
    initBlock.addFunctions()
