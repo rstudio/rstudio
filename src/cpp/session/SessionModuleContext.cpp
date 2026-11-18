@@ -101,6 +101,7 @@
 
 #include "modules/SessionBreakpoints.hpp"
 #include "modules/SessionFiles.hpp"
+#include "modules/SessionJulia.hpp"
 #include "modules/SessionReticulate.hpp"
 #include "modules/SessionVCS.hpp"
 
@@ -309,6 +310,8 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kTutorialLaunch;
       else if (name == "reticulate_event")
          type = session::client_events::kReticulateEvent;
+      else if (name == "julia_event")
+         type = session::client_events::kJuliaEvent;
       else if (name == "environment_assigned")
          type = session::client_events::kEnvironmentAssigned;
       else if (name == "environment_refresh")
@@ -3600,6 +3603,10 @@ std::string getActiveLanguage()
    {
       return "Python";
    }
+   else if (modules::julia::isReplActive())
+   {
+      return "Julia";
+   }
    else
    {
       return "R";
@@ -3651,22 +3658,12 @@ Error adaptToLanguage(const std::string& language)
    if (language == activeLanguage)
       return Success();
 
-   Error error;
-   if (language == "Python")
-   {
-      // r -> python: activate the reticulate REPL
-      error = module_context::enqueueConsoleInput("reticulate::repl_python()");
-   }
-   else if (language == "R")
-   {
-      // python -> r: deactivate the reticulate REPL
-      error = module_context::enqueueConsoleInput("quit");
-   }
-   else
-   {
+   // start or leave the reticulate / Julia REPL, as necessary
+   std::string input = console_input::languageSwitchInput(activeLanguage, language);
+   if (input.empty())
       return Success();
-   }
 
+   Error error = module_context::enqueueConsoleInput(input);
    if (error)
    {
       LOG_ERROR(error);

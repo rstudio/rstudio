@@ -146,6 +146,12 @@ define("mode/auto_brace_insert", ["require", "exports", "module"], function(requ
          if (text !== "'" && text !== '"' && text !== '`')
             return true;
 
+         // The Console's input stays in R mode at the Julia prompt, where a
+         // quote after a name is the adjoint operator (A'), and isn't paired
+         // (as in Julia's own mode)
+         if (text === "'" && session.$pairSingleQuotes === false)
+            return false;
+
          // Only allow auto-insert of a '`' character if the number of
          // backticks on the line is not balanced. Note that this is an
          // R-centric view of backquoted strings, and assumes things within

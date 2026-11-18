@@ -60,6 +60,8 @@ public class EditorLanguage
          "mode/yaml", true, false);
    public static final EditorLanguage LANG_PYTHON = new EditorLanguage(
          "mode/python", true);
+   public static final EditorLanguage LANG_JULIA = new EditorLanguage(
+         "mode/julia", false, true);
    public static final EditorLanguage LANG_SH = new EditorLanguage(
          "mode/sh", false, false);
    
@@ -96,7 +98,6 @@ public class EditorLanguage
    public static final EditorLanguage LANG_HAXE = new EditorLanguage("ace/mode/haxe", false, true);
    public static final EditorLanguage LANG_INI = new EditorLanguage("ace/mode/ini", false, true);
    public static final EditorLanguage LANG_JAVA = new EditorLanguage("ace/mode/java", false, true);
-   public static final EditorLanguage LANG_JULIA = new EditorLanguage("ace/mode/julia", false, true);
    public static final EditorLanguage LANG_LISP = new EditorLanguage("ace/mode/lisp", false, true);
    public static final EditorLanguage LANG_LUA = new EditorLanguage("ace/mode/lua", false, true);
    public static final EditorLanguage LANG_MAKEFILE = new EditorLanguage("ace/mode/makefile", false, true);

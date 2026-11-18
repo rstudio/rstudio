@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <!-- the Julia dots, in Julia's colors (https://github.com/JuliaLang/julia-logo-graphics) -->
+  <circle cx="16" cy="8.86" r="7" fill="#389826"/>
+  <circle cx="7.75" cy="23.14" r="7" fill="#CB3C33"/>
+  <circle cx="24.25" cy="23.14" r="7" fill="#9558B2"/>
+</svg>

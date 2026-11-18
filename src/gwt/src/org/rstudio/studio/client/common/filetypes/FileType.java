@@ -31,6 +31,7 @@ public abstract class FileType
    public static final String STAN_LANG_MODE = "Stan";
    public static final String YAML_LANG_MODE = "YAML";
    public static final String PYTHON_LANG_MODE = "Python";
+   public static final String JULIA_LANG_MODE = "Julia";
    
    static ArrayList<FileType> ALL_FILE_TYPES = new ArrayList<>();
 

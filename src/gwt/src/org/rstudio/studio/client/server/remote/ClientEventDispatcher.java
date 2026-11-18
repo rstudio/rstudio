@@ -71,6 +71,7 @@ import org.rstudio.studio.client.common.synctex.model.SourceLocation;
 import org.rstudio.studio.client.events.EditorCommandDispatchEvent;
 import org.rstudio.studio.client.events.EditorCommandEvent;
 import org.rstudio.studio.client.events.RStudioApiRequestEvent;
+import org.rstudio.studio.client.events.JuliaEvent;
 import org.rstudio.studio.client.events.ReticulateEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewCompletedEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewOutputEvent;
@@ -1183,6 +1184,11 @@ public class ClientEventDispatcher
          {
             ReticulateEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new ReticulateEvent(data));
+         }
+         else if (type == ClientEvent.JuliaEvent)
+         {
+            JuliaEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new JuliaEvent(data));
          }
          else if (type == ClientEvent.RStudioApiRequest)
          {

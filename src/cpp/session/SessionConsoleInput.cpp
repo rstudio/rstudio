@@ -27,7 +27,6 @@
 
 #include "modules/SessionChat.hpp"
 #include "modules/SessionConsole.hpp"
-#include "modules/SessionReticulate.hpp"
 
 #include "modules/connections/SessionConnections.hpp"
 #include "modules/environment/SessionEnvironment.hpp"
@@ -53,17 +52,42 @@ namespace {
 using ConsoleInputQueue = std::deque<rstudio::r::session::RConsoleInput>;
 ConsoleInputQueue s_consoleInputBuffer;
 
-// console input that enters / leaves the reticulate Python REPL; the same
-// lines module_context::adaptToLanguage() enqueues to switch languages
+// console input that enters the reticulate Python REPL, or the Julia REPL
+// (SessionJulia.R), from R; the first spelling of each is the one
+// languageSwitchInput() uses
+const char* const kPythonReplEnter = "reticulate::repl_python()";
+const char* const kJuliaReplEnter = ".rs.julia.repl()";
+
 bool isPythonReplEnter(const std::string& line)
 {
-   return line == "reticulate::repl_python()" || line == "repl_python()";
+   return line == kPythonReplEnter || line == "repl_python()";
 }
 
-bool isPythonReplExit(const std::string& line)
+bool isJuliaReplEnter(const std::string& line)
 {
-   // the spellings reticulate's REPL honors (with an empty buffer)
-   return line == "quit" || line == "exit" || line == "quit()" || line == "exit()";
+   return line == kJuliaReplEnter;
+}
+
+// console input that leaves either REPL for R: the spellings both honor
+// (with an empty buffer)
+const char* const kReplExit = "quit";
+
+bool isReplExit(const std::string& line)
+{
+   return line == kReplExit || line == "exit" || line == "quit()" || line == "exit()";
+}
+
+// the language the console is in once 'line' has run, starting from 'language'
+std::string languageAfterLine(const std::string& language, const std::string& line)
+{
+   if (language != "R")
+      return isReplExit(line) ? "R" : language;
+   else if (isPythonReplEnter(line))
+      return "Python";
+   else if (isJuliaReplEnter(line))
+      return "Julia";
+   else
+      return language;
 }
 
 // manage global state indicating whether R is processing input
@@ -219,7 +243,7 @@ void enqueConsolePrompt(const std::string& prompt, bool addToHistory, bool notif
    bool isDefaultPrompt = 
       prompt == rstudio::r::options::getOption<std::string>("prompt");
    data["default"] = isDefaultPrompt;
-   data["language"] = modules::reticulate::isReplActive() ? "Python" : "R";
+   data["language"] = module_context::getActiveLanguage();
    data["busy"] = r::session::isBusy();
 
    ClientEvent consolePromptEvent(client_events::kConsolePrompt, data);
@@ -358,18 +382,35 @@ unsigned readsCompleted()
 
 std::string languageAfterInput(const std::string& language, const std::string& input)
 {
-   // follow the REPL through the input the same way
+   // follow the REPLs through the input the same way
    // fixupPendingConsoleInput() does when it splits each item
-   bool pyReplActive = language == "Python";
+   std::string result = language;
    for (const std::string& line : core::algorithm::split(input, "\n"))
-   {
-      if (pyReplActive && isPythonReplExit(line))
-         pyReplActive = false;
-      else if (!pyReplActive && isPythonReplEnter(line))
-         pyReplActive = true;
-   }
+      result = languageAfterLine(result, line);
 
-   return pyReplActive ? "Python" : "R";
+   return result;
+}
+
+std::string languageSwitchInput(const std::string& from, const std::string& to)
+{
+   if (from == to)
+      return std::string();
+
+   std::string enter;
+   if (to == "Python")
+      enter = kPythonReplEnter;
+   else if (to == "Julia")
+      enter = kJuliaReplEnter;
+   else if (to != "R")
+      return std::string();
+
+   // the REPLs aren't nested: another language is reached by way of R
+   if (from == "R")
+      return enter;
+   else if (enter.empty())
+      return kReplExit;
+   else
+      return std::string(kReplExit) + "\n" + enter;
 }
 
 std::string languageAfterPendingInput(const std::string& language)
@@ -412,8 +453,8 @@ void fixupPendingConsoleInput()
    
    // if we're about to send code to the Python REPL, then
    // we need to fix whitespace in the code before sending
-   bool pyReplActive = modules::reticulate::isReplActive();
-   
+   std::string language = module_context::getActiveLanguage();
+
    // pop off current input (we're going to split and re-push now)
    s_consoleInputBuffer.pop_front();
    
@@ -439,7 +480,7 @@ void fixupPendingConsoleInput()
       std::string line = lines[i];
       
       // fix up indentation if necessary
-      if (pyReplActive)
+      if (language == "Python")
       {
          // if the line is empty, then replace it with the appropriate indent
          // (exclude last line in selection so that users submitting a whole
@@ -448,14 +489,14 @@ void fixupPendingConsoleInput()
          {
             line = blockIndent;
          }
-         
+
          // if this line would exit the reticulate REPL, then update that state
-         else if (isPythonReplExit(line))
+         else if (isReplExit(line))
          {
             blockIndent.clear();
-            pyReplActive = false;
+            language = "R";
          }
-         
+
          // if it looks like we're starting a new Python block,
          // then update our indent. perform a lookahead for the
          // next non-blank line, and use that line's indent
@@ -500,11 +541,8 @@ void fixupPendingConsoleInput()
       }
       else
       {
-         // check for a line that would enter the Python REPL
-         if (isPythonReplEnter(line))
-         {
-            pyReplActive = true;
-         }
+         // follow lines that enter or leave a REPL
+         language = languageAfterLine(language, line);
       }
    
       // add to buffer

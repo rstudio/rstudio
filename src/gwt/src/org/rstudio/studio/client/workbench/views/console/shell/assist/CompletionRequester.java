@@ -70,6 +70,7 @@ public class CompletionRequester
    private final SnippetHelper snippets_;
    
    private String cachedLinePrefix_;
+   private String cachedLanguage_;
    private HashMap<String, CompletionResult> cachedCompletions_ = new HashMap<>();
 
    // Injected ----
@@ -120,6 +121,15 @@ public class CompletionRequester
       if (token.toLowerCase().startsWith(cachedLinePrefix_.toLowerCase()))
       {
          String diff = StringUtil.substring(token, cachedLinePrefix_.length());
+
+         // in Python and Julia, a '.' starts a member of what precedes it
+         // (e.g. 'Base.Mat'), which the cached names don't include
+         if (diff.contains(".") &&
+             (StringUtil.equals(cachedLanguage_, ConsoleLanguageTracker.LANGUAGE_PYTHON) ||
+              StringUtil.equals(cachedLanguage_, ConsoleLanguageTracker.LANGUAGE_JULIA)))
+         {
+            return false;
+         }
 
          // if we already have a cached result for this diff, use it
          CompletionResult cached = cachedCompletions_.get(diff);
@@ -335,7 +345,11 @@ public class CompletionRequester
          @Override
          public void onResponseReceived(Completions response)
          {
+            // the cached narrowings are keyed by what was typed after the
+            // old prefix, so they don't carry over to a new one
             cachedLinePrefix_ = token;
+            cachedLanguage_ = response.getLanguage();
+            cachedCompletions_.clear();
             String token = response.getToken();
 
             JsArrayString comp = response.getCompletions();
@@ -765,6 +779,7 @@ public class CompletionRequester
    public void flushCache()
    {
       cachedLinePrefix_ = null;
+      cachedLanguage_ = null;
       cachedCompletions_.clear();
    }
 

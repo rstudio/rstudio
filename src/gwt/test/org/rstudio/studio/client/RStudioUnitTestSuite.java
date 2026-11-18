@@ -81,6 +81,7 @@ import org.rstudio.studio.client.workbench.views.output.lint.model.LintItemTests
 import org.rstudio.studio.client.workbench.views.packages.ui.PackageLinkColumnTests;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorControlTests;
 import org.rstudio.studio.client.workbench.views.source.editors.text.VimrcLoaderTests;
+import org.rstudio.studio.client.workbench.views.console.shell.ConsoleLanguageTrackerTests;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionPopupPanelTests;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositionerTests;
 import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParserTests;
@@ -115,6 +116,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(MiniPopupPanelTests.class);
       suite.addTestSuite(PopupPositionerTests.class);
       suite.addTestSuite(CompletionPopupPanelTests.class);
+      suite.addTestSuite(ConsoleLanguageTrackerTests.class);
       suite.addTestSuite(ModalDialogTrackerTests.class);
       suite.addTestSuite(SearchWidgetTests.class);
       suite.addTestSuite(ToolbarKeyboardNavigationTests.class);

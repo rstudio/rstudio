@@ -440,6 +440,23 @@ public class DependencyManager implements InstallShinyEvent.Handler,
             });
    }
 
+   public void withJuliaConnectoR(final String progressCaption,
+                                  final String userPrompt,
+                                  final Command command)
+   {
+      withDependencies(
+            progressCaption,
+            userPrompt,
+            getFeatureDescription("julia"),
+            getFeatureDependencies("julia"),
+            true,
+            (Boolean succeeded) ->
+            {
+               if (succeeded)
+                  command.execute();
+            });
+   }
+
    public void withStan(final String progressCaption,
                         final String userPrompt,
                         final Command command)

@@ -27,6 +27,7 @@ const PAGES = [
    "test/highlight_test_markdown.html",
    "test/highlight_test_r.html",
    "test/highlight_test_sql.html",
+   "test/julia_mode_test.html",
    "test/outline_test_cpp.html",
    "test/outline_test_r.html",
 ];

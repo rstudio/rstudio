@@ -1,0 +1,269 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <script type="text/javascript" src="../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace-uncompressed.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/colors.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/yaml_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/utils.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/rainbow_paren_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/julia_code.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/julia_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/julia_folding.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/julia.js"></script>
+  <style type="text/css">
+  .fail { color: #B00; }
+  </style>
+</head>
+<body>
+
+  <h2>Julia Mode Tester</h2>
+  <p>Passed: <span id="passed"></span>, Failed: <span id="failed"></span></p>
+  <pre id="failures"></pre>
+  <div id="editor" style="position: absolute; top: 400px; width: 600px; height: 300px; border: 1px solid #999"></div>
+
+  <script type="text/javascript">
+
+  var JuliaMode = require("mode/julia").Mode;
+
+  var editor = ace.edit("editor");
+  var session = editor.getSession();
+  var mode = new JuliaMode(false, session);
+  session.setMode(mode);
+  session.setTabSize(2);
+  session.setUseSoftTabs(true);
+
+  var passed = 0;
+  var failed = 0;
+  var failures = [];
+
+  function check(ok, description)
+  {
+    if (ok)
+      passed++;
+    else
+    {
+      failed++;
+      // the headless runner reports the lines marked [FAIL]
+      failures.push("[FAIL] " + description);
+    }
+  }
+
+  // the tokens of 'lines', which are set as the session's text
+  function tokenize(lines)
+  {
+    session.setValue(lines.join("\n"));
+    var result = [];
+    for (var i = 0; i < lines.length; i++)
+      result.push(session.getTokens(i));
+    return result;
+  }
+
+  // ---- highlighting ----
+
+  // [line(s), [value, type], ...]: the first token with each value, on the
+  // last line, has the type
+  var highlightCases = [
+    [["x = 1_000 + 0x1F + 0b101 + 0o17 + 1.5e-3 + 2im + 1f0"],
+      ["1_000", "constant.numeric"], ["0x1F", "constant.numeric"], ["0b101", "constant.numeric"],
+      ["0o17", "constant.numeric"], ["1.5e-3", "constant.numeric"], ["2im", "constant.numeric"],
+      ["1f0", "constant.numeric"]],
+    [["\"\"\"", "Docs for `f`, with \"quotes\".", "\"\"\"", "f(x) = x"],
+      ["f", "identifier"]],
+    [["#= a #= nested =# still a comment", "and here =# after = 1"],
+      ["after", "identifier"]],
+    [["#= a #= nested =# still a comment =# after = 1"],
+      ["after", "identifier"]],
+    [["s = \"a $b c $(d + f(e)) g\" * h"],
+      ["b", "identifier"], ["d", "identifier"], ["e", "identifier"], ["h", "identifier"]],
+    [["m = r\"^\\d+$\"i; v = b\"bytes\""],
+      ["r", "support.function"], ["v", "identifier"]],
+    [["c = 'a'; e = '\\n'; t = A'; u = (A * B)'; w = x''"],
+      ["'a'", "string"], ["'\\n'", "string"], ["A", "identifier"], ["'", "keyword.operator"],
+      ["u", "identifier"], ["w", "identifier"]],
+    [["mutable struct P end; abstract type Shape end; primitive type T 8 end; struct Q end"],
+      ["mutable struct", "keyword"], ["abstract type", "keyword"], ["primitive type", "keyword"],
+      ["struct", "keyword"]],
+    [["function g(x::Int)::Int where T"],
+      ["function", "keyword"], ["g", "entity.name.function"], ["::", "keyword.operator"],
+      ["where", "keyword"]],
+    [["@time sum(1:n); @. y = x"],
+      ["@time", "support.function"], ["1", "constant.numeric"], [":", "keyword.operator"],
+      ["n", "identifier"], ["@.", "support.function"]],
+    [["k = :sym; a ? b : c; v[i:j]"],
+      [":sym", "constant.other.symbol"], ["i", "identifier"], ["j", "identifier"]],
+    [["x \u2208 S && y \u2264 3 && z \u00F7 2"],
+      ["\u2208", "keyword.operator"], ["\u2264", "keyword.operator"], ["\u00F7", "keyword.operator"]],
+    [["\u03B1\u03B2\u2081 = 1"],
+      ["\u03B1\u03B2\u2081", "identifier"]],
+    [["if x!=y && push!(v, 1) end"],
+      ["x", "identifier"], ["!=", "keyword.operator"], ["push!", "identifier"], ["end", "keyword"]],
+    [["nothing, missing, true, NaN32, isa, in, public"],
+      ["nothing", "constant.language"], ["missing", "constant.language"], ["true", "constant.language"],
+      ["NaN32", "constant.language"], ["isa", "keyword"], ["in", "keyword"], ["public", "keyword"]],
+    [["run(`ls $dir`); after"],
+      ["dir", "identifier"], ["after", "identifier"]],
+    [["x = 1 # if this were code"],
+      ["# if this were code", "comment"]]
+  ];
+
+  highlightCases.forEach(function(testCase)
+  {
+    var lines = testCase[0];
+    var tokens = tokenize(lines);
+    var last = tokens[lines.length - 1];
+    for (var i = 1; i < testCase.length; i++)
+    {
+      var value = testCase[i][0];
+      var type = testCase[i][1];
+      var token = last.find(function(t) { return t.value === value; });
+      check(
+        token && token.type === type,
+        "highlight " + JSON.stringify(lines[lines.length - 1]) + ": " + JSON.stringify(value) +
+        " is " + (token ? token.type : "missing") + ", expected " + type);
+    }
+  });
+
+  // ---- indentation ----
+
+  // [lines, expected indent after the last line]
+  var indentCases = [
+    [["function f(x)"], "  "],
+    [["  if x > 0"], "    "],
+    [["module Foo"], ""],
+    [["x = [1, 2,"], "  "],
+    [["y = [i for i in 1:3 if isodd(i)]"], ""],
+    [["  z = a[end] + a[begin]"], "  "],
+    [["if x y end"], ""],
+    [["s = \"function\""], ""],
+    [["# if in a comment"], ""],
+    [["map(xs) do x"], "  "],
+    [["struct Point"], "  "],
+    [["if x", "  y", "  else"], "  "],
+    [["if x", "  y", "  elseif z"], "  "],
+    [["try", "  y", "  catch err"], "  "],
+    [["function f()", "  x", "  end"], ""],
+    [["function f()", "  if x", "    y", "    end"], "  "],
+    [["abstract type Shape end"], ""],
+    [["f(x) = x"], ""]
+  ];
+
+  indentCases.forEach(function(testCase)
+  {
+    var lines = testCase[0];
+    tokenize(lines);
+    var row = lines.length - 1;
+    var indent = mode.getNextLineIndent(session.getState(row), lines[row], "  ", row);
+    check(
+      indent === testCase[1],
+      "indent after " + JSON.stringify(lines) + ": " + JSON.stringify(indent) +
+      ", expected " + JSON.stringify(testCase[1]));
+  });
+
+  // Enter, which Ace handles without passing the row: [lines, expected last
+  // line and new line after pressing Enter at the end]
+  var enterCases = [
+    [["function f()", "  if x"], ["  if x", "    "]],
+    // 'elseif z' was outdented when the space after it was typed
+    [["function f()", "  if x", "    y", "  elseif z"], ["  elseif z", "    "]],
+    // 'else' is outdented by the Enter itself
+    [["function f()", "  if x", "    y", "    else"], ["  else", "    "]]
+  ];
+
+  enterCases.forEach(function(testCase)
+  {
+    var lines = testCase[0];
+    session.setValue(lines.join("\n"));
+    var row = lines.length - 1;
+    editor.moveCursorTo(row, lines[row].length);
+    editor.insert("\n");
+    var actual = [session.getLine(row), session.getLine(row + 1)];
+    check(
+      JSON.stringify(actual) === JSON.stringify(testCase[1]),
+      "Enter after " + JSON.stringify(lines) + ": " + JSON.stringify(actual) +
+      ", expected " + JSON.stringify(testCase[1]));
+  });
+
+  // ---- outdent ----
+
+  // [lines, expected last line after outdenting it]
+  var outdentCases = [
+    [["if x", "  y", "  else"], "else"],
+    [["begin", "  a", "  end"], "end"],
+    [["function f()", "  if x", "    y", "    end"], "  end"],
+    [["try", "  a", "  catch"], "catch"],
+    [["x = foo(", "    a,", "    )"], ")"],
+    [["s = \"", "  end"], "  end"]
+  ];
+
+  outdentCases.forEach(function(testCase)
+  {
+    var lines = testCase[0];
+    tokenize(lines);
+    var row = lines.length - 1;
+    mode.autoOutdent(session.getState(row), session, row);
+    var line = session.getLine(row);
+    check(
+      line === testCase[1],
+      "outdent " + JSON.stringify(lines) + ": " + JSON.stringify(line) +
+      ", expected " + JSON.stringify(testCase[1]));
+  });
+
+  // and only once a closing word is complete
+  check(mode.checkOutdent("start", "  end", "\n"), "checkOutdent: 'end' then newline");
+  check(mode.checkOutdent("start", "  else", " "), "checkOutdent: 'else' then space");
+  check(!mode.checkOutdent("start", "  en", "d"), "checkOutdent: not before 'end' is complete");
+  check(!mode.checkOutdent("start", "  endx", " "), "checkOutdent: not for 'endx'");
+
+  // ---- folding ----
+
+  var foldLines = [
+    "function f(x)",      // 0
+    "  if x",             // 1
+    "    1",              // 2
+    "  end",              // 3
+    "end",                // 4
+    "#= a",               // 5
+    "b =#",               // 6
+    "y = [1,",            // 7
+    "     2]",            // 8
+    "z = v[end]"          // 9
+  ];
+  tokenize(foldLines);
+  var folding = mode.foldingRules;
+
+  // [row, expected widget, expected end row, expected end column]
+  var foldCases = [
+    [0, "start", 4, 0],
+    [1, "start", 3, 2],
+    [5, "start", 6, 2],
+    [7, "start", 8, 6],
+    [9, "", null, null]
+  ];
+
+  foldCases.forEach(function(testCase)
+  {
+    var row = testCase[0];
+    var widget = folding.getFoldWidget(session, "markbegin", row);
+    check(
+      widget === testCase[1],
+      "fold widget on row " + row + ": " + JSON.stringify(widget) + ", expected " + JSON.stringify(testCase[1]));
+
+    if (testCase[2] !== null)
+    {
+      var range = folding.getFoldWidgetRange(session, "markbegin", row);
+      check(
+        range && range.end.row === testCase[2] && range.end.column === testCase[3],
+        "fold range from row " + row + ": " + (range ? range.toString() : "none") +
+        ", expected end " + testCase[2] + ":" + testCase[3]);
+    }
+  });
+
+  document.getElementById("failures").innerText = failures.join("\n");
+  document.getElementById("passed").innerText = passed;
+  document.getElementById("failed").innerText = failed;
+
+  </script>
+
+</body>
+
+</html>

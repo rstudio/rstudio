@@ -33,6 +33,7 @@ var CppMatchingBraceOutdent = require("mode/c_cpp_matching_brace_outdent").CppMa
 var RCodeModel = require("mode/r_code_model").RCodeModel;
 var CppCodeModel = require("mode/cpp_code_model").CppCodeModel;
 var PythonMode = require("mode/python").Mode;
+var JuliaMode = require("mode/julia").Mode;
 
 var RMarkdownFoldMode = require("rstudio/folding/rmarkdown").FoldMode;
 var CFoldMode = require("ace/mode/folding/cstyle").FoldMode;
@@ -68,6 +69,7 @@ var Mode = function(suppressHighlighting, session) {
    this.$cpp_outdent = new CppMatchingBraceOutdent(this.cpp_codeModel);
 
    this.$python = new PythonMode();
+   this.$julia = new JuliaMode(false, session);
 
    var rMarkdownFoldingRules = new RMarkdownFoldMode();
    var cFoldingRules = new CFoldMode();
@@ -144,6 +146,8 @@ oop.inherits(Mode, MarkdownMode);
          return "YAML";
       else if (mode === "python")
          return "Python";
+      else if (mode === "julia")
+         return "Julia";
       else if (mode == "sql")
          return "SQL";
       else if (mode === "stan")
@@ -165,6 +169,8 @@ oop.inherits(Mode, MarkdownMode);
          return this.$getIndent(this.$session.getLine(row + 1));
       else if (mode === "python")
          return this.$python.getNextLineIndent(state, line, tab, row);
+      else if (mode === "julia")
+         return this.$julia.getNextLineIndent(state, line, tab, row);
       else
          return this.$getNextLineIndent(state, line, tab);
    };
@@ -178,6 +184,8 @@ oop.inherits(Mode, MarkdownMode);
          return this.$cpp_outdent.checkOutdent(state, line, input);
       else if (mode === "yaml")
          return false;
+      else if (mode === "julia")
+         return this.$julia.checkOutdent(state, line, input);
       else
          return this.$outdent.checkOutdent(line, input);
    };
@@ -193,6 +201,8 @@ oop.inherits(Mode, MarkdownMode);
          return;
       else if (mode === "python")
          return this.$python.autoOutdent(state, session, row);
+      else if (mode === "julia")
+         return this.$julia.autoOutdent(state, session, row);
       else
          return this.$outdent.autoOutdent(session, row);
    };

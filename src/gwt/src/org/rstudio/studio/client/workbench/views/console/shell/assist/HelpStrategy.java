@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 import java.util.HashMap;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
@@ -95,11 +96,22 @@ public class HelpStrategy
    {
       cache_.clear();
    }
-    
+
+   // QualifiedName equality is name and type only; the same name can be
+   // documented differently in another language, package or module
+   private static String cacheKey(QualifiedName item)
+   {
+      return item.name + "\n" +
+             item.type + "\n" +
+             StringUtil.notNull(item.source) + "\n" +
+             StringUtil.notNull(item.language) + "\n" +
+             StringUtil.notNull(item.helpHandler);
+   }
+
    private void showDefaultHelp(final QualifiedName selectedItem,
                                 final CompletionPopupDisplay display)
    {
-      ParsedInfo cachedHelp = cache_.get(selectedItem);
+      ParsedInfo cachedHelp = cache_.get(cacheKey(selectedItem));
       if (cachedHelp != null)
       {
          display.displayHelp(cachedHelp);
@@ -130,7 +142,7 @@ public class HelpStrategy
                   HelpInfo.ParsedInfo help = result.toParsedInfo();
                   if (help.hasInfo())
                   {
-                     cache_.put(selectedItem, help);
+                     cache_.put(cacheKey(selectedItem), help);
                      display.displayHelp(help);
                      return;
                   }
@@ -162,7 +174,7 @@ public class HelpStrategy
                   HelpInfo.ParsedInfo help = result.parse(selectedItem.name);
                   if (help.hasInfo())
                   {
-                     cache_.put(selectedItem, help);
+                     cache_.put(cacheKey(selectedItem), help);
                      display.displayHelp(help);
                      return;
                   }
@@ -180,7 +192,7 @@ public class HelpStrategy
    {
       
       final String name = selectedItem.name.replaceAll("\\s*=\\s*$", "");
-      ParsedInfo cachedHelp = cache_.get(selectedItem);
+      ParsedInfo cachedHelp = cache_.get(cacheKey(selectedItem));
       if (cachedHelp != null)
       {
          doShowParameterHelp(cachedHelp, name, display);
@@ -205,7 +217,7 @@ public class HelpStrategy
                if (response != null)
                {
                   HelpInfo.ParsedInfo info = response.toParsedInfo();
-                  cache_.put(selectedItem, info);
+                  cache_.put(cacheKey(selectedItem), info);
                   doShowParameterHelp(info, name, display);
                }
                else
@@ -234,7 +246,7 @@ public class HelpStrategy
                if (response != null)
                {
                   ParsedInfo info = response.parse(selectedItem.source);
-                  cache_.put(selectedItem, info);
+                  cache_.put(cacheKey(selectedItem), info);
                   doShowParameterHelp(info, name, display);
                }
                else
@@ -288,7 +300,7 @@ public class HelpStrategy
    private void showPackageHelp(final QualifiedName selectedItem,
                                 final CompletionPopupDisplay display)
    {
-      ParsedInfo cachedHelp = cache_.get(selectedItem);
+      ParsedInfo cachedHelp = cache_.get(cacheKey(selectedItem));
       if (cachedHelp != null)
       {
          doShowPackageHelp(cachedHelp, display);
@@ -314,7 +326,7 @@ public class HelpStrategy
             if (response != null)
             {
                ParsedInfo info = response.parse(packageName);
-               cache_.put(selectedItem, info);
+               cache_.put(cacheKey(selectedItem), info);
                doShowPackageHelp(info, display);
             }
             else
@@ -340,7 +352,7 @@ public class HelpStrategy
       }
    }
    
-   HashMap<QualifiedName, ParsedInfo> cache_;
+   HashMap<String, ParsedInfo> cache_;
    private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
 
 }

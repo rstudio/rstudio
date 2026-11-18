@@ -46,6 +46,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.console.shell.ConsoleLanguageTracker;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.CompletionResult;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
@@ -83,6 +84,7 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class RCompletionManager implements CompletionManager
 {  
@@ -117,10 +119,10 @@ public class RCompletionManager implements CompletionManager
          @Override
          protected boolean isEnabled(Position position)
          {
-            return DocumentMode.isPositionInRMode(docDisplay_, position);
+            return isConsoleInR() && DocumentMode.isPositionInRMode(docDisplay_, position);
          }
       };
-      
+
       suggestTimer_ = new SuggestionTimer(this, userPrefs_);
       snippets_ = new SnippetHelper((AceEditor) docDisplay, getSourceDocumentPath());
       requester_ = new CompletionRequester(rContext, rnwContext, docDisplay, snippets_);
@@ -205,7 +207,8 @@ public class RCompletionManager implements CompletionManager
                           HelpStrategy helpStrategy,
                           UserPrefs uiPrefs,
                           Assistant assistant,
-                          ApplicationAutomation automation)
+                          ApplicationAutomation automation,
+                          Provider<ConsoleLanguageTracker> languageTracker)
    {
       globalDisplay_ = globalDisplay;
       fileTypeRegistry_ = fileTypeRegistry;
@@ -214,6 +217,7 @@ public class RCompletionManager implements CompletionManager
       userPrefs_ = uiPrefs;
       assistant_ = assistant;
       automation_ = automation;
+      languageTracker_ = languageTracker;
    }
    
    public void attach()
@@ -245,7 +249,10 @@ public class RCompletionManager implements CompletionManager
    
    public void goToHelp()
    {
-      InputEditorLineWithCursorPosition linePos = 
+      if (!isConsoleInR())
+         return;
+
+      InputEditorLineWithCursorPosition linePos =
             InputEditorUtil.getLineWithCursorPosition(input_);
 
       server_.getHelpAtCursor(
@@ -254,7 +261,12 @@ public class RCompletionManager implements CompletionManager
    }
    
    public void goToDefinition()
-   {   
+   {
+      // R's tokens misread Julia (in A' * B', "' * B'" reads as a quoted
+      // path), so nothing is looked up at a Julia prompt
+      if (isConsoleInJulia())
+         return;
+
       // check for a file-local definition (intra-file navigation -- using
       // the active scope tree)
       AceEditor editor = (AceEditor) docDisplay_;
@@ -289,7 +301,12 @@ public class RCompletionManager implements CompletionManager
                // seems the most appropriate action in such a case.
                fileTypeRegistry_.editFile(filePath);
             }
-            
+
+            // the rest finds R definitions (a quoted path opens at the Python
+            // prompt too, above)
+            if (!isConsoleInR())
+               return;
+
             String functionName = cursor.currentValue();
             JsArray<ScopeFunction> scopes =
                   editor.getAllFunctionScopes();
@@ -311,7 +328,9 @@ public class RCompletionManager implements CompletionManager
       
       // intra-file navigation failed -- hit the server and find a definition
       // in the project index
-      
+      if (!isConsoleInR())
+         return;
+
       // determine current line and cursor position
       InputEditorLineWithCursorPosition lineWithPos = 
                       InputEditorUtil.getLineWithCursorPosition(input_);
@@ -871,11 +890,14 @@ public class RCompletionManager implements CompletionManager
                
                if (token.matches("^(library|require|requireNamespace|data)\\s*$"))
                   canAutoPopup = true;
-               
-               Scheduler.get().scheduleDeferred(() -> 
+
+               if (isConsoleInR())
                {
-                  sigTipManager_.resolveActiveFunctionAndDisplayToolTip();
-               });
+                  Scheduler.get().scheduleDeferred(() ->
+                  {
+                     sigTipManager_.resolveActiveFunctionAndDisplayToolTip();
+                  });
+               }
             }
          }
          
@@ -922,6 +944,27 @@ public class RCompletionManager implements CompletionManager
             input_.getSelection().getStart().getPosition());
 
       return c != ' ' || linePart.matches(".*,\\s*");
+   }
+
+   // Whether R's signatures, help and definitions apply: not at another
+   // language's console prompt (whose signatures come with its completions,
+   // by help handler).
+   private boolean isConsoleInR()
+   {
+      if (behavior_ != EditorBehavior.AceBehaviorConsole)
+         return true;
+
+      return StringUtil.equals(
+         languageTracker_.get().getLanguage(),
+         ConsoleLanguageTracker.LANGUAGE_R);
+   }
+
+   private boolean isConsoleInJulia()
+   {
+      return behavior_ == EditorBehavior.AceBehaviorConsole &&
+             StringUtil.equals(
+                languageTracker_.get().getLanguage(),
+                ConsoleLanguageTracker.LANGUAGE_JULIA);
    }
 
    private static boolean canContinueCompletions(NativeEvent event)
@@ -2170,9 +2213,11 @@ public class RCompletionManager implements CompletionManager
          if (qualifiedName.type == RCompletionType.DIRECTORY)
             value = value + "/";
          
+         // backticks quote names in R only
          if (!shouldQuote &&
              !RCompletionType.isFileType(qualifiedName.type) &&
-             !StringUtil.equals(qualifiedName.language, "Python"))
+             !StringUtil.equals(qualifiedName.language, "Python") &&
+             !StringUtil.equals(qualifiedName.language, "Julia"))
          {
             value = quoteIfNotSyntacticNameCompletion(qualifiedName);
          }
@@ -2316,6 +2361,7 @@ public class RCompletionManager implements CompletionManager
    private UserPrefs userPrefs_;
    private Assistant assistant_;
    private ApplicationAutomation automation_;
+   private Provider<ConsoleLanguageTracker> languageTracker_;
 
    private final CodeToolsServerOperations server_;
    private final InputEditorDisplay input_;
