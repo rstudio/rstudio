@@ -11,20 +11,19 @@
 :: MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
 :: AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
 ::
-:: Usage: verify-nsis-plugins.cmd EXE
+:: Usage: verify-nsis-plugins.cmd EXE STAGED_DIR [signed]
 ::
-:: Fails unless every plugin DLL packed into the NSIS installer or uninstaller
-:: EXE has a valid signature. makensis falls back to the unsigned copy in the
-:: NSIS install for any plugin the template doesn't stage, and this catches it.
-:: Needs 7z.exe and signtool.exe on PATH.
+:: Fails if the NSIS installer or uninstaller EXE packs a plugin DLL that isn't
+:: in STAGED_DIR, since makensis falls back to the unsigned copy in the NSIS
+:: install for any plugin the template doesn't stage. With "signed", also fails
+:: unless every packed plugin has a valid signature. Needs 7z.exe on PATH, and
+:: signtool.exe too with "signed".
 ::
 @echo off
 setlocal
 
-if "%~1" == "" (
-    echo verify-nsis-plugins.cmd: no file given. Usage: verify-nsis-plugins.cmd EXE
-    exit /b 1
-)
+if "%~2" == "" goto :usage
+if not "%~3" == "" if /i not "%~3" == "signed" goto :usage
 
 set "PLUGINS_DIR=%TEMP%\rstudio-nsis-plugins-%RANDOM%%RANDOM%"
 set RESULT=0
@@ -41,11 +40,26 @@ if not exist "%PLUGINS_DIR%\*.dll" (
     goto :cleanup
 )
 
-signtool.exe verify /pa "%PLUGINS_DIR%\*.dll" || (
-    echo verify-nsis-plugins.cmd: "%~1" packs a plugin DLL without a valid signature. A plugin missing from the staged plugins in NSIS.template.in is packed unsigned; add it there.
-    set RESULT=1
+for %%F in ("%PLUGINS_DIR%\*.dll") do (
+    if not exist "%~2\%%~nxF" (
+        echo verify-nsis-plugins.cmd: "%~1" packs %%~nxF, which isn't staged, so it can't be signed. Add it to the staged plugins in NSIS.template.in.
+        set RESULT=1
+    )
+)
+if "%RESULT%" == "1" goto :cleanup
+
+if /i "%~3" == "signed" (
+    signtool.exe verify /pa "%PLUGINS_DIR%\*.dll" || (
+        echo verify-nsis-plugins.cmd: "%~1" packs a plugin DLL without a valid signature.
+        set RESULT=1
+    )
 )
 
 :cleanup
 if exist "%PLUGINS_DIR%" rmdir /s /q "%PLUGINS_DIR%"
 exit /b %RESULT%
+
+:usage
+echo verify-nsis-plugins.cmd: expected an NSIS executable and the staged plugins folder.
+echo Usage: verify-nsis-plugins.cmd EXE STAGED_DIR [signed]
+exit /b 1

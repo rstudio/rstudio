@@ -34,7 +34,7 @@
 ; RSTUDIO CHANGE - Pack plugin DLLs from a staging folder, where daily and release
 ; builds sign them: Smart App Control can block unsigned DLLs in $PLUGINSDIR (#19680).
 ; makensis takes a plugin from the last !addplugindir that has it, ahead of its own
-; Plugins folder, so keep this the only one. Signed builds fail on an unstaged plugin.
+; Plugins folder, so keep this the only one. Builds fail on an unstaged plugin.
 
   !searchreplace RSTUDIO_PLUGINS_DIR "@CPACK_TOPLEVEL_DIRECTORY@/nsis-plugins" "/" "\"
   !searchreplace RSTUDIO_SCRIPTS_DIR "@CPACK_RSTUDIO_SCRIPTS_DIR@" "/" "\"
@@ -58,10 +58,15 @@
 
   ; The Jenkins Package stage sets RSTUDIO_CODESIGN for daily and release
   ; builds. The installer itself is signed later, in the Sign Installer stage.
+  ; Every build checks that the installer and uninstaller pack only staged plugins.
+  !define RSTUDIO_VERIFY_PLUGINS '"${RSTUDIO_SCRIPTS_DIR}\verify-nsis-plugins.cmd" "%1" "${RSTUDIO_PLUGINS_DIR}"'
   !if "$%RSTUDIO_CODESIGN%" == "1"
     !system '"${RSTUDIO_SCRIPTS_DIR}\codesign.cmd" "${RSTUDIO_PLUGINS_DIR}\*.dll"' = 0
-    !uninstfinalize '"${RSTUDIO_SCRIPTS_DIR}\codesign.cmd" "%1" && "${RSTUDIO_SCRIPTS_DIR}\verify-nsis-plugins.cmd" "%1"' = 0
-    !finalize '"${RSTUDIO_SCRIPTS_DIR}\verify-nsis-plugins.cmd" "%1"' = 0
+    !uninstfinalize '"${RSTUDIO_SCRIPTS_DIR}\codesign.cmd" "%1" && ${RSTUDIO_VERIFY_PLUGINS} signed' = 0
+    !finalize '${RSTUDIO_VERIFY_PLUGINS} signed' = 0
+  !else
+    !uninstfinalize '${RSTUDIO_VERIFY_PLUGINS}' = 0
+    !finalize '${RSTUDIO_VERIFY_PLUGINS}' = 0
   !endif
 
   !addplugindir /x86-unicode "${RSTUDIO_PLUGINS_DIR}"
