@@ -287,9 +287,9 @@ Error restoreSearchPath(
 
    // load the required packages
    Error error = r::exec::RFunction(".rs.restoreSearchPath")
-         .addParam(searchPathsFile.getAbsolutePath())
-         .addParam(packagePathsFile.getAbsolutePath())
-         .addParam(environmentDataPath.getAbsolutePath())
+         .addParam(searchPathsFile)
+         .addParam(packagePathsFile)
+         .addParam(environmentDataPath)
          .call();
    if (error)
       LOG_ERROR(error);

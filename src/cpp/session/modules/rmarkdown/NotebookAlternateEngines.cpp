@@ -440,7 +440,7 @@ Error executeSqlEngineChunk(const std::string& docId,
    // run sql and save result
    error = r::exec::RFunction(".rs.runSqlForDataCapture")
          .addParam(code)
-         .addParam(dataPath.getAbsolutePath())
+         .addParam(dataPath)
          .addParam(options)
          .call();
 

@@ -768,7 +768,7 @@ r_util::RPackageInfo packageInfoForRd(const FilePath& rdFilePath)
 Error Rd2HTML(FilePath filePath, std::string* html)
 {
    r::exec::RFunction fun(".rs.Rd2HTML");
-   fun.addParam(filePath.getAbsolutePath());
+   fun.addParam(filePath);
 
    // add in package-specific information if available
    r_util::RPackageInfo pkgInfo = packageInfoForRd(filePath);
