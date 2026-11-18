@@ -154,18 +154,174 @@ SEXP mkCharUtf8(const std::string& value)
    return Rf_mkCharCE(value.c_str(), CE_UTF8);
 }
 
+bool hasNul(const std::string& value)
+{
+   return value.find('\0') != std::string::npos;
+}
+
 // names read from R arrive in C++ as UTF-8 (see translate()), but a symbol's
 // name is native; Rf_install() would take the UTF-8 bytes as native and, where
-// native is not UTF-8, name a different symbol than the one R bound
+// native is not UTF-8, name a different symbol than the one R bound. returns
+// nullptr for a name R can't make a symbol from (see isSymbolName()); R
+// checks the length of the native name, which can be shorter (or, with
+// escapes for characters native can't represent, longer) than the UTF-8 one
 SEXP installUtf8(const std::string& name)
 {
+   if (name.empty() || hasNul(name))
+      return nullptr;
+
    Protect protect;
    SEXP charSEXP;
    protect.add(charSEXP = mkCharUtf8(name));
+
+   const void* vmax = vmaxget();
+   bool installable = isSymbolName(Rf_translateChar(charSEXP));
+   vmaxset(vmax);
+   if (!installable)
+      return nullptr;
+
    return Rf_installTrChar(charSEXP);
 }
 
+// R code that C++ runs while merely reading a binding (an active binding's
+// function, a promise being forced) runs with R errors and interrupts caught,
+// as one would otherwise longjmp past the C++ caller. they're caught by
+// R_tryCatch() rather than R_ToplevelExec(), which would print the error (a
+// lookup the IDE makes on its own shouldn't write to the console), except
+// before R 3.6.2 (see evaluateCaught())
+struct CaughtEvaluation
+{
+   SEXP (*evaluate)(CaughtEvaluation*);
+   SEXP firstSEXP;
+   SEXP secondSEXP;
+
+   // a protected list the result is stored in, so that it stays protected
+   // while tryCatch() unwinds; returned through R as a value instead, an
+   // unforced promise (as R < 4.6 reads one) could be forced on the way
+   SEXP holderSEXP;
+
+   bool unbound;
+   bool caught;
+   bool interrupted;
+};
+
+SEXP caughtEvaluationBody(void* data)
+{
+   CaughtEvaluation* pEvaluation = static_cast<CaughtEvaluation*>(data);
+   SEXP resultSEXP = pEvaluation->evaluate(pEvaluation);
+   if (resultSEXP == nullptr)
+      pEvaluation->unbound = true;
+   else
+      SET_VECTOR_ELT(pEvaluation->holderSEXP, 0, resultSEXP);
+   return R_NilValue;
+}
+
+SEXP caughtEvaluationHandler(SEXP conditionSEXP, void* data)
+{
+   CaughtEvaluation* pEvaluation = static_cast<CaughtEvaluation*>(data);
+   pEvaluation->caught = true;
+   pEvaluation->interrupted = Rf_inherits(conditionSEXP, "interrupt");
+   return R_NilValue;
+}
+
+// before R 3.6.2, R_tryCatch() transferred control for every condition, so a
+// warning or message would read as a failure; executeSafely() has the right
+// semantics there, at the cost of printing a caught error. the answer is
+// cached only once the check succeeds
+bool tryCatchIsSelective()
+{
+   static int s_selective = -1;
+   if (s_selective == -1)
+   {
+      bool selective = false;
+      // both functions from base, so that a user's definitions can't mask them
+      Error error = r::exec::evaluateString("base::`>=`(base::getRversion(), \"3.6.2\")", &selective);
+      if (error)
+         return false;
+
+      s_selective = selective ? 1 : 0;
+   }
+
+   return s_selective == 1;
+}
+
+// returns the result, or nullptr if an R error or interrupt was caught
+SEXP evaluateCaught(SEXP (*evaluate)(CaughtEvaluation*), SEXP firstSEXP, SEXP secondSEXP)
+{
+   static SEXP s_conditionsSEXP = nullptr;
+   if (s_conditionsSEXP == nullptr)
+   {
+      s_conditionsSEXP = Rf_allocVector(STRSXP, 2);
+      R_PreserveObject(s_conditionsSEXP);
+      SET_STRING_ELT(s_conditionsSEXP, 0, Rf_mkChar("error"));
+      SET_STRING_ELT(s_conditionsSEXP, 1, Rf_mkChar("interrupt"));
+   }
+
+   // the result is left unprotected on return, like the value of a plain
+   // lookup: it's reachable from its binding or, when forced, its promise
+   Protect protect;
+   SEXP holderSEXP;
+   protect.add(holderSEXP = Rf_allocVector(VECSXP, 1));
+
+   CaughtEvaluation evaluation = { evaluate, firstSEXP, secondSEXP, holderSEXP, false, false, false };
+   if (tryCatchIsSelective())
+   {
+      R_tryCatch(caughtEvaluationBody, &evaluation,
+                 s_conditionsSEXP,
+                 caughtEvaluationHandler, &evaluation,
+                 nullptr, nullptr);
+   }
+   else
+   {
+      // executeSafely() also sets aside the user's options(error) handler, which
+      // would otherwise run (e.g. recover()) for an error the lookup catches;
+      // it can't tell an interrupt from an error, so one isn't re-armed here
+      Error error = r::exec::executeSafely([&]() { caughtEvaluationBody(&evaluation); });
+      if (error)
+         evaluation.caught = true;
+   }
+
+   // an interrupt is meant for R code that's running (as when a request is
+   // handled while the user's code runs), not for the lookup; re-arm it, so
+   // that code sees it when it next checks
+   if (evaluation.interrupted)
+      r::exec::setInterruptsPending(true);
+
+   if (evaluation.caught || evaluation.unbound)
+      return nullptr;
+
+   return VECTOR_ELT(holderSEXP, 0);
+}
+
+SEXP forcePromiseImpl(CaughtEvaluation* pEvaluation)
+{
+   // Rf_eval ignores the environment argument for promises; the promise's
+   // own stored environment is used for evaluation
+   return Rf_eval(pEvaluation->firstSEXP, R_BaseEnv);
+}
+
+SEXP findVarInFrameImpl(CaughtEvaluation* pEvaluation)
+{
+   return runtime::findVarInFrame(pEvaluation->firstSEXP, pEvaluation->secondSEXP);
+}
+
+// whether reading this binding can run R code: an active binding calls its
+// function, R_getVarEx() (R >= 4.6) forces a promise, and it raises an error
+// for a missing argument
+bool readingRunsCode(SEXP symSEXP, SEXP envSEXP)
+{
+   int bindingType = runtime::getBindingType(symSEXP, envSEXP);
+   return bindingType == runtime::kBindingTypeActive ||
+          bindingType == runtime::kBindingTypeDelayed ||
+          bindingType == runtime::kBindingTypeMissing;
+}
+
 } // anonymous namespace
+
+bool isSymbolName(const std::string& name)
+{
+   return !name.empty() && name.size() <= kMaxSymbolNameBytes && !hasNul(name);
+}
 
 std::string asString(SEXP object)
 {
@@ -310,9 +466,8 @@ SEXP forcePromise(SEXP objectSEXP)
    if (TYPEOF(objectSEXP) != PROMSXP)
       return objectSEXP;
 
-   // NOTE: Rf_eval ignores the environment argument for promises;
-   // the promise's own stored environment is used for evaluation.
-   return ::Rf_eval(objectSEXP, R_BaseEnv);
+   SEXP valueSEXP = evaluateCaught(forcePromiseImpl, objectSEXP, nullptr);
+   return valueSEXP == nullptr ? R_NilValue : valueSEXP;
 }
 
 SEXP findNamespace(const std::string& package)
@@ -474,6 +629,9 @@ SEXP findBindingFrame(SEXP sym, SEXP env)
 BindingType getBindingType(const std::string& name, SEXP env)
 {
    SEXP sym = installUtf8(name);
+   if (sym == nullptr)
+      return BindingType::Unbound;
+
    int bt = runtime::getBindingType(sym, env);
 
    // .Last.value lives in baseenv (SET_SYMVALUE on R_LastvalueSymbol), not
@@ -509,6 +667,8 @@ BindingType getBindingType(const std::string& name, SEXP env)
 SEXP getBindingIdentity(const std::string& name, SEXP env, BindingType type)
 {
    SEXP sym = installUtf8(name);
+   if (sym == nullptr)
+      return R_NilValue;
 
    switch (type)
    {
@@ -630,6 +790,9 @@ bool isActiveBinding(SEXP nameSEXP, SEXP envSEXP)
 bool isActiveBinding(const std::string& name, SEXP envSEXP)
 {
    SEXP nameSEXP = installUtf8(name);
+   if (nameSEXP == nullptr)
+      return false;
+
    return isActiveBinding(nameSEXP, envSEXP);
 }
 
@@ -652,17 +815,29 @@ SEXP functionBody(SEXP functionSEXP)
 
 SEXP findVarInFrame(SEXP envSEXP, SEXP nameSEXP)
 {
+   if (readingRunsCode(nameSEXP, envSEXP))
+      return evaluateCaught(findVarInFrameImpl, envSEXP, nameSEXP);
+
    return runtime::findVarInFrame(envSEXP, nameSEXP);
 }
 
 SEXP findVar(SEXP nameSEXP, SEXP envSEXP)
 {
-   return runtime::findVar(nameSEXP, envSEXP);
+   // find the binding's frame without reading it, to see whether reading it
+   // can run R code, then read it there; most bindings can't run code
+   SEXP frameSEXP = findBindingFrame(nameSEXP, envSEXP);
+   if (frameSEXP == R_EmptyEnv)
+      return runtime::findVar(nameSEXP, envSEXP);
+
+   return findVarInFrame(frameSEXP, nameSEXP);
 }
 
 SEXP findVar(const std::string& name, SEXP envSEXP)
 {
    SEXP nameSEXP = installUtf8(name);
+   if (nameSEXP == nullptr)
+      return nullptr;
+
    return findVar(nameSEXP, envSEXP);
 }
 
@@ -703,47 +878,39 @@ SEXP findFunction(const std::string& name, const std::string& ns)
    // we instead attempt to find the function by manually
    // walking through the environment (and its enclosing environments)
    SEXP nameSEXP = installUtf8(name);
-   
-   // Search through frames until we find the global environment.
+   if (nameSEXP == nullptr)
+      return nullptr;
+
+   // Search through the frames, as R does for a function. Each binding is
+   // read once, and one whose R code (an active binding's function, or a
+   // promise) fails ends the search, as it would end R's: a binding further
+   // out would be a function R wouldn't find.
    while (env != R_EmptyEnv)
    {
-      // If we're searching the global environment, then
-      // try using 'findVar', as this will attempt a search
-      // of R's own internal global cache.
-      if (env == R_GlobalEnv)
+      bool runsCode = readingRunsCode(nameSEXP, env);
+      SEXP resultSEXP = runsCode ?
+               evaluateCaught(findVarInFrameImpl, env, nameSEXP) :
+               runtime::findVarInFrame(env, nameSEXP);
+      // a missing argument (which R < 4.6 reads as R_MissingArg) is an error
+      // for R's lookup too
+      if (runsCode && (resultSEXP == nullptr || resultSEXP == R_MissingArg))
+         return nullptr;
+
+      if (resultSEXP != nullptr && TYPEOF(resultSEXP) == PROMSXP)
       {
-         SEXP resultSEXP = findVar(nameSEXP, R_GlobalEnv);
-         if (resultSEXP != nullptr)
-         {
-            if (Rf_isFunction(resultSEXP))
-               return resultSEXP;
-            else if (TYPEOF(resultSEXP) == PROMSXP)
-            {
-               protect.add(resultSEXP = Rf_eval(resultSEXP, env));
-               if (Rf_isFunction(resultSEXP))
-                  return resultSEXP;
-            }
-         }
+         resultSEXP = evaluateCaught(forcePromiseImpl, resultSEXP, nullptr);
+         if (resultSEXP == nullptr)
+            return nullptr;
+
+         protect.add(resultSEXP);
       }
-      
-      // Otherwise, just perform a simple search through
-      // the current frame.
-      SEXP resultSEXP = findVarInFrame(env, nameSEXP);
-      if (resultSEXP != nullptr)
-      {
-         if (Rf_isFunction(resultSEXP))
-            return resultSEXP;
-         else if (TYPEOF(resultSEXP) == PROMSXP)
-         {
-            protect.add(resultSEXP = Rf_eval(resultSEXP, env));
-            if (Rf_isFunction(resultSEXP))
-               return resultSEXP;
-         }
-      }
-      
+
+      if (resultSEXP != nullptr && Rf_isFunction(resultSEXP))
+         return resultSEXP;
+
       env = getParentEnv(env);
    }
-   
+
    return nullptr;
 }   
    
@@ -1258,34 +1425,48 @@ SEXP create(const core::json::Value& value, Protect* pProtect)
 
 namespace {
 
-SEXP createYamlMap(const YAML::Node& node, Protect* pProtect)
+SEXP createYaml(const YAML::Node& node, std::vector<YAML::Node>* pAncestors, Protect* pProtect);
+
+// an alias can refer to a node that contains it (`a: &x [1, *x]`); R can't
+// represent the cycle, and following it would recurse until the stack overflowed
+bool isYamlAncestor(const YAML::Node& node, const std::vector<YAML::Node>& ancestors)
+{
+   for (const YAML::Node& ancestor : ancestors)
+   {
+      if (ancestor.is(node))
+         return true;
+   }
+   return false;
+}
+
+SEXP createYamlMap(const YAML::Node& node, std::vector<YAML::Node>* pAncestors, Protect* pProtect)
 {
    ListBuilder builder(pProtect);
- 
+
    for (auto it = node.begin();
         it != node.end();
         ++it)
    {
       std::string key = it->first.as<std::string>();
-      SEXP value = create(it->second, pProtect);
+      SEXP value = createYaml(it->second, pAncestors, pProtect);
       builder.add(key, value);
    }
-   
+
    return r::sexp::create(builder, pProtect);
 }
 
-SEXP createYamlSequence(const YAML::Node& node, Protect* pProtect)
+SEXP createYamlSequence(const YAML::Node& node, std::vector<YAML::Node>* pAncestors, Protect* pProtect)
 {
    ListBuilder builder(pProtect);
-   
+
    for (auto it = node.begin();
         it != node.end();
         ++it)
    {
-      SEXP value = create(*it, pProtect);
+      SEXP value = createYaml(*it, pAncestors, pProtect);
       builder.add(value);
    }
-   
+
    return r::sexp::create(builder, pProtect);
 }
 
@@ -1381,17 +1562,25 @@ SEXP createYamlScalar(const YAML::Node& node, Protect* pProtect)
    return r::sexp::create(text, pProtect);
 }
 
-} // end anonymous namespace
-
-SEXP create(const YAML::Node& node, Protect* pProtect)
+SEXP createYaml(const YAML::Node& node, std::vector<YAML::Node>* pAncestors, Protect* pProtect)
 {
    auto type = node.Type();
    switch (type)
    {
    case YAML::NodeType::Map:
-      return createYamlMap(node, pProtect);
    case YAML::NodeType::Sequence:
-      return createYamlSequence(node, pProtect);
+   {
+      // a cyclic alias becomes NULL
+      if (isYamlAncestor(node, *pAncestors))
+         return R_NilValue;
+
+      pAncestors->push_back(node);
+      SEXP valueSEXP = type == YAML::NodeType::Map ?
+               createYamlMap(node, pAncestors, pProtect) :
+               createYamlSequence(node, pAncestors, pProtect);
+      pAncestors->pop_back();
+      return valueSEXP;
+   }
    case YAML::NodeType::Scalar:
       return createYamlScalar(node, pProtect);
    case YAML::NodeType::Undefined:
@@ -1402,7 +1591,13 @@ SEXP create(const YAML::Node& node, Protect* pProtect)
    }
 }
 
+} // end anonymous namespace
 
+SEXP create(const YAML::Node& node, Protect* pProtect)
+{
+   std::vector<YAML::Node> ancestors;
+   return createYaml(node, &ancestors, pProtect);
+}
 
 SEXP create(const char* value, Protect* pProtect)
 {
@@ -1455,10 +1650,13 @@ SEXP create(const core::json::Array& value, Protect* pProtect)
    SEXP listSEXP;
    pProtect->add(listSEXP = Rf_allocVector(VECSXP, value.getSize()));
    
-   // add each array element to it
+   // add each array element to it. each is protected only until it's stored
+   // in the (protected) list, so that a long array can't overflow R's
+   // protection stack, whose overflow is an R error
    for (size_t i=0; i<value.getSize(); i++)
    {
-      SEXP valueSEXP = create(value[i], pProtect);
+      Protect elementProtect;
+      SEXP valueSEXP = create(value[i], &elementProtect);
       SET_VECTOR_ELT(listSEXP, i,  valueSEXP);
    }
    return listSEXP;
@@ -1480,9 +1678,10 @@ SEXP create(const core::json::Object& value, Protect* pProtect)
    {
       // set name
       SET_STRING_ELT(namesSEXP, index, mkCharUtf8(member.getName()));
-      
-      // set value
-      SEXP valueSEXP = create(member.getValue(), pProtect);
+
+      // set value, protected only until it's stored (as for arrays)
+      Protect elementProtect;
+      SEXP valueSEXP = create(member.getValue(), &elementProtect);
       SET_VECTOR_ELT(listSEXP, index,  valueSEXP);
       
       // increment element index
@@ -1733,7 +1932,168 @@ SEXP createList(const std::vector<std::string>& names, Protect* pProtect)
 
    return listSEXP;
 }
-   
+
+bool containsNul(const std::string& value)
+{
+   return hasNul(value);
+}
+
+bool containsNul(const FilePath& value)
+{
+   return hasNul(value.getAbsolutePath());
+}
+
+bool containsNul(const core::json::Value& value)
+{
+   if (value.isString())
+      return hasNul(value.getString());
+   else if (value.isArray())
+      return containsNul(value.getArray());
+   else if (value.isObject())
+      return containsNul(value.getObject());
+   else
+      return false;
+}
+
+bool containsNul(const core::json::Array& value)
+{
+   for (const core::json::Value& element : value)
+   {
+      if (containsNul(element))
+         return true;
+   }
+   return false;
+}
+
+bool containsNul(const core::json::Object& value)
+{
+   for (const core::json::Object::Member& member : value)
+   {
+      if (hasNul(member.getName()) || containsNul(member.getValue()))
+         return true;
+   }
+   return false;
+}
+
+namespace {
+
+// what checking a YAML node, as create() would read it, found
+enum class YamlCheck
+{
+   Clean,
+   HasNul,
+
+   // a composite map key: create() raises a C++ exception reading one, so
+   // it reads nothing after it, and checking stops there
+   Unreadable
+};
+
+YamlCheck checkYaml(const YAML::Node& node, std::vector<YAML::Node>* pAncestors)
+{
+   switch (node.Type())
+   {
+   case YAML::NodeType::Map:
+   case YAML::NodeType::Sequence:
+   {
+      // a cyclic alias was, or is being, checked already (see createYaml())
+      if (isYamlAncestor(node, *pAncestors))
+         return YamlCheck::Clean;
+
+      pAncestors->push_back(node);
+      YamlCheck result = YamlCheck::Clean;
+      for (auto it = node.begin(); it != node.end() && result == YamlCheck::Clean; ++it)
+      {
+         if (node.IsMap())
+         {
+            // createYamlMap() reads a key with as<std::string>(), which
+            // reads a null key as "null" and throws for a composite one
+            const YAML::Node& key = it->first;
+            if (key.IsScalar() && hasNul(key.Scalar()))
+               result = YamlCheck::HasNul;
+            else if (!key.IsScalar() && !key.IsNull())
+               result = YamlCheck::Unreadable;
+            else
+               result = checkYaml(it->second, pAncestors);
+         }
+         else
+         {
+            result = checkYaml(*it, pAncestors);
+         }
+      }
+      pAncestors->pop_back();
+      return result;
+   }
+   case YAML::NodeType::Scalar:
+      return hasNul(node.Scalar()) ? YamlCheck::HasNul : YamlCheck::Clean;
+   default:
+      return YamlCheck::Clean;
+   }
+}
+
+} // anonymous namespace
+
+bool containsNul(const YAML::Node& node)
+{
+   std::vector<YAML::Node> ancestors;
+   return checkYaml(node, &ancestors) == YamlCheck::HasNul;
+}
+
+bool containsNul(const std::vector<std::string>& value)
+{
+   return std::any_of(value.begin(), value.end(), hasNul);
+}
+
+bool containsNul(const std::set<std::string>& value)
+{
+   return std::any_of(value.begin(), value.end(), hasNul);
+}
+
+bool containsNul(const std::vector<std::pair<std::string, std::string>>& value)
+{
+   for (const auto& pair : value)
+   {
+      if (hasNul(pair.first) || hasNul(pair.second))
+         return true;
+   }
+   return false;
+}
+
+bool containsNul(const std::map<std::string, std::string>& value)
+{
+   for (const auto& entry : value)
+   {
+      if (hasNul(entry.first) || hasNul(entry.second))
+         return true;
+   }
+   return false;
+}
+
+bool containsNul(const std::map<std::string, std::vector<std::string>>& value)
+{
+   for (const auto& entry : value)
+   {
+      if (hasNul(entry.first) || containsNul(entry.second))
+         return true;
+   }
+   return false;
+}
+
+bool containsNul(const std::map<std::string, SEXP>& value)
+{
+   for (const auto& entry : value)
+   {
+      if (hasNul(entry.first))
+         return true;
+   }
+   return false;
+}
+
+bool containsNul(const ListBuilder& builder)
+{
+   // the values are R objects already; only the names are still to be built
+   return containsNul(builder.names());
+}
+
 SEXP SEXPPreserver::add(SEXP dataSEXP)
 {
    if (dataSEXP == R_NilValue)

@@ -390,6 +390,11 @@ std::string NotebookQueueUnit::docId() const
    return docId_;
 }
 
+std::string NotebookQueueUnit::docType() const
+{
+   return docType_;
+}
+
 std::string NotebookQueueUnit::chunkId() const
 {
    return chunkId_;

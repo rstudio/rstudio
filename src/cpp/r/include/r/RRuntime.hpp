@@ -56,6 +56,10 @@ SEXP findVarInFrame(SEXP envSEXP, SEXP nameSEXP);
 // R_getVarEx with inheritance (R >= 4.6), falls back to Rf_findVar.
 SEXP findVar(SEXP nameSEXP, SEXP envSEXP);
 
+// whether the lookups above force a promise they read (R_getVarEx does;
+// Rf_findVarInFrame / Rf_findVar return the promise itself)
+bool lookupsForcePromises();
+
 // R_GetBindingType (R >= 4.6), falls back to manual struct inspection.
 // Returns the R_BindingType_t enum value as an int.
 int getBindingType(SEXP symSEXP, SEXP envSEXP);

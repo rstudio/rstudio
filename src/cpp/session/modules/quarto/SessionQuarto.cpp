@@ -1429,7 +1429,16 @@ void readQuartoProjectConfig(const FilePath& configFile,
             else if (key == "editor" && pEditor != nullptr)
             {
                auto node = it->second;
-               if (node.Type() == YAML::NodeType::Map)
+
+               // a "\0" escape gives a string R can't hold, and R would raise
+               // an error creating it -- at session startup, when the session
+               // can't recover from one
+               if (node.Type() == YAML::NodeType::Map && r::sexp::containsNul(node))
+               {
+                  LOG_WARNING_MESSAGE("Ignoring editor options containing a nul character in " +
+                                      configFile.getAbsolutePath());
+               }
+               else if (node.Type() == YAML::NodeType::Map)
                {
                   r::sexp::Protect protect;
                   auto editorSEXP = r::sexp::create(node, &protect);
