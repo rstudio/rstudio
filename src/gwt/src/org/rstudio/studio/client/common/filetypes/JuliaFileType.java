@@ -70,6 +70,19 @@ public class JuliaFileType extends TextFileType
       juliaCommands.remove(commands.showDiagnosticsProject());
       juliaCommands.remove(commands.reindent());
 
+      // these find their code with a scope tree, which Julia's mode lacks
+      juliaCommands.remove(commands.executeCurrentFunction());
+      juliaCommands.remove(commands.executeCurrentSection());
+
       return juliaCommands;
+   }
+
+   // A Julia file is included without echo, and can't run as an R job, so
+   // the toolbar's source options aren't offered. (Source with Echo stays
+   // supported: the Source button runs it when sourceWithEcho is set.)
+   @Override
+   public boolean canSourceWithEcho()
+   {
+      return false;
    }
 }

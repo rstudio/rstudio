@@ -206,7 +206,21 @@ public class DocumentMode
    public static boolean isSelectionInPythonMode(DocDisplay docDisplay)
    {
       return isPositionInPythonMode(docDisplay, docDisplay.getSelectionStart()) &&
-             isPositionInPythonMode(docDisplay, docDisplay.getSelectionEnd());
+             isPositionInPythonMode(docDisplay, getSelectionLastPosition(docDisplay));
+   }
+
+   // The end of the selected text. A selection of whole lines (as Shift+Down
+   // makes) ends at the start of the row after them, which may be a chunk's
+   // closing fence, and so not in the chunk's language.
+   private static Position getSelectionLastPosition(DocDisplay docDisplay)
+   {
+      Position start = docDisplay.getSelectionStart();
+      Position end = docDisplay.getSelectionEnd();
+      if (end.getColumn() > 0 || end.getRow() <= start.getRow())
+         return end;
+
+      int row = end.getRow() - 1;
+      return Position.create(row, docDisplay.getLine(row).length());
    }
 
    // Julia Mode
@@ -232,7 +246,7 @@ public class DocumentMode
    public static boolean isSelectionInJuliaMode(DocDisplay docDisplay)
    {
       return isPositionInJuliaMode(docDisplay, docDisplay.getSelectionStart()) &&
-             isPositionInJuliaMode(docDisplay, docDisplay.getSelectionEnd());
+             isPositionInJuliaMode(docDisplay, getSelectionLastPosition(docDisplay));
    }
 
    public static boolean isPositionInSqlMode(DocDisplay docDisplay,
