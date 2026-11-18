@@ -44,6 +44,7 @@
 
 #include <core/http/Util.hpp>
 #include <core/http/Request.hpp>
+#include <core/http/RequestParser.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/URL.hpp>
 #include <core/http/CSRFToken.hpp>
@@ -1181,7 +1182,7 @@ bool handleFileUploadRequestAsync(const http::Request& request,
    // the session connection makes a final call marked complete when the
    // client goes away mid-upload; there is no one left to answer
    uintmax_t bytesReceived = formData.size() + (pUploadState ? pUploadState->bytesReceived : 0);
-   if (complete && bytesReceived < request.contentLength())
+   if (http::RequestParser::isAbandonedForm(request, bytesReceived, complete))
    {
       if (pUploadState)
       {
@@ -1253,7 +1254,7 @@ bool handleFileUploadRequestAsync(const http::Request& request,
       }
 
       std::string boundary;
-      error = multipartBoundary(request.contentType(), &boundary);
+      error = http::util::multipartFormBoundary(request.contentType(), &boundary);
       if (error)
       {
          writeError(error);

@@ -16,21 +16,17 @@
 #ifndef SESSION_SESSION_FILES_UPLOAD_HPP
 #define SESSION_SESSION_FILES_UPLOAD_HPP
 
-#include <cstddef>
-#include <functional>
 #include <string>
 #include <string_view>
 
 #include <shared_core/Error.hpp>
 
+#include <core/http/Util.hpp>
+
 namespace rstudio {
 namespace session {
 namespace modules {
 namespace files {
-
-// The boundary parameter of a multipart/form-data Content-Type, which may be
-// quoted.
-core::Error multipartBoundary(const std::string& contentType, std::string* pBoundary);
 
 // Streaming parser for the Files pane upload form (RFC 7578): the file part
 // goes to the sink as it arrives, and the "targetDirectory" field is kept.
@@ -39,37 +35,36 @@ core::Error multipartBoundary(const std::string& contentType, std::string* pBoun
 class UploadFormParser
 {
 public:
-   // never called with empty data
-   typedef std::function<core::Error(const char* data, std::size_t size)> FileSink;
+   typedef core::http::util::MultipartFormParser::DataSink FileSink;
 
    UploadFormParser(const std::string& boundary, const FileSink& fileSink);
 
+   // the form parser calls back into this object
+   UploadFormParser(const UploadFormParser&) = delete;
+   UploadFormParser& operator=(const UploadFormParser&) = delete;
+
    // `complete` marks the final chunk, which must end the body
-   core::Error consume(std::string_view chunk, bool complete);
+   core::Error consume(std::string_view chunk, bool complete)
+   {
+      return parser_.consume(chunk, complete);
+   }
 
    bool hasFile() const { return hasFile_; }
    const std::string& fileName() const { return fileName_; }
    const std::string& targetDirectory() const { return targetDirectory_; }
 
 private:
-   enum class State { AfterDelimiter, PartHeaders, PartBody, Epilogue };
-   enum class PartKind { File, TargetDirectory, Ignored };
+   core::Error beginPart(const core::http::Headers& headers, FileSink* pSink);
 
-   core::Error step(bool* pProgress);
-   core::Error beginPart(std::string_view headerBlock);
-   core::Error emitPartData(std::size_t size);
-
-   std::string delimiter_;
    FileSink fileSink_;
-
-   State state_;
-   PartKind partKind_;
-   std::string buffer_;
 
    bool hasFile_;
    bool hasTargetDirectory_;
    std::string fileName_;
    std::string targetDirectory_;
+
+   // last, since its part handler uses the members above
+   core::http::util::MultipartFormParser parser_;
 };
 
 } // namespace files

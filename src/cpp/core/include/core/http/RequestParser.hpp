@@ -85,6 +85,13 @@ public:
         handler(std::string(), true);
   }
 
+  /// Whether a form handler's call is the one abortForm makes: marked
+  /// complete, with less than the Content-Length received in all.
+  static bool isAbandonedForm(const Request& request, uintmax_t bytesReceived, bool complete)
+  {
+     return complete && bytesReceived < request.contentLength();
+  }
+
   /// Parse the next chunk of input.
   ///
   /// After headers_parsed or pause is returned the parser holds an offset into

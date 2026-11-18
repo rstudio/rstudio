@@ -32,7 +32,6 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim.hpp>
-#include <boost/iostreams/filtering_stream.hpp>
 #include <boost/regex.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 
@@ -188,112 +187,6 @@ struct SemiFinder
    }
 } semiFinder;
 
-struct BoundaryFinder
-{
-   BoundaryFinder(const std::string_view& boundary) : boundary(boundary) {}
-
-   std::string boundary;
-
-   enum State
-   {
-      NeedLeadingCR,
-      NeedLeadingLF,
-      NeedDash1,
-      NeedDash2,
-      NeedString,
-      NeedTrailingCROrDash,
-      NeedTrailingCR,
-      NeedTrailingLF,
-      NeedTerminatorDash2,
-   };
-
-   template <typename ITER>
-   boost::iterator_range<ITER> operator()(ITER begin, ITER end) const {
-      using Range = boost::iterator_range<ITER>;
-
-      // empty range matches nothing
-      if (begin == end)
-      {
-         return Range(end, end);
-      }
-
-      State state = NeedLeadingCR;
-      size_t matchPos = 0;
-      ITER matchStart = begin;
-      if (*begin == '-')
-      {
-         state = NeedDash2;
-         ++begin;
-      }
-      for (ITER iter = begin; iter != end; iter++)
-      {
-         char ch = *iter;
-         // Keep track of the start of the match
-         if (state == NeedLeadingCR)
-            matchStart = iter;
-         // Reset the state machine on an unexpected \r
-         if (state != NeedTrailingCR && state != NeedTrailingCROrDash && ch == '\r')
-         {
-            state = NeedLeadingLF;
-            matchStart = iter;
-            continue;
-         }
-         switch (state)
-         {
-            case NeedLeadingCR:
-               // ignore everything but \r, which is handled above
-               break;
-            case NeedLeadingLF:
-               if (ch == '\n')
-                  state = NeedDash1;
-               else
-                  state = NeedLeadingCR;
-               break;
-            case NeedDash1:
-            case NeedDash2:
-               matchPos = 0;
-               if (ch == '-')
-                  state = (state == NeedDash1) ? NeedDash2 : NeedString;
-               else
-                  state = NeedLeadingCR;
-               break;
-            case NeedString:
-               if (ch == boundary[matchPos])
-               {
-                  matchPos++;
-                  if (matchPos == boundary.size())
-                     state = NeedTrailingCROrDash;
-               }
-               else
-                  state = NeedLeadingCR;
-               break;
-            case NeedTrailingCROrDash:
-            case NeedTrailingCR:
-               if (ch == '\r')
-                  state = NeedTrailingLF;
-               else if (ch == '-' && state == NeedTrailingCROrDash)
-                  state = NeedTerminatorDash2;
-               else if (ch != ' ' && ch != '\t')
-                  state = NeedLeadingCR;
-               else
-                  state = NeedTrailingCR;
-               break;
-            case NeedTrailingLF:
-               if (ch == '\n')
-                  return Range(matchStart, iter + 1);
-               state = NeedLeadingCR;
-               break;
-            case NeedTerminatorDash2:
-               if (ch == '-')
-                  return Range(matchStart, end);
-               state = NeedLeadingCR;
-               break;
-         }
-      }
-      return Range(end, end);
-   }
-};
-
 struct HeaderParams
 {
    std::vector<std::string> values;
@@ -366,124 +259,274 @@ struct HeaderParams
    }
 };
 
-}
+// Part headers and transport padding are small; this only stops a malformed
+// body from making us buffer it without bound.
+constexpr std::size_t kMaxBufferedBytes = 64 * 1024;
 
-void parseHeaderParams(const std::string& header,
-                       bool unescape,
-                       std::vector<std::string>* pValues,
-                       std::map<std::string, std::string>* pParams)
+Error formError(const std::string& description, const ErrorLocation& location)
 {
-   HeaderParams parsed = HeaderParams::parse(header, unescape);
-   *pValues = std::move(parsed.values);
-   *pParams = std::move(parsed.params);
+   return systemError(boost::system::errc::protocol_error,
+                      "Invalid form data received - " + description,
+                      location);
 }
 
+enum class DelimiterEnd { Close, Line, None, Unknown };
+
+// What follows the boundary in a candidate delimiter: "--" closes the body,
+// transport padding then a CRLF ends a delimiter line (*pPadding is the
+// padding's size), and anything else makes the candidate part data.
+DelimiterEnd delimiterEnd(std::string_view rest, std::size_t* pPadding)
+{
+   if (!rest.empty() && rest[0] == '-')
+   {
+      if (rest.size() < 2)
+         return DelimiterEnd::Unknown;
+
+      return (rest[1] == '-') ? DelimiterEnd::Close : DelimiterEnd::None;
+   }
+
+   std::size_t pos = rest.find_first_not_of(" \t");
+   if (pos == std::string_view::npos)
+      return DelimiterEnd::Unknown;
+
+   if (rest[pos] != '\r')
+      return DelimiterEnd::None;
+
+   if (pos + 1 == rest.size())
+      return DelimiterEnd::Unknown;
+
+   if (rest[pos + 1] != '\n')
+      return DelimiterEnd::None;
+
+   *pPadding = pos;
+   return DelimiterEnd::Line;
+}
+
+}
+
+Error multipartFormBoundary(const std::string& contentType, std::string* pBoundary)
+{
+   HeaderParams parsed = HeaderParams::parse(contentType);
+   if (parsed.values.empty() || !boost::algorithm::iequals(parsed.values.front(), "multipart/form-data"))
+      return formError("not multipart/form-data", ERROR_LOCATION);
+
+   *pBoundary = parsed.params["boundary"];
+   if (pBoundary->empty())
+      return formError("no boundary", ERROR_LOCATION);
+
+   return Success();
+}
+
+bool parseFormDataDisposition(const Headers& headers,
+                              bool unescape,
+                              FormDataDisposition* pDisposition)
+{
+   HeaderParams parsed = HeaderParams::parse(headerValue(headers, "Content-Disposition"), unescape);
+   auto name = parsed.params.find("name");
+   if (parsed.values.empty() || !boost::algorithm::iequals(parsed.values.front(), "form-data") || name == parsed.params.end())
+      return false;
+
+   auto fileName = parsed.params.find("filename");
+   pDisposition->name = name->second;
+   pDisposition->isFile = (fileName != parsed.params.end());
+   pDisposition->fileName = pDisposition->isFile ? fileName->second : std::string();
+   return true;
+}
+
+MultipartFormParser::MultipartFormParser(const std::string& boundary, const PartHandler& partHandler)
+   : delimiter_("\r\n--" + boundary),
+     partHandler_(partHandler),
+     // the preamble is read like the body of a skipped part; the CRLF lets
+     // the first delimiter be found when the body opens with it
+     state_(State::PartBody),
+     buffer_("\r\n")
+{
+}
+
+Error MultipartFormParser::consume(std::string_view chunk, bool complete)
+{
+   buffer_.append(chunk.data(), chunk.size());
+
+   // trim the buffer once at the end, rather than once per part
+   std::string_view input(buffer_);
+   bool progress = true;
+   while (progress)
+   {
+      progress = false;
+      Error error = step(&input, complete, &progress);
+      if (error)
+         return error;
+   }
+
+   buffer_.erase(0, buffer_.size() - input.size());
+
+   if (complete && state_ != State::Epilogue)
+      return formError("final boundary not found", ERROR_LOCATION);
+
+   return Success();
+}
+
+Error MultipartFormParser::step(std::string_view* pInput, bool complete, bool* pProgress)
+{
+   switch (state_)
+   {
+   case State::PartBody:
+   {
+      std::size_t pos = pInput->find(delimiter_);
+      if (pos == std::string_view::npos)
+      {
+         // pass on everything, holding back what could be the start of a
+         // delimiter split across chunks
+         std::size_t size = pInput->size();
+         if (!complete)
+            size -= std::min(size, delimiter_.size() - 1);
+
+         return emit(pInput, size);
+      }
+
+      std::size_t padding = 0;
+      DelimiterEnd end = delimiterEnd(pInput->substr(pos + delimiter_.size()), &padding);
+
+      // a delimiter line can't be finished once the body is complete, and
+      // isn't worth waiting for behind this much padding
+      if (end == DelimiterEnd::Unknown && (complete || pInput->size() - pos > kMaxBufferedBytes))
+         end = DelimiterEnd::None;
+
+      // wait for the rest of the candidate
+      if (end == DelimiterEnd::Unknown)
+         return emit(pInput, pos);
+
+      // part data that only starts like a delimiter
+      if (end == DelimiterEnd::None)
+      {
+         Error error = emit(pInput, pos + 1);
+         if (error)
+            return error;
+
+         break;
+      }
+
+      Error error = emit(pInput, pos);
+      if (error)
+         return error;
+
+      if (end == DelimiterEnd::Close)
+      {
+         state_ = State::Epilogue;
+         break;
+      }
+
+      // keep the CRLF, so that even an empty header block ends at "\r\n\r\n"
+      pInput->remove_prefix(delimiter_.size() + padding);
+      state_ = State::PartHeaders;
+      break;
+   }
+
+   case State::PartHeaders:
+   {
+      std::size_t pos = pInput->find("\r\n\r\n");
+      if (pos == std::string_view::npos)
+      {
+         if (pInput->size() > kMaxBufferedBytes)
+            return formError("part headers too long", ERROR_LOCATION);
+
+         return Success();
+      }
+
+      Headers headers;
+      std::istringstream headerStream{std::string(pInput->substr(2, pos))};
+      http::parseHeaders(headerStream, &headers);
+
+      sink_ = DataSink();
+      Error error = partHandler_(headers, &sink_);
+      if (error)
+         return error;
+
+      pInput->remove_prefix(pos + 4);
+      state_ = State::PartBody;
+      break;
+   }
+
+   case State::Epilogue:
+      *pInput = std::string_view();
+      return Success();
+   }
+
+   *pProgress = true;
+   return Success();
+}
+
+Error MultipartFormParser::emit(std::string_view* pInput, std::size_t size)
+{
+   std::string_view data = pInput->substr(0, size);
+   pInput->remove_prefix(size);
+   if (data.empty() || !sink_)
+      return Success();
+
+   return sink_(data.data(), data.size());
+}
 
 void parseMultipartForm(const std::string& contentType,
                         const std::string& body,
                         Fields* pFields,
                         Files* pFiles)
 {
-   namespace ba = boost::algorithm;
-   // get the boundary token
-   HeaderParams ctParams = HeaderParams::parse(contentType);
-   std::string boundary(ctParams.params["boundary"]);
-   if (boundary.empty())
+   std::string boundary;
+   Error error = multipartFormBoundary(contentType, &boundary);
+   if (error)
    {
-      // No boundary token: malformed multipart/form-data
       LOG_WARNING_MESSAGE("Invalid multipart/form-data content-type: missing boundary");
       return;
    }
 
-   // Per RFC 2046, multipart-body ends immediately after the `--` with no CRLF necessary.
-   const std::string terminator = "\r\n--" + boundary + "--";
-   size_t terminatorPos = body.find(terminator);
-   if (terminatorPos == 0 || !body.size())
+   std::size_t firstField = pFields->size();
+   MultipartFormParser parser(boundary, [&](const Headers& headers, MultipartFormParser::DataSink* pSink)
    {
-      // No sections, just a terminating boundary
-      LOG_WARNING_MESSAGE("Invalid multipart/form-data: no sections");
-      return;
-   }
-   // Hand BoundaryFinder the terminator so it closes the final part on a real
-   // delimiter instead of the end of the view; the parts are identical either
-   // way, since the match anchors at the same CRLF. Missing terminator: read
-   // the last part anyway, more permissively than RFC 2046 requires.
-   size_t multipartLen = terminatorPos == std::string::npos
-      ? body.size()
-      : terminatorPos + terminator.size();
+      // skip parts that aren't named form-data
+      FormDataDisposition disposition;
+      if (!parseFormDataDisposition(headers, true, &disposition))
+         return Success();
 
-   std::string_view multipart(body.data(), multipartLen);
-
-   // iterate over the multipart sections
-   BoundaryFinder finder(boundary);
-   auto iter = ba::make_split_iterator(multipart, finder);
-   auto endIter = ba::split_iterator<std::string_view::const_iterator>();
-   bool isPreamble = true;
-   for (; iter != endIter; ++iter)
-   {
-      auto partRange = *iter;
-      if (isPreamble)
+      if (!disposition.isFile)
       {
-         // Always ignore the preamble before the first multipart boundary
-         isPreamble = false;
-         continue;
+         std::size_t index = pFields->size();
+         pFields->emplace_back(disposition.name, std::string());
+         *pSink = [pFields, index](const char* data, std::size_t size)
+         {
+            (*pFields)[index].second.append(data, size);
+            return Success();
+         };
+
+         return Success();
       }
 
-      // wrap in non-copying stream
-      boost::iostreams::filtering_istream partStream(partRange);
-      partStream.unsetf(std::ios::skipws);
+      // keep the first file for a field name, without reading the rest
+      if (pFiles->count(disposition.name))
+         return Success();
 
-      // read the headers
-      Headers headers;
-      http::parseHeaders(partStream, &headers);
+      File& file = (*pFiles)[disposition.name];
+      file.name = disposition.fileName;
+      file.contentType = headerValue(headers, "Content-Type");
+      if (file.contentType.empty())
+         file.contentType = "application/octet-stream";
 
-      // get the content-disposition header
-      std::string cDispStr = http::headerValue(headers, "Content-Disposition");
-      if (cDispStr.empty())
-         continue;
-
-      // ignore sections that aren't form-data
-      HeaderParams cDisp = HeaderParams::parse(cDispStr);
-      if (cDisp.values.empty() || boost::algorithm::to_lower_copy(cDisp.values.front()) != "form-data")
-         continue;
-
-      auto nameIter = cDisp.params.find("name");
-      if (nameIter == cDisp.params.end())
+      std::string* pContents = &file.contents;
+      *pSink = [pContents](const char* data, std::size_t size)
       {
-         // name is required, so if it's missing, skip the entire section
-         continue;
-      }
+         pContents->append(data, size);
+         return Success();
+      };
 
-      std::string formName(nameIter->second);
+      return Success();
+   });
 
-      auto filenameIter = cDisp.params.find("filename");
-      if (filenameIter != cDisp.params.end() && pFiles->find(formName) != pFiles->end())
-      {
-         // If we've already processed a file upload for a given form field,
-         // keep the first file and ignore the rest without allocating any
-         // additional memory.
-         continue;
-      }
+   // a body without its close delimiter keeps what was read, last part included
+   error = parser.consume(body, true);
+   if (error)
+      LOG_WARNING_MESSAGE("Invalid multipart/form-data: " + error.getProperty("description"));
 
-      std::string formValue(partRange.size(), '\0');
-      partStream.read(formValue.data(), partRange.size());
-      formValue.resize(partStream.gcount());
-
-      if (filenameIter != cDisp.params.end())
-      {
-         File& uploadedFile = (*pFiles)[formName];
-         uploadedFile.name = filenameIter->second;
-         uploadedFile.contentType = http::headerValue(headers, "Content-Type");
-         if (uploadedFile.contentType.empty())
-            uploadedFile.contentType = "application/octet-stream";
-         uploadedFile.contents.swap(formValue);
-      }
-      else
-      {
-         boost::algorithm::trim(formValue);
-         pFields->emplace_back(formName, std::move(formValue));
-      }
-   }
+   for (auto it = pFields->begin() + firstField; it != pFields->end(); ++it)
+      boost::algorithm::trim(it->second);
 }
 
 

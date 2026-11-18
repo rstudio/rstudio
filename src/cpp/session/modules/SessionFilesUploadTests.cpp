@@ -42,7 +42,6 @@ using core::Error;
 using core::FilePath;
 using core::Success;
 using modules::files::handleFileUploadRequestForTesting;
-using modules::files::multipartBoundary;
 using modules::files::UploadFormParser;
 
 namespace {
@@ -242,6 +241,12 @@ UploadResult upload(const std::string& body, const std::vector<std::size_t>& spl
    core::http::Request request;
    setUploadHeaders(body, &request);
    return upload(request, body, splits);
+}
+
+std::string fileContents(const FilePath& file)
+{
+   std::ifstream stream(file.getAbsolutePath(), std::ios::binary);
+   return std::string((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
 }
 
 std::size_t uploadedFileCount()
@@ -504,14 +509,20 @@ TEST(SessionFilesUploadTest, RejectsABodyWithoutTheCloseDelimiter)
    EXPECT_FALSE(parse(body.substr(0, closeEnd)).error);
 }
 
-TEST(SessionFilesUploadTest, RejectsAMalformedDelimiterLine)
+TEST(SessionFilesUploadTest, KeepsLinesThatOnlyStartLikeADelimiter)
 {
-   std::string prefix = "--" + kBoundary;
-   std::string rest = "\r\n" + filePart(kPayload) + "\r\n--" + kBoundary + "--\r\n";
+   // a delimiter is the boundary then "--", or transport padding and a CRLF;
+   // anything else after the boundary is file data
+   std::string delimiter = "\r\n--" + kBoundary;
+   std::string payload = "a" + delimiter + "x\r\n" + delimiter + " x" + delimiter + "-x" + delimiter + " \t\rx" + delimiter + "\n";
+   std::string body = browserBody(payload);
 
-   EXPECT_TRUE(parse(prefix + "x" + rest).error);
-   EXPECT_TRUE(parse(prefix + " x" + rest).error);
-   EXPECT_TRUE(parse(prefix + "-x" + rest).error);
+   Parsed parsed = parse(body);
+   ASSERT_FALSE(parsed.error);
+   EXPECT_EQ(payload, parsed.payload);
+   EXPECT_EQ(kTargetDirectory, parsed.targetDirectory);
+
+   EXPECT_EQ("", firstSplitMismatch(body));
 }
 
 TEST(SessionFilesUploadTest, LimitsHeaderAndFieldSizes)
@@ -562,10 +573,7 @@ TEST(SessionFilesUploadTest, HandlerStoresAChunkedUpload)
    EXPECT_EQ(targetDirectory.getAbsolutePath(), uploadedTargetDirectory);
 
    FilePath tmpFile(tmpFilePath);
-   std::ifstream stream(tmpFile.getAbsolutePath(), std::ios::binary);
-   std::string contents((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
-   stream.close();
-   EXPECT_TRUE(contents == payload);
+   EXPECT_TRUE(fileContents(tmpFile) == payload);
 
    tmpFile.removeIfExists();
    targetDirectory.removeIfExists();
@@ -660,10 +668,7 @@ TEST(SessionFilesUploadTest, HandlerDropsAnUploadItsClientAbandoned)
    ASSERT_FALSE(core::json::readObject(result.token, "uploadedTempFile", tmpFilePath));
 
    FilePath tmpFile(tmpFilePath);
-   std::ifstream stream(tmpFile.getAbsolutePath(), std::ios::binary);
-   std::string contents((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
-   stream.close();
-   EXPECT_TRUE(contents == kPayload);
+   EXPECT_TRUE(fileContents(tmpFile) == kPayload);
 
    tmpFile.removeIfExists();
 }
@@ -681,37 +686,6 @@ TEST(SessionFilesUploadTest, HandlerIgnoresAnUploadAbandonedBeforeItsFirstChunk)
    EXPECT_FALSE(handleFileUploadRequestForTesting(request, std::string(), true, cont));
    EXPECT_EQ(0, responses);
    EXPECT_EQ(filesBefore, uploadedFileCount());
-}
-
-TEST(SessionFilesUploadTest, FindsTheBoundaryInTheContentType)
-{
-   std::vector<std::pair<std::string, std::string>> cases = {
-      { "multipart/form-data; boundary=abc", "abc" },
-      { "multipart/form-data; boundary=\"abc def\"", "abc def" },
-      { "multipart/form-data; boundary=abc; charset=utf-8", "abc" },
-      { "Multipart/Form-Data; charset=utf-8; BOUNDARY=abc", "abc" },
-      { "multipart/form-data; boundary=" + std::string(70, 'b'), std::string(70, 'b') }
-   };
-
-   for (const auto& testCase : cases)
-   {
-      std::string boundary;
-      ASSERT_FALSE(multipartBoundary(testCase.first, &boundary)) << testCase.first;
-      EXPECT_EQ(testCase.second, boundary) << testCase.first;
-   }
-
-   std::vector<std::string> invalid = {
-      "multipart/form-data",
-      "multipart/form-data; boundary=",
-      "multipart/form-data; boundary=\"\"",
-      "text/plain; boundary=abc"
-   };
-
-   for (const std::string& contentType : invalid)
-   {
-      std::string boundary;
-      EXPECT_TRUE(multipartBoundary(contentType, &boundary)) << contentType;
-   }
 }
 
 } // namespace tests

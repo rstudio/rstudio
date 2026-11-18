@@ -14,6 +14,7 @@
  */
 
 #include <core/http/FormProxy.hpp>
+#include <core/http/RequestParser.hpp>
 #include <core/http/Util.hpp>
 
 namespace rstudio {
@@ -95,7 +96,7 @@ bool FormProxy::queueData(const std::string& data, bool complete)
    bool abandoned = false;
    LOCK_MUTEX(mutex_)
    {
-      if (complete && bytesReceived_ + data.size() < pUpstreamConnection_->request().contentLength())
+      if (RequestParser::isAbandonedForm(pUpstreamConnection_->request(), bytesReceived_ + data.size(), complete))
       {
          abandoned = true;
          aborted_ = true;
