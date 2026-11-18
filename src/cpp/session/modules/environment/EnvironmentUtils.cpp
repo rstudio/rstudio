@@ -394,7 +394,7 @@ Error sourceFileFromRef(const SEXP srcref, std::string* pFileName)
    if (error)
        return error;
 
-   return r::sexp::extract(fileName, pFileName, true);
+   return r::sexp::extract(fileName, pFileName);
 }
 
 } // namespace environment
