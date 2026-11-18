@@ -21,7 +21,9 @@
 #include <memory>
 #include <string>
 #include <thread>
+#include <vector>
 
+#include <core/FileSerializer.hpp>
 #include <core/system/Environment.hpp>
 
 #include <r/RExec.hpp>
@@ -29,6 +31,7 @@
 #include <r/RErrorCategory.hpp>
 #include <r/RInterface.hpp>
 #include <r/RUtil.hpp>
+#include <r/session/RConsoleHistory.hpp>
 
 using namespace rstudio::core;
 
@@ -161,6 +164,41 @@ TEST(SessionRTest, SysGetenvSeesCoreSetenv) {
          .call(&value);
    EXPECT_FALSE(error);
    EXPECT_EQ("", value);
+}
+
+TEST(SessionRTest, FailedHistoryLoadKeepsHistory) {
+   r::session::ConsoleHistory& history = r::session::consoleHistory();
+
+   // this is the session's own history; put it back afterwards
+   FilePath backupPath;
+   ASSERT_FALSE(FilePath::tempFilePath(backupPath));
+   ASSERT_FALSE(history.saveToFile(backupPath, false));
+
+   FilePath seedPath, missingPath;
+   ASSERT_FALSE(FilePath::tempFilePath(seedPath));
+   ASSERT_FALSE(FilePath::tempFilePath(missingPath));
+
+   BOOST_SCOPE_EXIT(&backupPath, &seedPath)
+   {
+      r::session::consoleHistory().loadFromFile(backupPath, false);
+      backupPath.remove();
+      seedPath.remove();
+   }
+   BOOST_SCOPE_EXIT_END
+
+   // seed the history from a file, so no add() listeners see the entries
+   ASSERT_FALSE(core::writeStringToFile(seedPath, "first()\nsecond()\n"));
+   ASSERT_FALSE(history.loadFromFile(seedPath, true));
+   std::vector<std::string> seeded(history.begin(), history.end());
+   ASSERT_EQ((std::vector<std::string> {"first()", "second()"}), seeded);
+
+   // a file that doesn't exist, e.g. loadhistory() with a mistyped path
+   EXPECT_TRUE(history.loadFromFile(missingPath, true));
+   EXPECT_EQ(seeded, std::vector<std::string>(history.begin(), history.end()));
+
+   // without verifyFile, a missing file means there is no prior history
+   EXPECT_FALSE(history.loadFromFile(missingPath, false));
+   EXPECT_EQ(0, history.size());
 }
 
 TEST(SessionRTest, RActiveBindingDetection) {
