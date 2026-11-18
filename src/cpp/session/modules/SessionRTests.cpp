@@ -18,9 +18,11 @@
 #include <boost/scope_exit.hpp>
 
 #include <clocale>
+#include <condition_variable>
 #include <functional>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <set>
 #include <string>
 #include <thread>
@@ -657,8 +659,22 @@ TEST(SessionRTest, LookupsCatchErrorsFromBindings) {
       # a function of the same name further out, which findFunction() must
       # not return once the binding that shadows it fails, as R wouldn't;
       # attached first, as checking for conflicts would read the binding
-      attach(list(.rs.test.failingBinding = function() NULL),
+      attach(list(.rs.test.failingBinding = function() NULL,
+                  .rs.test.missingBinding = function() NULL),
              name = "rstudio-test-shadowed", warn.conflicts = FALSE)
+
+      # a missing argument, an error for R's lookup of a function too
+      assign(".rs.test.missingBinding", quote(expr = ), envir = globalenv())
+
+      # bindings that warn, or signal an interrupt, while being read
+      makeActiveBinding(".rs.test.warningBinding", function() {
+         warning("binding warned")
+         7L
+      }, globalenv())
+      makeActiveBinding(".rs.test.interruptingBinding", function() {
+         signalCondition(structure(list(message = "", call = NULL), class = c("interrupt", "condition")))
+         7L
+      }, globalenv())
 
       assign(".rs.test.bindingCalls", 0L, envir = globalenv())
       assign(".rs.test.promiseForced", FALSE, envir = globalenv())
@@ -680,7 +696,8 @@ TEST(SessionRTest, LookupsCatchErrorsFromBindings) {
       r::exec::executeString(R"EOF(
          detach("rstudio-test-shadowed")
          rm(list = c(".rs.test.failingBinding", ".rs.test.failingPromise", ".rs.test.workingBinding",
-                     ".rs.test.bindingCalls", ".rs.test.promiseForced"),
+                     ".rs.test.bindingCalls", ".rs.test.promiseForced", ".rs.test.missingBinding",
+                     ".rs.test.warningBinding", ".rs.test.interruptingBinding"),
             envir = globalenv())
       )EOF");
    }
@@ -688,6 +705,10 @@ TEST(SessionRTest, LookupsCatchErrorsFromBindings) {
 
    bool forcesPromises = false;
    error = r::exec::evaluateString("getRversion() >= '4.6.0'", &forcesPromises);
+   ASSERT_FALSE(error);
+
+   bool catchesOnlyErrors = false;
+   error = r::exec::evaluateString("getRversion() >= '3.6.2'", &catchesOnlyErrors);
    ASSERT_FALSE(error);
 
    // each lookup reads the failing binding once, and finds nothing; not
@@ -711,8 +732,9 @@ TEST(SessionRTest, LookupsCatchErrorsFromBindings) {
    ASSERT_FALSE(error);
    EXPECT_EQ(3, bindingCalls);
 
-   // R >= 4.6 forces a promise a lookup reads (R_getVarEx()), and the error
-   // is caught; earlier versions return the promise itself
+   // R_getVarEx() (R >= 4.6, where R exports it) forces a promise a lookup
+   // reads, and the error is caught; R's older lookup returns the promise
+   // itself. either way, whether it was forced and what was read agree
    SEXP promiseSEXP = R_GlobalEnv;
    lookupError = r::exec::executeSafely([&]()
    {
@@ -723,11 +745,43 @@ TEST(SessionRTest, LookupsCatchErrorsFromBindings) {
    bool promiseForced = false;
    error = r::exec::evaluateString(".rs.test.promiseForced", &promiseForced);
    ASSERT_FALSE(error);
-   EXPECT_EQ(forcesPromises, promiseForced);
    if (forcesPromises)
+      EXPECT_TRUE(promiseForced);
+
+   if (promiseForced)
       EXPECT_EQ(nullptr, promiseSEXP);
    else
       EXPECT_TRUE(promiseSEXP != nullptr && TYPEOF(promiseSEXP) == PROMSXP);
+
+   // a binding that warns is still read, as only errors and interrupts are
+   // caught; one that signals an interrupt reads as unbound, and the
+   // interrupt is re-armed for whatever R code is running; and a missing
+   // argument ends findFunction()'s search, as it ends R's
+   SEXP warningSEXP = nullptr;
+   SEXP interruptingSEXP = R_GlobalEnv;
+   bool interruptRearmed = false;
+   SEXP missingFunctionSEXP = R_GlobalEnv;
+   lookupError = r::exec::executeSafely([&]()
+   {
+      warningSEXP = r::sexp::findVar(".rs.test.warningBinding", R_GlobalEnv);
+
+      interruptingSEXP = r::sexp::findVar(".rs.test.interruptingBinding", R_GlobalEnv);
+      interruptRearmed = r::exec::interruptsPending();
+      r::exec::setInterruptsPending(false);
+
+      missingFunctionSEXP = r::sexp::findFunction(".rs.test.missingBinding");
+   });
+   ASSERT_FALSE(lookupError) << lookupError.asString();
+   EXPECT_TRUE(warningSEXP != nullptr && TYPEOF(warningSEXP) == INTSXP);
+   EXPECT_EQ(nullptr, missingFunctionSEXP);
+
+   // before R 3.6.2, R_ToplevelExec() is used, under which signalling an
+   // interrupt condition is a no-op
+   if (catchesOnlyErrors)
+   {
+      EXPECT_EQ(nullptr, interruptingSEXP);
+      EXPECT_TRUE(interruptRearmed);
+   }
 
    // findFunction() forces the promise, catching the error
    SEXP promiseFunctionSEXP = R_GlobalEnv;
@@ -854,7 +908,7 @@ TEST(SessionRTest, InvokeRpcHandlerAnswersARequestAnRErrorInterrupted) {
    int failuresBeforeSending = 0;
    Error responseError;
    json::JsonRpcFunctionContinuation continuation =
-      [&](const Error& error, json::JsonRpcResponse*)
+      [&](const Error& error, json::JsonRpcResponse* pResponse)
       {
          if (!session::rpc::claimRpcDelivery(pDelivery.get()))
             return;
@@ -868,6 +922,9 @@ TEST(SessionRTest, InvokeRpcHandlerAnswersARequestAnRErrorInterrupted) {
          responses++;
          responseError = error;
          session::rpc::markRpcDeliverySent(pDelivery.get());
+
+         if (pResponse != nullptr && pResponse->hasAfterResponse())
+            session::rpc::runAfterResponse(pDelivery.get(), pResponse);
       };
 
    json::JsonRpcFunctionContinuation retained;
@@ -932,11 +989,72 @@ TEST(SessionRTest, InvokeRpcHandlerAnswersARequestAnRErrorInterrupted) {
    EXPECT_EQ(1, responses);
    EXPECT_NE(std::string::npos, responseError.getProperty("errormsg").find("failed before sending"));
 
-   // a response another thread has claimed, but not yet sent, is left to it
+   // a response another thread has claimed, but not yet sent, is left to it:
+   // the backstop doesn't answer, and that thread's response is the one sent
    reset();
-   std::thread([&]() { session::rpc::claimRpcDelivery(pDelivery.get()); }).join();
+   std::mutex mutex;
+   std::condition_variable changed;
+   bool workerClaimed = false;
+   bool workerMaySend = false;
+   std::thread worker([&]()
+   {
+      bool owns = session::rpc::claimRpcDelivery(pDelivery.get());
+
+      std::unique_lock<std::mutex> lock(mutex);
+      workerClaimed = true;
+      changed.notify_all();
+      changed.wait(lock, [&]() { return workerMaySend; });
+
+      if (owns)
+      {
+         responses++;
+         session::rpc::markRpcDeliverySent(pDelivery.get());
+      }
+   });
+
+   {
+      std::unique_lock<std::mutex> lock(mutex);
+      changed.wait(lock, [&]() { return workerClaimed; });
+   }
+
    EXPECT_TRUE(invoke(failing));
    EXPECT_EQ(0, responses);
+
+   {
+      std::lock_guard<std::mutex> lock(mutex);
+      workerMaySend = true;
+   }
+   changed.notify_all();
+   worker.join();
+   EXPECT_EQ(1, responses);
+   EXPECT_FALSE(responseError) << responseError.asString();
+   EXPECT_TRUE(pDelivery->sent);
+
+   // after-response work runs once the handler has returned, outside the
+   // backstop's context: R discards calling handlers registered in a context
+   // when it ends, and that work registers some (a notebook's first chunk)
+   bool handlerReturned = false;
+   bool afterResponseRan = false;
+   bool afterResponseRanAfterHandler = false;
+   json::JsonRpcAsyncFunction respondsWithAfterResponse =
+      [&](const json::JsonRpcRequest&, const json::JsonRpcFunctionContinuation& respond)
+      {
+         json::JsonRpcResponse response;
+         response.setSuppressDetectChanges(true);
+         response.setAfterResponse([&]()
+         {
+            afterResponseRan = true;
+            afterResponseRanAfterHandler = handlerReturned;
+         });
+         respond(Success(), &response);
+         handlerReturned = true;
+      };
+
+   reset();
+   EXPECT_FALSE(invoke(respondsWithAfterResponse));
+   EXPECT_EQ(1, responses);
+   EXPECT_TRUE(afterResponseRan);
+   EXPECT_TRUE(afterResponseRanAfterHandler);
 
    // an async handler that responds after returning is answered once, by it
    json::JsonRpcAsyncFunction retains =

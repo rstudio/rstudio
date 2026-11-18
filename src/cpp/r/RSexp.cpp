@@ -202,6 +202,7 @@ struct CaughtEvaluation
 
    bool unbound;
    bool caught;
+   bool interrupted;
 };
 
 SEXP caughtEvaluationBody(void* data)
@@ -215,15 +216,37 @@ SEXP caughtEvaluationBody(void* data)
    return R_NilValue;
 }
 
-SEXP caughtEvaluationHandler(SEXP, void* data)
+SEXP caughtEvaluationHandler(SEXP conditionSEXP, void* data)
 {
-   static_cast<CaughtEvaluation*>(data)->caught = true;
+   CaughtEvaluation* pEvaluation = static_cast<CaughtEvaluation*>(data);
+   pEvaluation->caught = true;
+   pEvaluation->interrupted = Rf_inherits(conditionSEXP, "interrupt");
    return R_NilValue;
 }
 
 void caughtEvaluationToplevel(void* data)
 {
    caughtEvaluationBody(data);
+}
+
+// before R 3.6.2, R_tryCatch() transferred control for every condition, so a
+// warning or message would read as a failure; R_ToplevelExec() has the right
+// semantics there, at the cost of printing a caught error. the answer is
+// cached only once the check succeeds
+bool tryCatchIsSelective()
+{
+   static int s_selective = -1;
+   if (s_selective == -1)
+   {
+      bool selective = false;
+      Error error = r::exec::evaluateString("base::getRversion() >= \"3.6.2\"", &selective);
+      if (error)
+         return false;
+
+      s_selective = selective ? 1 : 0;
+   }
+
+   return s_selective == 1;
 }
 
 // returns the result, or nullptr if an R error or interrupt was caught
@@ -244,13 +267,8 @@ SEXP evaluateCaught(SEXP (*evaluate)(CaughtEvaluation*), SEXP firstSEXP, SEXP se
    SEXP holderSEXP;
    protect.add(holderSEXP = Rf_allocVector(VECSXP, 1));
 
-   // before R 3.6.2, R_tryCatch() transferred control for every condition,
-   // so a warning or message would read as a failure; R_ToplevelExec() has
-   // the right semantics there, at the cost of printing a caught error
-   static const bool s_tryCatchIsSelective = r::util::hasRequiredVersion("3.6.2");
-
-   CaughtEvaluation evaluation = { evaluate, firstSEXP, secondSEXP, holderSEXP, false, false };
-   if (s_tryCatchIsSelective)
+   CaughtEvaluation evaluation = { evaluate, firstSEXP, secondSEXP, holderSEXP, false, false, false };
+   if (tryCatchIsSelective())
    {
       R_tryCatch(caughtEvaluationBody, &evaluation,
                  s_conditionsSEXP,
@@ -261,6 +279,12 @@ SEXP evaluateCaught(SEXP (*evaluate)(CaughtEvaluation*), SEXP firstSEXP, SEXP se
    {
       evaluation.caught = true;
    }
+
+   // an interrupt is meant for R code that's running (as when a request is
+   // handled while the user's code runs), not for the lookup; re-arm it, so
+   // that code sees it when it next checks
+   if (evaluation.interrupted)
+      r::exec::setInterruptsPending(true);
 
    if (evaluation.caught || evaluation.unbound)
       return nullptr;
@@ -866,7 +890,9 @@ SEXP findFunction(const std::string& name, const std::string& ns)
       SEXP resultSEXP = runsCode ?
                evaluateCaught(findVarInFrameImpl, env, nameSEXP) :
                runtime::findVarInFrame(env, nameSEXP);
-      if (resultSEXP == nullptr && runsCode)
+      // a missing argument (which R < 4.6 reads as R_MissingArg) is an error
+      // for R's lookup too
+      if (runsCode && (resultSEXP == nullptr || resultSEXP == R_MissingArg))
          return nullptr;
 
       if (resultSEXP != nullptr && TYPEOF(resultSEXP) == PROMSXP)
@@ -1961,16 +1987,19 @@ bool yamlContainsNul(const YAML::Node& node, std::vector<YAML::Node>* pAncestors
       if (isYamlAncestor(node, *pAncestors))
          return false;
 
-      // a key is read as a string, as createYamlMap() reads it; a composite
-      // key isn't traversed, as create() can't read one either
+      // a key is read as a string, as createYamlMap() reads it. checking
+      // stops at a composite key, which create() can't read either (it
+      // raises a C++ exception); neither its value nor the rest is visited
       pAncestors->push_back(node);
       bool found = false;
       for (auto it = node.begin(); it != node.end() && !found; ++it)
       {
          if (node.IsMap())
          {
-            found = (it->first.IsScalar() && hasNul(it->first.Scalar())) ||
-                    yamlContainsNul(it->second, pAncestors);
+            if (!it->first.IsScalar())
+               break;
+
+            found = hasNul(it->first.Scalar()) || yamlContainsNul(it->second, pAncestors);
          }
          else
          {

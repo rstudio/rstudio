@@ -424,11 +424,15 @@ private:
       json::Object chunkOptions;
       Error optionsError = unit->parseOptions(&chunkOptions);
 
-      // R can't take code containing a nul character, so the options of a
-      // chunk with one can't be read, and the chunk would run with the
-      // document's default engine whatever its own is. run an error in R
-      // instead, whatever the default engine
-      if (optionsError && r::sexp::containsNul(unit->code()))
+      // R can't take a string containing a nul character, so the options of
+      // a chunk with one in its code (or metadata, which the options are read
+      // with) can't be read, and the chunk would run with the document's
+      // default engine whatever its own is. run an error in R instead,
+      // whatever the default engine
+      bool unrepresentable = r::sexp::containsNul(unit->code()) ||
+                             r::sexp::containsNul(unit->docType()) ||
+                             r::sexp::containsNul(unit->docId());
+      if (optionsError && unrepresentable)
       {
          unit->replaceCode("base::stop('This chunk contains a nul character, which R does not support.', call. = FALSE)\n");
          chunkOptions["engine"] = "r";

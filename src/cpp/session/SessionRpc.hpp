@@ -49,6 +49,13 @@ struct RpcDelivery
 {
    std::atomic<int> claimant { 0 };
    std::atomic<bool> sent { false };
+
+   // while invokeRpcHandler() runs the handler, a response's after-response
+   // work is held here, and run once the handler returns: R discards the
+   // calling handlers R code registers in a context when the context ends,
+   // and that work registers some (a notebook's first chunk). main thread only
+   std::atomic<bool> deferAfterResponse { false };
+   boost::shared_ptr<core::json::JsonRpcResponse> pAfterResponse;
 };
 
 // returns true when the caller now owns the response and should send it
@@ -65,7 +72,11 @@ void markRpcDeliverySent(RpcDelivery* pDelivery);
 void invokeRpcHandler(const core::json::JsonRpcAsyncFunction& handler,
                       const core::json::JsonRpcRequest& request,
                       const core::json::JsonRpcFunctionContinuation& continuation,
-                      boost::shared_ptr<RpcDelivery> pDelivery);
+                      const boost::shared_ptr<RpcDelivery>& pDelivery);
+
+// runs a response's after-response work, then lets modules detect changes;
+// with pDelivery, it's held instead while the handler runs (see RpcDelivery)
+void runAfterResponse(RpcDelivery* pDelivery, core::json::JsonRpcResponse* pResponse);
 
 void setRpcDelay(int delayMs);
 

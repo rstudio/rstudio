@@ -91,14 +91,7 @@ void endHandleRpcRequestDirect(boost::shared_ptr<rpc::RpcDelivery> pDelivery,
 
       // run after response if we have one (then detect changes again)
       if (pJsonRpcResponse->hasAfterResponse())
-      {
-         pJsonRpcResponse->runAfterResponse();
-         if (!pJsonRpcResponse->suppressDetectChanges())
-         {
-            module_context::events().onDetectChanges(
-                  module_context::ChangeSourceRPC);
-         }
-      }
+         rpc::runAfterResponse(pDelivery.get(), pJsonRpcResponse);
    }
 }
 
@@ -242,6 +235,13 @@ void answerInterruptedRpc(void* data, Rboolean jump)
 
    RpcHandlerInvocation* pInvocation = static_cast<RpcHandlerInvocation*>(data);
    RpcDelivery* pDelivery = pInvocation->pDelivery;
+
+   // the unwinding carries on past invokeRpcHandler(), so held after-response
+   // work is dropped, as the handler's remaining work is, and a continuation
+   // the handler kept runs its own
+   pDelivery->deferAfterResponse = false;
+   pDelivery->pAfterResponse.reset();
+
    if (pDelivery->sent)
       return;
 
@@ -277,10 +277,23 @@ void markRpcDeliverySent(RpcDelivery* pDelivery)
    pDelivery->sent = true;
 }
 
+void runAfterResponse(RpcDelivery* pDelivery, json::JsonRpcResponse* pResponse)
+{
+   if (pDelivery != nullptr && pDelivery->deferAfterResponse && core::thread::isMainThread())
+   {
+      pDelivery->pAfterResponse = boost::make_shared<json::JsonRpcResponse>(*pResponse);
+      return;
+   }
+
+   pResponse->runAfterResponse();
+   if (!pResponse->suppressDetectChanges())
+      module_context::events().onDetectChanges(module_context::ChangeSourceRPC);
+}
+
 void invokeRpcHandler(const json::JsonRpcAsyncFunction& handler,
                       const json::JsonRpcRequest& request,
                       const json::JsonRpcFunctionContinuation& continuation,
-                      boost::shared_ptr<RpcDelivery> pDelivery)
+                      const boost::shared_ptr<RpcDelivery>& pDelivery)
 {
    // offline requests are handled off the main thread without R, which
    // can't be entered there
@@ -290,15 +303,23 @@ void invokeRpcHandler(const json::JsonRpcAsyncFunction& handler,
       return;
    }
 
-   // R_UnwindProtect() rather than R_ToplevelExec(): it neither stops the
-   // unwinding nor runs the handler in a context of its own, which would
-   // discard calling handlers R code registered meanwhile (as a notebook's
-   // first chunk does), and catch interrupts meant for running R code
+   // R_UnwindProtect() rather than R_ToplevelExec(): it doesn't stop the
+   // unwinding, so an interrupt meant for R code that's running still
+   // reaches it. like any context, it restores R's handler stack when it
+   // ends, so after-response work (which can register calling handlers) is
+   // held until it has (see RpcDelivery)
    RpcHandlerInvocation invocation = { &handler, &request, &continuation, pDelivery.get(), nullptr };
+   pDelivery->deferAfterResponse = true;
    r::sexp::Protect protect;
    SEXP tokenSEXP;
    protect.add(tokenSEXP = R_MakeUnwindCont());
    R_UnwindProtect(invokeRpcHandlerImpl, &invocation, answerInterruptedRpc, &invocation, tokenSEXP);
+   pDelivery->deferAfterResponse = false;
+
+   boost::shared_ptr<json::JsonRpcResponse> pAfterResponse = pDelivery->pAfterResponse;
+   pDelivery->pAfterResponse.reset();
+   if (pAfterResponse)
+      runAfterResponse(nullptr, pAfterResponse.get());
 
    if (invocation.exception)
       std::rethrow_exception(invocation.exception);
@@ -404,14 +425,7 @@ void endHandleRpcRequestIndirectImpl(
 
    // run after response if we have one (then detect changes again)
    if (pJsonRpcResponse->hasAfterResponse())
-   {
-      pJsonRpcResponse->runAfterResponse();
-      if (!pJsonRpcResponse->suppressDetectChanges())
-      {
-         module_context::events().onDetectChanges(
-                 module_context::ChangeSourceRPC);
-      }
-   }
+      runAfterResponse(pDelivery, pJsonRpcResponse);
 }
 
 void endHandleRpcRequestIndirectOnce(
