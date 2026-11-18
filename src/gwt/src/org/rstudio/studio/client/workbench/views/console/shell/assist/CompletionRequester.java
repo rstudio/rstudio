@@ -345,8 +345,11 @@ public class CompletionRequester
          @Override
          public void onResponseReceived(Completions response)
          {
+            // the cached narrowings are keyed by what was typed after the
+            // old prefix, so they don't carry over to a new one
             cachedLinePrefix_ = token;
             cachedLanguage_ = response.getLanguage();
+            cachedCompletions_.clear();
             String token = response.getToken();
 
             JsArrayString comp = response.getCompletions();

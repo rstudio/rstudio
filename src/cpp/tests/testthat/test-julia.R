@@ -100,8 +100,9 @@ test_that("completions and their help come from Julia", {
    expect_identical(completions$type[completions$results == "@time"], types$UNKNOWN)
 
    # documentation, headed by the signature it begins with (even one wrapped
-   # over several lines); an example after it stays in the description
-   JuliaConnectoR::juliaEval(r"---(
+   # over several lines); an example after it stays in the description. (Not
+   # a raw string, which needs R 4.0.)
+   JuliaConnectoR::juliaEval('
       """
           rstudio_test_add(x,
                            y = 1)
@@ -111,7 +112,7 @@ test_that("completions and their help come from Julia", {
           rstudio_test_add(2)
       """
       rstudio_test_add(x, y = 1) = x + y
-   )---")
+   ')
 
    help <- .rs.julia.helpHandler("completion", "rstudio_test_add", "Main")
    expect_identical(help$signature, "rstudio_test_add(x, y = 1)")
