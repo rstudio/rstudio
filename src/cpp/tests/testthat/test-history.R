@@ -19,8 +19,20 @@ context("history")
 
 # .rs.savehistory() and .rs.loadhistory() replace utils::savehistory() and
 # utils::loadhistory() on Windows; they exist on every platform, so these tests
-# call them directly. only failures are exercised, so the session's own history
-# is never written out.
+# call them directly. the first test replaces the session's history with a
+# synthetic one, so only that is ever written out.
+
+test_that(".rs.loadhistory() and .rs.savehistory() round-trip a history file", {
+   input <- tempfile("history-input-")
+   output <- tempfile("history-output-")
+   on.exit(unlink(c(input, output)), add = TRUE)
+
+   writeLines("history_test_entry()", input)
+   .rs.loadhistory(input)
+   .rs.savehistory(output)
+
+   expect_identical(readLines(output), "history_test_entry()")
+})
 
 test_that(".rs.savehistory() reports a file it can't write", {
    path <- file.path(tempfile("no-such-dir-"), "history.Rhistory")
