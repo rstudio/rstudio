@@ -162,7 +162,7 @@ describe('DesktopCallback', () => {
       if (process.platform !== 'win32' || process.arch !== 'x64') {
         this.skip();
       }
-      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{} as never, null]);
+      const detect = sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{} as never, null]);
 
       // the client names bin\R.exe; the R prepared and launched is bin\x64\Rterm.exe
       const binDir = path.join(rDir, 'bin');
@@ -174,6 +174,7 @@ describe('DesktopCallback', () => {
       writeFileSync(rterm, '');
 
       assert.equal(await callback.setPendingRVersion(chosen), '');
+      assert.isTrue(detect.calledOnceWith(rterm));
       assert.equal(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload, chosen), '');
       assert.equal(callback.collectPendingRVersion(), rterm);
     });
