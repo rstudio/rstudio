@@ -259,8 +259,13 @@ expect_marker("${SOURCE_DIR}" "tip")
 
 
 # Without GIT_EXECUTABLE, the script finds git itself. (A fractional retry
-# delay is accepted too.)
-fetch("${DEP_URL}" "${DEP_PINNED}" "${SOURCE_DIR}" RESULT -DGIT_EXECUTABLE= -DRETRY_DELAY=.5)
+# delay and valid TLS settings are accepted too.)
+fetch(
+   "${DEP_URL}" "${DEP_PINNED}" "${SOURCE_DIR}" RESULT
+   -DGIT_EXECUTABLE=
+   -DRETRY_DELAY=.5
+   -DTLS_VERSION=1.2
+   -DTLS_VERIFY=ON)
 expect_fetched(RESULT "fetching without GIT_EXECUTABLE")
 expect_marker("${SOURCE_DIR}" "pinned")
 
