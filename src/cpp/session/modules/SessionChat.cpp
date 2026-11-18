@@ -461,9 +461,12 @@ static boost::mutex& s_pendingExecutionMutex = make_leaked<boost::mutex>();
 static std::queue<PendingExecutionRequest>& s_pendingExecutionQueue = make_leaked<std::queue<PendingExecutionRequest>>();
 static bool s_executionScheduled = false;
 
+// Whether a chat execution set the console busy and has yet to release it
+static bool s_chatHoldsBusy = false;
+
 // Forward declaration
 void processPendingExecution();
-void continuePendingExecutions(bool releaseBusy);
+void continuePendingExecutions();
 
 // ============================================================================
 // Code Execution Context (for console output capture)
@@ -1415,9 +1418,21 @@ void processPendingExecution()
       WLOG("Execution request timed out after {}ms in queue for trackingId: {}",
            waitTimeMs, request.trackingId);
 
-      // Send timeout error response if backend is still alive
+      // Send timeout response if backend is still alive. A request out of its
+      // own time gets the same result as one stopped while running.
       boost::shared_ptr<core::system::ProcessOperations> pOps = request.weakOps.lock();
-      if (pOps)
+      if (pOps && deadlinePassed)
+      {
+         json::Object result;
+         result["output"] = "";
+         result["error"] = timedOutMessage(request.timeout) + " (the R console was busy)";
+         result["canceled"] = false;
+         result["timedOut"] = true;
+         result["plots"] = json::Array();
+         result["executionTime"] = 0;
+         sendJsonRpcResponse(*pOps, request.requestId, result);
+      }
+      else if (pOps)
       {
          sendJsonRpcError(*pOps, request.requestId, kJsonRpcServerError,
             "Execution timed out. The R console was busy for too long.");
@@ -1430,13 +1445,13 @@ void processPendingExecution()
          s_canceledTrackingIds.erase(request.trackingId);
       }
 
-      // An execution before this one may have left the console busy for it
-      continuePendingExecutions(console_input::executing());
+      continuePendingExecutions();
       return;
    }
 
    // Signal that R is executing chat code
    console_input::setExecuting(true);
+   s_chatHoldsBusy = true;
    ClientEvent busyEvent(client_events::kBusy, true);
    module_context::enqueClientEvent(busyEvent);
 
@@ -1446,12 +1461,15 @@ void processPendingExecution()
                    request.silentExecution, request.expressionBoundaryHook,
                    request.timeout, request.queuedTime);
 
-   continuePendingExecutions(true);
+   continuePendingExecutions();
 }
 
 // After a request runs or expires: schedule the next queued request, or, once
-// the queue is empty, release the busy state if releaseBusy
-void continuePendingExecutions(bool releaseBusy)
+// the queue is empty, release the busy state a chat execution set. Releasing
+// only that one matters for a request that expires while idle work runs
+// inside a user command (e.g. one waiting in file.choose()), which must keep
+// its own busy state.
+void continuePendingExecutions()
 {
    boost::mutex::scoped_lock lock(s_pendingExecutionMutex);
    if (!s_pendingExecutionQueue.empty() && !s_executionScheduled)
@@ -1462,8 +1480,9 @@ void continuePendingExecutions(bool releaseBusy)
          processPendingExecution,
          true);  // idleOnly=true - wait for R to be idle
    }
-   else if (s_pendingExecutionQueue.empty() && releaseBusy)
+   else if (s_pendingExecutionQueue.empty() && s_chatHoldsBusy)
    {
+      s_chatHoldsBusy = false;
       lock.unlock();
       console_input::setExecuting(false);
       console_input::updateSessionExecuting();
@@ -1919,13 +1938,13 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    {
       r::exec::setInterruptsPending(false);
 
-      // A deadline that passed while R finished the last expression (e.g.
-      // printing its result) still means the request ran out of time
+      // The request ran out of time even if the last expression got to
+      // finish (e.g. the interrupt landed in printing its result), or the
+      // agent's code turned the interrupt into an error of its own, whose
+      // message is kept
+      timedOut = true;
       if (!error)
-      {
-         timedOut = true;
          error = Error(boost::system::errc::timed_out, timedOutMessage(timeout), ERROR_LOCATION);
-      }
    }
 
    // Handle parse/runtime errors
