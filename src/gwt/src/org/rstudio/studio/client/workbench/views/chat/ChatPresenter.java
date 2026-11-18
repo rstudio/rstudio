@@ -23,6 +23,7 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -116,7 +117,7 @@ public class ChatPresenter extends BasePresenter
       void hideUpdateNotification();
       void hideErrorNotification();
       void showCrashedMessage(int exitCode);
-      void showSuspendedMessage();
+      void showSuspendedMessage(String notice);
       void showIncompatibleVersion();
       void showUnsupportedVersionUpgradeRequired(String currentVersion, String newVersion);
       void showUnsupportedVersionNoUpdate(String currentVersion);
@@ -124,6 +125,9 @@ public class ChatPresenter extends BasePresenter
       void showManifestUnavailable(String errorMessage);
       void showInstallationManagedNotInstalled();
       void showConnectionLostNotification(String message);
+      // The backend the page in the frame connects to is about to stop; its
+      // reconnect failures are expected until the page is replaced
+      void expectFrameDisconnect();
       void hideConnectionLostNotification();
       void showReadlineNotification();
       void hideReadlineNotification();
@@ -323,12 +327,14 @@ public class ChatPresenter extends BasePresenter
                   // suspend overlay via SessionSerializationEvent forwarding
                   updateSavedGeometry();
                }
-               // Only dim the chat UI if it was actually loaded and running.
-               // If chat was never initialized (e.g., sidebar hidden at startup),
-               // there's nothing meaningful to dim.
-               if (cachedUrl_ != null)
+               // Only dim the chat UI if Posit Assistant was actually loaded and
+               // running. If chat was never initialized (e.g., sidebar hidden at
+               // startup) or another provider is selected, nothing will reconnect.
+               if (cachedUrl_ != null && paiUtil_.isChatProviderPosit())
                {
-                  display_.showSuspendedMessage();
+                  display_.showSuspendedMessage(restartingR_
+                     ? constants_.chatRestartingRNotice()
+                     : constants_.chatSessionSuspendedNotice());
                }
             }
             else if (action == SessionSerializationAction.RESUME_SESSION)
@@ -366,6 +372,16 @@ public class ChatPresenter extends BasePresenter
                pollForBackendUrl();
             }
          }
+      });
+
+      // Restart R stops the backend whether or not SUSPEND_SESSION reaches
+      // the client (Desktop doesn't wait to deliver it). If the restart fails,
+      // the expectation lasts until the page is next replaced.
+      events_.addHandler(RestartStatusEvent.TYPE, (RestartStatusEvent event) ->
+      {
+         restartingR_ = event.getStatus() == RestartStatusEvent.RESTART_INITIATED;
+         if (restartingR_)
+            display_.expectFrameDisconnect();
       });
 
       // Listen for satellite closed events
@@ -1644,6 +1660,9 @@ public class ChatPresenter extends BasePresenter
    private SatelliteWindowGeometry savedGeometry_ = null;
    private String cachedUrl_ = null;
    private String cachedAuthToken_ = null;
+
+   // Session > Restart R is between RESTART_INITIATED and RESTART_COMPLETED
+   private boolean restartingR_ = false;
 
    private static final ChatConstants constants_ = com.google.gwt.core.client.GWT.create(ChatConstants.class);
 }
