@@ -2098,6 +2098,11 @@ public class AceEditor implements DocDisplay
       widget_.getEditor().setInsertMatching(value);
    }
 
+   public void setPairSingleQuotes(boolean value)
+   {
+      widget_.getEditor().setPairSingleQuotes(value);
+   }
+
    @Override
    public void setSurroundSelectionPref(String value)
    {

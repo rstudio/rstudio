@@ -81,6 +81,7 @@ import org.rstudio.studio.client.workbench.views.history.events.HistoryEntriesAd
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
 import org.rstudio.studio.client.workbench.views.source.SourceSatellite;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.EditorBehavior;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
@@ -407,6 +408,17 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    public void onConsolePrompt(ConsolePromptEvent event)
    {
       historyCompletion_.resetOffset();
+
+      // the input is edited in R mode whatever the prompt's language; in
+      // Julia, a quote after a name is the adjoint (A'), not a string
+      if (input_ instanceof AceEditor)
+      {
+         boolean julia = StringUtil.equals(
+            event.getPrompt().getLanguage(),
+            ConsoleLanguageTracker.LANGUAGE_JULIA);
+         ((AceEditor) input_).setPairSingleQuotes(!julia);
+      }
+
       String prompt = event.getPrompt().getPromptText();
       boolean addToHistory = event.getPrompt().getAddToHistory();
       consolePrompt(prompt, addToHistory);

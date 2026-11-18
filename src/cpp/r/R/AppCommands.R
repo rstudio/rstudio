@@ -258,6 +258,7 @@
    activateConsolePanePane = "activateConsolePanePane",
    consoleActivateR = "consoleActivateR",
    consoleActivatePython = "consoleActivatePython",
+   consoleActivateJulia = "consoleActivateJulia",
    newFolder = "newFolder",
    touchSourceDoc = "touchSourceDoc",
    touchTextDoc = "touchTextDoc",

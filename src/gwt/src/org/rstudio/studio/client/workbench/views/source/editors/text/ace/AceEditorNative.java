@@ -472,6 +472,12 @@ public class AceEditorNative extends JavaScriptObject
       getSession().getMode().setInsertMatching(value);
    }
 
+   // Whether a typed ' may be paired, where the mode would pair it (see
+   // smartAllowAutoInsert)
+   public final native void setPairSingleQuotes(boolean value) /*-{
+      this.getSession().$pairSingleQuotes = value;
+   }-*/;
+
    public static native void setVerticallyAlignFunctionArgs(
          boolean verticallyAlign) /*-{
       $wnd.require("mode/r_code_model").setVerticallyAlignFunctionArgs(verticallyAlign);

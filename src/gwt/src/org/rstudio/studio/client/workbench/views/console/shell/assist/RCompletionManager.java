@@ -496,16 +496,20 @@ public class RCompletionManager implements CompletionManager
          {
             return snippets_.attemptSnippetInsertion(true);
          }
+         // R's help and definitions are the wrong ones at another language's
+         // console prompt
          else if (keycode == KeyCodes.KEY_F1
                   && modifier == KeyboardShortcut.NONE)
          {
-            goToHelp();
+            if (isConsoleInR())
+               goToHelp();
             return true;
          }
          else if (keycode == KeyCodes.KEY_F2
                   && modifier == KeyboardShortcut.NONE)
          {
-            goToDefinition();
+            if (isConsoleInR())
+               goToDefinition();
             return true;
          }
       }
@@ -931,8 +935,9 @@ public class RCompletionManager implements CompletionManager
       return c != ' ' || linePart.matches(".*,\\s*");
    }
 
-   // At another language's console prompt, R's signatures would be the wrong
-   // ones; that language's are shown with its completions, by help handler.
+   // Whether R's signatures, help and definitions apply: not at another
+   // language's console prompt (whose signatures come with its completions,
+   // by help handler).
    private boolean isConsoleInR()
    {
       if (behavior_ != EditorBehavior.AceBehaviorConsole)
