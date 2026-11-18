@@ -256,9 +256,11 @@ private:
    // executing with missing state. the R runtime is not thread-safe.
    bool requireMainThread(const char* method, const core::ErrorLocation& location);
 
-   // returns true when the parameter can be added. a name or value holding a
-   // string with an embedded nul is refused instead, recording the error for
-   // call() to return; so is any parameter after one was refused
+   // returns true when the parameter can be added. a parameter R would raise
+   // an error on while the call is built (a name or value holding a string
+   // with an embedded nul, or a name longer than R allows) is refused
+   // instead, recording the error for call() to return; so is any parameter
+   // after one was refused
    bool acceptParam(const std::string& name, bool valueContainsNul);
 
    void initParams()

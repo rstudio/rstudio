@@ -56,6 +56,9 @@ namespace exec {
 
 namespace {
 
+// R's limit on the length of a symbol name (MAXIDSIZE, which R doesn't export)
+const std::size_t kMaxSymbolNameBytes = 10000;
+
 // was the R session interrupted?
 std::atomic<bool> s_wasInterrupted(false);
 
@@ -473,13 +476,19 @@ bool RFunction::acceptParam(const std::string& name, bool valueContainsNul)
    if (paramError_)
       return false;
 
-   // a name is passed to Rf_install() as a C string, so it would be cut off
-   if (!valueContainsNul && name.find('\0') == std::string::npos)
+   // call() passes a name to Rf_install() as a C string, which cuts it off at
+   // a nul and raises an R error if it's longer than R's limit on symbol names
+   std::string problem;
+   if (valueContainsNul || name.find('\0') != std::string::npos)
+      problem = "a string with an embedded nul";
+   else if (name.size() > kMaxSymbolNameBytes)
+      problem = "a parameter name longer than " + std::to_string(kMaxSymbolNameBytes) + " bytes";
+   else
       return true;
 
    std::string functionName = functionName_.empty() ? "<unknown>" : functionName_;
    paramError_ = rCodeExecutionError(
-            "R function '" + functionName + "' was passed a string with an embedded nul",
+            "R function '" + functionName + "' was passed " + problem,
             ERROR_LOCATION);
    if (!functionName_.empty())
       paramError_.addProperty("symbol", functionName_);

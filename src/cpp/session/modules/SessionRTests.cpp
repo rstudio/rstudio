@@ -313,6 +313,14 @@ static void expectEmbeddedNulError(const Error& error, const std::string& label)
    EXPECT_NE(std::string::npos, error.getProperty("errormsg").find("was passed a string with an embedded nul")) << label;
 }
 
+// likewise for a parameter name longer than R's limit on symbol names, which
+// Rf_install() raises an R error on
+static void expectLongNameError(const Error& error, const std::string& label)
+{
+   EXPECT_TRUE(error == r::errc::CodeExecutionError) << label << ": " << error.asString();
+   EXPECT_NE(std::string::npos, error.getProperty("errormsg").find("was passed a parameter name longer than")) << label;
+}
+
 TEST(SessionRTest, JsonRpcRefusesStringsWithEmbeddedNul) {
    // R raises an error when asked for a string with an embedded nul. Raised
    // while an R handler's arguments are built, before the call runs protected,
@@ -363,6 +371,25 @@ TEST(SessionRTest, JsonRpcRefusesStringsWithEmbeddedNul) {
       error = r::exec::executeSafely([&]() { handlerError = handler(request, &response); });
       EXPECT_FALSE(error) << input << ": " << error.asString();
       expectEmbeddedNulError(handlerError, input);
+   }
+
+   // a kwparams name is also refused when it's longer than R allows a symbol
+   // name, which R would otherwise raise an error on in the same place
+   {
+      std::string input =
+         R"({"method": "test_embedded_nul", "kwparams": {")" +
+         std::string(10001, 'a') +
+         R"(": "x"}})";
+
+      json::JsonRpcRequest request;
+      error = json::parseJsonRpcRequest(input, &request);
+      ASSERT_FALSE(error);
+
+      Error handlerError;
+      json::JsonRpcResponse response;
+      error = r::exec::executeSafely([&]() { handlerError = handler(request, &response); });
+      EXPECT_FALSE(error) << error.asString();
+      expectLongNameError(handlerError, "long kwparams name");
    }
 
    // a request without a nul still reaches the handler
@@ -443,6 +470,41 @@ TEST(SessionRTest, RFunctionRefusesStringsWithEmbeddedNul) {
       });
       EXPECT_FALSE(error) << testCase.first << ": " << error.asString();
       expectEmbeddedNulError(callError, testCase.first);
+   }
+
+   // R also raises an error building a call with a parameter name longer than
+   // its limit on symbol names (10000 bytes)
+   std::string longName(10001, 'a');
+   std::vector<std::pair<std::string, AddParams>> longNameCases = {
+      { "long name", [&](r::exec::RFunction* pFunction) { pFunction->addParam(longName, "x"); } },
+      { "long SEXP name", [&](r::exec::RFunction* pFunction) { pFunction->addParam(longName, R_NilValue); } },
+      { "long quoted name", [&](r::exec::RFunction* pFunction) { pFunction->addQuotedParam(longName, R_NilValue); } },
+   };
+
+   for (const auto& testCase : longNameCases)
+   {
+      Error callError;
+      Error error = r::exec::executeSafely([&]()
+      {
+         r::exec::RFunction function("base:::list");
+         testCase.second(&function);
+         callError = function.call();
+      });
+      EXPECT_FALSE(error) << testCase.first << ": " << error.asString();
+      expectLongNameError(callError, testCase.first);
+   }
+
+   // a name at the limit is still accepted
+   {
+      Error callError;
+      Error error = r::exec::executeSafely([&]()
+      {
+         callError = r::exec::RFunction("base:::list")
+               .addParam(std::string(10000, 'a'), "x")
+               .call();
+      });
+      EXPECT_FALSE(error) << error.asString();
+      EXPECT_FALSE(callError) << callError.asString();
    }
 
    // the same kinds of parameters without a nul still reach R
