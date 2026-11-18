@@ -29,6 +29,43 @@
   Var UpdateInstallBegun
   ; the elevated instance's exit code for a failure after that point
   !define RSTUDIO_UPDATE_ERROR_INSTALL_BEGUN 666670
+
+;--------------------------------
+; RSTUDIO CHANGE - Pack plugin DLLs from a staging folder, where daily and release
+; builds sign them: Smart App Control can block unsigned DLLs in $PLUGINSDIR (#19680).
+; makensis takes a plugin from the last !addplugindir that has it, ahead of its own
+; Plugins folder, so keep this the only one. Signed builds fail on an unstaged plugin.
+
+  !searchreplace RSTUDIO_PLUGINS_DIR "@CPACK_TOPLEVEL_DIRECTORY@/nsis-plugins" "/" "\"
+  !searchreplace RSTUDIO_SCRIPTS_DIR "@CPACK_RSTUDIO_SCRIPTS_DIR@" "/" "\"
+
+  !system 'if exist "${RSTUDIO_PLUGINS_DIR}" rmdir /s /q "${RSTUDIO_PLUGINS_DIR}"' = 0
+  !system 'mkdir "${RSTUDIO_PLUGINS_DIR}"' = 0
+
+  !macro RSTUDIO_STAGE_PLUGIN PLUGIN_PATH
+    !searchreplace RSTUDIO_PLUGIN_SOURCE "${PLUGIN_PATH}" "/" "\"
+    !system 'copy /y "${RSTUDIO_PLUGIN_SOURCE}" "${RSTUDIO_PLUGINS_DIR}" >nul' = 0
+    !undef RSTUDIO_PLUGIN_SOURCE
+  !macroend
+
+  !insertmacro RSTUDIO_STAGE_PLUGIN "${NSISDIR}\Plugins\x86-unicode\InstallOptions.dll"
+  !insertmacro RSTUDIO_STAGE_PLUGIN "${NSISDIR}\Plugins\x86-unicode\nsDialogs.dll"
+  !insertmacro RSTUDIO_STAGE_PLUGIN "${NSISDIR}\Plugins\x86-unicode\System.dll"
+  !insertmacro RSTUDIO_STAGE_PLUGIN "${NSISDIR}\Plugins\x86-unicode\UserInfo.dll"
+  !insertmacro RSTUDIO_STAGE_PLUGIN "@CPACK_DEPENDENCIES_DIR@/nsis-multiuser/@CPACK_NSIS_MULTIUSER_VERSION@/Plugins/x86-unicode/StdUtils.dll"
+  !insertmacro RSTUDIO_STAGE_PLUGIN "@CPACK_DEPENDENCIES_DIR@/nsis-multiuser/@CPACK_NSIS_MULTIUSER_VERSION@/Plugins/x86-unicode/UAC.dll"
+  !insertmacro RSTUDIO_STAGE_PLUGIN "@CPACK_DEPENDENCIES_DIR@/nsprocess/@CPACK_NSPROCESS_VERSION@/Plugin/nsProcess.dll"
+
+  ; The Jenkins Package stage sets RSTUDIO_CODESIGN for daily and release
+  ; builds. The installer itself is signed later, in the Sign Installer stage.
+  !if "$%RSTUDIO_CODESIGN%" == "1"
+    !system '"${RSTUDIO_SCRIPTS_DIR}\codesign.cmd" "${RSTUDIO_PLUGINS_DIR}\*.dll"' = 0
+    !uninstfinalize '"${RSTUDIO_SCRIPTS_DIR}\codesign.cmd" "%1" && "${RSTUDIO_SCRIPTS_DIR}\verify-nsis-plugins.cmd" "%1"' = 0
+    !finalize '"${RSTUDIO_SCRIPTS_DIR}\verify-nsis-plugins.cmd" "%1"' = 0
+  !endif
+
+  !addplugindir /x86-unicode "${RSTUDIO_PLUGINS_DIR}"
+
 ;--------------------------------
 ;Include Modern UI
 
@@ -38,8 +75,6 @@
 ; NsisMultiUser: per-user / all-users install with UAC on demand
 
   !addincludedir "@CPACK_DEPENDENCIES_DIR@/nsis-multiuser/@CPACK_NSIS_MULTIUSER_VERSION@/Include"
-  !addplugindir /x86-ansi    "@CPACK_DEPENDENCIES_DIR@/nsis-multiuser/@CPACK_NSIS_MULTIUSER_VERSION@/Plugins/x86-ansi"
-  !addplugindir /x86-unicode "@CPACK_DEPENDENCIES_DIR@/nsis-multiuser/@CPACK_NSIS_MULTIUSER_VERSION@/Plugins/x86-unicode"
 
   !define PRODUCT_NAME "RStudio"
   !define PROGEXE "rstudio.exe"
@@ -75,7 +110,6 @@
 ;Include NsProcess to detect running RStudio instance
 
   !addincludedir "@CPACK_DEPENDENCIES_DIR@/nsprocess/@CPACK_NSPROCESS_VERSION@/Include"
-  !addplugindir "@CPACK_DEPENDENCIES_DIR@/nsprocess/@CPACK_NSPROCESS_VERSION@/Plugin"
   !include "nsProcess.nsh"
 
 ;--------------------------------

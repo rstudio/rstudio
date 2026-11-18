@@ -242,11 +242,33 @@ pipeline {
         // }
 
         stage('Package') {
+
+          environment {
+            // Daily and release builds -- both of which pass DAILY -- also sign
+            // the plugin DLLs makensis packs into the installer and the
+            // uninstaller it generates, which Smart App Control can otherwise
+            // block (#19680). The NSIS template runs the signing, so this stage
+            // sets up the same signing environment as Sign Executables.
+            RSTUDIO_CODESIGN = "${params.DAILY ? '1' : '0'}"
+          }
           steps {
-            bat "cd package/win32 &&" +
-              "set \"package_os=windows\" &&" +
-              "make-dist-packages.bat &&" +
-              "cd ../.."
+            bat '''
+              if "%RSTUDIO_CODESIGN%"=="1" (
+                call "C:\\Program Files\\Microsoft Visual Studio\\2026\\BuildTools\\Common7\\Tools\\VsDevCmd.bat"
+                C:\\Windows\\System32\\certutil.exe -csp "DigiCert Signing Manager KSP" -key -user
+                "C:\\Program Files\\DigiCert\\DigiCert One Signing Manager Tools\\smctl.exe" windows certsync
+              )
+              cd package\\win32 || exit /b 1
+              set "package_os=windows"
+              call make-dist-packages.bat || exit /b 1
+            '''
+          }
+          post {
+            failure {
+              // Client-side tools wrap server rejections in opaque errors; the
+              // real HTTP status and message land in the signingmanager logs
+              bat 'if exist "%USERPROFILE%\\.signingmanager\\logs\\*.log" type "%USERPROFILE%\\.signingmanager\\logs\\*.log"'
+            }
           }
         }
 
