@@ -159,14 +159,15 @@ TEST_F(ProjectTypeResolution, SiteAliasIsMigratedToWebsite)
 TEST_F(ProjectTypeResolution, EditorOptionsWithANulAreSkipped)
 {
    // a "\0" escape gives a string R can't hold; creating it raised an R error
-   // while the config was read at startup, which ended the session
+   // while the config was read at startup, which ended the session. the
+   // editor options come first, so that the settings after them are read too
    FilePath quartoYml = projectDir_.completeChildPath("_quarto.yml");
    writeStringToFile(
       quartoYml,
-      "project:\n"
-      "  type: website\n"
       "editor:\n"
-      "  mode: \"source\\0\"\n");
+      "  mode: \"source\\0\"\n"
+      "project:\n"
+      "  type: website\n");
 
    std::string type;
    json::Object editor;

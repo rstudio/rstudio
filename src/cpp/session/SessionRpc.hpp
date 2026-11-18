@@ -55,7 +55,8 @@ struct RpcDelivery
    // calling handlers R code registers in a context when the context ends,
    // and that work registers some (a notebook's first chunk). main thread only
    std::atomic<bool> deferAfterResponse { false };
-   boost::shared_ptr<core::json::JsonRpcResponse> pAfterResponse;
+   boost::function<void()> afterResponse;
+   bool suppressDetectChanges = false;
 };
 
 // returns true when the caller now owns the response and should send it

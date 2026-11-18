@@ -240,7 +240,7 @@ void answerInterruptedRpc(void* data, Rboolean jump)
    // work is dropped, as the handler's remaining work is, and a continuation
    // the handler kept runs its own
    pDelivery->deferAfterResponse = false;
-   pDelivery->pAfterResponse.reset();
+   pDelivery->afterResponse.clear();
 
    if (pDelivery->sent)
       return;
@@ -277,17 +277,30 @@ void markRpcDeliverySent(RpcDelivery* pDelivery)
    pDelivery->sent = true;
 }
 
+namespace {
+
+void runAfterResponseNow(const boost::function<void()>& afterResponse, bool suppressDetectChanges)
+{
+   if (afterResponse)
+      afterResponse();
+
+   if (!suppressDetectChanges)
+      module_context::events().onDetectChanges(module_context::ChangeSourceRPC);
+}
+
+} // anonymous namespace
+
 void runAfterResponse(RpcDelivery* pDelivery, json::JsonRpcResponse* pResponse)
 {
+   // only the work is held, not the response it came with
    if (pDelivery != nullptr && pDelivery->deferAfterResponse && core::thread::isMainThread())
    {
-      pDelivery->pAfterResponse = boost::make_shared<json::JsonRpcResponse>(*pResponse);
+      pDelivery->afterResponse = pResponse->afterResponse();
+      pDelivery->suppressDetectChanges = pResponse->suppressDetectChanges();
       return;
    }
 
-   pResponse->runAfterResponse();
-   if (!pResponse->suppressDetectChanges())
-      module_context::events().onDetectChanges(module_context::ChangeSourceRPC);
+   runAfterResponseNow(pResponse->afterResponse(), pResponse->suppressDetectChanges());
 }
 
 void invokeRpcHandler(const json::JsonRpcAsyncFunction& handler,
@@ -316,10 +329,10 @@ void invokeRpcHandler(const json::JsonRpcAsyncFunction& handler,
    R_UnwindProtect(invokeRpcHandlerImpl, &invocation, answerInterruptedRpc, &invocation, tokenSEXP);
    pDelivery->deferAfterResponse = false;
 
-   boost::shared_ptr<json::JsonRpcResponse> pAfterResponse = pDelivery->pAfterResponse;
-   pDelivery->pAfterResponse.reset();
-   if (pAfterResponse)
-      runAfterResponse(nullptr, pAfterResponse.get());
+   boost::function<void()> afterResponse;
+   afterResponse.swap(pDelivery->afterResponse);
+   if (afterResponse)
+      runAfterResponseNow(afterResponse, pDelivery->suppressDetectChanges);
 
    if (invocation.exception)
       std::rethrow_exception(invocation.exception);

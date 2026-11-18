@@ -703,9 +703,7 @@ TEST(SessionRTest, LookupsCatchErrorsFromBindings) {
    }
    BOOST_SCOPE_EXIT_END
 
-   bool forcesPromises = false;
-   error = r::exec::evaluateString("getRversion() >= '4.6.0'", &forcesPromises);
-   ASSERT_FALSE(error);
+   bool forcesPromises = r::runtime::lookupsForcePromises();
 
    bool catchesOnlyErrors = false;
    error = r::exec::evaluateString("getRversion() >= '3.6.2'", &catchesOnlyErrors);
@@ -732,9 +730,8 @@ TEST(SessionRTest, LookupsCatchErrorsFromBindings) {
    ASSERT_FALSE(error);
    EXPECT_EQ(3, bindingCalls);
 
-   // R_getVarEx() (R >= 4.6, where R exports it) forces a promise a lookup
-   // reads, and the error is caught; R's older lookup returns the promise
-   // itself. either way, whether it was forced and what was read agree
+   // R_getVarEx() (where R exports it) forces a promise a lookup reads, and
+   // the error is caught; R's older lookup returns the promise itself
    SEXP promiseSEXP = R_GlobalEnv;
    lookupError = r::exec::executeSafely([&]()
    {
@@ -745,10 +742,8 @@ TEST(SessionRTest, LookupsCatchErrorsFromBindings) {
    bool promiseForced = false;
    error = r::exec::evaluateString(".rs.test.promiseForced", &promiseForced);
    ASSERT_FALSE(error);
+   EXPECT_EQ(forcesPromises, promiseForced);
    if (forcesPromises)
-      EXPECT_TRUE(promiseForced);
-
-   if (promiseForced)
       EXPECT_EQ(nullptr, promiseSEXP);
    else
       EXPECT_TRUE(promiseSEXP != nullptr && TYPEOF(promiseSEXP) == PROMSXP);
@@ -878,6 +873,11 @@ TEST(SessionRTest, CreateTurnsACyclicYamlAliasIntoNull) {
    EXPECT_EQ(2, innerLength);
    EXPECT_TRUE(cycleIsNull);
    EXPECT_FALSE(nul);
+
+   // a null key is read as "null", so a nul after one is still found; a
+   // composite key, which create() can't read, ends the check
+   EXPECT_TRUE(r::sexp::containsNul(YAML::Load("~: x\nmode: \"a\\0b\"")));
+   EXPECT_FALSE(r::sexp::containsNul(YAML::Load("[a, b]: x\nmode: \"a\\0b\"")));
 
    // an alias to a node that doesn't contain it is still followed
    YAML::Node shared = YAML::Load("a: &x [1, 2]\nb: *x");

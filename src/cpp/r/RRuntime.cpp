@@ -422,6 +422,11 @@ SEXP findVar(SEXP nameSEXP, SEXP envSEXP)
    return unboundToNull(s_findVar(nameSEXP, envSEXP));
 }
 
+bool lookupsForcePromises()
+{
+   return R_getVarEx != nullptr;
+}
+
 int getBindingType(SEXP symSEXP, SEXP envSEXP)
 {
    return s_getBindingType(symSEXP, envSEXP);
