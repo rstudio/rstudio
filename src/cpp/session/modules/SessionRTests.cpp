@@ -23,6 +23,10 @@
 #include <thread>
 #include <vector>
 
+#ifndef _WIN32
+#include <unistd.h>
+#endif
+
 #include <core/FileSerializer.hpp>
 #include <core/system/Environment.hpp>
 
@@ -167,34 +171,41 @@ TEST(SessionRTest, SysGetenvSeesCoreSetenv) {
 }
 
 TEST(SessionRTest, FailedHistoryLoadKeepsHistory) {
-   r::session::ConsoleHistory& history = r::session::consoleHistory();
+   // a history of its own, so the session's history (and its listeners) stay
+   // out of it
+   r::session::ConsoleHistory history;
+   history.setCapacity(16);
+   history.add("first()", false);
+   history.add("second()", false);
 
-   // this is the session's own history; put it back afterwards
-   FilePath backupPath;
-   ASSERT_FALSE(FilePath::tempFilePath(backupPath));
-   ASSERT_FALSE(history.saveToFile(backupPath, false));
+   const std::vector<std::string> seeded {"first()", "second()"};
+   ASSERT_EQ(seeded, std::vector<std::string>(history.begin(), history.end()));
 
-   FilePath seedPath, missingPath;
-   ASSERT_FALSE(FilePath::tempFilePath(seedPath));
+   // a file that doesn't exist, e.g. loadhistory() with a mistyped path
+   FilePath missingPath;
    ASSERT_FALSE(FilePath::tempFilePath(missingPath));
+   EXPECT_TRUE(history.loadFromFile(missingPath, true));
+   EXPECT_EQ(seeded, std::vector<std::string>(history.begin(), history.end()));
 
-   BOOST_SCOPE_EXIT(&backupPath, &seedPath)
+#ifndef _WIN32
+   // a file that exists but can't be read; root can read it anyway, so the
+   // check only runs when the read really fails
+   FilePath unreadablePath;
+   ASSERT_FALSE(FilePath::tempFilePath(unreadablePath));
+   ASSERT_FALSE(core::writeStringToFile(unreadablePath, "third()\n"));
+   BOOST_SCOPE_EXIT(&unreadablePath)
    {
-      r::session::consoleHistory().loadFromFile(backupPath, false);
-      backupPath.remove();
-      seedPath.remove();
+      unreadablePath.remove();
    }
    BOOST_SCOPE_EXIT_END
 
-   // seed the history from a file, so no add() listeners see the entries
-   ASSERT_FALSE(core::writeStringToFile(seedPath, "first()\nsecond()\n"));
-   ASSERT_FALSE(history.loadFromFile(seedPath, true));
-   std::vector<std::string> seeded(history.begin(), history.end());
-   ASSERT_EQ((std::vector<std::string> {"first()", "second()"}), seeded);
-
-   // a file that doesn't exist, e.g. loadhistory() with a mistyped path
-   EXPECT_TRUE(history.loadFromFile(missingPath, true));
-   EXPECT_EQ(seeded, std::vector<std::string>(history.begin(), history.end()));
+   ASSERT_FALSE(unreadablePath.changeFileMode("000"));
+   if (::access(unreadablePath.getAbsolutePath().c_str(), R_OK) != 0)
+   {
+      EXPECT_TRUE(history.loadFromFile(unreadablePath, true));
+      EXPECT_EQ(seeded, std::vector<std::string>(history.begin(), history.end()));
+   }
+#endif
 
    // without verifyFile, a missing file means there is no prior history
    EXPECT_FALSE(history.loadFromFile(missingPath, false));
