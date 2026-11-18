@@ -26,7 +26,7 @@ import {
   nativeImage,
   webContents,
 } from 'electron';
-import { existsSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'fs';
 import os from 'os';
 import path from 'path';
 import { pathToFileURL } from 'url';
@@ -87,8 +87,21 @@ describe('DesktopCallback', () => {
   });
 
   describe('setPendingRVersion', () => {
-    // a stand-in R that exists on disk; querying it is stubbed
-    const rPath = process.execPath;
+    // a stand-in R that exists on disk; querying it is stubbed. It is an
+    // Rterm.exe whose folder isn't bin, which Windows leaves unrewritten
+    // (see fixWindowsRExecutablePath)
+    let rDir: string;
+    let rPath: string;
+
+    before(() => {
+      rDir = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'gwt-callback-r-')));
+      rPath = path.join(rDir, 'Rterm.exe');
+      writeFileSync(rPath, '');
+    });
+
+    after(() => {
+      rmSync(rDir, { recursive: true, force: true });
+    });
 
     afterEach(() => {
       callback.collectPendingRVersion();
@@ -142,6 +155,28 @@ describe('DesktopCallback', () => {
 
       callback.setPendingQuit(PendingQuit.PendingQuitNone);
       assert.equal(callback.collectPendingRVersion(), '');
+    });
+
+    it('finds the R a quit names by the path it was prepared with, on x64 windows', async function () {
+      // the desktop app is built for x64 only, and runs emulated on ARM64 Windows
+      if (process.platform !== 'win32' || process.arch !== 'x64') {
+        this.skip();
+      }
+      const detect = sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{} as never, null]);
+
+      // the client names bin\R.exe; the R prepared and launched is bin\x64\Rterm.exe
+      const binDir = path.join(rDir, 'bin');
+      const x64Dir = path.join(binDir, 'x64');
+      mkdirSync(x64Dir, { recursive: true });
+      const chosen = path.join(binDir, 'R.exe');
+      const rterm = path.join(x64Dir, 'Rterm.exe');
+      writeFileSync(chosen, '');
+      writeFileSync(rterm, '');
+
+      assert.equal(await callback.setPendingRVersion(chosen), '');
+      assert.isTrue(detect.calledOnceWith(rterm));
+      assert.equal(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload, chosen), '');
+      assert.equal(callback.collectPendingRVersion(), rterm);
     });
   });
 
