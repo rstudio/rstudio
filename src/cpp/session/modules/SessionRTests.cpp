@@ -22,9 +22,11 @@
 #include <string>
 #include <thread>
 
+#include <core/json/JsonRpc.hpp>
 #include <core/system/Environment.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RJsonRpc.hpp>
 #include <r/RSexp.hpp>
 #include <r/RErrorCategory.hpp>
 #include <r/RInterface.hpp>
@@ -293,6 +295,68 @@ TEST(SessionRTest, StringsReachRMarkedUtf8) {
    error = r::exec::RFunction("base:::Encoding", values).call(&encodings);
    ASSERT_FALSE(error);
    EXPECT_EQ(std::vector<std::string>({ "UTF-8", "UTF-8" }), encodings);
+}
+
+TEST(SessionRTest, JsonRpcRefusesStringsWithEmbeddedNul) {
+   // R raises an error when asked for a string with an embedded nul. Raised
+   // while an R handler's arguments are built, before the call runs protected,
+   // it would longjmp past the handler and leave the request unanswered
+   Error error = r::exec::executeString(R"EOF(
+      .rs.addJsonRpcHandler("test_embedded_nul", function(...) .rs.scalar(length(list(...))))
+   )EOF");
+   ASSERT_FALSE(error);
+
+   BOOST_SCOPE_EXIT(void)
+   {
+      r::exec::executeString(R"EOF(
+         rm(".rs.rpc.test_embedded_nul", envir = as.environment("tools:rstudio"))
+      )EOF");
+   }
+   BOOST_SCOPE_EXIT_END
+
+   json::JsonRpcMethods methods;
+   error = r::json::getRpcMethods(&methods);
+   ASSERT_FALSE(error);
+
+   auto it = methods.find("test_embedded_nul");
+   ASSERT_NE(methods.end(), it);
+   json::JsonRpcFunction handler = it->second;
+
+   // requests are parsed from text, as the session receives them; a json::Value
+   // assigned from a std::string stops at the first nul. names are refused too,
+   // as R would otherwise truncate them at the nul
+   std::vector<std::string> inputs = {
+      R"({"method": "test_embedded_nul", "params": ["a\u0000b"]})",
+      R"({"method": "test_embedded_nul", "kwparams": {"x": "a\u0000b"}})",
+      R"({"method": "test_embedded_nul", "params": [["a\u0000b"]]})",
+      R"({"method": "test_embedded_nul", "params": [{"x": "a\u0000b"}]})",
+      R"({"method": "test_embedded_nul", "params": [{"a\u0000b": "x"}]})",
+      R"({"method": "test_embedded_nul", "kwparams": {"a\u0000b": "x"}})",
+   };
+
+   for (const std::string& input : inputs)
+   {
+      json::JsonRpcRequest request;
+      error = json::parseJsonRpcRequest(input, &request);
+      ASSERT_FALSE(error) << input;
+
+      json::JsonRpcResponse response;
+      error = handler(request, &response);
+      EXPECT_EQ(json::errc::ParamInvalid, error.getCode()) << input;
+      EXPECT_EQ(json::jsonRpcCategory().name(), error.getName()) << input;
+   }
+
+   // a request without a nul still reaches the handler
+   json::JsonRpcRequest request;
+   error = json::parseJsonRpcRequest(
+      R"({"method": "test_embedded_nul", "params": ["ab"], "kwparams": {"x": "a"}})",
+      &request);
+   ASSERT_FALSE(error);
+
+   json::JsonRpcResponse response;
+   error = handler(request, &response);
+   ASSERT_FALSE(error) << error.asString();
+   EXPECT_EQ(2, response.result().getInt());
 }
 
 #ifndef _WIN32
