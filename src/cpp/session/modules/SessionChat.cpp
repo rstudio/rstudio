@@ -4338,8 +4338,7 @@ Error downloadPackage(const std::string& url, const FilePath& destPath)
    // a non-zero return status, so the helper folds the warnings and the status
    // into the reason it returns ("" when the download succeeded). The helper also
    // owns the transfer timeout and leaves the download method to the user/admin's
-   // download.file.* options. destfile goes in as UTF-8 for the same reason as
-   // the paths in installPackage().
+   // download.file.* options.
    r::exec::RFunction download(".rs.chat.downloadPackage");
    download.addParam("url", url);
    download.addParam("destfile", destPath);
