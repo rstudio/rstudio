@@ -51,6 +51,19 @@ TEST(ChatExecutionDeadline, PassesOnceAtTheTimeout)
    EXPECT_TRUE(deadline.passed());
 }
 
+TEST(ChatExecutionDeadline, PassesOnALateFirstCheck)
+{
+   // Background processing polls R about every 50 ms, so the first check
+   // usually comes after the deadline rather than exactly at it
+   ExecutionDeadline deadline;
+   deadline.arm(kQueued, 2000);
+
+   EXPECT_FALSE(deadline.check(kQueued + milliseconds(1990)));
+   EXPECT_TRUE(deadline.check(kQueued + milliseconds(2049)));
+   EXPECT_FALSE(deadline.check(kQueued + milliseconds(2099)));
+   EXPECT_TRUE(deadline.passed());
+}
+
 TEST(ChatExecutionDeadline, CountsFromWhenTheRequestWasQueued)
 {
    // A request that waited 1.5 s in the queue has 0.5 s left to run
@@ -111,6 +124,9 @@ TEST(ChatExecutionDeadline, ExpiredInQueueOnceTheTimeoutIsUsedUp)
 {
    EXPECT_FALSE(expiredInQueue(kQueued, 1000, kQueued + milliseconds(999)));
    EXPECT_TRUE(expiredInQueue(kQueued, 1000, kQueued + milliseconds(1000)));
+
+   // A request dequeued long after its deadline
+   EXPECT_TRUE(expiredInQueue(kQueued, 1000, kQueued + milliseconds(3200)));
 }
 
 TEST(ChatExecutionDeadline, NeverExpiredInQueueWithoutATimeout)

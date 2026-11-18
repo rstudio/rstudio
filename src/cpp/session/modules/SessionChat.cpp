@@ -461,7 +461,7 @@ static boost::mutex& s_pendingExecutionMutex = make_leaked<boost::mutex>();
 static std::queue<PendingExecutionRequest>& s_pendingExecutionQueue = make_leaked<std::queue<PendingExecutionRequest>>();
 static bool s_executionScheduled = false;
 
-// Whether a chat execution set the console busy and has yet to release it
+// Whether a finished chat execution left the console busy for queued requests
 static bool s_chatHoldsBusy = false;
 
 // Forward declaration
@@ -1418,10 +1418,10 @@ void processPendingExecution()
 
    // A canceled request is answered as canceled (by executeCodeImpl), however
    // long it waited
-   bool deadlinePassed = !canceled &&
+   bool deadlinePassed =
       chat_execution::expiredInQueue(request.queuedTime, request.timeout, now);
 
-   if (waitTimeMs > kMaxQueueWaitMs || deadlinePassed)
+   if (!canceled && (waitTimeMs > kMaxQueueWaitMs || deadlinePassed))
    {
       WLOG("Execution request timed out after {}ms in queue for trackingId: {}",
            waitTimeMs, request.trackingId);
@@ -1433,7 +1433,7 @@ void processPendingExecution()
       {
          json::Object result;
          result["output"] = "";
-         result["error"] = timedOutMessage(request.timeout) + " (the R console was busy)";
+         result["error"] = timedOutMessage(request.timeout) + " while waiting to run";
          result["canceled"] = false;
          result["timedOut"] = true;
          result["plots"] = json::Array();
@@ -1457,9 +1457,10 @@ void processPendingExecution()
       return;
    }
 
-   // Signal that R is executing chat code
+   // Signal that R is executing chat code. The running request owns the busy
+   // state now, not a handoff from an earlier one.
    console_input::setExecuting(true);
-   s_chatHoldsBusy = true;
+   s_chatHoldsBusy = false;
    ClientEvent busyEvent(client_events::kBusy, true);
    module_context::enqueClientEvent(busyEvent);
 
@@ -1474,21 +1475,28 @@ void processPendingExecution()
 
 // After a request runs or expires: schedule the next queued request, or, once
 // the queue is empty, release the console's busy state -- after a request
-// that ran, or after one that expired if a chat execution set it. An expiry
-// can happen while idle work runs inside a user command (e.g. one waiting in
-// file.choose()), whose own busy state must be left alone.
+// that ran, or after one that expired if a finished request left the console
+// busy for the queue. An expiry can happen in idle work inside something else
+// that holds the console (a user command waiting in file.choose(), or a chat
+// request waiting in readline()), which must keep it.
 void continuePendingExecutions(bool ran)
 {
    boost::mutex::scoped_lock lock(s_pendingExecutionMutex);
-   if (!s_pendingExecutionQueue.empty() && !s_executionScheduled)
+   if (!s_pendingExecutionQueue.empty())
    {
-      s_executionScheduled = true;
-      module_context::scheduleDelayedWork(
-         boost::posix_time::milliseconds(1),
-         processPendingExecution,
-         true);  // idleOnly=true - wait for R to be idle
+      if (ran)
+         s_chatHoldsBusy = true;
+
+      if (!s_executionScheduled)
+      {
+         s_executionScheduled = true;
+         module_context::scheduleDelayedWork(
+            boost::posix_time::milliseconds(1),
+            processPendingExecution,
+            true);  // idleOnly=true - wait for R to be idle
+      }
    }
-   else if (s_pendingExecutionQueue.empty() && (ran || s_chatHoldsBusy))
+   else if (ran || s_chatHoldsBusy)
    {
       s_chatHoldsBusy = false;
       lock.unlock();
