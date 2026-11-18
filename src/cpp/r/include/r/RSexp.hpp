@@ -172,7 +172,9 @@ core::Error extract(SEXP valueSEXP, std::map<std::string, std::set<std::string>>
 core::Error extract(SEXP valueSEXP, core::json::Value* pJson);
 core::Error extract(SEXP valueSEXP, core::FilePath* pFilePath);
 
-// create SEXP from c++ type; strings are marked as UTF-8
+// create SEXP from c++ type; strings are marked as UTF-8. as in R, a string
+// with an embedded nul raises an R error rather than being cut off at the
+// nul, so code that must not longjmp checks with containsNul() first
 SEXP create(SEXP valueSEXP, Protect* pProtect);
 SEXP create(const core::json::Value& value, Protect* pProtect);
 SEXP create(const YAML::Node& node, Protect* pProtect);
@@ -200,6 +202,30 @@ SEXP create(const ListBuilder& builder, Protect* pProtect);
 SEXP create(const std::map<std::string, std::string>& value, Protect* pProtect);
 SEXP create(const std::map<std::string, SEXP> &value,
             Protect *pProtect);
+
+// whether create() would be handed a string with an embedded nul, as a
+// value or a name; one overload per create() overload that builds strings
+bool containsNul(const std::string& value);
+bool containsNul(const core::FilePath& value);
+bool containsNul(const core::json::Value& value);
+bool containsNul(const core::json::Array& value);
+bool containsNul(const core::json::Object& value);
+bool containsNul(const YAML::Node& node);
+bool containsNul(const std::vector<std::string>& value);
+bool containsNul(const std::set<std::string>& value);
+bool containsNul(const std::vector<std::pair<std::string, std::string>>& value);
+bool containsNul(const std::map<std::string, std::string>& value);
+bool containsNul(const std::map<std::string, std::vector<std::string>>& value);
+bool containsNul(const std::map<std::string, SEXP>& value);
+bool containsNul(const ListBuilder& builder);
+
+// the remaining types build no strings from c++ data (a C string ends at its
+// first nul); a new create() overload that does needs its own overload above
+template <typename T>
+bool containsNul(const T&)
+{
+   return false;
+}
 
 // Create a raw vector (binary data)
 SEXP createRawVector(const std::string& data, Protect* pProtect);

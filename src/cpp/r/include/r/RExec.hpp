@@ -192,6 +192,9 @@ public:
       if (!REQUIRE_MAIN_THREAD())
          return *this;
 
+      if (!acceptParam(name, false))
+         return *this;
+
       preserver_.add(paramSEXP);
       params_.push_back(Param(name, paramSEXP));
       return *this;
@@ -202,6 +205,11 @@ public:
    {
       // no-op off the main thread; the R runtime is not thread-safe
       if (!REQUIRE_MAIN_THREAD())
+         return *this;
+
+      // R's error on an embedded nul would be raised by create(), outside
+      // the protected call, and longjmp past the caller
+      if (!acceptParam(name, sexp::containsNul(param)))
          return *this;
 
       r::sexp::Protect protect;
@@ -248,6 +256,11 @@ private:
    // executing with missing state. the R runtime is not thread-safe.
    bool requireMainThread(const char* method, const core::ErrorLocation& location);
 
+   // returns true when the parameter can be added. a name or value holding a
+   // string with an embedded nul is refused instead, recording the error for
+   // call() to return; so is any parameter after one was refused
+   bool acceptParam(const std::string& name, bool valueContainsNul);
+
    void initParams()
    {
    }
@@ -271,6 +284,9 @@ private:
    // because it is written from the offending thread and read from the main
    // thread; the store also orders the poisoning write to functionSEXP_
    std::atomic<bool> offMainThreadUse_ { false };
+
+   // the first parameter acceptParam() refused; returned by call()
+   core::Error paramError_;
 
    // function name (optional)
    std::string functionName_;

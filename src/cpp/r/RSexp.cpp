@@ -148,10 +148,17 @@ std::string translate(SEXP charSEXP)
 
 // strings created for R are marked UTF-8, the encoding C++ strings are in.
 // marked native, R would misread non-ASCII text wherever the native encoding
-// is not UTF-8 (e.g. Windows with R < 4.2)
+// is not UTF-8 (e.g. Windows with R < 4.2). the length is passed so that R
+// raises its error on an embedded nul, rather than R seeing a shorter string
+// than the one C++ code (or a check upstream) worked with
 SEXP mkCharUtf8(const std::string& value)
 {
-   return Rf_mkCharCE(value.c_str(), CE_UTF8);
+   return Rf_mkCharLenCE(value.c_str(), static_cast<int>(value.size()), CE_UTF8);
+}
+
+bool hasNul(const std::string& value)
+{
+   return value.find('\0') != std::string::npos;
 }
 
 // names read from R arrive in C++ as UTF-8 (see translate()), but a symbol's
@@ -1415,9 +1422,7 @@ SEXP create(const std::string& value, Protect* pProtect)
    pProtect->add(strSEXP = Rf_allocVector(STRSXP, 1));
 
    // protection not required as long as we immediately assign into protected STRSXP
-   int size = static_cast<int>(value.size());
-   SEXP charSEXP = Rf_mkCharLenCE(value.c_str(), size, CE_UTF8);
-   SET_STRING_ELT(strSEXP, 0, charSEXP);
+   SET_STRING_ELT(strSEXP, 0, mkCharUtf8(value));
    return strSEXP;
 }
 
@@ -1733,7 +1738,130 @@ SEXP createList(const std::vector<std::string>& names, Protect* pProtect)
 
    return listSEXP;
 }
-   
+
+bool containsNul(const std::string& value)
+{
+   return hasNul(value);
+}
+
+bool containsNul(const FilePath& value)
+{
+   return hasNul(value.getAbsolutePath());
+}
+
+bool containsNul(const core::json::Value& value)
+{
+   if (value.isString())
+      return hasNul(value.getString());
+   else if (value.isArray())
+      return containsNul(value.getArray());
+   else if (value.isObject())
+      return containsNul(value.getObject());
+   else
+      return false;
+}
+
+bool containsNul(const core::json::Array& value)
+{
+   for (const core::json::Value& element : value)
+   {
+      if (containsNul(element))
+         return true;
+   }
+   return false;
+}
+
+bool containsNul(const core::json::Object& value)
+{
+   for (const core::json::Object::Member& member : value)
+   {
+      if (hasNul(member.getName()) || containsNul(member.getValue()))
+         return true;
+   }
+   return false;
+}
+
+bool containsNul(const YAML::Node& node)
+{
+   switch (node.Type())
+   {
+   case YAML::NodeType::Map:
+      for (auto it = node.begin(); it != node.end(); ++it)
+      {
+         if (containsNul(it->first) || containsNul(it->second))
+            return true;
+      }
+      return false;
+   case YAML::NodeType::Sequence:
+      for (auto it = node.begin(); it != node.end(); ++it)
+      {
+         if (containsNul(*it))
+            return true;
+      }
+      return false;
+   case YAML::NodeType::Scalar:
+      return hasNul(node.Scalar());
+   default:
+      return false;
+   }
+}
+
+bool containsNul(const std::vector<std::string>& value)
+{
+   return std::any_of(value.begin(), value.end(), hasNul);
+}
+
+bool containsNul(const std::set<std::string>& value)
+{
+   return std::any_of(value.begin(), value.end(), hasNul);
+}
+
+bool containsNul(const std::vector<std::pair<std::string, std::string>>& value)
+{
+   for (const auto& pair : value)
+   {
+      if (hasNul(pair.first) || hasNul(pair.second))
+         return true;
+   }
+   return false;
+}
+
+bool containsNul(const std::map<std::string, std::string>& value)
+{
+   for (const auto& entry : value)
+   {
+      if (hasNul(entry.first) || hasNul(entry.second))
+         return true;
+   }
+   return false;
+}
+
+bool containsNul(const std::map<std::string, std::vector<std::string>>& value)
+{
+   for (const auto& entry : value)
+   {
+      if (hasNul(entry.first) || containsNul(entry.second))
+         return true;
+   }
+   return false;
+}
+
+bool containsNul(const std::map<std::string, SEXP>& value)
+{
+   for (const auto& entry : value)
+   {
+      if (hasNul(entry.first))
+         return true;
+   }
+   return false;
+}
+
+bool containsNul(const ListBuilder& builder)
+{
+   // the values are R objects already; only the names are still to be built
+   return containsNul(builder.names());
+}
+
 SEXP SEXPPreserver::add(SEXP dataSEXP)
 {
    if (dataSEXP == R_NilValue)

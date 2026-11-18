@@ -458,11 +458,32 @@ RFunction& RFunction::addQuotedParam(const std::string& name, SEXP paramSEXP)
    if (!REQUIRE_MAIN_THREAD())
       return *this;
 
+   if (!acceptParam(name, false))
+      return *this;
+
    static SEXP s_quote = Rf_install("quote");
    SEXP quotedSEXP = Rf_lang2(s_quote, paramSEXP);
    preserver_.add(quotedSEXP);
    params_.push_back(Param(name, quotedSEXP));
    return *this;
+}
+
+bool RFunction::acceptParam(const std::string& name, bool valueContainsNul)
+{
+   if (paramError_)
+      return false;
+
+   // a name is passed to Rf_install() as a C string, so it would be cut off
+   if (!valueContainsNul && name.find('\0') == std::string::npos)
+      return true;
+
+   std::string functionName = functionName_.empty() ? "<unknown>" : functionName_;
+   paramError_ = rCodeExecutionError(
+            "R function '" + functionName + "' was passed a string with an embedded nul",
+            ERROR_LOCATION);
+   if (!functionName_.empty())
+      paramError_.addProperty("symbol", functionName_);
+   return false;
 }
 
 void RFunction::commonInit(const std::string& functionName)
@@ -543,6 +564,9 @@ Error RFunction::call(SEXP evalNS,
          error.addProperty("symbol", functionName_);
       return error;
    }
+
+   if (paramError_)
+      return paramError_;
 
    // note that we're executing R code in this scope
    CodeExecutingScope executingScope;

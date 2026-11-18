@@ -18,9 +18,16 @@
 #include <boost/scope_exit.hpp>
 
 #include <clocale>
+#include <functional>
+#include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <thread>
+#include <utility>
+#include <vector>
+
+#include <yaml-cpp/yaml.h>
 
 #include <core/json/JsonRpc.hpp>
 #include <core/system/Environment.hpp>
@@ -297,6 +304,15 @@ TEST(SessionRTest, StringsReachRMarkedUtf8) {
    EXPECT_EQ(std::vector<std::string>({ "UTF-8", "UTF-8" }), encodings);
 }
 
+// matcher for the error RFunction::call() returns for a parameter with an
+// embedded nul; the message distinguishes it from R's own "embedded nul in
+// string" error, which a check that came too late would let through
+static void expectEmbeddedNulError(const Error& error, const std::string& label)
+{
+   EXPECT_TRUE(error == r::errc::CodeExecutionError) << label << ": " << error.asString();
+   EXPECT_NE(std::string::npos, error.getProperty("errormsg").find("was passed a string with an embedded nul")) << label;
+}
+
 TEST(SessionRTest, JsonRpcRefusesStringsWithEmbeddedNul) {
    // R raises an error when asked for a string with an embedded nul. Raised
    // while an R handler's arguments are built, before the call runs protected,
@@ -346,8 +362,7 @@ TEST(SessionRTest, JsonRpcRefusesStringsWithEmbeddedNul) {
       json::JsonRpcResponse response;
       error = r::exec::executeSafely([&]() { handlerError = handler(request, &response); });
       EXPECT_FALSE(error) << input << ": " << error.asString();
-      EXPECT_EQ(json::errc::ParamInvalid, handlerError.getCode()) << input;
-      EXPECT_EQ(json::jsonRpcCategory().name(), handlerError.getName()) << input;
+      expectEmbeddedNulError(handlerError, input);
    }
 
    // a request without a nul still reaches the handler
@@ -363,6 +378,111 @@ TEST(SessionRTest, JsonRpcRefusesStringsWithEmbeddedNul) {
    ASSERT_FALSE(error) << error.asString();
    ASSERT_FALSE(handlerError) << handlerError.asString();
    EXPECT_EQ(2, response.result().getInt());
+}
+
+TEST(SessionRTest, RFunctionRefusesStringsWithEmbeddedNul) {
+   // R raises an error on a string with an embedded nul. raised while a
+   // parameter is built, outside the protected call, it would longjmp past the
+   // caller, as from a C++ RPC handler passing on a client's string (#19697).
+   // names are refused too, as Rf_install() would cut them off at the nul
+   std::string nul("a\0b", 3);
+
+   json::Value jsonValue;
+   ASSERT_FALSE(jsonValue.parse(R"({"y": "ok", "x": ["ok", "a\u0000b"]})"));
+
+   json::Value jsonName;
+   ASSERT_FALSE(jsonName.parse(R"({"y": "ok", "a\u0000b": "x"})"));
+
+   r::sexp::Protect protect;
+   r::sexp::ListBuilder builder(&protect);
+   builder.add("y", 1);
+   builder.add(nul, 2);
+
+   typedef std::function<void(r::exec::RFunction*)> AddParams;
+   std::vector<std::pair<std::string, AddParams>> cases = {
+      { "string", [&](r::exec::RFunction* pFunction) { pFunction->addParam(nul); } },
+      { "named string", [&](r::exec::RFunction* pFunction) { pFunction->addParam("x", nul); } },
+      { "name", [&](r::exec::RFunction* pFunction) { pFunction->addParam(nul, "x"); } },
+      { "SEXP name", [&](r::exec::RFunction* pFunction) { pFunction->addParam(nul, R_NilValue); } },
+      { "quoted name", [&](r::exec::RFunction* pFunction) { pFunction->addQuotedParam(nul, R_NilValue); } },
+      { "after a valid param", [&](r::exec::RFunction* pFunction) { pFunction->addParam("ok").addParam(nul); } },
+      { "vector", [&](r::exec::RFunction* pFunction) { pFunction->addParam(std::vector<std::string>({ "ok", nul })); } },
+      { "set", [&](r::exec::RFunction* pFunction) { pFunction->addParam(std::set<std::string>({ nul })); } },
+      { "map name", [&](r::exec::RFunction* pFunction) { pFunction->addParam(std::map<std::string, std::string>({ { nul, "x" } })); } },
+      { "json value", [&](r::exec::RFunction* pFunction) { pFunction->addParam(jsonValue); } },
+      { "json name", [&](r::exec::RFunction* pFunction) { pFunction->addParam(jsonName); } },
+      { "list builder name", [&](r::exec::RFunction* pFunction) { pFunction->addParam(builder); } },
+      { "yaml", [&](r::exec::RFunction* pFunction) { pFunction->addParam(YAML::Load("x: \"a\\0b\"")); } },
+   };
+
+   for (const auto& testCase : cases)
+   {
+      // run protected, so that an R error escaping the call fails this test
+      // instead of ending the test run
+      Error callError;
+      Error error = r::exec::executeSafely([&]()
+      {
+         r::exec::RFunction function("base:::list");
+         testCase.second(&function);
+         callError = function.call();
+      });
+      EXPECT_FALSE(error) << testCase.first << ": " << error.asString();
+      expectEmbeddedNulError(callError, testCase.first);
+   }
+
+   // the same kinds of parameters without a nul still reach R
+   json::Value jsonOk;
+   ASSERT_FALSE(jsonOk.parse(R"({"y": "ok", "x": ["ok", "ab"]})"));
+
+   r::sexp::ListBuilder builderOk(&protect);
+   builderOk.add("y", 1);
+   builderOk.add("ab", 2);
+
+   SEXP resultSEXP = R_NilValue;
+   Error callError;
+   Error error = r::exec::executeSafely([&]()
+   {
+      callError = r::exec::RFunction("base:::list")
+            .addParam("ok")
+            .addParam("x", std::vector<std::string>({ "ok", "ab" }))
+            .addParam(jsonOk)
+            .addParam(builderOk)
+            .addParam(YAML::Load("x: \"ab\""))
+            .call(&resultSEXP, &protect);
+   });
+   ASSERT_FALSE(error) << error.asString();
+   ASSERT_FALSE(callError) << callError.asString();
+   EXPECT_EQ(5, r::sexp::length(resultSEXP));
+}
+
+TEST(SessionRTest, CreateRaisesOnEmbeddedNul) {
+   // every string create() builds raises R's error on an embedded nul, as R
+   // does, rather than R seeing the string cut off at the nul
+   std::string nul("a\0b", 3);
+
+   json::Value jsonName;
+   ASSERT_FALSE(jsonName.parse(R"({"a\u0000b": "x"})"));
+
+   typedef std::function<void(r::sexp::Protect*)> Create;
+   std::vector<std::pair<std::string, Create>> cases = {
+      { "string", [&](r::sexp::Protect* pProtect) { r::sexp::create(nul, pProtect); } },
+      { "vector", [&](r::sexp::Protect* pProtect) { r::sexp::create(std::vector<std::string>({ "ok", nul }), pProtect); } },
+      { "set", [&](r::sexp::Protect* pProtect) { r::sexp::create(std::set<std::string>({ nul }), pProtect); } },
+      { "map value", [&](r::sexp::Protect* pProtect) { r::sexp::create(std::map<std::string, std::string>({ { "x", nul } }), pProtect); } },
+      { "map name", [&](r::sexp::Protect* pProtect) { r::sexp::create(std::map<std::string, std::string>({ { nul, "x" } }), pProtect); } },
+      { "json name", [&](r::sexp::Protect* pProtect) { r::sexp::create(jsonName, pProtect); } },
+   };
+
+   for (const auto& testCase : cases)
+   {
+      // the R error is caught here, where it can't escape the test
+      Error error = r::exec::executeSafely([&]()
+      {
+         r::sexp::Protect protect;
+         testCase.second(&protect);
+      });
+      EXPECT_TRUE(error) << testCase.first;
+   }
 }
 
 #ifndef _WIN32
