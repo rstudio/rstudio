@@ -193,21 +193,43 @@ SEXP rs_createUUID()
    return r::sexp::create(core::system::generateUuid(false), &rProtect);
 }
    
+// failures are R errors, as from the Rloadhistory / Rsavehistory callbacks
+// that implement these functions on POSIX
 SEXP rs_loadHistory(SEXP sFile)
 {
-   std::string file = R_ExpandFileName(r::sexp::asString(sFile).c_str());
-   Error error = consoleHistory().loadFromFile(FilePath(file), true);
-   if (error)
-      LOG_ERROR(error);
-   else
+   try
+   {
+      std::string file = R_ExpandFileName(r::sexp::asString(sFile).c_str());
+      Error error = consoleHistory().loadFromFile(FilePath(file), true);
+      if (error)
+         throw r::exec::RErrorException(error.getMessage());
+
       rCallbacks().consoleHistoryReset();
+   }
+   catch(r::exec::RErrorException& e)
+   {
+      r::exec::error(e.message());
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
    return R_NilValue;
 }
 
 SEXP rs_saveHistory(SEXP sFile)
 {
-   std::string file = R_ExpandFileName(r::sexp::asString(sFile).c_str());
-   consoleHistory().saveToFile(FilePath(file), false /* atomic */);
+   try
+   {
+      std::string file = R_ExpandFileName(r::sexp::asString(sFile).c_str());
+      Error error = consoleHistory().saveToFile(FilePath(file), false /* atomic */);
+      if (error)
+         throw r::exec::RErrorException(error.getMessage());
+   }
+   catch(r::exec::RErrorException& e)
+   {
+      r::exec::error(e.message());
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
    return R_NilValue;
 }
 
