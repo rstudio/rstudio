@@ -387,9 +387,7 @@ void checkExecutionDeadline()
 {
    boost::mutex::scoped_lock lock(s_executionTrackingMutex);
 
-   if (s_currentTrackingId.empty())
-      return;
-
+   // Not gated on s_currentTrackingId: an execution may have an empty one
    if (!s_currentDeadline.check(std::chrono::steady_clock::now()))
       return;
 
@@ -465,6 +463,7 @@ static bool s_executionScheduled = false;
 
 // Forward declaration
 void processPendingExecution();
+void continuePendingExecutions(bool releaseBusy);
 
 // ============================================================================
 // Code Execution Context (for console output capture)
@@ -1424,18 +1423,15 @@ void processPendingExecution()
             "Execution timed out. The R console was busy for too long.");
       }
 
-      // Schedule next request if queued
+      // The request never runs, so a cancellation recorded for it would
+      // otherwise linger
       {
-         boost::mutex::scoped_lock lock(s_pendingExecutionMutex);
-         if (!s_pendingExecutionQueue.empty() && !s_executionScheduled)
-         {
-            s_executionScheduled = true;
-            module_context::scheduleDelayedWork(
-               boost::posix_time::milliseconds(1),
-               processPendingExecution,
-               true);  // idleOnly=true - wait for R to be idle
-         }
+         boost::mutex::scoped_lock lock(s_executionTrackingMutex);
+         s_canceledTrackingIds.erase(request.trackingId);
       }
+
+      // An execution before this one may have left the console busy for it
+      continuePendingExecutions(console_input::executing());
       return;
    }
 
@@ -1450,33 +1446,37 @@ void processPendingExecution()
                    request.silentExecution, request.expressionBoundaryHook,
                    request.timeout, request.queuedTime);
 
-   // Schedule next request if queued, or clear busy state
-   {
-      boost::mutex::scoped_lock lock(s_pendingExecutionMutex);
-      if (!s_pendingExecutionQueue.empty() && !s_executionScheduled)
-      {
-         s_executionScheduled = true;
-         module_context::scheduleDelayedWork(
-            boost::posix_time::milliseconds(1),
-            processPendingExecution,
-            true);  // idleOnly=true - wait for R to be idle
-      }
-      else if (s_pendingExecutionQueue.empty())
-      {
-         lock.unlock();
-         console_input::setExecuting(false);
-         console_input::updateSessionExecuting();
-         ClientEvent busyEvent(client_events::kBusy, false);
-         module_context::enqueClientEvent(busyEvent);
+   continuePendingExecutions(true);
+}
 
-         // Restore the top-level prompt flag before reissuing. Code executed
-         // by the chat backend may have called readline(), which sets
-         // atTopLevelPrompt to false (hist == 0 in RReadConsole). Without
-         // this reset, the reissued prompt carries busy=true and the chat
-         // pane's "waiting for input" notification is never dismissed.
-         r::session::setAtTopLevelPrompt(true);
-         console_input::reissueLastConsolePrompt();
-      }
+// After a request runs or expires: schedule the next queued request, or, once
+// the queue is empty, release the busy state if releaseBusy
+void continuePendingExecutions(bool releaseBusy)
+{
+   boost::mutex::scoped_lock lock(s_pendingExecutionMutex);
+   if (!s_pendingExecutionQueue.empty() && !s_executionScheduled)
+   {
+      s_executionScheduled = true;
+      module_context::scheduleDelayedWork(
+         boost::posix_time::milliseconds(1),
+         processPendingExecution,
+         true);  // idleOnly=true - wait for R to be idle
+   }
+   else if (s_pendingExecutionQueue.empty() && releaseBusy)
+   {
+      lock.unlock();
+      console_input::setExecuting(false);
+      console_input::updateSessionExecuting();
+      ClientEvent busyEvent(client_events::kBusy, false);
+      module_context::enqueClientEvent(busyEvent);
+
+      // Restore the top-level prompt flag before reissuing. Code executed
+      // by the chat backend may have called readline(), which sets
+      // atTopLevelPrompt to false (hist == 0 in RReadConsole). Without
+      // this reset, the reissued prompt carries busy=true and the chat
+      // pane's "waiting for input" notification is never dismissed.
+      r::session::setAtTopLevelPrompt(true);
+      console_input::reissueLastConsolePrompt();
    }
 }
 
@@ -1619,6 +1619,7 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
          result["output"] = "";
          result["error"] = kExecutionCanceledError;
          result["canceled"] = true;
+         result["timedOut"] = false;
          result["plots"] = json::Array();
          result["executionTime"] = 0;
 
@@ -1751,8 +1752,10 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
                break;
             }
 
-            // The deadline's interrupt may have landed outside the agent's
-            // code (e.g. while printing a result), so stop here too
+            // Stop if the deadline has passed, whether or not background
+            // processing has noticed yet, or its interrupt landed outside
+            // the agent's code (e.g. while printing a result)
+            s_currentDeadline.check(std::chrono::steady_clock::now());
             if (s_currentDeadline.passed())
             {
                timedOut = true;
@@ -1913,7 +1916,17 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    // interrupt it raised that R never consumed, which would otherwise land on
    // whatever R runs next, such as the user's next command.
    if (disarmExecutionDeadline())
+   {
       r::exec::setInterruptsPending(false);
+
+      // A deadline that passed while R finished the last expression (e.g.
+      // printing its result) still means the request ran out of time
+      if (!error)
+      {
+         timedOut = true;
+         error = Error(boost::system::errc::timed_out, timedOutMessage(timeout), ERROR_LOCATION);
+      }
+   }
 
    // Handle parse/runtime errors
    // We need to both:
@@ -2017,7 +2030,9 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    // (e.g., plot(1); plot(2)), only the last one is captured. This is a known
    // limitation compared to the previous evaluate-based approach which used new_device.
    json::Array plotsArray;
-   if (capturePlot)
+
+   // Replaying a plot takes time the request no longer has
+   if (capturePlot && !timedOut)
    {
       // Use R helper for plot capture, passing the recorded plot from before
       // execution so it can detect if a NEW plot was created (vs. stale plot)
