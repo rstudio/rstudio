@@ -208,8 +208,9 @@ public:
          return *this;
 
       // R's error on an embedded nul would be raised by create(), outside
-      // the protected call, and longjmp past the caller
-      if (!acceptParam(name, sexp::containsNul(param)))
+      // the protected call, and longjmp past the caller. once a parameter is
+      // refused, the call won't run, so later ones aren't scanned
+      if (paramError_ || !acceptParam(name, sexp::containsNul(param)))
          return *this;
 
       r::sexp::Protect protect;

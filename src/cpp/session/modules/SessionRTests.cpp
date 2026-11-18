@@ -430,10 +430,14 @@ TEST(SessionRTest, RFunctionRefusesStringsWithEmbeddedNul) {
    std::vector<std::string> vector = { "ok", nul };
    std::set<std::string> set = { nul };
    std::vector<std::pair<std::string, std::string>> pairs = { { "y", "ok" }, { "x", nul } };
+   std::vector<std::pair<std::string, std::string>> pairsName = { { nul, "ok" } };
    std::map<std::string, std::string> map = { { nul, "x" } };
+   std::map<std::string, std::string> mapValue = { { "x", nul } };
    std::map<std::string, std::vector<std::string>> mapOfVectors = { { "x", { "ok", nul } } };
+   std::map<std::string, std::vector<std::string>> mapOfVectorsName = { { nul, { "ok" } } };
    std::map<std::string, SEXP> mapOfSEXPs = { { nul, R_NilValue } };
    YAML::Node yamlMap = YAML::Load("x: \"a\\0b\"");
+   YAML::Node yamlMapKey = YAML::Load("\"a\\0b\": x");
    YAML::Node yamlSequence = YAML::Load("[\"ok\", \"a\\0b\"]");
 
    typedef std::function<void(r::exec::RFunction*)> AddParams;
@@ -447,13 +451,17 @@ TEST(SessionRTest, RFunctionRefusesStringsWithEmbeddedNul) {
       { "vector", [&](r::exec::RFunction* pFunction) { pFunction->addParam(vector); } },
       { "set", [&](r::exec::RFunction* pFunction) { pFunction->addParam(set); } },
       { "pairs", [&](r::exec::RFunction* pFunction) { pFunction->addParam(pairs); } },
+      { "pairs name", [&](r::exec::RFunction* pFunction) { pFunction->addParam(pairsName); } },
       { "map name", [&](r::exec::RFunction* pFunction) { pFunction->addParam(map); } },
+      { "map value", [&](r::exec::RFunction* pFunction) { pFunction->addParam(mapValue); } },
       { "map of vectors", [&](r::exec::RFunction* pFunction) { pFunction->addParam(mapOfVectors); } },
+      { "map of vectors name", [&](r::exec::RFunction* pFunction) { pFunction->addParam(mapOfVectorsName); } },
       { "map of SEXPs", [&](r::exec::RFunction* pFunction) { pFunction->addParam(mapOfSEXPs); } },
       { "json value", [&](r::exec::RFunction* pFunction) { pFunction->addParam(jsonValue); } },
       { "json name", [&](r::exec::RFunction* pFunction) { pFunction->addParam(jsonName); } },
       { "list builder name", [&](r::exec::RFunction* pFunction) { pFunction->addParam(builder); } },
       { "yaml map", [&](r::exec::RFunction* pFunction) { pFunction->addParam(yamlMap); } },
+      { "yaml map key", [&](r::exec::RFunction* pFunction) { pFunction->addParam(yamlMapKey); } },
       { "yaml sequence", [&](r::exec::RFunction* pFunction) { pFunction->addParam(yamlSequence); } },
    };
 
@@ -494,17 +502,29 @@ TEST(SessionRTest, RFunctionRefusesStringsWithEmbeddedNul) {
       expectLongNameError(callError, testCase.first);
    }
 
-   // a name at the limit is still accepted
+   // a name at the limit is still passed on, in full
    {
+      std::string limitName(10000, 'a');
+      std::vector<std::string> names;
+      std::string value;
       Error callError;
       Error error = r::exec::executeSafely([&]()
       {
+         r::sexp::Protect callProtect;
+         SEXP resultSEXP = R_NilValue;
          callError = r::exec::RFunction("base:::list")
-               .addParam(std::string(10000, 'a'), "x")
-               .call();
+               .addParam(limitName, "x")
+               .call(&resultSEXP, &callProtect);
+         if (!callError && r::sexp::length(resultSEXP) == 1)
+         {
+            r::sexp::getNames(resultSEXP, &names);
+            r::sexp::extract(VECTOR_ELT(resultSEXP, 0), &value);
+         }
       });
       EXPECT_FALSE(error) << error.asString();
-      EXPECT_FALSE(callError) << callError.asString();
+      ASSERT_FALSE(callError) << callError.asString();
+      EXPECT_EQ(std::vector<std::string>({ limitName }), names);
+      EXPECT_EQ("x", value);
    }
 
    // the same kinds of parameters without a nul still reach R
