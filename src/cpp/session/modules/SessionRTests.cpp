@@ -324,9 +324,16 @@ static void expectLongNameError(const Error& error, const std::string& label)
 TEST(SessionRTest, JsonRpcRefusesStringsWithEmbeddedNul) {
    // R raises an error when asked for a string with an embedded nul. Raised
    // while an R handler's arguments are built, before the call runs protected,
-   // it would longjmp past the handler and leave the request unanswered
+   // it would longjmp past the handler and leave the request unanswered. the
+   // handler counts its calls, so the test can tell a refused request from one
+   // the handler ran with whatever arguments were accepted
    Error error = r::exec::executeString(R"EOF(
-      .rs.addJsonRpcHandler("test_embedded_nul", function(...) .rs.scalar(length(list(...))))
+      assign(".rs.test_embedded_nul_calls", 0L, envir = globalenv())
+      .rs.addJsonRpcHandler("test_embedded_nul", function(...) {
+         calls <- get(".rs.test_embedded_nul_calls", envir = globalenv())
+         assign(".rs.test_embedded_nul_calls", calls + 1L, envir = globalenv())
+         .rs.scalar(length(list(...)))
+      })
    )EOF");
    ASSERT_FALSE(error);
 
@@ -334,6 +341,7 @@ TEST(SessionRTest, JsonRpcRefusesStringsWithEmbeddedNul) {
    {
       r::exec::executeString(R"EOF(
          rm(".rs.rpc.test_embedded_nul", envir = as.environment("tools:rstudio"))
+         rm(".rs.test_embedded_nul_calls", envir = globalenv())
       )EOF");
    }
    BOOST_SCOPE_EXIT_END
@@ -392,6 +400,12 @@ TEST(SessionRTest, JsonRpcRefusesStringsWithEmbeddedNul) {
       expectLongNameError(handlerError, "long kwparams name");
    }
 
+   // none of the refused requests ran the handler
+   int calls = -1;
+   error = r::exec::evaluateString(".rs.test_embedded_nul_calls", &calls);
+   ASSERT_FALSE(error);
+   EXPECT_EQ(0, calls);
+
    // a request without a nul still reaches the handler
    json::JsonRpcRequest request;
    error = json::parseJsonRpcRequest(
@@ -405,6 +419,10 @@ TEST(SessionRTest, JsonRpcRefusesStringsWithEmbeddedNul) {
    ASSERT_FALSE(error) << error.asString();
    ASSERT_FALSE(handlerError) << handlerError.asString();
    EXPECT_EQ(2, response.result().getInt());
+
+   error = r::exec::evaluateString(".rs.test_embedded_nul_calls", &calls);
+   ASSERT_FALSE(error);
+   EXPECT_EQ(1, calls);
 }
 
 TEST(SessionRTest, RFunctionRefusesStringsWithEmbeddedNul) {
