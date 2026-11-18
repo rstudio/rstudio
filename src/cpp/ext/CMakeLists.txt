@@ -712,7 +712,7 @@ function(add_rstudio_cmark_gfm)
    set(PROJECT_VERSION_MAJOR 0)
    set(PROJECT_VERSION_MINOR 29)
    set(PROJECT_VERSION_PATCH 0)
-   set(PROJECT_VERSION_GFM 13)
+   set(PROJECT_VERSION_GFM 14)
    configure_file("${CMARK_SOURCE_DIR}/src/cmark-gfm_version.h.in"
       "${CMARK_BINARY_DIR}/cmark-gfm_version.h" @ONLY)
 
