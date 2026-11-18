@@ -285,14 +285,14 @@ public class EditingTargetCodeExecution
 
       // trim intelligently (don't trim blank lines for Python
       // since those lines could signal the end of a block)
-      if (DocumentMode.isSelectionInPythonMode(docDisplay_))
+      if (DocumentMode.isSelectedCodeInPythonMode(docDisplay_))
       {
          language = "Python";
       }
       else
       {
          code = StringUtil.trimBlankLines(code);
-         if (DocumentMode.isSelectionInJuliaMode(docDisplay_))
+         if (DocumentMode.isSelectedCodeInJuliaMode(docDisplay_))
             language = ConsoleLanguageTracker.LANGUAGE_JULIA;
       }
 
