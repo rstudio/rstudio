@@ -473,25 +473,18 @@ RFunction& RFunction::addQuotedParam(const std::string& name, SEXP paramSEXP)
 
 bool RFunction::acceptParam(const std::string& name, bool valueContainsNul)
 {
-   if (paramError_)
+   if (!paramProblem_.empty())
       return false;
 
    // call() passes a name to Rf_install() as a C string, which cuts it off at
    // a nul and raises an R error if it's longer than R's limit on symbol names
-   std::string problem;
    if (valueContainsNul || name.find('\0') != std::string::npos)
-      problem = "a string with an embedded nul";
+      paramProblem_ = "a string with an embedded nul";
    else if (name.size() > kMaxSymbolNameBytes)
-      problem = "a parameter name longer than " + std::to_string(kMaxSymbolNameBytes) + " bytes";
+      paramProblem_ = "a parameter name longer than " + std::to_string(kMaxSymbolNameBytes) + " bytes";
    else
       return true;
 
-   std::string functionName = functionName_.empty() ? "<unknown>" : functionName_;
-   paramError_ = rCodeExecutionError(
-            "R function '" + functionName + "' was passed " + problem,
-            ERROR_LOCATION);
-   if (!functionName_.empty())
-      paramError_.addProperty("symbol", functionName_);
    return false;
 }
 
@@ -574,8 +567,16 @@ Error RFunction::call(SEXP evalNS,
       return error;
    }
 
-   if (paramError_)
-      return paramError_;
+   if (!paramProblem_.empty())
+   {
+      std::string functionName = functionName_.empty() ? "<unknown>" : functionName_;
+      Error error = rCodeExecutionError(
+               "R function '" + functionName + "' was passed " + paramProblem_,
+               ERROR_LOCATION);
+      if (!functionName_.empty())
+         error.addProperty("symbol", functionName_);
+      return error;
+   }
 
    // note that we're executing R code in this scope
    CodeExecutingScope executingScope;

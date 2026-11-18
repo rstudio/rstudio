@@ -210,7 +210,7 @@ public:
       // R's error on an embedded nul would be raised by create(), outside
       // the protected call, and longjmp past the caller. once a parameter is
       // refused, the call won't run, so later ones aren't scanned
-      if (paramError_ || !acceptParam(name, sexp::containsNul(param)))
+      if (!paramProblem_.empty() || !acceptParam(name, sexp::containsNul(param)))
          return *this;
 
       r::sexp::Protect protect;
@@ -260,8 +260,8 @@ private:
    // returns true when the parameter can be added. a parameter R would raise
    // an error on while the call is built (a name or value holding a string
    // with an embedded nul, or a name longer than R allows) is refused
-   // instead, recording the error for call() to return; so is any parameter
-   // after one was refused
+   // instead, recording why for call() to report; so is any parameter after
+   // one was refused
    bool acceptParam(const std::string& name, bool valueContainsNul);
 
    void initParams()
@@ -288,8 +288,9 @@ private:
    // thread; the store also orders the poisoning write to functionSEXP_
    std::atomic<bool> offMainThreadUse_ { false };
 
-   // the first parameter acceptParam() refused; returned by call()
-   core::Error paramError_;
+   // why acceptParam() refused the first parameter it refused, for call() to
+   // report; a string, as a default-constructed Error allocates
+   std::string paramProblem_;
 
    // function name (optional)
    std::string functionName_;
