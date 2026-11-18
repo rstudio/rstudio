@@ -184,16 +184,16 @@ run_git(checkout --quiet --detach FETCH_HEAD)
 # FetchContent initializes every submodule, recursively; keep doing that, but
 # shallowly. A shallow update fetches a submodule commit that isn't a branch
 # tip by its id, which some servers refuse; FetchContent fetched submodules'
-# full history, so fall back to that.
-if(EXISTS "${SOURCE_DIR}/.gitmodules")
-   try_git_with_retries(_SHALLOW_SUBMODULES submodule --quiet update --init --recursive --depth 1)
-   if(NOT _SHALLOW_SUBMODULES)
-      message(STATUS "Shallow submodule update failed for ${REPOSITORY}; fetching their full history")
+# full history, so fall back to that. As with FetchContent, this runs even
+# without a .gitmodules file, so that a submodule missing from it fails the
+# fetch instead of being left empty.
+try_git_with_retries(_SHALLOW_SUBMODULES submodule --quiet update --init --recursive --depth 1)
+if(NOT _SHALLOW_SUBMODULES)
+   message(STATUS "Shallow submodule update failed for ${REPOSITORY}; fetching their full history")
 
-      # Start the submodules over: an update would otherwise reuse their
-      # shallow repositories in .git/modules.
-      run_git(submodule --quiet deinit --all --force)
-      file(REMOVE_RECURSE "${SOURCE_DIR}/.git/modules")
-      run_git_with_retries(submodule --quiet update --init --recursive --no-recommend-shallow)
-   endif()
+   # Start the submodules over: an update would otherwise reuse their
+   # shallow repositories in .git/modules.
+   run_git(submodule --quiet deinit --all --force)
+   file(REMOVE_RECURSE "${SOURCE_DIR}/.git/modules")
+   run_git_with_retries(submodule --quiet update --init --recursive --no-recommend-shallow)
 endif()
