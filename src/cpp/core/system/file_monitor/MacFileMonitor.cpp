@@ -340,8 +340,8 @@ void processNonRecursiveFileEvents(FileEventContext* pContext,
    // a matter of cross-backend consistency.
    if (needsFullRescan)
    {
-      LOG_WARNING_MESSAGE("File monitor events were dropped; rescanning " +
-                          rootPathStr);
+      LOG_INFO_MESSAGE("File monitor events were dropped; rescanning " +
+                       rootPathStr);
 
       // scan the root unconditionally, matching registration -- the filter
       // is meant for entries within the directory, and gating recovery on
@@ -375,8 +375,8 @@ void processNonRecursiveFileEvents(FileEventContext* pContext,
 // not lost.
 bool performDroppedRescan(FileEventContext* pContext)
 {
-   LOG_WARNING_MESSAGE("File monitor events were dropped or coalesced; rescanning " +
-                       pContext->rootPath.getAbsolutePath());
+   LOG_INFO_MESSAGE("File monitor events were dropped or coalesced; rescanning " +
+                    pContext->rootPath.getAbsolutePath());
 
    Error error = impl::discoverAndProcessFileChanges(
                          FileInfo(pContext->rootPath.getAbsolutePath(), true),
