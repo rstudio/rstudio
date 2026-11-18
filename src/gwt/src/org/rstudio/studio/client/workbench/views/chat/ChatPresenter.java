@@ -320,6 +320,12 @@ public class ChatPresenter extends BasePresenter
             int action = event.getAction().getType();
             if (action == SessionSerializationAction.SUSPEND_SESSION)
             {
+               if (poppedOut_)
+               {
+                  // Save geometry; satellite stays open and shows its own
+                  // suspend overlay via SessionSerializationEvent forwarding
+                  updateSavedGeometry();
+               }
                onSessionSuspended();
             }
             else if (action == SessionSerializationAction.RESUME_SESSION)
@@ -1388,14 +1394,10 @@ public class ChatPresenter extends BasePresenter
          return;
       sessionSuspended_ = true;
 
+      // No geometry save here: it dirties client state, and after a forced
+      // suspend the next client-state push would resume the session
       backendPollGeneration_++; // invalidate existing poll callbacks
       display_.hideReadlineNotification();
-      if (poppedOut_)
-      {
-         // Save geometry; satellite stays open and shows its own
-         // suspend overlay via SessionSerializationEvent forwarding
-         updateSavedGeometry();
-      }
 
       // Only dim the chat UI if it was actually loaded and running.
       // If chat was never initialized (e.g., sidebar hidden at startup),
