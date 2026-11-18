@@ -157,6 +157,10 @@ endfunction()
 # Start from an empty directory, as FetchContent's git clone does, so files
 # from an earlier revision or a partial fetch can't survive.
 file(REMOVE_RECURSE "${SOURCE_DIR}")
+if(EXISTS "${SOURCE_DIR}")
+   # e.g. a file another process holds open on Windows
+   message(FATAL_ERROR "Could not remove the previous checkout in ${SOURCE_DIR}")
+endif()
 file(MAKE_DIRECTORY "${SOURCE_DIR}")
 
 run_git(init --quiet)

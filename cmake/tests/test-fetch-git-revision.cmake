@@ -71,8 +71,8 @@ set(ENV{GIT_CONFIG_NOSYSTEM} 1)
 # Don't let variables git sets for its hooks send the fixture's commits to
 # another repository.
 foreach(VAR
-   GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR
-   GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_DEFAULT_HASH)
+   GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR GIT_OBJECT_DIRECTORY
+   GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_QUARANTINE_PATH GIT_DEFAULT_HASH)
    unset(ENV{${VAR}})
 endforeach()
 
@@ -270,10 +270,50 @@ fetch("${DEP_URL}" "${DEP_TIP}" "${SOURCE_DIR}" RESULT -DRETRY_COUNT=OFF)
 expect_fetch_failed(RESULT "RETRY_COUNT must be a whole number" "fetching with RETRY_COUNT=OFF")
 expect_marker("${SOURCE_DIR}" "pinned")
 
-# So is a TLS version that git would ignore.
+# So are a retry delay that isn't a number, and a TLS version that git would
+# ignore.
+fetch("${DEP_URL}" "${DEP_TIP}" "${SOURCE_DIR}" RESULT -DRETRY_DELAY=OFF)
+expect_fetch_failed(RESULT "RETRY_DELAY must be a number" "fetching with RETRY_DELAY=OFF")
+expect_marker("${SOURCE_DIR}" "pinned")
+
 fetch("${DEP_URL}" "${DEP_TIP}" "${SOURCE_DIR}" RESULT -DTLS_VERSION=1.4)
 expect_fetch_failed(RESULT "TLS_VERSION must be one of" "fetching with TLS_VERSION=1.4")
 expect_marker("${SOURCE_DIR}" "pinned")
+
+
+# A submodule that can't be fetched fails the fetch, rather than leaving a
+# checkout without it.
+file(RENAME "${LEAF_DIR}" "${LEAF_DIR}-moved")
+fetch("${DEP_URL}" "${DEP_PINNED}" "${TEST_DIR}/src-no-leaf" RESULT)
+file(RENAME "${LEAF_DIR}-moved" "${LEAF_DIR}")
+expect_fetch_failed(RESULT "submodule" "fetching with an unavailable nested submodule")
+
+
+# A SHA-256 commit, for a user whose git creates SHA-1 repositories, if
+# this git can create SHA-256 repositories at all.
+set(SHA256_DIR "${TEST_DIR}/sha256")
+file(MAKE_DIRECTORY "${SHA256_DIR}")
+execute_process(
+   COMMAND "${GIT_EXECUTABLE}" init --quiet --object-format=sha256
+   WORKING_DIRECTORY "${SHA256_DIR}"
+   RESULT_VARIABLE SHA256_SUPPORTED
+   OUTPUT_QUIET
+   ERROR_QUIET)
+if(SHA256_SUPPORTED EQUAL 0)
+   commit_marker("${SHA256_DIR}" "pinned" SHA256_PINNED)
+   commit_marker("${SHA256_DIR}" "tip" _IGNORED)
+   file_url("${SHA256_DIR}" SHA256_URL)
+
+   set(ENV{GIT_DEFAULT_HASH} sha1)
+   fetch("${SHA256_URL}" "${SHA256_PINNED}" "${TEST_DIR}/src-sha256" RESULT)
+   unset(ENV{GIT_DEFAULT_HASH})
+   expect_fetched(RESULT "fetching a SHA-256 commit")
+   run_git("${TEST_DIR}/src-sha256" HEAD rev-parse HEAD)
+   expect_equal("${HEAD}" "${SHA256_PINNED}" "checked-out SHA-256 commit")
+   expect_marker("${TEST_DIR}/src-sha256" "pinned")
+else()
+   message(STATUS "This git can't create SHA-256 repositories; skipping that test")
+endif()
 
 
 # A commit the server doesn't have fails, after its retries.
