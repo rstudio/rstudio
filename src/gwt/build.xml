@@ -601,13 +601,19 @@
       </java-compile>
    </target>
 
-   <!-- The test classes to run, by fully qualified name (several separated by
-        spaces); e.g. ant unittest -Dtest.classes=org.rstudio.core.client.widget.RowTableTests.
-        A class run alone loads a fresh module, so it may pass or fail where the
-        suite, which shares one module across classes, does not. -->
+   <!-- Fully qualified, space-separated; see "GWT Tests" in .claude/CLAUDE.md. -->
    <property name="test.classes" value="org.rstudio.studio.client.RStudioUnitTestSuite"/>
 
    <target name="unittest" description="Runs JUnit unit tests (-Dtest.classes=... for specific classes)" depends="build-unittests">
+      <!-- JUnitCore given no classes runs nothing and still reports OK. -->
+      <fail message="test.classes is empty; name at least one fully qualified test class">
+         <condition>
+            <equals arg1="${test.classes}" arg2="" trim="true"/>
+         </condition>
+      </fail>
+      <!-- Ant ignores unknown properties, so a misspelled -Dtest.classes would
+           silently run the whole suite; echo what actually runs. -->
+      <echo message="Running: ${test.classes}"/>
       <java failonerror="true" fork="true" classname="org.junit.runner.JUnitCore">
          <classpath>
             <pathelement location="${test.dir}"/>

@@ -369,6 +369,10 @@ A class run alone gets a fresh GWT module, while the suite shares one module acr
 classes. So a class can pass in the suite yet fail alone (or the reverse) when it depends on
 state an earlier class left behind, e.g. Ace having been loaded.
 
+A plain `ant unittest`, and so CI, runs only the classes registered in
+`src/gwt/test/org/rstudio/studio/client/RStudioUnitTestSuite.java`. Register a new test class
+there too; one that only ever runs on its own is never tested by CI.
+
 The standalone HTML test pages in `src/gwt/test/` (autoindent, highlight) are exercised in headless chromium via:
 
     cd src/gwt && ant testpage
