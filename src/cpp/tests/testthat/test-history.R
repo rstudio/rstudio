@@ -25,7 +25,7 @@ context("history")
 
 test_that(".rs.loadhistory() and .rs.savehistory() round-trip a history file", {
    skip_if_not(nzchar(Sys.getenv("RSTUDIO_TESTS_HELPER")), "changes the session's console history")
-   skip_if(isTRUE(suppressWarnings(as.integer(Sys.getenv("R_HISTSIZE"))) < 1), "R_HISTSIZE keeps no history")
+   skip_if(identical(trimws(Sys.getenv("R_HISTSIZE")), "0"), "R_HISTSIZE keeps no history")
 
    input <- tempfile("history-input-")
    output <- tempfile("history-output-")
@@ -45,7 +45,7 @@ test_that(".rs.savehistory() reports a file it can't write", {
 })
 
 test_that(".rs.loadhistory() reports a file it can't read", {
-   # before #19686, a failed load also emptied the session's history
+   # a failed load can empty the session's history (#19686)
    skip_if_not(nzchar(Sys.getenv("RSTUDIO_TESTS_HELPER")), "changes the session's console history")
    expect_error(.rs.loadhistory(tempfile("no-such-history-")))
 })
