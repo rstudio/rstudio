@@ -2400,8 +2400,7 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     // the global shortcuts (Run Current Line on Ctrl+Enter / Cmd+Enter, say),
     // and those see every keydown before the table does.
     await expect(goTo).toHaveAttribute('tabindex', '-1');
-    await executeCommand(page, 'newSourceDoc');
-    await expect(page.locator(SELECTED_DOC_TAB)).toContainText('Untitled', { timeout: 15000 });
+    await new SourcePaneActions(page, new ConsolePaneActions(page)).newDocument('newSourceDoc');
     const row = panel.getByRole('row').filter({ hasText: 'script.R' }).first();
     await row.click();
     await page.keyboard.press('Shift+Enter');

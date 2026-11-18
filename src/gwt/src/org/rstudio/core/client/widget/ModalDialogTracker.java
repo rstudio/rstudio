@@ -161,14 +161,13 @@ public class ModalDialogTracker
    }
 
    /**
-    * The rest of the page is made inert while a modal shows; aria-modal tells assistive
-    * technology so from the dialog itself. It's only valid on the dialog roles, so panels
-    * with any other role are left alone.
+    * axe treats an alertdialog as an open modal only with aria-modal (#19251). Dialogs
+    * don't need it, since the rest of the page is inert, and in Chrome on macOS it hides
+    * popups attached outside the dialog, such as suggestion lists, from VoiceOver (#19254).
     */
    private static void markModal(Element el)
    {
-      String role = el.getAttribute("role");
-      if (role.equals("dialog") || role.equals("alertdialog"))
+      if (el.getAttribute("role").equals("alertdialog"))
          el.setAttribute("aria-modal", "true");
    }
 

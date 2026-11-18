@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -34,7 +35,6 @@ import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import org.rstudio.core.client.command.BaseMenuBar;
@@ -49,15 +49,6 @@ import java.util.ArrayList;
 public class TabOverflowPopupPanel extends ThemedPopupPanel
       implements ValueChangeHandler<String>
 {
-   private class DocsOracle extends SuggestOracle
-   {
-      @Override
-      public void requestSuggestions(Request request, Callback callback)
-      {
-         
-      }
-   }
-
    private class MenuKeyHandler implements KeyDownHandler
    {
       public MenuKeyHandler(BaseMenuBar menu)
@@ -117,7 +108,7 @@ public class TabOverflowPopupPanel extends ThemedPopupPanel
 
       DockPanel dockPanel = new DockPanel();
 
-      search_ = new SearchWidget(constants_.searchTabs(), new DocsOracle());
+      search_ = new SearchWidget(constants_.searchTabs());
       search_.addValueChangeHandler(this);
 
       search_.getElement().getStyle().setMarginRight(0, Unit.PX);
@@ -128,6 +119,8 @@ public class TabOverflowPopupPanel extends ThemedPopupPanel
       menu_.setWidth("100%");
       dockPanel.add(menu_, DockPanel.CENTER);
       setWidget(dockPanel);
+      search_.controlMenu(menu_.getElement(), menu_);
+      Roles.getMenuRole().setAriaLabelProperty(menu_.getElement(), constants_.switchToTab());
 
       setStylePrimaryName(ThemeStyles.INSTANCE.tabOverflowPopup());
 
@@ -201,6 +194,11 @@ public class TabOverflowPopupPanel extends ThemedPopupPanel
    {
       String value = event.getValue();
       menu_.filter(value);
+
+      // Don't leave the highlight, and so the active descendant, on a hidden item
+      MenuItem selected = menu_.getSelectedItem();
+      if (selected != null && !selected.isVisible())
+         menu_.selectItem(null);
    }
 
    public void resetDocTabs(String activeId,

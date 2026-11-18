@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.packages;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.Debug;
@@ -96,7 +95,6 @@ import com.google.gwt.user.cellview.client.SafeHtmlHeader;
 import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.LayoutPanel;
-import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.HasData;
@@ -406,16 +404,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       toolbar.addLeftWidget(restoreButton_);
       restoreButton_.setVisible(false);
 
-      searchWidget_ = new SearchWidget(constants_.filterByPackageNameLabel(), new SuggestOracle() {
-         @Override
-         public void requestSuggestions(Request request, Callback callback)
-         {
-            // no suggestions
-            callback.onSuggestionsReady(
-                  request,
-                  new Response(new ArrayList<>()));
-         }
-      });
+      searchWidget_ = new SearchWidget(constants_.filterByPackageNameLabel());
       
       searchWidget_.addValueChangeHandler(new ValueChangeHandler<String>() {
          @Override

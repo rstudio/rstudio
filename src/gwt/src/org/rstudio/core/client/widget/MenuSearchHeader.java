@@ -16,9 +16,6 @@ package org.rstudio.core.client.widget;
 
 import org.rstudio.core.client.StringUtil;
 
-import com.google.gwt.aria.client.AutocompleteValue;
-import com.google.gwt.aria.client.ComboboxRole;
-import com.google.gwt.aria.client.ExpandedValue;
 import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Element;
@@ -30,7 +27,6 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.Widget;
 
 import elemental2.dom.HTMLElement;
@@ -66,7 +62,7 @@ public class MenuSearchHeader
       searchWidget_.addKeyDownHandler(this::onSearchKeyDown);
 
       addToMenu();
-      initComboboxRole();
+      searchWidget_.controlMenu(menu_.getMenuBarElement(), menu_);
       nameMenuOnOpen();
       redirectMenuFocus();
    }
@@ -111,31 +107,6 @@ public class MenuSearchHeader
       panel.add(searchWidget_);
       panel.add(menuWidget);
       menu_.setWidget(panel);
-   }
-
-   // Focus stays in the search box while the arrow keys move the highlight, so the
-   // search box, not the menu, has to tell screen readers which item is highlighted.
-   private void initComboboxRole()
-   {
-      final Element input = searchWidget_.getInputElement();
-      Element menuEl = menu_.getMenuBarElement();
-      if (StringUtil.isNullOrEmpty(menuEl.getId()))
-         menuEl.setId(DOM.createUniqueId());
-
-      ComboboxRole role = Roles.getComboboxRole();
-      role.set(input);
-      role.setAriaExpandedState(input, ExpandedValue.TRUE);
-      role.setAriaAutocompleteProperty(input, AutocompleteValue.LIST);
-      role.setAriaControlsProperty(input, Id.of(menuEl));
-
-      menu_.addSelectionHandler(event ->
-      {
-         MenuItem item = event.getSelectedItem();
-         if (item == null)
-            role.removeAriaActivedescendantProperty(input);
-         else
-            role.setAriaActivedescendantProperty(input, Id.of(item.getElement()));
-      });
    }
 
    // Names the menu after its button, as in the menu button pattern. Owners may

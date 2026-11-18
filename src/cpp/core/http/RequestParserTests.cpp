@@ -215,6 +215,55 @@ TEST(HttpTest, SimpleFormParsingWorks)
    EXPECT_EQ(file.contents, "This is a simple text file");
 }
 
+TEST(HttpTest, FormParsingIgnoresTheMediaTypeCase)
+{
+   // media types are case-insensitive (RFC 9110 8.3.1), so this is streamed
+   // to the form handler like a lowercase one
+   FormTester form;
+   form.simpleRequest();
+   boost::algorithm::replace_first(form.requestStr, "multipart/form-data", "Multipart/Form-Data");
+
+   ASSERT_EQ(RequestParser::headers_parsed, form.parse());
+   ASSERT_EQ(RequestParser::form_complete, form.parse());
+   EXPECT_FALSE(form.validationError) << form.validationError;
+}
+
+TEST(HttpTest, AbortingAFormMidBodyEndsItWithAnEmptyCompleteCall)
+{
+   std::vector<std::pair<std::size_t, bool>> calls;
+   RequestParser parser;
+   parser.setFormHandler([&](const std::string& formData, bool complete)
+   {
+      calls.emplace_back(formData.size(), complete);
+      return true;
+   });
+
+   // half of a body large enough to be handed over before it ends
+   std::string sent(3 * 1024 * 1024 / 2, 'x');
+   std::string requestStr =
+         "POST /upload HTTP/1.1\r\n"
+         "Content-Type: multipart/form-data; boundary=b\r\n"
+         "Content-Length: " + std::to_string(2 * sent.size()) + "\r\n"
+         "\r\n" + sent;
+
+   Request request;
+   const char* begin = requestStr.c_str();
+   const char* end = begin + requestStr.size();
+   ASSERT_EQ(RequestParser::headers_parsed, parser.parse(request, begin, end));
+   ASSERT_EQ(RequestParser::incomplete, parser.parse(request, begin, end));
+   EXPECT_EQ(sent.size(), parser.formBytesRemaining());
+
+   parser.abortForm();
+   EXPECT_EQ(0u, parser.formBytesRemaining());
+   ASSERT_EQ(2u, calls.size());
+   EXPECT_EQ(std::make_pair(sent.size(), false), calls[0]);
+   EXPECT_EQ(std::make_pair(std::size_t(0), true), calls[1]);
+
+   // the handler is gone, so a second abort tells no one
+   parser.abortForm();
+   EXPECT_EQ(2u, calls.size());
+}
+
 TEST(HttpTest, SimpleFormParsingWorksOneByteAtATime)
 {
    FormTester form;

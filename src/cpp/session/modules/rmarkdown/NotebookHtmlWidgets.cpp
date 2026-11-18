@@ -94,8 +94,8 @@ core::Error HtmlCapture::connectHtmlCapture(
               const json::Object& chunkOptions)
 {
    return r::exec::RFunction(".rs.initHtmlCapture", 
-         string_utils::utf8ToSystem(outputFolder.getAbsolutePath()),
-         string_utils::utf8ToSystem(outputFolder.completePath(kChunkLibDir).getAbsolutePath()),
+         outputFolder.getAbsolutePath(),
+         outputFolder.completePath(kChunkLibDir).getAbsolutePath(),
          chunkOptions).call();
 }
 

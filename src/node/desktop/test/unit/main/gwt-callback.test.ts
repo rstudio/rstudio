@@ -217,6 +217,28 @@ describe('DesktopCallback', () => {
       callback.setPendingQuit(PendingQuit.PendingQuitNone);
       assert.isNull(callback.collectPendingRVersion());
     });
+
+    it('finds the R a quit names by the path it was prepared with, on x64 windows', async function () {
+      // the desktop app is built for x64 only, and runs emulated on ARM64 Windows
+      if (process.platform !== 'win32' || process.arch !== 'x64') {
+        this.skip();
+      }
+      const detect = sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([kRunningR, null]);
+
+      // the client names bin\R.exe; the R prepared and launched is bin\x64\Rterm.exe
+      const binDir = path.join(mkdtempSync(path.join(kFixtureRoot, 'stand-in-r-')), 'bin');
+      const x64Dir = path.join(binDir, 'x64');
+      mkdirSync(x64Dir, { recursive: true });
+      const chosen = path.join(binDir, 'R.exe');
+      const rterm = path.join(x64Dir, 'Rterm.exe');
+      writeFileSync(chosen, '');
+      writeFileSync(rterm, '');
+
+      assert.equal(await callback.setPendingRVersion(chosen), '');
+      assert.isTrue(detect.calledOnceWith(rterm));
+      assert.equal(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload, chosen), '');
+      assert.deepEqual(callback.collectPendingRVersion(), { path: rterm, useDefault: false });
+    });
   });
 
   describe('setDefaultRVersion', () => {

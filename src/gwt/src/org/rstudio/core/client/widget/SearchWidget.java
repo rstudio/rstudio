@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 import org.rstudio.core.client.CoreClientConstants;
@@ -24,6 +25,11 @@ import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 
+import com.google.gwt.aria.client.AutocompleteValue;
+import com.google.gwt.aria.client.ComboboxRole;
+import com.google.gwt.aria.client.ExpandedValue;
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -40,6 +46,7 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -49,6 +56,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.MenuBar;
+import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.SuggestBox.DefaultSuggestionDisplay;
 import com.google.gwt.user.client.ui.SuggestBox.SuggestionCallback;
@@ -132,16 +140,20 @@ public class SearchWidget extends Composite implements SearchDisplay
       
    }
 
+   // For a search box that only filters. SearchWidget recognizes it and keeps the
+   // box a plain text box, rather than a combobox whose list never opens.
+   public static class NoSuggestionsOracle extends SuggestOracle
+   {
+      @Override
+      public void requestSuggestions(Request request, Callback callback)
+      {
+         callback.onSuggestionsReady(request, new Response(new ArrayList<>()));
+      }
+   }
+
    public SearchWidget(String label)
    {
-      this(label, new SuggestOracle()
-      {
-         @Override
-         public void requestSuggestions(Request request, Callback callback)
-         {
-            // no-op
-         }
-      });
+      this(label, new NoSuggestionsOracle());
    }
 
    public SearchWidget(String label, SuggestOracle oracle)
@@ -176,6 +188,14 @@ public class SearchWidget extends Composite implements SearchDisplay
          suggestDisplay = new SearchSuggestionDisplay();
       
       suggestBox_ = new FocusSuggestBox(oracle, textBox, suggestDisplay);
+      if (oracle instanceof NoSuggestionsOracle)
+      {
+         // Undo the combobox attributes SuggestBox gives a box that uses its default display
+         Element input = textBox.getElement();
+         input.removeAttribute("role");
+         input.removeAttribute("aria-autocomplete");
+         input.removeAttribute("aria-expanded");
+      }
       initWidget(uiBinder.createAndBindUi(this));
       clearFilter_.setVisible(false);
       clearFilter_.setDescription(constants_.searchWidgetClearText());
@@ -211,6 +231,11 @@ public class SearchWidget extends Composite implements SearchDisplay
                event.preventDefault();
                event.stopPropagation();
 
+               // Read now: SuggestBox's own Escape handler runs after this one
+               // and closes the list before the deferred command below runs
+               final boolean listShowing =
+                     getSuggestionDisplay().isSuggestionListShowing();
+
                // defer the handling of ESC so that it doesn't end up
                // inside other UI (the editor) if/when the parent search
                // ui is dismissed
@@ -219,7 +244,7 @@ public class SearchWidget extends Composite implements SearchDisplay
                   @Override
                   public void execute()
                   {
-                     if (getSuggestionDisplay().isSuggestionListShowing())
+                     if (listShowing)
                      {
                         getSuggestionDisplay().hideSuggestions();
                         setText("", true);
@@ -416,6 +441,27 @@ public class SearchWidget extends Composite implements SearchDisplay
    public boolean isFocused()
    {
       return focusTracker_.isFocused();
+   }
+
+   // For a menu whose highlight the arrow keys move while focus stays in this box.
+   // The box, not the menu, then has to tell screen readers which item is highlighted.
+   public void controlMenu(Element menuEl, HasSelectionHandlers<MenuItem> menu)
+   {
+      final Element input = getInputElement();
+      ComboboxRole role = Roles.getComboboxRole();
+      role.set(input);
+      role.setAriaExpandedState(input, ExpandedValue.TRUE);
+      role.setAriaAutocompleteProperty(input, AutocompleteValue.LIST);
+      role.setAriaControlsProperty(input, Id.of(DomUtils.ensureHasId(menuEl)));
+
+      menu.addSelectionHandler(event ->
+      {
+         MenuItem item = event.getSelectedItem();
+         if (item == null)
+            role.removeAriaActivedescendantProperty(input);
+         else
+            role.setAriaActivedescendantProperty(input, Id.of(item.getElement()));
+      });
    }
 
    public Element getInputElement()

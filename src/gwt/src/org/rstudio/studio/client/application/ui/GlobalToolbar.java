@@ -97,12 +97,12 @@ public class GlobalToolbar extends Toolbar
 
       // create and add new menu
       StandardIcons icons = StandardIcons.INSTANCE;
-      newButton_ = new ToolbarMenuButton(ToolbarButton.NoText,
+      ToolbarMenuButton newButton = new ToolbarMenuButton(ToolbarButton.NoText,
                                                           constants_.newFileTitle(),
                                                           new ImageResource2x(icons.stock_new2x()),
                                                           newMenu_);
-      ElementIds.assignElementId(newButton_, ElementIds.NEW_FILE_MENUBUTTON);
-      addLeftWidget(newButton_);
+      ElementIds.assignElementId(newButton, ElementIds.NEW_FILE_MENUBUTTON);
+      addLeftWidget(newButton);
       addLeftSeparator();
 
       addLeftWidget(commands.newProject().createToolbarButton());
@@ -416,17 +416,13 @@ public class GlobalToolbar extends Toolbar
 
    public void setFocus()
    {
-      Scheduler.get().scheduleDeferred(() ->
-      {
-         newButton_.setFocus(true);
-      });
+      Scheduler.get().scheduleDeferred(() -> focusFirstTabStop());
    }
 
    private final Commands commands_;
    private final EventBus eventBus_;
    private final TrustPresenter trustPresenter_;
    private final ToolbarPopupMenu newMenu_;
-   private final ToolbarMenuButton newButton_;
    private final Provider<CodeSearch> pCodeSearch_;
    private final Widget searchWidget_;
    private final UserPrefs userPrefs_;

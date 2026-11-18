@@ -295,10 +295,8 @@ public class VirtualConsole
       String clazz = partialAnsiCodeClazz_;
       clearPartialAnsiCode();
 
-      // don't let the flush consume a pending new-range request
-      boolean forceNewRange = forceNewRange_;
-      forceNewRange_ = false;
-
+      // the held-back text arrived after any pending request for a new range
+      // (e.g. from a group that just closed), so it is the text to honor it
       flushingPartialAnsiCode_ = true;
       try
       {
@@ -307,7 +305,6 @@ public class VirtualConsole
       finally
       {
          flushingPartialAnsiCode_ = false;
-         forceNewRange_ = forceNewRange_ || forceNewRange;
       }
    }
 

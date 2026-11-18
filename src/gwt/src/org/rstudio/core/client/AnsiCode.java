@@ -317,7 +317,11 @@ public class AnsiCode
       for (String token : tokens)
       {
          int codeVal = token.isEmpty() ? RESET : StringUtil.parseInt(token,  -1);
-         if (codeVal == -1)
+
+         // inside an extended color, a skipped token still takes the place
+         // of the format or color value it stands for, so the parameters
+         // after it aren't misread as format, values, or SGR codes
+         if (codeVal == -1 && extendedColor == 0)
             continue;
 
          if (extendedColor > 0)
@@ -336,10 +340,9 @@ public class AnsiCode
                }
                else
                {
-                  // unknown extended color format; hard to recover so
-                  // just reset back to defaults and return
-                  reset();
-                  return getStyles();
+                  // an unknown (or skipped) format: drop the extended color
+                  // and apply the parameters after it as usual
+                  extendedColor = 0;
                }
             }
             else

@@ -24,6 +24,11 @@ namespace session {
 namespace modules {
 namespace r_packages {
 
+// The R command that fetches information for the given packages, or an empty
+// string when none of them is a valid R package name. Invalid names, which
+// project files can contain, are dropped.
+std::string packageInformationCommand(const std::vector<std::string>& packages);
+
 class AsyncPackageInformationProcess : public async_r::AsyncRProcess
 {
 public:
