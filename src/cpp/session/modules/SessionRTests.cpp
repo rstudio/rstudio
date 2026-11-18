@@ -340,10 +340,14 @@ TEST(SessionRTest, JsonRpcRefusesStringsWithEmbeddedNul) {
       error = json::parseJsonRpcRequest(input, &request);
       ASSERT_FALSE(error) << input;
 
+      // run protected, so that an R error escaping the handler fails this
+      // test instead of ending the test run
+      Error handlerError;
       json::JsonRpcResponse response;
-      error = handler(request, &response);
-      EXPECT_EQ(json::errc::ParamInvalid, error.getCode()) << input;
-      EXPECT_EQ(json::jsonRpcCategory().name(), error.getName()) << input;
+      error = r::exec::executeSafely([&]() { handlerError = handler(request, &response); });
+      EXPECT_FALSE(error) << input << ": " << error.asString();
+      EXPECT_EQ(json::errc::ParamInvalid, handlerError.getCode()) << input;
+      EXPECT_EQ(json::jsonRpcCategory().name(), handlerError.getName()) << input;
    }
 
    // a request without a nul still reaches the handler
