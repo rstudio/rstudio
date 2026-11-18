@@ -152,7 +152,22 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 8)
   set(RPM_SONAME_SUFFIX "()(64bit)")
 endif()
 
-foreach(OPENSSL_LIBRARY ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY})
+# An RPM without these Requires brings back #19647, so a package build fails
+# where it could produce an RPM. The configure step can't tell DEB from RPM;
+# rpm being installed stands in for it. Developer builds only warn.
+set(OPENSSL_SONAME_MESSAGE_MODE WARNING)
+if(RSTUDIO_PACKAGE_BUILD AND RPM_EXECUTABLE)
+  set(OPENSSL_SONAME_MESSAGE_MODE FATAL_ERROR)
+endif()
+
+set(OPENSSL_LINKED_LIBRARIES ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY})
+if(NOT OPENSSL_LINKED_LIBRARIES)
+  message(${OPENSSL_SONAME_MESSAGE_MODE}
+    "OPENSSL_SSL_LIBRARY and OPENSSL_CRYPTO_LIBRARY are empty here; "
+    "an RPM built from this configuration would not require OpenSSL.")
+endif()
+
+foreach(OPENSSL_LIBRARY ${OPENSSL_LINKED_LIBRARIES})
 
   # a static library adds no runtime dependency
   if(OPENSSL_LIBRARY MATCHES "\\.a$")
@@ -161,13 +176,18 @@ foreach(OPENSSL_LIBRARY ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY})
 
   execute_process(
     COMMAND "${CMAKE_OBJDUMP}" -p "${OPENSSL_LIBRARY}"
+    RESULT_VARIABLE OPENSSL_OBJDUMP_RESULT
     OUTPUT_VARIABLE OPENSSL_OBJDUMP_OUTPUT
-    ERROR_QUIET)
+    ERROR_VARIABLE OPENSSL_OBJDUMP_ERROR
+    ERROR_STRIP_TRAILING_WHITESPACE)
 
   if(OPENSSL_OBJDUMP_OUTPUT MATCHES "SONAME[ \t]+([^ \t\r\n]+)")
     list(APPEND RSTUDIO_RPM_DEPENDS "${CMAKE_MATCH_1}${RPM_SONAME_SUFFIX}")
   else()
-    message(WARNING "Could not read the SONAME of '${OPENSSL_LIBRARY}'; the RPM will not require it.")
+    message(${OPENSSL_SONAME_MESSAGE_MODE}
+      "Could not read the SONAME of '${OPENSSL_LIBRARY}' with '${CMAKE_OBJDUMP} -p' "
+      "(exit status: '${OPENSSL_OBJDUMP_RESULT}', stderr: '${OPENSSL_OBJDUMP_ERROR}'); "
+      "an RPM built from this configuration would not require it.")
   endif()
 
 endforeach()
