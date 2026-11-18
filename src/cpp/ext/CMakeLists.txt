@@ -266,9 +266,9 @@ endfunction()
 dependency(CMARK_GFM
    DEPNAME    "cmark-gfm"
    COMMENT    "CommonMark parser with GitHub Flavored Markdown extensions."
-   VERSION    "0.29.0.gfm.13"
+   VERSION    "0.29.0.gfm.14"
    REPOSITORY "https://github.com/github/cmark-gfm"
-   REVISION   "27d942c8b0a62d192f616e5bf3578f4b6a89e180" # pragma: allowlist secret
+   REVISION   "7fe8904ee31fa24b772ae565c4908b1394850de6" # pragma: allowlist secret
    LICENSE    "BSD-2-Clause AND MIT"
    LICENSE_PATH "COPYING"
    CUSTOM     TRUE
