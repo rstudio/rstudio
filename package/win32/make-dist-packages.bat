@@ -41,6 +41,7 @@ set "BUILD_DIR=%CD%"
 
 if not defined QUICK (
     echo Creating NSIS setup package...
+    set NSIS_FAILED=
     cpack -C "%CMAKE_BUILD_TYPE%" -G NSIS || set NSIS_FAILED=1
     REM emit NSIS error output if present
     if exist "%PKG_TEMP_DIR%\_CPack_Packages\win64\NSIS\NSISOutput.log" type "%PKG_TEMP_DIR%\_CPack_Packages\win64\NSIS\NSISOutput.log"
