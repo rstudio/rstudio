@@ -13,10 +13,11 @@ validation.
 ## Dependency
 
 `src/cpp/ext/CMakeLists.txt` declares cmark-gfm with the standard
-`dependency()` / `fetch()` mechanism. It pins
-[`27d942c8b0a62d192f616e5bf3578f4b6a89e180`](https://github.com/github/cmark-gfm/commit/27d942c8b0a62d192f616e5bf3578f4b6a89e180),
-a commit after the `0.29.0.gfm.13` release that includes subsequent fixes,
-including the autolink pointer-overflow fix at that revision.
+`dependency()` / `fetch()` mechanism. It pins the `0.29.0.gfm.14` release tag,
+[`7fe8904ee31fa24b772ae565c4908b1394850de6`](https://github.com/github/cmark-gfm/commit/7fe8904ee31fa24b772ae565c4908b1394850de6),
+which includes the autolink pointer-overflow and footnote use-after-free fixes.
+Pin a tagged commit: `fetch()` clones shallowly, which fetches only branch tips
+and tags, so an untagged commit stops being reachable once upstream moves on.
 
 The dependency uses `CUSTOM TRUE` to build only the static runtime library,
 without upstream's CLI, installation rules or global compiler settings.
@@ -30,8 +31,9 @@ The external target generates platform/export/version headers in its build
 directory. Include paths and static-library definitions are confined to cmark
 and its adapter, so upstream headers such as `utf8.h` cannot shadow other
 dependencies in core consumers. Updating cmark requires changing its revision
-in `src/cpp/ext/CMakeLists.txt`, reviewing the source list and adapter API, and
-regenerating dependency notices. Runtime source licenses are BSD-2-Clause and
+in `src/cpp/ext/CMakeLists.txt` and the hand-copied `PROJECT_VERSION_*` values
+in `add_rstudio_cmark_gfm()` there, reviewing the source list and adapter API,
+and regenerating dependency notices. Runtime source licenses are BSD-2-Clause and
 MIT; the full upstream `COPYING` file supplies the component attributions.
 
 ## Compatibility decisions
