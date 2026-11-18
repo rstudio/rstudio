@@ -262,9 +262,6 @@ public class RCompletionManager implements CompletionManager
    
    public void goToDefinition()
    {
-      if (!isConsoleInR())
-         return;
-
       // check for a file-local definition (intra-file navigation -- using
       // the active scope tree)
       AceEditor editor = (AceEditor) docDisplay_;
@@ -299,7 +296,12 @@ public class RCompletionManager implements CompletionManager
                // seems the most appropriate action in such a case.
                fileTypeRegistry_.editFile(filePath);
             }
-            
+
+            // the rest finds R definitions (a quoted path opens in any
+            // language, above)
+            if (!isConsoleInR())
+               return;
+
             String functionName = cursor.currentValue();
             JsArray<ScopeFunction> scopes =
                   editor.getAllFunctionScopes();
@@ -321,7 +323,9 @@ public class RCompletionManager implements CompletionManager
       
       // intra-file navigation failed -- hit the server and find a definition
       // in the project index
-      
+      if (!isConsoleInR())
+         return;
+
       // determine current line and cursor position
       InputEditorLineWithCursorPosition lineWithPos = 
                       InputEditorUtil.getLineWithCursorPosition(input_);
