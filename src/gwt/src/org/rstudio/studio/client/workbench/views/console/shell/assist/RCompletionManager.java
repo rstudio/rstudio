@@ -262,6 +262,11 @@ public class RCompletionManager implements CompletionManager
    
    public void goToDefinition()
    {
+      // R's tokens misread Julia (in A' * B', "' * B'" reads as a quoted
+      // path), so nothing is looked up at a Julia prompt
+      if (isConsoleInJulia())
+         return;
+
       // check for a file-local definition (intra-file navigation -- using
       // the active scope tree)
       AceEditor editor = (AceEditor) docDisplay_;
@@ -297,8 +302,8 @@ public class RCompletionManager implements CompletionManager
                fileTypeRegistry_.editFile(filePath);
             }
 
-            // the rest finds R definitions (a quoted path opens in any
-            // language, above)
+            // the rest finds R definitions (a quoted path opens at the Python
+            // prompt too, above)
             if (!isConsoleInR())
                return;
 
@@ -952,6 +957,14 @@ public class RCompletionManager implements CompletionManager
       return StringUtil.equals(
          languageTracker_.get().getLanguage(),
          ConsoleLanguageTracker.LANGUAGE_R);
+   }
+
+   private boolean isConsoleInJulia()
+   {
+      return behavior_ == EditorBehavior.AceBehaviorConsole &&
+             StringUtil.equals(
+                languageTracker_.get().getLanguage(),
+                ConsoleLanguageTracker.LANGUAGE_JULIA);
    }
 
    private static boolean canContinueCompletions(NativeEvent event)
