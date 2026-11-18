@@ -80,6 +80,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.VimrcLoader
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionPopupPanelTests;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositionerTests;
 import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParserTests;
+import org.rstudio.studio.client.workbench.views.vcs.common.diff.UnifiedParserTest;
 import org.rstudio.studio.client.workbench.views.vcs.common.model.VcsStateTests;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalLocalEchoTests;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalSessionSocketTests;
@@ -171,6 +172,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(PrefsTests.class);
       suite.addTestSuite(VimrcLoaderTests.class);
       suite.addTestSuite(VcsStateTests.class);
+      suite.addTestSuite(UnifiedParserTest.class);
       suite.addTestSuite(AppCommandMenuImageTests.class);
       suite.addTestSuite(ImageButtonColumnTests.class);
       suite.addTestSuite(TriStateCheckboxCellTests.class);
