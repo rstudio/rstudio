@@ -149,7 +149,7 @@ public class DirectoryContentsWidget extends Composite
          @Override
          public void onSelection(SelectionEvent<FileSystemItem> event)
          {
-            SelectionEvent.fire(DirectoryContentsWidget.this, event.getSelectedItem());
+            SelectionEvent.fire(DirectoryContentsWidget.this, rowItem(event.getSelectedItem()));
          }
       });
       
@@ -180,10 +180,21 @@ public class DirectoryContentsWidget extends Composite
     */
    public FileSystemItem resolveItem(FileSystemItem item)
    {
-      if (StringUtil.equals(item.getName(), ".."))
-         item = parentDirectory_;
+      return rowItem(item).resolveAliasTarget();
+   }
 
-      return item.resolveAliasTarget();
+   /**
+    * The item a row lists. The `..` row's own item is a placeholder whose
+    * path is literally `..`, so that it displays and is keyed by that name;
+    * the items this widget hands out are the parent directory instead
+    * (#19478).
+    */
+   private FileSystemItem rowItem(FileSystemItem row)
+   {
+      if (row != null && StringUtil.equals(row.getName(), ".."))
+         return parentDirectory_;
+
+      return row;
    }
 
    public void setSelectedRow(Integer row)
@@ -191,15 +202,23 @@ public class DirectoryContentsWidget extends Composite
       table_.selectRow(row);
    }
 
+   /**
+    * @return the selected row's name relative to the listed directory (`..`
+    * for the parent row), or "" when nothing is selected
+    */
    public String getSelectedValue()
    {
-      FileSystemItem item = getSelectedItem();
-      return item == null ? "" : item.getName();
+      FileSystemItem row = table_.getSelectedItem();
+      return row == null ? "" : row.getName();
    }
 
+   /**
+    * @return the item the selected row lists (the parent directory for the
+    * `..` row), or null when nothing is selected
+    */
    public FileSystemItem getSelectedItem()
    {
-      return table_.getSelectedItem();
+      return rowItem(table_.getSelectedItem());
    }
 
    /**
@@ -208,8 +227,8 @@ public class DirectoryContentsWidget extends Composite
     */
    public FileSystemItem getSelectedTarget()
    {
-      FileSystemItem item = getSelectedItem();
-      return item == null ? null : resolveItem(item);
+      FileSystemItem row = table_.getSelectedItem();
+      return row == null ? null : resolveItem(row);
    }
 
    public void showProgress(boolean show)

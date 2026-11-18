@@ -94,7 +94,7 @@ SessionStateCallbacks s_callbacks;
 
 Error saveLibPaths(const FilePath& libPathsFile)
 {
-   std::string file = string_utils::utf8ToSystem(libPathsFile.getAbsolutePath());
+   std::string file = libPathsFile.getAbsolutePath();
    return r::exec::RFunction(".rs.saveLibPaths", file).call();
 }
 
@@ -103,7 +103,7 @@ Error restoreLibPaths(const FilePath& libPathsFile)
    if (!libPathsFile.exists())
       return Success();
 
-   std::string file = string_utils::utf8ToSystem(libPathsFile.getAbsolutePath());
+   std::string file = libPathsFile.getAbsolutePath();
    return r::exec::RFunction(".rs.restoreLibPaths", file).call();
 }
 

@@ -140,16 +140,7 @@ public class DataTable
       colsSeparator_.setVisible(false);
       addColumnControls(toolbar);
 
-      searchWidget_ = new SearchWidget(constants_.searchWidgetLabel(), new SuggestOracle() {
-         @Override
-         public void requestSuggestions(Request request, Callback callback)
-         {
-            // no suggestions
-            callback.onSuggestionsReady(
-                  request,
-                  new Response(new ArrayList<>()));
-         }
-      });
+      searchWidget_ = new SearchWidget(constants_.searchWidgetLabel());
       searchWidget_.setPlaceholderText(constants_.searchPlaceholder());
       searchWidget_.addValueChangeHandler(new ValueChangeHandler<String>() {
          @Override

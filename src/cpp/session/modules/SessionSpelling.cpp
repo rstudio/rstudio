@@ -334,9 +334,8 @@ Error removeCustomDictionary(const json::JsonRpcRequest& request,
 Error installAllDictionaries(const json::JsonRpcRequest& request,
                              json::JsonRpcResponse* pResponse)
 {
-   // form system path to all languages dir
-   std::string targetDir = string_utils::utf8ToSystem(
-      allLanguagesDir().getAbsolutePath());
+   // form path to all languages dir
+   std::string targetDir = allLanguagesDir().getAbsolutePath();
 
    // perform the download
    r::exec::RFunction dlFunc(".rs.downloadAllDictionaries",

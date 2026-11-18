@@ -1832,8 +1832,9 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
                                                   environmentDataDir)
 {
    # First, read the package paths file, and try to load those packages.
+   # Both files are written in UTF-8 (RSearchPath.cpp).
    packagePaths <- .rs.readProperties(
-      path = packagePathsFile,
+      text = readLines(packagePathsFile, warn = FALSE, encoding = "UTF-8"),
       delimiter = "=",
       dequote = TRUE,
       trim = TRUE
@@ -1846,7 +1847,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    .rs.restorePackages(packagePaths)
 
    # Read the search paths file.
-   searchPaths <- readLines(searchPathsFile, warn = FALSE)
+   searchPaths <- readLines(searchPathsFile, warn = FALSE, encoding = "UTF-8")
 
    # Detach anything that's on the search path right now, but not in the search path list.
    currentSearchPaths <- setdiff(

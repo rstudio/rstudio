@@ -574,17 +574,7 @@ public class HistoryPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      searchWidget_ = new SearchWidget(constants_.filterCommandHistoryLabel(), new SuggestOracle()
-      {
-         @Override
-         public void requestSuggestions(Request request,
-                                        Callback callback)
-         {
-            callback.onSuggestionsReady(
-                  request,
-                  new Response(new ArrayList<>()));
-         }
-      });
+      searchWidget_ = new SearchWidget(constants_.filterCommandHistoryLabel());
       searchWidget_.addKeyDownHandler(new KeyDownHandler()
       {
          public void onKeyDown(KeyDownEvent event)

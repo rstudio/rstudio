@@ -11,6 +11,8 @@ export const RMARKDOWN_MODAL = 'div.gwt-DialogBox[aria-label="New R Markdown"]';
 export const TEMPLATE_OPTION = "//span[contains(.,'From Template')]";
 export const TEMPLATE_LIST = '#rstudio_new_rmd_template';
 export const SPELLING_MODAL = "div.gwt-DialogBox[aria-label='Check Spelling']";
+// Raised by SourceColumn.newDoc when the new_document RPC fails.
+export const NEW_DOCUMENT_ERROR_MODAL = 'div.gwt-DialogBox[aria-label="Error Creating New Document"]';
 
 // Actions
 export async function installDepIfPrompted(page: Page, detectTimeout: number = 5000, installTimeout: number = 500000): Promise<void> {

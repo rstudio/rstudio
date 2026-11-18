@@ -43,7 +43,6 @@ import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
-import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.inject.Inject;
 
 public class ObjectExplorerEditingTargetWidget extends Composite
@@ -78,13 +77,7 @@ public class ObjectExplorerEditingTargetWidget extends Composite
                }
             });
       
-      filterWidget_ = new SearchWidget(constants_.searchObjects(), new SuggestOracle()
-      {
-         @Override
-         public void requestSuggestions(Request request, Callback callback)
-         {
-         }
-      });
+      filterWidget_ = new SearchWidget(constants_.searchObjects());
       
       initToolbar();
       initMainWidget();

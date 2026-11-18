@@ -197,16 +197,33 @@ public class AnsiCodeTests extends GWTTestCase
 
    public void testUnknownExtendedColorFormat()
    {
+      // an unknown format drops the extended color and nothing else: the
+      // styles in effect are kept, and the parameters after it apply as usual
       AnsiCode ansi = new AnsiCode();
       ansi.processCode("\033[31m");
       AnsiCode.AnsiClazzes clazzes = ansi.processCode("\033[38;3m");
       Assert.assertNotNull(clazzes);
-      Assert.assertNull(clazzes.inlineClazzes);
+      Assert.assertEquals("xtermColor1", clazzes.inlineClazzes);
 
-      // the reset also ends inverse mode, so the next color is a foreground
+      ansi = new AnsiCode();
+      String expected = ansi.processCode("\033[31;1m").inlineClazzes;
+      String[] codes = { "\033[38;3;1m", "\033[38;6;1m", "\033[48;3;1m" };
+      for (String code : codes)
+      {
+         ansi = new AnsiCode();
+         ansi.processCode("\033[31m");
+         Assert.assertEquals(code, expected, ansi.processCode(code).inlineClazzes);
+      }
+
+      // inverse mode is kept too, so the next color is still a background
+      ansi = new AnsiCode();
+      ansi.processCode("\033[7m");
+      expected = ansi.processCode("\033[31m").inlineClazzes;
+
+      ansi = new AnsiCode();
       ansi.processCode("\033[7m");
       ansi.processCode("\033[38;3m");
-      Assert.assertEquals("xtermColor1", ansi.processCode("\033[31m").inlineClazzes);
+      Assert.assertEquals(expected, ansi.processCode("\033[31m").inlineClazzes);
    }
 
    public void testSubParametersSkipped()
@@ -219,6 +236,30 @@ public class AnsiCodeTests extends GWTTestCase
 
       ansi = new AnsiCode();
       Assert.assertNull(ansi.processCode("\033[38:2::255:0:0m").inlineClazzes);
+   }
+
+   public void testSubParameterInsideExtendedColor()
+   {
+      // a skipped token takes the place of the format or color value it
+      // stands for, so the extended color is dropped, the red is kept, and
+      // the bold after it applies
+      AnsiCode ansi = new AnsiCode();
+      String expected = ansi.processCode("\033[31;1m").inlineClazzes;
+
+      String[] codes = {
+         "\033[38;4:3;1m",
+         "\033[38;5;4:3;1m",
+         "\033[38;2;255:0;0;0;1m",
+         "\033[38;2;0;0;255:0;1m",
+         "\033[48;2;0;255:0;0;1m",
+      };
+
+      for (String code : codes)
+      {
+         ansi = new AnsiCode();
+         ansi.processCode("\033[31m");
+         Assert.assertEquals(code, expected, ansi.processCode(code).inlineClazzes);
+      }
    }
 
    public void testStripHyperlinks()

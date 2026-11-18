@@ -259,6 +259,133 @@ TEST(SessionRTest, PreservedSEXPMovedFromIsEmpty) {
    EXPECT_EQ(R_NilValue, constructed.get());
 }
 
+TEST(SessionRTest, StringsReachRMarkedUtf8) {
+   // C++ strings are UTF-8; marked native instead, non-ASCII text is misread
+   // wherever the native encoding is not UTF-8 (e.g. Windows with R < 4.2), as
+   // when an uploaded zip was expanded into a differently named folder (#19627)
+   std::string value = "/tmp/test-\xc3\xa9";
+
+   std::string encoding;
+   Error error = r::exec::RFunction("base:::Encoding", value).call(&encoding);
+   ASSERT_FALSE(error);
+   EXPECT_EQ("UTF-8", encoding);
+
+   encoding.clear();
+   error = r::exec::RFunction("base:::Encoding")
+         .addParam("x", value)
+         .call(&encoding);
+   ASSERT_FALSE(error);
+   EXPECT_EQ("UTF-8", encoding);
+
+   std::vector<std::string> encodings;
+   std::vector<std::string> values = { value, value };
+   error = r::exec::RFunction("base:::Encoding", values).call(&encodings);
+   ASSERT_FALSE(error);
+   EXPECT_EQ(std::vector<std::string>({ "UTF-8", "UTF-8" }), encodings);
+}
+
+#ifndef _WIN32
+
+TEST(SessionRTest, StringsFromRAreReadAsUtf8) {
+   // the C locale can't represent the string, so reading it as native rather
+   // than as UTF-8 would give "<U+00E9>" in place of the original bytes
+   std::string ctype;
+   Error error = r::exec::RFunction("base:::Sys.getlocale", "LC_CTYPE").call(&ctype);
+   ASSERT_FALSE(error);
+
+   BOOST_SCOPE_EXIT(&ctype)
+   {
+      r::exec::RFunction("base:::Sys.setlocale", "LC_CTYPE", ctype).call();
+   }
+   BOOST_SCOPE_EXIT_END
+
+   error = r::exec::RFunction("base:::Sys.setlocale", "LC_CTYPE", "C").call();
+   ASSERT_FALSE(error);
+
+   std::string value = "/tmp/test-\xc3\xa9";
+   r::sexp::Protect protect;
+   SEXP valueSEXP = r::sexp::createUtf8(value, &protect);
+   EXPECT_EQ(value, r::sexp::asString(valueSEXP));
+
+   std::string result;
+   error = r::exec::RFunction("base:::identity", valueSEXP).call(&result);
+   ASSERT_FALSE(error);
+   EXPECT_EQ(value, result);
+
+   std::vector<std::string> results;
+   error = r::exec::RFunction("base:::identity", valueSEXP).call(&results);
+   ASSERT_FALSE(error);
+   EXPECT_EQ(std::vector<std::string>({ value }), results);
+}
+
+TEST(SessionRTest, NamesReadFromRFindTheirBindings) {
+   // names are read from R as UTF-8, but symbol names are native, so a lookup
+   // by name must translate the name back. In Latin-1, as in a Windows code
+   // page with R < 4.2, installing the UTF-8 bytes as-is names a different
+   // symbol, and the Environment pane showed the variable with no value
+   std::string ctype;
+   Error error = r::exec::RFunction("base:::Sys.getlocale", "LC_CTYPE").call(&ctype);
+   ASSERT_FALSE(error);
+
+   BOOST_SCOPE_EXIT(&ctype)
+   {
+      r::exec::RFunction("base:::Sys.setlocale", "LC_CTYPE", ctype).call();
+   }
+   BOOST_SCOPE_EXIT_END
+
+   std::string latin1;
+   for (const char* locale : { "en_US.ISO8859-1", "en_US.ISO-8859-1" })
+   {
+      error = r::exec::RFunction("base:::Sys.setlocale", "LC_CTYPE", locale).call(&latin1);
+      if (!error && !latin1.empty())
+         break;
+   }
+
+   if (latin1.empty())
+      GTEST_SKIP() << "no Latin-1 locale is installed";
+
+   // binds "caf\xe9" (Latin-1) as R's parser would for that name
+   r::sexp::Protect protect;
+   SEXP envSEXP = R_NilValue;
+   error = r::exec::evaluateString(R"(
+      local({
+         name <- rawToChar(as.raw(c(0x63, 0x61, 0x66, 0xe9)))
+         inner <- new.env(parent = emptyenv())
+         makeActiveBinding(name, function() 42L, inner)
+         env <- new.env(parent = emptyenv())
+         assign(name, 42L, envir = env)
+         assign("inner", inner, envir = env)
+         env
+      })
+   )", &envSEXP, &protect);
+   ASSERT_FALSE(error) << error.asString();
+
+   std::string name = "caf\xc3\xa9";
+
+   std::vector<std::string> names;
+   r::sexp::listEnvironment(envSEXP, false, false, &names);
+   EXPECT_EQ(std::vector<std::string>({ name, "inner" }), names);
+
+   std::vector<std::string> objects;
+   error = r::sexp::objects(envSEXP, false, &objects);
+   ASSERT_FALSE(error);
+   EXPECT_EQ(names, objects);
+
+   EXPECT_EQ(r::sexp::BindingType::Normal, r::sexp::getBindingType(name, envSEXP));
+
+   SEXP valueSEXP = r::sexp::findVar(name, envSEXP);
+   ASSERT_NE(nullptr, valueSEXP);
+   EXPECT_EQ(42, r::sexp::asInteger(valueSEXP));
+   EXPECT_EQ(valueSEXP, r::sexp::getBindingIdentity(name, envSEXP, r::sexp::BindingType::Normal));
+
+   SEXP innerSEXP = r::sexp::findVar("inner", envSEXP);
+   ASSERT_NE(nullptr, innerSEXP);
+   EXPECT_TRUE(r::sexp::isActiveBinding(name, innerSEXP));
+   EXPECT_TRUE(r::sexp::hasActiveBinding("inner", envSEXP));
+}
+
+#endif
+
 #ifdef _WIN32
 
 TEST(SessionRTest, SynchronizeLocaleRepairsAClobberedLocale) {

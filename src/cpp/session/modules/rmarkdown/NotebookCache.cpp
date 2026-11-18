@@ -156,7 +156,7 @@ Error notebookContentMatches(const FilePath& nbPath, const FilePath& rmdPath,
    std::string nbRmdContents;
    r::exec::RFunction extractRmdFromNotebook(
             ".rs.extractRmdFromNotebook",
-            string_utils::utf8ToSystem(nbPath.getAbsolutePath()));
+            nbPath.getAbsolutePath());
    Error error = extractRmdFromNotebook.call(&nbRmdContents);
    if (error) 
       return error;
@@ -324,7 +324,7 @@ void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
    {
       Error error = r::exec::RFunction(
                ".rs.hydrateCacheFromNotebook",
-               string_utils::utf8ToSystem(notebookPath.getAbsolutePath())).call();
+               notebookPath.getAbsolutePath()).call();
       if (error)
          LOG_ERROR(error);
       return;
@@ -379,7 +379,7 @@ void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
 
       error = r::exec::RFunction(
                ".rs.hydrateCacheFromNotebook", 
-               string_utils::utf8ToSystem(notebookPath.getAbsolutePath())).call();
+               notebookPath.getAbsolutePath()).call();
       
       if (error)
          LOG_ERROR(error);
@@ -619,7 +619,7 @@ Error createNotebookFromCache(const json::JsonRpcRequest& request,
    {
       r::exec::RFunction evaluateInlineChunks(".rs.rnb.evaluateInlineChunks");
       evaluateInlineChunks.addParam(
-         string_utils::utf8ToSystem(rmdFile.getAbsolutePath()));
+         rmdFile.getAbsolutePath());
       evaluateInlineChunks.addParam(encoding);
       Error inlineError = evaluateInlineChunks.call(&inlineCachePath);
       if (inlineError)
@@ -730,8 +730,8 @@ Error extractRmdFromNotebook(const json::JsonRpcRequest& request,
    // perform the cache hydration
    error = r::exec::RFunction(
             ".rs.hydrateCacheFromNotebook",
-            string_utils::utf8ToSystem(nbPath.getAbsolutePath()),
-            string_utils::utf8ToSystem(cacheFolder.getAbsolutePath())).call();
+            nbPath.getAbsolutePath(),
+            cacheFolder.getAbsolutePath()).call();
    if (error)
       return error;
 

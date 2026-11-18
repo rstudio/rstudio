@@ -193,24 +193,44 @@ json::Array getCppDiagnosticsJson(const FilePath& filePath)
    // so when one is in play we surface those at the top of the file instead
    // of silently dropping them
    FilePath flagsFile = compileFlagsFileForSource(filePath);
-   bool hasUserFlags = !flagsFile.isEmpty() && !readCompileFlags(flagsFile).empty();
+   std::vector<RejectedCompileFlag> rejectedFlags;
+   bool hasUserFlags =
+         !flagsFile.isEmpty() &&
+         !filterCompileFlags(readCompileFlags(flagsFile), &rejectedFlags).empty();
 
    // get diagnostics from translation unit
    std::string filename = filePath.getAbsolutePath();
    TranslationUnit tu = sourceIndex().getTranslationUnit(filename, true);
+
+   // the flags only apply to a file we index, so only such a file is told
+   // about them. One that failed to parse is indexed if it has compile args
+   // (looked up without the PCH, so a bad flag doesn't trigger a second
+   // failed PCH build).
+   bool indexable = !tu.empty();
+   if (!indexable && (hasUserFlags || !rejectedFlags.empty()))
+      indexable = !clangCompilationDatabase().compileArgsForTranslationUnit(filename, false).empty();
+
+   // flags we don't pass on to libclang are reported, so they aren't
+   // mistaken for flags that had no effect
+   if (indexable)
+   {
+      for (const RejectedCompileFlag& rejected : rejectedFlags)
+      {
+         std::string message =
+               "'" + rejected.flag + "' in " + module_context::createAliasedPath(flagsFile) +
+               " was ignored; " + rejected.reason;
+         diagnosticsJson.push_back(syntheticDiagnosticJson(filePath, CXDiagnostic_Warning, message));
+      }
+   }
+
    if (tu.empty())
    {
-      if (hasUserFlags)
+      if (hasUserFlags && indexable)
       {
-         // (without the PCH, so a bad flag doesn't trigger a second failed PCH build)
-         bool indexable = !clangCompilationDatabase().compileArgsForTranslationUnit(filename, false).empty();
-         if (indexable)
-         {
-            std::string message =
-                  "libclang could not parse this file; check the flags in " +
-                  module_context::createAliasedPath(flagsFile);
-            diagnosticsJson.push_back(syntheticDiagnosticJson(filePath, CXDiagnostic_Error, message));
-         }
+         std::string message =
+               "libclang could not parse this file; check the flags in " +
+               module_context::createAliasedPath(flagsFile);
+         diagnosticsJson.push_back(syntheticDiagnosticJson(filePath, CXDiagnostic_Error, message));
       }
 
       return diagnosticsJson;

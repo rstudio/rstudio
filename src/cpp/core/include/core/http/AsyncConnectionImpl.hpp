@@ -759,7 +759,16 @@ private:
             Error error(e, ERROR_LOCATION);
             if (!isConnectionTerminatedError(error))
                logConnectionError(error);
-            
+
+            // let an upload handler mid-body stop forwarding it (FormProxy
+            // closes its session connection), before close() drops the
+            // proxy from our data
+            RECURSIVE_LOCK_MUTEX(mutex_)
+            {
+               requestParser_.abortForm();
+            }
+            END_LOCK_MUTEX
+
             // close the socket
             close();
             

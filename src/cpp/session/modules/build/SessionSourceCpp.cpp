@@ -240,7 +240,7 @@ SourceCppContext& sourceCppContext()
 SEXP rs_sourceCppOnBuild(SEXP sFile, SEXP sFromCode, SEXP sShowOutput)
 {
    std::string file = r::sexp::asString(sFile);
-   FilePath filePath(string_utils::systemToUtf8(file));
+   FilePath filePath(file);
    bool fromCode = r::sexp::asLogical(sFromCode);
    bool showOutput = r::sexp::asLogical(sShowOutput);
 

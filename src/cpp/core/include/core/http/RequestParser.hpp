@@ -63,6 +63,35 @@ public:
      formBuffer_.reserve(contentLength_ < MAX_BUFFER_SIZE ? contentLength_ : MAX_BUFFER_SIZE);
   }
 
+  /// Body bytes still to arrive for a form handler that is reading the body.
+  uintmax_t formBytesRemaining() const
+  {
+     if (!parsingBody_ || !isForm_ || !formHandler_ || bodyBytesRead_ >= contentLength_)
+        return 0;
+
+     return contentLength_ - bodyBytesRead_;
+  }
+
+  /// Drop the form handler. If it is still reading the body, first tell it
+  /// that no more is coming (e.g. the client went away) with a final empty
+  /// call marked complete, short of the Content-Length.
+  void abortForm()
+  {
+     FormHandler handler = formHandler_;
+     bool reading = formBytesRemaining() > 0;
+     cleanup();
+
+     if (reading)
+        handler(std::string(), true);
+  }
+
+  /// Whether a form handler's call is the one abortForm makes: marked
+  /// complete, with less than the Content-Length received in all.
+  static bool isAbandonedForm(const Request& request, uintmax_t bytesReceived, bool complete)
+  {
+     return complete && bytesReceived < request.contentLength();
+  }
+
   /// Parse the next chunk of input.
   ///
   /// After headers_parsed or pause is returned the parser holds an offset into
@@ -157,7 +186,7 @@ public:
              // if we have a body then continue parsing it
              if (contentLength_ > 0)
              {
-                if (req.contentType().find("multipart/form-data") != std::string::npos)
+                if (boost::algorithm::icontains(req.contentType(), "multipart/form-data"))
                    isForm_ = true;
              }
 
