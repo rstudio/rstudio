@@ -73,7 +73,7 @@ TEST(SessionConsoleHistoryTest, RHistsizeLimitsOnlyTheSavedHistory) {
    // usual. loading a history file into a capacity of 0 used to crash
    r::session::ConsoleHistory zeroHistory;
    zeroHistory.setCapacityFromRHistsize();
-   EXPECT_EQ(512, zeroHistory.capacity());
+   ASSERT_EQ(512, zeroHistory.capacity());
    ASSERT_FALSE(zeroHistory.loadFromFile(historyPath, true));
    EXPECT_EQ(commands, entriesOf(zeroHistory));
    EXPECT_TRUE(savedBy(zeroHistory).empty());
@@ -90,6 +90,12 @@ TEST(SessionConsoleHistoryTest, RHistsizeLimitsOnlyTheSavedHistory) {
    const std::vector<std::string> lastTwo {"second()", "third()"};
    EXPECT_EQ(lastTwo, savedBy(smallHistory));
    EXPECT_EQ(lastTwo, savedBy(zeroHistory));
+
+   // the session's own snapshot (saved on suspend) keeps everything
+   std::vector<std::string> snapshot;
+   ASSERT_FALSE(smallHistory.saveToFile(savedPath, true));
+   ASSERT_FALSE(core::readStringVectorFromFile(savedPath, &snapshot));
+   EXPECT_EQ(commands, snapshot);
 
    // a value larger than the default raises the session's capacity
    core::system::setenv("R_HISTSIZE", "1000");
