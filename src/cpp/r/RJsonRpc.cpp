@@ -94,7 +94,7 @@ Error callRHandler(const std::string& functionName,
       const core::json::Value& param = params[i];
       if (param.isString())
       {
-         rFunction.addUtf8Param(param.getString());
+         rFunction.addParam(param.getString());
       }
       else
       {
@@ -111,7 +111,7 @@ Error callRHandler(const std::string& functionName,
 
       if (value.isString())
       {
-         rFunction.addUtf8Param(name, value.getString());
+         rFunction.addParam(name, value.getString());
       }
       else
       {

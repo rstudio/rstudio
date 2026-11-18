@@ -372,19 +372,19 @@ SEXP rs_dictionariesPath(SEXP typeSEXP)
    
    if (type == "bundled")
    {
-      return r::sexp::createUtf8(
+      return r::sexp::create(
                options().hunspellDictionariesPath().getAbsolutePath(),
                &protect);
    }
    else if (type == "extra")
    {
-      return r::sexp::createUtf8(
+      return r::sexp::create(
                allDictionariesDir().getAbsolutePath(),
                &protect);
    }
    else if (type == "user")
    {
-      return r::sexp::createUtf8(
+      return r::sexp::create(
                userDictionariesDir().getAbsolutePath(),
                &protect);
    }

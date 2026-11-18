@@ -1986,7 +1986,7 @@ SEXP finalizePaths(const std::vector<boost::filesystem::path>& paths)
 
    // return to R
    r::sexp::Protect protect;
-   SEXP resultSEXP = r::sexp::createUtf8(utf8Paths, &protect);
+   SEXP resultSEXP = r::sexp::create(utf8Paths, &protect);
 
    SEXP sortedSEXP = R_NilValue;
    Error error = r::exec::RFunction("base:::sort", resultSEXP).call(&sortedSEXP, &protect);
@@ -2240,7 +2240,7 @@ SEXP rs_createAliasedPath(SEXP pathsSEXP)
          }
 
          std::string aliased = FilePath::createAliasedPath(
-            FilePath(r::sexp::asUtf8String(elt)),
+            FilePath(r::sexp::asString(elt)),
             home);
 
          SEXP charSEXP = Rf_mkCharLenCE(

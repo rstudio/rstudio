@@ -106,7 +106,6 @@ TEST(SessionRTest, RFunctionRefusesNonMainThread) {
    std::thread([&listFunction]()
    {
       listFunction.addParam("x");
-      listFunction.addUtf8Param("y");
    }).join();
    error = listFunction.call();
    expectNonMainThreadError(error);
@@ -277,6 +276,11 @@ TEST(SessionRTest, StringsReachRMarkedUtf8) {
    ASSERT_FALSE(error);
    EXPECT_EQ("UTF-8", encoding);
 
+   encoding.clear();
+   error = r::exec::RFunction("base:::Encoding", FilePath(value)).call(&encoding);
+   ASSERT_FALSE(error);
+   EXPECT_EQ("UTF-8", encoding);
+
    std::vector<std::string> encodings;
    std::vector<std::string> values = { value, value };
    error = r::exec::RFunction("base:::Encoding", values).call(&encodings);
@@ -304,7 +308,7 @@ TEST(SessionRTest, StringsFromRAreReadAsUtf8) {
 
    std::string value = "/tmp/test-\xc3\xa9";
    r::sexp::Protect protect;
-   SEXP valueSEXP = r::sexp::createUtf8(value, &protect);
+   SEXP valueSEXP = r::sexp::create(value, &protect);
    EXPECT_EQ(value, r::sexp::asString(valueSEXP));
 
    std::string result;

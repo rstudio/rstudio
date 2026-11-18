@@ -188,8 +188,8 @@ Error save(const FilePath& statePath)
       {
          std::string packagePath;
          error = r::exec::RFunction("base:::getNamespaceInfo")
-               .addUtf8Param(package)
-               .addUtf8Param("path")
+               .addParam(package)
+               .addParam("path")
                .call(&packagePath);
 
          if (error)
@@ -287,9 +287,9 @@ Error restoreSearchPath(
 
    // load the required packages
    Error error = r::exec::RFunction(".rs.restoreSearchPath")
-         .addUtf8Param(searchPathsFile.getAbsolutePath())
-         .addUtf8Param(packagePathsFile.getAbsolutePath())
-         .addUtf8Param(environmentDataPath.getAbsolutePath())
+         .addParam(searchPathsFile.getAbsolutePath())
+         .addParam(packagePathsFile.getAbsolutePath())
+         .addParam(environmentDataPath.getAbsolutePath())
          .call();
    if (error)
       LOG_ERROR(error);

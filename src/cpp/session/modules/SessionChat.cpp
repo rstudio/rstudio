@@ -321,7 +321,7 @@ using chat_staticfiles::handleAIChatRequest;
 SEXP rs_chatNormalizePath(SEXP pathSEXP)
 {
    std::vector<std::string> paths;
-   Error error = r::sexp::extract(pathSEXP, &paths, true);
+   Error error = r::sexp::extract(pathSEXP, &paths);
    if (error)
    {
       LOG_ERROR(error);
@@ -344,7 +344,7 @@ SEXP rs_chatNormalizePath(SEXP pathSEXP)
    }
 
    r::sexp::Protect protect;
-   return r::sexp::createUtf8(paths, &protect);
+   return r::sexp::create(paths, &protect);
 }
 
 // ============================================================================
@@ -4310,13 +4310,10 @@ bool isVersionDowngrade(
 
 // Calls one of the .rs.chat helpers built on .rs.chat.failureReason, which
 // return "" on success or the reason the operation failed.
-// callUtf8 because the reason is an R condition message, which on a localized
-// non-UTF-8 session carries native-encoded bytes that the install status
-// response (JSON) requires as UTF-8.
 Error callReportingFailure(r::exec::RFunction& function)
 {
    std::string reason;
-   Error error = function.callUtf8(&reason);
+   Error error = function.call(&reason);
    if (!error && !reason.empty())
       error = systemError(boost::system::errc::io_error, reason, ERROR_LOCATION);
    return error;
@@ -4345,7 +4342,7 @@ Error downloadPackage(const std::string& url, const FilePath& destPath)
    // the paths in installPackage().
    r::exec::RFunction download(".rs.chat.downloadPackage");
    download.addParam("url", url);
-   download.addUtf8Param("destfile", destPath);
+   download.addParam("destfile", destPath);
    Error error = callReportingFailure(download);
    if (error)
    {
@@ -4416,8 +4413,8 @@ Error installPackage(const FilePath& packagePath,
    // on Windows, native is the system code page, so a non-ASCII path (a user
    // name such as José) would name a different directory in R than here.
    r::exec::RFunction extract(".rs.chat.extractPackage");
-   extract.addUtf8Param("zipfile", packagePath);
-   extract.addUtf8Param("exdir", stagingDir);
+   extract.addParam("zipfile", packagePath);
+   extract.addParam("exdir", stagingDir);
    error = callReportingFailure(extract);
    if (error)
    {

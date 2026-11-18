@@ -439,8 +439,8 @@ Error executeSqlEngineChunk(const std::string& docId,
 
    // run sql and save result
    error = r::exec::RFunction(".rs.runSqlForDataCapture")
-         .addUtf8Param(code)
-         .addUtf8Param(dataPath.getAbsolutePath())
+         .addParam(code)
+         .addParam(dataPath.getAbsolutePath())
          .addParam(options)
          .call();
 
@@ -648,7 +648,7 @@ Error runUserDefinedEngine(const std::string& docId,
    // generic engine output (as a single string of console output)
    if (isString(outputSEXP))
    {
-      std::string text = asUtf8String(outputSEXP);
+      std::string text = asString(outputSEXP);
       
       // handle path outputs
       if (engine == "dot")
@@ -700,7 +700,7 @@ Error runUserDefinedEngine(const std::string& docId,
          else if (inherits(elSEXP, "knit_image_paths"))
          {
             // handle a plot provided by e.g. knitr::include_graphics()
-            std::string path = asUtf8String(elSEXP);
+            std::string path = asString(elSEXP);
             Error error = emitImage(path);
             if (error)
             {
@@ -730,7 +730,7 @@ Error runUserDefinedEngine(const std::string& docId,
          else if (isString(elSEXP) || isNumeric(elSEXP))
          {
             // plain old console text output -- emit as-is
-            std::string text = asUtf8String(elSEXP);
+            std::string text = asString(elSEXP);
             Error error = emitText(text, kChunkConsoleOutput);
             if (error)
             {

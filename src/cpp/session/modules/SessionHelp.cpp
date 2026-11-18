@@ -768,7 +768,7 @@ r_util::RPackageInfo packageInfoForRd(const FilePath& rdFilePath)
 Error Rd2HTML(FilePath filePath, std::string* html)
 {
    r::exec::RFunction fun(".rs.Rd2HTML");
-   fun.addUtf8Param(filePath.getAbsolutePath());
+   fun.addParam(filePath.getAbsolutePath());
 
    // add in package-specific information if available
    r_util::RPackageInfo pkgInfo = packageInfoForRd(filePath);
@@ -795,10 +795,10 @@ void handleDevFigure(const http::Request& request,
    }
 
    r::exec::RFunction system_file("base:::system.file");
-   system_file.addUtf8Param("package", pkg);
+   system_file.addParam("package", pkg);
    system_file.addParam("man");
    system_file.addParam("figures");
-   system_file.addUtf8Param(figure);
+   system_file.addParam(figure);
 
    std::string file;
    Error error = system_file.call(&file);

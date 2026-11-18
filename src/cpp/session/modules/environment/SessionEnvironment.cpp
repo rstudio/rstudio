@@ -662,7 +662,7 @@ bool functionIsOutOfSync(const CallFrameResult& cfResult,
       return true;
    }
 
-   error = r::sexp::extract(sexpCode, pFunctionCode, true);
+   error = r::sexp::extract(sexpCode, pFunctionCode);
    if (error)
    {
       LOG_ERROR(error);
