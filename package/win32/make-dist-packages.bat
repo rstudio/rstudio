@@ -41,9 +41,14 @@ set "BUILD_DIR=%CD%"
 
 if not defined QUICK (
     echo Creating NSIS setup package...
-    cpack -C "%CMAKE_BUILD_TYPE%" -G NSIS
+    cpack -C "%CMAKE_BUILD_TYPE%" -G NSIS || set NSIS_FAILED=1
     REM emit NSIS error output if present
     if exist "%PKG_TEMP_DIR%\_CPack_Packages\win64\NSIS\NSISOutput.log" type "%PKG_TEMP_DIR%\_CPack_Packages\win64\NSIS\NSISOutput.log"
+    if defined NSIS_FAILED (
+        echo ERROR: cpack failed to create the NSIS setup package
+        popd
+        goto :error
+    )
     if not defined RSTUDIO_DOCKER_DEVELOPMENT_BUILD (
         move "%PKG_TEMP_DIR%\*.exe" "%BUILD_DIR%"
     )
