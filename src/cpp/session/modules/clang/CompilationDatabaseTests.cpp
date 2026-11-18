@@ -213,7 +213,7 @@ TEST_F(CompileFlagsTest, AllowsFlagsThatShapeTheParse)
 
       // code generation flags let through so a build's flags can be pasted in
       "-fno-omit-frame-pointer", "-ffunction-sections", "-fdata-sections", "-ffp-contract=fast",
-      "-mfpmath=sse", "-mstackrealign", "-ffile-prefix-map=/build=.",
+      "-mstackrealign", "-ffile-prefix-map=/build=.",
    };
 
    std::vector<RejectedCompileFlag> rejected;
@@ -226,6 +226,12 @@ TEST_F(CompileFlagsTest, RejectsNegatedFeaturesThatArentListed)
    // '-fno-' and '-mno-' only allow the names their positive forms do
    std::vector<std::string> flags = {"-fno-foo", "-mno-foo", "-ffoo", "-mfoo"};
    EXPECT_EQ(rejectedFlags(flags), flags);
+}
+
+TEST_F(CompileFlagsTest, RejectsFpmath)
+{
+   // an x86 build's '-mfpmath=sse' would stop libclang parsing on arm64
+   EXPECT_EQ(rejectedFlags({"-mfpmath=sse"}), std::vector<std::string>{"-mfpmath=sse"});
 }
 
 TEST_F(CompileFlagsTest, RejectsFlagsThatReachBeyondTheParse)

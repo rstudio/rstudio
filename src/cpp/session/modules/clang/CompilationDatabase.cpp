@@ -327,10 +327,12 @@ const CompileFlagOption kCompileFlagOptions[] = {
 // clang options of their own that begin with one of the spellings above
 const char* const kShadowingOptions[] = { "-include-pch", "-iframeworkwithsysroot" };
 
-// Options that take their value only after an '=', as in '-std=c++17'
+// Options that take their value only after an '=', as in '-std=c++17'. Not
+// '-mfpmath': it doesn't change the parse, and an x86 build's '-mfpmath=sse'
+// stops libclang from parsing anything on arm64.
 const std::set<std::string> kSettingOptions = {
    "--target", "-std", "-stdlib",
-   "-march", "-mcpu", "-mtune", "-mabi", "-mfpu", "-mfpmath", "-mfloat-abi",
+   "-march", "-mcpu", "-mtune", "-mabi", "-mfpu", "-mfloat-abi",
    "-mmacos-version-min", "-mmacosx-version-min",
    "-fbracket-depth", "-fcf-protection", "-fconstexpr-backtrace-limit",
    "-fconstexpr-depth", "-fconstexpr-steps", "-fdiagnostics-color", "-ferror-limit",
