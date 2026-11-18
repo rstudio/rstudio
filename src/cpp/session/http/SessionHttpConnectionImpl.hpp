@@ -162,6 +162,12 @@ public:
       }
       CATCH_UNEXPECTED_EXCEPTION
 
+      // an upload handler can answer before the client has sent the whole
+      // body; closing with some of it unread resets the connection, which can
+      // discard the response, so handleRead reads the rest before closing
+      if (requestParser_.formBytesRemaining() > 0)
+         return;
+
       // always close connection
       try
       {
@@ -352,6 +358,19 @@ private:
                return;
             }
 
+            // paused - the upload handler gave up after sending its response;
+            // drop it, since its continuation keeps this connection alive,
+            // and read whatever is left of the body before closing
+            else if (status == core::http::RequestParser::pause)
+            {
+               uintmax_t remaining = requestParser_.formBytesRemaining();
+               requestParser_.setFormHandler(core::http::FormHandler());
+               if (remaining > 0)
+                  discardBody(remaining);
+
+               return;
+            }
+
             // got valid request -- handle it
             else
             {
@@ -371,6 +390,10 @@ private:
             if (!core::http::isConnectionTerminatedError(error))
                LOG_ERROR(error);
 
+            // let an upload handler mid-body clean up; dropping it also frees
+            // this connection, which its continuation keeps alive
+            requestParser_.abortForm();
+
             // close the connection
             close();
 
@@ -379,6 +402,34 @@ private:
          }
       }
       CATCH_UNEXPECTED_EXCEPTION
+   }
+
+   // read and drop the rest of a request body that no one wants, then close
+   void discardBody(uintmax_t remaining)
+   {
+      auto handler = boost::bind(&HttpConnectionImpl<ProtocolType>::handleDiscard,
+                                 HttpConnectionImpl<ProtocolType>::shared_from_this(),
+                                 remaining,
+                                 boost::asio::placeholders::error,
+                                 boost::asio::placeholders::bytes_transferred);
+
+      if (sslStream_)
+         sslStream_->async_read_some(boost::asio::buffer(buffer_), handler);
+      else
+         socket_->async_read_some(boost::asio::buffer(buffer_), handler);
+   }
+
+   void handleDiscard(uintmax_t remaining,
+                      const boost::system::error_code& e,
+                      std::size_t bytesTransferred)
+   {
+      if (e || bytesTransferred >= remaining)
+      {
+         close();
+         return;
+      }
+
+      discardBody(remaining - bytesTransferred);
    }
 
    void onStreamComplete()
