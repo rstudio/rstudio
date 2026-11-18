@@ -20,9 +20,13 @@ context("history")
 # .rs.savehistory() and .rs.loadhistory() replace utils::savehistory() and
 # utils::loadhistory() on Windows; they exist on every platform, so these tests
 # call them directly. the first test replaces the session's history with a
-# synthetic one, so only that is ever written out.
+# synthetic one, so only that is ever written out. tests that change the
+# session's history only run in the rstudio-tests runner's disposable session.
 
 test_that(".rs.loadhistory() and .rs.savehistory() round-trip a history file", {
+   skip_if_not(nzchar(Sys.getenv("RSTUDIO_TESTS_HELPER")), "changes the session's console history")
+   skip_if(isTRUE(suppressWarnings(as.integer(Sys.getenv("R_HISTSIZE"))) < 1), "R_HISTSIZE keeps no history")
+
    input <- tempfile("history-input-")
    output <- tempfile("history-output-")
    on.exit(unlink(c(input, output)), add = TRUE)
@@ -41,5 +45,7 @@ test_that(".rs.savehistory() reports a file it can't write", {
 })
 
 test_that(".rs.loadhistory() reports a file it can't read", {
+   # before #19686, a failed load also emptied the session's history
+   skip_if_not(nzchar(Sys.getenv("RSTUDIO_TESTS_HELPER")), "changes the session's console history")
    expect_error(.rs.loadhistory(tempfile("no-such-history-")))
 })
