@@ -466,7 +466,7 @@ static bool s_chatHoldsBusy = false;
 
 // Forward declaration
 void processPendingExecution();
-void continuePendingExecutions();
+void continuePendingExecutions(bool ran);
 
 // ============================================================================
 // Code Execution Context (for console output capture)
@@ -1410,7 +1410,15 @@ void processPendingExecution()
    auto now = std::chrono::steady_clock::now();
    auto waitTimeMs = std::chrono::duration_cast<std::chrono::milliseconds>(
       now - request.queuedTime).count();
-   bool deadlinePassed =
+   bool canceled = false;
+   {
+      boost::mutex::scoped_lock lock(s_executionTrackingMutex);
+      canceled = s_canceledTrackingIds.count(request.trackingId) > 0;
+   }
+
+   // A canceled request is answered as canceled (by executeCodeImpl), however
+   // long it waited
+   bool deadlinePassed = !canceled &&
       chat_execution::expiredInQueue(request.queuedTime, request.timeout, now);
 
    if (waitTimeMs > kMaxQueueWaitMs || deadlinePassed)
@@ -1445,7 +1453,7 @@ void processPendingExecution()
          s_canceledTrackingIds.erase(request.trackingId);
       }
 
-      continuePendingExecutions();
+      continuePendingExecutions(false);
       return;
    }
 
@@ -1461,15 +1469,15 @@ void processPendingExecution()
                    request.silentExecution, request.expressionBoundaryHook,
                    request.timeout, request.queuedTime);
 
-   continuePendingExecutions();
+   continuePendingExecutions(true);
 }
 
 // After a request runs or expires: schedule the next queued request, or, once
-// the queue is empty, release the busy state a chat execution set. Releasing
-// only that one matters for a request that expires while idle work runs
-// inside a user command (e.g. one waiting in file.choose()), which must keep
-// its own busy state.
-void continuePendingExecutions()
+// the queue is empty, release the console's busy state -- after a request
+// that ran, or after one that expired if a chat execution set it. An expiry
+// can happen while idle work runs inside a user command (e.g. one waiting in
+// file.choose()), whose own busy state must be left alone.
+void continuePendingExecutions(bool ran)
 {
    boost::mutex::scoped_lock lock(s_pendingExecutionMutex);
    if (!s_pendingExecutionQueue.empty() && !s_executionScheduled)
@@ -1480,7 +1488,7 @@ void continuePendingExecutions()
          processPendingExecution,
          true);  // idleOnly=true - wait for R to be idle
    }
-   else if (s_pendingExecutionQueue.empty() && s_chatHoldsBusy)
+   else if (s_pendingExecutionQueue.empty() && (ran || s_chatHoldsBusy))
    {
       s_chatHoldsBusy = false;
       lock.unlock();
@@ -1622,6 +1630,10 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    bool wasCanceled = false;
    bool timedOut = false;
 
+   // A request can start inside another one's nested console read (e.g. its
+   // readline()); that one's deadline is set aside and restored at the end
+   chat_execution::ExecutionDeadline enclosingDeadline;
+
    // Check if this request was already canceled (pre-cancellation of queued request)
    // and register tracking ID for cancellation support
    {
@@ -1649,6 +1661,7 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
 
       // Register as current execution
       s_currentTrackingId = trackingId;
+      enclosingDeadline = s_currentDeadline;
       s_currentDeadline.arm(queuedTime, timeout);
    }
 
@@ -2130,6 +2143,7 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    {
       boost::mutex::scoped_lock lock(s_executionTrackingMutex);
       s_currentTrackingId.clear();
+      s_currentDeadline = enclosingDeadline;
       // Also clean up from canceled set in case cancel arrived during execution
       s_canceledTrackingIds.erase(trackingId);
    }
