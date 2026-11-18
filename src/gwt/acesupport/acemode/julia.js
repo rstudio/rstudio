@@ -65,6 +65,11 @@ oop.inherits(Mode, TextMode);
 
    this.getNextLineIndent = function(state, line, tab, row)
    {
+      // Ace's Enter doesn't pass the row; by then the cursor is on the new
+      // line below it (as in r_code_model.js)
+      if (typeof row !== "number" && this.$session)
+         row = this.$session.getSelection().getCursor().row - 1;
+
       var indent = this.$getIndent(line);
       var tokens = this.getTokenizer().getLineTokens(line, state).tokens;
       var info = JuliaCode.analyze(tokens);

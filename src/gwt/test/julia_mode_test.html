@@ -159,6 +159,30 @@
       ", expected " + JSON.stringify(testCase[1]));
   });
 
+  // Enter, which Ace handles without passing the row: [lines, expected last
+  // line and new line after pressing Enter at the end]
+  var enterCases = [
+    [["function f()", "  if x"], ["  if x", "    "]],
+    // 'elseif z' was outdented when the space after it was typed
+    [["function f()", "  if x", "    y", "  elseif z"], ["  elseif z", "    "]],
+    // 'else' is outdented by the Enter itself
+    [["function f()", "  if x", "    y", "    else"], ["  else", "    "]]
+  ];
+
+  enterCases.forEach(function(testCase)
+  {
+    var lines = testCase[0];
+    session.setValue(lines.join("\n"));
+    var row = lines.length - 1;
+    editor.moveCursorTo(row, lines[row].length);
+    editor.insert("\n");
+    var actual = [session.getLine(row), session.getLine(row + 1)];
+    check(
+      JSON.stringify(actual) === JSON.stringify(testCase[1]),
+      "Enter after " + JSON.stringify(lines) + ": " + JSON.stringify(actual) +
+      ", expected " + JSON.stringify(testCase[1]));
+  });
+
   // ---- outdent ----
 
   // [lines, expected last line after outdenting it]

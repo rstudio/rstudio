@@ -249,7 +249,10 @@ public class RCompletionManager implements CompletionManager
    
    public void goToHelp()
    {
-      InputEditorLineWithCursorPosition linePos = 
+      if (!isConsoleInR())
+         return;
+
+      InputEditorLineWithCursorPosition linePos =
             InputEditorUtil.getLineWithCursorPosition(input_);
 
       server_.getHelpAtCursor(
@@ -258,7 +261,10 @@ public class RCompletionManager implements CompletionManager
    }
    
    public void goToDefinition()
-   {   
+   {
+      if (!isConsoleInR())
+         return;
+
       // check for a file-local definition (intra-file navigation -- using
       // the active scope tree)
       AceEditor editor = (AceEditor) docDisplay_;
@@ -496,20 +502,16 @@ public class RCompletionManager implements CompletionManager
          {
             return snippets_.attemptSnippetInsertion(true);
          }
-         // R's help and definitions are the wrong ones at another language's
-         // console prompt
          else if (keycode == KeyCodes.KEY_F1
                   && modifier == KeyboardShortcut.NONE)
          {
-            if (isConsoleInR())
-               goToHelp();
+            goToHelp();
             return true;
          }
          else if (keycode == KeyCodes.KEY_F2
                   && modifier == KeyboardShortcut.NONE)
          {
-            if (isConsoleInR())
-               goToDefinition();
+            goToDefinition();
             return true;
          }
       }
