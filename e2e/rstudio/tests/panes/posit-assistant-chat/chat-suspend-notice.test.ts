@@ -1,5 +1,6 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { sleep } from '@utils/constants';
+import { executeCommand } from '@utils/commands';
 import { restartSessionWithSentinel, waitForSessionRestart } from '@utils/project';
 import { dismissBlockingModals } from '@pages/modals.page';
 import { executeInConsole } from '@pages/console_pane.page';
@@ -34,6 +35,20 @@ async function expectBannerNeverShown(page: Page, windowMs: number, when: string
     expect(shown, `"connection lost" banner shown ${when}`).toBe(false);
     await sleep(250);
   }
+}
+
+/**
+ * Counts ChatPresenter's "Chat iframe error:" log lines, which it writes even
+ * when the banner is suppressed. A suppression check is only meaningful if the
+ * outgoing page reported a failure during it.
+ */
+function watchIframeErrors(page: Page): { count: () => number; stop: () => void } {
+  let count = 0;
+  const onConsole = (msg: { text(): string }): void => {
+    if (msg.text().includes('Chat iframe error:')) count++;
+  };
+  page.on('console', onConsole);
+  return { count: () => count, stop: () => page.off('console', onConsole) };
 }
 
 // Client state is pushed on a passive 5s timer, and that RPC resumes a
@@ -74,22 +89,30 @@ test.describe.serial('Posit Assistant across suspend and restart', {
     rstudioPage: page,
   }) => {
     await waitForClientStateQuiet(page);
-    // Not Session > Suspend: a forced suspend exits without delivering
-    // SUSPEND_SESSION, like an inactivity-timeout suspend does
-    await executeInConsole(page, '.rs.suspendSession(force = FALSE)', { wait: false });
+    // Suspend cooperatively, as the inactivity timeout does. Session > Suspend
+    // is forced and doesn't reliably deliver SUSPEND_SESSION (see below).
+    const iframeErrors = watchIframeErrors(page);
+    try {
+      await executeInConsole(page, '.rs.suspendSession(force = FALSE)', { wait: false });
 
-    await expect(suspendedNotice(page)).toBeVisible({ timeout: 15000 });
+      await expect(suspendedNotice(page)).toBeVisible({ timeout: 15000 });
 
-    // The session stays suspended while nothing issues an RPC, so the old
-    // iframe keeps failing to reconnect for this whole window.
-    await expectBannerNeverShown(page, RECONNECT_REPORT_WINDOW_MS, 'while suspended');
-    await expect(suspendedNotice(page)).toBeVisible();
+      // The session stays suspended while nothing issues an RPC, so the old
+      // iframe keeps failing to reconnect for this whole window.
+      await expectBannerNeverShown(page, RECONNECT_REPORT_WINDOW_MS, 'while suspended');
+      await expect(suspendedNotice(page)).toBeVisible();
+      expect(iframeErrors.count(), 'iframe errors reported while suspended').toBeGreaterThan(0);
+    } finally {
+      iframeErrors.stop();
+    }
 
     await waitForSessionRestart(page);
     await dismissBlockingModals(page);
-    await chatActions.waitForChatReady();
 
+    // The notice hides only once the old page is replaced, so the ready check
+    // that follows can't match the old page's composer
     await expect(suspendedNotice(page)).toBeHidden({ timeout: 15000 });
+    await chatActions.waitForChatReady();
     await expectBannerNeverShown(page, 3000, 'after resume');
   });
 
@@ -108,20 +131,47 @@ test.describe.serial('Posit Assistant across suspend and restart', {
       await route.continue().catch(() => undefined);
     });
 
+    const iframeErrors = watchIframeErrors(page);
     try {
       await restartSessionWithSentinel(page);
       await dismissBlockingModals(page);
       // The held lookup keeps the pre-restart iframe, and its notice, in place
       await expect(restartingNotice(page)).toBeVisible();
       await expectBannerNeverShown(page, RECONNECT_REPORT_WINDOW_MS, 'during restart');
+      expect(iframeErrors.count(), 'iframe errors reported during restart').toBeGreaterThan(0);
     } finally {
+      iframeErrors.stop();
       release();
       await page.unroute(/\/rpc\/chat_get_backend_status/);
     }
     expect(held, 'chat_get_backend_status calls held after restart').toBeGreaterThan(0);
 
-    await chatActions.waitForChatReady();
     await expect(restartingNotice(page)).toBeHidden({ timeout: 15000 });
+    await chatActions.waitForChatReady();
     await expectBannerNeverShown(page, 3000, 'after restart');
+  });
+
+  // The issue's repro. A forced suspend doesn't flush pending events before
+  // exiting, so SUSPEND_SESSION reaches the client only if an events poll picks
+  // it up first. Blocking the polls loses it every time; the old page's banner
+  // then shows while suspended, and the reload on resume must clear it.
+  test('Session > Suspend without SUSPEND_SESSION: resume clears the banner', async ({
+    rstudioPage: page,
+  }) => {
+    await waitForClientStateQuiet(page);
+    await page.route(/\/events\/get_events/, (route) => route.abort());
+    try {
+      await executeCommand(page, 'suspendSession');
+      await expect(lostBanner(page)).toBeVisible({ timeout: 15000 });
+    } finally {
+      await page.unroute(/\/events\/get_events/);
+    }
+    await expect(suspendedNotice(page)).toBeHidden();
+
+    await waitForSessionRestart(page);
+    await dismissBlockingModals(page);
+
+    await expect(lostBanner(page)).toBeHidden({ timeout: 30000 });
+    await chatActions.waitForChatReady();
   });
 });
