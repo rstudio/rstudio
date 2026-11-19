@@ -35,7 +35,7 @@ namespace rstudio {
 namespace r {
 namespace session {
 
-// singleton
+// consoleHistory() returns the session's history
 class ConsoleHistory;
 ConsoleHistory& consoleHistory();
    
