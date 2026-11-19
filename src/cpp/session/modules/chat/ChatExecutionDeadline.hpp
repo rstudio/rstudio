@@ -93,6 +93,15 @@ private:
 // int's range is clamped. Non-positive means no limit (0).
 int timeoutFromOption(double timeoutMs);
 
+// The time limit for a request with these options, as timeoutFromOption()
+// reads it, or 0 for none. Only the agent's code is limited: interactive
+// requests that capture output. Every 11.x Assistant also sends a timeout
+// with the chat pane's Run in Console action (captureOutput false), whose
+// code the user chose to run and expects to finish, and with the silent
+// setup and teardown around the agent's code, whose teardown must still run
+// after code that outlived its own limit.
+int requestTimeout(double timeoutMs, bool captureOutput, bool silent);
+
 } // namespace execution
 } // namespace chat
 } // namespace modules

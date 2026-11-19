@@ -205,6 +205,27 @@ TEST(ChatExecutionDeadline, TimeoutFromOptionReadsNonPositiveAsNoLimit)
    EXPECT_EQ(timeoutFromOption(std::nan("")), 0);
 }
 
+TEST(ChatExecutionDeadline, RequestTimeoutLimitsTheAgentsCode)
+{
+   EXPECT_EQ(requestTimeout(30000, true, false), 30000);
+   EXPECT_EQ(requestTimeout(1500.5, true, false), 1501);
+}
+
+TEST(ChatExecutionDeadline, RequestTimeoutLeavesRunInConsoleUnlimited)
+{
+   // Every 11.x Assistant sends Run in Console with captureOutput: false and
+   // timeout: 30000
+   EXPECT_EQ(requestTimeout(30000, false, false), 0);
+}
+
+TEST(ChatExecutionDeadline, RequestTimeoutLeavesSilentRequestsUnlimited)
+{
+   // Every 11.x Assistant sends its interleaved setup and teardown silently,
+   // with the agent code's timeout, and its best-effort teardown with 5000
+   EXPECT_EQ(requestTimeout(30000, true, true), 0);
+   EXPECT_EQ(requestTimeout(5000, true, true), 0);
+}
+
 TEST(ChatExecutionDeadline, NeverExpiredInQueueWithoutATimeout)
 {
    EXPECT_FALSE(expiredInQueue(kQueued, 0, kQueued + std::chrono::hours(24)));

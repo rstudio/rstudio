@@ -94,6 +94,14 @@ int timeoutFromOption(double timeoutMs)
    return static_cast<int>(std::min(std::ceil(timeoutMs), static_cast<double>(INT_MAX)));
 }
 
+int requestTimeout(double timeoutMs, bool captureOutput, bool silent)
+{
+   if (!captureOutput || silent)
+      return 0;
+
+   return timeoutFromOption(timeoutMs);
+}
+
 } // namespace execution
 } // namespace chat
 } // namespace modules

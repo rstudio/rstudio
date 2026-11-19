@@ -1554,21 +1554,10 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
    bool captureOutput = true, capturePlot = false;
    std::string executionMode = "interactive";
    std::string expressionBoundaryHook;
-
-   // Milliseconds the whole request may take, queue wait included. Absent or
-   // non-positive means no limit: none was ever enforced, so a peer that
-   // omits it may expect long-running code to finish.
-   int timeout = 0;
    json::readObject(options, "captureOutput", captureOutput);
    json::readObject(options, "capturePlot", capturePlot);
    json::readObject(options, "executionMode", executionMode);
    json::readObject(options, "expressionBoundaryHook", expressionBoundaryHook);
-
-   // Read as a number: getInt() would reject a fraction and assert on a
-   // value past int's range
-   double timeoutValue = 0;
-   json::readObject(options, "timeout", timeoutValue);
-   timeout = chat_execution::timeoutFromOption(timeoutValue);
 
    if (executionMode != "interactive" && executionMode != "silent")
    {
@@ -1578,6 +1567,14 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
    }
 
    bool silentExecution = executionMode == "silent";
+
+   // Milliseconds the whole request may take, queue wait included. Absent or
+   // non-positive means no limit: none was ever enforced, so a peer that
+   // omits it may expect long-running code to finish. Read as a number:
+   // getInt() would reject a fraction and assert on a value past int's range.
+   double timeoutValue = 0;
+   json::readObject(options, "timeout", timeoutValue);
+   int timeout = chat_execution::requestTimeout(timeoutValue, captureOutput, silentExecution);
 
    // Check if R console is busy and log for debugging
    bool rIsBusy = console_input::executing() || r::session::isBusy();
