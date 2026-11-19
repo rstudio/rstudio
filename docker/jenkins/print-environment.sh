@@ -19,8 +19,10 @@ SENSITIVE_NAMES=(
    'AUTH'
    '^BASH_FUNC_'
    'CERT'
+   'CONNECTION_STRING'
    'COOKIE'
    'CRED'
+   '(^|_)DSN(_|$)'
    '^GIT_CONFIG_PARAMETERS'
    '^GIT_CONFIG_VALUE_'
    'KEY'
@@ -32,6 +34,7 @@ SENSITIVE_NAMES=(
    '_PWD(_|$)'
    'SECRET'
    'TOKEN'
+   'WEBHOOK'
 )
 SENSITIVE_NAME=$(IFS='|'; echo "${SENSITIVE_NAMES[*]}")
 
