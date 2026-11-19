@@ -2000,7 +2000,19 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
       if (error)
       {
          timedOut = true;
-         if (error.getMessage().empty())
+
+         // A cancel takes precedence over the deadline (see the response's
+         // timedOut), so the error names the cancel, as it does for a
+         // request canceled in the queue
+         bool canceled = false;
+         {
+            boost::mutex::scoped_lock lock(s_executionTrackingMutex);
+            canceled = s_canceledTrackingIds.count(trackingId) > 0;
+         }
+
+         if (canceled)
+            error = Error(boost::system::errc::operation_canceled, kExecutionCanceledError, ERROR_LOCATION);
+         else if (error.getMessage().empty())
             error = Error(boost::system::errc::timed_out, timedOutMessage(timeout), ERROR_LOCATION);
       }
    }
