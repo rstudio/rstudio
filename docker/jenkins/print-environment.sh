@@ -19,7 +19,7 @@ SENSITIVE_NAMES=(
    'AUTH'
    '^BASH_FUNC_'
    'CERT'
-   'CONNECTION_STRING'
+   'CONNECTION_?STRING'
    'COOKIE'
    'CRED'
    '(^|_)DSN(_|$)'
