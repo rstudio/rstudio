@@ -170,6 +170,15 @@ public class ConsoleError extends Composite
       return button.getOffsetHeight() > 0 && !isInert(button);
    }
 
+   /**
+    * @return Whether this error's buttons are still inside the container.
+    *    Trimming old output can remove them while leaving part of the error.
+    */
+   public boolean hasButtonsIn(Element container)
+   {
+      return container.isOrHasChild(showTracebackText.getElement());
+   }
+
    private static native boolean isInert(Element el) /*-{
       return el.closest("[inert]") !== null;
    }-*/;

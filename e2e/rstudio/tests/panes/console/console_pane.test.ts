@@ -238,6 +238,30 @@ test.describe('Console pane', () => {
     await waitForConsoleFocus(page);
   });
 
+  test('Focus Last Console Error announces when trimming removed the error\'s buttons', async ({ rstudioPage: page }) => {
+    const announcement = page.locator('[role="status"]', { hasText: 'No Console error to focus' });
+    await setPref(page, 'console_max_lines', 20);
+    try {
+      await consoleActions.executeInConsole(
+        'f <- function() stop(paste(1:15, collapse = "\\n")); g <- function() f(); g()');
+      const pane = consoleActions.consolePane;
+      await expect(pane.tracebackBtn).toBeVisible({ timeout: 10000 });
+
+      // Trim into the error box: its buttons go first, part of its message stays
+      await consoleActions.executeInConsole('writeLines(as.character(101:110))');
+      await expect(page.locator('.ace_console_error')).toHaveCount(1);
+      await expect(pane.tracebackBtn).toHaveCount(0);
+
+      // An earlier test's announcement clears itself after a few seconds
+      await expect(announcement).toHaveCount(0, { timeout: 10000 });
+      await page.keyboard.press(FOCUS_LAST_ERROR);
+      await expect(announcement).toBeAttached();
+      await waitForConsoleFocus(page);
+    } finally {
+      await clearPref(page, 'console_max_lines');
+    }
+  });
+
   for (const hide of ['zoomed out', 'minimized'] as const) {
     for (const reducedMotion of [true, false]) {
       const motion = reducedMotion ? 'reduced motion' : 'animated';

@@ -558,12 +558,13 @@ public class ShellWidget extends Composite implements ShellDisplay,
    }
 
    /**
-    * @return The most recent error box still in the output, or null if there
-    *    is none (none written yet, or cleared or trimmed away since).
+    * @return The most recent error box whose buttons are still in the output,
+    *    or null if there is none (none written yet, or cleared or trimmed away
+    *    since).
     */
    public ConsoleError getLastError()
    {
-      if (lastError_ != null && !output_.getElement().isOrHasChild(lastError_.getElement()))
+      if (lastError_ != null && !lastError_.hasButtonsIn(output_.getElement()))
          lastError_ = null;
       return lastError_;
    }
