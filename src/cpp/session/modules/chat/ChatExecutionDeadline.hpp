@@ -43,10 +43,16 @@ public:
    // Whether the deadline has passed by now; a pass is remembered
    bool expired(Clock::time_point now);
 
-   // True for every call at or after the deadline, so the caller interrupts
-   // R again if the agent's code caught the last interrupt; false before
-   // the deadline and when disarmed
+   // True for every call at or after the deadline while the agent's code
+   // runs, so the caller interrupts R again if that code caught the last
+   // interrupt; false before the deadline, outside the agent's code, and
+   // when disarmed
    bool takeInterrupt(Clock::time_point now);
+
+   // Marks when the agent's code starts and stops running, so interrupts
+   // don't land in RStudio's own R calls around it. arm() starts with it
+   // stopped.
+   void setAgentCodeRunning(bool running);
 
    // Whether the deadline was found passed since the last arm
    bool passed() const;
@@ -61,6 +67,7 @@ private:
    boost::optional<Clock::time_point> deadline_;
    bool passed_ = false;
    bool interrupted_ = false;
+   bool agentCodeRunning_ = false;
 };
 
 // Whether a request queued at queuedTime used up its whole timeout before it

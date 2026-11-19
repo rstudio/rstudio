@@ -29,6 +29,7 @@ void ExecutionDeadline::arm(Clock::time_point queuedTime, int timeoutMs)
 {
    passed_ = false;
    interrupted_ = false;
+   agentCodeRunning_ = false;
    if (timeoutMs > 0)
       deadline_ = queuedTime + std::chrono::milliseconds(timeoutMs);
    else
@@ -45,11 +46,16 @@ bool ExecutionDeadline::expired(Clock::time_point now)
 
 bool ExecutionDeadline::takeInterrupt(Clock::time_point now)
 {
-   if (!deadline_ || !expired(now))
+   if (!deadline_ || !agentCodeRunning_ || !expired(now))
       return false;
 
    interrupted_ = true;
    return true;
+}
+
+void ExecutionDeadline::setAgentCodeRunning(bool running)
+{
+   agentCodeRunning_ = running;
 }
 
 bool ExecutionDeadline::passed() const

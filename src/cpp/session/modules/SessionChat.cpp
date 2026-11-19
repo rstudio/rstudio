@@ -381,10 +381,10 @@ bool currentDeadlinePassed()
 }
 
 // Interrupts R once the current execution's deadline passes, and again on
-// each later poll until the execution ends, in case the agent's code caught
-// the last interrupt. Runs during background processing, which R's event
-// polling reaches while agent code evaluates, so the interrupt lands where a
-// runtime/cancelExecution one would.
+// each later poll while the agent's code runs (see AgentCodeScope), in case
+// it caught the last interrupt. Runs during background processing, which R's
+// event polling reaches while agent code evaluates, so the interrupt lands
+// where a runtime/cancelExecution one would.
 void checkExecutionDeadline()
 {
    boost::mutex::scoped_lock lock(s_executionTrackingMutex);
@@ -407,6 +407,33 @@ bool disarmExecutionDeadline(bool* pInterrupted)
    *pInterrupted = s_currentDeadline.interrupted();
    return s_currentDeadline.disarm();
 }
+
+// Lets the current execution's deadline interrupt R while the agent's code
+// runs: its expression, or the print method for its result. RStudio's own R
+// calls between them (conditionMessage(), the warning formatter, the
+// expression boundary hook) run outside it, and an interrupt the deadline
+// raised that R hasn't consumed is dropped on exit so it can't land there.
+class AgentCodeScope
+{
+public:
+   AgentCodeScope()
+   {
+      boost::mutex::scoped_lock lock(s_executionTrackingMutex);
+      s_currentDeadline.setAgentCodeRunning(true);
+   }
+
+   ~AgentCodeScope()
+   {
+      boost::mutex::scoped_lock lock(s_executionTrackingMutex);
+      s_currentDeadline.setAgentCodeRunning(false);
+      if (s_currentDeadline.interrupted())
+         r::exec::setInterruptsPending(false);
+   }
+
+   // non-copyable
+   AgentCodeScope(const AgentCodeScope&) = delete;
+   AgentCodeScope& operator=(const AgentCodeScope&) = delete;
+};
 
 // ============================================================================
 // Streaming Output Notification Queue with Lifecycle Management
@@ -1782,8 +1809,8 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
             }
 
             // Stop if the deadline has passed, whether or not background
-            // processing has noticed yet, or its interrupt landed outside
-            // the agent's code (e.g. in the boundary hook)
+            // processing has noticed yet; it doesn't interrupt outside the
+            // agent's code (e.g. during the boundary hook)
             if (s_currentDeadline.expired(std::chrono::steady_clock::now()))
             {
                error = Error(boost::system::errc::timed_out, timedOutMessage(timeout), ERROR_LOCATION);
@@ -1807,9 +1834,13 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
          // before passing it to the function, which breaks visibility detection
          // (all results become visible).
          // https://github.com/rstudio/rstudio/issues/17044
-         Error callError = r::exec::RFunction(".rs.chat.safeEval")
-            .addQuotedParam(exprSEXP)
-            .call(&evalResultSEXP, &protect);
+         Error callError;
+         {
+            AgentCodeScope agentCode;
+            callError = r::exec::RFunction(".rs.chat.safeEval")
+               .addQuotedParam(exprSEXP)
+               .call(&evalResultSEXP, &protect);
+         }
 
          // This should only fail if there's a problem calling the wrapper itself
          if (callError)
@@ -1909,9 +1940,13 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
          // Print visible results immediately (mimics REPL)
          if (exprVisible && !silentExecution)
          {
-            Error printError = r::exec::RFunction("print")
-               .addParam(exprResult)
-               .call();
+            Error printError;
+            {
+               AgentCodeScope agentCode;
+               printError = r::exec::RFunction("print")
+                  .addParam(exprResult)
+                  .call();
+            }
 
             if (printError && currentDeadlinePassed())
             {
@@ -1946,9 +1981,9 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    // The deadline bounds the agent's code, not the reporting below. Once it
    // has raised an interrupt, drop whatever interrupt is still pending, which
    // would otherwise land on whatever R runs next, such as the user's next
-   // command. That is usually one the deadline raised and R never consumed,
-   // but can be an Escape or a cancel that came after the code stopped,
-   // which has nothing left to stop.
+   // command. AgentCodeScope has dropped any the deadline raised, so this is
+   // an Escape or a cancel that came after the code stopped, which has
+   // nothing left to stop.
    bool deadlineInterrupted = false;
    if (disarmExecutionDeadline(&deadlineInterrupted))
    {
@@ -1957,8 +1992,8 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
 
       // timedOut tells the peer the code didn't finish, so code that did
       // finish before the deadline stopped anything isn't reported as timed
-      // out (e.g. when the interrupt landed in the boundary hook after the
-      // last expression). An error the agent's code turned the interrupt
+      // out (e.g. when the last expression caught the interrupt and went on
+      // to finish). An error the agent's code turned the interrupt
       // into keeps its message. An error without a message is the interrupt
       // landing outside safeEval's handlers (e.g. right as a system() call
       // returns).

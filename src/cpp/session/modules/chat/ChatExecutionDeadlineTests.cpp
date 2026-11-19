@@ -35,6 +35,7 @@ TEST(ChatExecutionDeadline, DoesNotPassBeforeTheTimeout)
 {
    ExecutionDeadline deadline;
    deadline.arm(kQueued, 2000);
+   deadline.setAgentCodeRunning(true);
 
    EXPECT_FALSE(deadline.takeInterrupt(kQueued));
    EXPECT_FALSE(deadline.expired(kQueued + milliseconds(1999)));
@@ -47,6 +48,7 @@ TEST(ChatExecutionDeadline, InterruptsAtTheTimeout)
 {
    ExecutionDeadline deadline;
    deadline.arm(kQueued, 2000);
+   deadline.setAgentCodeRunning(true);
 
    EXPECT_TRUE(deadline.takeInterrupt(kQueued + milliseconds(2000)));
    EXPECT_TRUE(deadline.passed());
@@ -59,6 +61,7 @@ TEST(ChatExecutionDeadline, InterruptsAgainAtLaterChecks)
    // and carry on, so each check past the deadline asks for another
    ExecutionDeadline deadline;
    deadline.arm(kQueued, 2000);
+   deadline.setAgentCodeRunning(true);
 
    EXPECT_TRUE(deadline.takeInterrupt(kQueued + milliseconds(2000)));
    EXPECT_TRUE(deadline.takeInterrupt(kQueued + milliseconds(2050)));
@@ -73,6 +76,7 @@ TEST(ChatExecutionDeadline, InterruptsOnALateFirstCheck)
    // usually comes after the deadline rather than exactly at it
    ExecutionDeadline deadline;
    deadline.arm(kQueued, 2000);
+   deadline.setAgentCodeRunning(true);
 
    EXPECT_FALSE(deadline.takeInterrupt(kQueued + milliseconds(1990)));
    EXPECT_TRUE(deadline.takeInterrupt(kQueued + milliseconds(2049)));
@@ -83,10 +87,41 @@ TEST(ChatExecutionDeadline, DisarmStopsFurtherInterrupts)
 {
    ExecutionDeadline deadline;
    deadline.arm(kQueued, 2000);
+   deadline.setAgentCodeRunning(true);
    ASSERT_TRUE(deadline.takeInterrupt(kQueued + milliseconds(2000)));
 
    deadline.disarm();
    EXPECT_FALSE(deadline.takeInterrupt(kQueued + milliseconds(2050)));
+}
+
+TEST(ChatExecutionDeadline, DoesNotInterruptOutsideTheAgentsCode)
+{
+   // After the agent's code returns, RStudio's own R calls run (the warning
+   // formatter, the expression boundary hook); an interrupt there would cut
+   // them short
+   ExecutionDeadline deadline;
+   deadline.arm(kQueued, 2000);
+
+   EXPECT_FALSE(deadline.takeInterrupt(kQueued + milliseconds(2000)));
+
+   deadline.setAgentCodeRunning(true);
+   EXPECT_TRUE(deadline.takeInterrupt(kQueued + milliseconds(2050)));
+
+   deadline.setAgentCodeRunning(false);
+   EXPECT_FALSE(deadline.takeInterrupt(kQueued + milliseconds(2100)));
+   EXPECT_TRUE(deadline.passed());
+}
+
+TEST(ChatExecutionDeadline, ArmStartsOutsideTheAgentsCode)
+{
+   // A request that starts inside another one's readline() arms the deadline
+   // while the other one's code is running
+   ExecutionDeadline deadline;
+   deadline.arm(kQueued, 2000);
+   deadline.setAgentCodeRunning(true);
+
+   deadline.arm(kQueued, 2000);
+   EXPECT_FALSE(deadline.takeInterrupt(kQueued + milliseconds(2000)));
 }
 
 TEST(ChatExecutionDeadline, ExpiredRecordsAPassWithoutAnInterrupt)
@@ -94,6 +129,7 @@ TEST(ChatExecutionDeadline, ExpiredRecordsAPassWithoutAnInterrupt)
    // Checking between expressions finds the pass without interrupting R
    ExecutionDeadline deadline;
    deadline.arm(kQueued, 2000);
+   deadline.setAgentCodeRunning(true);
 
    EXPECT_TRUE(deadline.expired(kQueued + milliseconds(2010)));
    EXPECT_TRUE(deadline.passed());
@@ -105,6 +141,7 @@ TEST(ChatExecutionDeadline, CountsFromWhenTheRequestWasQueued)
    // A request that waited 1.5 s in the queue has 0.5 s left to run
    ExecutionDeadline deadline;
    deadline.arm(kQueued, 2000);
+   deadline.setAgentCodeRunning(true);
 
    Clock::time_point started = kQueued + milliseconds(1500);
    EXPECT_FALSE(deadline.takeInterrupt(started + milliseconds(499)));
@@ -117,6 +154,7 @@ TEST(ChatExecutionDeadline, NonPositiveTimeoutSetsNoLimit)
    {
       ExecutionDeadline deadline;
       deadline.arm(kQueued, timeout);
+      deadline.setAgentCodeRunning(true);
 
       EXPECT_FALSE(deadline.expired(kQueued + std::chrono::hours(24))) << timeout;
       EXPECT_FALSE(deadline.takeInterrupt(kQueued + std::chrono::hours(24))) << timeout;
@@ -128,7 +166,9 @@ TEST(ChatExecutionDeadline, ArmWithoutALimitReplacesAnActiveDeadline)
 {
    ExecutionDeadline deadline;
    deadline.arm(kQueued, 2000);
+   deadline.setAgentCodeRunning(true);
    deadline.arm(kQueued, 0);
+   deadline.setAgentCodeRunning(true);
 
    EXPECT_FALSE(deadline.expired(kQueued + milliseconds(5000)));
    EXPECT_FALSE(deadline.takeInterrupt(kQueued + milliseconds(5000)));
@@ -138,6 +178,7 @@ TEST(ChatExecutionDeadline, DisarmStopsEnforcing)
 {
    ExecutionDeadline deadline;
    deadline.arm(kQueued, 2000);
+   deadline.setAgentCodeRunning(true);
 
    EXPECT_FALSE(deadline.disarm());
    EXPECT_FALSE(deadline.expired(kQueued + milliseconds(5000)));
@@ -148,6 +189,7 @@ TEST(ChatExecutionDeadline, DisarmReportsAPass)
 {
    ExecutionDeadline deadline;
    deadline.arm(kQueued, 2000);
+   deadline.setAgentCodeRunning(true);
    ASSERT_TRUE(deadline.takeInterrupt(kQueued + milliseconds(2000)));
 
    EXPECT_TRUE(deadline.disarm());
@@ -159,11 +201,13 @@ TEST(ChatExecutionDeadline, ArmForgetsAnEarlierPass)
 {
    ExecutionDeadline deadline;
    deadline.arm(kQueued, 2000);
+   deadline.setAgentCodeRunning(true);
    ASSERT_TRUE(deadline.takeInterrupt(kQueued + milliseconds(2000)));
    deadline.disarm();
 
    Clock::time_point next = kQueued + milliseconds(10000);
    deadline.arm(next, 2000);
+   deadline.setAgentCodeRunning(true);
    EXPECT_FALSE(deadline.passed());
    EXPECT_FALSE(deadline.interrupted());
    EXPECT_FALSE(deadline.takeInterrupt(next + milliseconds(1000)));
