@@ -19,6 +19,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
 
 import org.rstudio.core.client.VirtualConsole;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.common.debugging.model.ErrorFrame;
@@ -167,7 +168,7 @@ public class ConsoleError extends Composite
    public boolean canFocus()
    {
       Element button = showTracebackText.getElement();
-      return button.getOffsetHeight() > 0 && !isInert(button);
+      return button.getOffsetHeight() > 0 && !A11y.isInert(button);
    }
 
    /**
@@ -179,9 +180,6 @@ public class ConsoleError extends Composite
       return container.isOrHasChild(showTracebackText.getElement());
    }
 
-   private static native boolean isInert(Element el) /*-{
-      return el.closest("[inert]") !== null;
-   }-*/;
 
    /**
     * Shows, as a tooltip on the error's buttons, the shortcut that brings focus
