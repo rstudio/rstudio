@@ -30,8 +30,10 @@ using Clock = std::chrono::steady_clock;
 
 // The time limit a runtime/executeCode request sets with its timeout option,
 // in milliseconds. It covers the whole request, queue wait included, since
-// that is how long the backend waits for the response. A non-positive
-// timeout sets no limit.
+// that is how long the backend waits for the response. It counts from when
+// RStudio reads the request, which can be after the backend sent it: the
+// backend's messages are read only while R polls for events, so not while R
+// is blocked in native code. A non-positive timeout sets no limit.
 class ExecutionDeadline
 {
 public:
