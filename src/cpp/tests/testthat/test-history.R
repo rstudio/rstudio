@@ -73,16 +73,21 @@ test_that("savehistory() saves only the last R_HISTSIZE commands", {
 
 # .rs.savehistory() and .rs.loadhistory() replace utils::savehistory() and
 # utils::loadhistory() on Windows; they exist on every platform, so these tests
-# call them directly.
+# call them directly. the error is the system's message for the failure, which
+# on Windows is the Win32 text rather than strerror()'s.
 
 test_that(".rs.savehistory() reports a file it can't write", {
    path <- file.path(tempfile("no-such-dir-"), "history.Rhistory")
-   expect_error(.rs.savehistory(path))
+   expect_error(
+      .rs.savehistory(path),
+      "No such file or directory|cannot find the path specified"
+   )
    expect_false(file.exists(path))
 })
 
 test_that(".rs.loadhistory() reports a file it can't read", {
-   # a failed load can empty the session's history (#19686)
-   skip_if_not(nzchar(Sys.getenv("RSTUDIO_TESTS_HELPER")), "changes the session's console history")
-   expect_error(.rs.loadhistory(tempfile("no-such-history-")))
+   expect_error(
+      .rs.loadhistory(tempfile("no-such-history-")),
+      "No such file or directory|cannot find the file specified"
+   )
 })
