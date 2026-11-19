@@ -892,6 +892,79 @@ TEST(SessionRTest, CreateKeepsTheProtectionStackShortForLongJson) {
    EXPECT_EQ(n, objectLength);
 }
 
+TEST(SessionRTest, CreateMakesNaForANulInANulCheckScope) {
+   // R raises an error making a string with an embedded nul, and cuts a name
+   // off at one; under a NulCheckScope, create() makes NA for either instead
+   // and the scope records it, so that a caller can refuse the value (#19697)
+   json::Value jsonName;
+   ASSERT_FALSE(jsonName.parse(R"({"ok": "x", "a\u0000b": "y"})"));
+
+   bool valueFound = false;
+   bool valueIsNa = false;
+   bool nameFound = false;
+   bool nameIsNa = false;
+   bool yamlFound = false;
+   bool cleanFound = true;
+   bool innerFound = false;
+   bool outerFoundAfterInner = true;
+   std::string nameAfterScopes;
+   Error error = r::exec::executeSafely([&]()
+   {
+      r::sexp::Protect protect;
+      {
+         r::sexp::NulCheckScope nulCheck;
+         SEXP valueSEXP = r::sexp::create(std::string("a\0b", 3), &protect);
+         valueFound = nulCheck.foundNul();
+         valueIsNa = STRING_ELT(valueSEXP, 0) == NA_STRING;
+      }
+      {
+         r::sexp::NulCheckScope nulCheck;
+         SEXP objectSEXP = r::sexp::create(jsonName, &protect);
+         nameFound = nulCheck.foundNul();
+         SEXP namesSEXP = Rf_getAttrib(objectSEXP, R_NamesSymbol);
+         nameIsNa = Rf_xlength(namesSEXP) == 2 && STRING_ELT(namesSEXP, 1) == NA_STRING;
+      }
+      {
+         // a null key is read as "null", and what follows it still created
+         r::sexp::NulCheckScope nulCheck;
+         r::sexp::create(YAML::Load("~: x\nmode: \"a\\0b\""), &protect);
+         yamlFound = nulCheck.foundNul();
+      }
+      {
+         r::sexp::NulCheckScope nulCheck;
+         r::sexp::create(YAML::Load("mode: source"), &protect);
+         cleanFound = nulCheck.foundNul();
+      }
+
+      // a scope sees only the strings created while it's the innermost
+      {
+         r::sexp::NulCheckScope outer;
+         {
+            r::sexp::NulCheckScope inner;
+            r::sexp::create(std::string("a\0b", 3), &protect);
+            innerFound = inner.foundNul();
+         }
+         outerFoundAfterInner = outer.foundNul();
+      }
+
+      // once the scopes have ended, a name is cut off at the nul again
+      SEXP objectSEXP = r::sexp::create(jsonName, &protect);
+      SEXP namesSEXP = Rf_getAttrib(objectSEXP, R_NamesSymbol);
+      if (Rf_xlength(namesSEXP) == 2)
+         nameAfterScopes = r::sexp::asString(STRING_ELT(namesSEXP, 1));
+   });
+   ASSERT_FALSE(error) << error.asString();
+   EXPECT_TRUE(valueFound);
+   EXPECT_TRUE(valueIsNa);
+   EXPECT_TRUE(nameFound);
+   EXPECT_TRUE(nameIsNa);
+   EXPECT_TRUE(yamlFound);
+   EXPECT_FALSE(cleanFound);
+   EXPECT_TRUE(innerFound);
+   EXPECT_FALSE(outerFoundAfterInner);
+   EXPECT_EQ("a", nameAfterScopes);
+}
+
 TEST(SessionRTest, CreateTurnsACyclicYamlAliasIntoNull) {
    // an alias can refer to a node that contains it; following it recursed
    // until the stack overflowed, crashing the session (as for a _quarto.yml
@@ -901,7 +974,6 @@ TEST(SessionRTest, CreateTurnsACyclicYamlAliasIntoNull) {
    int outerLength = 0;
    int innerLength = 0;
    bool cycleIsNull = false;
-   bool nul = true;
    Error error = r::exec::executeSafely([&]()
    {
       r::sexp::Protect protect;
@@ -913,18 +985,11 @@ TEST(SessionRTest, CreateTurnsACyclicYamlAliasIntoNull) {
          innerLength = r::sexp::length(innerSEXP);
          cycleIsNull = innerLength == 2 && VECTOR_ELT(innerSEXP, 1) == R_NilValue;
       }
-      nul = r::sexp::containsNul(node);
    });
    ASSERT_FALSE(error) << error.asString();
    EXPECT_EQ(1, outerLength);
    EXPECT_EQ(2, innerLength);
    EXPECT_TRUE(cycleIsNull);
-   EXPECT_FALSE(nul);
-
-   // a null key is read as "null", so a nul after one is still found; a
-   // composite key, which create() can't read, ends the check
-   EXPECT_TRUE(r::sexp::containsNul(YAML::Load("~: x\nmode: \"a\\0b\"")));
-   EXPECT_FALSE(r::sexp::containsNul(YAML::Load("[a, b]: x\nmode: \"a\\0b\"")));
 
    // an alias to a node that doesn't contain it is still followed
    YAML::Node shared = YAML::Load("a: &x [1, 2]\nb: *x");

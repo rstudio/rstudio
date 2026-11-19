@@ -147,17 +147,37 @@ std::string translate(SEXP charSEXP)
    return result;
 }
 
+bool hasNul(const std::string& value)
+{
+   return value.find('\0') != std::string::npos;
+}
+
+// NulCheckScope's state. it's kept here rather than in the scope, so that an R
+// error longjmping past a scope (skipping its destructor) leaves no pointer to
+// it behind, only create() still making NA for a nul
+int s_nulCheckDepth = 0;
+bool s_nulFound = false;
+
+// whether a NulCheckScope is active and the value has a nul, which is then
+// recorded for the scope; the caller makes NA instead of the string
+bool recordNul(const std::string& value)
+{
+   if (s_nulCheckDepth == 0 || !hasNul(value))
+      return false;
+
+   s_nulFound = true;
+   return true;
+}
+
 // strings created for R are marked UTF-8, the encoding C++ strings are in.
 // marked native, R would misread non-ASCII text wherever the native encoding
 // is not UTF-8 (e.g. Windows with R < 4.2)
 SEXP mkCharUtf8(const std::string& value)
 {
-   return Rf_mkCharCE(value.c_str(), CE_UTF8);
-}
+   if (recordNul(value))
+      return NA_STRING;
 
-bool hasNul(const std::string& value)
-{
-   return value.find('\0') != std::string::npos;
+   return Rf_mkCharCE(value.c_str(), CE_UTF8);
 }
 
 // names read from R arrive in C++ as UTF-8 (see translate()), but a symbol's
@@ -1629,7 +1649,7 @@ SEXP create(const std::string& value, Protect* pProtect)
 
    // protection not required as long as we immediately assign into protected STRSXP
    int size = static_cast<int>(value.size());
-   SEXP charSEXP = Rf_mkCharLenCE(value.c_str(), size, CE_UTF8);
+   SEXP charSEXP = recordNul(value) ? NA_STRING : Rf_mkCharLenCE(value.c_str(), size, CE_UTF8);
    SET_STRING_ELT(strSEXP, 0, charSEXP);
    return strSEXP;
 }
@@ -1951,165 +1971,27 @@ SEXP createList(const std::vector<std::string>& names, Protect* pProtect)
    return listSEXP;
 }
 
+NulCheckScope::NulCheckScope()
+   : enclosingFoundNul_(s_nulFound)
+{
+   s_nulCheckDepth++;
+   s_nulFound = false;
+}
+
+NulCheckScope::~NulCheckScope()
+{
+   s_nulCheckDepth--;
+   s_nulFound = enclosingFoundNul_;
+}
+
+bool NulCheckScope::foundNul() const
+{
+   return s_nulFound;
+}
+
 bool containsNul(const std::string& value)
 {
    return hasNul(value);
-}
-
-bool containsNul(const FilePath& value)
-{
-   return hasNul(value.getAbsolutePath());
-}
-
-bool containsNul(const core::json::Value& value)
-{
-   if (value.isString())
-      return hasNul(value.getString());
-   else if (value.isArray())
-      return containsNul(value.getArray());
-   else if (value.isObject())
-      return containsNul(value.getObject());
-   else
-      return false;
-}
-
-bool containsNul(const core::json::Array& value)
-{
-   for (const core::json::Value& element : value)
-   {
-      if (containsNul(element))
-         return true;
-   }
-   return false;
-}
-
-bool containsNul(const core::json::Object& value)
-{
-   for (const core::json::Object::Member& member : value)
-   {
-      if (hasNul(member.getName()) || containsNul(member.getValue()))
-         return true;
-   }
-   return false;
-}
-
-namespace {
-
-// what checking a YAML node, as create() would read it, found
-enum class YamlCheck
-{
-   Clean,
-   HasNul,
-
-   // a composite map key: create() raises a C++ exception reading one, so
-   // it reads nothing after it, and checking stops there
-   Unreadable
-};
-
-YamlCheck checkYaml(const YAML::Node& node, std::vector<YAML::Node>* pAncestors)
-{
-   switch (node.Type())
-   {
-   case YAML::NodeType::Map:
-   case YAML::NodeType::Sequence:
-   {
-      // a cyclic alias was, or is being, checked already (see createYaml())
-      if (isYamlAncestor(node, *pAncestors))
-         return YamlCheck::Clean;
-
-      pAncestors->push_back(node);
-      YamlCheck result = YamlCheck::Clean;
-      for (auto it = node.begin(); it != node.end() && result == YamlCheck::Clean; ++it)
-      {
-         if (node.IsMap())
-         {
-            // createYamlMap() reads a key with as<std::string>(), which
-            // reads a null key as "null" and throws for a composite one
-            const YAML::Node& key = it->first;
-            if (key.IsScalar() && hasNul(key.Scalar()))
-               result = YamlCheck::HasNul;
-            else if (!key.IsScalar() && !key.IsNull())
-               result = YamlCheck::Unreadable;
-            else
-               result = checkYaml(it->second, pAncestors);
-         }
-         else
-         {
-            result = checkYaml(*it, pAncestors);
-         }
-      }
-      pAncestors->pop_back();
-      return result;
-   }
-   case YAML::NodeType::Scalar:
-      return hasNul(node.Scalar()) ? YamlCheck::HasNul : YamlCheck::Clean;
-   default:
-      return YamlCheck::Clean;
-   }
-}
-
-} // anonymous namespace
-
-bool containsNul(const YAML::Node& node)
-{
-   std::vector<YAML::Node> ancestors;
-   return checkYaml(node, &ancestors) == YamlCheck::HasNul;
-}
-
-bool containsNul(const std::vector<std::string>& value)
-{
-   return std::any_of(value.begin(), value.end(), hasNul);
-}
-
-bool containsNul(const std::set<std::string>& value)
-{
-   return std::any_of(value.begin(), value.end(), hasNul);
-}
-
-bool containsNul(const std::vector<std::pair<std::string, std::string>>& value)
-{
-   for (const auto& pair : value)
-   {
-      if (hasNul(pair.first) || hasNul(pair.second))
-         return true;
-   }
-   return false;
-}
-
-bool containsNul(const std::map<std::string, std::string>& value)
-{
-   for (const auto& entry : value)
-   {
-      if (hasNul(entry.first) || hasNul(entry.second))
-         return true;
-   }
-   return false;
-}
-
-bool containsNul(const std::map<std::string, std::vector<std::string>>& value)
-{
-   for (const auto& entry : value)
-   {
-      if (hasNul(entry.first) || containsNul(entry.second))
-         return true;
-   }
-   return false;
-}
-
-bool containsNul(const std::map<std::string, SEXP>& value)
-{
-   for (const auto& entry : value)
-   {
-      if (hasNul(entry.first))
-         return true;
-   }
-   return false;
-}
-
-bool containsNul(const ListBuilder& builder)
-{
-   // the values are R objects already; only the names are still to be built
-   return containsNul(builder.names());
 }
 
 SEXP SEXPPreserver::add(SEXP dataSEXP)

@@ -207,14 +207,25 @@ public:
       if (!REQUIRE_MAIN_THREAD())
          return *this;
 
-      // R's error on an embedded nul would be raised by create(), outside
-      // the protected call, and longjmp past the caller. once a parameter is
-      // refused, the call won't run, so later ones aren't scanned
-      if (!paramProblem_.empty() || !acceptParam(name, sexp::containsNul(param)))
+      // once a parameter is refused, the call won't run, so later ones
+      // aren't created
+      if (!paramProblem_.empty())
          return *this;
 
+      // R's error on an embedded nul would be raised by create(), outside
+      // the protected call, and longjmp past the caller
       r::sexp::Protect protect;
-      SEXP paramSEXP = sexp::create(param, &protect);
+      SEXP paramSEXP = R_NilValue;
+      bool paramContainsNul = false;
+      {
+         sexp::NulCheckScope nulCheck;
+         paramSEXP = sexp::create(param, &protect);
+         paramContainsNul = nulCheck.foundNul();
+      }
+
+      if (!acceptParam(name, paramContainsNul))
+         return *this;
+
       preserver_.add(paramSEXP);
       params_.push_back(Param(name, paramSEXP));
       return *this;
