@@ -1656,12 +1656,7 @@ public class AssistantPreferencesPane extends PreferencesPane
          // Project has overridden the assistant selection
          projectAssistantOverride_ = projectAssistant;
 
-         // Use appropriate message for disabled vs configured
-         if (projectAssistant.equals(UserPrefsAccessor.ASSISTANT_NONE))
-            lblProjectOverride_.setText(constants_.codeAssistantDisabledInProject());
-         else
-            lblProjectOverride_.setText(constants_.assistantConfiguredInProject(
-               Assistant.getDisplayName(projectAssistant)));
+         lblProjectOverride_.setText(projectOverrideText(projectAssistant));
 
          projectOverridePanel_.setVisible(true);
 
@@ -1674,6 +1669,26 @@ public class AssistantPreferencesPane extends PreferencesPane
          // Trigger the change handler to update the displayed panel
          assistantChangedHandler_.onChange(null);
       }
+   }
+
+   /**
+    * The banner text for a project's own assistant setting. When the project
+    * selects an assistant that runs as (None) here, say so, since the panel
+    * below shows (None).
+    */
+   private String projectOverrideText(String projectAssistant)
+   {
+      if (projectAssistant.equals(UserPrefsAccessor.ASSISTANT_NONE))
+         return constants_.codeAssistantDisabledInProject();
+
+      String text = constants_.assistantConfiguredInProject(
+            Assistant.getDisplayName(projectAssistant));
+      if (assistant_.effectiveAssistantType(projectAssistant)
+            .equals(UserPrefsAccessor.ASSISTANT_NONE))
+      {
+         text += " " + constants_.assistantNotInInstallation();
+      }
+      return text;
    }
 
    /**
@@ -1715,12 +1730,7 @@ public class AssistantPreferencesPane extends PreferencesPane
          // Project has a specific assistant configured
          projectAssistantOverride_ = projectAssistant;
 
-         // Use appropriate message for disabled vs configured
-         if (projectAssistant.equals(UserPrefsAccessor.ASSISTANT_NONE))
-            lblProjectOverride_.setText(constants_.codeAssistantDisabledInProject());
-         else
-            lblProjectOverride_.setText(constants_.assistantConfiguredInProject(
-               Assistant.getDisplayName(projectAssistant)));
+         lblProjectOverride_.setText(projectOverrideText(projectAssistant));
 
          projectOverridePanel_.setVisible(true);
          selAssistant_.setEnabled(false);
