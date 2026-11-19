@@ -47,8 +47,9 @@ var reSectionLeadingHashes = /^\s*(#+)/;
 //     similar to how HTML only provides <h1> through <h6>.
 //
 // A trailing run of '#' is never decoration on its own account, even when it
-// mirrors the leading run: four or more trailing '#' is how a comment becomes
-// a section header, so "#### Foo ####" is as much an h4 as "#### Foo ----".
+// mirrors the leading run: a trailing run of four or more delimiters, '#'
+// included, is how a comment becomes a section header, so "#### Foo ####" is
+// as much an h4 as "#### Foo ----".
 //
 // Both the document outline and hierarchical section folding read a header's
 // level through this function. With hierarchical folding disabled, every
