@@ -73,7 +73,7 @@ Error extractRCode(const std::string& contents,
    extract.addParam(contents);
    extract.addParam(reOpen);
    extract.addParam(reClose);
-   Error error = extract.callUtf8(pContent);
+   Error error = extract.call(pContent);
    return error;
 }
 
@@ -357,12 +357,12 @@ SEXP rs_systemToUtf8(SEXP stringSEXP)
    std::string text = r::sexp::asString(stringSEXP);
 
    r::sexp::Protect protect;
-   return r::sexp::createUtf8(text, &protect);
+   return r::sexp::create(text, &protect);
 }
 
 SEXP rs_utf8ToSystem(SEXP stringSEXP)
 {
-   std::string text = r::sexp::asUtf8String(stringSEXP);
+   std::string text = r::sexp::asString(stringSEXP);
    std::string asNative = core::string_utils::utf8ToSystem(text);
 
    // Rf_mkString() marks the result native; r::sexp::create() would mark it UTF-8
@@ -409,7 +409,7 @@ SEXP rs_userDataDir()
 {
    r::sexp::Protect protect;
    std::string userDataDir = core::system::xdg::userDataDir().getAbsolutePath();
-   return r::sexp::createUtf8(userDataDir, &protect);
+   return r::sexp::create(userDataDir, &protect);
 }
 
 // true on Apple silicon even when this process runs under Rosetta, where R
@@ -477,8 +477,8 @@ SEXP rs_registryGetValue(SEXP pathSEXP, SEXP nameSEXP)
 {
    try
    {
-      std::string path = r::sexp::asUtf8String(pathSEXP);
-      std::string name = r::sexp::asUtf8String(nameSEXP);
+      std::string path = r::sexp::asString(pathSEXP);
+      std::string name = r::sexp::asString(nameSEXP);
 
       std::string data;
       DWORD type = REG_NONE;
@@ -500,7 +500,7 @@ SEXP rs_registryGetValue(SEXP pathSEXP, SEXP nameSEXP)
 
       // getValue() returns UTF-8, which is not the native encoding under R
       // < 4.2 on Windows
-      builder.add("data", r::sexp::createUtf8(data, &protect));
+      builder.add("data", r::sexp::create(data, &protect));
       return r::sexp::create(builder, &protect);
    }
    catch (r::exec::RErrorException& e)
@@ -516,9 +516,9 @@ SEXP rs_registrySetValue(SEXP pathSEXP, SEXP nameSEXP, SEXP dataSEXP, SEXP typeS
 {
    try
    {
-      std::string path = r::sexp::asUtf8String(pathSEXP);
-      std::string name = r::sexp::asUtf8String(nameSEXP);
-      std::string data = r::sexp::asUtf8String(dataSEXP);
+      std::string path = r::sexp::asString(pathSEXP);
+      std::string name = r::sexp::asString(nameSEXP);
+      std::string data = r::sexp::asString(dataSEXP);
       std::string typeName = r::sexp::asString(typeSEXP);
 
       DWORD type;
@@ -547,8 +547,8 @@ SEXP rs_registryDeleteValue(SEXP pathSEXP, SEXP nameSEXP)
 {
    try
    {
-      std::string path = r::sexp::asUtf8String(pathSEXP);
-      std::string name = r::sexp::asUtf8String(nameSEXP);
+      std::string path = r::sexp::asString(pathSEXP);
+      std::string name = r::sexp::asString(nameSEXP);
 
       core::system::RegistryKey key;
       Error error = openRegistryKey(path, KEY_SET_VALUE, &key);

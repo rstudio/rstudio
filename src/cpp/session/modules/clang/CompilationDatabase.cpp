@@ -135,7 +135,7 @@ FilePath compilerDefinitionsPath(bool isCpp)
 void generateCompilerDefinitions(FilePath defnPath, bool isCpp)
 {
    Error error = r::exec::RFunction(".rs.libclang.generateCompilerDefinitions")
-         .addUtf8Param(defnPath)
+         .addParam(defnPath)
          .addParam(isCpp)
          .call();
    if (error)

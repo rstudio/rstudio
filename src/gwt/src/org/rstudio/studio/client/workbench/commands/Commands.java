@@ -262,6 +262,7 @@ public abstract class
    public abstract AppCommand restartR();
    public abstract AppCommand restartRClearOutput();
    public abstract AppCommand restartRRunAllChunks();
+   public abstract AppCommand switchRVersion();
    public abstract AppCommand terminateR();
    public abstract AppCommand activateConsole();
    public abstract AppCommand activateConsolePane();

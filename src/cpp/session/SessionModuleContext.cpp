@@ -2052,7 +2052,7 @@ SEXP rs_htmlEscape(SEXP textSEXP, SEXP attributeSEXP)
 
 SEXP rs_resolveAliasedPath(SEXP pathSEXP)
 {
-   std::string path = r::sexp::asUtf8String(pathSEXP);
+   std::string path = r::sexp::asString(pathSEXP);
    FilePath resolved = module_context::resolveAliasedPath(path);
    r::sexp::Protect protect;
    return r::sexp::create(resolved.getAbsolutePath(), &protect);
@@ -2465,7 +2465,7 @@ SEXP rs_isRScriptInPackageBuildTarget(SEXP filePathSEXP)
 {
    r::sexp::Protect protect;
    FilePath filePath = module_context::resolveAliasedPath(
-      r::sexp::asUtf8String(filePathSEXP));
+      r::sexp::asString(filePathSEXP));
    return r::sexp::create(isRScriptInPackageBuildTarget(filePath), &protect);
 }
 

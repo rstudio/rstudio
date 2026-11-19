@@ -36,6 +36,8 @@
 #include <session/SessionOptions.hpp>
 #include <session/jobs/JobsApi.hpp>
 
+#include "session-config.h"
+
 using namespace rstudio::core;
 using namespace boost::placeholders;
 
@@ -363,6 +365,53 @@ Error rigGetInstallDir(const json::JsonRpcRequest& request,
    return Success();
 }
 
+// the R installations to offer when choosing the version of R RStudio uses
+Error rigListRInstallations(const json::JsonRpcRequest& request,
+                            json::JsonRpcResponse* pResponse)
+{
+   if (options().programMode() != kSessionProgramModeDesktop)
+      return Error(json::errc::MethodUnexpected, ERROR_LOCATION);
+
+   json::Value installations;
+   Error error = r::exec::RFunction(".rs.rInstallations.forChooser")
+         .addParam("minimum", RSTUDIO_R_VERSION_REQUIRED)
+         .call(&installations);
+   if (error)
+      return error;
+
+   pResponse->setResult(installations.isArray() ? installations : json::Value(json::Array()));
+   return Success();
+}
+
+// the R installation an R executable the user browsed to launches, listed
+// as rigListRInstallations() lists them; null when it isn't one
+Error rigDescribeRInstallation(const json::JsonRpcRequest& request,
+                               json::JsonRpcResponse* pResponse)
+{
+   if (options().programMode() != kSessionProgramModeDesktop)
+      return Error(json::errc::MethodUnexpected, ERROR_LOCATION);
+
+   std::string binary;
+   Error error = json::readParams(request.params, &binary);
+   if (error)
+      return error;
+
+   // the desktop's file dialog gives a path under the home directory as ~/...,
+   // and the desktop checks the executable it is handed back as a plain path
+   std::string resolvedBinary = module_context::resolveAliasedPath(binary).getAbsolutePath();
+
+   json::Value installation;
+   error = r::exec::RFunction(".rs.rInstallations.describe")
+         .addParam("binary", resolvedBinary)
+         .addParam("minimum", RSTUDIO_R_VERSION_REQUIRED)
+         .call(&installation);
+   if (error)
+      return error;
+
+   pResponse->setResult(installation.isObject() ? installation : json::Value());
+   return Success();
+}
+
 void onShutdown(bool)
 {
    if (s_pInstallJob)
@@ -441,6 +490,8 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "rig_install_r_version", rigInstallRVersion))
       (bind(registerRpcMethod, "rig_get_install_dir", rigGetInstallDir))
+      (bind(registerRpcMethod, "rig_list_r_installations", rigListRInstallations))
+      (bind(registerRpcMethod, "rig_describe_r_installation", rigDescribeRInstallation))
       (bind(sourceModuleRFile, "SessionRig.R"));
 
    return initBlock.execute();
