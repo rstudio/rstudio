@@ -436,8 +436,13 @@ describe('DesktopCallback', () => {
         // nor is an off-screen window that asked used, while the main window is there
         const main = fakeBrowserWindow() as unknown as BrowserWindow;
         mainWindow.window = main;
-        const requester = fakeBrowserWindow({ minimized: true }) as unknown as BrowserWindow;
-        assert.strictEqual(callback.dialogParentWindow(null, requester), main);
+        const offScreen = fakeBrowserWindow({ minimized: true }) as unknown as BrowserWindow;
+        assert.strictEqual(callback.dialogParentWindow(null, offScreen), main);
+
+        // while a window that asked and is on screen is used with the main window off screen
+        mainWindow.window = fakeBrowserWindow({ minimized: true }) as unknown as BrowserWindow;
+        const onScreen = fakeBrowserWindow() as unknown as BrowserWindow;
+        assert.strictEqual(callback.dialogParentWindow(null, onScreen), onScreen);
       } finally {
         app.commandLine.removeSwitch('automation-agent');
       }
