@@ -14,7 +14,7 @@
  */
 
 import { ChildProcess, spawn } from 'child_process';
-import { app } from 'electron';
+import { app, dialog } from 'electron';
 import fs, { rmSync } from 'fs';
 
 import { getenv, setenv, unsetenv } from '../core/environment';
@@ -36,7 +36,18 @@ import { GwtCallback, PendingQuit } from './gwt-callback';
 import LogOptions from './log-options';
 import { closeAllSatellites, MainWindow } from './main-window';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
-import { prepareEnvironment } from './detect-r';
+import {
+  defaultR,
+  detectREnvironmentAsync,
+  kRQueryTimeoutMs,
+  prepareEnvironment,
+  rExecutableProblem,
+  rSharedLibraryProblem,
+  storeChosenR,
+  storeRChoice,
+  UnusableRChoice,
+} from './detect-r';
+import { clearRChoice, rChoiceApplies, sameRExecutable, savedRChoice } from './r-choice';
 import { EXIT_FAILURE } from './program-status';
 import { waitForUrlWithTimeout } from './url-utils';
 import { createStandaloneErrorDialog, getCurrentlyUniqueFolderName, isAutomated, showWindowForAutomation, userLogPath } from './utils';
@@ -198,6 +209,18 @@ export function launchFailedDetail(abendMessage: string | null, stateDirIssues: 
   return '[No error available]';
 }
 
+/**
+ * Whether two R executables are the same file once links are followed: a
+ * default R that is a link to the R that failed would fail the same way.
+ */
+function sameInstallation(a: string, b: string): boolean {
+  try {
+    return fs.realpathSync(a) === fs.realpathSync(b);
+  } catch {
+    return false;
+  }
+}
+
 export class SessionLauncher {
   host = kLocalSessionHost;
   sessionProcess?: ChildProcess;
@@ -214,8 +237,24 @@ export class SessionLauncher {
   // names this instance's development copies of the session binary
   private devSessionTag = '';
 
-  // an R switched to on Windows, stored once a session has started with it
+  // the R executable the session runs (the next one's, once a switch has
+  // prepared it)
+  rPath = '';
+
+  // an R switched to, stored once a session has started with it
   private switchedRToStore = '';
+
+  // the R in use before a switch, until a session starts with the R switched
+  // to: the launch error page offers to go back to it
+  private rBeforeSwitch = '';
+
+  // the first session runs the R chosen in RStudio, and hasn't started yet:
+  // should it fail, the launch error page offers the default R
+  private defaultRIfSessionFails = false;
+
+  // an R chosen in RStudio that startup could not use, to tell the user about
+  // once the workbench is up
+  private unusableRChoice?: UnusableRChoice;
 
   constructor(
     private sessionPath: FilePath,
@@ -280,6 +319,15 @@ export class SessionLauncher {
 
     this.mainWindow = new MainWindow(launchContext.url);
     this.mainWindow.sessionLauncher = this;
+
+    const unusable = this.unusableRChoice;
+    if (unusable) {
+      this.unusableRChoice = undefined;
+      appState().gwtCallback?.once(GwtCallback.WORKBENCH_INITIALIZED, () => void this.showUnusableRChoice(unusable));
+    }
+    if (this.defaultRIfSessionFails) {
+      appState().gwtCallback?.once(GwtCallback.WORKBENCH_INITIALIZED, () => (this.defaultRIfSessionFails = false));
+    }
     this.mainWindow.setSessionProcess(this.sessionProcess);
     this.mainWindow.appLauncher = this.appLaunch;
     this.appLaunch.setActivationWindow(this.mainWindow);
@@ -473,6 +521,12 @@ export class SessionLauncher {
     vars.set('log_file', logFile);
     vars.set('log_content', logContent);
 
+    // a session that failed with an R just switched to can go back to the R
+    // in use before, and one started with the R chosen in RStudio to the
+    // default R
+    vars.set('previous_r', this.rBeforeSwitch);
+    vars.set('default_r_fallback', !this.rBeforeSwitch && this.defaultRIfSessionFails ? 'true' : '');
+
     appState().gwtCallback?.setErrorPageInfo(vars);
     this.mainWindow
       ?.loadUrl(ERROR_WINDOW_WEBPACK_ENTRY)
@@ -545,10 +599,17 @@ export class SessionLauncher {
     }
   }
 
-  async launchNextSession(reload: boolean): Promise<Err> {
+  /**
+   * Launch the session that follows one that has quit (or failed to start).
+   * `keepInitialProject` keeps the project this instance was launched to
+   * open, for a session that replaces a first one that never started.
+   */
+  async launchNextSession(reload: boolean, keepInitialProject = false): Promise<Err> {
     // unset the initial project environment variable it this doesn't
     // pollute future sessions
-    unsetenv(kRStudioInitialProject);
+    if (!keepInitialProject) {
+      unsetenv(kRStudioInitialProject);
+    }
 
     // disconnect the firstWorkbenchInitialized event so it doesn't occur
     // again when we launch the next session
@@ -591,6 +652,7 @@ export class SessionLauncher {
     // update the main window's reference to the process object
     this.mainWindow?.setSessionProcess(this.sessionProcess);
     if (reload) {
+      const launched = this.sessionProcess;
       waitForUrlWithTimeout(launchContext.url, 50, 25, 10)
         .then((error: Err) => {
           if (error) {
@@ -601,8 +663,17 @@ export class SessionLauncher {
           logger().logError(error);
         })
         .finally(() => {
-          this.nextSessionUrl = launchContext.url;
-          setImmediate(this.onReloadFrameForNextSession.bind(this));
+          setImmediate(() => {
+            // a session that has exited left the launch error page up, and a
+            // later launch (going back to the previous R after this session
+            // failed, say) supersedes this one; either keeps the window
+            const exited = launched.exitCode !== null || launched.signalCode !== null;
+            if (exited || this.sessionProcess !== launched) {
+              return;
+            }
+            this.nextSessionUrl = launchContext.url;
+            this.onReloadFrameForNextSession();
+          });
         });
     }
 
@@ -614,18 +685,19 @@ export class SessionLauncher {
    * for (already checked to run when it was requested). The current R is
    * kept if preparing fails anyway.
    *
-   * On Windows, the choice is also stored as the Choose R dialog stores one,
-   * so it holds for later launches too, and can be changed back the same
-   * way. It is stored only once a session has started with it: an R that
+   * The choice is stored as the R RStudio uses from then on (see
+   * storeChosenR), but only once a session has started with it: an R that
    * runs but can't host a session would otherwise fail every later launch.
-   * Elsewhere, RStudio has no stored choice of R to change back, so the
-   * switch lasts until RStudio quits.
+   * Until then, the launch error page offers to go back to the R in use
+   * before.
    */
   applyPendingRVersion(): void {
-    const rPath = this.mainWindow?.collectPendingRVersion();
-    if (!rPath) {
+    const pending = this.mainWindow?.collectPendingRVersion();
+    if (!pending?.path) {
       return;
     }
+
+    const rPath = pending.path;
 
     logger().logInfo(`Switching to R: ${rPath}`);
     const error = prepareEnvironment(rPath);
@@ -634,24 +706,194 @@ export class SessionLauncher {
       return;
     }
 
-    if (process.platform === 'win32') {
-      this.switchedRToStore = rPath;
-      appState().gwtCallback?.once(GwtCallback.WORKBENCH_INITIALIZED, () => this.storeSwitchedR(rPath));
-    }
+    this.rBeforeSwitch = this.rPath;
+    this.defaultRIfSessionFails = false;
+    this.rPath = rPath;
+    this.switchedRToStore = rPath;
+    appState().gwtCallback?.once(GwtCallback.WORKBENCH_INITIALIZED, () =>
+      this.storeSwitchedR(rPath, pending.useDefault),
+    );
   }
 
-  private storeSwitchedR(rPath: string): void {
-    // a later switch supersedes this one
+  private storeSwitchedR(rPath: string, useDefault: boolean): void {
+    // a later switch (or going back) supersedes this one
     if (this.switchedRToStore !== rPath) {
       return;
     }
     this.switchedRToStore = '';
+    this.rBeforeSwitch = '';
 
-    // the default installations take precedence over a stored path
-    const options = ElectronDesktopOptions();
-    options.setUseDefault32BitR(false);
-    options.setUseDefault64BitR(false);
-    options.setRExecutablePath(rPath);
+    storeChosenR(rPath, useDefault).catch((error: unknown) => logger().logError(safeError(error)));
+  }
+
+  /**
+   * Note the R the first session runs. When it is the R chosen in RStudio,
+   * the launch error page offers the default R should the session fail to
+   * start: Global Options keeps a choice before any session has run with it,
+   * and macOS and Linux have no chooser at launch to get away from it with.
+   */
+  setStartupR(rPath: string): void {
+    this.rPath = rPath;
+
+    const choice = savedRChoice();
+    this.defaultRIfSessionFails = choice !== null && rChoiceApplies(choice) && sameRExecutable(choice.path, rPath);
+  }
+
+  /**
+   * From the launch error page, go back to the R in use before a switch
+   * whose session failed to start, or to the default R when the first
+   * session, started with the R chosen in RStudio, failed. The R that failed
+   * is not kept (see forgetFailedChoice). Resolves to a message for the page
+   * when going back fails, so that the user can try again, and to ''
+   * otherwise.
+   */
+  async restartWithPreviousR(): Promise<string> {
+    const failedR = this.rPath;
+    const rBeforeSwitch = this.rBeforeSwitch;
+    const defaultRIfSessionFails = this.defaultRIfSessionFails;
+
+    let rPath = rBeforeSwitch;
+    if (!rPath && defaultRIfSessionFails) {
+      rPath = await defaultR();
+      if (!rPath || sameRExecutable(rPath, failedR) || sameInstallation(rPath, failedR)) {
+        return i18next.t('sessionLauncherTs.noDefaultRToRestartWith');
+      }
+    }
+    if (!rPath) {
+      return '';
+    }
+
+    logger().logInfo(`Going back to R: ${rPath}`);
+
+    // as a switch checks it: still there, and running as itself
+    const executableProblem = rExecutableProblem(rPath);
+    if (executableProblem) {
+      logger().logError(new Error(executableProblem));
+      return executableProblem;
+    }
+
+    // the default R may never have been queried (one RSTUDIO_WHICH_R or the
+    // PATH names is taken as it is); query it in the background, bounded,
+    // so that preparing it below reads the answer rather than running an R
+    // that may hang on the main process
+    const [environment, queryError] = await detectREnvironmentAsync(rPath, kRQueryTimeoutMs);
+    if (queryError) {
+      logger().logError(queryError);
+      return queryError.message;
+    }
+
+    const libraryProblem = rSharedLibraryProblem(rPath, environment);
+    if (libraryProblem) {
+      logger().logError(new Error(libraryProblem));
+      return libraryProblem;
+    }
+
+    const error = prepareEnvironment(rPath);
+    if (error) {
+      logger().logError(error);
+      return error.message;
+    }
+
+    this.rBeforeSwitch = '';
+    this.defaultRIfSessionFails = false;
+    this.switchedRToStore = '';
+    this.rPath = rPath;
+    this.mainWindow?.clearErrorDisplayed();
+
+    let launchError: Err;
+    try {
+      // going to the default R replaces a first session that never
+      // started, which was to open the project this instance was launched to
+      launchError = await this.launchNextSession(true, !rBeforeSwitch);
+    } catch (thrown: unknown) {
+      launchError = safeError(thrown);
+    }
+
+    // nothing was launched: the page stays up, and trying again starts over
+    if (launchError) {
+      logger().logError(launchError);
+      this.rBeforeSwitch = rBeforeSwitch;
+      this.defaultRIfSessionFails = defaultRIfSessionFails;
+      this.rPath = failedR;
+      this.mainWindow?.setErrorDisplayed();
+      return launchError.message;
+    }
+
+    this.forgetFailedChoice(failedR, rPath).catch((storeError: unknown) => logger().logError(safeError(storeError)));
+    return '';
+  }
+
+  /**
+   * Keep the R gone back to rather than the R that failed, when the failed R
+   * is what RStudio would otherwise start with next: the R chosen (in Global
+   * Options, before the switch or an earlier launch), or the default R with
+   * nothing chosen. Any other choice was made apart from the R that failed,
+   * and is left alone.
+   */
+  private async forgetFailedChoice(failedR: string, previousR: string): Promise<void> {
+    const saved = savedRChoice();
+    if (saved !== null) {
+      if (sameRExecutable(saved.path, failedR)) {
+        await storeRChoice(previousR);
+      }
+      return;
+    }
+
+    const defaultPath = await defaultR();
+    if (sameRExecutable(failedR, defaultPath) && savedRChoice() === null) {
+      await storeRChoice(previousR);
+    }
+  }
+
+  /**
+   * Have the user told, once the workbench is up, that the R chosen in
+   * RStudio could not be used, so the default R is used instead.
+   */
+  reportUnusableRChoice(choice: UnusableRChoice): void {
+    this.unusableRChoice = choice;
+  }
+
+  /**
+   * Tell the user that the R chosen in RStudio could not be used, and ask
+   * whether to use the default R from now on, or to keep the choice and try
+   * it again at the next launch (as when it is only out of reach for now).
+   * Dismissing the dialog keeps the choice.
+   */
+  async showUnusableRChoice(choice: UnusableRChoice): Promise<void> {
+    const window = this.mainWindow?.window;
+    const kUseDefault = 0;
+    const kKeepChoice = 1;
+    const options = {
+      type: 'warning' as const,
+      title: i18next.t('sessionLauncherTs.chosenRUnusableTitle'),
+      message: i18next.t('sessionLauncherTs.chosenRUnusableMessage'),
+      detail: i18next.t('sessionLauncherTs.chosenRUnusableDetail', {
+        reason: choice.reason,
+        rPath: this.rPath,
+        interpolation: { escapeValue: false },
+      }),
+      buttons: [
+        i18next.t('sessionLauncherTs.chosenRUnusableUseDefault'),
+        i18next.t('sessionLauncherTs.chosenRUnusableKeepChoice'),
+      ],
+      defaultId: kUseDefault,
+      cancelId: kKeepChoice,
+    };
+
+    try {
+      const result = await appState().modalTracker.trackElectronModalAsync(async () =>
+        window ? dialog.showMessageBox(window, options) : dialog.showMessageBox(options),
+      );
+
+      // another R may have been chosen while the dialog was up
+      const saved = savedRChoice();
+      if (result.response === kUseDefault && saved !== null && sameRExecutable(saved.path, choice.path)) {
+        logger().logInfo(`Forgetting the R chosen in RStudio: ${choice.path}`);
+        clearRChoice();
+      }
+    } catch (error: unknown) {
+      logger().logError(safeError(error));
+    }
   }
 
   onReloadFrameForNextSession(): void {

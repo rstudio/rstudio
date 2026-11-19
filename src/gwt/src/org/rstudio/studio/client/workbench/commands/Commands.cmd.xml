@@ -416,6 +416,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <cmd refid="restartR"/>
          <cmd refid="restartRClearOutput"/>
          <cmd refid="restartRRunAllChunks"/>
+         <cmd refid="switchRVersion"/>
          <separator/>
          <menu label="Set _Working Directory">
             <cmd refid="setWorkingDirToProjectDir"/>
@@ -3024,6 +3025,14 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         label="Restart R Session and Run All Chunks"
         menuLabel="Restart R and Run _All Chunks"
         desc="Restart R session and run all chunks" />
+
+   <!-- shown on the desktop only, where the session can switch R -->
+   <cmd id="switchRVersion"
+        label="Switch R Version"
+        menuLabel="Switch R _Version..."
+        desc="Restart the R session with another installed version of R"
+        windowMode="main"
+        visible="false"/>
 
    <cmd id="terminateR"
         label="Terminate R Session"

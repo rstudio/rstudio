@@ -193,14 +193,18 @@ SEXP rs_createUUID()
    return r::sexp::create(core::system::generateUuid(false), &rProtect);
 }
    
+// .rs.loadhistory() and .rs.savehistory() expand '~' with path.expand().
+// R_ExpandFileName() can't be used here: on Windows it prepends the home
+// directory in the native encoding, and FilePath reads the result as UTF-8.
+//
 // failures are R errors, as from the Rloadhistory / Rsavehistory callbacks
 // that implement these functions on POSIX
 SEXP rs_loadHistory(SEXP sFile)
 {
    try
    {
-      std::string file = R_ExpandFileName(r::sexp::asString(sFile).c_str());
-      Error error = consoleHistory().loadFromFile(FilePath(file), true);
+      FilePath file(r::sexp::asString(sFile));
+      Error error = consoleHistory().loadFromFile(file, true);
       if (error)
          throw r::exec::RErrorException(error.getMessage());
 
@@ -219,8 +223,8 @@ SEXP rs_saveHistory(SEXP sFile)
 {
    try
    {
-      std::string file = R_ExpandFileName(r::sexp::asString(sFile).c_str());
-      Error error = consoleHistory().saveToFile(FilePath(file), false /* atomic */);
+      FilePath file(r::sexp::asString(sFile));
+      Error error = consoleHistory().saveToHistoryFile(file);
       if (error)
          throw r::exec::RErrorException(error.getMessage());
    }

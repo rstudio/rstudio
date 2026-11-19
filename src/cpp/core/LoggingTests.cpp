@@ -63,6 +63,17 @@ std::string zeroPad(const std::string& in, const unsigned int width)
    return oss.str();
 }
 
+std::string findLogLine(const std::vector<std::string>& logLines, const std::string& text)
+{
+   for (const std::string& line : logLines)
+   {
+      if (line.find(text) != std::string::npos)
+         return line;
+   }
+
+   return std::string();
+}
+
 TEST(LoggingTest, CanFindLoggingConfFromEnvVar)
 {
    FilePath tmpConfPath;
@@ -1187,6 +1198,99 @@ TEST(LoggingTest, ReinitializingLogReplacesPreviousDestinations)
    }
 
    ASSERT_EQ(1, occurrences);
+}
+
+TEST(LoggingTest, FormattedWarningsAndErrorsLogCodeLocation)
+{
+   FilePath tmpConfPath;
+   ASSERT_FALSE(FilePath::tempFilePath(".conf", tmpConfPath));
+
+   std::string confFileContents =
+         "[*]\n"
+         "logger-type=file\n"
+         "log-level=trace\n"
+         "log-dir=" + tmpConfPath.getParent().getAbsolutePath();
+
+   ASSERT_FALSE(core::writeStringToFile(tmpConfPath, confFileContents));
+
+   clearLogEnvVars();
+   core::system::setenv("RS_LOG_CONF_FILE", tmpConfPath.getAbsolutePath());
+
+   std::string id = core::system::generateShortenedUuid();
+   ASSERT_FALSE(core::system::initializeStderrLog("logging-tests-" + id, log::LogLevel::WARN, true));
+
+   TLOGF("Formatted trace {}", 1);
+   DLOGF("Formatted debug {}", 2);
+   ILOGF("Formatted info {}", 3);
+   WLOGF("Formatted warning {}", 4);
+   ELOGF("Formatted error {}", 5);
+
+   FilePath logFile = tmpConfPath.getParent().completeChildPath("logging-tests-" + id + ".log");
+   ASSERT_TRUE(logFile.exists());
+
+   std::vector<std::string> logLines;
+   ASSERT_FALSE(core::readStringVectorFromFile(logFile, &logLines));
+
+   std::string traceLine = findLogLine(logLines, "Formatted trace 1");
+   std::string debugLine = findLogLine(logLines, "Formatted debug 2");
+   std::string infoLine = findLogLine(logLines, "Formatted info 3");
+   std::string warningLine = findLogLine(logLines, "Formatted warning 4");
+   std::string errorLine = findLogLine(logLines, "Formatted error 5");
+
+   ASSERT_FALSE(traceLine.empty());
+   ASSERT_FALSE(debugLine.empty());
+   ASSERT_FALSE(infoLine.empty());
+   ASSERT_FALSE(warningLine.empty());
+   ASSERT_FALSE(errorLine.empty());
+
+   // matches LOG_WARNING_MESSAGE / LOG_ERROR_MESSAGE: warnings and errors
+   // always say where they came from, lower levels only with log-code-locations
+   EXPECT_EQ(std::string::npos, traceLine.find("LOGGED FROM"));
+   EXPECT_EQ(std::string::npos, debugLine.find("LOGGED FROM"));
+   EXPECT_EQ(std::string::npos, infoLine.find("LOGGED FROM"));
+   EXPECT_NE(std::string::npos, warningLine.find("LOGGED FROM"));
+   EXPECT_NE(std::string::npos, warningLine.find("LoggingTests.cpp"));
+   EXPECT_NE(std::string::npos, errorLine.find("LOGGED FROM"));
+   EXPECT_NE(std::string::npos, errorLine.find("LoggingTests.cpp"));
+}
+
+TEST(LoggingTest, FormattedMessagesLogCodeLocationWhenEnabled)
+{
+   FilePath tmpConfPath;
+   ASSERT_FALSE(FilePath::tempFilePath(".conf", tmpConfPath));
+
+   std::string confFileContents =
+         "[*]\n"
+         "logger-type=file\n"
+         "log-level=trace\n"
+         "log-code-locations=1\n"
+         "log-dir=" + tmpConfPath.getParent().getAbsolutePath();
+
+   ASSERT_FALSE(core::writeStringToFile(tmpConfPath, confFileContents));
+
+   clearLogEnvVars();
+   core::system::setenv("RS_LOG_CONF_FILE", tmpConfPath.getAbsolutePath());
+
+   std::string id = core::system::generateShortenedUuid();
+   ASSERT_FALSE(core::system::initializeStderrLog("logging-tests-" + id, log::LogLevel::WARN, true));
+   ASSERT_TRUE(log::logCodeLocations());
+
+   TLOGF("Formatted trace {}", 1);
+   DLOGF("Formatted debug {}", 2);
+   ILOGF("Formatted info {}", 3);
+
+   // the setting is process-global; don't leak it into later tests
+   log::setLogCodeLocations(false);
+
+   FilePath logFile = tmpConfPath.getParent().completeChildPath("logging-tests-" + id + ".log");
+   ASSERT_TRUE(logFile.exists());
+
+   std::vector<std::string> logLines;
+   ASSERT_FALSE(core::readStringVectorFromFile(logFile, &logLines));
+
+   EXPECT_NE(std::string::npos, findLogLine(logLines, "Formatted trace 1").find("LoggingTests.cpp"));
+   EXPECT_NE(std::string::npos, findLogLine(logLines, "Formatted debug 2").find("LoggingTests.cpp"));
+   EXPECT_NE(std::string::npos, findLogLine(logLines, "Formatted info 3").find("LoggingTests.cpp"));
 }
 
 } // namespace unit_tests

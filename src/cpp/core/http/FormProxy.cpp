@@ -14,6 +14,7 @@
  */
 
 #include <core/http/FormProxy.hpp>
+#include <core/http/RequestParser.hpp>
 #include <core/http/Util.hpp>
 
 namespace rstudio {
@@ -29,7 +30,9 @@ FormProxy::FormProxy(const boost::shared_ptr<AsyncConnection>& pUpstreamConnecti
    currentBufferSize_(0),
    connectedDownstream_(false),
    bufferFull_(false),
-   downstreamClosed_(false)
+   downstreamClosed_(false),
+   bytesReceived_(0),
+   aborted_(false)
 {
 }
 
@@ -88,14 +91,37 @@ void FormProxy::onDownstreamConnected()
    END_LOCK_MUTEX
 }
 
-bool FormProxy::queueData(const std::string& data)
+bool FormProxy::queueData(const std::string& data, bool complete)
 {
+   bool abandoned = false;
+   LOCK_MUTEX(mutex_)
+   {
+      if (RequestParser::isAbandonedForm(pUpstreamConnection_->request(), bytesReceived_ + data.size(), complete))
+      {
+         abandoned = true;
+         aborted_ = true;
+
+         std::queue<std::string> discarded;
+         writeBuffer_.swap(discarded);
+         currentBufferSize_ = 0;
+      }
+   }
+   END_LOCK_MUTEX
+
+   // outside our lock, as the client's teardown may call back into us
+   if (abandoned)
+   {
+      abort();
+      return true;
+   }
+
    LOCK_MUTEX(mutex_)
    {
       if (downstreamClosed_)
       {
          // nowhere to write it -- discard, but keep accepting so the upstream
          // connection drains and closes rather than stalling (onDownstreamClosed)
+         bytesReceived_ += data.size();
          return true;
       }
 
@@ -111,6 +137,7 @@ bool FormProxy::queueData(const std::string& data)
       }
 
       // queue the data
+      bytesReceived_ += data.size();
       currentBufferSize_ += data.size();
       writeBuffer_.push(data);
 
@@ -123,6 +150,14 @@ bool FormProxy::queueData(const std::string& data)
    END_LOCK_MUTEX
 
    return true;
+}
+
+void FormProxy::abort()
+{
+   // the usual teardown for a client: detaching its handlers also drops the
+   // connect handler, which holds a reference to us
+   pDownstreamConnection_->close();
+   pDownstreamConnection_->disableHandlers();
 }
 
 void FormProxy::writeData()
@@ -151,6 +186,13 @@ void FormProxy::writeData()
 
 void FormProxy::onDataWrote(const boost::system::error_code& ec)
 {
+   LOCK_MUTEX(mutex_)
+   {
+      if (aborted_)
+         return;
+   }
+   END_LOCK_MUTEX
+
    if (handleError(ec))
       return;
 

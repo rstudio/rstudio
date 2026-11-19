@@ -52,4 +52,19 @@ public interface RenvConstants extends Messages {
     String renvPackagesNotInstalled();
     String renvRestoreAction();
     String renvDismissNotice();
+    String chooseRVersionCaption();
+    String chooseRVersionLabel();
+    String findingRInstallations();
+    String browseForR();
+    String browseForRCaption();
+    String browseForRButton();
+    String notAnRInstallation(String path);
+    String rInstallationLabel(String version, String location);
+    String rExecutableLabel(String location);
+    String defaultRLabel(String description);
+    String rInUseLabel(String description);
+    String rEmulatedLabel(String description);
+    String switchRVersionButton();
+    String restartWithChosenRCaption();
+    String restartWithChosenRMessage(String description);
 }

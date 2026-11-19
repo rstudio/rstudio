@@ -99,7 +99,11 @@
                     "type": "object",
                     "properties": {
                         "rBinDir": { "type": "string" },
-                        "preferR64": { "type": "boolean" }
+                        "preferR64": { "type": "boolean" },
+                        "rstudioWhichRWhenChosen": {
+                            "type": "string",
+                            "description": "The value of RSTUDIO_WHICH_R when the R executable RStudio uses was chosen."
+                        }
                     }
                 },
                 "macos": {
@@ -108,6 +112,27 @@
                         "defaultFileHandlerPrompted": {
                             "type": "boolean",
                             "description": "Whether RStudio has already asked macOS to make it the default application for R files."
+                        },
+                        "rExecutablePath": {
+                            "type": "string",
+                            "description": "The R executable chosen in RStudio, used instead of the default R; empty to use the default R."
+                        },
+                        "rstudioWhichRWhenChosen": {
+                            "type": "string",
+                            "description": "The value of RSTUDIO_WHICH_R when the R executable RStudio uses was chosen."
+                        }
+                    }
+                },
+                "linux": {
+                    "type": "object",
+                    "properties": {
+                        "rExecutablePath": {
+                            "type": "string",
+                            "description": "The R executable chosen in RStudio, used instead of the default R; empty to use the default R."
+                        },
+                        "rstudioWhichRWhenChosen": {
+                            "type": "string",
+                            "description": "The value of RSTUDIO_WHICH_R when the R executable RStudio uses was chosen."
                         }
                     }
                 }
@@ -118,10 +143,17 @@
                     "useDefault64BitR": true,
                     "rBinDir": "",
                     "preferR64": true,
-                    "rExecutablePath": ""
+                    "rExecutablePath": "",
+                    "rstudioWhichRWhenChosen": ""
                   },
                 "macos": {
-                    "defaultFileHandlerPrompted": false
+                    "defaultFileHandlerPrompted": false,
+                    "rExecutablePath": "",
+                    "rstudioWhichRWhenChosen": ""
+                },
+                "linux": {
+                    "rExecutablePath": "",
+                    "rstudioWhichRWhenChosen": ""
                 }
             }
         },

@@ -210,27 +210,7 @@ public:
       params_.push_back(Param(name, paramSEXP));
       return *this;
    }
-   
-   template <typename T>
-   RFunction& addUtf8Param(const T& param)
-   {
-      return addUtf8Param(std::string(), param);
-   }
-   
-   template <typename T>
-   RFunction& addUtf8Param(const std::string& name, const T& param)
-   {
-      // no-op off the main thread; the R runtime is not thread-safe
-      if (!REQUIRE_MAIN_THREAD())
-         return *this;
 
-      r::sexp::Protect protect;
-      SEXP paramSEXP = sexp::createUtf8(param, &protect);
-      preserver_.add(paramSEXP);
-      params_.push_back(Param(name, paramSEXP));
-      return *this;
-   }
-   
    core::Error call(SEXP evalNS = R_GlobalEnv, bool safely = true);
    core::Error callUnsafe();
 
@@ -258,20 +238,6 @@ public:
       return sexp::extract(resultSEXP, pValue);
    }
 
-   template <typename T>
-   core::Error callUtf8(T* pValue)
-   {
-      // call the function
-      sexp::Protect rProtect;
-      SEXP resultSEXP;
-      core::Error error = call(R_GlobalEnv, &resultSEXP, &rProtect);
-      if (error)
-         return error;
-
-      // convert result to c++ accessible type
-      return sexp::extract(resultSEXP, pValue, true);
-   }
-   
 private:
    void commonInit(const std::string& functionName);
 
