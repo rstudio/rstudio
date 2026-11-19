@@ -609,10 +609,11 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
       }
       else
       {
-         // an isolated drop is routine and logs at info (performDroppedRescan),
-         // but one arriving this soon after the last rescan means overflow is
-         // outpacing recovery -- the burst pattern behind #18507 -- so keep
-         // that visible at the default log level
+         // an isolated drop or root-level coalesce is routine and logs at
+         // info (performDroppedRescan), but one arriving this soon after the
+         // last rescan means events are outpacing recovery -- the burst
+         // pattern behind #18507 -- so keep that visible at the default log
+         // level
          WLOGF(
             "File monitor events were dropped or coalesced again within {}s of the last rescan; deferring rescan of {}",
             kDroppedRescanIntervalSeconds,
