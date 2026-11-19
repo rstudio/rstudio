@@ -65,7 +65,10 @@ env -0 | sort -z | while IFS= read -r -d '' entry; do
       value="${scheme}<masked>@${value##*@}"
    elif [[ "${value}" == *://*@* ]]; then
       # user names and passwords can hold an unescaped '@', so they run
-      # through the last '@' before the path
+      # through the last '@' before the path, query or fragment. An unescaped
+      # '/', '?' or '#' in a password ends the match early, so that URL prints
+      # in full; masking through the last '@' anywhere would catch it, but
+      # would also mangle URLs such as https://registry.npmjs.org/@scope/pkg
       value="$(printf '%s' "${value}" | sed -E 's,://[^/?#[:space:]]*@,://<masked>@,g')"
    fi
 
