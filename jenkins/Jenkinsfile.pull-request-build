@@ -51,7 +51,7 @@ pipeline {
           }
 
           // Log environment variables
-          sh 'printenv | sort'
+          sh 'docker/jenkins/print-environment.sh'
 
         }
       }

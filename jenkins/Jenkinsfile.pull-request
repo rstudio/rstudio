@@ -28,7 +28,7 @@ pipeline {
     stage('Load Utils') {
       steps {
         script {
-          sh 'printenv'
+          sh 'docker/jenkins/print-environment.sh'
           sh "echo 'Loading utils from ${env.WORKSPACE}/jenkins/utils.groovy'"
           utils = load "${env.WORKSPACE}/jenkins/utils.groovy"
           utils.ensureFullCommitHistory()
@@ -78,7 +78,7 @@ pipeline {
               filename 'docker/jenkins/Dockerfile.snyk'
               registryCredentialsId 'ecr:us-east-1:aws-build-role'
               registryUrl 'https://263245908434.dkr.ecr.us-east-1.amazonaws.com'
-              additionalBuildArgs "--build-arg BASE_IMAGE=${BASE_IMAGE}" + ' --build-arg GITHUB_LOGIN=${GITHUB_LOGIN}'
+              additionalBuildArgs "--build-arg BASE_IMAGE=${BASE_IMAGE}"
               reuseNode true
             }
           }
