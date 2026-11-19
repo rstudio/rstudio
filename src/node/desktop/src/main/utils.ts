@@ -121,6 +121,14 @@ export function openFileUrlWithWindowsShell(url: string): void {
 }
 
 /**
+ * Whether a window is shown and not minimized: one a user can see without
+ * bringing it back, and one an automation run can put a sheet on (#18764).
+ */
+export function isOnScreen(window: BrowserWindow): boolean {
+  return window.isVisible() && !window.isMinimized();
+}
+
+/**
  * Put a window on screen during an automation run without activating it or
  * raising it over whatever the user is working in. A window that is already
  * on screen is left exactly where it is, so the user can click one to watch a
@@ -128,7 +136,7 @@ export function openFileUrlWithWindowsShell(url: string): void {
  * just underneath it.
  */
 export function showWindowForAutomation(window: BrowserWindow): void {
-  if (window.isVisible() && !window.isMinimized()) {
+  if (isOnScreen(window)) {
     return;
   }
 

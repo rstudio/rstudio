@@ -28,7 +28,13 @@ import {
   dialog,
   FileFilter,
 } from 'electron';
-import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
+import {
+  IpcMainEvent,
+  IpcMainInvokeEvent,
+  MessageBoxOptions,
+  OpenDialogOptions,
+  SaveDialogOptions,
+} from 'electron/main';
 import EventEmitter from 'events';
 import { existsSync, statSync, writeFileSync } from 'fs';
 import { platform } from 'os';
@@ -67,6 +73,7 @@ import {
 import {
   parseFilter,
   isAutomated,
+  isOnScreen,
   openExternalPath,
   openExternalUrl,
   openFileUrlWithWindowsShell,
@@ -341,10 +348,7 @@ export class GwtCallback extends EventEmitter {
           openDialogOptions.filters = parseFilter(filter);
         }
 
-        const focusedWindow = this.dialogParentWindow(
-          focusOwner ? this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window : null,
-          BrowserWindow.fromWebContents(event.sender),
-        );
+        const focusedWindow = this.dialogParentForRequest('desktop_get_open_file_name', event, focusOwner);
         if (focusedWindow) {
           return appState().modalTracker.trackElectronModalAsync(async () =>
             dialog.showOpenDialog(focusedWindow, openDialogOptions),
@@ -396,10 +400,7 @@ export class GwtCallback extends EventEmitter {
           filters.unshift({ name: extension, extensions: [extension] });
         }
         saveDialogOptions['filters'] = filters;
-        const focusedWindow = this.dialogParentWindow(
-          focusOwner ? this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window : null,
-          BrowserWindow.fromWebContents(event.sender),
-        );
+        const focusedWindow = this.dialogParentForRequest('desktop_get_save_file_name', event, focusOwner);
         if (focusedWindow) {
           return appState().modalTracker.trackElectronModalAsync(async () =>
             dialog.showSaveDialog(focusedWindow, saveDialogOptions),
@@ -420,10 +421,7 @@ export class GwtCallback extends EventEmitter {
           properties: ['openDirectory', 'createDirectory', 'promptToCreate'],
         };
 
-        const focusedWindow = this.dialogParentWindow(
-          focusOwner ? this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window : null,
-          BrowserWindow.fromWebContents(event.sender),
-        );
+        const focusedWindow = this.dialogParentForRequest('desktop_get_existing_directory', event, focusOwner);
 
         if (focusedWindow) {
           return appState().modalTracker.trackElectronModalAsync(async () =>
@@ -800,7 +798,7 @@ export class GwtCallback extends EventEmitter {
           };
         }
 
-        const focusedWindow = this.dialogParentWindow(null, BrowserWindow.fromWebContents(event.sender));
+        const focusedWindow = this.dialogParentForRequest('desktop_show_message_box', event);
         if (focusedWindow) {
           return appState().modalTracker.trackElectronModalAsync(async () =>
             dialog.showMessageBox(focusedWindow, openDialogOptions),
@@ -1035,16 +1033,16 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_get_desktop_synctex_viewer', () => {
-      GwtCallback.unimpl('desktop_get_desktop_synctex_viewer');
+      this.unimpl('desktop_get_desktop_synctex_viewer');
       return '';
     });
 
     ipcMain.on('desktop_external_synctex_preview', (_event, _pdfPath, _page) => {
-      GwtCallback.unimpl('desktop_external_synctex_preview');
+      this.unimpl('desktop_external_synctex_preview');
     });
 
     ipcMain.on('desktop_external_synctex_view', (_event, _pdfFile, _srcFile, _line, _column) => {
-      GwtCallback.unimpl('desktop_external_synctex_view');
+      this.unimpl('desktop_external_synctex_view');
     });
 
     ipcMain.handle('desktop_supports_fullscreen_mode', () => {
@@ -1164,7 +1162,7 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_get_session_server', () => {
-      GwtCallback.unimpl('desktop_get_session_server');
+      this.unimpl('desktop_get_session_server');
       return {};
     });
 
@@ -1173,57 +1171,57 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_reconnect_to_session_server', (_event, _sessionServerJson) => {
-      GwtCallback.unimpl('desktop_reconnect_to_session_server');
+      this.unimpl('desktop_reconnect_to_session_server');
     });
 
     ipcMain.handle('desktop_set_launcher_server', (_event, _sessionServerJson) => {
-      GwtCallback.unimpl('desktop_set_launcher_server');
+      this.unimpl('desktop_set_launcher_server');
       return false;
     });
 
     ipcMain.on('desktop_connect_to_launcher_server', () => {
-      GwtCallback.unimpl('desktop_connect_to_launcher_server');
+      this.unimpl('desktop_connect_to_launcher_server');
     });
 
     ipcMain.handle('desktop_get_launcher_server', () => {
-      GwtCallback.unimpl('desktop_get_launcher_server');
+      this.unimpl('desktop_get_launcher_server');
       return {};
     });
 
     ipcMain.on('desktop_start_launcher_job_status_stream', (_event, _jobId) => {
-      GwtCallback.unimpl('desktop_start_launcher_job_status_stream');
+      this.unimpl('desktop_start_launcher_job_status_stream');
     });
 
     ipcMain.on('desktop_stop_launcher_job_status_stream', (_event, _jobId) => {
-      GwtCallback.unimpl('desktop_stop_launcher_job_status_stream');
+      this.unimpl('desktop_stop_launcher_job_status_stream');
     });
 
     ipcMain.on('desktop_start_launcher_job_output_stream', (_event, _jobId) => {
-      GwtCallback.unimpl('desktop_start_launcher_job_output_stream');
+      this.unimpl('desktop_start_launcher_job_output_stream');
     });
 
     ipcMain.on('desktop_stop_launcher_job_output_stream', (_event, _jobId) => {
-      GwtCallback.unimpl('desktop_stop_launcher_job_output_stream');
+      this.unimpl('desktop_stop_launcher_job_output_stream');
     });
 
     ipcMain.on('desktop_control_launcher_job', (_event, _jobId, _operation) => {
-      GwtCallback.unimpl('desktop_control_launcher_job');
+      this.unimpl('desktop_control_launcher_job');
     });
 
     ipcMain.on('desktop_submit_launcher_job', (_event, _job) => {
-      GwtCallback.unimpl('desktop_submit_launcher_job');
+      this.unimpl('desktop_submit_launcher_job');
     });
 
     ipcMain.on('desktop_get_job_container_user', () => {
-      GwtCallback.unimpl('desktop_get_job_container_user');
+      this.unimpl('desktop_get_job_container_user');
     });
 
     ipcMain.on('desktop_validate_jobs_config', () => {
-      GwtCallback.unimpl('desktop_validate_jobs_config');
+      this.unimpl('desktop_validate_jobs_config');
     });
 
     ipcMain.handle('desktop_get_proxy_port_number', () => {
-      GwtCallback.unimpl('desktop_get_proxy_port_number');
+      this.unimpl('desktop_get_proxy_port_number');
       return -1;
     });
 
@@ -1301,12 +1299,12 @@ export class GwtCallback extends EventEmitter {
     }
   }
 
-  static unimpl(ipcName: string): void {
+  unimpl(ipcName: string): void {
     if (app.isPackaged) {
       return;
     }
 
-    const focusedWindow = BrowserWindow.getFocusedWindow();
+    const focusedWindow = this.dialogParentWindow();
 
     const dialogOptions = {
       title: i18next.t('gwtCallbackTs.unimplemented'),
@@ -1510,12 +1508,23 @@ export class GwtCallback extends EventEmitter {
   }
 
   /**
+   * Parent window for a native dialog that an IPC request asked for: the
+   * sender's own window when `focusOwner` is set, else as for
+   * dialogParentWindow(), with the sender's window as the requester.
+   */
+  dialogParentForRequest(channel: string, event: IpcMainInvokeEvent, focusOwner = false): BrowserWindow | undefined {
+    const preferred = focusOwner ? this.getSender(channel, event.processId, event.frameId).window : null;
+    return this.dialogParentWindow(preferred, BrowserWindow.fromWebContents(event.sender));
+  }
+
+  /**
    * Parent window for a native dialog: `preferred`, else the focused window,
    * else `requester` (the window that asked for the dialog) or the main
    * window, whichever is on screen. macOS runs a parentless dialog app-modal
    * without activating the app, so it can open unseen behind the active app
    * or on another display while every RStudio window beeps at a click
-   * (#19728); a sheet stays on its window and blocks nothing else.
+   * (#19728). A sheet blocks only its own window (and the app menu, which
+   * the modal tracker disables while any native dialog is open).
    */
   dialogParentWindow(preferred?: BrowserWindow | null, requester?: BrowserWindow | null): BrowserWindow | undefined {
     const window = preferred ?? BrowserWindow.getFocusedWindow();
@@ -1526,15 +1535,18 @@ export class GwtCallback extends EventEmitter {
     const candidates = [requester, this.mainWindow.window].filter(
       (candidate): candidate is BrowserWindow => !!candidate && !candidate.isDestroyed(),
     );
-    const onScreen = candidates.find((candidate) => candidate.isVisible() && !candidate.isMinimized());
+    const onScreen = candidates.find((candidate) => isOnScreen(candidate));
     if (onScreen) {
       return onScreen;
     }
 
-    // AppKit may hold a sheet on a minimized or hidden window until the
-    // window comes back. A user brings it back; an automation run would
-    // hang on a dialog it can never reach, so it stays parentless there.
-    return isAutomated() ? undefined : candidates[0];
+    // With every window off screen, only macOS needs a parent, since its
+    // parentless dialog blocks every window; AppKit holds the sheet until the
+    // user brings its window back. An automation run would hang on a dialog
+    // it can never reach, so it stays parentless there. Elsewhere a parentless
+    // dialog blocks no window, while an owned one may stay hidden with its
+    // minimized owner (Windows).
+    return process.platform === 'darwin' && !isAutomated() ? candidates[0] : undefined;
   }
 
   /**
