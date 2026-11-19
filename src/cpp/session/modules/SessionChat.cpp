@@ -1662,24 +1662,10 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    // readline()); that one's deadline is set aside and restored at the end
    chat_execution::ExecutionDeadline enclosingDeadline;
 
-   // Check if this request was already canceled (pre-cancellation of queued request)
-   // and register tracking ID for cancellation support
+   // Register tracking ID for cancellation support. A request canceled while
+   // it was queued never gets here: processPendingExecution() answers it.
    {
       boost::mutex::scoped_lock lock(s_executionTrackingMutex);
-
-      // Check if already canceled
-      if (s_canceledTrackingIds.count(trackingId) > 0)
-      {
-         wasCanceled = true;
-         s_canceledTrackingIds.erase(trackingId);
-
-         // Return a response indicating cancellation
-         sendNotRunResult(ops, requestId, kExecutionCanceledError, true, false);
-         // Note: No need to unregister here as we never registered (this check is before registration)
-         return;
-      }
-
-      // Register as current execution
       s_currentTrackingId = trackingId;
       enclosingDeadline = s_currentDeadline;
       s_currentDeadline.arm(queuedTime, timeout);
