@@ -177,7 +177,7 @@ Error ConsoleHistory::loadFromFile(const FilePath& filePath,
    // tolerate file not found -- the user may not have any prior history
    if (filePath.exists())
    {
-      return core::readCollectionFromFile<boost::circular_buffer<std::string> >(
+      return core::readCollectionFromFile<HistoryBuffer>(
                                                       filePath,
                                                       &historyBuffer_,
                                                       core::parseString);
@@ -195,7 +195,7 @@ Error ConsoleHistory::loadFromFile(const FilePath& filePath,
    
 Error ConsoleHistory::saveToFile(const FilePath& filePath, bool atomic) const
 {
-   return core::writeCollectionToFile<boost::circular_buffer<std::string> >(
+   return core::writeCollectionToFile<HistoryBuffer>(
                                                       filePath,
                                                       historyBuffer_,
                                                       core::stringifyString,

@@ -112,6 +112,16 @@ TEST(SessionConsoleHistoryTest, RHistsizeLimitsOnlyTheSavedHistory)
    ASSERT_EQ(600, largeHistory.size());
    EXPECT_EQ(longCommands, savedBy(largeHistory));
 
+   // a value meant as "unlimited" is kept as the capacity too; the buffer
+   // allocates only what it holds, where a circular_buffer would allocate
+   // gigabytes up front
+   core::system::setenv("R_HISTSIZE", "999999999");
+   r::session::ConsoleHistory hugeHistory;
+   hugeHistory.setCapacityFromRHistsize();
+   EXPECT_EQ(999999999, hugeHistory.capacity());
+   ASSERT_FALSE(hugeHistory.loadFromFile(longHistoryPath, true));
+   EXPECT_EQ(longCommands, savedBy(hugeHistory));
+
    // unset, negative, and invalid values mean R's default of 512, for both the
    // session's capacity and the commands saved; a longer history file loads
    // only its newest 512
