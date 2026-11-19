@@ -535,6 +535,11 @@ FilePath agentPathOverrideFor(const std::string& assistant)
 // own language server, so NES is never missing while one is in effect.
 void refreshPositNesMissing()
 {
+   // Where Posit Assistant can't be used, Posit AI isn't offered regardless,
+   // so skip scanning for an installation.
+   if (!isPositAssistantAllowedByAdmin())
+      return;
+
    bool overrideInEffect = !agentPathOverrideFor(kAssistantPosit).isEmpty();
    FilePath installPath = chat::installation::locatePositAssistantInstallation();
    bool nesMissing = !overrideInEffect && isNesMissing(installPath);
