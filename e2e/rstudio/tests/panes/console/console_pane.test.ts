@@ -269,6 +269,33 @@ test.describe('Console pane', () => {
     expect(focusLog[0]).toContain('show_traceback_text');
   });
 
+  test('Focus Last Console Error run after a mouse click shows a focus ring', async ({
+    rstudioPage: page,
+  }) => {
+    await consoleActions.executeInConsole(NESTED_ERROR);
+    const pane = consoleActions.consolePane;
+    await expect(pane.tracebackBtn).toBeVisible({ timeout: 10000 });
+
+    // After a mouse click on a control (not a text field), the browser doesn't
+    // count script focus as :focus-visible, as when the command is chosen from a
+    // menu. A stand-in button avoids side effects from clicking a real one.
+    await page.evaluate(() => {
+      const button = document.createElement('button');
+      button.id = 'pw-click-target';
+      button.textContent = 'click target';
+      button.style.cssText = 'position: fixed; top: 0; left: 0; z-index: 100000';
+      document.body.appendChild(button);
+    });
+    await page.locator('#pw-click-target').click();
+    await page.evaluate(() => document.getElementById('pw-click-target')?.remove());
+    await executeCommand(page, 'focusLastConsoleError');
+    await expect(pane.tracebackBtn).toBeFocused();
+    expect(await pane.tracebackBtn.evaluate((el) => el.matches(':focus-visible')),
+      'precondition: focus is not :focus-visible').toBe(false);
+    await expect(pane.tracebackBtn).toHaveCSS('opacity', '1');
+    await expect(pane.tracebackBtn).not.toHaveCSS('outline-style', 'none');
+  });
+
   test('Focus Last Console Error announces when there is no error', async ({
     rstudioPage: page,
   }) => {

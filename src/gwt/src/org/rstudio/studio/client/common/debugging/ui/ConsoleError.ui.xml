@@ -47,8 +47,16 @@
    }
    
    .errorCommandText:hover,
-   .errorCommandText:focus-visible {
+   .errorCommandText:focus {
       opacity: 1;
+   }
+
+   /* :focus, not :focus-visible: the browser doesn't count focus from a command
+      chosen with the mouse as :focus-visible. Matches the app-wide outline in
+      focus-visible.css. */
+   .errorCommandText:focus {
+      outline: #8AA9DB solid 2px;
+      outline-offset: -1px;
    }
    
    .errorCommandImage {
