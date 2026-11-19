@@ -792,6 +792,13 @@ public class ChunkOutputStream extends FlowPanel
       if (expected.isEmpty())
          return groupEl;
 
+      // the console cuts each run of text it writes (e.g. the part after a
+      // highlighted "Error") at the line length limit, so only the message's
+      // first 'limit' characters are sure to be shown as they are
+      int limit = RStudioGinjector.INSTANCE.getUserPrefs().consoleLineLengthLimit().getValue();
+      if (limit > 0 && expected.length() > limit)
+         expected = StringUtil.substring(expected, 0, limit);
+
       // each message starts a child span, as its highlighted error prefix
       // gets a span of its own; scan back to the start of this one
       String text = "";

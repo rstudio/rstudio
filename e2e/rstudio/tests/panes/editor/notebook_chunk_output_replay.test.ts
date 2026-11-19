@@ -19,10 +19,12 @@ import { useSuiteSandbox } from '@utils/sandbox';
 
 const FILE_NAME = 'chunk_output_replay.Rmd';
 const ERRORS_FILE_NAME = 'chunk_output_errors.Rmd';
+const MESSAGES_FILE_NAME = 'chunk_output_messages.Rmd';
 const OUTPUT = '.rstudio_chunk_output_before_error';
 const ERROR_BOX = `${OUTPUT} .ace_console_error`;
 const TWO_ERRORS = '.rstudio_chunk_output_two_errors';
 const ONE_FRAME_FIRST = '.rstudio_chunk_output_one_frame_first';
+const MESSAGE_FORMS = '.rstudio_chunk_output_message_forms';
 
 // The heredoc reads template parts in raw form, so escaped backticks (\`)
 // would keep their backslashes; interpolate backticks instead.
@@ -67,6 +69,35 @@ function errorsSource(): string {
     innerC19654 <- function() stop("multi frame")
     stop("one frame")
     outerC19654()
+    ${FENCE}
+  `;
+}
+
+function messagesSource(): string {
+  // Messages longer than the console's line length limit (2000 by default),
+  // both on a line of their own (R wraps a long message after its call) and
+  // on the line that starts with the highlighted "Error", and a message with
+  // color escapes. R cuts error messages at warning.length (1000 by default),
+  // so the chunk raises it. The \033 escapes are written for R to read.
+  return heredoc`
+    ---
+    output: html_document
+    ---
+
+    ${FENCE}{r message_forms, error = TRUE}
+    options19654 <- options(warning.length = 8170)
+    outerD19654 <- function() innerD19654()
+    innerD19654 <- function() stop(paste0("ownline19654", strrep("x", 3000)))
+    outerE19654 <- function() innerE19654()
+    innerE19654 <- function() stop(paste0("errorline19654", strrep("y", 3000)), call. = FALSE)
+    outerF19654 <- function() innerF19654()
+    innerF19654 <- function() stop("\033[31mcolored19654\033[39m")
+    outerD19654()
+    Sys.sleep(1)
+    outerE19654()
+    Sys.sleep(1)
+    outerF19654()
+    options(options19654)
     ${FENCE}
   `;
 }
@@ -120,9 +151,9 @@ test.describe('Notebook chunk output replay', { tag: ['@parallel_safe'] }, () =>
   });
 
   test.afterAll(async ({ rstudioPage: page }) => {
-    await closeAndDeleteSandboxFiles(page, sandbox.dir, [FILE_NAME, ERRORS_FILE_NAME]);
+    await closeAndDeleteSandboxFiles(page, sandbox.dir, [FILE_NAME, ERRORS_FILE_NAME, MESSAGES_FILE_NAME]);
     await consoleActions.executeInConsole(
-      'suppressWarnings(rm(list = ls(pattern = "^(outer|inner).*19654$")))',
+      'suppressWarnings(rm(list = ls(pattern = "^(outer|inner|options).*19654$")))',
       { wait: true },
     );
   });
@@ -172,5 +203,24 @@ test.describe('Notebook chunk output replay', { tag: ['@parallel_safe'] }, () =>
     // box used to take the first box as its message.
     await reopen(page, `${sandbox.dir}/${ERRORS_FILE_NAME}`);
     await expectSeparateErrorBoxes(page);
+  });
+
+  test('moves a long or colored error message into its box', async ({ rstudioPage: page }) => {
+    await writeAndOpenFile(page, sandbox.dir, MESSAGES_FILE_NAME, messagesSource());
+    await sourceActions.ensureSourceMode();
+
+    // Live, each message is shown as text before its error arrives; the box
+    // takes that text, rather than leaving it above and showing its own copy.
+    await runChunk(page, sourceActions, 'message_forms', 3);
+    const boxes = page.locator(`${MESSAGE_FORMS} .ace_console_error`);
+    const markers = ['ownline19654', 'errorline19654', 'colored19654'];
+    for (const [i, marker] of markers.entries()) {
+      await expect.soft(boxes.nth(i)).toContainText(marker);
+      await expect.soft(page.locator(`${MESSAGE_FORMS} pre`, { hasText: marker })).toHaveCount(0);
+    }
+
+    // the long messages are cut as the console cuts them
+    await expect.soft(boxes.nth(0)).toContainText('<truncated>');
+    await expect.soft(boxes.nth(1)).toContainText('<truncated>');
   });
 });
