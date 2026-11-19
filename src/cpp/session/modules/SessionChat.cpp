@@ -2192,7 +2192,10 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    result["output"] = execContext.getOutput();
    result["error"] = execContext.getError();
    result["canceled"] = wasCanceled;
-   result["timedOut"] = timedOut;
+
+   // A cancel takes precedence over the deadline, as for a request canceled
+   // in the queue, so a peer can treat the two flags as exclusive
+   result["timedOut"] = timedOut && !wasCanceled;
    result["plots"] = plotsArray;
    result["executionTime"] = executionTime;
 
