@@ -4,7 +4,8 @@
 #
 # Prints the environment for CI build logs, like `printenv | sort`, but masks
 # the values of variables that look like they hold credentials: those with a
-# credential-like name, and the user name and password in URLs.
+# credential-like name or a credential parameter (`password=`, `token=`, ...),
+# and the user name and password in URLs.
 
 # a trace would print each value before it is masked
 set +x
@@ -38,8 +39,9 @@ SENSITIVE_NAMES=(
 )
 SENSITIVE_NAME=$(IFS='|'; echo "${SENSITIVE_NAMES[*]}")
 
-# a password parameter, as in a connection string or a URL query
-PASSWORD_PARAMETER='(pass(wd|word)?|pwd)='
+# a credential parameter, as in a connection string (which allows spaces
+# around the '=') or a URL query, such as a signed storage URL
+CREDENTIAL_PARAMETER='(pass(wd|word)?|pwd|token|sig(nature)?|secret|api[-_]?key)[[:space:]]*='
 
 # proxy endpoints, such as HTTPS_PROXY or COPILOT_PROXY_URL
 PROXY_NAME='PROXY(_URL)?$'
@@ -51,7 +53,7 @@ env -0 | sort -z | while IFS= read -r -d '' entry; do
    name="${entry%%=*}"
    value="${entry#*=}"
 
-   if [[ "${name}" =~ ${SENSITIVE_NAME} || "${value}" =~ ${PASSWORD_PARAMETER} ]]; then
+   if [[ "${name}" =~ ${SENSITIVE_NAME} || "${value}" =~ ${CREDENTIAL_PARAMETER} ]]; then
       value="<masked>"
    elif [[ "${name}" =~ ${PROXY_NAME} && "${value}" == *@* ]]; then
       # proxy settings can leave out the scheme (user:pass@proxy:3128), and
