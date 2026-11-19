@@ -83,7 +83,7 @@ Error readEnvConfigFile(bool emitInfoLog)
       if (emitInfoLog)
       {
          // values can hold credentials (e.g. a proxy URL with a password)
-         LOG_INFO_MESSAGE("Setting server environment variable '" + var.first + "'");
+         ILOGF("Setting server environment variable '{}'", var.first);
       }
       core::system::setenv(var.first, var.second);
    }
@@ -107,9 +107,8 @@ void forwardHttpProxyVars(core::system::Options *pEnvironment)
          std::string oldVal = core::system::getenv(*pEnvironment, proxyVar);
          if (!oldVal.empty() && oldVal != val)
          {
-            LOG_WARNING_MESSAGE("Overriding HTTP proxy setting " +
-                                std::string(proxyVar) + ": '" + oldVal +
-                                "' => '" + val + "'");
+            // proxy URLs can hold a user name and password
+            WLOGF("Overriding HTTP proxy setting {}", proxyVar);
          }
          core::system::setenv(pEnvironment, proxyVar, val);
       }
