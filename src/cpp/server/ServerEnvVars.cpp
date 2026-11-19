@@ -82,8 +82,8 @@ Error readEnvConfigFile(bool emitInfoLog)
    {
       if (emitInfoLog)
       {
-         LOG_INFO_MESSAGE("Setting server environment variable '" +
-               var.first + "' = '" + var.second + "'");
+         // values can hold credentials (e.g. a proxy URL with a password)
+         LOG_INFO_MESSAGE("Setting server environment variable '" + var.first + "'");
       }
       core::system::setenv(var.first, var.second);
    }
