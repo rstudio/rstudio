@@ -268,8 +268,9 @@ void processNonRecursiveFileEvents(FileEventContext* pContext,
    {
       FSEventStreamEventFlags flags = eventFlags[i];
 
-      // FSEvents indicates events were dropped (kernel/user buffer overflow,
-      // or MustScanSubDirs); reconcile by rescanning the watched directory.
+      // FSEvents indicates events were dropped (kernel/user buffer overflow)
+      // or coalesced hierarchically (MustScanSubDirs); reconcile by
+      // rescanning the watched directory.
       if (flags & (kFSEventStreamEventFlagMustScanSubDirs |
                    kFSEventStreamEventFlagKernelDropped |
                    kFSEventStreamEventFlagUserDropped))
@@ -340,8 +341,7 @@ void processNonRecursiveFileEvents(FileEventContext* pContext,
    // a matter of cross-backend consistency.
    if (needsFullRescan)
    {
-      LOG_INFO_MESSAGE("File monitor events were dropped; rescanning " +
-                       rootPathStr);
+      ILOGF("File monitor events were dropped or coalesced; rescanning {}", rootPathStr);
 
       // scan the root unconditionally, matching registration -- the filter
       // is meant for entries within the directory, and gating recovery on
@@ -375,8 +375,9 @@ void processNonRecursiveFileEvents(FileEventContext* pContext,
 // not lost.
 bool performDroppedRescan(FileEventContext* pContext)
 {
-   LOG_INFO_MESSAGE("File monitor events were dropped or coalesced; rescanning " +
-                    pContext->rootPath.getAbsolutePath());
+   ILOGF(
+      "File monitor events were dropped or coalesced; rescanning {}",
+      pContext->rootPath.getAbsolutePath());
 
    Error error = impl::discoverAndProcessFileChanges(
                          FileInfo(pContext->rootPath.getAbsolutePath(), true),
@@ -608,6 +609,15 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
       }
       else
       {
+         // an isolated drop is routine and logs at info (performDroppedRescan),
+         // but one arriving this soon after the last rescan means overflow is
+         // outpacing recovery -- the burst pattern behind #18507 -- so keep
+         // that visible at the default log level
+         WLOGF(
+            "File monitor events were dropped or coalesced again within {}s of the last rescan; deferring rescan of {}",
+            kDroppedRescanIntervalSeconds,
+            pContext->rootPath.getAbsolutePath());
+
          // CFAbsoluteTimeGetCurrent() is wall-clock time, so a backward
          // clock step can make 'elapsed' negative; clamp so the deferred
          // rescan is never scheduled more than a full debounce interval out
