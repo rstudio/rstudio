@@ -390,7 +390,7 @@ endif()
 if (RSTUDIO_UNIT_TESTS_ENABLED)
 
    # Test-only stdin/stdout driver for Markdown differential testing.
-   add_executable(rstudio-markdown ../tools/MarkdownRender.cpp)
+   add_executable(rstudio-markdown markdown/MarkdownRender.cpp)
    target_link_libraries(rstudio-markdown rstudio-core)
 
    # Find all test files (including both standard tests and gtest files)

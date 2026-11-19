@@ -14,63 +14,66 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.common.diff;
 
-import junit.framework.TestCase;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.TextResource;
 
-import java.io.*;
-import java.net.URL;
-
-public class UnifiedParserTest extends TestCase
+// Each diffN.out.txt is the hunk text of diffN.txt, so parsing a diff and
+// re-emitting its chunk headers, column markers, and line text should
+// reproduce it exactly.
+public class UnifiedParserTest extends GWTTestCase
 {
-   public void setUp() throws Exception
+   interface Resources extends ClientBundle
    {
+      @Source("diff1.txt")
+      TextResource diff1();
 
+      @Source("diff1.out.txt")
+      TextResource diff1Out();
+
+      @Source("diff2.txt")
+      TextResource diff2();
+
+      @Source("diff2.out.txt")
+      TextResource diff2Out();
    }
 
-   public void tearDown() throws Exception
+   @Override
+   public String getModuleName()
    {
-
+      return "org.rstudio.studio.RStudioTests";
    }
 
-   private String readFileResource(String name) throws Exception
+   public void testCombinedDiffRoundTrips()
    {
-      FileInputStream fileInputStream = null;
-      try
-      {
-         URL url = getClass().getResource(name);
-         fileInputStream = new FileInputStream(url.getFile());
-         StringWriter sw = new StringWriter();
-         for (int c; -1 != (c = fileInputStream.read()); )
-         {
-            sw.append((char) c);
-         }
-         return sw.toString();
-      }
-      finally
-      {
-         if (fileInputStream != null)
-            fileInputStream.close();
-      }
+      Resources res = GWT.create(Resources.class);
+      UnifiedParser parser = new UnifiedParser(res.diff1().getText());
+
+      // nextChunk() stops at a file header, so consume it first
+      DiffFileHeader header = parser.nextFilePair();
+      assertNotNull(header);
+      assertEquals("describe.c", header.getDescription());
+
+      assertEquals(res.diff1Out().getText(), render(parser));
    }
 
-   public void testNextChunk() throws Exception
+   public void testBareHunkRoundTrips()
    {
-      testFile("diff1");
+      Resources res = GWT.create(Resources.class);
+      UnifiedParser parser = new UnifiedParser(res.diff2().getText());
+
+      assertEquals(res.diff2Out().getText(), render(parser));
    }
 
-   public void testNextChunk2() throws Exception
+   private static String render(UnifiedParser parser)
    {
-      testFile("diff2");
-   }
+      StringBuilder output = new StringBuilder();
 
-   private void testFile(String testName) throws Exception
-   {
-      StringWriter stringWriter = new StringWriter();
-      PrintWriter output = new PrintWriter(stringWriter);
-      UnifiedParser parser = new UnifiedParser(readFileResource(testName + ".txt"));
       DiffChunk chunk;
       while (null != (chunk = parser.nextChunk()))
       {
-         output.println(UnifiedEmitter.createChunkString(chunk));
+         output.append(UnifiedEmitter.createChunkString(chunk)).append('\n');
          for (Line line : chunk.getLines())
          {
             char c;
@@ -91,12 +94,18 @@ public class UnifiedParserTest extends TestCase
                default:
                   throw new IllegalArgumentException();
             }
+
+            // appliesTo says which versions contain the line, so an
+            // insertion is marked against the parents that lack it, and a
+            // deletion against the parents that have it
             boolean[] appliesTo = line.getAppliesTo();
-            for (int i = 0; i < appliesTo.length-1; i++)
-               output.print(appliesTo[i] ? c : ' ');
-            output.println(line.getText());
+            boolean insertion = line.getType() == Line.Type.Insertion;
+            for (int i = 0; i < appliesTo.length - 1; i++)
+               output.append(appliesTo[i] != insertion ? c : ' ');
+            output.append(line.getText()).append('\n');
          }
       }
-      assertEquals(readFileResource(testName + ".out.txt"), stringWriter.toString());
+
+      return output.toString();
    }
 }

@@ -372,20 +372,20 @@ SEXP rs_dictionariesPath(SEXP typeSEXP)
    
    if (type == "bundled")
    {
-      return r::sexp::createUtf8(
-               options().hunspellDictionariesPath().getAbsolutePath(),
+      return r::sexp::create(
+               options().hunspellDictionariesPath(),
                &protect);
    }
    else if (type == "extra")
    {
-      return r::sexp::createUtf8(
-               allDictionariesDir().getAbsolutePath(),
+      return r::sexp::create(
+               allDictionariesDir(),
                &protect);
    }
    else if (type == "user")
    {
-      return r::sexp::createUtf8(
-               userDictionariesDir().getAbsolutePath(),
+      return r::sexp::create(
+               userDictionariesDir(),
                &protect);
    }
    else

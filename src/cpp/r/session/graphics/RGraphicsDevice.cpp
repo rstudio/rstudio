@@ -824,7 +824,7 @@ Error altText(std::string* pAltText)
    }
 
    return r::exec::RFunction(".rs.graphicsAltText",
-                             s_pGEDevDesc->displayList).callUtf8(pAltText);
+                             s_pGEDevDesc->displayList).call(pAltText);
 }
 
 std::string imageFileExtension()

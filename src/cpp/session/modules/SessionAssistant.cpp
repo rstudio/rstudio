@@ -346,7 +346,7 @@ std::vector<std::string> extractVariablesInScope(const std::string& contents,
    SEXP resultSEXP = R_NilValue;
 
    error = r::exec::RFunction(".rs.assistant.extractVariablesInScope")
-         .addUtf8Param(code)
+         .addParam(code)
          .addParam(R_GlobalEnv)
          .call(&resultSEXP, &protect);
 
@@ -819,7 +819,7 @@ void setCopilotConfiguration()
 
       // parse the URL into its associated components for logging
       Error error = r::exec::RFunction(".rs.copilot.parseNetworkProxyUrl")
-            .addUtf8Param(proxyUrl)
+            .addParam(proxyUrl)
             .call(&networkProxySEXP, &protect);
       if (error)
       {
@@ -968,7 +968,7 @@ json::Array getVariablesWithAction(const std::string& action)
          .addParam(true)                     // variablesInScope
          .addParam(kAssistantMaxVariables)   // maxVariables
          .addParam(kAssistantMaxChildren)    // maxChildren
-         .addUtf8Param(action)               // action
+         .addParam(action)                   // action
          .call(&resultSEXP, &protect);
 
    if (error)
@@ -2899,7 +2899,7 @@ void onEnvironmentVariablesChanged(const module_context::EnvironmentVariablesCha
             .addParam(R_NilValue)               // variablesInScope (ignored when names provided)
             .addParam(R_NilValue)               // maxVariables (ignored when names provided)
             .addParam(kAssistantMaxChildren)    // maxChildren
-            .addUtf8Param("create")             // action
+            .addParam("create")                 // action
             .call(&resultSEXP, &protect);
 
       if (!error)
@@ -2929,7 +2929,7 @@ void onEnvironmentVariablesChanged(const module_context::EnvironmentVariablesCha
             .addParam(R_NilValue)               // variablesInScope (ignored when names provided)
             .addParam(R_NilValue)               // maxVariables (ignored when names provided)
             .addParam(kAssistantMaxChildren)    // maxChildren
-            .addUtf8Param("modify")             // action
+            .addParam("modify")                 // action
             .call(&resultSEXP, &protect);
 
       if (!error)
