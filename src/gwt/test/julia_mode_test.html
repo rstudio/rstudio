@@ -90,7 +90,10 @@
       ["@time", "support.function"], ["1", "constant.numeric"], [":", "keyword.operator"],
       ["n", "identifier"], ["@.", "support.function"]],
     [["k = :sym; a ? b : c; v[i:j]"],
-      [":sym", "constant.other.symbol"], ["i", "identifier"], ["j", "identifier"]],
+      [":sym", "constant.language.symbol"], ["i", "identifier"], ["j", "identifier"]],
+    [["y = (a + b):c; z = x[i]:n; f(x) = :done"],
+      [":", "keyword.operator"], ["c", "identifier"], ["n", "identifier"],
+      [":done", "constant.language.symbol"]],
     [["x \u2208 S && y \u2264 3 && z \u00F7 2"],
       ["\u2208", "keyword.operator"], ["\u2264", "keyword.operator"], ["\u00F7", "keyword.operator"]],
     [["\u03B1\u03B2\u2081 = 1"],
@@ -122,6 +125,20 @@
         " is " + (token ? token.type : "missing") + ", expected " + type);
     }
   });
+
+  // a bracket before a range's ':' still counts toward the rainbow nesting
+  var RainbowParen = require("mode/rainbow_paren_highlight_rules");
+  RainbowParen.setRainbowParentheses(true);
+  var rainbowTypes = tokenize(["((a):b)"])[0].map(function(t) { return t.type; });
+  RainbowParen.setRainbowParentheses(false);
+  var expectedRainbowTypes = [
+    "paren.paren_color_0", "paren.paren_color_1", "identifier", "paren.paren_color_1",
+    "keyword.operator", "identifier", "paren.paren_color_0"
+  ];
+  check(
+    JSON.stringify(rainbowTypes) === JSON.stringify(expectedRainbowTypes),
+    "rainbow parens in \"((a):b)\": " + JSON.stringify(rainbowTypes) +
+    ", expected " + JSON.stringify(expectedRainbowTypes));
 
   // ---- indentation ----
 

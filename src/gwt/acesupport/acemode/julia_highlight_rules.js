@@ -68,6 +68,8 @@ var JuliaHighlightRules = function() {
       "[?:;,.'$]"
    ].join("|");
 
+   var parenRule = RainbowParenHighlightRules.getParenRule();
+
    // '$name' and '$(...)' in an interpolating string or command
    var interpolation = [{
       token : ["keyword.operator", "identifier"],
@@ -139,6 +141,17 @@ var JuliaHighlightRules = function() {
          token : ["identifier", "keyword.operator"],
          regex : "(" + identifier + ")(:)(?=[" + letter + "0-9(])"
       }, {
+         // nor after a closing bracket, as in (a + b):c; the bracket goes
+         // through the paren rule, which tracks the rainbow nesting
+         regex : "[)\\]]:(?=[" + letter + "0-9(])",
+         onMatch : function(value, state, stack, line, context) {
+            var bracket = value.charAt(0);
+            return [
+               { type : parenRule.onMatch(bracket, state, stack, line, context), value : bracket },
+               { type : "keyword.operator", value : ":" }
+            ];
+         }
+      }, {
          token : "constant.numeric",
          regex : number
       }, {
@@ -148,14 +161,18 @@ var JuliaHighlightRules = function() {
          token : "keyword.operator",
          regex : "::"
       }, {
-         token : "constant.other.symbol",
+         // Most themes color constant.language, but many leave constant.other
+         // at (or near) the text color. Adding 'other' would let a theme's
+         // .ace_constant.ace_other rule tie with, and win over, its
+         // .ace_constant.ace_language rule.
+         token : "constant.language.symbol",
          regex : ":" + identifier
       }, {
          token : "keyword.operator",
          regex : operators,
          merge : false
       },
-      RainbowParenHighlightRules.getParenRule(),
+      parenRule,
       {
          token : "text",
          regex : "\\s+"
