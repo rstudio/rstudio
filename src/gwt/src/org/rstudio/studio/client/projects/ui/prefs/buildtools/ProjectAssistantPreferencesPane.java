@@ -120,8 +120,8 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       // Create assistant selector - conditionally include each provider based
       // on whether it is available in this build and enabled by the
       // administrator, and for Posit AI, offered by its installation.
-      boolean paiEnabled =
-         paiUtil_.isPositAssistantEnabled() && assistant_.isPositAssistantOffered();
+      boolean paiEnabled = paiUtil_.isPositAssistantEnabled();
+      boolean paiAssistantOffered = paiEnabled && assistant_.isPositAssistantOffered();
       boolean copilotEnabled = session_.getSessionInfo().getCopilotEnabled();
       List<String> assistantLabelList = new ArrayList<>();
       List<String> assistantValueList = new ArrayList<>();
@@ -129,7 +129,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       assistantValueList.add(ASSISTANT_DEFAULT);
       assistantLabelList.add(constants_.none());
       assistantValueList.add(UserPrefsAccessor.ASSISTANT_NONE);
-      if (paiEnabled)
+      if (paiAssistantOffered)
       {
          assistantLabelList.add(prefsConstants_.assistantEnum_posit());
          assistantValueList.add(UserPrefsAccessor.ASSISTANT_POSIT);
