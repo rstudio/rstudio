@@ -134,7 +134,7 @@ jobs:
             *) exit 0 ;;
           esac
 
-          # Prints the headers, then the new reaction's id as the last line.
+          # Prints the headers, then the reaction's id as the last line.
           if ! RESPONSE=$(gh api --include --method POST "repos/${REPO}/${TARGET}/reactions" -f content=eyes --jq .id); then
             echo "::warning::Failed to add the eyes reaction"
             exit 0
@@ -187,8 +187,10 @@ jobs:
       # Eyes would otherwise promise a reply that is not coming. Removing the
       # reaction also lets a duplicate delivery queued behind this run get a
       # 201 and relay in its place. Only a reaction this run added is removed.
+      # A job that hits timeout-minutes is cancelled, not failed, so
+      # failure() alone would miss a dispatch that hung.
       - name: Withdraw the acknowledgment
-        if: failure() && steps.ack.outputs.reaction != ''
+        if: (failure() || cancelled()) && steps.ack.outputs.reaction != ''
         env:
           GH_TOKEN: ${{ github.token }}
           REACTION: ${{ steps.ack.outputs.reaction }}
