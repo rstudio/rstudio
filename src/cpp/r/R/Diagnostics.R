@@ -24,15 +24,28 @@ dir.create(dirname(diagnosticsFile), recursive = TRUE, showWarnings = FALSE)
 
 redact_regex <- function() {
   
+  # matched as whole words in names with '_' read as a space, so that e.g.
+  # GITHUB_PAT matches PAT but PATH does not
   words <- c(
-    "API", "AUTH", "GITHUB", "HOST", "HOST", "KEY", "LOGNAME",
-    "PASSWORD", "PAT", "PWD", "R TRAVIS (COM|ORG)", "SECRET", 
-    "TOKEN", "UID", "USERNAME"
+    "API", "AUTH", "CONNECTION STRING", "COOKIE", "DSN", "GITHUB", "HOST",
+    "KEY", "LOGNAME", "PASS", "PAT", "PRIVATE", "PWD", "R TRAVIS (COM|ORG)",
+    "UID", "USERNAME", "WEBHOOK"
   )
   
-  fmt <- "\\b%s\\b"
-  sprintf("(?:%s)", paste(sprintf(fmt, words), collapse = "|"))
+  # matched anywhere, so that e.g. PGPASSWORD and APIKEY match too
+  fragments <- c(
+    "ACCESSKEY", "APIKEY", "CREDENTIAL", "PASSPHRASE", "PASSWD", "PASSWORD",
+    "SECRET", "TOKEN"
+  )
   
+  patterns <- c(sprintf("\\b%s\\b", words), fragments)
+  sprintf("(?:%s)", paste(patterns, collapse = "|"))
+  
+}
+
+# redacts the user name and password in URLs, e.g. in a proxy setting
+redact_url_credentials <- function(x) {
+  gsub("://[^/@[:space:]]+@", "://*** redacted ***@", x, perl = TRUE)
 }
 
 header <- function(fmt, ...) {
@@ -72,29 +85,29 @@ dumpfile <- function(path) {
     return(invisible())
   }
   
-  regex <- sprintf("%s\\s*=", redact_regex())
-  matches <- grep(regex, gsub("_", " ", contents))
-  for (i in matches) {
-    line <- contents[[i]]
-    redacted <- paste(substring(line, 1, regexpr("=", line, fixed = TRUE)), "*** redacted ***")
-    contents[[i]] <- redacted
+  # redact what is assigned to a sensitive name, in forms such as TOKEN=...,
+  # token <- ..., or Sys.setenv("TOKEN" = ...)
+  regex <- sprintf("%s[\"'`]?\\s*(?:=|<-)", redact_regex())
+  keys <- gsub("_", " ", contents, fixed = TRUE)
+  matches <- regexpr(regex, keys, ignore.case = TRUE, perl = TRUE)
+  for (i in which(matches != -1L)) {
+    end <- matches[[i]] + attr(matches, "match.length")[[i]] - 1L
+    contents[[i]] <- paste(substring(contents[[i]], 1L, end), "*** redacted ***")
   }
   
-  writeLines(contents)
+  writeLines(redact_url_credentials(contents))
   
 }
 
 envvars <- function() {
   
-  # log environment variables, redacting any banned words (e.g. those that might
-  # expose API tokens or other secrets). match it on the list of environment
-  # variable names with _ converted to a space (so that e.g. GITHUB_PAT becomes
-  # GITHUB PAT and matches the banned word PAT)
+  # log environment variables, redacting the values of those whose names
+  # suggest they hold secrets (e.g. API tokens)
   vars <- Sys.getenv()
   keys <- gsub("_", " ", names(vars), fixed = TRUE)
-  matches <- grepl(redact_regex(), keys, ignore.case = TRUE)
+  matches <- grepl(redact_regex(), keys, ignore.case = TRUE, perl = TRUE)
   vars[matches] <- "*** redacted ***"
-  as.list(vars)
+  as.list(redact_url_credentials(vars))
 }
 
 # Main script ----
