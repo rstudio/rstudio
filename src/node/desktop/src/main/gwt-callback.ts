@@ -1511,11 +1511,11 @@ export class GwtCallback extends EventEmitter {
 
   /**
    * Parent window for a native dialog: `preferred`, else the focused window,
-   * else `requester` (the window that asked for the dialog), else the main
-   * window. macOS runs a parentless dialog app-modal without activating the
-   * app, so it can open unseen behind the active app or on another display
-   * while every RStudio window beeps at a click (#19728); a sheet stays on
-   * its window and blocks nothing else.
+   * else `requester` (the window that asked for the dialog) or the main
+   * window, whichever is on screen. macOS runs a parentless dialog app-modal
+   * without activating the app, so it can open unseen behind the active app
+   * or on another display while every RStudio window beeps at a click
+   * (#19728); a sheet stays on its window and blocks nothing else.
    */
   dialogParentWindow(preferred?: BrowserWindow | null, requester?: BrowserWindow | null): BrowserWindow | undefined {
     const window = preferred ?? BrowserWindow.getFocusedWindow();
@@ -1523,22 +1523,18 @@ export class GwtCallback extends EventEmitter {
       return window;
     }
 
-    for (const candidate of [requester, this.mainWindow.window]) {
-      if (!candidate || candidate.isDestroyed()) {
-        continue;
-      }
-
-      // AppKit may hold a sheet on a minimized or hidden window until the
-      // window comes back. A user brings it back; an automation run would
-      // hang on a dialog it can never reach, so it stays parentless there.
-      if (isAutomated() && (!candidate.isVisible() || candidate.isMinimized())) {
-        continue;
-      }
-
-      return candidate;
+    const candidates = [requester, this.mainWindow.window].filter(
+      (candidate): candidate is BrowserWindow => !!candidate && !candidate.isDestroyed(),
+    );
+    const onScreen = candidates.find((candidate) => candidate.isVisible() && !candidate.isMinimized());
+    if (onScreen) {
+      return onScreen;
     }
 
-    return undefined;
+    // AppKit may hold a sheet on a minimized or hidden window until the
+    // window comes back. A user brings it back; an automation run would
+    // hang on a dialog it can never reach, so it stays parentless there.
+    return isAutomated() ? undefined : candidates[0];
   }
 
   /**

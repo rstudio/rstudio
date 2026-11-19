@@ -382,6 +382,17 @@ describe('DesktopCallback', () => {
       );
     });
 
+    it('prefers a window on screen to an off-screen window that asked', () => {
+      const main = fakeBrowserWindow() as unknown as BrowserWindow;
+      mainWindow.window = main;
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(null);
+
+      for (const state of [{ minimized: true }, { visible: false }]) {
+        const requester = fakeBrowserWindow(state) as unknown as BrowserWindow;
+        assert.strictEqual(callback.dialogParentWindow(null, requester), main, JSON.stringify(state));
+      }
+    });
+
     // the sheet shows once the user brings the window back, while a parentless
     // dialog would block every window from wherever it opened
     it('parents on a minimized or hidden window outside automation mode', () => {
@@ -448,11 +459,63 @@ describe('DesktopCallback', () => {
         const handler = invokeHandlers.get('desktop_show_message_box');
         assert.isDefined(handler);
         const event = { sender } as unknown as IpcMainInvokeEvent;
-        const result = await handler!(event, 1, 'Update Available', 'A newer build is available.', 'Install|Later', 0, 1);
+        const result = await handler!(
+          event,
+          1,
+          'Update Available',
+          'A newer build is available.',
+          'Install|Later',
+          0,
+          1,
+        );
 
         assert.isTrue(showMessageBox.calledOnce);
         assert.strictEqual(showMessageBox.firstCall.args[0] as unknown, requester);
         assert.deepEqual(result, { response: 1, checkboxChecked: false });
+      } finally {
+        clearApplicationSingleton();
+      }
+    });
+  });
+
+  describe('file dialogs', () => {
+    it('attach to the window that asked when RStudio is not focused', async () => {
+      const dir = os.tmpdir();
+      const cases: { channel: string; args: unknown[]; show: 'showOpenDialog' | 'showSaveDialog' }[] = [
+        {
+          channel: 'desktop_get_open_file_name',
+          args: ['Open', 'Open', dir, '', false, false],
+          show: 'showOpenDialog',
+        },
+        {
+          channel: 'desktop_get_save_file_name',
+          args: ['Save', 'Save', dir, '', false, false],
+          show: 'showSaveDialog',
+        },
+        { channel: 'desktop_get_existing_directory', args: ['Choose', 'Choose', dir, false], show: 'showOpenDialog' },
+      ];
+
+      const requester = fakeBrowserWindow() as unknown as BrowserWindow;
+      mainWindow.window = fakeBrowserWindow() as unknown as BrowserWindow;
+      const sender = {};
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(null);
+      sinon.stub(BrowserWindow, 'fromWebContents').callsFake((contents) => (contents === sender ? requester : null));
+      const shows = {
+        showOpenDialog: sinon.stub(dialog, 'showOpenDialog').resolves({ canceled: true, filePaths: [] }),
+        showSaveDialog: sinon.stub(dialog, 'showSaveDialog').resolves({ canceled: true, filePath: '' }),
+      };
+
+      setApplication(new Application());
+      try {
+        for (const { channel, args, show } of cases) {
+          shows[show].resetHistory();
+          const handler = invokeHandlers.get(channel);
+          assert.isDefined(handler, channel);
+          await handler!({ sender } as unknown as IpcMainInvokeEvent, ...args);
+
+          assert.isTrue(shows[show].calledOnce, channel);
+          assert.strictEqual(shows[show].firstCall.args[0] as unknown, requester, channel);
+        }
       } finally {
         clearApplicationSingleton();
       }
