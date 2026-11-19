@@ -35,7 +35,7 @@ namespace rstudio {
 namespace r {
 namespace session {
 
-// singleton
+// consoleHistory() returns the session's history
 class ConsoleHistory;
 ConsoleHistory& consoleHistory();
    
@@ -46,12 +46,10 @@ public:
    typedef boost::circular_buffer<std::string>::const_iterator const_iterator;
    typedef RSTUDIO_BOOST_SIGNAL<void (const std::string&, bool)> AddSignal;
 
-private:
+   // the session's history is consoleHistory(); tests use their own instance
    ConsoleHistory();
-   friend ConsoleHistory& consoleHistory();
    // COPYING: boost::noncopyable
-      
-public:   
+
    void setCapacity(int capacity);
 
    void setCapacityFromRHistsize();
