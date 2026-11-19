@@ -220,17 +220,22 @@ function(fetch)
             # branch tip (#19714). Git is optional here, since a
             # FETCHCONTENT_SOURCE_DIR_<NAME> override skips the download.
             find_package(Git QUIET)
+
+            # ExternalProject downloads again whenever the download command
+            # changes, so pass the settings that don't change what's checked
+            # out through the environment instead.
+            set(ENV{RSTUDIO_FETCH_GIT_EXECUTABLE} "${GIT_EXECUTABLE}")
+            set(ENV{RSTUDIO_FETCH_RETRY_COUNT} "${CMAKE_EP_GIT_CLONE_RETRY_COUNT}")
+            set(ENV{RSTUDIO_FETCH_RETRY_DELAY} "${CMAKE_EP_GIT_CLONE_RETRY_DELAY}")
+            set(ENV{RSTUDIO_FETCH_TLS_VERSION} "${CMAKE_TLS_VERSION}")
+            set(ENV{RSTUDIO_FETCH_TLS_VERIFY} "${CMAKE_TLS_VERIFY}")
+
             FetchContent_Declare("${_NAME}"
                DOWNLOAD_COMMAND
                   "${CMAKE_COMMAND}"
-                  "-DGIT_EXECUTABLE=${GIT_EXECUTABLE}"
                   "-DREPOSITORY=${${_PREFIX}_REPOSITORY}"
                   "-DREVISION=${${_PREFIX}_REVISION}"
                   "-DSOURCE_DIR=<SOURCE_DIR>"
-                  "-DRETRY_COUNT=${CMAKE_EP_GIT_CLONE_RETRY_COUNT}"
-                  "-DRETRY_DELAY=${CMAKE_EP_GIT_CLONE_RETRY_DELAY}"
-                  "-DTLS_VERSION=${CMAKE_TLS_VERSION}"
-                  "-DTLS_VERIFY=${CMAKE_TLS_VERIFY}"
                   -P "${FETCH_GIT_REVISION_SCRIPT}"
                SOURCE_SUBDIR  "${_SOURCE_SUBDIR}"
                EXCLUDE_FROM_ALL)

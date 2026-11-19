@@ -29,7 +29,12 @@
 #         [-DTLS_VERSION=<version>] [-DTLS_VERIFY=<bool>]
 #         -P fetch-git-revision.cmake
 #
-# TLS_VERSION and TLS_VERIFY default to the CMAKE_TLS_VERSION and
+# Each optional setting not given with -D comes from the environment variable
+# RSTUDIO_FETCH_<SETTING> instead (e.g. RSTUDIO_FETCH_RETRY_COUNT). That keeps
+# these settings off the command line that ExternalProject compares, so that
+# changing them doesn't download every dependency again.
+#
+# TLS_VERSION and TLS_VERIFY then default to the CMAKE_TLS_VERSION and
 # CMAKE_TLS_VERIFY environment variables, and are applied to git the way
 # FetchContent applies them to its git clone.
 
@@ -38,6 +43,12 @@ cmake_minimum_required(VERSION 3.25)
 foreach(_VAR REPOSITORY REVISION SOURCE_DIR)
    if("${${_VAR}}" STREQUAL "")
       message(FATAL_ERROR "fetch-git-revision.cmake requires -D${_VAR}=<value>")
+   endif()
+endforeach()
+
+foreach(_VAR GIT_EXECUTABLE RETRY_COUNT RETRY_DELAY TLS_VERSION TLS_VERIFY)
+   if("${${_VAR}}" STREQUAL "")
+      set(${_VAR} "$ENV{RSTUDIO_FETCH_${_VAR}}")
    endif()
 endforeach()
 

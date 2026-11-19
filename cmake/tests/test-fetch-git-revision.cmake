@@ -91,6 +91,12 @@ foreach(VAR
    unset(ENV{${VAR}})
 endforeach()
 
+# Nor the fetch script's settings from the environment, which would take
+# the place of the defaults the tests rely on.
+foreach(VAR GIT_EXECUTABLE RETRY_COUNT RETRY_DELAY TLS_VERSION TLS_VERIFY)
+   unset(ENV{RSTUDIO_FETCH_${VAR}})
+endforeach()
+
 
 # Runs git in DIR, stores its output in OUT_VAR, and stops if it fails.
 function(run_git DIR OUT_VAR)
@@ -299,6 +305,13 @@ expect_marker("${SOURCE_DIR}" "pinned")
 
 fetch("${DEP_URL}" "${DEP_TIP}" "${SOURCE_DIR}" RESULT -DTLS_VERSION=1.4)
 expect_fetch_failed(RESULT "TLS_VERSION must be one of" "fetching with TLS_VERSION=1.4")
+expect_marker("${SOURCE_DIR}" "pinned")
+
+# A setting not given with -D comes from the environment.
+set(ENV{RSTUDIO_FETCH_RETRY_DELAY} OFF)
+fetch("${DEP_URL}" "${DEP_TIP}" "${SOURCE_DIR}" RESULT -DRETRY_DELAY=)
+unset(ENV{RSTUDIO_FETCH_RETRY_DELAY})
+expect_fetch_failed(RESULT "RETRY_DELAY must be a number" "fetching with RSTUDIO_FETCH_RETRY_DELAY=OFF")
 expect_marker("${SOURCE_DIR}" "pinned")
 
 
