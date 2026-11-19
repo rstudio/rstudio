@@ -412,11 +412,13 @@ public class AssistantPreferencesPane extends PreferencesPane
     */
    private void onNesMissingChanged()
    {
-      String selected = selAssistant_.getValue();
+      String shown = selAssistant_.getValue();
+      String selected = shown;
       List<String> labels = new ArrayList<>();
       List<String> values = new ArrayList<>();
       addAssistantChoices(labels, values);
-      selAssistant_.setChoices(labels.toArray(new String[0]), values.toArray(new String[0]));
+      selAssistant_.setChoices(labels.toArray(new String[0]),
+                               values.toArray(new String[0]));
 
       if (projectAssistantOverride_ != null)
       {
@@ -425,10 +427,19 @@ public class AssistantPreferencesPane extends PreferencesPane
          return;
       }
 
+      // (None) stood in for a stored Posit AI selection while it wasn't
+      // offered; show that selection again now that it is, so OK keeps it.
+      String storedAssistant = prefs_.assistant().getGlobalValue();
+      if (StringUtil.equals(selected, UserPrefsAccessor.ASSISTANT_NONE) &&
+          StringUtil.equals(storedAssistant, UserPrefsAccessor.ASSISTANT_POSIT))
+      {
+         selected = storedAssistant;
+      }
+
       // Before init() the panels aren't built yet; init() shows the selection.
       selAssistant_.setValue(assistant_.effectiveAssistantType(selected));
       if (assistantChangedHandler_ != null &&
-          !StringUtil.equals(selected, selAssistant_.getValue()))
+          !StringUtil.equals(shown, selAssistant_.getValue()))
       {
          assistantChangedHandler_.onChange(null);
       }
