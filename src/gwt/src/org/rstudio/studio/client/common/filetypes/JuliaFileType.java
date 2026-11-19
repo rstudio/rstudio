@@ -17,8 +17,10 @@ package org.rstudio.studio.client.common.filetypes;
 import java.util.HashSet;
 
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.gwt.resources.client.ImageResource;
 
@@ -74,7 +76,44 @@ public class JuliaFileType extends TextFileType
       juliaCommands.remove(commands.executeCurrentFunction());
       juliaCommands.remove(commands.executeCurrentSection());
 
+      // with no code to run, these come off along with the commands that
+      // run it, but they only edit comments
+      juliaCommands.add(commands.commentUncomment());
+      juliaCommands.add(commands.reflowComment());
+
       return juliaCommands;
+   }
+
+   // Julia code runs in the Console's Julia, which the administrator can
+   // turn off; Julia files can then only be edited
+   @Override
+   public boolean canSource()
+   {
+      return super.canSource() && isJuliaEnabled();
+   }
+
+   @Override
+   public boolean canExecuteCode()
+   {
+      return super.canExecuteCode() && isJuliaEnabled();
+   }
+
+   @Override
+   public boolean canExecuteAllCode()
+   {
+      return super.canExecuteAllCode() && isJuliaEnabled();
+   }
+
+   @Override
+   public boolean canExecuteToCurrentLine()
+   {
+      return super.canExecuteToCurrentLine() && isJuliaEnabled();
+   }
+
+   private static boolean isJuliaEnabled()
+   {
+      SessionInfo info = RStudioGinjector.INSTANCE.getSession().getSessionInfo();
+      return info != null && info.getJuliaEnabled();
    }
 
    // A Julia file is included without echo, and can't run as an R job, so

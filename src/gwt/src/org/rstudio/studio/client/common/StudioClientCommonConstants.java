@@ -178,6 +178,8 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     String withShinyAddinsUserAction();
     String withStylerCaption();
     String withStylerUserAction();
+    String juliaDisabledCaption();
+    String juliaDisabledMessage();
     String withDataImportCSVCaption();
     String withDataImportSAV();
     String withDataImportXLS();

@@ -104,6 +104,15 @@
    isTRUE(.rs.julia.state$active)
 })
 
+#' Is Julia Integration Enabled?
+#'
+#' Administrators turn Julia integration off with 'julia-enabled=0' in
+#' rsession.conf; the Console's Julia then won't start.
+.rs.addFunction("julia.isEnabled", function()
+{
+   .Call("rs_juliaEnabled", PACKAGE = "(embedding)")
+})
+
 #' Start a Julia REPL in the Console
 #'
 #' Julia input is read, evaluated and printed until 'exit' or 'quit' returns
@@ -399,6 +408,14 @@
 #' console's helpers (RStudio.jl) into it if they aren't loaded yet.
 .rs.addFunction("julia.start", function()
 {
+   if (!.rs.julia.isEnabled())
+   {
+      stop(
+         "Julia integration has been disabled by the administrator.",
+         call. = FALSE
+      )
+   }
+
    if (!requireNamespace("JuliaConnectoR", quietly = TRUE))
    {
       stop(

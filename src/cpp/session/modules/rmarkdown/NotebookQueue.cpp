@@ -32,6 +32,7 @@
 #include "NotebookWorkingDir.hpp"
 
 #include "../../SessionConsoleInput.hpp"
+#include "../SessionJulia.hpp"
 
 #include <r/RInterface.hpp>
 #include <r/ROptions.hpp>
@@ -69,13 +70,21 @@ enum ChunkExecState
    ChunkExecCancelled = 2
 };
 
+// Does the console's Julia run chunks with the julia engine? Not when an
+// administrator turned Julia off (julia-enabled): those chunks then run
+// through knitr's julia engine, like any other engine without a console
+bool isJuliaConsoleEngine(const std::string& engine)
+{
+   return engine == "julia" && modules::julia::isEnabled();
+}
+
 // The console language that runs a chunk with this (lowercase) engine; one
 // with no console of its own runs through R
 std::string consoleLanguage(const std::string& engine)
 {
    if (engine == "python")
       return "Python";
-   else if (engine == "julia")
+   else if (isJuliaConsoleEngine(engine))
       return "Julia";
    else
       return "R";
@@ -85,7 +94,7 @@ std::string consoleLanguage(const std::string& engine)
 // that RStudio calls?
 bool isConsoleEngine(const std::string& engine)
 {
-   return engine == "r" || engine == "python" || engine == "julia";
+   return engine == "r" || engine == "python" || isJuliaConsoleEngine(engine);
 }
 
 // A Julia string literal with the given contents
@@ -577,7 +586,7 @@ private:
                                   : "OSError";
             unit->replaceCode("raise " + exception + "('" + escaped + "')\n");
          }
-         else if (engine == "julia")
+         else if (isJuliaConsoleEngine(engine))
          {
             unit->replaceCode("error(" + juliaStringLiteral(codeFileMessage) + ")\n");
          }

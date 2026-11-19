@@ -1051,6 +1051,15 @@
             "isHidden": true
          }
       ],
+      "julia": [
+         {
+            "name": "julia-enabled",
+            "type": "bool",
+            "memberName": "juliaEnabled_",
+            "defaultValue": true,
+            "description": "Indicates whether or not Julia integration is enabled. When disabled, the Console can't switch to Julia, Julia scripts can't be run or sourced, and notebook Julia chunks run through knitr's Julia engine rather than the Console's Julia."
+         }
+      ],
       "trust": [
          {
             "name": "project-trust-dialogs",

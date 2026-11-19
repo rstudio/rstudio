@@ -29,6 +29,9 @@ namespace session {
 namespace modules {
 namespace julia {
 
+// has the administrator left Julia integration on (julia-enabled)?
+bool isEnabled();
+
 // is the console's Julia REPL (SessionJulia.R) reading input?
 bool isReplActive();
 

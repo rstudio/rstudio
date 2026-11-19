@@ -135,12 +135,15 @@ public class ConsoleInterpreterVersion
                });
             }));
 
-            menu.addItem(new MenuItem("Julia", () -> {
-               tracker_.adaptToLanguage(ConsoleLanguageTracker.LANGUAGE_JULIA, () -> {
-                  commands_.activateConsole().execute();
-               });
-            }));
-            
+            if (session_.getSessionInfo().getJuliaEnabled())
+            {
+               menu.addItem(new MenuItem("Julia", () -> {
+                  tracker_.adaptToLanguage(ConsoleLanguageTracker.LANGUAGE_JULIA, () -> {
+                     commands_.activateConsole().execute();
+                  });
+               }));
+            }
+
             logoContainer_.addStyleName(RES.styles().menuClicked());
             menu.addCloseHandler(new CloseHandler<PopupPanel>()
             {

@@ -440,10 +440,20 @@ public class DependencyManager implements InstallShinyEvent.Handler,
             });
    }
 
+   // Every way into the Console's Julia comes through here, so this is
+   // where Julia code is refused when the administrator turned Julia off
    public void withJuliaConnectoR(final String progressCaption,
                                   final String userPrompt,
                                   final Command command)
    {
+      if (!session_.getSessionInfo().getJuliaEnabled())
+      {
+         globalDisplay_.showErrorMessage(
+               constants_.juliaDisabledCaption(),
+               constants_.juliaDisabledMessage());
+         return;
+      }
+
       withDependencies(
             progressCaption,
             userPrompt,

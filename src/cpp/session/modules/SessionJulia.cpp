@@ -34,6 +34,7 @@
 #include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionOptions.hpp>
 
 #define R_NO_REMAP
 #include <Rinternals.h>
@@ -109,7 +110,17 @@ SEXP rs_juliaKill(SEXP pidSEXP)
    return R_NilValue;
 }
 
+SEXP rs_juliaEnabled()
+{
+   return Rf_ScalarLogical(isEnabled());
+}
+
 } // anonymous namespace
+
+bool isEnabled()
+{
+   return session::options().juliaEnabled();
+}
 
 bool isReplActive()
 {
@@ -128,6 +139,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_juliaReadConsole, 1);
    RS_REGISTER_CALL_METHOD(rs_juliaInterrupt, 1);
    RS_REGISTER_CALL_METHOD(rs_juliaKill, 1);
+   RS_REGISTER_CALL_METHOD(rs_juliaEnabled, 0);
 
    ExecBlock initBlock;
    initBlock.addFunctions()

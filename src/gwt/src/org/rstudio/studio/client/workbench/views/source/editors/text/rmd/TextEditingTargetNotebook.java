@@ -437,9 +437,11 @@ public class TextEditingTargetNotebook
       if (chunkOptions.containsKey("engine"))
       {
          String engine = chunkOptions.get("engine");
+         // (with Julia turned off by the administrator, a Julia chunk runs
+         // through knitr's julia engine, from R)
          if (engine.contains("python"))
             language = ConsoleLanguageTracker.LANGUAGE_PYTHON;
-         else if (engine.contains("julia"))
+         else if (engine.contains("julia") && session_.getSessionInfo().getJuliaEnabled())
             language = ConsoleLanguageTracker.LANGUAGE_JULIA;
       }
       

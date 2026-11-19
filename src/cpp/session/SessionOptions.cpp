@@ -154,6 +154,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    options_description user("user");
    options_description copilot("copilot");
    options_description pai("pai");
+   options_description julia("julia");
    options_description trust("trust");
    options_description misc("misc");
 
@@ -163,8 +164,8 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
 
    program_options::OptionsDescription optionsDesc =
          buildOptions(&automation, &tests, &script, &verify, &version, &program, &log, &docs, &www,
-                      &session, &allow, &r, &limits, &external, &git, &user, &copilot, &pai, &trust,
-                      &misc, &saveActionDefault, &sameSite, &sessionPortRange);
+                      &session, &allow, &r, &limits, &external, &git, &user, &copilot, &pai, &julia,
+                      &trust, &misc, &saveActionDefault, &sameSite, &sessionPortRange);
 
    addOverlayOptions(&misc);
 
@@ -186,6 +187,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    optionsDesc.commandLine.add(user);
    optionsDesc.commandLine.add(pai);
    optionsDesc.commandLine.add(copilot);
+   optionsDesc.commandLine.add(julia);
    optionsDesc.commandLine.add(trust);
    optionsDesc.commandLine.add(misc);
 
@@ -203,6 +205,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    optionsDesc.configFile.add(user);
    optionsDesc.configFile.add(pai);
    optionsDesc.configFile.add(copilot);
+   optionsDesc.configFile.add(julia);
    optionsDesc.configFile.add(trust);
    optionsDesc.configFile.add(misc);
 

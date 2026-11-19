@@ -244,6 +244,7 @@ public class ConsoleLanguageTracker
    public void onSessionInit(SessionInitEvent event)
    {
       setLanguage(session_.getSessionInfo().getConsoleLanguage());
+      commands_.consoleActivateJulia().setVisible(session_.getSessionInfo().getJuliaEnabled());
    }
 
    @Override

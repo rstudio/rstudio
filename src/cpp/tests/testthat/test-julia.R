@@ -52,6 +52,21 @@ test_that("bytes that aren't UTF-8 aren't held back", {
    expect_identical(.rs.julia.completeUtf8Length(bytes), length(bytes))
 })
 
+test_that("Julia won't start when an administrator turns it off", {
+   # julia-enabled defaults to on
+   expect_true(.rs.julia.isEnabled())
+
+   # testthat can't mock bindings in the locked tools:rstudio environment
+   rsEnv <- as.environment("tools:rstudio")
+   original <- get(".rs.julia.isEnabled", envir = rsEnv)
+   on.exit(assign(".rs.julia.isEnabled", original, envir = rsEnv), add = TRUE)
+   assign(".rs.julia.isEnabled", function() FALSE, envir = rsEnv)
+
+   expect_error(.rs.julia.start(), "disabled by the administrator")
+   expect_error(.rs.julia.repl(quiet = TRUE), "disabled by the administrator")
+   expect_false(.rs.julia.replIsActive())
+})
+
 test_that("the help handler only answers completion help", {
    expect_identical(.rs.julia.helpHandler("url", "println", "Main"), "")
    expect_null(.rs.julia.helpHandler("parameter", NULL, "Main"))

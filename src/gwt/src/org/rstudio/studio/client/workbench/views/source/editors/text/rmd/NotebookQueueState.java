@@ -584,7 +584,12 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
    {
       boolean requiresPython = false;
       boolean requiresJulia = false;
-      
+
+      // with Julia turned off by the administrator, Julia chunks run through
+      // knitr's julia engine (NotebookQueue.cpp), which needs no JuliaConnectoR
+      boolean juliaEnabled =
+            RStudioGinjector.INSTANCE.getSession().getSessionInfo().getJuliaEnabled();
+
       for (NotebookQueueUnit unit : JsUtil.asIterable(queue_.getUnits()))
       {
          String code = unit.getCode();
@@ -602,7 +607,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
          
          String engine = chunkOptions.get("engine");
          requiresPython = requiresPython || isEngine(engine, "python");
-         requiresJulia = requiresJulia || isEngine(engine, "julia");
+         requiresJulia = requiresJulia || (juliaEnabled && isEngine(engine, "julia"));
          
          // break early if we can
          if (requiresPython && requiresJulia)
