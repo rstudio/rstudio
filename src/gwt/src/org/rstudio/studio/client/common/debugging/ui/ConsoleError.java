@@ -180,7 +180,6 @@ public class ConsoleError extends Composite
       return container.isOrHasChild(showTracebackText.getElement());
    }
 
-
    /**
     * Shows, as a tooltip on the error's buttons, the shortcut that brings focus
     * back to the most recent error. Browsers also expose the tooltip to screen
