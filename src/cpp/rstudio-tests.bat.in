@@ -17,6 +17,7 @@ REM that :has_scope matches against.
 set "TEST_SCOPE_ARGS="
 set "TEST_SCOPES="
 set "TEST_FILTER="
+set "WWW_PORT="
 set "TEST_FAILURE=0"
 
 REM --- parse arguments -------------------------------------------------------
@@ -43,6 +44,14 @@ if /I "%~1" == "--scope" (
 if /I "%~1" == "--filter" (
     if "%~2" == "" goto :missing_value
     set "TEST_FILTER=%~2"
+    shift
+    shift
+    goto :parse
+)
+
+if /I "%~1" == "--www-port" (
+    if "%~2" == "" goto :missing_value
+    set "WWW_PORT=%~2"
     shift
     shift
     goto :parse
@@ -147,7 +156,7 @@ goto :eof
 call :setup_session_test_environment
 if errorlevel 1 goto :eof
 echo Running 'rsession' tests...
-"@CMAKE_CURRENT_BINARY_DIR@/session/rsession.exe" --run-tests --config-file="!SESSION_CONF!"
+"@CMAKE_CURRENT_BINARY_DIR@/session/rsession.exe" --run-tests --config-file="!SESSION_CONF!" --www-port=!SESSION_WWW_PORT!
 call :record "rsession" !ERRORLEVEL!
 goto :eof
 
@@ -176,7 +185,7 @@ REM rsession copies --run-script verbatim into the R console (RScriptCallbacks.c
 REM The bare quoted form delivers source('...'); runTests() to R; this differs from
 REM the Unix runner's extra \"...\" escaping, which exists only to survive the
 REM watchdog's second 'bash -c' eval that Windows does not have.
-"@CMAKE_CURRENT_BINARY_DIR@/session/rsession.exe" --run-script "source('@CMAKE_CURRENT_SOURCE_DIR@/tests/testthat/run-tests.R'); runTests()" --config-file="!SESSION_CONF!"
+"@CMAKE_CURRENT_BINARY_DIR@/session/rsession.exe" --run-script "source('@CMAKE_CURRENT_SOURCE_DIR@/tests/testthat/run-tests.R'); runTests()" --config-file="!SESSION_CONF!" --www-port=!SESSION_WWW_PORT!
 call :record "r" !ERRORLEVEL!
 
 REM a non-zero count, a missing file, or empty contents all count as failure
@@ -219,6 +228,18 @@ REM Prevent startup from migrating the user's legacy RStudio state here.
 mkdir "!RSTUDIO_DATA_HOME!\client-state" 2>nul && mkdir "!RSTUDIO_CONFIG_HOME!" 2>nul
 if errorlevel 1 (
     echo DIAGNOSTICS: failed to initialize temp dir !RSTUDIO_TEST_TMP! 1>&2
+    set "TEST_FAILURE=1"
+    exit /b 1
+)
+
+REM Desktop mode listens on TCP www-port (8787 unless set), which a dev server
+REM or another test run may already hold, so take a port the OS reports free.
+set "SESSION_WWW_PORT=!WWW_PORT!"
+if not defined SESSION_WWW_PORT (
+    for /f %%P in ('powershell.exe -NoProfile -NonInteractive -Command "$l = New-Object Net.Sockets.TcpListener([Net.IPAddress]::Loopback, 0); $l.Start(); $l.LocalEndpoint.Port; $l.Stop()"') do set "SESSION_WWW_PORT=%%P"
+)
+if not defined SESSION_WWW_PORT (
+    echo DIAGNOSTICS: failed to find a free port for the session tests 1>&2
     set "TEST_FAILURE=1"
     exit /b 1
 )
@@ -268,7 +289,7 @@ goto :usage_err
 :print_usage
 echo Run RStudio unit tests. Available options:
 echo.
-echo   rstudio-tests.bat [--scope ^<scopes^>] [--filter ^<pattern^>]
+echo   rstudio-tests.bat [--scope ^<scopes^>] [--filter ^<pattern^>] [--www-port ^<port^>]
 echo.
 echo   --scope   Run only the given scopes: core, rserver, rsession, r.
 echo             Takes more than one scope and may be repeated, so
@@ -276,6 +297,8 @@ echo             '--scope core,rsession', '--scope core rsession', and
 echo             '--scope core --scope rsession' are all equivalent.
 echo             Scopes always run in the order listed above.
 echo   --filter  Run a subset of R tests matching the pattern ^(implies --scope r^).
+echo   --www-port Port for the rsession and r scopes' session to listen on
+echo             ^(default: a free port, chosen for each scope^).
 echo   --help    Show this help.
 echo.
 echo With no options, all scopes are run.
