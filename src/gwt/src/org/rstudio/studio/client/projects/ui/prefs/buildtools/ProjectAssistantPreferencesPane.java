@@ -82,10 +82,13 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
 
       RestartRequirement requirement = new RestartRequirement();
 
-      // Check if assistant changed
+      // Check if assistant changed. Compare the assistant that ran, so saving
+      // (None) over a Posit AI setting that already ran as (None) needs no
+      // restart.
       String originalAssistant = options_.getAssistantOptions().assistant;
       if (originalAssistant == null)
          originalAssistant = "default";
+      originalAssistant = assistant_.effectiveAssistantType(originalAssistant);
       if (!originalAssistant.equals(assistantOptions.assistant))
          requirement.setSessionRestartRequired(true);
 
@@ -627,7 +630,12 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       if (projectAssistant == null || projectAssistant.isEmpty())
          selAssistant_.setValue(ASSISTANT_DEFAULT);
       else
-         setPreservingValue(selAssistant_, projectAssistant, assistantLabel(projectAssistant));
+      {
+         // A Posit AI setting that isn't offered shows as the (None) it runs
+         // as, and is saved as (None) only if the user clicks OK.
+         String shownAssistant = assistant_.effectiveAssistantType(projectAssistant);
+         setPreservingValue(selAssistant_, shownAssistant, assistantLabel(shownAssistant));
+      }
 
       // Load chat provider selection from project options
       String projectChatProvider = options.getAssistantOptions().chat_provider;
