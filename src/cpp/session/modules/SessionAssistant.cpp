@@ -515,11 +515,13 @@ FilePath paiLanguageServerPath()
 
 // Refresh s_positNesMissing, telling the client when it changes. An
 // RSTUDIO_AGENT_PATH override supplies its own language server, so NES is
-// never missing while one is in effect.
+// never missing while one is in effect -- but startAgent() ignores the
+// override when a Posit Assistant helper is configured.
 void refreshPositNesMissing()
 {
    std::string agentPathOverride = core::system::getenv("RSTUDIO_AGENT_PATH");
    bool overrideInEffect =
+      session::options().positAssistantHelper().isEmpty() &&
       !agentPathOverride.empty() && FilePath::exists(agentPathOverride);
 
    FilePath installPath = chat::installation::locatePositAssistantInstallation();
