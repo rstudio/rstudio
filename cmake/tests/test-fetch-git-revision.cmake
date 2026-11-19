@@ -22,8 +22,8 @@
 #   cmake [-DWORK_DIR=<dir>] -P cmake/tests/test-fetch-git-revision.cmake
 #
 # The test works in a new test-fetch-git-revision-<random> folder inside
-# WORK_DIR (by default, the current directory), and removes it when every
-# test passes.
+# WORK_DIR (by default, the system's temporary directory), and removes it
+# when every test passes.
 
 cmake_minimum_required(VERSION 3.25)
 
@@ -34,8 +34,18 @@ get_filename_component(
 
 find_program(GIT_EXECUTABLE git REQUIRED)
 
+# Not the current directory: a failed run leaves its repositories behind,
+# which inside a checkout git would pick up as embedded repositories.
 if("${WORK_DIR}" STREQUAL "")
-   set(WORK_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+   foreach(VAR TMPDIR TEMP TMP)
+      if(NOT "$ENV{${VAR}}" STREQUAL "")
+         file(TO_CMAKE_PATH "$ENV{${VAR}}" WORK_DIR)
+         break()
+      endif()
+   endforeach()
+endif()
+if("${WORK_DIR}" STREQUAL "")
+   set(WORK_DIR "/tmp")
 endif()
 get_filename_component(
    WORK_DIR
@@ -48,6 +58,7 @@ if(EXISTS "${TEST_DIR}")
    message(FATAL_ERROR "${TEST_DIR} already exists")
 endif()
 file(MAKE_DIRECTORY "${TEST_DIR}")
+message(STATUS "Testing in ${TEST_DIR}")
 
 # Keep the user's git config (commit signing, hooks, protocol version) out of
 # the test, including on versions of git that predate GIT_CONFIG_GLOBAL.
