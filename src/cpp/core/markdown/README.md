@@ -95,7 +95,7 @@ Build one executable with `RSTUDIO_USE_CMARK_GFM=OFF` and one with it `ON` in
 separate build directories, then run, for example:
 
 ```sh
-src/cpp/tools/compare-markdown \
+src/cpp/core/markdown/compare-markdown \
   build-sundown/core/rstudio-markdown \
   build-cmark/core/rstudio-markdown \
   --output build-cmark/comparison \

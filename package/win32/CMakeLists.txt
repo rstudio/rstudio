@@ -256,6 +256,9 @@ if(NOT EXISTS "${NSIS_MULTIUSER_DIR}/Include/NsisMultiUser.nsh")
    message(FATAL_ERROR "NsisMultiUser not found at ${NSIS_MULTIUSER_DIR}. Run dependencies/windows/install-dependencies.cmd to install it.")
 endif()
 
+# signing scripts the installer template runs for daily and release builds
+set(CPACK_RSTUDIO_SCRIPTS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/scripts")
+
 # build installer
 include(CPack)
 
