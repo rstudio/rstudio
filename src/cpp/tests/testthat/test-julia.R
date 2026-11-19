@@ -179,18 +179,53 @@ test_that("display() shows text in the console, as values are", {
    expect_identical(output, c('"rstudio"', "42"))
 })
 
+# Write a PNG of `colors`, a matrix of R colors, one pixel each: drawn at its
+# own size, and uninterpolated, it keeps them.
+writeTestPng <- function(colors, path)
+{
+   png(path, width = ncol(colors), height = nrow(colors), type = "cairo", bg = "transparent")
+   grid::grid.raster(as.raster(colors), interpolate = FALSE)
+   dev.off()
+}
+
+# Make the PNG at `path` the image the Julia global `name` shows.
+defineTestImage <- function(name, path)
+{
+   # an identical redefinition is allowed
+   JuliaConnectoR::juliaEval('
+      struct RStudioTestImage
+         png::Vector{UInt8}
+      end
+      Base.show(io::IO, ::MIME"image/png", x::RStudioTestImage) = write(io, x.png)
+   ')
+   JuliaConnectoR::juliaLet(sprintf("global %s = RStudioTestImage(read(path)); nothing", name), path = path)
+}
+
+# The grobs on the current page, named by kind ("rect", "rastergrob").
+pageGrobs <- function()
+{
+   grobs <- lapply(grid::grid.ls(print = FALSE)$name, grid::grid.get)
+   names(grobs) <- vapply(grobs, function(grob) class(grob)[[1L]], character(1L))
+   grobs
+}
+
+# A 4 x 5 matrix of colors: `border` along the edge (recycled), `middle` inside.
+framedColors <- function(border, middle)
+{
+   colors <- matrix(middle, nrow = 4L, ncol = 5L)
+   edge <- row(colors) %in% c(1L, 4L) | col(colors) %in% c(1L, 5L)
+   colors[edge] <- rep_len(border, sum(edge))
+   colors
+}
+
 test_that("a value that renders as an image is drawn on R's graphics device", {
    skipUnlessJulia()
    skip_if_not(capabilities("cairo"), "R can't write PNGs with cairo")
 
-   # a PNG with a known color in each pixel: drawn at its own size, and
-   # uninterpolated, it keeps them
    colors <- matrix(c("red", "#00FF00", "blue", "white", "black", "#808080"), nrow = 2L, byrow = TRUE)
    path <- tempfile(fileext = ".png")
    on.exit(unlink(path), add = TRUE)
-   png(path, width = 3L, height = 2L, type = "cairo")
-   grid::grid.raster(as.raster(colors), interpolate = FALSE)
-   dev.off()
+   writeTestPng(colors, path)
 
    # nativeRaster's packing: red in the lowest byte, row by row from the top
    rgba <- col2rgb(t(colors), alpha = TRUE)
@@ -199,35 +234,74 @@ test_that("a value that renders as an image is drawn on R's graphics device", {
 
    on.exit(.rs.julia.stop(), add = TRUE)
    .rs.julia.start()
-   JuliaConnectoR::juliaLet("global rstudio_test_png = read(path); nothing", path = path)
-   JuliaConnectoR::juliaEval('
-      struct RStudioTestImage end
-      Base.show(io::IO, ::MIME"image/png", ::RStudioTestImage) = write(io, rstudio_test_png)
-   ')
+   defineTestImage("rstudio_test_image", path)
 
    pdf(NULL)
    on.exit(dev.off(), add = TRUE)
 
    # shown, nothing printed
-   output <- capture.output(.rs.julia.evaluate("RStudioTestImage()"))
+   output <- capture.output(.rs.julia.evaluate("rstudio_test_image"))
    expect_identical(output, character())
 
-   grobs <- grid::grid.ls(print = FALSE)$name
-   expect_length(grobs, 1L)
-   raster <- grid::grid.get(grobs[[1L]])$raster
-   expect_s3_class(raster, "nativeRaster")
-   expect_identical(dim(raster), c(2L, 3L))
-   expect_identical(as.integer(raster), expected)
+   shown <- pageGrobs()$rastergrob
+   expect_s3_class(shown$raster, "nativeRaster")
+   expect_identical(dim(shown$raster), c(2L, 3L))
+   expect_identical(as.integer(shown$raster), expected)
 
    # as is one passed to display(), on a page of its own; one that a
    # semicolon hides isn't
-   .rs.julia.evaluate("display(RStudioTestImage())")
-   displayed <- grid::grid.ls(print = FALSE)$name
-   expect_length(displayed, 1L)
-   expect_false(identical(displayed, grobs))
+   .rs.julia.evaluate("display(rstudio_test_image)")
+   displayed <- pageGrobs()$rastergrob
+   expect_false(identical(displayed$name, shown$name))
 
-   .rs.julia.evaluate("RStudioTestImage();")
-   expect_identical(grid::grid.ls(print = FALSE)$name, displayed)
+   .rs.julia.evaluate("rstudio_test_image;")
+   expect_identical(pageGrobs()$rastergrob$name, displayed$name)
+})
+
+test_that("the space around an image is filled as its border suggests", {
+   skipUnlessJulia()
+   skip_if_not(capabilities("cairo"), "R can't write PNGs with cairo")
+
+   images <- list(
+      # one color: that color
+      rstudio_test_navy  = framedColors("navy", "yellow"),
+      # mixed: black or white, by the border's lightness
+      rstudio_test_dark  = framedColors(c("black", "#303030"), "white"),
+      rstudio_test_light = framedColors(c("white", "#D0D0D0"), "black"),
+      # transparent: left alone
+      rstudio_test_clear = framedColors("transparent", "red")
+   )
+
+   on.exit(.rs.julia.stop(), add = TRUE)
+   .rs.julia.start()
+   for (name in names(images))
+   {
+      path <- tempfile(fileext = ".png")
+      on.exit(unlink(path), add = TRUE)
+      writeTestPng(images[[name]], path)
+      defineTestImage(name, path)
+   }
+
+   pdf(NULL)
+   on.exit(dev.off(), add = TRUE)
+
+   .rs.julia.evaluate("rstudio_test_navy")
+   expect_identical(pageGrobs()$rect$gp$fill, "#000080")
+   .rs.julia.evaluate("rstudio_test_dark")
+   expect_identical(pageGrobs()$rect$gp$fill, "#000000")
+   .rs.julia.evaluate("rstudio_test_light")
+   expect_identical(pageGrobs()$rect$gp$fill, "#ffffff")
+   .rs.julia.evaluate("rstudio_test_clear")
+   expect_null(pageGrobs()$rect)
+
+   # or as the user says
+   .rs.julia.evaluate('RStudio.plot_background[] = "red";')
+   .rs.julia.evaluate("rstudio_test_navy")
+   expect_identical(pageGrobs()$rect$gp$fill, "red")
+
+   .rs.julia.evaluate("RStudio.plot_background[] = nothing;")
+   .rs.julia.evaluate("rstudio_test_navy")
+   expect_null(pageGrobs()$rect)
 })
 
 test_that("only the console starts Julia with serve.jl", {

@@ -1055,7 +1055,10 @@
 #'   them: packed RGBA integers, row by row from the top.
 #' @param width The image's width, in pixels.
 #' @param height The image's height, in pixels.
-.rs.addFunction("julia.showPlot", function(path, width, height)
+#' @param background The color to fill the space around the image with, where
+#'   its shape doesn't match the device's; "" leaves the device's background
+#'   (see plot_background in RStudio.jl).
+.rs.addFunction("julia.showPlot", function(path, width, height, background = "")
 {
    width <- as.integer(width)
    height <- as.integer(height)
@@ -1068,8 +1071,11 @@
       channels = 4L
    )
 
-   # as large as the device allows, keeping its aspect ratio
    grid::grid.newpage()
+   if (nzchar(background))
+      grid::grid.rect(gp = grid::gpar(fill = background, col = NA))
+
+   # as large as the device allows, keeping its aspect ratio
    grid::grid.raster(image, interpolate = TRUE)
 
    invisible(NULL)

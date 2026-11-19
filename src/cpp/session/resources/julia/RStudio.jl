@@ -39,6 +39,20 @@ const plot_callback = Ref{Any}(nothing)
 # width and colors (see `evaluate`).
 const value_io = Ref{Union{IO, Nothing}}(nothing)
 
+"""
+    RStudio.plot_background[]
+
+What the Plots pane fills the space around an image with, where the image's
+shape doesn't match the pane's:
+
+- `:auto` (the default): the image's border color, when the border is one
+  color, as a plot's background is; otherwise black or white, whichever is
+  nearer the border's average lightness. A transparent border is left alone.
+- `nothing`: the pane's own background.
+- a color R understands, such as `"black"` or `"#1e1e1e"`.
+"""
+const plot_background = Ref{Any}(:auto)
+
 # How long to wait for an interrupt R sent that hasn't landed yet, in seconds.
 const INTERRUPT_GRACE = 0.25
 
@@ -404,6 +418,7 @@ function Base.display(d::ConsoleDisplay, mime::MIME"image/png", @nospecialize(x)
    buffer = IOBuffer()
    show(buffer, mime, x)
    pixels, width, height = decode_png(take!(buffer))
+   background = background_color(plot_background[], pixels, width, height)
 
    path = tempname()
    try
@@ -413,12 +428,75 @@ function Base.display(d::ConsoleDisplay, mime::MIME"image/png", @nospecialize(x)
       # that wait would leave the reply unread, breaking the connection; so
       # one waits until the reply is in, and interrupts the evaluation then
       Base.disable_sigint() do
-         Base.invokelatest(callback, path, width, height)
+         Base.invokelatest(callback, path, width, height, background)
       end
    finally
       rm(path; force = true)
    end
    return nothing
+end
+
+# The color to fill around an image with, for R: "" for none. See
+# `plot_background`.
+function background_color(setting, pixels::Vector{Int32}, width::Int, height::Int)
+   if setting === :auto
+      return something(border_color(pixels, width, height), "")
+   elseif setting === nothing
+      return ""
+   elseif setting isa AbstractString
+      return String(setting)
+   else
+      throw(ArgumentError("RStudio.plot_background[] must be :auto, nothing, or a color name or hex string"))
+   end
+end
+
+# A packed nativeRaster pixel's red, green, blue and alpha.
+function unpack_rgba(pixel::Int32)
+   p = reinterpret(UInt32, pixel)
+   return (Int(p & 0xff), Int((p >> 8) & 0xff), Int((p >> 16) & 0xff), Int(p >> 24))
+end
+
+# How far a sample may stray from the border's most common color and still
+# count as that color: antialiasing, dithering, a stray mark.
+const BORDER_TOLERANCE = 8
+
+# The share of the border that must be one color for that to be the image's
+# background; a plot's frame or a legend may touch the edge.
+const BORDER_UNIFORM_SHARE = 0.9
+
+# The color around an image, as "#rrggbb", from its border pixels; nothing
+# for a border that's mostly transparent, where the pane's own background
+# already shows through.
+function border_color(pixels::Vector{Int32}, width::Int, height::Int)
+   border = Int32[]
+   for x in 1:width
+      push!(border, pixels[x], pixels[(height - 1) * width + x])
+   end
+   for y in 2:height - 1
+      push!(border, pixels[(y - 1) * width + 1], pixels[y * width])
+   end
+
+   opaque = [unpack_rgba(p)[1:3] for p in border if unpack_rgba(p)[4] >= 0xf8]
+   if 2 * length(opaque) < length(border)
+      return nothing
+   end
+
+   counts = Dict{NTuple{3, Int}, Int}()
+   for rgb in opaque
+      counts[rgb] = get(counts, rgb, 0) + 1
+   end
+   _, common = findmax(counts)
+
+   near = count(rgb -> maximum(abs.(rgb .- common)) <= BORDER_TOLERANCE, opaque)
+   rgb = if near >= BORDER_UNIFORM_SHARE * length(opaque)
+      common
+   else
+      # sRGB luma, against the midpoint
+      lightness = sum(((r, g, b),) -> 0.2126r + 0.7152g + 0.0722b, opaque) / length(opaque)
+      lightness < 128 ? (0, 0, 0) : (255, 255, 255)
+   end
+
+   return "#" * join(string.(rgb; base = 16, pad = 2))
 end
 
 # Put the console's display on top of Julia's display stack. Julia's own
