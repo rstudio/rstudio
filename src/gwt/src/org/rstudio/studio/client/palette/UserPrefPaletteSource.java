@@ -137,8 +137,12 @@ public class UserPrefPaletteSource implements CommandPaletteEntryProvider
       Set<String> excluded = new HashSet<>();
       if (id.equals(UserPrefsAccessor.ASSISTANT))
       {
-         if (!sessionInfo_.getPositAssistantEnabled())
+         // Posit AI also isn't offered when its installation lacks NES
+         if (!sessionInfo_.getPositAssistantEnabled() ||
+             sessionInfo_.getAssistantNesMissing())
+         {
             excluded.add(UserPrefsAccessor.ASSISTANT_POSIT);
+         }
          if (!sessionInfo_.getCopilotEnabled())
             excluded.add(UserPrefsAccessor.ASSISTANT_COPILOT);
       }

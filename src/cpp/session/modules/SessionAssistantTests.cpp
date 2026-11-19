@@ -24,6 +24,7 @@
 #include <core/system/Process.hpp>
 
 #include <session/SessionSourceDatabase.hpp>
+#include <session/prefs/UserPrefValues.hpp>
 
 #include "SessionLSP.hpp"
 
@@ -39,6 +40,8 @@ using modules::assistant::focusDocumentForTesting;
 using modules::assistant::agentRequestTimeout;
 using modules::assistant::agentStderrTail;
 using modules::assistant::agentStdoutErrorSummary;
+using modules::assistant::effectiveAssistantType;
+using modules::assistant::isNesMissing;
 using modules::assistant::nesLanguageServerPath;
 using modules::assistant::queueAgentNotificationForTesting;
 using modules::assistant::queueAgentReplyForTesting;
@@ -470,6 +473,49 @@ TEST(SessionAssistant, NesLanguageServerPathPrefersCjsScript)
              installDir.completeChildPath("dist/nes/language-server.cjs").getAbsolutePath());
 
    installDir.removeIfExists();
+}
+
+TEST(SessionAssistant, NesNotMissingWhenNoInstallationLocated)
+{
+   // With nothing installed yet, an install may still bring NES, so Posit AI
+   // stays selectable.
+   EXPECT_FALSE(isNesMissing(FilePath()));
+}
+
+TEST(SessionAssistant, NesMissingWhenInstallationHasNoNesScript)
+{
+   FilePath installDir;
+   FilePath::tempFilePath(installDir);
+   installDir.ensureDirectory();
+
+   EXPECT_TRUE(isNesMissing(installDir));
+
+   installDir.removeIfExists();
+}
+
+TEST(SessionAssistant, NesNotMissingWhenInstallationHasNesScript)
+{
+   FilePath installDir = createNesInstallation("language-server.cjs");
+
+   EXPECT_FALSE(isNesMissing(installDir));
+
+   installDir.removeIfExists();
+}
+
+TEST(SessionAssistant, EffectiveAssistantTypeIsNoneForPositWithoutNes)
+{
+   EXPECT_EQ(effectiveAssistantType(kAssistantPosit, true), kAssistantNone);
+}
+
+TEST(SessionAssistant, EffectiveAssistantTypeKeepsPositWithNes)
+{
+   EXPECT_EQ(effectiveAssistantType(kAssistantPosit, false), kAssistantPosit);
+}
+
+TEST(SessionAssistant, EffectiveAssistantTypeKeepsOtherAssistantsWithoutNes)
+{
+   EXPECT_EQ(effectiveAssistantType(kAssistantCopilot, true), kAssistantCopilot);
+   EXPECT_EQ(effectiveAssistantType(kAssistantNone, true), kAssistantNone);
 }
 
 TEST(SessionAssistant, ServicedClockCountsShortGaps)

@@ -277,6 +277,11 @@ bool s_isSessionShuttingDown = false;
 // Project-specific assistant options.
 projects::RProjectAssistantOptions s_assistantProjectOptions;
 
+// Whether the Posit Assistant installation lacks NES, as of the last
+// synchronize(). Cached so the session and the client agree on it between
+// installs, and so resolving the assistant type stays off the filesystem.
+bool s_positNesMissing = false;
+
 // A queue of pending files to be indexed.
 std::vector<FileInfo> s_indexQueue;
 std::size_t s_indexBatchSize = 200;
@@ -508,6 +513,32 @@ FilePath paiLanguageServerPath()
    return FilePath();
 }
 
+// Refresh s_positNesMissing, telling the client when it changes. An
+// RSTUDIO_AGENT_PATH override supplies its own language server, so NES is
+// never missing while one is in effect.
+void refreshPositNesMissing()
+{
+   std::string agentPathOverride = core::system::getenv("RSTUDIO_AGENT_PATH");
+   bool overrideInEffect =
+      !agentPathOverride.empty() && FilePath::exists(agentPathOverride);
+
+   FilePath installPath = chat::installation::locatePositAssistantInstallation();
+   bool nesMissing = !overrideInEffect && isNesMissing(installPath);
+   if (nesMissing == s_positNesMissing)
+      return;
+
+   s_positNesMissing = nesMissing;
+   if (nesMissing)
+      DLOG("Posit Assistant installation '{}' doesn't include NES; "
+           "treating a Posit AI assistant selection as (None).",
+           installPath.getAbsolutePath());
+
+   json::Object dataJson;
+   dataJson["nes_missing"] = nesMissing;
+   ClientEvent event(client_events::kAssistantNesMissingChanged, dataJson);
+   module_context::enqueClientEvent(event);
+}
+
 FilePath copilotLanguageServerPath()
 {
    FilePath copilotPath;
@@ -559,12 +590,14 @@ std::string getConfiguredAssistantType(const std::string& assistantType = "")
       return assistantType;
 
    // Check for project-level override
-   std::string projectAssistant = s_assistantProjectOptions.assistant;
-   if (!projectAssistant.empty() && projectAssistant != "default")
-      return projectAssistant;
+   std::string selectedAssistant = s_assistantProjectOptions.assistant;
+   if (selectedAssistant.empty() || selectedAssistant == "default")
+   {
+      // Fall back to global preference
+      selectedAssistant = prefs::userPrefs().assistant();
+   }
 
-   // Fall back to global preference
-   return prefs::userPrefs().assistant();
+   return effectiveAssistantType(selectedAssistant, s_positNesMissing);
 }
 
 FilePath assistantLanguageServerPath(const std::string& assistantType)
@@ -2247,6 +2280,7 @@ void synchronize()
       return;
 
    // Update cached enabled state.
+   refreshPositNesMissing();
    s_assistantEnabled = isAssistantEnabled();
 
    // Start or stop the agent as appropriate.
@@ -3199,6 +3233,25 @@ FilePath nesLanguageServerPath(const FilePath& installPath)
    }
 
    return FilePath();
+}
+
+bool isNesMissing(const FilePath& installPath)
+{
+   return !installPath.isEmpty() && nesLanguageServerPath(installPath).isEmpty();
+}
+
+std::string effectiveAssistantType(const std::string& selectedAssistant,
+                                   bool nesMissing)
+{
+   if (selectedAssistant == kAssistantPosit && nesMissing)
+      return kAssistantNone;
+
+   return selectedAssistant;
+}
+
+bool isPositAssistantNesMissing()
+{
+   return s_positNesMissing;
 }
 
 ServicedClock::ServicedClock(std::chrono::steady_clock::duration maxGap)

@@ -32,6 +32,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantConstants;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantEvent;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantEvent.AssistantEventType;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantNesMissingChangedEvent;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantRuntimeStatusChangedEvent;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantDiagnosticsResponse;
@@ -86,6 +87,16 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
          handlers_.fireEvent(event);
       });
 
+      // Record the change before notifying listeners, so they see it through
+      // effectiveAssistantType().
+      events_.addHandler(AssistantNesMissingChangedEvent.TYPE, (event) ->
+      {
+         session_.getSessionInfo().setAssistantNesMissing(event.isNesMissing());
+         handlers_.fireEvent(event);
+         if (!isEnabled())
+            events_.fireEvent(new AssistantEvent(AssistantEventType.ASSISTANT_DISABLED));
+      });
+
       session_.withSessionInfo(info ->
       {
          assistantProjectOptions_ = info.getAssistantProjectOptions();
@@ -121,12 +132,38 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
          String projectAssistant = assistantProjectOptions_.assistant;
          if (projectAssistant != null && !projectAssistant.isEmpty() && !projectAssistant.equals("default"))
          {
-            return projectAssistant;
+            return effectiveAssistantType(projectAssistant);
          }
       }
 
       // Fall back to global preference
-      return prefs_.assistant().getGlobalValue();
+      return effectiveAssistantType(prefs_.assistant().getGlobalValue());
+   }
+
+   /**
+    * Whether Posit AI can be offered as the code assistant: it can't when the
+    * Posit Assistant installation lacks NES. With nothing installed yet it
+    * can, since installing may bring NES.
+    */
+   public boolean isPositAssistantOffered()
+   {
+      return !session_.getSessionInfo().getAssistantNesMissing();
+   }
+
+   /**
+    * The assistant that runs for a selected one. Posit AI runs as (None) when
+    * it isn't offered, leaving the selection itself in place. Mirrors
+    * effectiveAssistantType() in SessionAssistant.cpp.
+    */
+   public String effectiveAssistantType(String selectedAssistant)
+   {
+      if (StringUtil.equals(selectedAssistant, UserPrefsAccessor.ASSISTANT_POSIT) &&
+          !isPositAssistantOffered())
+      {
+         return UserPrefsAccessor.ASSISTANT_NONE;
+      }
+
+      return selectedAssistant;
    }
 
    @Handler
@@ -508,6 +545,11 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
    public HandlerRegistration addRuntimeStatusChangedHandler(AssistantRuntimeStatusChangedEvent.Handler handler)
    {
       return handlers_.addHandler(AssistantRuntimeStatusChangedEvent.TYPE, handler);
+   }
+
+   public HandlerRegistration addNesMissingChangedHandler(AssistantNesMissingChangedEvent.Handler handler)
+   {
+      return handlers_.addHandler(AssistantNesMissingChangedEvent.TYPE, handler);
    }
 
    interface AssistantCommandBinder

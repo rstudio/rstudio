@@ -194,34 +194,17 @@ public class AssistantPreferencesPane extends PreferencesPane
       chatServer_ = chatServer;
       installManager_ = new PositAiInstallManager();
 
-      // Create assistant selector - conditionally include each provider based
-      // on whether it is available in this build and enabled by the administrator.
-      boolean paiEnabled = paiUtil_.isPositAssistantEnabled();
-      boolean copilotEnabled = session_.getSessionInfo().getCopilotEnabled();
       List<String> assistantLabelList = new ArrayList<>();
       List<String> assistantValueList = new ArrayList<>();
-      assistantLabelList.add(prefsConstants_.assistantEnum_none());
-      assistantValueList.add(UserPrefsAccessor.ASSISTANT_NONE);
-      if (paiEnabled)
-      {
-         assistantLabelList.add(prefsConstants_.assistantEnum_posit());
-         assistantValueList.add(UserPrefsAccessor.ASSISTANT_POSIT);
-      }
-      if (copilotEnabled)
-      {
-         assistantLabelList.add(prefsConstants_.assistantEnum_copilot());
-         assistantValueList.add(UserPrefsAccessor.ASSISTANT_COPILOT);
-      }
-      String[] assistantLabels = assistantLabelList.toArray(new String[0]);
-      String[] assistantValues = assistantValueList.toArray(new String[0]);
+      addAssistantChoices(assistantLabelList, assistantValueList);
       selAssistant_ = new SelectWidget(
             constants_.assistantSelectLabel(),
-            assistantLabels,
-            assistantValues,
+            assistantLabelList.toArray(new String[0]),
+            assistantValueList.toArray(new String[0]),
             false,
             true,
             false);
-      selAssistant_.setValue(prefs_.assistant().getGlobalValue());
+      selAssistant_.setValue(assistant_.effectiveAssistantType(prefs_.assistant().getGlobalValue()));
 
       // Container for dynamic assistant-specific content
       assistantDetailsPanel_ = new SimplePanel();
@@ -348,7 +331,7 @@ public class AssistantPreferencesPane extends PreferencesPane
       // Create chat provider selector - conditionally include Posit Assistant option
       String[] chatProviderLabels;
       String[] chatProviderValues;
-      if (paiEnabled)
+      if (paiUtil_.isPositAssistantEnabled())
       {
          chatProviderLabels = new String[] {
                prefsConstants_.chatProviderEnum_none(),
@@ -394,6 +377,60 @@ public class AssistantPreferencesPane extends PreferencesPane
       {
          onProjectOptionsChanged(event.getData());
       });
+
+      nesMissingChangedHandler_ = assistant_.addNesMissingChangedHandler((event) ->
+      {
+         onNesMissingChanged();
+      });
+   }
+
+   /**
+    * Adds a choice for each assistant available in this build and enabled by
+    * the administrator -- and, for Posit AI, offered by its installation.
+    */
+   private void addAssistantChoices(List<String> labels, List<String> values)
+   {
+      labels.add(prefsConstants_.assistantEnum_none());
+      values.add(UserPrefsAccessor.ASSISTANT_NONE);
+      if (paiUtil_.isPositAssistantEnabled() && assistant_.isPositAssistantOffered())
+      {
+         labels.add(prefsConstants_.assistantEnum_posit());
+         values.add(UserPrefsAccessor.ASSISTANT_POSIT);
+      }
+      if (session_.getSessionInfo().getCopilotEnabled())
+      {
+         labels.add(prefsConstants_.assistantEnum_copilot());
+         values.add(UserPrefsAccessor.ASSISTANT_COPILOT);
+      }
+   }
+
+   /**
+    * Re-offers the assistant choices after an install or update changes
+    * whether Posit AI is offered, keeping the current selection where it
+    * still can be.
+    */
+   private void onNesMissingChanged()
+   {
+      String selected = selAssistant_.getValue();
+      List<String> labels = new ArrayList<>();
+      List<String> values = new ArrayList<>();
+      addAssistantChoices(labels, values);
+      selAssistant_.setChoices(labels.toArray(new String[0]), values.toArray(new String[0]));
+
+      if (projectAssistantOverride_ != null)
+      {
+         // Re-derive the project's (possibly now different) effective assistant
+         onProjectOptionsChanged(projectOptions_);
+         return;
+      }
+
+      // Before init() the panels aren't built yet; init() shows the selection.
+      selAssistant_.setValue(assistant_.effectiveAssistantType(selected));
+      if (assistantChangedHandler_ != null &&
+          !StringUtil.equals(selected, selAssistant_.getValue()))
+      {
+         assistantChangedHandler_.onChange(null);
+      }
    }
 
    @Override
@@ -408,6 +445,11 @@ public class AssistantPreferencesPane extends PreferencesPane
       {
          projectOptionsChangedHandler_.removeHandler();
          projectOptionsChangedHandler_ = null;
+      }
+      if (nesMissingChangedHandler_ != null)
+      {
+         nesMissingChangedHandler_.removeHandler();
+         nesMissingChangedHandler_ = null;
       }
       super.onUnload();
    }
@@ -1639,7 +1681,7 @@ public class AssistantPreferencesPane extends PreferencesPane
          return null;
       }
 
-      return projectAssistant;
+      return assistant_.effectiveAssistantType(projectAssistant);
    }
 
    /**
@@ -1685,7 +1727,7 @@ public class AssistantPreferencesPane extends PreferencesPane
          selAssistant_.setEnabled(true);
 
          // Restore selector to global preference value
-         selAssistant_.setValue(prefs_.assistant().getGlobalValue());
+         selAssistant_.setValue(assistant_.effectiveAssistantType(prefs_.assistant().getGlobalValue()));
 
          // Reset refresh flags
          copilotRefreshed_ = false;
@@ -1740,6 +1782,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private boolean initialUseSystemCa_; // snapshot from initialize(); guards the session-restart trigger in onApply
    private HandlerRegistration assistantRuntimeStatusHandler_;
    private HandlerRegistration projectOptionsChangedHandler_;
+   private HandlerRegistration nesMissingChangedHandler_;
    private boolean assistantStarted_ = false; // did Copilot get started while the dialog was open?
    private boolean copilotRefreshed_ = false; // has Copilot status been refreshed for this pane instance?
    private boolean positAiRefreshed_ = false; // has Posit Assistant status been refreshed for this pane instance?
