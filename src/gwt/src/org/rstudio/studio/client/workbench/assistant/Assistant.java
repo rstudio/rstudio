@@ -547,7 +547,8 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
       return handlers_.addHandler(AssistantRuntimeStatusChangedEvent.TYPE, handler);
    }
 
-   public HandlerRegistration addNesMissingChangedHandler(AssistantNesMissingChangedEvent.Handler handler)
+   public HandlerRegistration addNesMissingChangedHandler(
+         AssistantNesMissingChangedEvent.Handler handler)
    {
       return handlers_.addHandler(AssistantNesMissingChangedEvent.TYPE, handler);
    }

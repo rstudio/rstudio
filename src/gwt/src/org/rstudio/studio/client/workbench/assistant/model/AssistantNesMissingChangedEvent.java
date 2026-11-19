@@ -20,7 +20,8 @@ import com.google.gwt.event.shared.GwtEvent;
 
 // Fired when the Posit Assistant installation gains or loses NES, e.g. after
 // an install or update.
-public class AssistantNesMissingChangedEvent extends GwtEvent<AssistantNesMissingChangedEvent.Handler>
+public class AssistantNesMissingChangedEvent
+      extends GwtEvent<AssistantNesMissingChangedEvent.Handler>
 {
    public interface Handler extends EventHandler
    {

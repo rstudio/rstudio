@@ -204,7 +204,8 @@ public class AssistantPreferencesPane extends PreferencesPane
             false,
             true,
             false);
-      selAssistant_.setValue(assistant_.effectiveAssistantType(prefs_.assistant().getGlobalValue()));
+      selAssistant_.setValue(
+            assistant_.effectiveAssistantType(prefs_.assistant().getGlobalValue()));
 
       // Container for dynamic assistant-specific content
       assistantDetailsPanel_ = new SimplePanel();
@@ -1727,7 +1728,8 @@ public class AssistantPreferencesPane extends PreferencesPane
          selAssistant_.setEnabled(true);
 
          // Restore selector to global preference value
-         selAssistant_.setValue(assistant_.effectiveAssistantType(prefs_.assistant().getGlobalValue()));
+         selAssistant_.setValue(
+               assistant_.effectiveAssistantType(prefs_.assistant().getGlobalValue()));
 
          // Reset refresh flags
          copilotRefreshed_ = false;
