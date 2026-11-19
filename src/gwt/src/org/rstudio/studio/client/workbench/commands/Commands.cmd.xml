@@ -586,6 +586,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
                <cmd refid="activateSource"/>
                <cmd refid="activateConsole"/>
                <cmd refid="focusConsoleOutputEnd"/>
+               <cmd refid="focusLastConsoleError"/>
                <cmd refid="focusNextPane"/>
                <cmd refid="focusPreviousPane"/>
                <cmd refid="activateTerminal"/>
@@ -1054,6 +1055,8 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <shortcut refid="focusConsoleOutputEnd" value="Ctrl+Alt+2" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="focusConsoleOutputEnd" value="Alt+Shift+2" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="focusConsoleOutputEnd" value="Ctrl+`"/>
+         <shortcut refid="focusLastConsoleError" value="Ctrl+Alt+7" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="focusLastConsoleError" value="Alt+Shift+7" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="focusNextPane" value="F6"/>
          <shortcut refid="focusPreviousPane" value="Shift+F6"/>
          <shortcut refid="toggleTabKeyMovesFocus" value="Ctrl+Alt+[" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
@@ -4542,6 +4545,10 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
 
    <cmd id="focusConsoleOutputEnd"
         menuLabel="_Focus Console Output"
+        windowMode="main"/>
+
+   <cmd id="focusLastConsoleError"
+        menuLabel="Focus Last Console _Error"
         windowMode="main"/>
 
    <cmd id="focusNextPane"
