@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 #
 # Claude Code PreToolUse hook (Bash matcher).
-# Blocks git push and git commit when the current branch is main or matches rel-*.
+# Blocks git commit when the current branch is main or matches rel-*, and git
+# push when it would update such a branch on the remote.
+#
+# Keep this compatible with bash 3.2 (macOS /bin/bash): e.g. an empty array
+# expands as ${arr[@]+"${arr[@]}"}, since "${arr[@]}" fails under 'set -u'.
 #
 set -euo pipefail
 
@@ -22,7 +26,85 @@ command=$(echo "$input" | jq -r '.tool_input.command // empty') || {
 # real commit/push subcommand, and the -C target, past them.
 git_opts="([[:space:]]+(-C[[:space:]]+(\"[^\"]*\"|'[^']*'|[^[:space:]]+)|-c[[:space:]]+[^[:space:]]+|--?[^[:space:]]+))*"
 
-# Block git push and git commit on protected branches
+is_protected() {
+  [ "$1" = "main" ] || [[ "$1" == rel-* ]]
+}
+
+# Prints the remote branches that a 'git push' with the arguments in $1 would
+# update, one per line, or '*' when it may update any branch. $2 is the current
+# branch, which git pushes when no refspec is given, and which HEAD names.
+push_targets() {
+  local token spec dst
+  local skip_arg=false end_of_opts=false have_remote=false
+  local -a tokens=() specs=()
+
+  read -r -a tokens <<< "$1" || true
+  for token in ${tokens[@]+"${tokens[@]}"}; do
+    token="${token//\"/}"
+    token="${token//\'/}"
+
+    if $skip_arg; then
+      skip_arg=false
+      continue
+    fi
+
+    if ! $end_of_opts; then
+      case "$token" in
+        --)
+          end_of_opts=true
+          continue ;;
+        --all|--mirror|--branches)
+          echo '*'
+          continue ;;
+        -o|--push-option|--repo|--receive-pack|--exec)
+          skip_arg=true
+          continue ;;
+        -*)
+          continue ;;
+      esac
+    fi
+
+    # the first operand is the remote; the rest are refspecs
+    if $have_remote; then
+      specs+=("$token")
+    else
+      have_remote=true
+    fi
+  done
+
+  if [ ${#specs[@]} -eq 0 ]; then
+    echo "$2"
+    return
+  fi
+
+  for spec in "${specs[@]}"; do
+    spec="${spec#+}"
+
+    # ':' alone pushes every branch that exists on both sides; ':dst' deletes
+    case "$spec" in
+      :)
+        dst='*' ;;
+      *:*)
+        dst="${spec#*:}" ;;
+      *)
+        dst="$spec" ;;
+    esac
+
+    case "$dst" in
+      *'*'*)
+        dst='*' ;;
+      HEAD|@)
+        dst="$2" ;;
+      refs/heads/*)
+        dst="${dst#refs/heads/}" ;;
+      refs/*)
+        continue ;;
+    esac
+
+    echo "$dst"
+  done
+}
+
 if echo "$command" | grep -qE "\bgit${git_opts}[[:space:]]+(push|commit)\b"; then
 
   # Resolve the directory the git command actually targets, so that commits
@@ -52,14 +134,41 @@ if echo "$command" | grep -qE "\bgit${git_opts}[[:space:]]+(push|commit)\b"; the
     exit 2
   }
 
-  if [ "$branch" = "main" ] || echo "$branch" | grep -qE '^rel-'; then
-    if echo "$command" | grep -qE "\bgit${git_opts}[[:space:]]+push\b"; then
-      echo "BLOCKED: git push on '$branch' is not allowed. Create a feature branch first." >&2
-    else
-      echo "BLOCKED: git commit on '$branch' is not allowed. Create a feature branch first." >&2
-    fi
+  if is_protected "$branch" && echo "$command" | grep -qE "\bgit${git_opts}[[:space:]]+commit\b"; then
+    echo "BLOCKED: git commit on '$branch' is not allowed. Create a feature branch first." >&2
     exit 2
   fi
+
+  # A push is judged by the branches it updates, not the one checked out, so
+  # that 'git push origin <feature-branch>' works from a checkout on main. Split
+  # the command into simple commands, so each push's arguments end where its
+  # command does; a redirection (e.g. '2>&1') ends them too. A push is found
+  # anywhere in a command, so that wrapped ones (e.g. bash -c '...') are still
+  # checked; the cost is that a commit message quoting a push to main is
+  # blocked too.
+  newline=$'\n'
+  segments="$command"
+  for op in '&&' '||' ';' '|' '&' '(' ')'; do
+    segments="${segments//"$op"/$newline}"
+  done
+
+  while IFS= read -r segment; do
+    if ! echo "$segment" | grep -qE "\bgit${git_opts}[[:space:]]+push\b"; then
+      continue
+    fi
+
+    args=$(echo "$segment" | sed -E "s/.*git${git_opts}[[:space:]]+push//; s/[[:space:]]*[0-9]*[<>].*$//")
+    while IFS= read -r target; do
+      if [ "$target" = '*' ]; then
+        echo "BLOCKED: git push that may update every branch (--all, --mirror, --branches, ':' or a glob) is not allowed. Push a feature branch by name." >&2
+        exit 2
+      fi
+      if is_protected "$target"; then
+        echo "BLOCKED: git push to '$target' is not allowed. Push a feature branch instead." >&2
+        exit 2
+      fi
+    done < <(push_targets "$args" "$branch")
+  done <<< "$segments"
 fi
 
 # Allow: nothing matched a protected branch. Exit explicitly so the allow path
