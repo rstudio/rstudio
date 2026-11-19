@@ -1,6 +1,9 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { TIMEOUTS } from '@utils/constants';
-import { clearPref, setPref } from '@utils/commands';
+import { clearPref, executeCommand, resetLayoutZoom, setPref, waitForActiveDocument } from '@utils/commands';
+import { closeAndDeleteSandboxFiles, seedSandboxFile } from '@utils/files';
+import { rPathLiteral } from '@utils/r';
+import { useSuiteSandbox } from '@utils/sandbox';
 import {
   getConsoleCursorPosition,
   getConsoleScreenRowCount,
@@ -11,8 +14,12 @@ import {
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { waitForConsoleFocus } from '@pages/console_pane.page';
 
+// Focus Last Console Error
+const FOCUS_LAST_ERROR = process.platform === 'darwin' ? 'Control+Alt+7' : 'Alt+Shift+7';
+
 test.describe('Console pane', () => {
   let consoleActions: ConsolePaneActions;
+  const sandbox = useSuiteSandbox();
 
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
@@ -176,6 +183,75 @@ test.describe('Console pane', () => {
     await consoleActions.consolePane.tracebackBtn.click();
     await expect(consoleActions.consolePane.stackTrace).toBeHidden();
     await expect(consoleActions.consolePane.tracebackBtn).toHaveText('Show Traceback');
+  });
+
+  test('keyboard reaches an error box and its traceback source links', async ({ rstudioPage: page }) => {
+    const fileName = 'console_error_keyboard.R';
+    const filePath = await seedSandboxFile(page, sandbox.dir, fileName,
+      'inner <- function() stop("boom")\nouter <- function() inner()\n');
+    try {
+      await consoleActions.executeInConsole(`source(${rPathLiteral(filePath)})`);
+      await consoleActions.executeInConsole('outer()');
+      const pane = consoleActions.consolePane;
+      await expect(pane.tracebackBtn).toBeVisible({ timeout: 10000 });
+      await expect(pane.tracebackBtn).toHaveAttribute('title', /most recent Console error/);
+
+      // A half-typed line must survive the visit: keys meant for the error box
+      // must not reach the input (Escape would clear it, Enter would run it)
+      await setConsoleInput(page, 'pending <- 1');
+
+      await page.keyboard.press(FOCUS_LAST_ERROR);
+      await expect(pane.tracebackBtn).toBeFocused();
+      await expect(pane.tracebackBtn).toHaveAttribute('aria-expanded', 'false');
+
+      await page.keyboard.press('Escape');
+      await waitForConsoleFocus(page);
+      expect(await pane.consoleInputValue()).toBe('pending <- 1');
+
+      await page.keyboard.press(FOCUS_LAST_ERROR);
+      await expect(pane.tracebackBtn).toBeFocused();
+      await page.keyboard.press('Enter');
+      await expect(pane.stackTrace).toBeVisible();
+      await expect(pane.tracebackBtn).toHaveAttribute('aria-expanded', 'true');
+      await expect(pane.tracebackBtn).toHaveText('Hide Traceback');
+      await expect(pane.tracebackBtn).toBeFocused();
+      expect(await pane.consoleInputValue()).toBe('pending <- 1');
+
+      // Tab moves through the box even though Tab in the input does completion
+      await page.keyboard.press('Tab');
+      await expect(pane.rerunBtn).toBeFocused();
+      await page.keyboard.press('Tab');
+      const sourceLink = pane.stackTrace.getByRole('button', { name: /^console_error_keyboard\.R#\d+$/ });
+      await expect(sourceLink.first()).toBeFocused();
+
+      await page.keyboard.press('Enter');
+      await waitForActiveDocument(page, filePath);
+    } finally {
+      await setConsoleInput(page, '');
+      await closeAndDeleteSandboxFiles(page, sandbox.dir, [fileName]);
+    }
+  });
+
+  test('Focus Last Console Error announces when there is no error', async ({ rstudioPage: page }) => {
+    await page.keyboard.press(FOCUS_LAST_ERROR);
+    await expect(page.locator('[role="status"]', { hasText: 'No Console error to focus' })).toBeAttached();
+    await waitForConsoleFocus(page);
+  });
+
+  test('Focus Last Console Error brings a hidden Console forward', async ({ rstudioPage: page }) => {
+    await consoleActions.executeInConsole('g <- function() stop("boom"); f <- function() g(); f()');
+    const pane = consoleActions.consolePane;
+    await expect(pane.tracebackBtn).toBeVisible({ timeout: 10000 });
+
+    await executeCommand(page, 'layoutZoomRightColumn');
+    try {
+      await expect(pane.tracebackBtn).not.toBeInViewport();
+      await page.keyboard.press(FOCUS_LAST_ERROR);
+      await expect(pane.tracebackBtn).toBeInViewport();
+      await expect(pane.tracebackBtn).toBeFocused();
+    } finally {
+      await resetLayoutZoom(page);
+    }
   });
 
   test('auto-expanded traceback offers Hide Traceback', async ({ rstudioPage: page }) => {

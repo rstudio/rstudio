@@ -27,6 +27,12 @@
    }
    
    .errorCommandText {
+      /* Buttons, so the keyboard can reach and activate them; drawn as plain text */
+      background: none;
+      border: none;
+      margin: 0;
+      padding: 0;
+      color: inherit;
       font-family: proportionalFont;
       font-size: 80%;
       opacity: 0.50;
@@ -40,7 +46,8 @@
       position: relative;
    }
    
-   .errorCommandText:hover {
+   .errorCommandText:hover,
+   .errorCommandText:focus-visible {
       opacity: 1;
    }
    
@@ -83,7 +90,7 @@
                   width="9"
                   height="9"
                   styleName="{style.errorCommandImage} show_traceback_image"/>
-           <g:Anchor styleName="{style.errorCommandText} show_traceback_text" ui:field="showTracebackText"/>
+           <g:Button styleName="{style.errorCommandText} show_traceback_text" ui:field="showTracebackText"/>
         </g:HTMLPanel>
         <g:HTMLPanel>
            <rw:DecorativeImage resource="{rerun}"
@@ -91,7 +98,7 @@
                     width="9"
                     height="9"
                     styleName="{style.errorCommandImage} rerun_image"/>
-           <g:Anchor styleName="{style.errorCommandText} rerun_text" ui:field="rerunText"/>
+           <g:Button styleName="{style.errorCommandText} rerun_text" ui:field="rerunText"/>
         </g:HTMLPanel>
      </g:HTMLPanel>
      <g:HTML ui:field="errorMessage" styleName="{style.errorMessage}"></g:HTML>

@@ -37,6 +37,7 @@ import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.debugging.ErrorManager;
 import org.rstudio.studio.client.common.debugging.events.UnhandledErrorEvent;
+import org.rstudio.studio.client.common.debugging.ui.ConsoleError;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.shell.ShellDisplay;
 import org.rstudio.studio.client.rmarkdown.events.ChunkExecStateChangedEvent;
@@ -131,6 +132,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       void onSelected();
 
       void onConsoleFind();
+
+      ConsoleError getLastError();
    }
 
    @Inject
@@ -329,6 +332,27 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    void onFocusConsoleOutputEnd()
    {
       view_.getConsoleOutputWriter().focusEnd();
+   }
+
+   @Handler
+   void onFocusLastConsoleError()
+   {
+      if (view_.getLastError() == null)
+      {
+         ariaLive_.announce(AriaLiveService.ON_DEMAND, constants_.noConsoleErrorToFocusMessage(),
+               Timing.IMMEDIATE, Severity.STATUS);
+         return;
+      }
+
+      // Activating shows a hidden Console but also focuses its input, so move
+      // focus to the error after that
+      commands_.activateConsole().execute();
+      Scheduler.get().scheduleDeferred(() ->
+      {
+         ConsoleError error = view_.getLastError();
+         if (error != null)
+            error.focus();
+      });
    }
 
    public void addKeyDownPreviewHandler(KeyDownPreviewHandler handler)

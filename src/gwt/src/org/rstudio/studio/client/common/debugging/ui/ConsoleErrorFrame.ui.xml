@@ -6,6 +6,12 @@
    }
    
    .sourceLink {
+     /* A button, so the keyboard can reach and activate it; drawn as plain text */
+     background: none;
+     border: none;
+     margin: 0;
+     padding: 0;
+     font: inherit;
      cursor: pointer;
    }
    
@@ -35,9 +41,8 @@
             <g:HTMLPanel>
                <g:Label ui:field="functionName" styleName="{style.function}">
                </g:Label>
-               <g:Anchor ui:field="sourceLink" 
-                       styleName="{style.sourceLink} ace_constant ace_numeric">
-               </g:Anchor>
+               <g:Button ui:field="sourceLink"
+                       styleName="{style.sourceLink} ace_constant ace_numeric"/>
             </g:HTMLPanel>
          </g:customCell>
       </g:row>
