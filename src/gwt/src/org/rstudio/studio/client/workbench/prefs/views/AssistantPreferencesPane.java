@@ -1667,7 +1667,9 @@ public class AssistantPreferencesPane extends PreferencesPane
 
          // Disable the selector and set it to match project's assistant
          selAssistant_.setEnabled(false);
-         selAssistant_.setValue(projectAssistant);
+         // The panel follows the assistant that actually runs; the label
+         // above names the project's own setting.
+         selAssistant_.setValue(assistant_.effectiveAssistantType(projectAssistant));
 
          // Trigger the change handler to update the displayed panel
          assistantChangedHandler_.onChange(null);
@@ -1693,7 +1695,7 @@ public class AssistantPreferencesPane extends PreferencesPane
          return null;
       }
 
-      return assistant_.effectiveAssistantType(projectAssistant);
+      return projectAssistant;
    }
 
    /**
@@ -1722,7 +1724,9 @@ public class AssistantPreferencesPane extends PreferencesPane
 
          projectOverridePanel_.setVisible(true);
          selAssistant_.setEnabled(false);
-         selAssistant_.setValue(projectAssistant);
+         // The panel follows the assistant that actually runs; the label
+         // above names the project's own setting.
+         selAssistant_.setValue(assistant_.effectiveAssistantType(projectAssistant));
 
          // Reset refresh flags so status gets refreshed for the new assistant
          copilotRefreshed_ = false;
