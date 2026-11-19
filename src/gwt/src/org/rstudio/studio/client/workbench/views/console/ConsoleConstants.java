@@ -28,6 +28,7 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
     String consoleClearedMessage();
     String noConsoleErrorToFocusMessage();
     String consoleErrorNotFocusedMessage();
+    String consoleErrorHasNoActionsMessage();
     String focusConsoleWarningMessage(String title);
     String errorString(String userMessage);
     String executingPythonCodeProgressCaption();

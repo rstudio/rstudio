@@ -136,6 +136,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       void onConsoleFind();
 
       ConsoleError getLastError();
+      void markLatestErrorWithoutActions();
+      boolean latestErrorHasNoActions();
    }
 
    @Inject
@@ -342,7 +344,9 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       ConsoleError error = view_.getLastError();
       if (error == null)
       {
-         announceFocusFailure(constants_.noConsoleErrorToFocusMessage());
+         announceFocusFailure(view_.latestErrorHasNoActions()
+               ? constants_.consoleErrorHasNoActionsMessage()
+               : constants_.noConsoleErrorToFocusMessage());
          return;
       }
 
@@ -455,6 +459,10 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                event.getError(),
                prefs_.autoExpandErrorTracebacks().getValue(),
                getHistoryEntry(0));
+      }
+      else
+      {
+         view_.markLatestErrorWithoutActions();
       }
    }
 

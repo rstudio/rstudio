@@ -508,6 +508,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       if (!StringUtil.isNullOrEmpty(shortcut))
          errorWidget.setFocusShortcutHint(DomUtils.htmlToText(shortcut));
       lastError_ = errorWidget;
+      latestErrorHasNoActions_ = false;
 
       insertErrorWidgetElement(
             errorEls,
@@ -555,6 +556,21 @@ public class ShellWidget extends Composite implements ShellDisplay,
    public void runCommandWithDebug(String command)
    {
       events_.fireEvent(new RunCommandWithDebugEvent(command));
+   }
+
+   /**
+    * Records that the newest error was written without an error box (e.g. while
+    * the debugger is active), so older boxes no longer hold the latest error.
+    */
+   public void markLatestErrorWithoutActions()
+   {
+      lastError_ = null;
+      latestErrorHasNoActions_ = true;
+   }
+
+   public boolean latestErrorHasNoActions()
+   {
+      return latestErrorHasNoActions_;
    }
 
    /**
@@ -1034,6 +1050,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
    @Override
    public void clearOutput()
    {
+      lastError_ = null;
+      latestErrorHasNoActions_ = false;
       output_.clearConsoleOutput();
       clearLiveRegion();
       cleared_ = true;
@@ -1351,6 +1369,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    // The errors that have occurred since the last console prompt.
    private final ConsoleErrorTracker errors_ = new ConsoleErrorTracker();
    private ConsoleError lastError_;
+   private boolean latestErrorHasNoActions_;
    private boolean clearErrors_ = false;
 
    // Injected

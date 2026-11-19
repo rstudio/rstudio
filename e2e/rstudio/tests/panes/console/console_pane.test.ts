@@ -16,6 +16,7 @@ import {
   setConsoleInput,
 } from '@utils/console';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
+import { DebuggerActions } from '@actions/debugger.actions';
 import { waitForConsoleFocus } from '@pages/console_pane.page';
 
 // Focus Last Console Error
@@ -294,6 +295,34 @@ test.describe('Console pane', () => {
       'precondition: focus is not :focus-visible').toBe(false);
     await expect(pane.tracebackBtn).toHaveCSS('opacity', '1');
     await expect(pane.tracebackBtn).not.toHaveCSS('outline-style', 'none');
+  });
+
+  test('Focus Last Console Error skips older errors when the newest has no actions', async ({
+    rstudioPage: page,
+  }) => {
+    const debuggerActions = new DebuggerActions(page, consoleActions);
+    const pane = consoleActions.consolePane;
+    await consoleActions.executeInConsole(NESTED_ERROR);
+    await expect(pane.tracebackBtn).toBeVisible({ timeout: 10000 });
+
+    // An error while the debugger is active is written as plain text, with no box
+    try {
+      await consoleActions.executeInConsole('(function() browser())()');
+      await debuggerActions.waitForDebugMode();
+      // paste0 keeps the echoed command from matching the message
+      await consoleActions.executeInConsole('stop(paste0("in the", " debugger"))');
+      await expect(pane.consoleOutput).toContainText('in the debugger');
+
+      await page.keyboard.press(FOCUS_LAST_ERROR);
+      const noActions = '[role="status"]:has-text("most recent Console error has no actions")';
+      await expect(page.locator(noActions)).toBeAttached();
+      await expect(pane.tracebackBtn).not.toBeFocused();
+    } finally {
+      if (await debuggerActions.debuggerPage.debugToolbar.isVisible()) {
+        await debuggerActions.stopDebug();
+        await debuggerActions.waitForDebugExit();
+      }
+    }
   });
 
   test('Focus Last Console Error announces when there is no error', async ({
