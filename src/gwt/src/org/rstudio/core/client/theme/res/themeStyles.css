@@ -228,6 +228,14 @@
 
 body.windows, body.macintosh, body.linux {}
 
+/* The layout is absolutely positioned, so html and body would otherwise be 0px tall.
+   Window.enableScrolling(false) makes html overflow: hidden, and axe-core treats a 0px
+   overflow: hidden ancestor as clipping its content, so it skips nearly every element
+   when checking color contrast. */
+html, body {
+   height: 100%;
+}
+
 body {
    background: BACKGROUNDGRADIENT repeat-x top #e1e2e5;
 }
