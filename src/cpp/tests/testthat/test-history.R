@@ -73,8 +73,9 @@ test_that("savehistory() saves only the last R_HISTSIZE commands", {
 
 # .rs.savehistory() and .rs.loadhistory() replace utils::savehistory() and
 # utils::loadhistory() on Windows; they exist on every platform, so these tests
-# call them directly. the error is the system's message for the failure, which
-# on Windows is the Win32 text rather than strerror()'s.
+# call them directly. a failed save reports the system's message, which on
+# Windows is the Win32 text rather than strerror()'s. a failed load reports a
+# generic errc message, which MSVC gives in lower case.
 
 test_that(".rs.savehistory() reports a file it can't write", {
    path <- file.path(tempfile("no-such-dir-"), "history.Rhistory")
@@ -88,11 +89,11 @@ test_that(".rs.savehistory() reports a file it can't write", {
 test_that(".rs.loadhistory() reports a file it can't read", {
    expect_error(
       .rs.loadhistory(tempfile("no-such-history-")),
-      "No such file or directory|cannot find the file specified"
+      "no such file or directory",
+      ignore.case = TRUE
    )
 })
 
 test_that(".rs.loadhistory() reports a directory", {
-   # MSVC's generic_category() messages are lower case
    expect_error(.rs.loadhistory(tempdir()), "is a directory", ignore.case = TRUE)
 })

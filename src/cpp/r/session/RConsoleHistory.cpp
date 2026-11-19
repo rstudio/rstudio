@@ -178,7 +178,7 @@ Error ConsoleHistory::loadFromFile(const FilePath& filePath,
    {
       if (verifyFile)
       {
-         return systemError(boost::system::errc::no_such_file_or_directory,
+         return systemError(std::make_error_code(std::errc::no_such_file_or_directory),
                             ERROR_LOCATION);
       }
 
