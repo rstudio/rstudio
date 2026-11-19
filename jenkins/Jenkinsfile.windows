@@ -49,7 +49,7 @@ pipeline {
         stage('Load Utils') {
           steps {
             script {
-              sh 'printenv'
+              sh 'docker/jenkins/print-environment.sh'
               sh "echo 'Loading utils from ${env.WORKSPACE}/jenkins/utils.groovy'"
               utils = load "${env.WORKSPACE}/jenkins/utils.groovy"
               utils.ensureFullCommitHistory()
