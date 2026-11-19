@@ -238,21 +238,44 @@ test.describe('Console pane', () => {
     await waitForConsoleFocus(page);
   });
 
-  test('Focus Last Console Error brings a hidden Console forward', async ({ rstudioPage: page }) => {
-    await consoleActions.executeInConsole('g <- function() stop("boom"); f <- function() g(); f()');
-    const pane = consoleActions.consolePane;
-    await expect(pane.tracebackBtn).toBeVisible({ timeout: 10000 });
+  for (const hide of ['zoomed out', 'minimized'] as const) {
+    for (const reducedMotion of [true, false]) {
+      const motion = reducedMotion ? 'reduced motion' : 'animated';
+      test(`Focus Last Console Error brings a ${hide} Console forward (${motion})`, async ({ rstudioPage: page }) => {
+        await consoleActions.executeInConsole('g <- function() stop("boom"); f <- function() g(); f()');
+        const pane = consoleActions.consolePane;
+        await expect(pane.tracebackBtn).toBeVisible({ timeout: 10000 });
 
-    await executeCommand(page, 'layoutZoomRightColumn');
-    try {
-      await expect(pane.tracebackBtn).not.toBeInViewport();
-      await page.keyboard.press(FOCUS_LAST_ERROR);
-      await expect(pane.tracebackBtn).toBeInViewport();
-      await expect(pane.tracebackBtn).toBeFocused();
-    } finally {
-      await resetLayoutZoom(page);
+        await setPref(page, 'reduced_motion', reducedMotion);
+        try {
+          if (hide === 'zoomed out')
+            await executeCommand(page, 'layoutZoomRightColumn');
+          else
+            await page.locator('#rstudio_Console_pane .rstudio_panel_min_btn_console').click();
+          await expect(page.locator('body')).not.toHaveClass(/rstudio-animating/);
+          await expect(pane.tracebackBtn).not.toBeInViewport();
+
+          await page.keyboard.press(FOCUS_LAST_ERROR);
+          await expect(pane.tracebackBtn).toBeInViewport();
+          await expect(pane.tracebackBtn).toBeFocused();
+
+          // Restoring the pane animates, and its end can move focus; the column
+          // animation sets no marker to wait on, so watch past its 300ms
+          for (let elapsed = 0; elapsed < 1000; elapsed += 50) {
+            expect(await pane.tracebackBtn.evaluate((el) => el === document.activeElement),
+              `Show Traceback still focused after ${elapsed}ms`).toBe(true);
+            await page.waitForTimeout(50);
+          }
+        } finally {
+          // The fixture's value, not the default: animations would slow every later test
+          await setPref(page, 'reduced_motion', true);
+          await resetLayoutZoom(page);
+          if (!(await page.locator('#rstudio_Console_pane').isVisible()))
+            await executeCommand(page, 'activateConsolePane');
+        }
+      });
     }
-  });
+  }
 
   test('auto-expanded traceback offers Hide Traceback', async ({ rstudioPage: page }) => {
     await setPref(page, 'auto_expand_error_tracebacks', true);

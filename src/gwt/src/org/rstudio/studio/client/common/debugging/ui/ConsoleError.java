@@ -161,6 +161,20 @@ public class ConsoleError extends Composite
    }
 
    /**
+    * @return Whether focus() would land now. A pane being restored stays inert
+    *    until its animation ends.
+    */
+   public boolean canFocus()
+   {
+      Element button = showTracebackText.getElement();
+      return button.getOffsetHeight() > 0 && !isInert(button);
+   }
+
+   private static native boolean isInert(Element el) /*-{
+      return el.closest("[inert]") !== null;
+   }-*/;
+
+   /**
     * Shows, as a tooltip on the error's buttons, the shortcut that brings focus
     * back to the most recent error. Browsers also expose the tooltip to screen
     * readers as the buttons' description.

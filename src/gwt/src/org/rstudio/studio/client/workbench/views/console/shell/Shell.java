@@ -90,6 +90,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Past
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.event.dom.client.KeyCodeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -344,15 +345,28 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
          return;
       }
 
-      // Activating shows a hidden Console but also focuses its input, so move
-      // focus to the error after that
+      // Activating shows a hidden Console and focuses its input. Showing it can
+      // animate, and the Console stays inert until that ends, so keep trying to
+      // focus the error until it can take focus.
       commands_.activateConsole().execute();
-      Scheduler.get().scheduleDeferred(() ->
+      Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
       {
-         ConsoleError error = view_.getLastError();
-         if (error != null)
-            error.focus();
-      });
+         @Override
+         public boolean execute()
+         {
+            ConsoleError error = view_.getLastError();
+            if (error == null)
+               return false;
+            if (error.canFocus())
+            {
+               error.focus();
+               return false;
+            }
+            return ++attempts_ < FOCUS_ERROR_MAX_ATTEMPTS;
+         }
+
+         private int attempts_ = 0;
+      }, FOCUS_ERROR_RETRY_MS);
    }
 
    public void addKeyDownPreviewHandler(KeyDownPreviewHandler handler)
@@ -1004,6 +1018,10 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    private final ShellInputAnimator inputAnimator_;
 
    private String initialInput_;
+
+   // Long enough for the Console to finish an animated restore
+   private static final int FOCUS_ERROR_RETRY_MS = 50;
+   private static final int FOCUS_ERROR_MAX_ATTEMPTS = 40;
 
    private static final String GROUP_CONSOLE = "console";
    private static final String STATE_INPUT = "input";
