@@ -114,6 +114,14 @@ bool isNesMissing(const core::FilePath& installPath);
 std::string effectiveAssistantType(const std::string& selectedAssistant,
                                    bool nesMissing);
 
+// Whether an RSTUDIO_AGENT_PATH override naming an existing file is used to
+// launch the given assistant. A helper configured for that assistant launches
+// the assistant's own language server instead. Exposed for testing.
+bool agentPathOverrideApplies(const std::string& assistant,
+                              bool overrideExists,
+                              bool positHelperConfigured,
+                              bool copilotHelperConfigured);
+
 // Whether the Posit Assistant installation lacked NES at the last
 // synchronize(), which is what the client is told.
 bool isPositAssistantNesMissing();

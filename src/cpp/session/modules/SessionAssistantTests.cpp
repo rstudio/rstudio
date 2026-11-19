@@ -34,6 +34,7 @@ namespace tests {
 
 using core::FilePath;
 using modules::assistant::addPendingAgentRequestForTesting;
+using modules::assistant::agentPathOverrideApplies;
 using modules::assistant::AgentStderrTail;
 using modules::assistant::AgentStdoutReader;
 using modules::assistant::focusDocumentForTesting;
@@ -516,6 +517,32 @@ TEST(SessionAssistant, EffectiveAssistantTypeKeepsOtherAssistantsWithoutNes)
 {
    EXPECT_EQ(effectiveAssistantType(kAssistantCopilot, true), kAssistantCopilot);
    EXPECT_EQ(effectiveAssistantType(kAssistantNone, true), kAssistantNone);
+}
+
+TEST(SessionAssistant, AgentPathOverrideDoesNotApplyWhenAbsent)
+{
+   EXPECT_FALSE(agentPathOverrideApplies(kAssistantPosit, false, false, false));
+   EXPECT_FALSE(agentPathOverrideApplies(kAssistantCopilot, false, false, false));
+}
+
+TEST(SessionAssistant, AgentPathOverrideAppliesWithoutHelpers)
+{
+   EXPECT_TRUE(agentPathOverrideApplies(kAssistantPosit, true, false, false));
+   EXPECT_TRUE(agentPathOverrideApplies(kAssistantCopilot, true, false, false));
+}
+
+TEST(SessionAssistant, AgentPathOverrideIgnoredByPositHelper)
+{
+   // A Posit Assistant helper launches the installation's own language
+   // server, so the override can't supply NES for Posit AI.
+   EXPECT_FALSE(agentPathOverrideApplies(kAssistantPosit, true, true, false));
+   EXPECT_TRUE(agentPathOverrideApplies(kAssistantCopilot, true, true, false));
+}
+
+TEST(SessionAssistant, AgentPathOverrideIgnoredByCopilotHelper)
+{
+   EXPECT_FALSE(agentPathOverrideApplies(kAssistantCopilot, true, false, true));
+   EXPECT_TRUE(agentPathOverrideApplies(kAssistantPosit, true, false, true));
 }
 
 TEST(SessionAssistant, ServicedClockCountsShortGaps)

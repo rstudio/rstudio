@@ -513,17 +513,29 @@ FilePath paiLanguageServerPath()
    return FilePath();
 }
 
+// The RSTUDIO_AGENT_PATH override to launch the given assistant's agent from,
+// or an empty path when there is none or it doesn't apply to that assistant.
+FilePath agentPathOverrideFor(const std::string& assistant)
+{
+   std::string value = core::system::getenv("RSTUDIO_AGENT_PATH");
+   bool overrideExists = !value.empty() && FilePath::exists(value);
+   if (!agentPathOverrideApplies(assistant,
+                                 overrideExists,
+                                 !session::options().positAssistantHelper().isEmpty(),
+                                 !session::options().copilotHelper().isEmpty()))
+   {
+      return FilePath();
+   }
+
+   return FilePath(value);
+}
+
 // Refresh s_positNesMissing, telling the client when it changes. An
-// RSTUDIO_AGENT_PATH override supplies its own language server, so NES is
-// never missing while one is in effect -- but startAgent() ignores the
-// override when a Posit Assistant helper is configured.
+// RSTUDIO_AGENT_PATH override that Posit AI would launch from supplies its
+// own language server, so NES is never missing while one is in effect.
 void refreshPositNesMissing()
 {
-   std::string agentPathOverride = core::system::getenv("RSTUDIO_AGENT_PATH");
-   bool overrideInEffect =
-      session::options().positAssistantHelper().isEmpty() &&
-      !agentPathOverride.empty() && FilePath::exists(agentPathOverride);
-
+   bool overrideInEffect = !agentPathOverrideFor(kAssistantPosit).isEmpty();
    FilePath installPath = chat::installation::locatePositAssistantInstallation();
    bool nesMissing = !overrideInEffect && isNesMissing(installPath);
    if (nesMissing == s_positNesMissing)
@@ -604,13 +616,13 @@ std::string getConfiguredAssistantType(const std::string& assistantType = "")
 
 FilePath assistantLanguageServerPath(const std::string& assistantType)
 {
-   // Allow override via environment variable
-   std::string rstudioAgentPath = core::system::getenv("RSTUDIO_AGENT_PATH");
-   if (!rstudioAgentPath.empty() && FilePath::exists(rstudioAgentPath))
-      return FilePath(rstudioAgentPath);
-
    // Get the configured assistant type
    std::string assistant = getConfiguredAssistantType(assistantType);
+
+   // Allow override via environment variable, as startAgent() launches it
+   FilePath agentPathOverride = agentPathOverrideFor(assistant);
+   if (!agentPathOverride.isEmpty())
+      return agentPathOverride;
 
    if (assistant == kAssistantPosit)
    {
@@ -1442,39 +1454,22 @@ Error startAgent(const std::string& assistantType = "")
 
    node_tools::applySystemCaOption(&environment, nodePath);
 
-   // The RSTUDIO_AGENT_PATH override is pinned once here: the direct launch
-   // branch reuses the pinned path rather than re-reading the environment,
-   // so an override that disappears cannot silently fall back to a
-   // different source mid-start.
-   bool positHelperConfigured =
-      !session::options().positAssistantHelper().isEmpty();
-   FilePath agentPathOverride;
-   std::string agentPathOverrideValue =
-      core::system::getenv("RSTUDIO_AGENT_PATH");
-   if (!agentPathOverrideValue.empty() &&
-       FilePath::exists(agentPathOverrideValue))
-   {
-      agentPathOverride = FilePath(agentPathOverrideValue);
-   }
-   bool overrideInEffect = !agentPathOverride.isEmpty();
-
    uint64_t agentGeneration = ++s_agentGeneration;
    resetForNewAgent();
 
    // Resolve the agent executable once and reuse it in the launch branches
-   // below.
-   FilePath resolvedAgentPath;
-   if (assistant == kAssistantPosit && positHelperConfigured)
-      resolvedAgentPath = paiLanguageServerPath();
-   else if (assistant == kAssistantCopilot &&
-            !session::options().copilotHelper().isEmpty())
-      resolvedAgentPath = copilotLanguageServerPath();
-   else if (overrideInEffect)
-      resolvedAgentPath = agentPathOverride;
-   else if (assistant == kAssistantPosit)
-      resolvedAgentPath = paiLanguageServerPath();
-   else if (assistant == kAssistantCopilot)
-      resolvedAgentPath = copilotLanguageServerPath();
+   // below. The RSTUDIO_AGENT_PATH override is pinned here too: the direct
+   // launch branch reuses the pinned path rather than re-reading the
+   // environment, so an override that disappears cannot silently fall back
+   // to a different source mid-start.
+   FilePath resolvedAgentPath = agentPathOverrideFor(assistant);
+   if (resolvedAgentPath.isEmpty())
+   {
+      if (assistant == kAssistantPosit)
+         resolvedAgentPath = paiLanguageServerPath();
+      else if (assistant == kAssistantCopilot)
+         resolvedAgentPath = copilotLanguageServerPath();
+   }
 
    // Set up process callbacks
    core::system::ProcessCallbacks callbacks;
@@ -3249,6 +3244,23 @@ std::string effectiveAssistantType(const std::string& selectedAssistant,
       return kAssistantNone;
 
    return selectedAssistant;
+}
+
+bool agentPathOverrideApplies(const std::string& assistant,
+                              bool overrideExists,
+                              bool positHelperConfigured,
+                              bool copilotHelperConfigured)
+{
+   if (!overrideExists)
+      return false;
+
+   if (assistant == kAssistantPosit)
+      return !positHelperConfigured;
+
+   if (assistant == kAssistantCopilot)
+      return !copilotHelperConfigured;
+
+   return true;
 }
 
 bool isPositAssistantNesMissing()
