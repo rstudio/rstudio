@@ -149,8 +149,6 @@ test_that("traced functions are recognized whatever their trace class", {
    expect_identical(body(.rs.untraced(traced)), body(original))
 
 })
-# Affects every R version: the trace class comes from S7 1.0.0 (or the methods
-# package, for S4), not from the version of R.
 
 test_that("the browser environment can be read before it is first set", {
 
