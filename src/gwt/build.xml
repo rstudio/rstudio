@@ -601,7 +601,19 @@
       </java-compile>
    </target>
 
-   <target name="unittest" description="Runs JUnit unit tests" depends="build-unittests">
+   <!-- Fully qualified, space-separated; see "GWT Tests" in .claude/CLAUDE.md. -->
+   <property name="test.classes" value="org.rstudio.studio.client.RStudioUnitTestSuite"/>
+
+   <target name="unittest" description="Runs JUnit unit tests (-Dtest.classes=... for specific classes)" depends="build-unittests">
+      <!-- JUnitCore given no classes runs nothing and still reports OK. -->
+      <fail message="test.classes is empty; name at least one fully qualified test class">
+         <condition>
+            <equals arg1="${test.classes}" arg2="" trim="true"/>
+         </condition>
+      </fail>
+      <!-- Ant ignores unknown properties, so a misspelled -Dtest.classes would
+           silently run the whole suite; echo what actually runs. -->
+      <echo message="Running: ${test.classes}"/>
       <java failonerror="true" fork="true" classname="org.junit.runner.JUnitCore">
          <classpath>
             <pathelement location="${test.dir}"/>
@@ -612,7 +624,7 @@
          <!-- The default 1-minute wait for HtmlUnit to contact JUnitShell is too short on
               loaded CI agents; one timeout fails every remaining test in the suite. -->
          <jvmarg value="-Dgwt.args=-sourceLevel ${javac.version} -testBeginTimeout 3"/>
-         <arg value="org.rstudio.studio.client.RStudioUnitTestSuite"/>
+         <arg line="${test.classes}"/>
      </java>
    </target>
 

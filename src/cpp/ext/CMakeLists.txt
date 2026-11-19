@@ -31,15 +31,20 @@ endif()
 include(ExternalProject)
 include(FetchContent)
 
-# CMake 4.4 added a configurable delay between FetchContent git clone
-# attempts. Use a nonzero default so the built-in retries can outlast brief
-# network outages, while still allowing callers to override it with -D.
-if(NOT CMAKE_VERSION VERSION_LESS "4.4")
-   set(
-      CMAKE_EP_GIT_CLONE_RETRY_DELAY
-      "5"
-      CACHE STRING "Delay in seconds between FetchContent git clone attempts")
-endif()
+# fetch() downloads dependencies with fetch-git-revision.cmake, which retries
+# a failed fetch using FetchContent's git clone retry settings,
+# CMAKE_EP_GIT_CLONE_RETRY_COUNT and CMAKE_EP_GIT_CLONE_RETRY_DELAY. Use a
+# nonzero delay by default so the retries can outlast brief network outages,
+# while still allowing callers to override it with -D.
+set(
+   CMAKE_EP_GIT_CLONE_RETRY_DELAY
+   "5"
+   CACHE STRING "Delay in seconds between dependency fetch attempts")
+
+get_filename_component(
+   FETCH_GIT_REVISION_SCRIPT
+   "${CMAKE_CURRENT_LIST_DIR}/../../../cmake/fetch-git-revision.cmake"
+   ABSOLUTE)
 
 if(NOT DEFINED CMAKE_POLICY_VERSION_MINIMUM)
    set(CMAKE_POLICY_VERSION_MINIMUM "3.5" CACHE STRING "" FORCE)
@@ -57,6 +62,8 @@ set(FETCHCONTENT_QUIET TRUE)
 # VERSION:      The version of the dependency to be used.
 # REPOSITORY:   The (git) repository to be used when retrieving the dependency.
 # REVISION:     The (git) revision / commit hash to be used when retrieving the dependency.
+#               It need not be a tag or branch tip, as long as the server sends commits by id
+#               (GitHub, and any server using git protocol v2, send any reachable commit).
 # CUSTOM:       Optional; when TRUE, the project is retrieved but not automatically added to the build.
 # ALWAYS_FETCH: Optional; when TRUE, it will always be downloaded instead of using a system package
 # PLATFORMS:    Optional; a list of platforms for which this dependency should be retrieved and built.
@@ -208,10 +215,28 @@ function(fetch)
          set(${_PREFIX}_FETCHED ${do_fetch})
          set(${_PREFIX}_FETCHED ${do_fetch} PARENT_SCOPE)
          if(do_fetch)
+            # Fetch just the pinned commit, instead of using GIT_SHALLOW: its
+            # clone can only check out a commit that is still a tag or a
+            # branch tip (#19714). Git is optional here, since a
+            # FETCHCONTENT_SOURCE_DIR_<NAME> override skips the download.
+            find_package(Git QUIET)
+
+            # ExternalProject downloads again whenever the download command
+            # changes, so pass the settings that don't change what's checked
+            # out through the environment instead.
+            set(ENV{RSTUDIO_FETCH_GIT_EXECUTABLE} "${GIT_EXECUTABLE}")
+            set(ENV{RSTUDIO_FETCH_RETRY_COUNT} "${CMAKE_EP_GIT_CLONE_RETRY_COUNT}")
+            set(ENV{RSTUDIO_FETCH_RETRY_DELAY} "${CMAKE_EP_GIT_CLONE_RETRY_DELAY}")
+            set(ENV{RSTUDIO_FETCH_TLS_VERSION} "${CMAKE_TLS_VERSION}")
+            set(ENV{RSTUDIO_FETCH_TLS_VERIFY} "${CMAKE_TLS_VERIFY}")
+
             FetchContent_Declare("${_NAME}"
-               GIT_REPOSITORY "${${_PREFIX}_REPOSITORY}"
-               GIT_TAG        "${${_PREFIX}_REVISION}"
-               GIT_SHALLOW    ON
+               DOWNLOAD_COMMAND
+                  "${CMAKE_COMMAND}"
+                  "-DREPOSITORY=${${_PREFIX}_REPOSITORY}"
+                  "-DREVISION=${${_PREFIX}_REVISION}"
+                  "-DSOURCE_DIR=<SOURCE_DIR>"
+                  -P "${FETCH_GIT_REVISION_SCRIPT}"
                SOURCE_SUBDIR  "${_SOURCE_SUBDIR}"
                EXCLUDE_FROM_ALL)
          else()
