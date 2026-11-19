@@ -1,7 +1,9 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import type { Page } from 'playwright';
 import { TIMEOUTS } from '@utils/constants';
-import { clearPref, executeCommand, resetLayoutZoom, setPref, waitForActiveDocument } from '@utils/commands';
+import {
+  clearPref, executeCommand, resetLayoutZoom, setPref, waitForActiveDocument,
+} from '@utils/commands';
 import { closeAndDeleteSandboxFiles, seedSandboxFile } from '@utils/files';
 import { rPathLiteral } from '@utils/r';
 import { useSuiteSandbox } from '@utils/sandbox';
@@ -18,6 +20,9 @@ import { waitForConsoleFocus } from '@pages/console_pane.page';
 
 // Focus Last Console Error
 const FOCUS_LAST_ERROR = process.platform === 'darwin' ? 'Control+Alt+7' : 'Alt+Shift+7';
+const NO_ERROR_ANNOUNCEMENT = '[role="status"]:has-text("No Console error to focus")';
+// An error with a traceback, so its box has the Show Traceback button
+const NESTED_ERROR = 'g <- function() stop("boom"); f <- function() g(); f()';
 
 test.describe('Console pane', () => {
   let consoleActions: ConsolePaneActions;
@@ -187,7 +192,9 @@ test.describe('Console pane', () => {
     await expect(consoleActions.consolePane.tracebackBtn).toHaveText('Show Traceback');
   });
 
-  test('keyboard reaches an error box and its traceback source links', async ({ rstudioPage: page }) => {
+  test('keyboard reaches an error box and its traceback source links', async ({
+    rstudioPage: page,
+  }) => {
     const fileName = 'console_error_keyboard.R';
     const filePath = await seedSandboxFile(page, sandbox.dir, fileName,
       'inner <- function() stop("boom")\nouter <- function() inner()\n');
@@ -223,7 +230,9 @@ test.describe('Console pane', () => {
       await page.keyboard.press('Tab');
       await expect(pane.rerunBtn).toBeFocused();
       await page.keyboard.press('Tab');
-      const sourceLink = pane.stackTrace.getByRole('button', { name: /^console_error_keyboard\.R#\d+$/ });
+      const sourceLink = pane.stackTrace.getByRole('button', {
+        name: /^console_error_keyboard\.R#\d+$/,
+      });
       await expect(sourceLink.first()).toBeFocused();
 
       await page.keyboard.press('Enter');
@@ -234,14 +243,18 @@ test.describe('Console pane', () => {
     }
   });
 
-  test('Focus Last Console Error announces when there is no error', async ({ rstudioPage: page }) => {
+  test('Focus Last Console Error announces when there is no error', async ({
+    rstudioPage: page,
+  }) => {
     await page.keyboard.press(FOCUS_LAST_ERROR);
-    await expect(page.locator('[role="status"]', { hasText: 'No Console error to focus' })).toBeAttached();
+    await expect(page.locator(NO_ERROR_ANNOUNCEMENT)).toBeAttached();
     await waitForConsoleFocus(page);
   });
 
-  test('Focus Last Console Error announces when trimming removed the error\'s buttons', async ({ rstudioPage: page }) => {
-    const announcement = page.locator('[role="status"]', { hasText: 'No Console error to focus' });
+  test('Focus Last Console Error announces when trimming removed the error\'s buttons', async ({
+    rstudioPage: page,
+  }) => {
+    const announcement = page.locator(NO_ERROR_ANNOUNCEMENT);
     await setPref(page, 'console_max_lines', 20);
     try {
       await consoleActions.executeInConsole(
@@ -292,20 +305,23 @@ test.describe('Console pane', () => {
   for (const hide of ['zoomed out', 'minimized', 'minimized alone in its pane'] as const) {
     for (const reducedMotion of [true, false]) {
       const motion = reducedMotion ? 'reduced motion' : 'animated';
-      test(`Focus Last Console Error brings a ${hide} Console forward (${motion})`, async ({ rstudioPage: page }) => {
+      test(`Focus Last Console Error brings a ${hide} Console forward (${motion})`, async ({
+        rstudioPage: page,
+      }) => {
         const alone = hide === 'minimized alone in its pane';
-        if (alone)
-          await setConsoleAlone(page, true);
-        await consoleActions.executeInConsole('g <- function() stop("boom"); f <- function() g(); f()');
         const pane = consoleActions.consolePane;
-        await expect(pane.tracebackBtn).toBeVisible({ timeout: 10000 });
-
-        await setPref(page, 'reduced_motion', reducedMotion);
         try {
+          if (alone)
+            await setConsoleAlone(page, true);
+          await consoleActions.executeInConsole(NESTED_ERROR);
+          await expect(pane.tracebackBtn).toBeVisible({ timeout: 10000 });
+
+          await setPref(page, 'reduced_motion', reducedMotion);
           if (hide === 'zoomed out')
             await executeCommand(page, 'layoutZoomRightColumn');
           else
-            await page.locator('#rstudio_Console_pane [class*="rstudio_panel_min_btn"]').first().click();
+            await page.locator('#rstudio_Console_pane [class*="rstudio_panel_min_btn"]')
+              .first().click();
           await expect(page.locator('body')).not.toHaveClass(/rstudio-animating/);
           await expect(pane.tracebackBtn).not.toBeInViewport();
 
