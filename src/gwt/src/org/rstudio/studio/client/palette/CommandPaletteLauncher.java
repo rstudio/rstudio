@@ -33,6 +33,7 @@ import org.rstudio.studio.client.palette.events.PaletteItemExecutedEvent;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteMruEntry;
 import org.rstudio.studio.client.palette.ui.CommandPalette;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -62,6 +63,7 @@ public class CommandPaletteLauncher implements CommandPalette.Host
                                  Provider<UserPrefs> pPrefs,
                                  Provider<WorkbenchListManager> pWorkbenchLists,
                                  Provider<Session> pSession,
+                                 Provider<WorkbenchContext> pWorkbenchContext,
                                  EventBus events,
                                  GlobalDisplay display,
                                  Binder binder)
@@ -72,6 +74,7 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       pSource_ = pSource;
       pPrefs_ = pPrefs;
       pSession_ = pSession;
+      pWorkbenchContext_ = pWorkbenchContext;
       display_ = display;
       pWorkbenchLists_ = pWorkbenchLists;
       state_ = State.Hidden;
@@ -137,7 +140,9 @@ public class CommandPaletteLauncher implements CommandPalette.Host
          providers.add(provider);
       }
       providers.add(new RAddinPaletteSource(addins_.getRAddins(), ShortcutManager.INSTANCE));
-      providers.add(new UserPrefPaletteSource(pPrefs_.get(), pSession_.get().getSessionInfo()));
+      providers.add(new UserPrefPaletteSource(pPrefs_.get(),
+            pSession_.get().getSessionInfo(),
+            pWorkbenchContext_.get().getRVersionsInfo()));
 
       // Populate the MRU on first show if enabled
       if (mru_ == null && pPrefs_.get().commandPaletteMru().getValue())
@@ -235,6 +240,7 @@ public class CommandPaletteLauncher implements CommandPalette.Host
    private final Provider<UserPrefs> pPrefs_;
    private final Provider<WorkbenchListManager> pWorkbenchLists_;
    private final Provider<Session> pSession_;
+   private final Provider<WorkbenchContext> pWorkbenchContext_;
 
    private static final PaletteConstants constants_ = GWT.create(PaletteConstants.class);
 }

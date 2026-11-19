@@ -22,6 +22,7 @@ import java.util.Set;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.studio.client.application.model.RVersionsInfo;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.palette.ui.CommandPalette;
@@ -36,10 +37,17 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
  */
 public class UserPrefPaletteSource implements CommandPaletteEntryProvider
 {
-   public UserPrefPaletteSource(UserPrefs prefs, SessionInfo sessionInfo)
+   /**
+    * @param rVersionsInfo The current R versions, which (unlike the startup
+    *    snapshot in sessionInfo) follow version list refreshes.
+    */
+   public UserPrefPaletteSource(UserPrefs prefs,
+                                SessionInfo sessionInfo,
+                                RVersionsInfo rVersionsInfo)
    {
       prefs_ = prefs;
       sessionInfo_ = sessionInfo;
+      rVersionsInfo_ = rVersionsInfo;
    }
 
    @Override
@@ -56,7 +64,7 @@ public class UserPrefPaletteSource implements CommandPaletteEntryProvider
          }
          if (isPrefUnavailable(val.getId()))
          {
-            // Ignore preferences for AI features not available in this build
+            // Ignore preferences for features not available here
             continue;
          }
          items.add(new UserPrefPaletteItem(val, excludedValues(val.getId())));
@@ -89,9 +97,10 @@ public class UserPrefPaletteSource implements CommandPaletteEntryProvider
    }
 
    /**
-    * Preferences for AI features that should not appear in the palette when the
-    * corresponding feature is unavailable in this build (e.g. built with
-    * RSTUDIO_ENABLE_POSIT_ASSISTANT=OFF) or disabled by the administrator.
+    * Preferences that should not appear in the palette when the corresponding
+    * feature is unavailable: AI features absent from this build (e.g. built
+    * with RSTUDIO_ENABLE_POSIT_ASSISTANT=OFF) or disabled by the
+    * administrator, and the R version selector in sessions without one.
     */
    private boolean isPrefUnavailable(String id)
    {
@@ -122,6 +131,11 @@ public class UserPrefPaletteSource implements CommandPaletteEntryProvider
          case UserPrefsAccessor.ASSISTANT_NES_AUTOSHOW:
             return !sessionInfo_.getCopilotEnabled() &&
                    !sessionInfo_.getPositAssistantEnabled();
+         // Only the toolbar R version selector reads this, and it's shown only
+         // when the session offers R versions -- as is the Global Options
+         // checkbox for it.
+         case UserPrefsAccessor.R_VERSION_QUICK_PICK:
+            return rVersionsInfo_ == null || !rVersionsInfo_.isMultiVersion();
          default:
             return false;
       }
@@ -153,4 +167,5 @@ public class UserPrefPaletteSource implements CommandPaletteEntryProvider
 
    private final UserPrefs prefs_;
    private final SessionInfo sessionInfo_;
+   private final RVersionsInfo rVersionsInfo_;
 }

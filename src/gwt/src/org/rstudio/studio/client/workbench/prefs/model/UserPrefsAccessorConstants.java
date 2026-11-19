@@ -1648,6 +1648,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String reuseSessionsForProjectLinksDescription();
 
    /**
+    * Whether the R version selector groups R installations by version and offers a type-down search, instead of a single flat menu. Applies to RStudio Pro and RStudio Workbench sessions that show the R version selector; ignored elsewhere.
+    */
+   @DefaultStringValue("Use searchable R version selector")
+   String rVersionQuickPickTitle();
+   @DefaultStringValue("Whether the R version selector groups R installations by version and offers a type-down search, instead of a single flat menu. Applies to RStudio Pro and RStudio Workbench sessions that show the R version selector; ignored elsewhere.")
+   String rVersionQuickPickDescription();
+
+   /**
     * Whether to enable RStudio's version control system interface.
     */
    @DefaultStringValue("Enable version control if available")

@@ -150,8 +150,20 @@ public class GeneralPreferencesPane extends PreferencesPane
          rememberRVersionForProjects_.setValue(true);
          Style style = rememberRVersionForProjects_.getElement().getStyle();
          style.setMarginTop(5, Unit.PX);
-         style.setMarginBottom(12, Unit.PX);
+         // 4px to match the lessSpaced rhythm of adjacent checkboxes; the 12px
+         // that used to close out this block now sits on the checkbox below,
+         // which became the last control in it.
+         style.setMarginBottom(4, Unit.PX);
          basic.add(rememberRVersionForProjects_);
+
+         // Only meaningful when there is more than one R version to choose
+         // between, which is why it lives inside this block rather than
+         // alongside the other general checkboxes. Spaced rather than
+         // lessSpaced because it closes the block off from the working
+         // directory chooser that follows.
+         rVersionQuickPick_ = checkboxPref(prefs_.rVersionQuickPick(), false /*defaultSpaced*/);
+         spaced(rVersionQuickPick_);
+         basic.add(rVersionQuickPick_);
       }
 
       dirChooser_ = new DirectoryChooserTextBox(
@@ -881,6 +893,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    private CheckBox fullPathInTitle_ = null;
    private CheckBox reduceRemoteFilesystemOperations_ = null;
    private boolean initialReduceRemoteFilesystemOperations_ = false;
+   private CheckBox rVersionQuickPick_ = null;
    private CheckBox nativeFileDialogs_ = null;
    private CheckBox disableRendererAccessibility_ = null;
    private SelectWidget renderingEngineWidget_ = null;
