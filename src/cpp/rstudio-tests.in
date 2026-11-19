@@ -41,10 +41,11 @@ error () {
     exit 1
 }
 
-# Prints a port that nothing on this machine listens on. Desktop builds run
-# the session scopes in desktop mode, which listens on TCP www-port (8787 unless
-# set), and a dev server or another test run may already hold that. Server mode
-# (rsession-dev.conf) listens on a socket in RS_SESSION_TMP_DIR instead.
+# Prints a port that nothing answers on at 127.0.0.1. Desktop builds run the
+# session scopes in desktop mode, which listens there on TCP www-port (8787
+# unless set), and a dev server or another test run may already hold that.
+# Server mode (rsession-dev.conf) listens on a socket in RS_SESSION_TMP_DIR
+# instead.
 findFreePort() {
    local PORT
    for _ in {1..20}; do
@@ -457,8 +458,11 @@ while [ $# -gt 0 ]; do
 
    "--www-port")
 
-      if [ -z "$2" ]; then
-         echo "Usage: ./rstudio-tests --www-port <port>"
+      # rsession reports a bad port only when it fails to bind it, which server
+      # mode never does; 0 binds, but breaks requests back into a desktop-mode
+      # session, which go to the configured port
+      if ! [[ "$2" =~ ^[1-9][0-9]{0,4}$ ]] || [ "$2" -gt 65535 ]; then
+         echo "Usage: ./rstudio-tests --www-port <port>, a port number in 1-65535"
          exit 1
       fi
 
