@@ -169,6 +169,67 @@ test_that("output reaches R before the result that follows it", {
    expect_lt(as.numeric(difftime(Sys.time(), started, units = "secs")), 5)
 })
 
+test_that("display() shows text in the console, as values are", {
+   skipUnlessJulia()
+
+   on.exit(.rs.julia.stop(), add = TRUE)
+   .rs.julia.start()
+
+   output <- capture.output(.rs.julia.evaluate('display("rstudio"); 42'))
+   expect_identical(output, c('"rstudio"', "42"))
+})
+
+test_that("a value that renders as an image is drawn on R's graphics device", {
+   skipUnlessJulia()
+   skip_if_not(capabilities("cairo"), "R can't write PNGs with cairo")
+
+   # a PNG with a known color in each pixel: drawn at its own size, and
+   # uninterpolated, it keeps them
+   colors <- matrix(c("red", "#00FF00", "blue", "white", "black", "#808080"), nrow = 2L, byrow = TRUE)
+   path <- tempfile(fileext = ".png")
+   on.exit(unlink(path), add = TRUE)
+   png(path, width = 3L, height = 2L, type = "cairo")
+   grid::grid.raster(as.raster(colors), interpolate = FALSE)
+   dev.off()
+
+   # nativeRaster's packing: red in the lowest byte, row by row from the top
+   rgba <- col2rgb(t(colors), alpha = TRUE)
+   packed <- rgba[1L, ] + rgba[2L, ] * 2^8 + rgba[3L, ] * 2^16 + rgba[4L, ] * 2^24
+   expected <- as.integer(ifelse(packed >= 2^31, packed - 2^32, packed))
+
+   on.exit(.rs.julia.stop(), add = TRUE)
+   .rs.julia.start()
+   JuliaConnectoR::juliaLet("global rstudio_test_png = read(path); nothing", path = path)
+   JuliaConnectoR::juliaEval('
+      struct RStudioTestImage end
+      Base.show(io::IO, ::MIME"image/png", ::RStudioTestImage) = write(io, rstudio_test_png)
+   ')
+
+   pdf(NULL)
+   on.exit(dev.off(), add = TRUE)
+
+   # shown, nothing printed
+   output <- capture.output(.rs.julia.evaluate("RStudioTestImage()"))
+   expect_identical(output, character())
+
+   grobs <- grid::grid.ls(print = FALSE)$name
+   expect_length(grobs, 1L)
+   raster <- grid::grid.get(grobs[[1L]])$raster
+   expect_s3_class(raster, "nativeRaster")
+   expect_identical(dim(raster), c(2L, 3L))
+   expect_identical(as.integer(raster), expected)
+
+   # as is one passed to display(), on a page of its own; one that a
+   # semicolon hides isn't
+   .rs.julia.evaluate("display(RStudioTestImage())")
+   displayed <- grid::grid.ls(print = FALSE)$name
+   expect_length(displayed, 1L)
+   expect_false(identical(displayed, grobs))
+
+   .rs.julia.evaluate("RStudioTestImage();")
+   expect_identical(grid::grid.ls(print = FALSE)$name, displayed)
+})
+
 test_that("only the console starts Julia with serve.jl", {
    skipUnlessJulia()
 

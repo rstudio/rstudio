@@ -466,7 +466,8 @@
       "RStudio.init",
       .rs.julia.onEvaluationDone,
       asNamespace("JuliaConnectoR")$pkgLocal$communicator,
-      Sys.getpid()
+      Sys.getpid(),
+      .rs.julia.showPlot
    )
 
    state <- .rs.julia.state
@@ -1041,6 +1042,37 @@
    state$evaluating <- FALSE
    .rs.julia.debug("evaluation done; %d SIGINT(s) sent", state$sigints)
    state$sigints
+})
+
+#' Show a Julia Image
+#'
+#' Julia calls this to show a value that renders as an image (see
+#' ConsoleDisplay in RStudio.jl), on the current graphics device: the Plots
+#' pane, or a notebook chunk's output. Julia decodes the image itself, so
+#' that no package is needed to read it here.
+#'
+#' @param path A file holding the image's pixels, as a nativeRaster holds
+#'   them: packed RGBA integers, row by row from the top.
+#' @param width The image's width, in pixels.
+#' @param height The image's height, in pixels.
+.rs.addFunction("julia.showPlot", function(path, width, height)
+{
+   width <- as.integer(width)
+   height <- as.integer(height)
+   pixels <- readBin(path, "integer", n = width * height, size = 4L)
+
+   image <- structure(
+      pixels,
+      dim      = c(height, width),
+      class    = "nativeRaster",
+      channels = 4L
+   )
+
+   # as large as the device allows, keeping its aspect ratio
+   grid::grid.newpage()
+   grid::grid.raster(image, interpolate = TRUE)
+
+   invisible(NULL)
 })
 
 #' Stop Julia

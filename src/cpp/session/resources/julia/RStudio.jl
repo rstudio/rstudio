@@ -21,6 +21,8 @@ import Logging
 import Pkg
 import REPL
 
+include("png.jl")
+
 # Inputs evaluated so far; backtraces name them REPL[n], as the Julia REPL does.
 const input_count = Ref(0)
 
@@ -29,6 +31,13 @@ const DISPLAY_LINES = 40
 
 # Tells R that an evaluation is over (see `finish_evaluation`).
 const evaluation_done = Ref{Any}(nothing)
+
+# Shows an image in the Plots pane: an R function (see `ConsoleDisplay`).
+const plot_callback = Ref{Any}(nothing)
+
+# Where an evaluation's values are shown as text: stdout, with the console's
+# width and colors (see `evaluate`).
+const value_io = Ref{Union{IO, Nothing}}(nothing)
 
 # How long to wait for an interrupt R sent that hasn't landed yet, in seconds.
 const INTERRUPT_GRACE = 0.25
@@ -67,14 +76,15 @@ function debug(parts...)
 end
 
 """
-    init(done, communicator, rpid)
+    init(done, communicator, rpid, show_plot)
 
 Prepare a freshly started Julia process for the console. `done` is an R
 function, called when an evaluation is over; it returns the number of
 interrupts R sent during the evaluation. `communicator` is JuliaConnectoR's
-connection to R, and `rpid` R's process ID.
+connection to R, and `rpid` R's process ID. `show_plot` is an R function that
+draws an image's pixels on R's graphics device (see `ConsoleDisplay`).
 """
-function init(done, communicator, rpid)
+function init(done, communicator, rpid, show_plot)
    # leave R's process group: RStudio interrupts R by signalling the whole
    # group, and a SIGINT that Julia doesn't expect breaks its connection to
    # R. R sends Julia its own (see .rs.julia.interrupt in SessionJulia.R)
@@ -86,7 +96,9 @@ function init(done, communicator, rpid)
    end
 
    evaluation_done[] = done
+   plot_callback[] = show_plot
    forward_output(communicator)
+   install_display()
 
    # serve.jl has every message JuliaConnectoR writes (a result, a failure, a
    # callback) wait for the output written before it; see drain_output
@@ -349,6 +361,83 @@ function partial_mark_length(bytes::Vector{UInt8}, start::Int)
 end
 
 """
+    ConsoleDisplay()
+
+Shows values as the Julia REPL's display does, but for RStudio: an image in
+the Plots pane, anything else as text in the console. It sits on top of
+Julia's display stack (see `install_display`), so it shows both the values
+the console prints and those user code passes to `display()`; a display that
+user code or a package pushes later goes above it, as in the Julia REPL.
+"""
+struct ConsoleDisplay <: AbstractDisplay end
+
+const PNG = MIME("image/png")
+const TEXT = MIME("text/plain")
+
+Base.Multimedia.displayable(::ConsoleDisplay, ::MIME"text/plain") = true
+Base.Multimedia.displayable(::ConsoleDisplay, ::MIME"image/png") = plot_callback[] !== nothing
+
+function Base.display(d::ConsoleDisplay, @nospecialize(x))
+   if displayable(d, PNG) && showable(PNG, x)
+      display(d, PNG, x)
+   else
+      display(d, TEXT, x)
+   end
+   return nothing
+end
+
+function Base.display(::ConsoleDisplay, mime::MIME"text/plain", @nospecialize(x))
+   io = something(value_io[], stdout)
+   show(io, mime, x)
+   println(io)
+   return nothing
+end
+
+# R draws the image on its graphics device, from pixels rather than the PNG,
+# so it needs no PNG reader (see png.jl, and .rs.julia.showPlot).
+function Base.display(d::ConsoleDisplay, mime::MIME"image/png", @nospecialize(x))
+   callback = plot_callback[]
+   if callback === nothing
+      throw(MethodError(display, (d, mime, x)))
+   end
+
+   buffer = IOBuffer()
+   show(buffer, mime, x)
+   pixels, width, height = decode_png(take!(buffer))
+
+   path = tempname()
+   try
+      write(path, pixels)
+
+      # Julia waits for R's reply while R draws, and an interrupt landing in
+      # that wait would leave the reply unread, breaking the connection; so
+      # one waits until the reply is in, and interrupts the evaluation then
+      Base.disable_sigint() do
+         Base.invokelatest(callback, path, width, height)
+      end
+   finally
+      rm(path; force = true)
+   end
+   return nothing
+end
+
+# Put the console's display on top of Julia's display stack. Julia's own
+# text display, below it, writes to the stdout Julia started with, which
+# `forward_output` has replaced: it is made to follow the new one.
+function install_display()
+   displays = Base.Multimedia.displays
+   for i in eachindex(displays)
+      if displays[i] isa Base.TextDisplay
+         displays[i] = Base.TextDisplay(stdout)
+      end
+   end
+
+   filter!(d -> !(d isa ConsoleDisplay), displays)
+   pushdisplay(ConsoleDisplay())
+   return nothing
+end
+
+"""
     iscomplete(code)
 
 Is `code` complete input, as the Julia REPL judges it? An open block, string
@@ -534,10 +623,10 @@ function evaluate(code::AbstractString, mode::AbstractString, width::Integer, co
       end
       before = pwd()
 
-      io = IOContext(stdout, :limit => true, :displaysize => (DISPLAY_LINES, Int(width)), :module => Main, :color => color)
+      value_io[] = IOContext(stdout, :limit => true, :displaysize => (DISPLAY_LINES, Int(width)), :module => Main, :color => color)
       errio = IOContext(stderr, :color => color)
 
-      interrupted += run_input(String(code), String(mode), io, errio)
+      interrupted += run_input(String(code), String(mode), errio)
    catch err
       # an interrupt that landed outside the input's own evaluation
       err isa InterruptException || rethrow()
@@ -548,6 +637,7 @@ function evaluate(code::AbstractString, mode::AbstractString, width::Integer, co
       # input's error couldn't be reported
       Base.sigatomic_begin()
       accept_interrupts[] = false
+      value_io[] = nothing
       debug("evaluation over; ", interrupted, " interrupt(s) received")
       try
          drain_output()
@@ -570,13 +660,14 @@ function evaluate(code::AbstractString, mode::AbstractString, width::Integer, co
    return after
 end
 
-# Evaluate and print, returning the number of interrupts this caught.
-function run_input(code::String, mode::String, io::IO, errio::IO)
+# Evaluate and show the value, returning the number of interrupts this caught.
+# The value goes through the display stack, as in the Julia REPL, which lets a
+# plot reach the Plots pane (see `ConsoleDisplay`).
+function run_input(code::String, mode::String, errio::IO)
    try
       value = evaluate_mode(code, mode)
       if value !== nothing && !(mode == "julia" && REPL.ends_with_semicolon(code))
-         Base.invokelatest(show, io, MIME("text/plain"), value)
-         println(io)
+         Base.invokelatest(display, value)
       end
       return 0
    catch err
