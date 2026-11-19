@@ -33,7 +33,8 @@ namespace rstudio {
 namespace session {
 namespace tests {
 
-TEST(SessionConsoleHistoryTest, RHistsizeLimitsOnlyTheSavedHistory) {
+TEST(SessionConsoleHistoryTest, RHistsizeLimitsOnlyTheSavedHistory)
+{
    // restores R_HISTSIZE, set or not, when the test ends
    core::system::EnvironmentScope histsizeScope("R_HISTSIZE", "0");
 
@@ -111,8 +112,15 @@ TEST(SessionConsoleHistoryTest, RHistsizeLimitsOnlyTheSavedHistory) {
    ASSERT_EQ(600, largeHistory.size());
    EXPECT_EQ(longCommands, savedBy(largeHistory));
 
+   // a value meant as "unlimited" raises it only up to a limit
+   core::system::setenv("R_HISTSIZE", "999999999");
+   r::session::ConsoleHistory hugeHistory;
+   hugeHistory.setCapacityFromRHistsize();
+   EXPECT_EQ(100000, hugeHistory.capacity());
+
    // unset, negative, and invalid values mean R's default of 512, for both the
-   // session's capacity and the commands saved
+   // session's capacity and the commands saved; a longer history file loads
+   // only its newest 512
    const std::vector<std::string> last512(longCommands.end() - 512, longCommands.end());
    for (const char* value : {"", "-1", "abc"})
    {
@@ -124,7 +132,19 @@ TEST(SessionConsoleHistoryTest, RHistsizeLimitsOnlyTheSavedHistory) {
       r::session::ConsoleHistory defaultHistory;
       defaultHistory.setCapacityFromRHistsize();
       EXPECT_EQ(512, defaultHistory.capacity()) << "R_HISTSIZE=" << value;
+      ASSERT_FALSE(defaultHistory.loadFromFile(longHistoryPath, true)) << "R_HISTSIZE=" << value;
+      EXPECT_EQ(last512, entriesOf(defaultHistory)) << "R_HISTSIZE=" << value;
       EXPECT_EQ(last512, savedBy(largeHistory)) << "R_HISTSIZE=" << value;
+   }
+
+   // setCapacity() keeps room for at least one command, whatever it's given
+   for (int capacity : {0, -1})
+   {
+      r::session::ConsoleHistory tinyHistory;
+      tinyHistory.setCapacity(capacity);
+      EXPECT_EQ(1, tinyHistory.capacity()) << "capacity " << capacity;
+      ASSERT_FALSE(tinyHistory.loadFromFile(historyPath, true)) << "capacity " << capacity;
+      EXPECT_EQ(std::vector<std::string>{"third()"}, entriesOf(tinyHistory)) << "capacity " << capacity;
    }
 }
 

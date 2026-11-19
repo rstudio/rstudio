@@ -86,7 +86,9 @@ public:
    core::Error saveToFile(const core::FilePath& filePath, bool atomic) const;
 
    // saves a user's history file (.Rhistory on quit, savehistory()) as R does:
-   // only the most recent R_HISTSIZE commands, read at the time of saving
+   // only the most recent R_HISTSIZE commands, read at the time of saving.
+   // unlike R, it can save only what the session kept, so raising R_HISTSIZE
+   // past capacity() during the session doesn't save more than capacity()
    core::Error saveToHistoryFile(const core::FilePath& filePath) const;
 
    RSTUDIO_BOOST_CONNECTION connectOnAdd(const AddSignal::slot_function_type& slot)

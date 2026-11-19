@@ -16,7 +16,6 @@
 #include <r/session/RConsoleHistory.hpp>
 
 #include <algorithm>
-#include <cstddef>
 #include <vector>
 
 #include <boost/function.hpp>
@@ -43,7 +42,14 @@ namespace {
 // R's default for R_HISTSIZE
 const int kDefaultHistorySize = 512;
 
-// R_HISTSIZE as R reads it: R ignores a negative or invalid value
+// circular_buffer allocates its whole capacity up front, so a value meant as
+// "unlimited", like R_HISTSIZE=999999999, would allocate gigabytes. with a
+// larger R_HISTSIZE, at most this many commands are kept and saved
+const int kMaxHistorySize = 100000;
+
+// R_HISTSIZE as an int; like R, a negative or invalid value means the default.
+// R also accepts a k/K/M/G suffix (R_Decode2Long(), which isn't part of R's
+// API); such a value is invalid here
 int rHistorySize()
 {
    std::string histSize = core::system::getenv("R_HISTSIZE");
@@ -67,7 +73,9 @@ ConsoleHistory::ConsoleHistory()
 
 void ConsoleHistory::setCapacity(int capacity)
 {
-   historyBuffer_.set_capacity(capacity);
+   // loading a history file into a capacity of 0 crashes (#19690), and a
+   // negative one converts to a huge size_t
+   historyBuffer_.set_capacity(std::clamp(capacity, 1, kMaxHistorySize));
 }
 
 void ConsoleHistory::setCapacityFromRHistsize()
@@ -201,11 +209,8 @@ Error ConsoleHistory::saveToFile(const FilePath& filePath, bool atomic) const
 
 Error ConsoleHistory::saveToHistoryFile(const FilePath& filePath) const
 {
-   std::size_t count = std::min(static_cast<std::size_t>(rHistorySize()),
-                                historyBuffer_.size());
-   std::vector<std::string> commands(
-            historyBuffer_.end() - static_cast<std::ptrdiff_t>(count),
-            historyBuffer_.end());
+   std::vector<std::string> commands;
+   subset(size() - std::min(size(), rHistorySize()), size(), &commands);
 
    return core::writeCollectionToFile<std::vector<std::string> >(
                                                       filePath,
