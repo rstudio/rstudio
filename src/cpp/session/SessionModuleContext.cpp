@@ -2589,12 +2589,15 @@ void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
    module_context::enqueClientEvent(clientEvent);
 }
 
-Error enqueueConsoleInput(const std::string& consoleInput)
+namespace {
+
+// `flags` are RConsoleInput's, e.g. kConsoleInputNoEcho
+Error enqueueConsoleInputWithFlags(const std::string& consoleInput, int flags)
 {
    using namespace r::session;
 
    // construct our JSON RPC
-   json::Array jsonParams = RConsoleInput(consoleInput).toJsonArray();
+   json::Array jsonParams = RConsoleInput(consoleInput, "", flags).toJsonArray();
 
    json::Object jsonRpc;
    jsonRpc["method"] = "console_input";
@@ -2609,6 +2612,13 @@ Error enqueueConsoleInput(const std::string& consoleInput)
    consoleInputService().enqueue(oss.str());
 
    return Success();
+}
+
+} // anonymous namespace
+
+Error enqueueConsoleInput(const std::string& consoleInput)
+{
+   return enqueueConsoleInputWithFlags(consoleInput, 0);
 }
 
 // NOTE: we used to call explicitly back into r::session to write output
@@ -3663,7 +3673,18 @@ Error adaptToLanguage(const std::string& language)
    if (input.empty())
       return Success();
 
-   Error error = module_context::enqueueConsoleInput(input);
+   // the REPLs aren't nested, so the switch leaves one by way of R and then
+   // enters the other. RStudio's own way into and out of the Julia console
+   // isn't echoed: the prompt shows where the console is. reticulate's is
+   std::string leave = console_input::languageSwitchInput(activeLanguage, "R");
+   std::string enter = console_input::languageSwitchInput("R", language);
+
+   Error error;
+   if (!leave.empty())
+      error = enqueueConsoleInputWithFlags(leave, activeLanguage == "Julia" ? kConsoleInputNoEcho : 0);
+   if (!error && !enter.empty())
+      error = enqueueConsoleInputWithFlags(enter, language == "Julia" ? kConsoleInputNoEcho : 0);
+
    if (error)
    {
       LOG_ERROR(error);
