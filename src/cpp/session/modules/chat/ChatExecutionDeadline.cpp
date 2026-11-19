@@ -45,7 +45,7 @@ bool ExecutionDeadline::expired(Clock::time_point now)
 
 bool ExecutionDeadline::takeInterrupt(Clock::time_point now)
 {
-   if (!deadline_ || interrupted_ || !expired(now))
+   if (!deadline_ || !expired(now))
       return false;
 
    interrupted_ = true;

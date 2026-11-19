@@ -41,8 +41,9 @@ public:
    // Whether the deadline has passed by now; a pass is remembered
    bool expired(Clock::time_point now);
 
-   // True for the first call at or after the deadline, so the caller
-   // interrupts R once; false before it, after it, and when disarmed
+   // True for every call at or after the deadline, so the caller interrupts
+   // R again if the agent's code caught the last interrupt; false before
+   // the deadline and when disarmed
    bool takeInterrupt(Clock::time_point now);
 
    // Whether the deadline was found passed since the last arm

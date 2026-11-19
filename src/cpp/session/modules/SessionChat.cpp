@@ -380,19 +380,23 @@ bool currentDeadlinePassed()
    return s_currentDeadline.passed();
 }
 
-// Interrupts R once the current execution's deadline passes. Runs during
-// background processing, which R's event polling reaches while agent code
-// evaluates, so the interrupt lands where a runtime/cancelExecution one would.
+// Interrupts R once the current execution's deadline passes, and again on
+// each later poll until the execution ends, in case the agent's code caught
+// the last interrupt. Runs during background processing, which R's event
+// polling reaches while agent code evaluates, so the interrupt lands where a
+// runtime/cancelExecution one would.
 void checkExecutionDeadline()
 {
    boost::mutex::scoped_lock lock(s_executionTrackingMutex);
 
    // Not gated on s_currentTrackingId: an execution may have an empty one
+   bool firstInterrupt = !s_currentDeadline.interrupted();
    if (!s_currentDeadline.takeInterrupt(std::chrono::steady_clock::now()))
       return;
 
    r::exec::setInterruptsPending(true);
-   DLOG("Execution deadline passed for trackingId: {}", s_currentTrackingId);
+   if (firstInterrupt)
+      DLOG("Execution deadline passed for trackingId: {}", s_currentTrackingId);
 }
 
 // Stops enforcing the current execution's deadline; returns whether it

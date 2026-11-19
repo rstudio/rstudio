@@ -43,7 +43,7 @@ TEST(ChatExecutionDeadline, DoesNotPassBeforeTheTimeout)
    EXPECT_FALSE(deadline.interrupted());
 }
 
-TEST(ChatExecutionDeadline, InterruptsOnceAtTheTimeout)
+TEST(ChatExecutionDeadline, InterruptsAtTheTimeout)
 {
    ExecutionDeadline deadline;
    deadline.arm(kQueued, 2000);
@@ -51,10 +51,20 @@ TEST(ChatExecutionDeadline, InterruptsOnceAtTheTimeout)
    EXPECT_TRUE(deadline.takeInterrupt(kQueued + milliseconds(2000)));
    EXPECT_TRUE(deadline.passed());
    EXPECT_TRUE(deadline.interrupted());
+}
 
-   // Later checks don't ask for a second interrupt
-   EXPECT_FALSE(deadline.takeInterrupt(kQueued + milliseconds(5000)));
+TEST(ChatExecutionDeadline, InterruptsAgainAtLaterChecks)
+{
+   // The agent's code can catch an interrupt (e.g. tryCatch(interrupt = ))
+   // and carry on, so each check past the deadline asks for another
+   ExecutionDeadline deadline;
+   deadline.arm(kQueued, 2000);
+
+   EXPECT_TRUE(deadline.takeInterrupt(kQueued + milliseconds(2000)));
+   EXPECT_TRUE(deadline.takeInterrupt(kQueued + milliseconds(2050)));
+   EXPECT_TRUE(deadline.takeInterrupt(kQueued + milliseconds(5000)));
    EXPECT_TRUE(deadline.passed());
+   EXPECT_TRUE(deadline.interrupted());
 }
 
 TEST(ChatExecutionDeadline, InterruptsOnALateFirstCheck)
@@ -66,8 +76,17 @@ TEST(ChatExecutionDeadline, InterruptsOnALateFirstCheck)
 
    EXPECT_FALSE(deadline.takeInterrupt(kQueued + milliseconds(1990)));
    EXPECT_TRUE(deadline.takeInterrupt(kQueued + milliseconds(2049)));
-   EXPECT_FALSE(deadline.takeInterrupt(kQueued + milliseconds(2099)));
    EXPECT_TRUE(deadline.passed());
+}
+
+TEST(ChatExecutionDeadline, DisarmStopsFurtherInterrupts)
+{
+   ExecutionDeadline deadline;
+   deadline.arm(kQueued, 2000);
+   ASSERT_TRUE(deadline.takeInterrupt(kQueued + milliseconds(2000)));
+
+   deadline.disarm();
+   EXPECT_FALSE(deadline.takeInterrupt(kQueued + milliseconds(2050)));
 }
 
 TEST(ChatExecutionDeadline, ExpiredRecordsAPassWithoutAnInterrupt)
