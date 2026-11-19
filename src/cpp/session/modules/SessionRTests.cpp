@@ -207,6 +207,19 @@ TEST(SessionRTest, FailedHistoryLoadKeepsHistory) {
    }
 #endif
 
+   // a directory, e.g. loadhistory("~"); libc++ reads one as an empty file
+   FilePath directoryPath;
+   ASSERT_FALSE(FilePath::tempFilePath(directoryPath));
+   ASSERT_FALSE(directoryPath.ensureDirectory());
+   BOOST_SCOPE_EXIT(&directoryPath)
+   {
+      directoryPath.remove();
+   }
+   BOOST_SCOPE_EXIT_END
+
+   EXPECT_TRUE(history.loadFromFile(directoryPath, true));
+   EXPECT_EQ(seeded, std::vector<std::string>(history.begin(), history.end()));
+
    // a load that succeeds replaces the history with the file's commands
    FilePath loadedPath;
    ASSERT_FALSE(FilePath::tempFilePath(loadedPath));

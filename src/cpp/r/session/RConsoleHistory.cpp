@@ -166,6 +166,11 @@ Error ConsoleHistory::loadFromFile(const FilePath& filePath,
       return Success();
    }
 
+   // libc++ opens a directory and reads it as an empty file, which would
+   // replace the history with nothing
+   if (filePath.isDirectory())
+      return systemError(boost::system::errc::is_a_directory, ERROR_LOCATION);
+
    boost::circular_buffer<std::string> loaded(historyBuffer_.capacity());
    Error error = core::readCollectionFromFile<boost::circular_buffer<std::string> >(
                                                       filePath,
