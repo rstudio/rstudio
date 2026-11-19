@@ -35,6 +35,15 @@ import { kWindowsRExe } from '../ui/utils';
 import { dialog } from 'electron';
 import { appState } from './app-state';
 import { REnvironmentCache } from './r-environment-cache';
+import {
+  clearRChoice,
+  launchRStudioWhichR,
+  rChoiceApplies,
+  sameRExecutable,
+  saveRChoice,
+  savedRChoice,
+} from './r-choice';
+import { frameworkVersion, isOrthogonal } from './r-framework';
 
 let kLdLibraryPathVariable: string;
 if (process.platform === 'darwin') {
@@ -108,7 +117,7 @@ export function rChooserLikely(): boolean {
   if (rChooserRequested()) {
     return true;
   }
-  if (getenv('RSTUDIO_WHICH_R').length !== 0) {
+  if (getenv('RSTUDIO_WHICH_R').length !== 0 && !chosenRApplies()) {
     return false;
   }
 
@@ -156,6 +165,207 @@ export function rFromRStudioWhichR(): string {
   return rstudioWhichR ? resolveRHome(rstudioWhichR) : '';
 }
 
+/**
+ * Whether an R chosen in RStudio decides which R startup uses, ahead of
+ * RSTUDIO_WHICH_R (see rChoiceApplies).
+ */
+function chosenRApplies(platform = process.platform): boolean {
+  const choice = savedRChoice(platform);
+  return choice !== null && rChoiceApplies(choice);
+}
+
+/**
+ * What stops the R executable at this path from hosting a session, found
+ * without running it: it is missing, or it is a macOS framework version that
+ * would run the framework's default R instead of itself. The message is for
+ * the user; null when neither applies.
+ */
+export function rExecutableProblem(rPath: string): string | null {
+  // the client escapes the message for display itself
+  const interpolation = { escapeValue: false };
+
+  if (!existsSync(rPath)) {
+    return t('gwtCallbackTs.rExecutableMissing', { path: rPath, interpolation }) || rPath;
+  }
+
+  const home = frameworkVersionHome(rPath);
+  const version = home === null ? null : frameworkVersion(home);
+  if (version !== null && !isOrthogonal(version)) {
+    return t('gwtCallbackTs.rExecutableNotOrthogonal', { path: rPath, interpolation }) || rPath;
+  }
+
+  return null;
+}
+
+/**
+ * What stops an R that answered RStudio's query from hosting a session on
+ * macOS or Linux: the session loads R's shared library, which an R built
+ * without one (no --enable-R-shlib) lacks; on macOS, looking for it then
+ * fails the launch outright, before the launch error page can offer a way
+ * back. The message is for the user; null when nothing does.
+ */
+export function rSharedLibraryProblem(
+  rPath: string,
+  environment: REnvironment,
+  platform = process.platform,
+): string | null {
+  const home = environment.envVars['R_HOME'];
+  if (platform === 'win32' || !home) {
+    return null;
+  }
+
+  const library = join(home, 'lib', platform === 'darwin' ? 'libR.dylib' : 'libR.so');
+  if (existsSync(library)) {
+    return null;
+  }
+
+  const interpolation = { escapeValue: false };
+  return t('gwtCallbackTs.rSharedLibraryMissing', { path: rPath, library, interpolation }) || rPath;
+}
+
+/** An R chosen in RStudio that startup could not use, and why. */
+export interface UnusableRChoice {
+  path: string;
+  reason: string;
+}
+
+/**
+ * The R chosen in RStudio, as `path`, when it decides which R startup uses
+ * (see rChoiceApplies) and can still be used. A chosen R that can't be used
+ * now is returned as `unusable`, so that startup uses the default R and the
+ * user can be told why. The choice is kept: the R may only be out of reach
+ * for now (on a volume not yet mounted, say), and the user decides whether
+ * to forget it. Neither is set when no chosen R applies. Windows startup
+ * handles its stored R itself, in promptUserForR().
+ */
+export function chosenRForStartup(platform = process.platform): { path?: string; unusable?: UnusableRChoice } {
+  const choice = savedRChoice(platform);
+  if (choice === null || !rChoiceApplies(choice)) {
+    return {};
+  }
+
+  let reason = rExecutableProblem(choice.path);
+  if (reason === null) {
+    const [environment, error] = detectREnvironment(choice.path);
+    if (error) {
+      const interpolation = { escapeValue: false };
+      reason = t('gwtCallbackTs.rExecutableFailed', { path: choice.path, error: error.message, interpolation });
+    } else {
+      reason = rSharedLibraryProblem(choice.path, environment);
+    }
+  }
+
+  if (reason === null) {
+    logger().logDebug(`Using R chosen in RStudio: ${choice.path}`);
+    return { path: choice.path };
+  }
+
+  logger().logWarning(`The R chosen in RStudio cannot be used; using the default R instead: ${reason}`);
+  return { unusable: { path: choice.path, reason } };
+}
+
+/** How long describing an R RStudio isn't running may take. */
+export const kRQueryTimeoutMs = 30000;
+
+/**
+ * The R RStudio uses when none was chosen in RStudio: the R that
+ * RSTUDIO_WHICH_R named at launch, or else the platform's default
+ * installation, the first of the candidates startup would try that runs.
+ * '' when there is none. Queried in the background, and bounded: startup
+ * may never have run it, and an R that hangs must not hang RStudio.
+ */
+export async function defaultR(timeoutMs = kRQueryTimeoutMs, platform = process.platform): Promise<string> {
+  const rstudioWhichR = launchRStudioWhichR();
+  if (rstudioWhichR) {
+    return resolveRHome(rstudioWhichR, platform);
+  }
+
+  if (platform === 'win32') {
+    return firstRunningR(registryRCandidatesWin32(), timeoutMs);
+  }
+
+  // as in scanForRPosix(), the R on the PATH is taken as it is on Linux
+  if (platform !== 'darwin') {
+    const rOnPath = rOnPathLinux();
+    if (rOnPath) {
+      return rOnPath;
+    }
+  }
+
+  return firstRunningR(defaultRLocationsPosix(), timeoutMs);
+}
+
+/**
+ * The first of the given R executables that answers RStudio's query within
+ * the timeout, or '' when none does.
+ */
+export async function firstRunningR(candidates: string[], timeoutMs: number): Promise<string> {
+  for (const candidate of candidates) {
+    if (!existsSync(candidate)) {
+      continue;
+    }
+
+    const [, error] = await detectREnvironmentAsync(candidate, timeoutMs);
+    if (!error) {
+      return candidate;
+    }
+  }
+
+  return '';
+}
+
+/**
+ * Make the given R the one RStudio uses from now on. Choosing the default R
+ * (see defaultR) means following the default from then on, rather than
+ * holding on to the R it is now.
+ */
+export async function storeRChoice(rPath: string, platform = process.platform): Promise<void> {
+  // kept straight away, so that quitting while the default R is looked for
+  // keeps it; following the default instead is settled after, unless
+  // another R was chosen in the meantime
+  saveRChoice(rPath, platform);
+
+  const defaultPath = await defaultR(kRQueryTimeoutMs, platform);
+  const saved = savedRChoice(platform);
+  if (saved !== null && sameRExecutable(saved.path, rPath, platform)) {
+    rememberRChoice(rPath, defaultPath, platform);
+  }
+}
+
+/**
+ * Make the R the user chose the one RStudio uses from now on: the default R
+ * (`useDefault`), followed from then on, or else the installation chosen.
+ * Off Windows an installation at the default R's own path is the default R
+ * (see storeRChoice): that path, such as Debian's /usr/bin/R, follows
+ * upgrades itself. On Windows each version has its own directory and the
+ * registry's default moves to each newly installed one, so choosing the
+ * default R's own installation holds on to that version.
+ */
+export async function storeChosenR(rPath: string, useDefault: boolean, platform = process.platform): Promise<void> {
+  if (useDefault) {
+    // Windows keeps the stored path to fall back on when no default 64-bit
+    // installation is found (see clearRChoice), which must then be the
+    // default R rather than an R chosen before
+    if (platform === 'win32') {
+      saveRChoice(rPath, platform);
+    }
+    clearRChoice(platform);
+  } else if (platform === 'win32') {
+    saveRChoice(rPath, platform);
+  } else {
+    await storeRChoice(rPath, platform);
+  }
+}
+
+/** As storeRChoice(), given the default R (from defaultR()). */
+export function rememberRChoice(rPath: string, defaultPath: string, platform = process.platform): void {
+  if (sameRExecutable(rPath, defaultPath, platform)) {
+    clearRChoice(platform);
+  } else {
+    saveRChoice(rPath, platform);
+  }
+}
+
 export async function promptUserForR(platform = process.platform): Promise<Expected<string | null>> {
   const options = ElectronDesktopOptions();
 
@@ -163,9 +373,10 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
     const showUi = rChooserRequested();
 
     if (!showUi) {
-      // nothing to do if RSTUDIO_WHICH_R is set
+      // nothing to do if RSTUDIO_WHICH_R is set, unless an R was chosen in
+      // RStudio since it was (the stored path, below)
       const rstudioWhichR = rFromRStudioWhichR();
-      if (rstudioWhichR) {
+      if (rstudioWhichR && !chosenRApplies(platform)) {
         logger().logDebug(`Using R from RSTUDIO_WHICH_R: ${rstudioWhichR}`);
         return ok(rstudioWhichR);
       }
@@ -210,6 +421,7 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
     options.setUseDefault32BitR(data.useDefault32BitR || false);
     options.setUseDefault64BitR(data.useDefault64BitR || false);
     options.setRExecutablePath(path);
+    options.setRStudioWhichRWhenChosen(launchRStudioWhichR());
 
     // if the user has changed the default rendering engine,
     // then we'll need to ask them to restart RStudio now
@@ -257,8 +469,9 @@ interface RCandidateWin32 {
  * The R executables the Windows startup prefers when the user is not asked,
  * in order: the default 32-bit or 64-bit installation when the options ask
  * for one (and it exists), then the executable stored in the options.
+ * Exported for tests.
  */
-function storedRCandidatesWin32(): RCandidateWin32[] {
+export function storedRCandidatesWin32(): RCandidateWin32[] {
   const options = ElectronDesktopOptions();
   const candidates: RCandidateWin32[] = [];
 
@@ -286,7 +499,17 @@ function storedRCandidatesWin32(): RCandidateWin32[] {
 
   const rBinDir = options.rBinDir();
   if (rBinDir) {
-    candidates.push({ path: fixWindowsRExecutablePath(`${rBinDir}/${kWindowsRExe}`), validate: true });
+    // with no default installation asked for, the stored path is the chosen
+    // R, which gives way to the default installation once RSTUDIO_WHICH_R
+    // has changed since it was chosen (see rChoiceApplies); startup then
+    // forgets it, but the early query (startRDetection) runs before that
+    const path = fixWindowsRExecutablePath(`${rBinDir}/${kWindowsRExe}`);
+    const askedForDefault = options.useDefault32BitR() || options.useDefault64BitR();
+    if (askedForDefault || rChoiceApplies({ path, rstudioWhichR: options.rstudioWhichRWhenChosen() })) {
+      candidates.push({ path, validate: true });
+    } else {
+      candidates.push(...registryRCandidatesWin32().map((candidate) => ({ path: candidate, validate: true })));
+    }
   }
 
   return candidates;
@@ -878,20 +1101,31 @@ let rDetection: Promise<void> | undefined;
 
 /**
  * The R executables startup would consider, in order, without asking the
- * user: RSTUDIO_WHICH_R, then the platform's stored or well-known locations.
+ * user: an R chosen in RStudio that applies (see rChoiceApplies), then
+ * RSTUDIO_WHICH_R, then the platform's stored or well-known locations.
  */
 function rCandidates(): string[] {
+  const choice = savedRChoice();
+  const chosen = choice !== null && rChoiceApplies(choice);
+
   const rstudioWhichR = rFromRStudioWhichR();
-  if (rstudioWhichR) {
+  if (rstudioWhichR && !chosen) {
     return [rstudioWhichR];
   }
 
+  // a Windows choice is among the stored candidates
   if (process.platform === 'win32') {
     return [...storedRCandidatesWin32().map((candidate) => candidate.path), ...registryRCandidatesWin32()];
   }
 
+  const fallbacks = rstudioWhichR ? [rstudioWhichR] : posixRCandidates();
+  return chosen ? [choice.path, ...fallbacks] : fallbacks;
+}
+
+// the R executables scanForRPosix() tries, in order
+function posixRCandidates(platform = process.platform): string[] {
   const candidates = defaultRLocationsPosix();
-  if (process.platform !== 'darwin') {
+  if (platform !== 'darwin') {
     const rLocation = rOnPathLinux();
     if (rLocation) {
       candidates.unshift(rLocation);

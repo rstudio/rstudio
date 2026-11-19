@@ -591,7 +591,7 @@ Error getRmdPublishDetails(const json::JsonRpcRequest& request,
    r::sexp::Protect protect;
    SEXP sexpDetails;
    error = r::exec::RFunction(".rs.getRmdPublishDetails")
-         .addUtf8Param(target)
+         .addParam(target)
          .addParam(encoding)
          .call(&sexpDetails, &protect);
    

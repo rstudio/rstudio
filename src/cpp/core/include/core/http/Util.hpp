@@ -17,7 +17,9 @@
 #define CORE_HTTP_UTIL_HPP
 
 #include <cstddef>
+#include <functional>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <map>
 
@@ -25,6 +27,8 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/system/error_code.hpp>
+
+#include <shared_core/Error.hpp>
 
 #include <core/http/Header.hpp>
 
@@ -139,6 +143,60 @@ void parseMultipartForm(const std::string& contentType,
                         const std::string& body, 
                         Fields* pFields,
                         Files* pFiles);
+
+// The boundary parameter of a multipart/form-data Content-Type, which may be
+// quoted.
+Error multipartFormBoundary(const std::string& contentType, std::string* pBoundary);
+
+// What a part's form-data Content-Disposition says about it (RFC 7578 4.2).
+struct FormDataDisposition
+{
+   std::string name;
+   bool isFile = false;
+   std::string fileName;
+};
+
+// Read a part's form-data Content-Disposition; false when it has none, or it
+// has no name. Backslash escapes in quoted values are decoded only with
+// `unescape`: browsers send the backslashes in a file name as-is.
+bool parseFormDataDisposition(const Headers& headers,
+                              bool unescape,
+                              FormDataDisposition* pDisposition);
+
+// Streaming parser for a multipart/form-data body, framed per RFC 2046. As
+// each part begins, its headers go to the part handler, which picks the sink
+// for the part's data, and that data goes to the sink as it arrives. The body
+// may be split into chunks at any byte. A line that starts like a delimiter,
+// but goes on with neither "--" nor transport padding and a CRLF, is part
+// data.
+class MultipartFormParser
+{
+public:
+   // never called with empty data
+   typedef std::function<Error(const char* data, std::size_t size)> DataSink;
+
+   // leave *pSink empty to skip the part's data
+   typedef std::function<Error(const Headers& headers, DataSink* pSink)> PartHandler;
+
+   MultipartFormParser(const std::string& boundary, const PartHandler& partHandler);
+
+   // `complete` marks the final chunk, which must end the body; what is left
+   // of the last part still goes to its sink when it doesn't
+   Error consume(std::string_view chunk, bool complete);
+
+private:
+   enum class State { PartHeaders, PartBody, Epilogue };
+
+   Error step(std::string_view* pInput, bool complete, bool* pProgress);
+   Error emit(std::string_view* pInput, std::size_t size);
+
+   std::string delimiter_;
+   PartHandler partHandler_;
+
+   State state_;
+   DataSink sink_;
+   std::string buffer_;
+};
 
 void buildQueryString(const Fields& fields, std::string* pQueryString);
 void parseQueryString(const std::string& queryString, Fields* pFields);

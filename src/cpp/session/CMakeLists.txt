@@ -236,6 +236,7 @@ set(SESSION_SOURCE_FILES
    modules/SessionFiles.cpp
    modules/SessionFilesListingMonitor.cpp
    modules/SessionFilesQuotas.cpp
+   modules/SessionFilesUpload.cpp
    modules/SessionFind.cpp
    modules/SessionFonts.cpp
    modules/SessionGit.cpp

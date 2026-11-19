@@ -182,9 +182,9 @@ Error NotebookQueueUnit::parseOptions(json::Object* pOptions)
    r::sexp::Protect protect;
    SEXP sexpOptions = R_NilValue;
    Error error = r::exec::RFunction(".rs.evaluateChunkOptions")
-         .addUtf8Param(docId_)
-         .addUtf8Param(docType_)
-         .addUtf8Param(code_)
+         .addParam(docId_)
+         .addParam(docType_)
+         .addParam(code_)
          .call(&sexpOptions, &protect);
 
    if (error)
@@ -271,8 +271,8 @@ Error NotebookQueueUnit::replaceCodeFromFileOption(const json::Object& options,
 Error NotebookQueueUnit::innerCode(std::string* pCode)
 {
    return r::exec::RFunction(".rs.extractChunkInnerCode")
-       .addUtf8Param(code_)
-       .callUtf8(pCode);
+       .addParam(code_)
+       .call(pCode);
 }
 
 bool NotebookQueueUnit::hasPendingRanges()

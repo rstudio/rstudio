@@ -79,45 +79,59 @@ Error setJsonResult(SEXP resultSEXP, core::json::JsonRpcResponse* pResponse)
    return Success();
 }
 
+bool containsNul(const core::json::Value& value)
+{
+   if (value.isString())
+      return value.getString().find('\0') != std::string::npos;
+
+   if (value.isArray())
+   {
+      for (const core::json::Value& element : value.getArray())
+      {
+         if (containsNul(element))
+            return true;
+      }
+   }
+   else if (value.isObject())
+   {
+      for (const core::json::Object::Member& member : value.getObject())
+      {
+         if (member.getName().find('\0') != std::string::npos || containsNul(member.getValue()))
+            return true;
+      }
+   }
+
+   return false;
+}
+
 Error callRHandler(const std::string& functionName,
                    const core::json::JsonRpcRequest& request,
                    SEXP* pResult,
                    sexp::Protect* pProtect)
 {
+   // R raises an error on a string with an embedded nul. Raised while the
+   // arguments below are built, before the call runs protected, it would
+   // longjmp past this handler and leave the request unanswered. names are
+   // refused too, as R would truncate them at the nul
+   if (containsNul(request.params) || containsNul(request.kwparams))
+   {
+      return Error(core::json::errc::ParamInvalid,
+                   "string parameter contains an embedded nul",
+                   ERROR_LOCATION);
+   }
+
    // initialize the function
    r::exec::RFunction rFunction(functionName);
    
    // add params
    const core::json::Array& params = request.params;
    for (size_t i = 0; i < params.getSize(); i++)
-   {
-      const core::json::Value& param = params[i];
-      if (param.isString())
-      {
-         rFunction.addUtf8Param(param.getString());
-      }
-      else
-      {
-         rFunction.addParam(param);
-      }
-   }
-   
+      rFunction.addParam(params[i]);
+
    // add kwparams
    const core::json::Object& kwparams = request.kwparams;
    for (const core::json::Object::Member& member : kwparams)
-   {
-      const std::string& name = member.getName();
-      const core::json::Value& value = member.getValue();
-
-      if (value.isString())
-      {
-         rFunction.addUtf8Param(name, value.getString());
-      }
-      else
-      {
-         rFunction.addParam(name, value);
-      }
-   }
+      rFunction.addParam(member.getName(), member.getValue());
    
    // call the function
    return rFunction.call(pResult, pProtect);

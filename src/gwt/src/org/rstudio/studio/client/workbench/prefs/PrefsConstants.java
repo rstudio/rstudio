@@ -160,8 +160,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String rSessionsTitle();
     String rVersionTitle();
     String rVersionChangeTitle();
-    String rChangeVersionMessage();
-    String rQuitReOpenMessage();
     String rVersionLoadingText();
     String rRestoreLabel();
     String rDefaultDirectoryTitle();

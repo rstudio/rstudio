@@ -34,12 +34,18 @@ public:
              const boost::shared_ptr<IAsyncClient>& pDownstreamCOnnection,
              uint64_t maxBufferSize = defaultMaxBufferSize);
 
-   bool queueData(const std::string& formData);
+   // Queue form data for the downstream connection. A final call marked
+   // complete that leaves the body short of its Content-Length is the upstream
+   // connection saying its client went away (RequestParser::abortForm), so
+   // the downstream connection is closed, and the session stops waiting for
+   // the rest.
+   bool queueData(const std::string& formData, bool complete);
    void initialize();
 
 private:
    constexpr static uint64_t defaultMaxBufferSize = 1'572'864; // 1.5 MB
 
+   void abort();
    void writeData();
    void onDownstreamConnected();
    void onDownstreamClosed();
@@ -61,6 +67,13 @@ private:
    // accepted and discarded rather than buffered, so that the upstream
    // connection is never left paused waiting on a writer that cannot exist.
    bool downstreamClosed_;
+
+   // form data accepted from the upstream connection so far
+   uint64_t bytesReceived_;
+
+   // set once abort() has closed the downstream connection, whose in-flight
+   // write then fails with an error that is ours, not the session's
+   bool aborted_;
 };
 
 } // namespace http

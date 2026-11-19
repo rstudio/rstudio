@@ -334,6 +334,214 @@ test_that("the architectures of an R build are read from libR", {
    match <- .rs.findInstalledRVersion("4.4.1", installed, architecture = NULL)
    expect_equal(match$home, .rs.scalar(file.path(root, "x86_64")))
 
+   # the chooser says which builds would run emulated
+   offered <- .rs.rInstallations.forChooser("3.6.0", installed, current = file.path(root, "arm64"), architecture = "arm64")
+   emulated <- vapply(offered, function(entry) isTRUE(entry$emulated), logical(1))
+   homes <- vapply(offered, function(entry) as.character(entry$home), character(1))
+   expect_identical(emulated[homes == file.path(root, "x86_64")], TRUE)
+   expect_identical(emulated[homes == file.path(root, "arm64")], FALSE)
+
+})
+
+test_that("the R installations offered for choosing R are the supported ones, newest first", {
+
+   versions <- c("4.3.3", "3.5.0", "4.5.1", "4.4.10", "4.4.9")
+   installed <- data.frame(
+      version = versions,
+      path    = paste0("/opt/R/", versions),
+      binary  = paste0("/opt/R/", versions, "/bin/R"),
+      home    = paste0("/opt/R/", versions, "/lib/R"),
+      stringsAsFactors = FALSE
+   )
+
+   offered <- .rs.rInstallations.forChooser(
+      minimum      = "3.6.0",
+      installed    = installed,
+      current      = "/opt/R/4.4.9/lib/R",
+      architecture = NULL
+   )
+
+   field <- function(name, type) vapply(offered, function(entry) as.vector(entry[[name]]), type)
+   expect_identical(field("version", character(1)), c("4.5.1", "4.4.10", "4.4.9", "4.3.3"))
+   expect_identical(field("current", logical(1)), c(FALSE, FALSE, TRUE, FALSE))
+   expect_identical(field("binary", character(1))[[1L]], "/opt/R/4.5.1/bin/R")
+   expect_false(any(field("emulated", logical(1))))
+   expect_true(all(field("orthogonal", logical(1))))
+
+})
+
+test_that("the R in use is offered for choosing R even when it was found nowhere else", {
+
+   home <- tempfile("r-home-")
+   dir.create(file.path(home, "include"), recursive = TRUE)
+   on.exit(unlink(home, recursive = TRUE), add = TRUE)
+   writeLines(
+      c('#define R_MAJOR  "4"', '#define R_MINOR  "4.1"'),
+      file.path(home, "include", "Rversion.h")
+   )
+
+   installed <- data.frame(
+      version = "4.5.1",
+      path    = "/opt/R/4.5.1",
+      binary  = "/opt/R/4.5.1/bin/R",
+      home    = "/opt/R/4.5.1/lib/R",
+      stringsAsFactors = FALSE
+   )
+
+   offered <- .rs.rInstallations.forChooser("3.6.0", installed, current = home, architecture = NULL, arch = "")
+
+   expect_length(offered, 2L)
+   expect_identical(as.vector(offered[[1L]]$version), "4.5.1")
+   expect_false(isTRUE(offered[[1L]]$current))
+   expect_identical(as.vector(offered[[2L]]$version), "4.4.1")
+   expect_true(isTRUE(offered[[2L]]$current))
+   expect_identical(basename(dirname(as.vector(offered[[2L]]$binary))), "bin")
+
+   # nothing is offered twice once the R in use is among those found
+   installed <- rbind(installed, data.frame(
+      version = "4.4.1",
+      path    = home,
+      binary  = file.path(home, "bin", "R"),
+      home    = home,
+      stringsAsFactors = FALSE
+   ))
+   expect_length(.rs.rInstallations.forChooser("3.6.0", installed, current = home, architecture = NULL), 2L)
+
+})
+
+test_that("the R in use is told apart from the other architecture of its installation", {
+
+   home <- "C:/Program Files/R/R-4.1.3"
+
+   # a 64-bit session: bin/x64 and bin/R.exe run it, bin/i386 doesn't
+   expect_true(.rs.rInstallations.isCurrent(file.path(home, "bin/x64/R.exe"), home, home, arch = "/x64"))
+   expect_true(.rs.rInstallations.isCurrent(file.path(home, "bin/R.exe"), home, home, arch = "/x64"))
+   expect_false(.rs.rInstallations.isCurrent(file.path(home, "bin/i386/R.exe"), home, home, arch = "/x64"))
+
+   # a 32-bit session
+   expect_true(.rs.rInstallations.isCurrent(file.path(home, "bin/i386/R.exe"), home, home, arch = "/i386"))
+   expect_false(.rs.rInstallations.isCurrent(file.path(home, "bin/R.exe"), home, home, arch = "/i386"))
+
+   # elsewhere there is one R per installation
+   expect_true(.rs.rInstallations.isCurrent("/opt/R/4.4.1/bin/R", "/opt/R/4.4.1/lib/R", "/opt/R/4.4.1/lib/R", arch = ""))
+   expect_false(.rs.rInstallations.isCurrent("/opt/R/4.4.1/bin/R", "/opt/R/4.4.1/lib/R", "/opt/R/4.5.0/lib/R", arch = ""))
+   expect_false(.rs.rInstallations.isCurrent("/opt/R/4.4.1/bin/R", "", "/opt/R/4.4.1/lib/R", arch = ""))
+
+})
+
+test_that("R installations recorded in the Windows registry are found wherever they are", {
+
+   # what utils::readRegistry() reports for the R-core keys: the key's own
+   # values (the current version), and a subkey per version
+   registry <- list(
+      HLM = list(
+         "SOFTWARE\\R-core\\R64" = list(
+            "Current Version" = "4.5.0",
+            InstallPath = "C:\\Program Files\\R\\R-4.5.0",
+            "4.5.0" = list(InstallPath = "C:\\Program Files\\R\\R-4.5.0"),
+            "4.3.3" = list(InstallPath = "D:\\R\\R-4.3.3")
+         )
+      ),
+      HCU = list(
+         "SOFTWARE\\R-core\\R" = list(
+            "4.4.1" = list(InstallPath = "C:\\Users\\me\\R\\R-4.4.1")
+         )
+      )
+   )
+
+   read <- function(key, hive, maxdepth, view) {
+      entries <- registry[[hive]][[key]]
+      if (is.null(entries))
+         stop("cannot open key")
+      entries
+   }
+
+   homes <- .rs.rInstallations.registryHomes(read)
+   expect_setequal(
+      gsub("\\\\", "/", homes),
+      c("C:/Program Files/R/R-4.5.0", "D:/R/R-4.3.3", "C:/Users/me/R/R-4.4.1")
+   )
+
+   expect_identical(.rs.rInstallations.registryHomes(function(...) stop("no registry")), character())
+
+})
+
+test_that("an R executable the user browsed to is described as the chooser lists it", {
+
+   skip_on_os("windows")
+
+   # an R home, and a stand-in launcher that reports it as R does
+   root <- tempfile("r-browsed-")
+   on.exit(unlink(root, recursive = TRUE), add = TRUE)
+   home <- file.path(root, "lib", "R")
+   dir.create(file.path(home, "library", "base"), recursive = TRUE)
+   dir.create(file.path(home, "include"))
+   writeLines(
+      c('#define R_MAJOR  "3"', '#define R_MINOR  "5.2"'),
+      file.path(home, "include", "Rversion.h")
+   )
+   binary <- file.path(root, "bin", "R")
+   dir.create(dirname(binary))
+   writeLines(c("#!/bin/sh", sprintf("echo '%s'", home)), binary)
+   Sys.chmod(binary, "755")
+
+   entry <- .rs.rInstallations.describe(binary, minimum = "3.6.0", current = R.home(), architecture = NULL)
+   expect_identical(as.vector(entry$version), "3.5.2")
+   expect_identical(as.vector(entry$binary), binary)
+   expect_identical(as.vector(entry$home), home)
+   expect_false(isTRUE(entry$current))
+   expect_false(isTRUE(entry$supported))
+
+   entry <- .rs.rInstallations.describe(binary, minimum = "3.5.0", current = home, architecture = NULL)
+   expect_true(isTRUE(entry$supported))
+   expect_true(isTRUE(entry$current))
+
+   # anything else is not an R installation
+   expect_null(.rs.rInstallations.describe(file.path(root, "missing"), minimum = "3.6.0", architecture = NULL))
+   notR <- file.path(home, "include", "Rversion.h")
+   expect_null(suppressWarnings(.rs.rInstallations.describe(notR, minimum = "3.6.0", architecture = NULL)))
+
+})
+
+test_that("only the R launcher of a macOS framework version is described as R", {
+
+   skip_on_os("windows")
+
+   # a framework version's home is taken from the path, so any file in it
+   # would otherwise pass for that version of R
+   root <- tempfile("r-framework-browsed-")
+   on.exit(unlink(root, recursive = TRUE), add = TRUE)
+   home <- file.path(root, "R.framework", "Versions", "4.4-arm64", "Resources")
+   dir.create(file.path(home, "library", "base"), recursive = TRUE)
+   dir.create(file.path(home, "include"))
+   header <- file.path(home, "include", "Rversion.h")
+   writeLines(c('#define R_MAJOR  "4"', '#define R_MINOR  "4.1"'), header)
+   dir.create(file.path(home, "bin"))
+   launcher <- file.path(home, "bin", "R")
+   writeLines("#!/bin/sh", launcher)
+   Sys.chmod(launcher, "755")
+
+   entry <- .rs.rInstallations.describe(launcher, minimum = "3.6.0", current = R.home(), architecture = NULL)
+   expect_identical(as.vector(entry$version), "4.4.1")
+   expect_identical(as.vector(entry$binary), launcher)
+
+   expect_null(.rs.rInstallations.describe(header, minimum = "3.6.0", architecture = NULL))
+
+   # another executable in it is not its launcher
+   rscript <- file.path(home, "bin", "Rscript")
+   writeLines("#!/bin/sh", rscript)
+   Sys.chmod(rscript, "755")
+   expect_null(.rs.rInstallations.describe(rscript, minimum = "3.6.0", architecture = NULL))
+
+   # nor is a launcher beside the version's home, which would otherwise be
+   # taken for the live installation (see rig.rHome)
+   old <- file.path(dirname(home), "Resources.old", "bin", "R")
+   dir.create(dirname(old), recursive = TRUE)
+   writeLines("#!/bin/sh", old)
+   Sys.chmod(old, "755")
+   expect_null(.rs.rInstallations.describe(old, minimum = "3.6.0", architecture = NULL))
+   expect_null(.rs.rInstallations.describe(file.path(home, "bin"), minimum = "3.6.0", architecture = NULL))
+
 })
 
 test_that("only version numbers are accepted as R versions", {
@@ -441,6 +649,27 @@ test_that("the home of a macOS framework install is derived from its path", {
    # a missing binary elsewhere has no known home
    expect_identical(.rs.rig.rHome("/opt/R/none/bin/R"), "")
    
+})
+
+test_that("the home of a Windows Rterm.exe or Rgui.exe is derived from its path", {
+
+   # never run: asked for RHOME, these start R
+   home <- normalizePath(tempfile("R-4.5.0-"), winslash = "/", mustWork = FALSE)
+   on.exit(unlink(home, recursive = TRUE), add = TRUE)
+   dir.create(file.path(home, "bin", "x64"), recursive = TRUE)
+   rterm <- file.path(home, "bin", "x64", "Rterm.exe")
+   rgui <- file.path(home, "bin", "x64", "Rgui.exe")
+   file.create(rterm, rgui)
+
+   expect_identical(.rs.rig.rHome(rterm, windows = TRUE), home)
+   expect_identical(.rs.rig.rHome(rgui, windows = TRUE), home)
+
+   # as R 4.1 and earlier lay out a 32-bit build
+   dir.create(file.path(home, "bin", "i386"))
+   rterm32 <- file.path(home, "bin", "i386", "RTerm.exe")
+   file.create(rterm32)
+   expect_identical(.rs.rig.rHome(rterm32, windows = TRUE), home)
+
 })
 
 test_that("macOS framework versions that run the default R are recognized", {

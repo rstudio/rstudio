@@ -48,8 +48,12 @@ typedef boost::variant<AsyncUriHandlerFunction,
 class AsyncUriHandlerFunctionVariantVisitor : public boost::static_visitor<void>
 {
 public:
+   // the connection must have already read the request in full: an upload
+   // handler reached this way gets the whole body at once, marked complete
    AsyncUriHandlerFunctionVariantVisitor(boost::shared_ptr<AsyncConnection> pConnection) :
-      pConnection_(pConnection)
+      pConnection_(pConnection),
+      isComplete_(true),
+      isFullRequest_(true)
    {
    }
 
@@ -58,7 +62,8 @@ public:
                                          bool isComplete) :
       pConnection_(pConnection),
       formData_(formData),
-      isComplete_(isComplete)
+      isComplete_(isComplete),
+      isFullRequest_(false)
    {
    }
 
@@ -69,13 +74,14 @@ public:
 
    void operator()(const AsyncUriUploadHandlerFunction& func)
    {
-      func(pConnection_, formData_, isComplete_);
+      func(pConnection_, isFullRequest_ ? pConnection_->request().body() : formData_, isComplete_);
    }
 
 private:
    boost::shared_ptr<AsyncConnection> pConnection_;
    std::string formData_;
    bool isComplete_;
+   bool isFullRequest_;
 };
 
 class AsyncUriHandler

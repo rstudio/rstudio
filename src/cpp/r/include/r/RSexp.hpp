@@ -132,7 +132,6 @@ bool isAltrep(SEXP object);
 
 // type coercions; strings are read as UTF-8
 std::string asString(SEXP object);
-std::string asUtf8String(SEXP object);
 std::string safeAsString(SEXP object, 
                          const std::string& defValue = std::string());
 int asInteger(SEXP object);
@@ -161,15 +160,15 @@ void clearExternalPtr(SEXP extptr);
 SEXP getExternalPtrProtected(SEXP extptr);
 SEXP getExternalPtrTag(SEXP extptr);
 
-// extract c++ type from R SEXP; strings are read as UTF-8 unless asUtf8 is false
+// extract c++ type from R SEXP; strings are read as UTF-8
 core::Error extract(SEXP valueSEXP, int* pInt);
 core::Error extract(SEXP valueSEXP, bool* pBool);
 core::Error extract(SEXP valueSEXP, double* pDouble);
 core::Error extract(SEXP valueSEXP, std::vector<int>* pVector);
-core::Error extract(SEXP valueSEXP, std::string* pString, bool asUtf8 = true);
-core::Error extract(SEXP valueSEXP, std::vector<std::string>* pVector, bool asUtf8 = true);
-core::Error extract(SEXP valueSEXP, std::set<std::string>* pSet, bool asUtf8 = true);
-core::Error extract(SEXP valueSEXP, std::map<std::string, std::set<std::string>>* pMap, bool asUtf8 = true);
+core::Error extract(SEXP valueSEXP, std::string* pString);
+core::Error extract(SEXP valueSEXP, std::vector<std::string>* pVector);
+core::Error extract(SEXP valueSEXP, std::set<std::string>* pSet);
+core::Error extract(SEXP valueSEXP, std::map<std::string, std::set<std::string>>* pMap);
 core::Error extract(SEXP valueSEXP, core::json::Value* pJson);
 core::Error extract(SEXP valueSEXP, core::FilePath* pFilePath);
 
@@ -179,6 +178,7 @@ SEXP create(const core::json::Value& value, Protect* pProtect);
 SEXP create(const YAML::Node& node, Protect* pProtect);
 SEXP create(const char* value, Protect* pProtect);
 SEXP create(const std::string& value, Protect* pProtect);
+SEXP create(const core::FilePath& value, Protect* pProtect);
 SEXP create(int value, Protect* pProtect);
 SEXP create(double value, Protect* pProtect);
 SEXP create(bool value, Protect* pProtect);
@@ -200,11 +200,6 @@ SEXP create(const ListBuilder& builder, Protect* pProtect);
 SEXP create(const std::map<std::string, std::string>& value, Protect* pProtect);
 SEXP create(const std::map<std::string, SEXP> &value,
             Protect *pProtect);
-
-// Create a UTF-8 encoded character vector
-SEXP createUtf8(const std::string& data, Protect* pProtect);
-SEXP createUtf8(const core::FilePath& filePath, Protect* pProtect);
-SEXP createUtf8(const std::vector<std::string>& data, Protect* pProtect);
 
 // Create a raw vector (binary data)
 SEXP createRawVector(const std::string& data, Protect* pProtect);
