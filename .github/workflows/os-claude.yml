@@ -134,7 +134,8 @@ jobs:
             *) exit 0 ;;
           esac
 
-          if ! RESPONSE=$(gh api --include --method POST "repos/${REPO}/${TARGET}/reactions" -f content=eyes); then
+          # Prints the headers, then the new reaction's id as the last line.
+          if ! RESPONSE=$(gh api --include --method POST "repos/${REPO}/${TARGET}/reactions" -f content=eyes --jq .id); then
             echo "::warning::Failed to add the eyes reaction"
             exit 0
           fi
@@ -145,6 +146,8 @@ jobs:
           if [ "$STATUS" = 200 ] && [ "$RUN_ATTEMPT" = 1 ]; then
             echo "::notice::Another run already acknowledged this mention; skipping."
             echo "duplicate=true" >> "$GITHUB_OUTPUT"
+          elif [ "$STATUS" = 201 ]; then
+            echo "reaction=repos/${REPO}/${TARGET}/reactions/$(tail -n 1 <<< "$RESPONSE")" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Generate token for GitHub App
@@ -180,3 +183,13 @@ jobs:
             -f "client_payload[review_id]=${REVIEW_ID}" \
             -f "client_payload[actor]=${ACTOR}" \
             -f "client_payload[branch_prefix]=${BRANCH_PREFIX}"
+
+      # Eyes would otherwise promise a reply that is not coming. Removing the
+      # reaction also lets a duplicate delivery queued behind this run get a
+      # 201 and relay in its place. Only a reaction this run added is removed.
+      - name: Withdraw the acknowledgment
+        if: failure() && steps.ack.outputs.reaction != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REACTION: ${{ steps.ack.outputs.reaction }}
+        run: gh api --method DELETE "$REACTION"
