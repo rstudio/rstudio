@@ -130,10 +130,19 @@ Error NotebookQueueUnit::fromJson(
    if (error)
       LOG_ERROR(error);
 
+   // the client never sends a document ID or type with a nul character; an ID
+   // would be read up to the nul, below and wherever the unit runs, and so
+   // name another document's files
+   if (r::sexp::containsNul(unit.docId_))
+      return Error(json::errc::ParamInvalid, ERROR_LOCATION);
+
    // extract document type separately -- we've seen it missing
    // in some scenarios
    std::string docType;
    error = json::readObject(source, kQueueUnitDocType, docType);
+   if (r::sexp::containsNul(docType))
+      return Error(json::errc::ParamInvalid, ERROR_LOCATION);
+
    if (error)
    {
       // try reading the source document from the database to recover the type
@@ -388,11 +397,6 @@ std::string NotebookQueueUnit::popExecRange(ExecRange* pRange,
 std::string NotebookQueueUnit::docId() const
 {
    return docId_;
-}
-
-std::string NotebookQueueUnit::docType() const
-{
-   return docType_;
 }
 
 std::string NotebookQueueUnit::chunkId() const

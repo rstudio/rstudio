@@ -19,6 +19,10 @@
 
 #include "NotebookChunkDefs.hpp"
 
+#include <core/json/JsonRpc.hpp>
+
+#include <r/RSexp.hpp>
+
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
 #include <session/SessionQuarto.hpp>
@@ -148,7 +152,13 @@ core::Error NotebookDocQueue::fromJson(const core::json::Object& source,
    if (error)
       return error;
 
-   *pQueue = boost::make_shared<NotebookDocQueue>(docId, jobDesc, workingDir,
+   // the client never sends a document ID with a nul character; the queue
+   // would read one up to the nul, here and before running its first unit,
+   // and so name another document's files
+   if (r::sexp::containsNul(docId))
+      return Error(json::errc::ParamInvalid, ERROR_LOCATION);
+
+   *pQueue =boost::make_shared<NotebookDocQueue>(docId, jobDesc, workingDir,
          static_cast<CommitMode>(commitMode), pixelWidth, charWidth,
          maxUnits);
 

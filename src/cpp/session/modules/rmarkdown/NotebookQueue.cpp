@@ -419,13 +419,6 @@ private:
 
       boost::shared_ptr<NotebookQueueUnit> unit = docQueue->firstUnit();
 
-      // a unit whose document ID or type holds a nul character is malformed
-      // (the client never sends one); skip it before its document's paths,
-      // which would be read up to the nul and so name another document's
-      // output, are touched
-      if (r::sexp::containsNul(unit->docId()) || r::sexp::containsNul(unit->docType()))
-         return skipUnit();
-
       // extract the default chunk options, then augment with the unit's
       // chunk-specific options
       json::Object chunkOptions;
