@@ -11,7 +11,9 @@ set +x
 
 shopt -s nocasematch
 
-SENSITIVE_NAME='KEY|TOKEN|SECRET|PASS|PSW|CRED|AUTH|LOGIN|COOKIE|PRIVATE|CERT|(^|_)PAT(_|$)|_PWD(_|$)'
+# GIT_CONFIG_VALUE_<n> and GIT_CONFIG_PARAMETERS can carry settings such as
+# http.extraHeader, and exported functions (BASH_FUNC_*) can hold anything
+SENSITIVE_NAME='KEY|TOKEN|SECRET|PASS|PSW|CRED|AUTH|LOGIN|COOKIE|PRIVATE|CERT|(^|_)PAT(_|$)|_PWD(_|$)|^GIT_CONFIG_(VALUE|PARAMETERS)|^BASH_FUNC_'
 
 # read a snapshot of the environment, so that the loop's own variables can't
 # shadow exported variables of the same name
@@ -20,15 +22,16 @@ env -0 | sort -z | while IFS= read -r -d '' entry; do
    name="${entry%%=*}"
    value="${entry#*=}"
 
-   # user names and passwords in URLs run through the last '@' before the
-   # path, since they can hold an unescaped '@'; proxy settings can leave out
-   # the scheme, as in user:pass@proxy:3128
    if [[ "${name}" =~ ${SENSITIVE_NAME} ]]; then
       value="<masked>"
-   elif [[ "${value}" == *@* ]]; then
-      value="$(printf '%s' "${value}" | sed -E \
-         -e 's,://[^/?#[:space:]]*@,://<masked>@,g' \
-         -e 's,(^|[[:space:]=])[^[:space:]/?#:@=]+:[^[:space:]/?#]*@,\1<masked>@,g')"
+   elif [[ "${name}" =~ PROXY && "${value}" == *@* ]]; then
+      # proxy settings can leave out the scheme (user:pass@proxy:3128), and
+      # their user names can hold an '@' (user@domain:pass@proxy:3128)
+      value="<masked>@${value##*@}"
+   elif [[ "${value}" == *://*@* ]]; then
+      # user names and passwords can hold an unescaped '@', so they run
+      # through the last '@' before the path
+      value="$(printf '%s' "${value}" | sed -E 's,://[^/?#[:space:]]*@,://<masked>@,g')"
    fi
 
    printf '%s=%s\n' "${name}" "${value}"
