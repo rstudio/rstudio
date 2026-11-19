@@ -343,6 +343,7 @@ export class GwtCallback extends EventEmitter {
 
         const focusedWindow = this.dialogParentWindow(
           focusOwner ? this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window : null,
+          BrowserWindow.fromWebContents(event.sender),
         );
         if (focusedWindow) {
           return appState().modalTracker.trackElectronModalAsync(async () =>
@@ -397,6 +398,7 @@ export class GwtCallback extends EventEmitter {
         saveDialogOptions['filters'] = filters;
         const focusedWindow = this.dialogParentWindow(
           focusOwner ? this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window : null,
+          BrowserWindow.fromWebContents(event.sender),
         );
         if (focusedWindow) {
           return appState().modalTracker.trackElectronModalAsync(async () =>
@@ -420,6 +422,7 @@ export class GwtCallback extends EventEmitter {
 
         const focusedWindow = this.dialogParentWindow(
           focusOwner ? this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window : null,
+          BrowserWindow.fromWebContents(event.sender),
         );
 
         if (focusedWindow) {
@@ -797,7 +800,7 @@ export class GwtCallback extends EventEmitter {
           };
         }
 
-        const focusedWindow = this.dialogParentWindow();
+        const focusedWindow = this.dialogParentWindow(null, BrowserWindow.fromWebContents(event.sender));
         if (focusedWindow) {
           return appState().modalTracker.trackElectronModalAsync(async () =>
             dialog.showMessageBox(focusedWindow, openDialogOptions),
@@ -1507,26 +1510,32 @@ export class GwtCallback extends EventEmitter {
   }
 
   /**
-   * Parent window for a native dialog. Without one, macOS runs the dialog
-   * detached and activates the app; in automation mode the app is never
-   * focused, so fall back to the main window and get a sheet instead.
+   * Parent window for a native dialog: `preferred`, else the focused window,
+   * else `requester` (the window that asked for the dialog), else the main
+   * window. macOS runs a parentless dialog app-modal without activating the
+   * app, so it can open unseen behind the active app or on another display
+   * while every RStudio window beeps at a click (#19728); a sheet stays on
+   * its window and blocks nothing else.
    */
-  dialogParentWindow(preferred?: BrowserWindow | null): BrowserWindow | undefined {
+  dialogParentWindow(preferred?: BrowserWindow | null, requester?: BrowserWindow | null): BrowserWindow | undefined {
     const window = preferred ?? BrowserWindow.getFocusedWindow();
     if (window) {
       return window;
     }
 
-    if (!isAutomated()) {
-      return undefined;
-    }
+    for (const candidate of [requester, this.mainWindow.window]) {
+      if (!candidate || candidate.isDestroyed()) {
+        continue;
+      }
 
-    // AppKit holds a sheet on a minimized or hidden window until the window
-    // comes back, and the test run would hang on a dialog it can never reach;
-    // a parentless dialog that activates the app is the lesser evil there.
-    const main = this.mainWindow.window;
-    if (!main.isDestroyed() && main.isVisible() && !main.isMinimized()) {
-      return main;
+      // AppKit may hold a sheet on a minimized or hidden window until the
+      // window comes back. A user brings it back; an automation run would
+      // hang on a dialog it can never reach, so it stays parentless there.
+      if (isAutomated() && (!candidate.isVisible() || candidate.isMinimized())) {
+        continue;
+      }
+
+      return candidate;
     }
 
     return undefined;

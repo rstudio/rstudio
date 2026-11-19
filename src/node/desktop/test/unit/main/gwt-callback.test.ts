@@ -21,6 +21,7 @@ import {
   BrowserWindow,
   clipboard,
   ClipboardItem,
+  dialog,
   ipcMain,
   IpcMainInvokeEvent,
   nativeImage,
@@ -354,19 +355,45 @@ describe('DesktopCallback', () => {
   });
 
   describe('dialogParentWindow', () => {
-    // a parentless native dialog activates the app on macOS, so automation
-    // runs must always get a parent even though the app is never focused
+    // on macOS a parentless native dialog is app-modal: every RStudio window
+    // beeps at a click while the alert may sit unseen behind another app
+    // (#19728), so a dialog gets a parent even when RStudio is not focused
     it('prefers the requested window, then the focused window', () => {
       const preferred = fakeBrowserWindow() as unknown as BrowserWindow;
       const focused = fakeBrowserWindow() as unknown as BrowserWindow;
+      const requester = fakeBrowserWindow() as unknown as BrowserWindow;
       sinon.stub(BrowserWindow, 'getFocusedWindow').returns(focused);
 
-      assert.strictEqual(callback.dialogParentWindow(preferred), preferred);
-      assert.strictEqual(callback.dialogParentWindow(), focused);
+      assert.strictEqual(callback.dialogParentWindow(preferred, requester), preferred);
+      assert.strictEqual(callback.dialogParentWindow(null, requester), focused);
     });
 
-    it('leaves the dialog parentless when nothing is focused', () => {
+    it('falls back to the window that asked, then the main window, when nothing is focused', () => {
+      const main = fakeBrowserWindow() as unknown as BrowserWindow;
+      const requester = fakeBrowserWindow() as unknown as BrowserWindow;
+      mainWindow.window = main;
       sinon.stub(BrowserWindow, 'getFocusedWindow').returns(null);
+
+      assert.strictEqual(callback.dialogParentWindow(null, requester), requester);
+      assert.strictEqual(callback.dialogParentWindow(null, null), main);
+      assert.strictEqual(
+        callback.dialogParentWindow(null, fakeBrowserWindow({ destroyed: true }) as unknown as BrowserWindow),
+        main,
+      );
+    });
+
+    // the sheet shows once the user brings the window back, while a parentless
+    // dialog would block every window from wherever it opened
+    it('parents on a minimized or hidden window outside automation mode', () => {
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(null);
+
+      for (const state of [{ minimized: true }, { visible: false }]) {
+        const main = fakeBrowserWindow(state) as unknown as BrowserWindow;
+        mainWindow.window = main;
+        assert.strictEqual(callback.dialogParentWindow(), main, JSON.stringify(state));
+      }
+
+      mainWindow.window = fakeBrowserWindow({ destroyed: true }) as unknown as BrowserWindow;
       assert.isUndefined(callback.dialogParentWindow());
     });
 
@@ -394,8 +421,40 @@ describe('DesktopCallback', () => {
           mainWindow.window = fakeBrowserWindow(state) as unknown as BrowserWindow;
           assert.isUndefined(callback.dialogParentWindow(), JSON.stringify(state));
         }
+
+        // nor is an off-screen window that asked used, while the main window is there
+        const main = fakeBrowserWindow() as unknown as BrowserWindow;
+        mainWindow.window = main;
+        const requester = fakeBrowserWindow({ minimized: true }) as unknown as BrowserWindow;
+        assert.strictEqual(callback.dialogParentWindow(null, requester), main);
       } finally {
         app.commandLine.removeSwitch('automation-agent');
+      }
+    });
+  });
+
+  describe('desktop_show_message_box', () => {
+    // e.g. the Update Available prompt at startup, which finishes while the
+    // user is in another app (#19728)
+    it('attaches to the window that asked when RStudio is not focused', async () => {
+      const requester = fakeBrowserWindow() as unknown as BrowserWindow;
+      const sender = {};
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(null);
+      sinon.stub(BrowserWindow, 'fromWebContents').callsFake((contents) => (contents === sender ? requester : null));
+      const showMessageBox = sinon.stub(dialog, 'showMessageBox').resolves({ response: 1, checkboxChecked: false });
+
+      setApplication(new Application());
+      try {
+        const handler = invokeHandlers.get('desktop_show_message_box');
+        assert.isDefined(handler);
+        const event = { sender } as unknown as IpcMainInvokeEvent;
+        const result = await handler!(event, 1, 'Update Available', 'A newer build is available.', 'Install|Later', 0, 1);
+
+        assert.isTrue(showMessageBox.calledOnce);
+        assert.strictEqual(showMessageBox.firstCall.args[0] as unknown, requester);
+        assert.deepEqual(result, { response: 1, checkboxChecked: false });
+      } finally {
+        clearApplicationSingleton();
       }
     });
   });
