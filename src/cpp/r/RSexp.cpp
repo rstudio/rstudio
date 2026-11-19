@@ -43,6 +43,7 @@
 #include <r/RRuntime.hpp>
 #include <r/RSexpInternal.hpp>
 #include <r/RUtil.hpp>
+#include <r/session/RSession.hpp>
 
 // clean out global definitions of TRUE and FALSE so we can
 // use the Rboolean variations of them
@@ -226,23 +227,15 @@ SEXP caughtEvaluationHandler(SEXP conditionSEXP, void* data)
 
 // before R 3.6.2, R_tryCatch() transferred control for every condition, so a
 // warning or message would read as a failure; executeSafely() has the right
-// semantics there, at the cost of printing a caught error. the answer is
-// cached only once the check succeeds
+// semantics there, at the cost of printing a caught error. only a true answer
+// is cached, as a check that fails (say, interrupted) also answers false
 bool tryCatchIsSelective()
 {
-   static int s_selective = -1;
-   if (s_selective == -1)
-   {
-      bool selective = false;
-      // both functions from base, so that a user's definitions can't mask them
-      Error error = r::exec::evaluateString("base::`>=`(base::getRversion(), \"3.6.2\")", &selective);
-      if (error)
-         return false;
+   static bool s_selective = false;
+   if (!s_selective)
+      s_selective = r::util::hasRequiredVersion("3.6.2");
 
-      s_selective = selective ? 1 : 0;
-   }
-
-   return s_selective == 1;
+   return s_selective;
 }
 
 // returns the result, or nullptr if an R error or interrupt was caught
@@ -257,8 +250,9 @@ SEXP evaluateCaught(SEXP (*evaluate)(CaughtEvaluation*), SEXP firstSEXP, SEXP se
       SET_STRING_ELT(s_conditionsSEXP, 1, Rf_mkChar("interrupt"));
    }
 
-   // the result is left unprotected on return, like the value of a plain
-   // lookup: it's reachable from its binding or, when forced, its promise
+   // the result is left unprotected on return, as a plain lookup's is, and the
+   // caller must protect it: a forced promise's value stays reachable from the
+   // promise, but an active binding's function can return a fresh value
    Protect protect;
    SEXP holderSEXP;
    protect.add(holderSEXP = Rf_allocVector(VECSXP, 1));
@@ -283,8 +277,11 @@ SEXP evaluateCaught(SEXP (*evaluate)(CaughtEvaluation*), SEXP firstSEXP, SEXP se
 
    // an interrupt is meant for R code that's running (as when a request is
    // handled while the user's code runs), not for the lookup; re-arm it, so
-   // that code sees it when it next checks
-   if (evaluation.interrupted)
+   // that code sees it when it next checks. at the top-level prompt (as in
+   // its change detection) none is running, and one still pending arrived as
+   // a command finished; the lookup uses it up, as R's jump to top level
+   // would have, rather than leave it for the user's next command
+   if (evaluation.interrupted && !r::session::atTopLevelPrompt())
       r::exec::setInterruptsPending(true);
 
    if (evaluation.caught || evaluation.unbound)
@@ -300,20 +297,41 @@ SEXP forcePromiseImpl(CaughtEvaluation* pEvaluation)
    return Rf_eval(pEvaluation->firstSEXP, R_BaseEnv);
 }
 
+// returns nullptr if an R error or interrupt was caught; a promise that's
+// been forced runs no code, and its value is read directly
+SEXP forcePromiseCaught(SEXP promiseSEXP)
+{
+   SEXP valueSEXP = runtime::forcedPromiseValue(promiseSEXP);
+   if (valueSEXP != nullptr)
+      return valueSEXP;
+
+   return evaluateCaught(forcePromiseImpl, promiseSEXP, nullptr);
+}
+
 SEXP findVarInFrameImpl(CaughtEvaluation* pEvaluation)
 {
    return runtime::findVarInFrame(pEvaluation->firstSEXP, pEvaluation->secondSEXP);
 }
 
-// whether reading this binding can run R code: an active binding calls its
-// function, R_getVarEx() (R >= 4.6) forces a promise, and it raises an error
-// for a missing argument
-bool readingRunsCode(SEXP symSEXP, SEXP envSEXP)
+// whether reading a binding of this type can run R code: an active binding
+// calls its function, and R_getVarEx() (R >= 4.6) forces a promise and raises
+// an error for a missing argument, where R's older lookups return either as is
+bool readingRunsCode(int bindingType)
 {
-   int bindingType = runtime::getBindingType(symSEXP, envSEXP);
-   return bindingType == runtime::kBindingTypeActive ||
-          bindingType == runtime::kBindingTypeDelayed ||
-          bindingType == runtime::kBindingTypeMissing;
+   if (bindingType == runtime::kBindingTypeActive)
+      return true;
+
+   return runtime::lookupsForcePromises() &&
+          (bindingType == runtime::kBindingTypeDelayed ||
+           bindingType == runtime::kBindingTypeMissing);
+}
+
+SEXP readBinding(SEXP envSEXP, SEXP nameSEXP, int bindingType)
+{
+   if (readingRunsCode(bindingType))
+      return evaluateCaught(findVarInFrameImpl, envSEXP, nameSEXP);
+
+   return runtime::findVarInFrame(envSEXP, nameSEXP);
 }
 
 } // anonymous namespace
@@ -466,7 +484,7 @@ SEXP forcePromise(SEXP objectSEXP)
    if (TYPEOF(objectSEXP) != PROMSXP)
       return objectSEXP;
 
-   SEXP valueSEXP = evaluateCaught(forcePromiseImpl, objectSEXP, nullptr);
+   SEXP valueSEXP = forcePromiseCaught(objectSEXP);
    return valueSEXP == nullptr ? R_NilValue : valueSEXP;
 }
 
@@ -608,8 +626,8 @@ namespace {
 // Uses runtime::getBindingType for frame-presence checks because it's
 // non-evaluating -- a value lookup via findVarInFrame would invoke an
 // active binding's getter, which we must avoid while merely inspecting
-// where the binding lives.
-SEXP findBindingFrame(SEXP sym, SEXP env)
+// where the binding lives. pBindingType, if given, gets the binding's type.
+SEXP findBindingFrame(SEXP sym, SEXP env, int* pBindingType = nullptr)
 {
    while (env != R_EmptyEnv)
    {
@@ -617,6 +635,8 @@ SEXP findBindingFrame(SEXP sym, SEXP env)
       if (bt != runtime::kBindingTypeNotFound &&
           bt != runtime::kBindingTypeUnbound)
       {
+         if (pBindingType != nullptr)
+            *pBindingType = bt;
          return env;
       }
       env = getParentEnv(env);
@@ -815,21 +835,20 @@ SEXP functionBody(SEXP functionSEXP)
 
 SEXP findVarInFrame(SEXP envSEXP, SEXP nameSEXP)
 {
-   if (readingRunsCode(nameSEXP, envSEXP))
-      return evaluateCaught(findVarInFrameImpl, envSEXP, nameSEXP);
-
-   return runtime::findVarInFrame(envSEXP, nameSEXP);
+   return readBinding(envSEXP, nameSEXP, runtime::getBindingType(nameSEXP, envSEXP));
 }
 
 SEXP findVar(SEXP nameSEXP, SEXP envSEXP)
 {
-   // find the binding's frame without reading it, to see whether reading it
-   // can run R code, then read it there; most bindings can't run code
-   SEXP frameSEXP = findBindingFrame(nameSEXP, envSEXP);
+   // find the binding's frame and type without reading it, to see whether
+   // reading it can run R code, then read it there. R's own lookup (and its
+   // global cache) can't be tried first: reading is what runs the code
+   int bindingType = runtime::kBindingTypeNotFound;
+   SEXP frameSEXP = findBindingFrame(nameSEXP, envSEXP, &bindingType);
    if (frameSEXP == R_EmptyEnv)
       return runtime::findVar(nameSEXP, envSEXP);
 
-   return findVarInFrame(frameSEXP, nameSEXP);
+   return readBinding(frameSEXP, nameSEXP, bindingType);
 }
 
 SEXP findVar(const std::string& name, SEXP envSEXP)
@@ -887,18 +906,17 @@ SEXP findFunction(const std::string& name, const std::string& ns)
    // out would be a function R wouldn't find.
    while (env != R_EmptyEnv)
    {
-      bool runsCode = readingRunsCode(nameSEXP, env);
-      SEXP resultSEXP = runsCode ?
-               evaluateCaught(findVarInFrameImpl, env, nameSEXP) :
-               runtime::findVarInFrame(env, nameSEXP);
+      int bindingType = runtime::getBindingType(nameSEXP, env);
+      SEXP resultSEXP = readBinding(env, nameSEXP, bindingType);
+
       // a missing argument (which R < 4.6 reads as R_MissingArg) is an error
       // for R's lookup too
-      if (runsCode && (resultSEXP == nullptr || resultSEXP == R_MissingArg))
+      if ((resultSEXP == nullptr && readingRunsCode(bindingType)) || resultSEXP == R_MissingArg)
          return nullptr;
 
       if (resultSEXP != nullptr && TYPEOF(resultSEXP) == PROMSXP)
       {
-         resultSEXP = evaluateCaught(forcePromiseImpl, resultSEXP, nullptr);
+         resultSEXP = forcePromiseCaught(resultSEXP);
          if (resultSEXP == nullptr)
             return nullptr;
 

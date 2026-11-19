@@ -209,6 +209,12 @@ struct RpcHandlerInvocation
    // a C++ exception must not unwind through R_UnwindProtect(), which would
    // leave R's context stack pointing at its frame; it's rethrown after
    std::exception_ptr exception;
+
+   // R's error message from before the handler ran. an interrupt writes no
+   // message, and clears R's pending flag and RStudio's wasInterrupted (the
+   // newline R prints) before it unwinds, so an unchanged message is how the
+   // backstop tells one from an error
+   std::string previousErrorMessage;
 };
 
 SEXP invokeRpcHandlerImpl(void* data)
@@ -252,9 +258,12 @@ void answerInterruptedRpc(void* data, Rboolean jump)
 
    try
    {
+      const std::string& method = pInvocation->pRequest->method;
+      std::string errorMessage = r::exec::getErrorMessage();
       Error error = r::rCodeExecutionError(
-               "R error while handling '" + pInvocation->pRequest->method + "': " +
-               r::exec::getErrorMessage(),
+               errorMessage == pInvocation->previousErrorMessage ?
+                  "R code was interrupted while handling '" + method + "'" :
+                  "R error while handling '" + method + "': " + errorMessage,
                ERROR_LOCATION);
       json::JsonRpcResponse response;
       (*pInvocation->pContinuation)(error, &response);
@@ -321,7 +330,7 @@ void invokeRpcHandler(const json::JsonRpcAsyncFunction& handler,
    // reaches it. like any context, it restores R's handler stack when it
    // ends, so after-response work (which can register calling handlers) is
    // held until it has (see RpcDelivery)
-   RpcHandlerInvocation invocation = { &handler, &request, &continuation, pDelivery.get(), nullptr };
+   RpcHandlerInvocation invocation = { &handler, &request, &continuation, pDelivery.get(), nullptr, r::exec::getErrorMessage() };
    pDelivery->deferAfterResponse = true;
    r::sexp::Protect protect;
    SEXP tokenSEXP;

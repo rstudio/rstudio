@@ -427,6 +427,17 @@ bool lookupsForcePromises()
    return R_getVarEx != nullptr;
 }
 
+SEXP forcedPromiseValue(SEXP promiseSEXP)
+{
+   // a runtime that doesn't export PRVALUE reads as unforced, and the caller
+   // forces the promise as it otherwise would
+   if (PRVALUE == nullptr)
+      return nullptr;
+
+   SEXP valueSEXP = PRVALUE(promiseSEXP);
+   return valueSEXP == *s_pUnboundValue ? nullptr : valueSEXP;
+}
+
 int getBindingType(SEXP symSEXP, SEXP envSEXP)
 {
    return s_getBindingType(symSEXP, envSEXP);

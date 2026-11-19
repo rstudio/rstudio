@@ -40,8 +40,17 @@
 #include <r/RErrorCategory.hpp>
 #include <r/RInterface.hpp>
 #include <r/RUtil.hpp>
+#include <r/session/RSession.hpp>
 
 #include "../SessionRpc.hpp"
+
+#ifndef _WIN32
+#include <R_ext/libextern.h>
+
+extern "C" {
+LibExtern Rboolean R_interrupts_suspended;
+}
+#endif
 
 using namespace rstudio::core;
 
@@ -688,16 +697,27 @@ TEST(SessionRTest, LookupsCatchErrorsFromBindings) {
          stop("promise failed")
       }, assign.env = globalenv())
       makeActiveBinding(".rs.test.workingBinding", function() 42L, globalenv())
+
+      # a promise for a function, which counts how often it's forced
+      assign(".rs.test.functionPromiseForces", 0L, envir = globalenv())
+      delayedAssign(".rs.test.functionPromise", {
+         forces <- get(".rs.test.functionPromiseForces", envir = globalenv())
+         assign(".rs.test.functionPromiseForces", forces + 1L, envir = globalenv())
+         function() NULL
+      }, assign.env = globalenv())
    )EOF");
    ASSERT_FALSE(error) << error.asString();
 
-   BOOST_SCOPE_EXIT(void)
+   bool wasAtTopLevelPrompt = r::session::atTopLevelPrompt();
+   BOOST_SCOPE_EXIT(wasAtTopLevelPrompt)
    {
+      r::session::setAtTopLevelPrompt(wasAtTopLevelPrompt);
       r::exec::executeString(R"EOF(
          detach("rstudio-test-shadowed")
          rm(list = c(".rs.test.failingBinding", ".rs.test.failingPromise", ".rs.test.workingBinding",
                      ".rs.test.bindingCalls", ".rs.test.promiseForced", ".rs.test.missingBinding",
-                     ".rs.test.warningBinding", ".rs.test.interruptingBinding"),
+                     ".rs.test.warningBinding", ".rs.test.interruptingBinding",
+                     ".rs.test.functionPromise", ".rs.test.functionPromiseForces"),
             envir = globalenv())
       )EOF");
    }
@@ -750,18 +770,26 @@ TEST(SessionRTest, LookupsCatchErrorsFromBindings) {
 
    // a binding that warns is still read, as only errors and interrupts are
    // caught; one that signals an interrupt reads as unbound, and the
-   // interrupt is re-armed for whatever R code is running; and a missing
-   // argument ends findFunction()'s search, as it ends R's
+   // interrupt is re-armed for R code that's running, but not at the
+   // top-level prompt, where none is; and a missing argument ends
+   // findFunction()'s search, as it ends R's
    SEXP warningSEXP = nullptr;
    SEXP interruptingSEXP = R_GlobalEnv;
    bool interruptRearmed = false;
+   bool interruptRearmedAtPrompt = true;
    SEXP missingFunctionSEXP = R_GlobalEnv;
    lookupError = r::exec::executeSafely([&]()
    {
       warningSEXP = r::sexp::findVar(".rs.test.warningBinding", R_GlobalEnv);
 
+      r::session::setAtTopLevelPrompt(false);
       interruptingSEXP = r::sexp::findVar(".rs.test.interruptingBinding", R_GlobalEnv);
       interruptRearmed = r::exec::interruptsPending();
+      r::exec::setInterruptsPending(false);
+
+      r::session::setAtTopLevelPrompt(true);
+      r::sexp::findVar(".rs.test.interruptingBinding", R_GlobalEnv);
+      interruptRearmedAtPrompt = r::exec::interruptsPending();
       r::exec::setInterruptsPending(false);
 
       missingFunctionSEXP = r::sexp::findFunction(".rs.test.missingBinding");
@@ -776,6 +804,7 @@ TEST(SessionRTest, LookupsCatchErrorsFromBindings) {
    {
       EXPECT_EQ(nullptr, interruptingSEXP);
       EXPECT_TRUE(interruptRearmed);
+      EXPECT_FALSE(interruptRearmedAtPrompt);
    }
 
    // findFunction() forces the promise, catching the error
@@ -793,6 +822,24 @@ TEST(SessionRTest, LookupsCatchErrorsFromBindings) {
    ASSERT_FALSE(lookupError) << lookupError.asString();
    EXPECT_EQ(nullptr, promiseFunctionSEXP);
    EXPECT_EQ(42, workingValue);
+
+   // a promise for a function is forced once, and once forced, its value is
+   // found again (R < 4.6 reads it from the promise the lookup returns)
+   SEXP firstFunctionSEXP = R_NilValue;
+   SEXP secondFunctionSEXP = R_NilValue;
+   lookupError = r::exec::executeSafely([&]()
+   {
+      firstFunctionSEXP = r::sexp::findFunction(".rs.test.functionPromise");
+      secondFunctionSEXP = r::sexp::findFunction(".rs.test.functionPromise");
+   });
+   ASSERT_FALSE(lookupError) << lookupError.asString();
+   EXPECT_TRUE(firstFunctionSEXP != nullptr && TYPEOF(firstFunctionSEXP) == CLOSXP);
+   EXPECT_EQ(firstFunctionSEXP, secondFunctionSEXP);
+
+   int functionPromiseForces = 0;
+   error = r::exec::evaluateString(".rs.test.functionPromiseForces", &functionPromiseForces);
+   ASSERT_FALSE(error);
+   EXPECT_EQ(1, functionPromiseForces);
 }
 
 TEST(SessionRTest, ParseStringRefusesEmbeddedNul) {
@@ -959,6 +1006,36 @@ TEST(SessionRTest, InvokeRpcHandlerAnswersARequestAnRErrorInterrupted) {
    EXPECT_EQ(1, responses);
    EXPECT_TRUE(responseError == r::errc::CodeExecutionError) << responseError.asString();
    EXPECT_NE(std::string::npos, responseError.getProperty("errormsg").find("handler failed"));
+
+#ifndef _WIN32
+   // an interrupt writes no error message, so the reply doesn't quote the one
+   // R reported last; Rf_onintr() is R's own path for a pending interrupt
+   // (on Windows, R_ProcessEvents() runs it, and would run session events)
+   json::JsonRpcAsyncFunction interrupted =
+      [](const json::JsonRpcRequest&, const json::JsonRpcFunctionContinuation&)
+      {
+         r::exec::setInterruptsPending(true);
+         Rf_onintr();
+      };
+
+   // executeString() catches the error, leaving its message as R's last
+   reset();
+   ASSERT_TRUE(r::exec::executeString("stop('a stale error')"));
+
+   // the tests run inside R's initialization, which suspends interrupts
+   Rboolean interruptsWereSuspended = R_interrupts_suspended;
+   R_interrupts_suspended = static_cast<Rboolean>(false);
+   bool interruptUnwound = invoke(interrupted);
+   R_interrupts_suspended = interruptsWereSuspended;
+   r::exec::setInterruptsPending(false);
+
+   EXPECT_TRUE(interruptUnwound);
+   EXPECT_EQ(1, responses);
+   EXPECT_TRUE(responseError == r::errc::CodeExecutionError) << responseError.asString();
+   std::string interruptedMessage = responseError.getProperty("errormsg");
+   EXPECT_EQ(std::string::npos, interruptedMessage.find("a stale error")) << interruptedMessage;
+   EXPECT_NE(std::string::npos, interruptedMessage.find("interrupted")) << interruptedMessage;
+#endif
 
    // one that responded before the error isn't answered again
    json::JsonRpcAsyncFunction respondsThenFails =

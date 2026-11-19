@@ -60,6 +60,11 @@ SEXP findVar(SEXP nameSEXP, SEXP envSEXP);
 // Rf_findVarInFrame / Rf_findVar return the promise itself)
 bool lookupsForcePromises();
 
+// a promise's value once it's been forced (PRVALUE), else nullptr; reading
+// it runs no R code, as Rf_eval() of a forced promise can (an interrupt
+// check, finalizers)
+SEXP forcedPromiseValue(SEXP promiseSEXP);
+
 // R_GetBindingType (R >= 4.6), falls back to manual struct inspection.
 // Returns the R_BindingType_t enum value as an int.
 int getBindingType(SEXP symSEXP, SEXP envSEXP);
