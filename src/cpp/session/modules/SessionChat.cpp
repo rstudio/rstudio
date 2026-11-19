@@ -1806,10 +1806,9 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
 
             // Stop if the deadline has passed, whether or not background
             // processing has noticed yet, or its interrupt landed outside
-            // the agent's code (e.g. while printing a result)
+            // the agent's code (e.g. in the boundary hook)
             if (s_currentDeadline.expired(std::chrono::steady_clock::now()))
             {
-               timedOut = true;
                error = Error(boost::system::errc::timed_out, timedOutMessage(timeout), ERROR_LOCATION);
                break;
             }
@@ -1873,10 +1872,7 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
             }
 
             if (Rf_inherits(evalResultSEXP, "interrupt") && currentDeadlinePassed())
-            {
-               timedOut = true;
                errorMsg = timedOutMessage(timeout);
-            }
 
             SEXP conditionsSEXP = Rf_getAttrib(
                evalResultSEXP,
@@ -1940,7 +1936,14 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
                .addParam(exprResult)
                .call();
 
-            if (printError)
+            if (printError && currentDeadlinePassed())
+            {
+               // The deadline interrupted the result's print method, which
+               // is the agent's code too. Setting error ends the loop once
+               // this expression's warnings and boundary hook are done.
+               error = Error(boost::system::errc::timed_out, timedOutMessage(timeout), ERROR_LOCATION);
+            }
+            else if (printError)
             {
                // Print errors should be visible to users, not just logged
                std::string printErrorMsg = "Error printing result: " + printError.getMessage();
@@ -1963,24 +1966,31 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
       }
    }
 
-   // The deadline bounds the agent's code, not the reporting below. Drop an
-   // interrupt it raised that R never consumed, which would otherwise land on
-   // whatever R runs next, such as the user's next command; an interrupt it
-   // didn't raise is left alone.
+   // The deadline bounds the agent's code, not the reporting below. Once it
+   // has raised an interrupt, drop whatever interrupt is still pending, which
+   // would otherwise land on whatever R runs next, such as the user's next
+   // command. That is usually one the deadline raised and R never consumed,
+   // but can be an Escape or a cancel that came after the code stopped,
+   // which has nothing left to stop.
    bool deadlineInterrupted = false;
    if (disarmExecutionDeadline(&deadlineInterrupted))
    {
       if (deadlineInterrupted)
          r::exec::setInterruptsPending(false);
 
-      // The request ran out of time even if the last expression got to
-      // finish (e.g. the interrupt landed in printing its result), or the
-      // agent's code turned the interrupt into an error of its own, whose
-      // message is kept. An error without a message is the interrupt landing
-      // outside safeEval's handlers (e.g. right as a system() call returns).
-      timedOut = true;
-      if (!error || error.getMessage().empty())
-         error = Error(boost::system::errc::timed_out, timedOutMessage(timeout), ERROR_LOCATION);
+      // timedOut tells the peer the code didn't finish, so code that did
+      // finish before the deadline stopped anything isn't reported as timed
+      // out (e.g. when the interrupt landed in the boundary hook after the
+      // last expression). An error the agent's code turned the interrupt
+      // into keeps its message. An error without a message is the interrupt
+      // landing outside safeEval's handlers (e.g. right as a system() call
+      // returns).
+      if (error)
+      {
+         timedOut = true;
+         if (error.getMessage().empty())
+            error = Error(boost::system::errc::timed_out, timedOutMessage(timeout), ERROR_LOCATION);
+      }
    }
 
    // Handle parse/runtime errors
