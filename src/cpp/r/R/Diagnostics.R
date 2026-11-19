@@ -27,9 +27,9 @@ redact_regex <- function() {
   # matched as whole words in names with '_' read as a space, so that e.g.
   # GITHUB_PAT matches PAT but PATH does not
   words <- c(
-    "API", "AUTH", "CONNECTION STRING", "COOKIE", "DSN", "GITHUB", "HOST",
-    "KEY", "LOGNAME", "PASS", "PAT", "PRIVATE", "PWD", "R TRAVIS (COM|ORG)",
-    "UID", "USERNAME", "WEBHOOK"
+    "API", "AUTH", "AUTHORIZATION", "CONNECTION STRING", "COOKIE", "DSN",
+    "GITHUB", "HOST", "KEY", "LOGNAME", "PASS", "PAT", "PRIVATE", "PWD",
+    "R TRAVIS (COM|ORG)", "UID", "USERNAME", "WEBHOOK"
   )
   
   # matched anywhere, so that e.g. PGPASSWORD and APIKEY match too
@@ -43,9 +43,26 @@ redact_regex <- function() {
   
 }
 
-# redacts the user name and password in URLs, e.g. in a proxy setting
+# redacts the user name and password in URLs, e.g. in a proxy setting. they
+# run through the last '@' before the path, since user names and passwords
+# can hold an unescaped '@'; proxy settings can leave out the scheme, as in
+# user:pass@proxy:3128
 redact_url_credentials <- function(x) {
-  gsub("://[^/@[:space:]]+@", "://*** redacted ***@", x, perl = TRUE)
+
+  x <- gsub(
+    "://[^/?#[:space:]]*@",
+    "://*** redacted ***@",
+    x,
+    perl = TRUE
+  )
+
+  gsub(
+    "(?<![^[:space:]=\"'])[^[:space:]/?#:@=\"']+:[^[:space:]/?#\"']*@",
+    "*** redacted ***@",
+    x,
+    perl = TRUE
+  )
+
 }
 
 header <- function(fmt, ...) {
@@ -86,12 +103,16 @@ dumpfile <- function(path) {
   }
   
   # redact what is assigned to a sensitive name, in forms such as TOKEN=...,
-  # token <- ..., or Sys.setenv("TOKEN" = ...)
-  regex <- sprintf("%s[\"'`]?\\s*(?:=|<-)", redact_regex())
+  # GITHUB_PAT_READONLY=..., token <- ..., or Sys.setenv("TOKEN" = ...). a
+  # line can assign several values, as in Sys.setenv(A = ..., TOKEN = ...),
+  # so redact from its first assignment. this works line by line: a value
+  # that starts or continues on a later line is not redacted
+  regex <- sprintf("%s[[:alnum:]. ]*[\"'`]?\\s*(?:=|<-)", redact_regex())
   keys <- gsub("_", " ", contents, fixed = TRUE)
-  matches <- regexpr(regex, keys, ignore.case = TRUE, perl = TRUE)
-  for (i in which(matches != -1L)) {
-    end <- matches[[i]] + attr(matches, "match.length")[[i]] - 1L
+  matches <- grepl(regex, keys, ignore.case = TRUE, perl = TRUE)
+  for (i in which(matches)) {
+    first <- regexpr("=|<-", contents[[i]], perl = TRUE)
+    end <- first + attr(first, "match.length") - 1L
     contents[[i]] <- paste(substring(contents[[i]], 1L, end), "*** redacted ***")
   }
   
@@ -247,8 +268,10 @@ sensitive information before submitting your diagnostics report.
     
   if (file.exists(binaryPath)) {
     binaryPath <- normalizePath(binaryPath)
+    # the output includes rstudio-prefs.json, where e.g. a CRAN mirror URL
+    # can hold credentials
     diagnostics <- system2(binaryPath, stdout = TRUE, stderr = TRUE)
-    writeLines(diagnostics)
+    writeLines(redact_url_credentials(diagnostics))
   }
   
 })
