@@ -844,10 +844,20 @@
 .rs.addFunction("julia.callImpl", function(con, name, args)
 {
    jc <- asNamespace("JuliaConnectoR")
+   args <- c(list(JuliaConnectoR::juliaExpr(name)), args)
 
-   writeBin(jc$CALL_INDICATOR, con)
-   jc$writeString("Base.invokelatest")
-   jc$writeList(c(list(JuliaConnectoR::juliaExpr(name)), args))
+   # JuliaConnectoR versions with writeCallMessage() assemble each message
+   # before sending it, so their writeString() and writeList() only buffer
+   if (is.function(jc[["writeCallMessage"]]))
+   {
+      jc$writeCallMessage("Base.invokelatest", args)
+   }
+   else
+   {
+      writeBin(jc$CALL_INDICATOR, con)
+      jc$writeString("Base.invokelatest")
+      jc$writeList(args)
+   }
 
    repeat
    {
