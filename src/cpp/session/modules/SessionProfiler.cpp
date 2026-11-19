@@ -83,8 +83,8 @@ void handleProfilerResourceResReq(const http::Request& request,
 void clearRProfile(const std::string& path, const std::string& htmlLocalPath)
 {
    Error error = r::exec::RFunction(".rs.rpc.clear_profile")
-         .addUtf8Param(path)
-         .addUtf8Param(htmlLocalPath)
+         .addParam(path)
+         .addParam(htmlLocalPath)
          .call();
 
    if (error)
@@ -115,7 +115,7 @@ Error initialize()
 
    // set up profiles path (be careful to mark as UTF-8)
    r::sexp::Protect protect;
-   SEXP cacheDir = r::sexp::createUtf8(profilesCacheDir(), &protect);
+   SEXP cacheDir = r::sexp::create(profilesCacheDir(), &protect);
    Error error = r::exec::RFunction(".rs.setOptionDefault")
                .addParam("profvis.prof_output")
                .addParam(cacheDir)
