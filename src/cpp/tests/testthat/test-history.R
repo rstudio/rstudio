@@ -91,3 +91,8 @@ test_that(".rs.loadhistory() reports a file it can't read", {
       "No such file or directory|cannot find the file specified"
    )
 })
+
+test_that(".rs.loadhistory() reports a directory", {
+   # MSVC's generic_category() messages are lower case
+   expect_error(.rs.loadhistory(tempdir()), "is a directory", ignore.case = TRUE)
+})
