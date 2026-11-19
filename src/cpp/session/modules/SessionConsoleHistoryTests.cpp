@@ -112,12 +112,6 @@ TEST(SessionConsoleHistoryTest, RHistsizeLimitsOnlyTheSavedHistory)
    ASSERT_EQ(600, largeHistory.size());
    EXPECT_EQ(longCommands, savedBy(largeHistory));
 
-   // a value meant as "unlimited" raises it only up to a limit
-   core::system::setenv("R_HISTSIZE", "999999999");
-   r::session::ConsoleHistory hugeHistory;
-   hugeHistory.setCapacityFromRHistsize();
-   EXPECT_EQ(100000, hugeHistory.capacity());
-
    // unset, negative, and invalid values mean R's default of 512, for both the
    // session's capacity and the commands saved; a longer history file loads
    // only its newest 512

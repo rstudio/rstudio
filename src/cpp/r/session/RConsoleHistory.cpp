@@ -42,11 +42,6 @@ namespace {
 // R's default for R_HISTSIZE
 const int kDefaultHistorySize = 512;
 
-// circular_buffer allocates its whole capacity up front, so a value meant as
-// "unlimited", like R_HISTSIZE=999999999, would allocate gigabytes. with a
-// larger R_HISTSIZE, at most this many commands are kept and saved
-const int kMaxHistorySize = 100000;
-
 // R_HISTSIZE as an int; like R, a negative or invalid value means the default.
 // R also accepts a k/K/M/G suffix (R_Decode2Long(), which isn't part of R's
 // API); such a value is invalid here
@@ -75,7 +70,7 @@ void ConsoleHistory::setCapacity(int capacity)
 {
    // loading a history file into a capacity of 0 crashes (#19690), and a
    // negative one converts to a huge size_t
-   historyBuffer_.set_capacity(std::clamp(capacity, 1, kMaxHistorySize));
+   historyBuffer_.set_capacity(std::max(capacity, 1));
 }
 
 void ConsoleHistory::setCapacityFromRHistsize()
