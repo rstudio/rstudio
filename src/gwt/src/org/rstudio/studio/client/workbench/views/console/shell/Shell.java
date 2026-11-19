@@ -339,10 +339,19 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    @Handler
    void onFocusLastConsoleError()
    {
-      if (view_.getLastError() == null)
+      ConsoleError error = view_.getLastError();
+      if (error == null)
       {
          ariaLive_.announce(AriaLiveService.ON_DEMAND, constants_.noConsoleErrorToFocusMessage(),
                Timing.IMMEDIATE, Severity.STATUS);
+         return;
+      }
+
+      // Already showing: focus it directly, so focus doesn't pass through the
+      // input (which would scroll the output and start a screen reader on it)
+      if (canFocusNow(error))
+      {
+         error.focus();
          return;
       }
 
@@ -355,12 +364,12 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
          @Override
          public boolean execute()
          {
-            ConsoleError error = view_.getLastError();
-            if (error == null)
+            ConsoleError current = view_.getLastError();
+            if (current == null)
                return false;
-            if (error.canFocus() && !DualWindowLayoutPanel.isAnimating())
+            if (canFocusNow(current))
             {
-               error.focus();
+               current.focus();
                return false;
             }
             return ++attempts_ < FOCUS_ERROR_MAX_ATTEMPTS;
@@ -368,6 +377,11 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
          private int attempts_ = 0;
       }, FOCUS_ERROR_RETRY_MS);
+   }
+
+   private static boolean canFocusNow(ConsoleError error)
+   {
+      return error.canFocus() && !DualWindowLayoutPanel.isAnimating();
    }
 
    public void addKeyDownPreviewHandler(KeyDownPreviewHandler handler)

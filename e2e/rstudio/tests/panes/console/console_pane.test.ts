@@ -243,6 +243,32 @@ test.describe('Console pane', () => {
     }
   });
 
+  test('Focus Last Console Error focuses a visible error directly', async ({
+    rstudioPage: page,
+  }) => {
+    await consoleActions.executeInConsole(NESTED_ERROR);
+    const pane = consoleActions.consolePane;
+    await expect(pane.tracebackBtn).toBeVisible({ timeout: 10000 });
+
+    // Start outside the Console, then record everything that takes focus. Passing
+    // through the input would also scroll the output, and a screen reader would
+    // start reading the input.
+    await executeCommand(page, 'activateSource');
+    await page.evaluate(() => {
+      const log: string[] = [];
+      (window as unknown as { focusLog: string[] }).focusLog = log;
+      document.addEventListener('focusin', (e) =>
+        log.push((e.target as HTMLElement).className), { capture: true });
+    });
+
+    await page.keyboard.press(FOCUS_LAST_ERROR);
+    await expect(pane.tracebackBtn).toBeFocused();
+    const focusLog = await page.evaluate(
+      () => (window as unknown as { focusLog: string[] }).focusLog);
+    expect(focusLog).toHaveLength(1);
+    expect(focusLog[0]).toContain('show_traceback_text');
+  });
+
   test('Focus Last Console Error announces when there is no error', async ({
     rstudioPage: page,
   }) => {
@@ -322,6 +348,10 @@ test.describe('Console pane', () => {
           else
             await page.locator('#rstudio_Console_pane [class*="rstudio_panel_min_btn"]')
               .first().click();
+          // A zoomed-out column is inert only once its collapse animation ends
+          if (hide === 'zoomed out')
+            await expect.poll(() =>
+              pane.tracebackBtn.evaluate((el) => el.closest('[inert]') !== null)).toBe(true);
           await expect(page.locator('body')).not.toHaveClass(/rstudio-animating/);
           await expect(pane.tracebackBtn).not.toBeInViewport();
 
