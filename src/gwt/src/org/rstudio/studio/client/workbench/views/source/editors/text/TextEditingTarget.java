@@ -8227,7 +8227,11 @@ public class TextEditingTarget implements
          // Julia doesn't expand '~'; in a Julia string, '\', '"' and '$' are special
          String path = server_.resolveAliasedPath(FileSystemItem.createFile(getPath()));
          path = path.replace("\\", "\\\\").replace("\"", "\\\"").replace("$", "\\$");
-         String command = "include(\"" + path + "\");";
+
+         // the file's last value is shown, as include() at the Julia REPL
+         // shows it: a Julia plot is a value, drawn only when it is displayed,
+         // so a script that ends with one would otherwise show nothing
+         String command = "include(\"" + path + "\")";
          events_.fireEvent(new SendToConsoleEvent(command, ConsoleLanguageTracker.LANGUAGE_JULIA, true));
       });
    }
