@@ -114,14 +114,25 @@ else()
 endif()
 
 
-# Runs git in SOURCE_DIR, and stops if it fails.
-function(run_git)
+# Runs git in SOURCE_DIR, and sets OUT_VAR to whether it succeeded.
+function(try_git OUT_VAR)
    execute_process(
       COMMAND "${GIT_EXECUTABLE}" ${GIT_OPTIONS} ${ARGN}
       WORKING_DIRECTORY "${SOURCE_DIR}"
       RESULT_VARIABLE _RESULT)
 
-   if(NOT _RESULT EQUAL 0)
+   if(_RESULT EQUAL 0)
+      set(${OUT_VAR} TRUE PARENT_SCOPE)
+   else()
+      set(${OUT_VAR} FALSE PARENT_SCOPE)
+   endif()
+endfunction()
+
+
+# Runs git in SOURCE_DIR, and stops if it fails.
+function(run_git)
+   try_git(_SUCCEEDED ${ARGN})
+   if(NOT _SUCCEEDED)
       list(JOIN ARGN " " _COMMAND)
       message(FATAL_ERROR "'git ${_COMMAND}' failed in ${SOURCE_DIR}")
    endif()
@@ -129,41 +140,26 @@ endfunction()
 
 
 # Runs git in SOURCE_DIR for commands that use the network: a failed attempt
-# is retried RETRY_COUNT times, RETRY_DELAY seconds apart. Sets OUT_VAR to
-# whether one of the attempts succeeded.
-function(try_git_with_retries OUT_VAR)
+# is retried RETRY_COUNT times, RETRY_DELAY seconds apart, and the script
+# stops if every attempt fails.
+function(run_git_with_retries)
    list(JOIN ARGN " " _COMMAND)
 
    set(_ATTEMPT 0)
    while(TRUE)
-      execute_process(
-         COMMAND "${GIT_EXECUTABLE}" ${GIT_OPTIONS} ${ARGN}
-         WORKING_DIRECTORY "${SOURCE_DIR}"
-         RESULT_VARIABLE _RESULT)
-      if(_RESULT EQUAL 0)
-         set(${OUT_VAR} TRUE PARENT_SCOPE)
+      try_git(_SUCCEEDED ${ARGN})
+      if(_SUCCEEDED)
          return()
       endif()
 
       math(EXPR _ATTEMPT "${_ATTEMPT} + 1")
       if(_ATTEMPT GREATER RETRY_COUNT)
-         set(${OUT_VAR} FALSE PARENT_SCOPE)
-         return()
+         message(FATAL_ERROR "'git ${_COMMAND}' failed for ${REPOSITORY}")
       endif()
 
       message(STATUS "'git ${_COMMAND}' failed for ${REPOSITORY}; retrying in ${RETRY_DELAY} seconds")
       execute_process(COMMAND "${CMAKE_COMMAND}" -E sleep "${RETRY_DELAY}")
    endwhile()
-endfunction()
-
-
-# Like try_git_with_retries(), but stops if every attempt fails.
-function(run_git_with_retries)
-   try_git_with_retries(_SUCCEEDED ${ARGN})
-   if(NOT _SUCCEEDED)
-      list(JOIN ARGN " " _COMMAND)
-      message(FATAL_ERROR "'git ${_COMMAND}' failed for ${REPOSITORY}")
-   endif()
 endfunction()
 
 
@@ -184,10 +180,12 @@ run_git(checkout --quiet --detach FETCH_HEAD)
 # FetchContent initializes every submodule, recursively; keep doing that, but
 # shallowly. A shallow update fetches a submodule commit that isn't a branch
 # tip by its id, which some servers refuse; FetchContent fetched submodules'
-# full history, so fall back to that. As with FetchContent, this runs even
+# full history, so fall back to that. The shallow update gets one attempt: a
+# server that refuses it would refuse every retry, and the fallback retries a
+# failure that is only transient. As with FetchContent, this runs even
 # without a .gitmodules file, so that a submodule missing from it fails the
 # fetch instead of being left empty.
-try_git_with_retries(_SHALLOW_SUBMODULES submodule --quiet update --init --recursive --depth 1)
+try_git(_SHALLOW_SUBMODULES submodule --quiet update --init --recursive --depth 1)
 if(NOT _SHALLOW_SUBMODULES)
    message(STATUS "Shallow submodule update failed for ${REPOSITORY}; fetching their full history")
 

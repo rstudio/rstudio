@@ -303,8 +303,9 @@ expect_marker("${SOURCE_DIR}" "pinned")
 
 
 # A submodule whose server won't send its pinned commit by id is fetched
-# with its full history instead. Over protocol version 0, only the
-# dependency's server is set to send a commit by id, as GitHub's does.
+# with its full history instead, without retrying the shallow update. Over
+# protocol version 0, only the dependency's server is set to send a commit
+# by id, as GitHub's does.
 run_git("${DEP_DIR}" _IGNORED config uploadpack.allowReachableSHA1InWant true)
 run_git("${TEST_DIR}" _IGNORED config --global protocol.version 0)
 fetch("${DEP_URL}" "${DEP_PINNED}" "${TEST_DIR}/src-full-submodules" RESULT)
@@ -313,6 +314,9 @@ run_git("${DEP_DIR}" _IGNORED config --unset uploadpack.allowReachableSHA1InWant
 expect_fetched(RESULT "fetching a submodule from a strict server")
 if(NOT RESULT_OUTPUT MATCHES "Shallow submodule update failed")
    message(FATAL_ERROR "the shallow submodule update did not fall back:\n${RESULT_OUTPUT}")
+endif()
+if(RESULT_OUTPUT MATCHES "retrying")
+   message(FATAL_ERROR "the shallow submodule update was retried:\n${RESULT_OUTPUT}")
 endif()
 expect_marker("${TEST_DIR}/src-full-submodules/sub" "pinned")
 expect_marker("${TEST_DIR}/src-full-submodules/sub/leaf" "pinned")
