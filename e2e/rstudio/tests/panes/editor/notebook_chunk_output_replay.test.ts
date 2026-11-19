@@ -66,7 +66,6 @@ function errorsSource(): string {
     outerC19654 <- function() innerC19654()
     innerC19654 <- function() stop("multi frame")
     stop("one frame")
-    print("x")
     outerC19654()
     ${FENCE}
   `;
@@ -161,7 +160,8 @@ test.describe('Notebook chunk output replay', { tag: ['@parallel_safe'] }, () =>
     expect(await precedes(page.locator(`${TWO_ERRORS} .ace_console_error`).first(), afterFirst)).toBe(true);
 
     // An error without a traceback stays text; the box for the next error
-    // takes that error's message, not the earlier one.
+    // takes that error's message, not the earlier one. With nothing between
+    // them, the console puts both messages in one group.
     await runChunk(page, sourceActions, 'one_frame_first', 1);
     const box = page.locator(`${ONE_FRAME_FIRST} .ace_console_error`);
     await expect(box).toContainText('multi frame');

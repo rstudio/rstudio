@@ -22,6 +22,7 @@ import java.util.Map;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
 
+import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
@@ -344,7 +345,7 @@ public class ChunkOutputStream extends FlowPanel
 
       // if the message wasn't cut from the queue above, it was already shown
       // as text; move it into the box
-      Element errorEl = idx < 0 ? lastErrorGroup(textEl) : null;
+      Element errorEl = idx < 0 ? errorMessageGroup(textEl, err.getErrorMessage()) : null;
 
       // TODO: Use Ace theme when appropriate.
       ConsoleError error = new ConsoleError(err, null, null, this, errorEl);
@@ -761,18 +762,59 @@ public class ChunkOutputStream extends FlowPanel
    // its own group, the last one in the text block written before the error
    // arrived. Earlier blocks hold the messages of earlier errors, and error
    // boxes carry the same class, so look only in that block.
-   private Element lastErrorGroup(Element textEl)
+   //
+   // The console also extends the group before a new one when nothing comes
+   // between them, so the group can start with an earlier error's message
+   // (e.g. one without a traceback, which stays text). Take only the part
+   // from where this error's message starts, and leave the rest as text.
+   private Element errorMessageGroup(Element textEl, String message)
    {
       if (textEl == null)
          return null;
 
+      Element groupEl = null;
       String groupError = VirtualConsole.RES.styles().groupError();
       for (Node node = textEl.getLastChild(); node != null; node = node.getPreviousSibling())
       {
          if (Element.is(node) && Element.as(node).hasClassName(groupError))
-            return Element.as(node);
+         {
+            groupEl = Element.as(node);
+            break;
+         }
       }
 
+      if (groupEl == null)
+         return null;
+
+      // compare text as the console shows it: without escapes (the message
+      // can carry colors), and without the newlines it trims from a group
+      String expected = AnsiCode.strip(StringUtil.notNull(message)).trim();
+      if (expected.isEmpty())
+         return groupEl;
+
+      // each message starts a child span, as its highlighted error prefix
+      // gets a span of its own; scan back to the start of this one
+      String text = "";
+      for (Node node = groupEl.getLastChild(); node != null; node = node.getPreviousSibling())
+      {
+         text = (Element.is(node) ? Element.as(node).getInnerText() : StringUtil.notNull(node.getNodeValue())) + text;
+         if (!text.trim().startsWith(expected))
+            continue;
+
+         if (node == groupEl.getFirstChild())
+            return groupEl;
+
+         Element partEl = Element.as(groupEl.cloneNode(false));
+         while (node != null)
+         {
+            Node next = node.getNextSibling();
+            partEl.appendChild(node);
+            node = next;
+         }
+         return partEl;
+      }
+
+      // the group doesn't hold this message; the box shows its own copy
       return null;
    }
    
