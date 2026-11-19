@@ -431,6 +431,10 @@ describe('DesktopCallback', () => {
         for (const state of [{ minimized: true }, { visible: false }, { destroyed: true }]) {
           mainWindow.window = fakeBrowserWindow(state) as unknown as BrowserWindow;
           assert.isUndefined(callback.dialogParentWindow(), JSON.stringify(state));
+
+          // nor does an off-screen window that asked get it
+          const requester = fakeBrowserWindow({ minimized: true }) as unknown as BrowserWindow;
+          assert.isUndefined(callback.dialogParentWindow(null, requester), JSON.stringify(state));
         }
 
         // nor is an off-screen window that asked used, while the main window is there
