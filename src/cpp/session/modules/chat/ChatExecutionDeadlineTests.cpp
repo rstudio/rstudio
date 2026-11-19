@@ -210,3 +210,62 @@ TEST(ChatExecutionDeadline, NeverExpiredInQueueWithoutATimeout)
    EXPECT_FALSE(expiredInQueue(kQueued, 0, kQueued + std::chrono::hours(24)));
    EXPECT_FALSE(expiredInQueue(kQueued, -1, kQueued + std::chrono::hours(24)));
 }
+
+TEST(ChatBusyHandoff, ReleasesAfterTheLastRequestRuns)
+{
+   BusyHandoff handoff;
+   handoff.started();
+
+   EXPECT_TRUE(handoff.finished(true, true));
+}
+
+TEST(ChatBusyHandoff, HandsTheBusyStateToTheNextRequest)
+{
+   BusyHandoff handoff;
+   handoff.started();
+   EXPECT_FALSE(handoff.finished(true, false));
+
+   handoff.started();
+   EXPECT_TRUE(handoff.finished(true, true));
+}
+
+TEST(ChatBusyHandoff, ReleasesWhenTheLastRequestExpiresAfterAHandoff)
+{
+   // A ran with B queued behind it, and B expired before it could start
+   BusyHandoff handoff;
+   handoff.started();
+   EXPECT_FALSE(handoff.finished(true, false));
+
+   EXPECT_TRUE(handoff.finished(false, true));
+}
+
+TEST(ChatBusyHandoff, KeepsHoldingWhileExpiriesLeaveRequestsQueued)
+{
+   BusyHandoff handoff;
+   handoff.started();
+   EXPECT_FALSE(handoff.finished(true, false));
+
+   EXPECT_FALSE(handoff.finished(false, false));
+   EXPECT_TRUE(handoff.finished(false, true));
+}
+
+TEST(ChatBusyHandoff, KeepsTheBusyStateOfWorkItDidNotStart)
+{
+   // An expiry in idle work inside a user command waiting in file.choose()
+   BusyHandoff handoff;
+
+   EXPECT_FALSE(handoff.finished(false, true));
+}
+
+TEST(ChatBusyHandoff, KeepsTheBusyStateOfARunningRequest)
+{
+   // A ran with B queued and handed the busy state to B, which waits in
+   // readline(); C expires in idle work inside that read, and B, not the
+   // handoff, still holds the console
+   BusyHandoff handoff;
+   handoff.started();
+   EXPECT_FALSE(handoff.finished(true, false));
+   handoff.started();
+
+   EXPECT_FALSE(handoff.finished(false, true));
+}

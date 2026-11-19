@@ -73,6 +73,18 @@ bool expiredInQueue(Clock::time_point queuedTime, int timeoutMs, Clock::time_poi
    return timeoutMs > 0 && now - queuedTime >= std::chrono::milliseconds(timeoutMs);
 }
 
+void BusyHandoff::started()
+{
+   held_ = false;
+}
+
+bool BusyHandoff::finished(bool ran, bool queueEmpty)
+{
+   bool owned = ran || held_;
+   held_ = owned && !queueEmpty;
+   return owned && queueEmpty;
+}
+
 int timeoutFromOption(double timeoutMs)
 {
    // Written as a negation so NaN also reads as no limit

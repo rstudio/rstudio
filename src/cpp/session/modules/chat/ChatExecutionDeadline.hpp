@@ -65,6 +65,27 @@ private:
 // could start, so it should not start at all
 bool expiredInQueue(Clock::time_point queuedTime, int timeoutMs, Clock::time_point now);
 
+// Decides when queued requests release the console's busy state. A request
+// that runs marks the console busy, and while more requests wait it is
+// handed from one to the next rather than released in between. A request
+// that expires without running releases it only when such a handoff left it
+// busy: the expiry may happen in idle work inside something else that holds
+// the console (a user command in file.choose(), or a chat request in
+// readline()), which must keep it.
+class BusyHandoff
+{
+public:
+   // A queued request starts running, and owns the busy state it sets
+   void started();
+
+   // A queued request ran, or expired without running; returns whether to
+   // release the console's busy state
+   bool finished(bool ran, bool queueEmpty);
+
+private:
+   bool held_ = false;
+};
+
 // The timeout option's value, read as a JSON number, in whole milliseconds:
 // a fraction rounds up rather than down to "no limit", and a value past
 // int's range is clamped. Non-positive means no limit (0).

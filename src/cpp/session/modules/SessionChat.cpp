@@ -467,8 +467,8 @@ static boost::mutex& s_pendingExecutionMutex = make_leaked<boost::mutex>();
 static std::queue<PendingExecutionRequest>& s_pendingExecutionQueue = make_leaked<std::queue<PendingExecutionRequest>>();
 static bool s_executionScheduled = false;
 
-// Whether a finished chat execution left the console busy for queued requests
-static bool s_chatHoldsBusy = false;
+// When queued chat executions release the console's busy state
+static chat_execution::BusyHandoff s_busyHandoff;
 
 // Forward declaration
 void processPendingExecution();
@@ -1472,10 +1472,9 @@ void processPendingExecution()
       return;
    }
 
-   // Signal that R is executing chat code. The running request owns the busy
-   // state now, not a handoff from an earlier one.
+   // Signal that R is executing chat code
    console_input::setExecuting(true);
-   s_chatHoldsBusy = false;
+   s_busyHandoff.started();
    ClientEvent busyEvent(client_events::kBusy, true);
    module_context::enqueClientEvent(busyEvent);
 
@@ -1489,19 +1488,15 @@ void processPendingExecution()
 }
 
 // After a request runs or expires: schedule the next queued request, or, once
-// the queue is empty, release the console's busy state -- after a request
-// that ran, or after one that expired if a finished request left the console
-// busy for the queue. An expiry can happen in idle work inside something else
-// that holds the console (a user command waiting in file.choose(), or a chat
-// request waiting in readline()), which must keep it.
+// the queue is empty, release the console's busy state if it is chat
+// execution's to release (see BusyHandoff)
 void continuePendingExecutions(bool ran)
 {
    boost::mutex::scoped_lock lock(s_pendingExecutionMutex);
-   if (!s_pendingExecutionQueue.empty())
+   bool queueEmpty = s_pendingExecutionQueue.empty();
+   bool releaseBusy = s_busyHandoff.finished(ran, queueEmpty);
+   if (!queueEmpty)
    {
-      if (ran)
-         s_chatHoldsBusy = true;
-
       if (!s_executionScheduled)
       {
          s_executionScheduled = true;
@@ -1511,9 +1506,8 @@ void continuePendingExecutions(bool ran)
             true);  // idleOnly=true - wait for R to be idle
       }
    }
-   else if (ran || s_chatHoldsBusy)
+   else if (releaseBusy)
    {
-      s_chatHoldsBusy = false;
       lock.unlock();
       console_input::setExecuting(false);
       console_input::updateSessionExecuting();
