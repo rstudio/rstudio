@@ -873,8 +873,8 @@ Error formatDocumentImpl(
 
       FilePath formatScriptPath = module_context::tempFile("rstudio-format-", "R");
       error = r::exec::RFunction(".rs.generateStylerFormatDocumentScript")
-            .addUtf8Param(documentPath)
-            .addUtf8Param(formatScriptPath)
+            .addParam(documentPath)
+            .addParam(formatScriptPath)
             .call();
       if (error)
          return onError(error, ERROR_LOCATION);
@@ -1855,7 +1855,7 @@ SEXP rs_fileEdit(SEXP fileSEXP)
 
       // extract string vector
       std::vector<std::string> filenames;
-      Error error = r::sexp::extract(fileSEXP, &filenames, true);
+      Error error = r::sexp::extract(fileSEXP, &filenames);
       if (error)
          throw r::exec::RErrorException(error.getSummary());
 

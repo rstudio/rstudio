@@ -28,9 +28,11 @@
 #endif
 
 #include <core/FileSerializer.hpp>
+#include <core/json/JsonRpc.hpp>
 #include <core/system/Environment.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RJsonRpc.hpp>
 #include <r/RSexp.hpp>
 #include <r/RErrorCategory.hpp>
 #include <r/RInterface.hpp>
@@ -113,7 +115,6 @@ TEST(SessionRTest, RFunctionRefusesNonMainThread) {
    std::thread([&listFunction]()
    {
       listFunction.addParam("x");
-      listFunction.addUtf8Param("y");
    }).join();
    error = listFunction.call();
    expectNonMainThreadError(error);
@@ -353,11 +354,91 @@ TEST(SessionRTest, StringsReachRMarkedUtf8) {
    ASSERT_FALSE(error);
    EXPECT_EQ("UTF-8", encoding);
 
+   FilePath filePath(value);
+
+   encoding.clear();
+   error = r::exec::RFunction("base:::Encoding", filePath).call(&encoding);
+   ASSERT_FALSE(error);
+   EXPECT_EQ("UTF-8", encoding);
+
+   std::string path;
+   error = r::exec::RFunction("base:::identity", filePath).call(&path);
+   ASSERT_FALSE(error);
+   EXPECT_EQ(filePath.getAbsolutePath(), path);
+
    std::vector<std::string> encodings;
    std::vector<std::string> values = { value, value };
    error = r::exec::RFunction("base:::Encoding", values).call(&encodings);
    ASSERT_FALSE(error);
    EXPECT_EQ(std::vector<std::string>({ "UTF-8", "UTF-8" }), encodings);
+}
+
+TEST(SessionRTest, JsonRpcRefusesStringsWithEmbeddedNul) {
+   // R raises an error when asked for a string with an embedded nul. Raised
+   // while an R handler's arguments are built, before the call runs protected,
+   // it would longjmp past the handler and leave the request unanswered
+   Error error = r::exec::executeString(R"EOF(
+      .rs.addJsonRpcHandler("test_embedded_nul", function(...) .rs.scalar(length(list(...))))
+   )EOF");
+   ASSERT_FALSE(error);
+
+   BOOST_SCOPE_EXIT(void)
+   {
+      r::exec::executeString(R"EOF(
+         rm(".rs.rpc.test_embedded_nul", envir = as.environment("tools:rstudio"))
+      )EOF");
+   }
+   BOOST_SCOPE_EXIT_END
+
+   json::JsonRpcMethods methods;
+   error = r::json::getRpcMethods(&methods);
+   ASSERT_FALSE(error);
+
+   auto it = methods.find("test_embedded_nul");
+   ASSERT_NE(methods.end(), it);
+   json::JsonRpcFunction handler = it->second;
+
+   // requests are parsed from text, as the session receives them; a json::Value
+   // assigned from a std::string stops at the first nul. names are refused too,
+   // as R would otherwise truncate them at the nul
+   std::vector<std::string> inputs = {
+      R"({"method": "test_embedded_nul", "params": ["a\u0000b"]})",
+      R"({"method": "test_embedded_nul", "kwparams": {"y": "ok", "x": "a\u0000b"}})",
+      R"({"method": "test_embedded_nul", "params": [["a\u0000b"]]})",
+      R"({"method": "test_embedded_nul", "params": ["ok", {"y": "ok", "x": "a\u0000b"}]})",
+      R"({"method": "test_embedded_nul", "params": [{"a\u0000b": "x"}]})",
+      R"({"method": "test_embedded_nul", "kwparams": {"a\u0000b": "x"}})",
+   };
+
+   for (const std::string& input : inputs)
+   {
+      json::JsonRpcRequest request;
+      error = json::parseJsonRpcRequest(input, &request);
+      ASSERT_FALSE(error) << input;
+
+      // run protected, so that an R error escaping the handler fails this
+      // test instead of ending the test run
+      Error handlerError;
+      json::JsonRpcResponse response;
+      error = r::exec::executeSafely([&]() { handlerError = handler(request, &response); });
+      EXPECT_FALSE(error) << input << ": " << error.asString();
+      EXPECT_EQ(json::errc::ParamInvalid, handlerError.getCode()) << input;
+      EXPECT_EQ(json::jsonRpcCategory().name(), handlerError.getName()) << input;
+   }
+
+   // a request without a nul still reaches the handler
+   json::JsonRpcRequest request;
+   error = json::parseJsonRpcRequest(
+      R"({"method": "test_embedded_nul", "params": ["ab"], "kwparams": {"x": "a"}})",
+      &request);
+   ASSERT_FALSE(error);
+
+   Error handlerError;
+   json::JsonRpcResponse response;
+   error = r::exec::executeSafely([&]() { handlerError = handler(request, &response); });
+   ASSERT_FALSE(error) << error.asString();
+   ASSERT_FALSE(handlerError) << handlerError.asString();
+   EXPECT_EQ(2, response.result().getInt());
 }
 
 #ifndef _WIN32
@@ -380,7 +461,7 @@ TEST(SessionRTest, StringsFromRAreReadAsUtf8) {
 
    std::string value = "/tmp/test-\xc3\xa9";
    r::sexp::Protect protect;
-   SEXP valueSEXP = r::sexp::createUtf8(value, &protect);
+   SEXP valueSEXP = r::sexp::create(value, &protect);
    EXPECT_EQ(value, r::sexp::asString(valueSEXP));
 
    std::string result;

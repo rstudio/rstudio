@@ -252,7 +252,7 @@ protected:
                projectPath = projects::projectContext().directory().getAbsolutePath();
 
             Error error = r::exec::RFunction(".rs.python.configuredInterpreterPath")
-               .addUtf8Param(projectPath)
+               .addParam(projectPath)
                .addParam(true)
                .call(&pythonPath);
             if (error)

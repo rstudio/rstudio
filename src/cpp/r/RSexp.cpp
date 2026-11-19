@@ -129,19 +129,19 @@ FunctionSymbolUsageCache& functionSymbolUsageCache()
 }
 
 // C++ treats a std::string as UTF-8, so strings read from R are converted to
-// UTF-8 unless the caller asks for R's native encoding
-std::string translate(SEXP charSEXP, bool asUtf8 = true)
+// UTF-8
+std::string translate(SEXP charSEXP)
 {
    // "bytes" strings have no encoding to convert from, and translating one
    // is an R error that would longjmp through this frame
    cetype_t encoding = Rf_getCharCE(charSEXP);
-   if (encoding == CE_BYTES || encoding == (asUtf8 ? CE_UTF8 : CE_NATIVE))
+   if (encoding == CE_BYTES || encoding == CE_UTF8)
       return std::string(CHAR(charSEXP), LENGTH(charSEXP));
 
    // release the R_alloc() buffer a conversion makes, which would otherwise
    // live until R next resets its allocation stack
    const void* vmax = vmaxget();
-   std::string result = asUtf8 ? Rf_translateCharUTF8(charSEXP) : Rf_translateChar(charSEXP);
+   std::string result = Rf_translateCharUTF8(charSEXP);
    vmaxset(vmax);
    return result;
 }
@@ -165,51 +165,41 @@ SEXP installUtf8(const std::string& name)
    return Rf_installTrChar(charSEXP);
 }
 
-std::string asStringImpl(SEXP objectSEXP, bool asUtf8)
+} // anonymous namespace
+
+std::string asString(SEXP object)
 {
-   switch (TYPEOF(objectSEXP))
+   switch (TYPEOF(object))
    {
-   
+
    case CHARSXP:
-      return translate(objectSEXP, asUtf8);
-      
+      return translate(object);
+
    case STRSXP:
-      if (length(objectSEXP) == 0)
+      if (length(object) == 0)
       {
          return std::string();
       }
       else
       {
-         SEXP charSEXP = STRING_ELT(objectSEXP, 0);
-         return translate(charSEXP, asUtf8);
+         SEXP charSEXP = STRING_ELT(object, 0);
+         return translate(charSEXP);
       }
-      
+
    default:
       Protect protect;
       SEXP charSEXP;
-      protect.add(charSEXP = Rf_asChar(objectSEXP));
-      return translate(charSEXP, asUtf8);
-      
+      protect.add(charSEXP = Rf_asChar(object));
+      return translate(charSEXP);
+
    }
 }
 
-} // anonymous namespace
-   
-std::string asString(SEXP object)
-{
-   return asStringImpl(object, true);
-}
-
-std::string asUtf8String(SEXP object)
-{
-   return asStringImpl(object, true);
-}
-   
 std::string safeAsString(SEXP object, const std::string& defValue)
 {
    if (object != R_NilValue)
-      return asStringImpl(object, true);
-   else 
+      return asString(object);
+   else
       return defValue;
 }
     
@@ -1099,7 +1089,7 @@ Error extract(SEXP valueSEXP, std::vector<int>* pVector)
    return Success();
 }
 
-Error extract(SEXP valueSEXP, std::string* pString, bool asUtf8)
+Error extract(SEXP valueSEXP, std::string* pString)
 {
    if (TYPEOF(valueSEXP) != STRSXP)
       return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
@@ -1107,35 +1097,35 @@ Error extract(SEXP valueSEXP, std::string* pString, bool asUtf8)
    if (Rf_length(valueSEXP) < 1)
       return Error(errc::NoDataAvailableError, ERROR_LOCATION);
 
-   *pString = translate(STRING_ELT(valueSEXP, 0), asUtf8);
+   *pString = translate(STRING_ELT(valueSEXP, 0));
    return Success();
 }
 
-Error extract(SEXP valueSEXP, std::vector<std::string>* pVector, bool asUtf8)
+Error extract(SEXP valueSEXP, std::vector<std::string>* pVector)
 {
    if (TYPEOF(valueSEXP) != STRSXP)
       return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
 
    pVector->clear();
    for (int i = 0; i < Rf_length(valueSEXP); i++)
-      pVector->push_back(translate(STRING_ELT(valueSEXP, i), asUtf8));
+      pVector->push_back(translate(STRING_ELT(valueSEXP, i)));
    
    return Success();
 }
 
-Error extract(SEXP valueSEXP, std::set<std::string>* pSet, bool asUtf8)
+Error extract(SEXP valueSEXP, std::set<std::string>* pSet)
 {
    if (TYPEOF(valueSEXP) != STRSXP)
       return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
    
    pSet->clear();
    for (int i = 0; i < Rf_length(valueSEXP); i++)
-      pSet->insert(translate(STRING_ELT(valueSEXP, i), asUtf8));
+      pSet->insert(translate(STRING_ELT(valueSEXP, i)));
    
    return Success();
 }
 
-Error extract(SEXP valueSEXP, std::map<std::string, std::set<std::string>>* pMap, bool asUtf8)
+Error extract(SEXP valueSEXP, std::map<std::string, std::set<std::string>>* pMap)
 {
    if (TYPEOF(valueSEXP) != VECSXP)
       return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
@@ -1152,9 +1142,9 @@ Error extract(SEXP valueSEXP, std::map<std::string, std::set<std::string>>* pMap
       SEXP el = VECTOR_ELT(valueSEXP, i);
       std::set<std::string> contents;
       for (int j = 0; j < Rf_length(el); ++j)
-         contents.insert(translate(STRING_ELT(el, j), asUtf8));
+         contents.insert(translate(STRING_ELT(el, j)));
       
-      std::string name = translate(STRING_ELT(namesSEXP, i), asUtf8);
+      std::string name = translate(STRING_ELT(namesSEXP, i));
       pMap->operator [](name) = contents;
    }
    
@@ -1163,9 +1153,8 @@ Error extract(SEXP valueSEXP, std::map<std::string, std::set<std::string>>* pMap
 
 Error extract(SEXP valueSEXP, FilePath* pFilePath)
 {
-   // extract result (require UTF-8)
    std::string path;
-   Error error = extract(valueSEXP, &path, true);
+   Error error = extract(valueSEXP, &path);
    if (error)
       return error;
    
@@ -1422,7 +1411,19 @@ SEXP create(const char* value, Protect* pProtect)
 
 SEXP create(const std::string& value, Protect* pProtect)
 {
-   return createUtf8(value, pProtect);
+   SEXP strSEXP;
+   pProtect->add(strSEXP = Rf_allocVector(STRSXP, 1));
+
+   // protection not required as long as we immediately assign into protected STRSXP
+   int size = static_cast<int>(value.size());
+   SEXP charSEXP = Rf_mkCharLenCE(value.c_str(), size, CE_UTF8);
+   SET_STRING_ELT(strSEXP, 0, charSEXP);
+   return strSEXP;
+}
+
+SEXP create(const FilePath& value, Protect* pProtect)
+{
+   return create(value.getAbsolutePath(), pProtect);
 }
 
 SEXP create(int value, Protect* pProtect)
@@ -1707,39 +1708,6 @@ SEXP create(const std::map<std::string, std::string>& map, Protect* pProtect)
    
    Rf_setAttrib(listSEXP, R_NamesSymbol, namesSEXP);
    return listSEXP;
-}
-
-SEXP createUtf8(const std::string& data, Protect* pProtect)
-{
-   SEXP strSEXP;
-   pProtect->add(strSEXP = Rf_allocVector(STRSXP, 1));
-
-   // protection not required as long as we immediately assign into protected STRSXP
-   int size = static_cast<int>(data.size());
-   SEXP charSEXP = Rf_mkCharLenCE(data.c_str(), size, CE_UTF8);
-   SET_STRING_ELT(strSEXP, 0, charSEXP);
-   return strSEXP;
-}
-
-SEXP createUtf8(const FilePath& filePath, Protect* pProtect)
-{
-   return createUtf8(filePath.getAbsolutePath(), pProtect);
-}
-
-SEXP createUtf8(const std::vector<std::string>& data, Protect* pProtect)
-{
-   SEXP strSEXP;
-   pProtect->add(strSEXP = Rf_allocVector(STRSXP, data.size()));
-   
-   for (std::size_t i = 0, n = data.size(); i < n; i++)
-   {
-      // protection not required as long as we immediately assign into protected STRSXP
-      int size = static_cast<int>(data[i].size());
-      SEXP charSEXP = Rf_mkCharLenCE(data[i].c_str(), size, CE_UTF8);
-      SET_STRING_ELT(strSEXP, i, charSEXP);
-   }
-   
-   return strSEXP;
 }
 
 SEXP createRawVector(const std::string& data, Protect* pProtect)

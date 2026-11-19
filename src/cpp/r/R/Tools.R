@@ -1024,14 +1024,15 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    invisible(.Call("rs_activatePane", "history", PACKAGE = "(embedding)"))
 })
 
+# expand '~' here rather than in C++; see rs_loadHistory() in RSession.cpp
 .rs.addFunction("savehistory", function(file = ".Rhistory")
 {
-   invisible(.Call("rs_saveHistory", file, PACKAGE = "(embedding)"))
+   invisible(.Call("rs_saveHistory", path.expand(file), PACKAGE = "(embedding)"))
 })
 
 .rs.addFunction("loadhistory", function(file = ".Rhistory")
 {
-   invisible(.Call("rs_loadHistory", file, PACKAGE = "(embedding)"))
+   invisible(.Call("rs_loadHistory", path.expand(file), PACKAGE = "(embedding)"))
 })
 
 .rs.addFunction("timestamp", function(stamp = date(),

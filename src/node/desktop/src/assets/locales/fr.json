@@ -59,6 +59,12 @@
     "errorStartingR": "Erreur de démarrage de R",
     "problemReportCopiedToClipboard": "Rapport d'erreur copié dans le presse-papiers.",
     "couldNotCopyProblemReportToClipboard": "Impossible de copier le rapport d'erreur dans le presse-papiers.",
+    "previousRHeading": "Version précédente de R",
+    "previousRMessage": "R n'a pas démarré après que RStudio est passé à une autre version de R. Vous pouvez revenir à la version de R utilisée auparavant :",
+    "restartWithPreviousR": "Redémarrer avec la version précédente de R",
+    "defaultRHeading": "Version de R par défaut",
+    "defaultRMessage": "R n'a pas démarré avec la version de R choisie dans RStudio. Vous pouvez redémarrer avec la version de R par défaut, que RStudio utilisera alors à partir de maintenant.",
+    "restartWithDefaultR": "Redémarrer avec la version de R par défaut",
     "rLogo": "Logo de R",
     "warning": "Avertissement",
     "rstudioVersion": "Version de RStudio",
@@ -124,6 +130,7 @@
     "rExecutableNotPrepared": "R dans {{path}} n'a pas été vérifié pour ce redémarrage.",
     "rExecutableFailed": "{{path}} n'a pas pu être exécuté : {{error}}",
     "rExecutableNotOrthogonal": "{{path}} est configuré pour exécuter la version de R par défaut plutôt que lui-même",
+    "rSharedLibraryMissing": "{{path}} n'a pas de bibliothèque R partagée ({{library}}), dont RStudio a besoin pour exécuter R",
     "rUpdatePrompt": "RStudio souhaite mettre à jour R {{version}} afin qu'il puisse fonctionner avec d'autres versions de R.",
     "rUpdateCancelled": "la mise à jour de R a été annulée",
     "rUpdateFailed": "impossible de mettre à jour {{path}} : {{error}}"
@@ -133,7 +140,13 @@
   },
   "sessionLauncherTs": {
     "rSessionFatalError": "La session R a eu une erreur fatale.",
-    "errorWasCausedByRAttemptingToLoadPackagesFromADifferentIncompatibleRVersion": "Cette erreur a très probablement été causée par la tentative de R de charger des paquets à partir d'une autre version incompatible de R sur votre système. Veuillez supprimer les autres versions de R et/ou supprimer les variables d'environnement qui font référence aux bibliothèques d'autres versions de R avant de poursuivre."
+    "errorWasCausedByRAttemptingToLoadPackagesFromADifferentIncompatibleRVersion": "Cette erreur a très probablement été causée par la tentative de R de charger des paquets à partir d'une autre version incompatible de R sur votre système. Veuillez supprimer les autres versions de R et/ou supprimer les variables d'environnement qui font référence aux bibliothèques d'autres versions de R avant de poursuivre.",
+    "chosenRUnusableTitle": "Version de R choisie indisponible",
+    "chosenRUnusableMessage": "La version de R choisie dans RStudio n'a pas pu être utilisée ; RStudio a donc démarré avec la version de R par défaut.",
+    "chosenRUnusableDetail": "{{reason}}\n\nRStudio utilise désormais {{rPath}}. Conservez la version de R choisie pour la réessayer au prochain démarrage de RStudio, ou utilisez la version de R par défaut à partir de maintenant.",
+    "chosenRUnusableUseDefault": "Utiliser la version par défaut",
+    "chosenRUnusableKeepChoice": "Conserver la version choisie",
+    "noDefaultRToRestartWith": "RStudio n'a trouvé aucune autre version de R avec laquelle redémarrer : la version de R par défaut est celle qui n'a pas démarré, ou aucune n'a été trouvée."
   },
   "utilsTs": {
     "rsessionNotFoundError": "Impossible de trouver l'exécutable rsession. Essayez de définir la variable d'environnement \"RSTUDIO_CPP_BUILD_OUTPUT\" à l'emplacement où src/cpp a été construit.\n( Répertoire de travail : {{workingDirectory}} )"
