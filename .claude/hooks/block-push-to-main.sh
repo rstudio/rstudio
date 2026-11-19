@@ -18,6 +18,10 @@ command=$(echo "$input" | jq -r '.tool_input.command // empty') || {
   exit 2
 }
 
+# Join continuation lines: the checks below read the command a line at a time
+continuation=$'\\\n'
+command="${command//"$continuation"/ }"
+
 # A git invocation may carry global options between 'git' and its subcommand
 # (e.g. 'git -C <dir> -c x=y commit'), so the subcommand is not necessarily the
 # first token. This fragment matches a run of such options -- '-C <dir>' (whose
@@ -31,8 +35,11 @@ is_protected() {
 }
 
 # Prints the remote branches that a 'git push' with the arguments in $1 would
-# update, one per line, or '*' when it may update any branch. $2 is the current
-# branch, which git pushes when no refspec is given, and which HEAD names.
+# update, one per line: '*' when it may update any branch, and '?' when the
+# shell expands an argument, so what it pushes can't be read here. $2 is the
+# current branch, which git pushes when no refspec is given, and which HEAD
+# names. That assumes the default push configuration: push.default=upstream, or
+# a remote.<name>.push refspec, can push the current branch under another name.
 push_targets() {
   local token spec dst
   local skip_arg=false end_of_opts=false have_remote=false
@@ -40,6 +47,12 @@ push_targets() {
 
   read -r -a tokens <<< "$1" || true
   for token in ${tokens[@]+"${tokens[@]}"}; do
+    case "$token" in
+      *[\$\`\{\\?[]*)
+        echo '?'
+        return ;;
+    esac
+
     token="${token//\"/}"
     token="${token//\'/}"
 
@@ -97,6 +110,8 @@ push_targets() {
         dst="$2" ;;
       refs/heads/*)
         dst="${dst#refs/heads/}" ;;
+      heads/*)
+        dst="${dst#heads/}" ;;
       refs/*)
         continue ;;
     esac
@@ -140,27 +155,32 @@ if echo "$command" | grep -qE "\bgit${git_opts}[[:space:]]+(push|commit)\b"; the
   fi
 
   # A push is judged by the branches it updates, not the one checked out, so
-  # that 'git push origin <feature-branch>' works from a checkout on main. Split
-  # the command into simple commands, so each push's arguments end where its
-  # command does; a redirection (e.g. '2>&1') ends them too. A push is found
-  # anywhere in a command, so that wrapped ones (e.g. bash -c '...') are still
-  # checked; the cost is that a commit message quoting a push to main is
-  # blocked too.
+  # that 'git push origin <feature-branch>' works from a checkout on main. Drop
+  # redirections (e.g. '2>&1', '>log'), operator and target, then split the
+  # command into simple commands, so each push's arguments end where its
+  # command does. A push is found anywhere in a command, so that wrapped ones
+  # (e.g. bash -c '...') are still checked; the cost is that a commit message
+  # quoting a push to main is blocked too.
   newline=$'\n'
-  segments="$command"
+  segments=$(echo "$command" | sed -E 's/[0-9]*(&>>?|>>?&?|>\||<&|<<<?|<>|<)[[:space:]]*[^[:space:];&|()<>]*//g')
   for op in '&&' '||' ';' '|' '&' '(' ')'; do
     segments="${segments//"$op"/$newline}"
   done
 
   while IFS= read -r segment; do
-    if ! echo "$segment" | grep -qE "\bgit${git_opts}[[:space:]]+push\b"; then
+    # the text after 'git push', or nothing when the segment has no push
+    args=$(echo "$segment" | sed -nE "s/(^|.*[^[:alnum:]_])git${git_opts}[[:space:]]+push([^[:alnum:]_]|\$)/ /p")
+    if [ -z "$args" ]; then
       continue
     fi
 
-    args=$(echo "$segment" | sed -E "s/.*git${git_opts}[[:space:]]+push//; s/[[:space:]]*[0-9]*[<>].*$//")
     while IFS= read -r target; do
       if [ "$target" = '*' ]; then
         echo "BLOCKED: git push that may update every branch (--all, --mirror, --branches, ':' or a glob) is not allowed. Push a feature branch by name." >&2
+        exit 2
+      fi
+      if [ "$target" = '?' ]; then
+        echo "BLOCKED: git push with an argument the shell expands (\$, \`, {, \\, ? or [) is not allowed, since the branch it updates can't be checked. Name the branch literally." >&2
         exit 2
       fi
       if is_protected "$target"; then
