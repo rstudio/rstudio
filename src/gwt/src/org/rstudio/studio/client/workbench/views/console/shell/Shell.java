@@ -344,9 +344,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       ConsoleError error = view_.getLastError();
       if (error == null)
       {
-         announceFocusFailure(view_.latestErrorHasNoActions()
-               ? constants_.consoleErrorHasNoActionsMessage()
-               : constants_.noConsoleErrorToFocusMessage());
+         announceNoErrorToFocus();
          return;
       }
 
@@ -370,7 +368,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
             ConsoleError current = view_.getLastError();
             if (current == null)
             {
-               announceFocusFailure(constants_.noConsoleErrorToFocusMessage());
+               announceNoErrorToFocus();
                return false;
             }
             if (canFocusNow(current))
@@ -392,6 +390,13 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    private static boolean canFocusNow(ConsoleError error)
    {
       return error.canFocus() && !DualWindowLayoutPanel.isAnimating();
+   }
+
+   private void announceNoErrorToFocus()
+   {
+      announceFocusFailure(view_.latestErrorHasNoActions()
+            ? constants_.consoleErrorHasNoActionsMessage()
+            : constants_.noConsoleErrorToFocusMessage());
    }
 
    private void announceFocusFailure(String message)
