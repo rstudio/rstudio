@@ -1,9 +1,11 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
+import type { Page } from 'playwright';
 import { TIMEOUTS } from '@utils/constants';
 import { clearPref, executeCommand, resetLayoutZoom, setPref, waitForActiveDocument } from '@utils/commands';
 import { closeAndDeleteSandboxFiles, seedSandboxFile } from '@utils/files';
 import { rPathLiteral } from '@utils/r';
 import { useSuiteSandbox } from '@utils/sandbox';
+import { killAllTerminals, XTERM_SELECTOR } from '@utils/terminal';
 import {
   getConsoleCursorPosition,
   getConsoleScreenRowCount,
@@ -262,10 +264,38 @@ test.describe('Console pane', () => {
     }
   });
 
-  for (const hide of ['zoomed out', 'minimized'] as const) {
+  // Alone in its pane, the Console has no tab panel, and the end of the
+  // restore animation focuses the Console's input
+  async function setConsoleAlone(page: Page, alone: boolean): Promise<void> {
+    const neighbors = ['terminal', 'background_jobs'];
+    if (alone) {
+      for (const id of neighbors) {
+        const close = page.locator(`#rstudio_workbench_tab_${id} img[alt^="Close"]`);
+        if (await close.isVisible())
+          await close.click();
+      }
+    } else {
+      // Later specs expect both tabs. Reopening Terminal starts a shell; let it
+      // finish starting before ending it.
+      await executeCommand(page, 'activateBackgroundJobs');
+      await executeCommand(page, 'activateTerminal');
+      await expect(page.locator(`#rstudio_workbench_panel_terminal ${XTERM_SELECTOR}`))
+        .toBeVisible({ timeout: TIMEOUTS.consoleReady });
+      await killAllTerminals(page);
+      await executeCommand(page, 'activateConsole');
+    }
+    await expect(page.locator('#rstudio_workbench_tab_console')).toBeVisible({ visible: !alone });
+    for (const id of neighbors)
+      await expect(page.locator(`#rstudio_workbench_tab_${id}`)).toBeVisible({ visible: !alone });
+  }
+
+  for (const hide of ['zoomed out', 'minimized', 'minimized alone in its pane'] as const) {
     for (const reducedMotion of [true, false]) {
       const motion = reducedMotion ? 'reduced motion' : 'animated';
       test(`Focus Last Console Error brings a ${hide} Console forward (${motion})`, async ({ rstudioPage: page }) => {
+        const alone = hide === 'minimized alone in its pane';
+        if (alone)
+          await setConsoleAlone(page, true);
         await consoleActions.executeInConsole('g <- function() stop("boom"); f <- function() g(); f()');
         const pane = consoleActions.consolePane;
         await expect(pane.tracebackBtn).toBeVisible({ timeout: 10000 });
@@ -275,7 +305,7 @@ test.describe('Console pane', () => {
           if (hide === 'zoomed out')
             await executeCommand(page, 'layoutZoomRightColumn');
           else
-            await page.locator('#rstudio_Console_pane .rstudio_panel_min_btn_console').click();
+            await page.locator('#rstudio_Console_pane [class*="rstudio_panel_min_btn"]').first().click();
           await expect(page.locator('body')).not.toHaveClass(/rstudio-animating/);
           await expect(pane.tracebackBtn).not.toBeInViewport();
 
@@ -296,6 +326,8 @@ test.describe('Console pane', () => {
           await resetLayoutZoom(page);
           if (!(await page.locator('#rstudio_Console_pane').isVisible()))
             await executeCommand(page, 'activateConsolePane');
+          if (alone)
+            await setConsoleAlone(page, false);
         }
       });
     }

@@ -27,6 +27,7 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
+import org.rstudio.core.client.layout.DualWindowLayoutPanel;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.Desktop;
@@ -346,8 +347,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       }
 
       // Activating shows a hidden Console and focuses its input. Showing it can
-      // animate, and the Console stays inert until that ends, so keep trying to
-      // focus the error until it can take focus.
+      // animate: a column stays inert until its animation ends, and a pane's
+      // animation can end by focusing the input. Wait out both.
       commands_.activateConsole().execute();
       Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
       {
@@ -357,7 +358,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
             ConsoleError error = view_.getLastError();
             if (error == null)
                return false;
-            if (error.canFocus())
+            if (error.canFocus() && !DualWindowLayoutPanel.isAnimating())
             {
                error.focus();
                return false;
