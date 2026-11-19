@@ -402,6 +402,10 @@ describe('DesktopCallback', () => {
         const main = fakeBrowserWindow(state) as unknown as BrowserWindow;
         mainWindow.window = main;
         assert.strictEqual(callback.dialogParentWindow(), main, JSON.stringify(state));
+
+        // with every window off screen, the one that asked keeps the dialog
+        const requester = fakeBrowserWindow(state) as unknown as BrowserWindow;
+        assert.strictEqual(callback.dialogParentWindow(null, requester), requester, JSON.stringify(state));
       }
 
       mainWindow.window = fakeBrowserWindow({ destroyed: true }) as unknown as BrowserWindow;
