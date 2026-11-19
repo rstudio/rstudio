@@ -109,11 +109,13 @@ jobs:
       # The ack doubles as a duplicate check: GitHub sometimes starts this
       # workflow twice for one comment, which would relay it twice and get
       # two replies. The reactions API answers 200 rather than 201 when this
-      # account's eyes reaction already exists, and only this workflow reacts
-      # as github-actions[bot] here, so a 200 means another run took the
-      # mention. A re-run always relays, and a failed reaction never blocks
-      # the relay. Reviews have no reactions API, so they get neither; there
-      # the only ack is Claude's reply.
+      # account's eyes reaction already exists, so on a first attempt a 200
+      # means another run already acknowledged the mention. That holds only
+      # while no other workflow here adds an eyes reaction as
+      # github-actions[bot]: one that did would make every mention it touched
+      # look like a duplicate, and those would never be relayed. A failed
+      # reaction never blocks the relay. Reviews have no reactions API, so
+      # they get neither; there the only ack is Claude's reply.
       - name: Acknowledge mention
         if: steps.mention.outputs.found == 'true'
         id: ack
@@ -136,9 +138,12 @@ jobs:
             echo "::warning::Failed to add the eyes reaction"
             exit 0
           fi
-          STATUS=$(head -n 1 <<< "$RESPONSE" | awk '{ print $2 }')
+          STATUS=$(awk 'NR == 1 { print $2 }' <<< "$RESPONSE")
+
+          # A re-run relays even on a 200, so re-run the run that failed: a
+          # re-run of the one that skipped as a duplicate relays a second time.
           if [ "$STATUS" = 200 ] && [ "$RUN_ATTEMPT" = 1 ]; then
-            echo "::notice::Another run already relayed this mention; skipping."
+            echo "::notice::Another run already acknowledged this mention; skipping."
             echo "duplicate=true" >> "$GITHUB_OUTPUT"
           fi
 
