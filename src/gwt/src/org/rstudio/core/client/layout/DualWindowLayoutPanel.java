@@ -36,6 +36,7 @@ import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
@@ -55,6 +56,18 @@ public class DualWindowLayoutPanel extends SimplePanel
                                 implements ProvidesResize,
                                            RequiresResize
 {
+   // On the body while a pane animates to its new size
+   static final String ANIMATING_CLASS = "rstudio-animating";
+
+   /**
+    * @return Whether a pane is animating to its new size. An animation can end
+    *    by focusing the pane it revealed.
+    */
+   public static boolean isAnimating()
+   {
+      return Document.get().getBody().hasClassName(ANIMATING_CLASS);
+   }
+
    private static class NormalHeight
    {
       public NormalHeight(int height,

@@ -234,12 +234,12 @@ code_2 <- 4
   });
 
   // https://github.com/rstudio/rstudio/issues/18602
-  test('a banner header does not fold away a wider banner below it', async ({ rstudioPage: page }) => {
+  test('a header does not fold away a wide banner below it', async ({ rstudioPage: page }) => {
     await setPref(page, 'hierarchical_section_folding', true);
 
-    // Same root cause as a bar of hashes, but with the label inline: the
-    // leading '#' run mirrors the trailing one to draw a box around the label,
-    // so it is decoration rather than a heading level.
+    // Same root cause as a bar of hashes, but with the label inline: a leading
+    // run deeper than '######' is decoration rather than a heading level, so
+    // Section B is not an h10 nested inside the h5 above it.
     const content = heredoc`
       ##### Section A #####
       code_a <- 1
@@ -256,52 +256,58 @@ code_2 <- 4
     const range = await editor.getFoldWidgetRange(0);
     expect(range?.end.row).toBe(1);
 
-    // Neither banner carries a heading level, so neither nests in the other.
     const scopes = await editor.getSectionScopes();
     expect(scopes).toEqual([
-      { label: 'Section A', row: 0, depth: 0, parent: null },
+      { label: 'Section A', row: 0, depth: 5, parent: null },
       { label: 'Section B', row: 2, depth: 0, parent: null },
     ]);
   });
 
-  // https://github.com/rstudio/rstudio/issues/18602
-  test('a banner header does not fold away a banner one hash wider', async ({
+  // https://github.com/rstudio/rstudio/issues/19694
+  test('a header whose trailing hashes match its leading run keeps its heading depth', async ({
     rstudioPage: page,
   }) => {
     await setPref(page, 'hierarchical_section_folding', true);
 
-    // Both leading runs are within h1..h6, so a rule that only discounts runs
-    // deeper than h6 still reads these as an h5 containing an h6.
+    // Four or more trailing '#' is what makes a comment a section header, so
+    // a trailing run as wide as the leading one says nothing about the level.
     const content = heredoc`
-      ##### Section A #####
-      code_a <- 1
-      ###### Section B ######
-      code_b <- 2
+      #### Load data ####
+      code_load <- 1
+      ##### Add missing indicator ####
+      code_indicator <- 2
+      ##### Recode #####
+      code_recode <- 3
+      #### Model ####
+      code_model <- 4
     `;
 
     await writeAndOpenFile(page, sandbox.dir, 'code_folding.R', content);
 
-    const editor = new AceEditor(page, 'code_b');
-    await expect.poll(() => editor.getValue()).toContain('code_b');
+    const editor = new AceEditor(page, 'code_model');
+    await expect.poll(() => editor.getValue()).toContain('code_model');
 
+    // 'Load data' folds through both h5 sections, down to the row before
+    // 'Model' (row 5).
     const range = await editor.getFoldWidgetRange(0);
-    expect(range?.end.row).toBe(1);
+    expect(range?.end.row).toBe(5);
 
     const scopes = await editor.getSectionScopes();
     expect(scopes).toEqual([
-      { label: 'Section A', row: 0, depth: 0, parent: null },
-      { label: 'Section B', row: 2, depth: 0, parent: null },
+      { label: 'Load data', row: 0, depth: 4, parent: null },
+      { label: 'Add missing indicator', row: 2, depth: 5, parent: 'Load data' },
+      { label: 'Recode', row: 4, depth: 5, parent: 'Load data' },
+      { label: 'Model', row: 6, depth: 4, parent: null },
     ]);
   });
 
   // https://github.com/rstudio/rstudio/issues/18602
-  test('a hash-tailed header keeps its heading depth unless boxed', async ({
+  test('a hash-tailed header keeps its heading depth', async ({
     rstudioPage: page,
   }) => {
     await setPref(page, 'hierarchical_section_folding', true);
 
-    // A trailing hash run is also an ordinary section delimiter. It is only
-    // decoration when its width mirrors the leading run.
+    // A trailing hash run is an ordinary section delimiter, not decoration.
     const content = heredoc`
       # Part 1 ####
       code_part_1 <- 1

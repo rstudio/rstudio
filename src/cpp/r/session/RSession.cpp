@@ -210,7 +210,7 @@ SEXP rs_loadHistory(SEXP sFile)
 SEXP rs_saveHistory(SEXP sFile)
 {
    FilePath file(r::sexp::asString(sFile));
-   consoleHistory().saveToFile(file, false /* atomic */);
+   consoleHistory().saveToHistoryFile(file);
    return R_NilValue;
 }
 

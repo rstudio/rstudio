@@ -4236,6 +4236,10 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("_Focus Console Output") // $NON-NLS-1$
     String focusConsoleOutputEndMenuLabel();
     
+    // focusLastConsoleError
+    @DefaultStringValue("Focus Last Console _Error") // $NON-NLS-1$
+    String focusLastConsoleErrorMenuLabel();
+    
     // focusNextPane
     @DefaultStringValue("_Focus Next Pane") // $NON-NLS-1$
     String focusNextPaneMenuLabel();

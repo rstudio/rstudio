@@ -32,11 +32,10 @@ var reSectionDelimChars = require("mode/r_highlight_rules").reSectionDelimChars;
 var reSectionLabelStart = new RegExp("[^" + reSectionDelimChars + "\\s]", "u");
 var reSectionLabelTail = new RegExp("\\s*[" + reSectionDelimChars + "]+\\s*$", "u");
 var reSectionTrailingTail = new RegExp("[" + reSectionDelimChars + "]+\\s*$", "u");
-var reSectionTrailingHashes = /(#+)\s*$/;
 var reSectionLeadingHashes = /^\s*(#+)/;
 
 // Infer the heading level of a section header from its leading '#' run,
-// e.g. "# Foo ----" => 1, "### Foo ----" => 3.
+// e.g. "# Foo ----" => 1, "### Foo ----" => 3, "#### Foo ####" => 4.
 //
 // Returns 0 when the header's leading run is decoration rather than a heading
 // level, and so carries no level at all:
@@ -44,11 +43,13 @@ var reSectionLeadingHashes = /^\s*(#+)/;
 //   - a header with no label is a bar, e.g. "##########" or "#### ====";
 //     its width says nothing about how deeply the file is nested;
 //
-//   - a header whose label is enclosed by matching runs of '#' is a banner,
-//     e.g. "##### Section A #####", where both runs draw the box;
-//
 //   - a run deeper than 6 is more likely to be decoration than a heading,
 //     similar to how HTML only provides <h1> through <h6>.
+//
+// A trailing run of '#' is never decoration on its own account, even when it
+// mirrors the leading run: a trailing run of four or more delimiters, '#'
+// included, is how a comment becomes a section header, so "#### Foo ####" is
+// as much an h4 as "#### Foo ----".
 //
 // Both the document outline and hierarchical section folding read a header's
 // level through this function. With hierarchical folding disabled, every
@@ -63,14 +64,6 @@ function sectionHeadDepth(sectionHead)
       return 0;
 
    var depth = match[1].length;
-
-   // Only matching leading and trailing runs form a decorative box. A
-   // conventional header such as '# Section ####' still carries its leading
-   // run's heading level.
-   var bannerMatch = reSectionTrailingHashes.exec(sectionHead);
-   if (bannerMatch !== null && bannerMatch[1].length === depth)
-      return 0;
-
    return depth > 6 ? 0 : depth;
 }
 
