@@ -62,17 +62,18 @@ message(STATUS "Testing in ${TEST_DIR}")
 
 # Keep the user's git config (commit signing, hooks, protocol version) out of
 # the test, including on versions of git that predate GIT_CONFIG_GLOBAL.
-# Allow file:// submodules, which git blocks by default, and let the local
-# server hand out unadvertised commits the way GitHub does.
+# Allow file:// submodules, which git blocks by default. The local servers
+# otherwise keep git's defaults, which send an unadvertised commit by id
+# over protocol version 2 but not over version 0.
 set(TEST_HOME "${TEST_DIR}/home")
 file(WRITE "${TEST_HOME}/.gitconfig" [=[
 [user]
    name = test
    email = test@example.com
+[protocol]
+   version = 2
 [protocol "file"]
    allow = always
-[uploadpack]
-   allowReachableSHA1InWant = true
 [core]
    longpaths = true
 ]=])
@@ -301,14 +302,14 @@ expect_fetch_failed(RESULT "TLS_VERSION must be one of" "fetching with TLS_VERSI
 expect_marker("${SOURCE_DIR}" "pinned")
 
 
-# A submodule whose server won't send its pinned commit by id (here, git
-# protocol version 0 without allowReachableSHA1InWant) is fetched with its
-# full history instead.
-run_git("${SUB_DIR}" _IGNORED config uploadpack.allowReachableSHA1InWant false)
+# A submodule whose server won't send its pinned commit by id is fetched
+# with its full history instead. Over protocol version 0, only the
+# dependency's server is set to send a commit by id, as GitHub's does.
+run_git("${DEP_DIR}" _IGNORED config uploadpack.allowReachableSHA1InWant true)
 run_git("${TEST_DIR}" _IGNORED config --global protocol.version 0)
 fetch("${DEP_URL}" "${DEP_PINNED}" "${TEST_DIR}/src-full-submodules" RESULT)
-run_git("${TEST_DIR}" _IGNORED config --global --unset protocol.version)
-run_git("${SUB_DIR}" _IGNORED config --unset uploadpack.allowReachableSHA1InWant)
+run_git("${TEST_DIR}" _IGNORED config --global protocol.version 2)
+run_git("${DEP_DIR}" _IGNORED config --unset uploadpack.allowReachableSHA1InWant)
 expect_fetched(RESULT "fetching a submodule from a strict server")
 if(NOT RESULT_OUTPUT MATCHES "Shallow submodule update failed")
    message(FATAL_ERROR "the shallow submodule update did not fall back:\n${RESULT_OUTPUT}")
