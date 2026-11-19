@@ -172,25 +172,36 @@ void ConsoleHistory::asJson(json::Array* pHistoryArray) const
 Error ConsoleHistory::loadFromFile(const FilePath& filePath,
                                    bool verifyFile)
 {
-   historyBuffer_.clear();
-   
-   // tolerate file not found -- the user may not have any prior history
-   if (filePath.exists())
+   // a failed load keeps the current history; it would otherwise be what the
+   // session saves to .Rhistory on quit
+   if (!filePath.exists())
    {
-      return core::readCollectionFromFile<HistoryBuffer>(
-                                                      filePath,
-                                                      &historyBuffer_,
-                                                      core::parseString);
-   }
-   else if (verifyFile)
-   {
-      return systemError(boost::system::errc::no_such_file_or_directory,
-                         ERROR_LOCATION);
-   }
-   else
-   {
+      if (verifyFile)
+      {
+         return systemError(boost::system::errc::no_such_file_or_directory,
+                            ERROR_LOCATION);
+      }
+
+      // tolerate file not found -- the user may not have any prior history
+      historyBuffer_.clear();
       return Success();
    }
+
+   // libc++ opens a directory and reads it as an empty file, which would
+   // replace the history with nothing
+   if (filePath.isDirectory())
+      return systemError(boost::system::errc::is_a_directory, ERROR_LOCATION);
+
+   HistoryBuffer loaded(historyBuffer_.capacity());
+   Error error = core::readCollectionFromFile<HistoryBuffer>(
+                                                      filePath,
+                                                      &loaded,
+                                                      core::parseString);
+   if (error)
+      return error;
+
+   historyBuffer_.swap(loaded);
+   return Success();
 }
    
 Error ConsoleHistory::saveToFile(const FilePath& filePath, bool atomic) const
