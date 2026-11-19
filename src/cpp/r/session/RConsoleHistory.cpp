@@ -15,6 +15,9 @@
 
 #include <r/session/RConsoleHistory.hpp>
 
+#include <algorithm>
+#include <vector>
+
 #include <boost/function.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/bind/bind.hpp>
@@ -32,32 +35,50 @@ using namespace boost::placeholders;
 
 namespace rstudio {
 namespace r {
-namespace session {   
-   
+namespace session {
+
+namespace {
+
+// R's default for R_HISTSIZE
+const int kDefaultHistorySize = 512;
+
+// R_HISTSIZE as an int; like R, a negative or invalid value means the default.
+// R also accepts a k/K/M/G suffix (R_Decode2Long(), which isn't part of R's
+// API); such a value is invalid here
+int rHistorySize()
+{
+   std::string histSize = core::system::getenv("R_HISTSIZE");
+   int size = safe_convert::stringTo<int>(histSize, kDefaultHistorySize);
+   return size < 0 ? kDefaultHistorySize : size;
+}
+
+} // anonymous namespace
+
 ConsoleHistory& consoleHistory()
 {
    static ConsoleHistory instance;
    return instance;
 }
-   
+
 ConsoleHistory::ConsoleHistory()
    : removeDuplicates_(true)
 {
-   setCapacity(512);
+   setCapacity(kDefaultHistorySize);
 }
-   
+
 void ConsoleHistory::setCapacity(int capacity)
 {
-   historyBuffer_.set_capacity(capacity);
+   // loading a history file into a capacity of 0 crashes (#19690), and a
+   // negative one converts to a huge size_t
+   historyBuffer_.set_capacity(std::max(capacity, 1));
 }
 
 void ConsoleHistory::setCapacityFromRHistsize()
 {
-   std::string histSize = core::system::getenv("R_HISTSIZE");
-   if (!histSize.empty())
-   {
-      setCapacity(safe_convert::stringTo<int>(histSize, capacity()));
-   }
+   // in R, R_HISTSIZE limits only the commands saved to a history file, not
+   // those kept during the session (see saveToHistoryFile()), so a smaller
+   // value doesn't shrink the session's history
+   setCapacity(std::max(kDefaultHistorySize, rHistorySize()));
 }
 
 void ConsoleHistory::setRemoveDuplicates(bool removeDuplicates)
@@ -171,8 +192,8 @@ Error ConsoleHistory::loadFromFile(const FilePath& filePath,
    if (filePath.isDirectory())
       return systemError(boost::system::errc::is_a_directory, ERROR_LOCATION);
 
-   boost::circular_buffer<std::string> loaded(historyBuffer_.capacity());
-   Error error = core::readCollectionFromFile<boost::circular_buffer<std::string> >(
+   HistoryBuffer loaded(historyBuffer_.capacity());
+   Error error = core::readCollectionFromFile<HistoryBuffer>(
                                                       filePath,
                                                       &loaded,
                                                       core::parseString);
@@ -185,11 +206,23 @@ Error ConsoleHistory::loadFromFile(const FilePath& filePath,
    
 Error ConsoleHistory::saveToFile(const FilePath& filePath, bool atomic) const
 {
-   return core::writeCollectionToFile<boost::circular_buffer<std::string> >(
+   return core::writeCollectionToFile<HistoryBuffer>(
                                                       filePath,
                                                       historyBuffer_,
                                                       core::stringifyString,
                                                       atomic);
+}
+
+Error ConsoleHistory::saveToHistoryFile(const FilePath& filePath) const
+{
+   std::vector<std::string> commands;
+   subset(size() - std::min(size(), rHistorySize()), size(), &commands);
+
+   return core::writeCollectionToFile<std::vector<std::string> >(
+                                                      filePath,
+                                                      commands,
+                                                      core::stringifyString,
+                                                      false /* atomic */);
 }
 
 void ConsoleHistory::safeRemove(int index)

@@ -42,8 +42,11 @@ ConsoleHistory& consoleHistory();
 class ConsoleHistory : boost::noncopyable
 {
 public:
-   typedef boost::circular_buffer<std::string>::value_type value_type;
-   typedef boost::circular_buffer<std::string>::const_iterator const_iterator;
+   // allocates as commands are added rather than its whole capacity up front,
+   // so a large R_HISTSIZE costs only the history actually kept
+   typedef boost::circular_buffer_space_optimized<std::string> HistoryBuffer;
+   typedef HistoryBuffer::value_type value_type;
+   typedef HistoryBuffer::const_iterator const_iterator;
    typedef RSTUDIO_BOOST_SIGNAL<void (const std::string&, bool)> AddSignal;
 
    // the session's history is consoleHistory(); tests use their own instance
@@ -56,7 +59,7 @@ public:
 
    int capacity() const
    {
-      return static_cast<int>(historyBuffer_.capacity());
+      return static_cast<int>(historyBuffer_.capacity().capacity());
    }
 
    void setRemoveDuplicates(bool removeDuplicates);
@@ -84,7 +87,13 @@ public:
    core::Error loadFromFile(const core::FilePath& filePath, bool verifyFile);
    // atomic should be false for files that belong to the user, like .Rhistory
    core::Error saveToFile(const core::FilePath& filePath, bool atomic) const;
-   
+
+   // saves a user's history file (.Rhistory on quit, savehistory()) as R does:
+   // only the most recent R_HISTSIZE commands, read at the time of saving.
+   // unlike R, it can save only what the session kept, so raising R_HISTSIZE
+   // past capacity() during the session doesn't save more than capacity()
+   core::Error saveToHistoryFile(const core::FilePath& filePath) const;
+
    RSTUDIO_BOOST_CONNECTION connectOnAdd(const AddSignal::slot_function_type& slot)
    {
       return onAdd_.connect(slot);
@@ -95,7 +104,7 @@ private:
    
 private:   
    bool removeDuplicates_;
-   boost::circular_buffer<std::string> historyBuffer_;
+   HistoryBuffer historyBuffer_;
    AddSignal onAdd_;
 };
    
