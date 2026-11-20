@@ -356,15 +356,16 @@ const std::size_t kChunkSize = 512;
 // sequence that would otherwise have been cut in two
 bool isChunk(json::Array& typeArray, json::Array& dataArray, std::size_t index)
 {
-   std::string data = dataArray[index].getString();
-   if (data.size() == kChunkSize)
-      return true;
-
+   // the rest of a chunked line is always the next action, of the same type
    if (index + 1 == dataArray.getSize() ||
        typeArray[index].getInt() != typeArray[index + 1].getInt())
    {
       return false;
    }
+
+   std::string data = dataArray[index].getString();
+   if (data.size() == kChunkSize)
+      return true;
 
    // cut a chunk from this action and the next, as if they were still one
    // piece of text: is this action what gets cut off?
@@ -673,6 +674,26 @@ TEST_F(ConsoleActionsTest, GetConsoleLinesKeepsOutputOfDifferentTypesApart)
 
    EXPECT_EQ(Lines({unfinished, "\xE2\x96\x88 error"}), actions.getConsoleLines(50));
    EXPECT_EQ(Lines({unfinished, "\xE2\x96\x88 error"}), actions.getConsoleLines(50, 0, false));
+
+   // nor is one of exactly a chunk's length: input that long, and then its
+   // output, or an unfinished line of output that long, and then a prompt
+   actions.reset();
+   const std::string input(kChunkSize, 'i');
+   const std::string output(kChunkSize, 'o');
+   actions.add(kConsoleActionPrompt, "> ");
+   actions.add(kConsoleActionInput, input);
+   actions.add(kConsoleActionOutput, output);
+   actions.add(kConsoleActionPrompt, "> ");
+
+   json::Object actionsJson;
+   actions.asJson(&actionsJson);
+   json::Array dataArray = actionsJson["data"].getArray();
+   ASSERT_EQ(4u, dataArray.getSize());
+   ASSERT_EQ(input, dataArray[1].getString());
+   ASSERT_EQ(output, dataArray[2].getString());
+
+   EXPECT_EQ(Lines({"> " + input, output, "> "}), actions.getConsoleLines(50));
+   EXPECT_EQ(Lines({"> " + input, output, "> "}), actions.getConsoleLines(50, 0, false));
 }
 
 TEST_F(ConsoleActionsTest, GetConsoleLinesJoinsPromptsAndInput)

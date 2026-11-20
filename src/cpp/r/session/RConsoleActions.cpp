@@ -374,25 +374,30 @@ struct LineStart
 // Whether the action at an index is a chunk of a long line, which continues
 // in the action after it. flush() splits long lines into chunks of kChunkSize
 // bytes, or of up to 3 bytes fewer where that would have cut a UTF-8 sequence
-// in two; the action after such a chunk then starts with that sequence.
+// in two; the action after such a chunk then starts with that sequence. The
+// rest of the line is always the next action, and of the same type: an action
+// that a different type follows (say, input of exactly kChunkSize bytes, and
+// then its output) ends its line.
 template <typename Actions>
 bool isChunk(const Actions& actions, std::size_t index)
 {
    const ConsoleAction& action = actions[index];
 
    std::size_t size = action.data.size();
-   if (size == kChunkSize)
-      return true;
-
    if (size > kChunkSize || size + 3 < kChunkSize || index + 1 == actions.size())
       return false;
 
+   const ConsoleAction& next = actions[index + 1];
+   if (next.type != action.type)
+      return false;
+
+   if (size == kChunkSize)
+      return true;
+
    // a shorter chunk, if the bytes that would have filled it are the start,
    // and no more, of a UTF-8 sequence
-   const ConsoleAction& next = actions[index + 1];
    std::size_t missing = kChunkSize - size;
-   return next.type == action.type &&
-          string_utils::utf8IncompleteSuffixLength(next.data.substr(0, missing)) == missing;
+   return string_utils::utf8IncompleteSuffixLength(next.data.substr(0, missing)) == missing;
 }
 
 // Whether a line ends after the action at an index, though its data doesn't
