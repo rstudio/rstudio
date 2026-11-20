@@ -162,13 +162,13 @@ test_that("C++ sources do not put errc values in the system category", {
       paste0("error_code(errc::io_error, ", category, ")"),
       paste0("error_code(boost::system::errc::io_error,\n   boost::system::", category, ")")
    )
-   expect_true(all(grepl(pattern, gsub("\\s+", " ", offending))))
+   expect_true(all(grepl(pattern, offending, useBytes = TRUE)))
 
    allowed <- c(
       "error_code(errc::io_error, generic_category())",
       paste0("error_code(ERROR_ACCESS_DENIED, ", category, ")")
    )
-   expect_false(any(grepl(pattern, allowed)))
+   expect_false(any(grepl(pattern, allowed, useBytes = TRUE)))
 
    cppFiles <- list.files(
       root,
@@ -177,10 +177,12 @@ test_that("C++ sources do not put errc values in the system category", {
       recursive = TRUE
    )
 
+   # sources are UTF-8 and the pattern is ASCII, so match bytes rather than
+   # characters in the session's native encoding (which may not be UTF-8)
    offenders <- character()
    for (cppFile in cppFiles) {
-      contents <- paste(readLines(cppFile, warn = FALSE), collapse = " ")
-      if (grepl(pattern, gsub("\\s+", " ", contents)))
+      contents <- paste(readLines(cppFile, warn = FALSE), collapse = "\n")
+      if (grepl(pattern, contents, useBytes = TRUE))
          offenders <- c(offenders, sub(paste0(root, "/"), "", cppFile, fixed = TRUE))
    }
 

@@ -25,6 +25,7 @@
 #endif
 
 #include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 namespace rstudio {
 namespace core {
@@ -80,7 +81,7 @@ inline bool isConnectionTerminatedError(const core::Error& error)
    bool shortRead = error == boost::asio::ssl::error::stream_truncated; // "short read"
    bool badFile = error.matches(boost::system::errc::bad_file_descriptor);
    bool brokenPipe = error.matches(boost::system::errc::broken_pipe);
-   bool noFile = error.matches(boost::system::errc::no_such_file_or_directory);
+   bool noFile = isNotFoundError(error);
 
 #ifdef _WIN32
    int ec = error.getCode();
@@ -98,8 +99,9 @@ inline bool isConnectionUnavailableError(const Error& error)
    // not currently existing (and thus remediable by launching a new one)
    
    return (
-         // for unix domain sockets
-         error.matches(boost::system::errc::no_such_file_or_directory) ||
+         // for unix domain sockets; not matches(), which on Windows would
+         // also accept permanent pipe errors such as ERROR_INVALID_NAME
+         isNotFoundError(error) ||
 
          // for tcp-ip and unix domain sockets
          error.matches(boost::system::errc::connection_refused)
