@@ -1658,6 +1658,22 @@ std::string sessionPort()
    return options().wwwPort();
 }
 
+std::string restartContextId()
+{
+   // a desktop session shares its scope with others on the same project, so
+   // it takes the port it bound: sessions started with www-port 0 then each
+   // get a context of their own, rather than sharing (and restoring) one
+   // named for port 0. a restart that keeps the client's page has to relaunch
+   // on the port that page is connected to, so the restarted session is
+   // given this port and finds the context
+   if (options().programMode() == kSessionProgramModeDesktop)
+      return sessionPort();
+
+   // a server session has a scope of its own, and may be relaunched with
+   // www-port 0 and bind another port, so it keeps the configured one
+   return options().wwwPort();
+}
+
 // get the R local help port
 std::string rLocalHelpPort()
 {

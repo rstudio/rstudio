@@ -2761,9 +2761,9 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
  
       // set the rstudio user identity environment variable (can differ from
       // username in debug configurations). this is provided so that
-      // rpostback knows what local stream to connect back to (desktop mode's
-      // port is published once the listener binds; see
-      // startHttpConnectionListener)
+      // rpostback knows what local stream to connect back to (the port of a
+      // desktop or standalone session is published once its listener binds;
+      // see startHttpConnectionListener)
       core::system::setenv(kRStudioUserIdentity, options.userIdentity());
 
       // provide session stream for postback in server mode
@@ -2772,17 +2772,6 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
          r_util::SessionContext context = options.sessionContext();
          std::string stream = r_util::sessionContextFile(context);
          core::system::setenv(kRStudioSessionStream, stream);
-      }
-
-      // set the standalone port if we are running in standalone mode (the
-      // port the listener binds replaces it, as www-port may be 0; see
-      // startHttpConnectionListener)
-      if (options.standalone())
-      {
-         std::string port = options.wwwPort();
-         auto rule = core::http::createNoProxyRule("127.0.0.1", port);
-         core::http::proxyUtils().addNoProxyRule(std::move(rule));
-         core::system::setenv(kRSessionStandalonePortNumber, port);
       }
 
       // ensure we aren't being started as a low (privileged) account
@@ -3096,15 +3085,8 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
       rOptions.scopedScratchPath = module_context::scopedScratchPath();
       rOptions.sessionScratchPath = module_context::sessionScratchPath();
       rOptions.logPath = options.userLogPath();
-      // names the restart context. in desktop mode, the bound port, so
-      // sessions started with www-port 0 in the same scope each get their own
-      // rather than sharing (and restoring) one named for port 0. a restart
-      // that keeps the client's page has to relaunch on the port that page is
-      // connected to, so the restarted session is given this port and finds
-      // the context. a server session has a scope of its own, and may be
-      // relaunched with www-port 0 and bind another port, so it keeps the
-      // configured one
-      rOptions.sessionPort = desktopMode ? module_context::sessionPort() : options.wwwPort();
+      // names the restart context, which isn't always the session's port
+      rOptions.sessionPort = module_context::restartContextId();
       rOptions.startupEnvironmentFilePath = getStartupEnvironmentFilePath();
       rOptions.rEnvironmentDir = boost::bind(dirs::rEnvironmentDir);
       rOptions.rHistoryDir = boost::bind(dirs::rHistoryDir);

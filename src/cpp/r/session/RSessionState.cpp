@@ -254,8 +254,9 @@ void setEnvVar(const std::string& name, const std::string& value)
       return;
 
    // nor the port it listens on, which the OS picks anew on each start when
-   // www-port is 0 (set once the listener binds)
-   if (name == "RSTUDIO_SESSION_PORT" && !core::system::getenv(name).empty())
+   // www-port is 0. set once the listener binds, or left unset by a session
+   // listening on a local stream, which a saved port would misdirect
+   if (name == "RSTUDIO_SESSION_PORT")
       return;
 
    // don't restore socket path environment variables (should be set by main session initialization)

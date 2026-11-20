@@ -80,7 +80,7 @@ runSessionScript <- function(blockSourceDatabase = FALSE,
    if (localPeer)
    {
       peer <- tempfile("rs-peer-", tmpdir = "/tmp")
-      on.exit(unlink(peer), add = TRUE)
+      on.exit(unlink(c(peer, paste0(peer, ".pid"))), add = TRUE)
       env[["RS_LOCAL_PEER"]] <- peer
    }
 
@@ -157,6 +157,24 @@ test_that("a desktop session on www-port 0 doesn't restore a restart context for
       return()
 
    expect_equal(result$scriptOutput, "not restored", info = result$output)
+})
+
+test_that("a server session on www-port 0 restores a restart context for port 0", {
+   # a server session has a scope of its own and keeps the configured port as
+   # its restart context's name. This is also what shows that the context
+   # seeded for the test above is one a session would restore
+   script <- "writeLines(getOption('rstudio.tests.portZeroRestartContext', 'not restored'), 'script-ran')"
+
+   result <- runSessionScript(script = script, seedPortZeroRestartContext = TRUE,
+                              sessionArgs = c("--program-mode=server", "--standalone=1"))
+   expect_equal(result$status, 0L, info = result$output)
+   expect_true(result$scriptRan, info = result$output)
+
+   # the script wrote nothing to check; the failures above say why
+   if (!result$scriptRan)
+      return()
+
+   expect_equal(result$scriptOutput, "restored", info = result$output)
 })
 
 test_that("a desktop session on a local stream publishes no session port", {

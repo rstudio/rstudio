@@ -479,13 +479,17 @@ Error startHttpConnectionListener()
       if (standalone)
          core::system::setenv(kRSessionStandalonePortNumber, port);
    }
-   else if (desktopMode)
+   else
    {
-      // a desktop listener on a local stream (RS_LOCAL_PEER, not on Windows)
-      // has no port. publish none, so requests back into the session go to
-      // the stream (see sendSessionRequest) rather than to www-port, which
+      // a listener on a local stream (never on Windows) has no port. where a
+      // port would otherwise be published (a desktop session on
+      // RS_LOCAL_PEER), publish none, so requests back into the session go
+      // to the stream (see sendSessionRequest) rather than to www-port, which
       // the session isn't listening on
-      core::system::unsetenv(kRSessionPortNumber);
+      if (desktopMode)
+         core::system::unsetenv(kRSessionPortNumber);
+      if (standalone)
+         core::system::unsetenv(kRSessionStandalonePortNumber);
    }
 
    error = httpConnectionListener().start();
