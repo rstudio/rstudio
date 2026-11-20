@@ -1581,7 +1581,7 @@ Error FilePath::isWriteable(bool &out_writeable) const
          {
             // Expected on the folder shape that got us here (see below); log at debug so
             // the litter is discoverable without making a warning out of a known cost.
-            Error error = systemError(::GetLastError(), ERROR_LOCATION);
+            Error error = LAST_SYSTEM_ERROR();
             error.addProperty("path", getAbsolutePath());
             log::logErrorAsDebug(error);
          }

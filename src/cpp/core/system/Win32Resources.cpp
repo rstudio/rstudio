@@ -30,7 +30,7 @@ Error getTotalMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
    status.dwLength = sizeof(status);
    if (::GlobalMemoryStatusEx(&status) == 0)
    {
-      return systemError(::GetLastError(), ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    }
 
    *pUsedKb = static_cast<long>((status.ullTotalPhys - status.ullAvailPhys) / 1024);
@@ -43,7 +43,7 @@ Error getProcessMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
    PROCESS_MEMORY_COUNTERS info;
    if (::GetProcessMemoryInfo(GetCurrentProcess(), &info, sizeof(info)) == 0)
    {
-      return systemError(::GetLastError(), ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    }
    *pUsedKb = static_cast<long>(info.WorkingSetSize / 1024);
    *pProvider = MemoryProviderWindows;
@@ -56,7 +56,7 @@ Error getTotalMemory(long *pTotalKb, MemoryProvider *pProvider)
    status.dwLength = sizeof(status);
    if (::GlobalMemoryStatusEx(&status) == 0)
    {
-      return systemError(::GetLastError(), ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    }
 
    *pTotalKb = static_cast<long>(status.ullTotalPhys / 1024);

@@ -161,6 +161,21 @@ matchLines <- function(contents, pattern) {
 
 }
 
+# Mask comments and literals so examples in documentation are ignored and
+# parentheses inside strings do not affect where a C++ call ends. Keep newlines
+# so diagnostics still point at the original source.
+maskCppNonCode <- function(contents) {
+   rawString <- 'R"([^()\\\\[:space:]]{0,16})\\((?s:.*?)\\)\\1"'
+   string <- '"(?:\\\\(?s:.)|[^"\\\\\r\n])*"'
+   # A C++ numeric literal can contain apostrophes as digit separators.
+   char <- "(?<![[:alnum:]_])(?:u8|[LuU])?'(?:\\\\(?s:.)|[^'\\\\\r\n])*'"
+   pattern <- paste(rawString, string, char, "//[^\\n]*", "/\\*(?s:.*?)\\*/", sep = "|")
+   matches <- gregexpr(pattern, contents, perl = TRUE)
+   tokens <- regmatches(contents, matches)[[1L]]
+   regmatches(contents, matches) <- list(gsub("[^\n]+", " ", tokens))
+   contents
+}
+
 # Whether each line of a C++ file is compiled only on Windows: every line of a
 # file with Win32 in its name, else the lines in a branch that needs _WIN32
 # ('#ifdef _WIN32', '#if _WIN32', '#if defined(_WIN32) && ...', or the
@@ -235,7 +250,7 @@ windowsOnlyLines <- function(lines, windowsOnlyFile) {
 
 }
 
-test_that("C++ sources don't treat errno values as system error codes", {
+test_that("C++ sources capture and compare error codes with their categories", {
 
    # systemError(int) and systemCallError(name, int) build a system-category
    # code, which holds Win32 error codes on Windows, so an errno value passed
@@ -263,6 +278,20 @@ test_that("C++ sources don't treat errno values as system error codes", {
       "(getCode|value)\\(\\)\\s*[!=]=\\s*(boost::system::|std::)?errc::",
       "|\\berrc::[a-z_]+\\s*[!=]=\\s*[A-Za-z_][A-Za-z0-9_.>()-]*(getCode|value)\\(\\)"
    )
+
+   lastErrorCall <- "\\bsystemError\\s*\\(\\s*(?:::)?GetLastError\\s*\\(\\s*\\)\\s*,\\s*ERROR_LOCATION\\s*\\)"
+
+   # Match the whole call in either operand position. The lookahead selects a
+   # portable errc as the first argument. The recursive group balances nested
+   # parentheses in the remaining arguments (including ErrorLocation()).
+   errcCall <- paste0(
+      "(?:::)?(?:\\b\\w+::)*\\bsystemError\\s*",
+      "(?=\\(\\s*(?:::)?(?:boost::system::)?errc::\\w+\\s*,)",
+      "(\\((?:[^();]++|(?-1))*\\))"
+   )
+   errcComparison <- paste0("[!=]=\\s*", errcCall, "(?!\\s*\\.)|", errcCall, "\\s*[!=]=")
+   captureRule <- c("capture the native error with LAST_SYSTEM_ERROR()" = lastErrorCall)
+   conditionRule <- c("use Error::matches() to test a portable condition" = errcComparison)
 
    # in code only Windows compiles, errno comes from the C runtime, and a
    # code's value is a Win32 code, not an errno value. (cross-platform code
@@ -303,6 +332,27 @@ test_that("C++ sources don't treat errno values as system error codes", {
    expect_true(grepl(errnoByValue, "ENOENT == e.code().value()", perl = TRUE))
    expect_false(grepl(errnoByValue, "error.getCode() == ERROR_ACCESS_DENIED", perl = TRUE))
    expect_false(grepl(errnoByValue, "input.value() == EOF", perl = TRUE))
+
+   fixture <- paste(c(
+      "return core::systemError(::GetLastError(), ERROR_LOCATION);",
+      "return systemError(\n  GetLastError(), ERROR_LOCATION);",
+      "// systemError(::GetLastError(), ERROR_LOCATION)",
+      "return systemError(savedCode, ERROR_LOCATION);",
+      "if (error == ::rstudio::core::systemError(boost::system::errc::timed_out, ERROR_LOCATION))",
+      "if (systemError(errc::timed_out,\n  describe(context()), ErrorLocation()) != error)",
+      "if (error != core::systemError(errc::timed_out, loc))",
+      "if (systemError(errc::timed_out, loc) == error)",
+      "EXPECT_EQ(error, systemError(errc::timed_out, loc));",
+      "if (error.matches(errc::timed_out))",
+      "if (text == systemError(errc::timed_out, loc).getMessage())",
+      "if (rpcError == systemError(json::errc::ParamInvalid, loc))",
+      '/* error == systemError(errc::timed_out, loc) */',
+      'auto example = R"doc("error" == systemError(errc::timed_out, loc))doc";',
+      "auto delay = 1'000; if (error == systemError(errc::timed_out, loc))"
+   ), collapse = "\n")
+   code <- maskCppNonCode(fixture)
+   expect_equal(matchLines(code, lastErrorCall), c(1L, 2L))
+   expect_equal(matchLines(code, errcComparison), c(6L, 7L, 9L, 10L, 17L))
 
    fixture <- c(
       "systemError(errno, ERROR_LOCATION);",
@@ -367,10 +417,23 @@ test_that("C++ sources don't treat errno values as system error codes", {
       if (length(hits))
          offenders <- c(offenders, paste0(path, ":", sort(hits)))
 
+      if (grepl("systemError", contents, fixed = TRUE)) {
+         code <- maskCppNonCode(contents)
+         rules <- captureRule
+         # Unit tests may deliberately assert exact equality between error codes.
+         if (!endsWith(cppFile, "Tests.cpp"))
+            rules <- c(rules, conditionRule)
+         for (advice in names(rules)) {
+            hits <- matchLines(code, rules[[advice]])
+            if (length(hits))
+               offenders <- c(offenders, paste0(path, ":", hits, " - ", advice))
+         }
+      }
+
    }
 
    failureMessage <- paste(
-      c("errno values treated as system error codes:", offenders),
+      c("Incorrect use of error codes:", offenders),
       collapse = "\n"
    )
 
