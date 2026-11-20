@@ -149,6 +149,7 @@ TEST_F(ConsoleActionsTest, HugeCapacityKeepsQueuedConsoleOutput)
    // the client event queue trims each batch of console output to the
    // scrollback limit plus one line, which must not overflow at INT_MAX
    consoleActions().setCapacity(std::numeric_limits<int>::max());
+   ASSERT_EQ(std::numeric_limits<int>::max(), consoleActions().capacity());
 
    const std::string output = "line 0\nline 1\nline 2\n";
    queue.add(rstudio::session::ClientEvent(
