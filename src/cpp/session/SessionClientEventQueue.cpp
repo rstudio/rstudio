@@ -48,6 +48,16 @@ namespace {
 
 ClientEventQueue* s_pClientEventQueue = nullptr;
 
+// lines to keep from a batch of console output: the scrollback capacity plus
+// one, where the capacity can be INT_MAX (console_max_lines has no maximum)
+constexpr int consoleOutputLineLimit(int capacity)
+{
+   return (capacity < std::numeric_limits<int>::max()) ? capacity + 1 : capacity;
+}
+
+static_assert(consoleOutputLineLimit(std::numeric_limits<int>::max()) == std::numeric_limits<int>::max(),
+              "the console output line limit must not overflow");
+
 } // end anonymous namespace
 
 void initializeClientEventQueue()
@@ -419,9 +429,7 @@ void ClientEventQueue::flushBufferedOutput(int event, std::string* pOutput)
    
    if (isConsoleOutputEvent(event))
    {
-      // the capacity can be INT_MAX (console_max_lines has no maximum)
-      int capacity = r::session::consoleActions().capacity();
-      int limit = (capacity < std::numeric_limits<int>::max()) ? capacity + 1 : capacity;
+      int limit = consoleOutputLineLimit(r::session::consoleActions().capacity());
       string_utils::trimLeadingLines(limit, pOutput);
    }
 

@@ -144,7 +144,7 @@ TEST_F(ConsoleActionsTest, HugeCapacityKeepsQueuedConsoleOutput)
    queue.clear();
 
    // the client event queue trims each batch of console output to the
-   // scrollback limit plus one line, which must not overflow at INT_MAX
+   // scrollback limit, so at INT_MAX it should keep all of it
    consoleActions().setCapacity(std::numeric_limits<int>::max());
    ASSERT_EQ(std::numeric_limits<int>::max(), consoleActions().capacity());
 
