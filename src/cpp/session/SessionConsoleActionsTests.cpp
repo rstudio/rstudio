@@ -351,6 +351,32 @@ typedef std::vector<std::string> Lines;
 // RConsoleActions.cpp)
 const std::size_t kChunkSize = 512;
 
+// whether the action at 'index' is a chunk of a long line, which continues in
+// the action after it. a chunk is kChunkSize bytes, less the bytes of a UTF-8
+// sequence that would otherwise have been cut in two
+bool isChunk(json::Array& typeArray, json::Array& dataArray, std::size_t index)
+{
+   std::string data = dataArray[index].getString();
+   if (data.size() == kChunkSize)
+      return true;
+
+   if (index + 1 == dataArray.getSize() ||
+       typeArray[index].getInt() != typeArray[index + 1].getInt())
+   {
+      return false;
+   }
+
+   // cut a chunk from this action and the next, as if they were still one
+   // piece of text: is this action what gets cut off?
+   std::string text = data + dataArray[index + 1].getString();
+   if (text.size() < kChunkSize)
+      return false;
+
+   std::string chunk = text.substr(0, kChunkSize);
+   chunk.resize(chunk.size() - string_utils::utf8IncompleteSuffixLength(chunk));
+   return chunk == data;
+}
+
 // every console line, computed the straightforward way: join all of the
 // actions, strip escape sequences, then split. getConsoleLines() must return
 // pages of exactly these lines, without doing all of this work
@@ -366,12 +392,12 @@ Lines referenceConsoleLines(json::Object& actionsJson)
       content.append(data);
 
       // input and output that doesn't end its line gets a newline; prompts
-      // don't (input follows on the same line), nor do chunk-sized actions
-      // (a long line continues in the next action)
+      // don't (input follows on the same line), nor do chunks (a long line
+      // continues in the next action)
       if (typeArray[i].getInt() != kConsoleActionPrompt &&
           !data.empty() &&
           data.back() != '\n' &&
-          data.size() != kChunkSize)
+          !isChunk(typeArray, dataArray, i))
       {
          content.push_back('\n');
       }
@@ -578,6 +604,77 @@ TEST_F(ConsoleActionsTest, GetConsoleLinesStripsAnsiCodesSpanningChunks)
    EXPECT_EQ(Lines({"after"}), actions.getConsoleLines(1, 2, false));
 }
 
+TEST_F(ConsoleActionsTest, GetConsoleLinesJoinsChunksOfLongNonAsciiLines)
+{
+   ConsoleActions& actions = consoleActions();
+
+   // a chunk is cut short rather than split a multi-byte character, so the
+   // chunks of these lines come in different sizes: cycling 1- to 4-byte
+   // characters cuts chunks 1 and 2 bytes short, and the first chunk of the
+   // second line has room for all but the last byte of a 4-byte character
+   std::string mixed;
+   for (int i = 0; i < 200; i++)
+      mixed.append("a\xC3\xA9\xE2\x96\x88\xF0\x9F\x98\x80");
+
+   std::string wide = "a";
+   for (int i = 0; i < 200; i++)
+      wide.append("\xF0\x9F\x98\x80");
+
+   actions.add(kConsoleActionOutput, "before\n" + mixed + "\n" + wide + "\nafter\n");
+
+   // make sure chunks of each of those sizes really are involved
+   json::Object actionsJson;
+   actions.asJson(&actionsJson);
+   json::Array dataArray = actionsJson["data"].getArray();
+   ASSERT_EQ(8u, dataArray.getSize());
+   ASSERT_EQ(kChunkSize - 1, dataArray[1].getString().size());
+   ASSERT_EQ(kChunkSize, dataArray[2].getString().size());
+   ASSERT_EQ(kChunkSize - 2, dataArray[3].getString().size());
+   ASSERT_EQ(kChunkSize - 3, dataArray[5].getString().size());
+
+   EXPECT_EQ(Lines({"before", mixed, wide, "after"}), actions.getConsoleLines(50));
+   EXPECT_EQ(Lines({"before", mixed, wide, "after"}), actions.getConsoleLines(50, 0, false));
+   EXPECT_EQ(Lines({mixed}), actions.getConsoleLines(1, 2));
+   EXPECT_EQ(Lines({wide}), actions.getConsoleLines(1, 2, false));
+}
+
+TEST_F(ConsoleActionsTest, GetConsoleLinesStripsAnsiCodesSpanningShortenedChunks)
+{
+   ConsoleActions& actions = consoleActions();
+
+   // a window title of 3-byte characters, placed so that the first chunk ends
+   // partway through it, 2 bytes short of the chunk size
+   std::string title;
+   for (int i = 0; i < 10; i++)
+      title.append("\xE2\x96\x88");
+
+   const std::string head(kChunkSize - 12, 'a');
+   actions.add(kConsoleActionOutput, head + "\x1b]0;" + title + "\x07visible\n");
+
+   json::Object actionsJson;
+   actions.asJson(&actionsJson);
+   json::Array dataArray = actionsJson["data"].getArray();
+   ASSERT_EQ(2u, dataArray.getSize());
+   ASSERT_EQ(kChunkSize - 2, dataArray[0].getString().size());
+
+   EXPECT_EQ(Lines({head + "visible"}), actions.getConsoleLines(50));
+   EXPECT_EQ(Lines({head + "visible"}), actions.getConsoleLines(50, 0, false));
+}
+
+TEST_F(ConsoleActionsTest, GetConsoleLinesKeepsOutputOfDifferentTypesApart)
+{
+   ConsoleActions& actions = consoleActions();
+
+   // an unfinished line that happens to be nearly a chunk long, followed by
+   // a multi-byte character, isn't a chunk when what follows is other output
+   const std::string unfinished(kChunkSize - 2, 'x');
+   actions.add(kConsoleActionOutput, unfinished);
+   actions.add(kConsoleActionOutputError, "\xE2\x96\x88 error\n");
+
+   EXPECT_EQ(Lines({unfinished, "\xE2\x96\x88 error"}), actions.getConsoleLines(50));
+   EXPECT_EQ(Lines({unfinished, "\xE2\x96\x88 error"}), actions.getConsoleLines(50, 0, false));
+}
+
 TEST_F(ConsoleActionsTest, GetConsoleLinesJoinsPromptsAndInput)
 {
    ConsoleActions& actions = consoleActions();
@@ -699,6 +796,16 @@ TEST_F(ConsoleActionsTest, GetConsoleLinesMatchesWholeScrollbackReference)
       "\x1b]8;;http://example.com\x07",
       "\x1b]0;title",
       "\x1b\\",
+      "\xC3\xA9",
+      "\xE2\x96\x88",
+      "\xF0\x9F\x98\x80",
+   };
+
+   // characters of 2, 3 and 4 bytes
+   const std::vector<std::string> wide = {
+      "\xC3\xA9",
+      "\xE2\x96\x88",
+      "\xF0\x9F\x98\x80",
    };
 
    // out of range values included: they come straight from the caller
@@ -712,6 +819,11 @@ TEST_F(ConsoleActionsTest, GetConsoleLinesMatchesWholeScrollbackReference)
 
    for (int iteration = 0; iteration < 100; iteration++)
    {
+      // the character that the previous action, if cut short like a chunk,
+      // is followed by
+      std::string carried;
+      int carriedType = 0;
+
       std::vector<ConsoleAction> input(pick(13));
       for (ConsoleAction& action : input)
       {
@@ -719,10 +831,27 @@ TEST_F(ConsoleActionsTest, GetConsoleLinesMatchesWholeScrollbackReference)
          for (std::size_t i = 0, n = pick(5); i < n; i++)
             action.data.append(pieces[pick(pieces.size())]);
 
-         // make some actions exactly one chunk long: ending in ordinary text,
-         // in a newline, or in the first byte of an escape sequence
-         switch (pick(10))
+         // usually in an action of the same type, as it is for a real chunk
+         if (!carried.empty())
          {
+            action.data.insert(0, carried);
+            if (pick(4) != 0)
+               action.type = carriedType;
+            carried.clear();
+         }
+
+         // make some actions one chunk long: ending in ordinary text, in a
+         // newline, or in the first byte of an escape sequence; or 1 to 3
+         // bytes short of that and followed by a multi-byte character, which
+         // makes the action a chunk only if the character wouldn't have fit
+         switch (pick(12))
+         {
+         case 3:
+         case 4:
+            action.data.resize(kChunkSize - 1 - pick(3), 'x');
+            carried = wide[pick(wide.size())];
+            carriedType = action.type;
+            break;
          case 0:
             action.data.resize(kChunkSize, 'x');
             break;

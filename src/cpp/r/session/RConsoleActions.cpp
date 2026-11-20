@@ -371,19 +371,44 @@ struct LineStart
    std::size_t offset;
 };
 
-// Whether a line ends after this action, though its data doesn't end with a
-// newline. That's so for input, and for output whose line is still to be
-// completed, but not for prompts (the input follows on the same line), nor
-// for actions of exactly kChunkSize bytes: flush() splits long lines into
-// chunks of that size, so such an action continues in the next one. Ending
-// the line there would break it apart, and could cut an escape sequence in
-// half, hiding it from the ANSI stripping.
-bool endsLine(const ConsoleAction& action)
+// Whether the action at an index is a chunk of a long line, which continues
+// in the action after it. flush() splits long lines into chunks of kChunkSize
+// bytes, or of up to 3 bytes fewer where that would have cut a UTF-8 sequence
+// in two; the action after such a chunk then starts with that sequence.
+template <typename Actions>
+bool isChunk(const Actions& actions, std::size_t index)
 {
+   const ConsoleAction& action = actions[index];
+
+   std::size_t size = action.data.size();
+   if (size == kChunkSize)
+      return true;
+
+   if (size > kChunkSize || size + 3 < kChunkSize || index + 1 == actions.size())
+      return false;
+
+   // a shorter chunk, if the bytes that would have filled it are the start,
+   // and no more, of a UTF-8 sequence
+   const ConsoleAction& next = actions[index + 1];
+   std::size_t missing = kChunkSize - size;
+   return next.type == action.type &&
+          string_utils::utf8IncompleteSuffixLength(next.data.substr(0, missing)) == missing;
+}
+
+// Whether a line ends after the action at an index, though its data doesn't
+// end with a newline. That's so for input, and for output whose line is still
+// to be completed, but not for prompts (the input follows on the same line),
+// nor for chunks of a long line. Ending the line after a chunk would break it
+// apart, and could cut an escape sequence in half, hiding it from the ANSI
+// stripping.
+template <typename Actions>
+bool endsLine(const Actions& actions, std::size_t index)
+{
+   const ConsoleAction& action = actions[index];
    return action.type != kConsoleActionPrompt &&
           !action.data.empty() &&
           action.data.back() != '\n' &&
-          action.data.size() != kChunkSize;
+          !isChunk(actions, index);
 }
 
 // Read the line starting at *pStart into *pLine (which may be null, to skip
@@ -412,7 +437,7 @@ bool readLine(const Actions& actions, LineStart* pStart, std::string* pLine)
       if (pLine)
          pLine->append(action.data, offset, std::string::npos);
 
-      if (endsLine(action))
+      if (endsLine(actions, index))
       {
          *pStart = {index + 1, 0};
          return true;
@@ -467,7 +492,7 @@ long long findPageFromBottom(const Actions& actions,
    {
       const ConsoleAction& action = actions[index - 1];
 
-      if (endsLine(action))
+      if (endsLine(actions, index - 1))
          done = visit(index, 0);
 
       std::size_t newline = action.data.size();
