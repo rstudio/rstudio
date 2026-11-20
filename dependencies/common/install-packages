@@ -24,6 +24,7 @@ PACKAGES=(
   digest
   purrr
   rmarkdown
+  S7
   testthat
   xml2
   yaml
@@ -164,6 +165,11 @@ if (nzchar(lockfile)) {
 } else {
   # otherwise, install preset list of packages from CRAN
   packages <- scan(text = "${PACKAGES[@]}", what = character())
+
+  # S7 1.0.0 requires R >= 4.2.0
+  if (getRversion() < "4.2.0")
+    packages[packages == "S7"] <- "S7@0.2.2"
+
   writeLines(paste("Installing packages:", paste(packages, collapse = ", ")))
   renv::install(packages)
 }
