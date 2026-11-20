@@ -196,21 +196,44 @@ SEXP rs_createUUID()
 // .rs.loadhistory() and .rs.savehistory() expand '~' with path.expand().
 // R_ExpandFileName() can't be used here: on Windows it prepends the home
 // directory in the native encoding, and FilePath reads the result as UTF-8.
+//
+// failures are R errors, as from the Rloadhistory / Rsavehistory callbacks
+// that implement these functions on POSIX
 SEXP rs_loadHistory(SEXP sFile)
 {
-   FilePath file(r::sexp::asString(sFile));
-   Error error = consoleHistory().loadFromFile(file, true);
-   if (error)
-      LOG_ERROR(error);
-   else
+   try
+   {
+      FilePath file(r::sexp::asString(sFile));
+      Error error = consoleHistory().loadFromFile(file, true);
+      if (error)
+         throw r::exec::RErrorException(error.getMessage());
+
       rCallbacks().consoleHistoryReset();
+   }
+   catch(r::exec::RErrorException& e)
+   {
+      r::exec::error(e.message());
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
    return R_NilValue;
 }
 
 SEXP rs_saveHistory(SEXP sFile)
 {
-   FilePath file(r::sexp::asString(sFile));
-   consoleHistory().saveToFile(file, false /* atomic */);
+   try
+   {
+      FilePath file(r::sexp::asString(sFile));
+      Error error = consoleHistory().saveToHistoryFile(file);
+      if (error)
+         throw r::exec::RErrorException(error.getMessage());
+   }
+   catch(r::exec::RErrorException& e)
+   {
+      r::exec::error(e.message());
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
    return R_NilValue;
 }
 

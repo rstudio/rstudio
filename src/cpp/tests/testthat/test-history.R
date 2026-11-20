@@ -32,7 +32,7 @@ test_that(".rs.savehistory() expands '~'", {
 
 test_that(".rs.loadhistory() expands '~'", {
    skip_if_not(nzchar(Sys.getenv("RSTUDIO_TESTS_HELPER")), "changes the session's console history")
-   skip_if(identical(trimws(Sys.getenv("R_HISTSIZE")), "0"), "R_HISTSIZE keeps no history")
+   skip_if(identical(trimws(Sys.getenv("R_HISTSIZE")), "0"), "R_HISTSIZE=0 saves no history")
 
    input <- file.path("~", basename(tempfile("history-test-")))
    output <- tempfile("history-output-")
@@ -43,4 +43,57 @@ test_that(".rs.loadhistory() expands '~'", {
    .rs.savehistory(output)
 
    expect_identical(readLines(output), "history_tilde_test_entry()")
+})
+
+# savehistory() reaches Rsavehistory() on POSIX, and .rs.savehistory() and
+# rs_saveHistory on Windows; both must save only the last R_HISTSIZE commands
+# (#19690)
+test_that("savehistory() saves only the last R_HISTSIZE commands", {
+   skip_if_not(nzchar(Sys.getenv("RSTUDIO_TESTS_HELPER")), "changes the session's console history")
+
+   input <- tempfile("history-input-")
+   output <- tempfile("history-output-")
+   on.exit(unlink(c(input, output)), add = TRUE)
+
+   histsize <- Sys.getenv("R_HISTSIZE", unset = NA)
+   on.exit({
+      if (is.na(histsize))
+         Sys.unsetenv("R_HISTSIZE")
+      else
+         Sys.setenv(R_HISTSIZE = histsize)
+   }, add = TRUE)
+
+   writeLines(c("first()", "second()", "third()"), input)
+   loadhistory(input)
+   Sys.setenv(R_HISTSIZE = "2")
+   savehistory(output)
+
+   expect_identical(readLines(output), c("second()", "third()"))
+})
+
+# .rs.savehistory() and .rs.loadhistory() replace utils::savehistory() and
+# utils::loadhistory() on Windows; they exist on every platform, so these tests
+# call them directly. a failed save reports the system's message, which on
+# Windows is the Win32 text rather than strerror()'s. a failed load reports a
+# generic errc message, which MSVC gives in lower case.
+
+test_that(".rs.savehistory() reports a file it can't write", {
+   path <- file.path(tempfile("no-such-dir-"), "history.Rhistory")
+   expect_error(
+      .rs.savehistory(path),
+      "No such file or directory|cannot find the path specified"
+   )
+   expect_false(file.exists(path))
+})
+
+test_that(".rs.loadhistory() reports a file it can't read", {
+   expect_error(
+      .rs.loadhistory(tempfile("no-such-history-")),
+      "no such file or directory",
+      ignore.case = TRUE
+   )
+})
+
+test_that(".rs.loadhistory() reports a directory", {
+   expect_error(.rs.loadhistory(tempdir()), "is a directory", ignore.case = TRUE)
 })

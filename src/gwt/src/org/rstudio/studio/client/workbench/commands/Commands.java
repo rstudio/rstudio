@@ -772,6 +772,7 @@ public abstract class
    public abstract AppCommand focusMainToolbar();
    public abstract AppCommand speakEditorLocation();
    public abstract AppCommand focusConsoleOutputEnd();
+   public abstract AppCommand focusLastConsoleError();
    public abstract AppCommand focusNextPane();
    public abstract AppCommand focusPreviousPane();
    public abstract AppCommand showAccessibilityHelp();

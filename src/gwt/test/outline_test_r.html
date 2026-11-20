@@ -312,7 +312,7 @@ var bannerAfterBrace = makeSession([
   "g <- function() {",
   "  if (x) {",
   "    y",
-  "  }#### done ####",
+  "  }####### done #######",
   "  z",
   "}",
   "h <- function() {",
@@ -572,6 +572,22 @@ check("headers nest by level",
       outline(levels),
       ["Top", "  Sub", "    Subsub", "  Sub two", "Top two"].join("\n"));
 
+// A trailing run of four or more '#' is an ordinary section delimiter, so a
+// header whose leading run happens to be just as wide still nests by its
+// leading run (https://github.com/rstudio/rstudio/issues/19694).
+var hashTailed = makeSession([
+  "#### Imports ####",
+  "#### Load data ####",
+  "##### Add missing indicator ####",
+  "##### Recode #####",
+  "#### Model ####",
+  ""
+].join("\n"));
+
+check("headers with a matching trailing run of '#' nest by level",
+      outline(hashTailed),
+      ["Imports", "Load data", "  Add missing indicator", "  Recode", "Model"].join("\n"));
+
 var afterFn = makeSession([
   "# a ----",
   "f <- function() {",
@@ -590,7 +606,7 @@ check("a header after a function closes the section containing it",
 var banner = makeSession([
   "# outer ----",
   "if (x) {",
-  "  #### banner ####",
+  "  ####### banner #######",
   "  # inner ----",
   "}",
   "# after ----",

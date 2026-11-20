@@ -679,6 +679,7 @@
    focusMainToolbar = "focusMainToolbar",
    speakEditorLocation = "speakEditorLocation",
    focusConsoleOutputEnd = "focusConsoleOutputEnd",
+   focusLastConsoleError = "focusLastConsoleError",
    focusNextPane = "focusNextPane",
    focusPreviousPane = "focusPreviousPane",
    showAccessibilityHelp = "showAccessibilityHelp",

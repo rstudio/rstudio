@@ -137,31 +137,31 @@ bool logCodeLocations();
 #define TLOGF(__FMT__, ...)                                                                                            \
    do {                                                                                                                \
       std::string message = fmt::format(FMT_STRING(__FMT__), ##__VA_ARGS__);                                           \
-      ::rstudio::core::log::logTraceMessage(message);                                                                  \
+      ::rstudio::core::log::logTraceMessage(message, LOG_LOCATION_IF_ENABLED());                                       \
    } while (0)
 
 #define DLOGF(__FMT__, ...)                                                    \
   do {                                                                         \
     std::string message = fmt::format(FMT_STRING(__FMT__), ##__VA_ARGS__);     \
-    ::rstudio::core::log::logDebugMessage(message);                            \
+    ::rstudio::core::log::logDebugMessage(message, LOG_LOCATION_IF_ENABLED()); \
   } while (0)
 
 #define ILOGF(__FMT__, ...)                                                    \
   do {                                                                         \
     std::string message = fmt::format(FMT_STRING(__FMT__), ##__VA_ARGS__);     \
-    ::rstudio::core::log::logInfoMessage(message);                             \
+    ::rstudio::core::log::logInfoMessage(message, LOG_LOCATION_IF_ENABLED());  \
   } while (0)
 
 #define WLOGF(__FMT__, ...)                                                    \
   do {                                                                         \
     std::string message = fmt::format(FMT_STRING(__FMT__), ##__VA_ARGS__);     \
-    ::rstudio::core::log::logWarningMessage(message);                          \
+    ::rstudio::core::log::logWarningMessage(message, ERROR_LOCATION);          \
   } while (0)
 
 #define ELOGF(__FMT__, ...)                                                    \
   do {                                                                         \
     std::string message = fmt::format(FMT_STRING(__FMT__), ##__VA_ARGS__);     \
-    ::rstudio::core::log::logErrorMessage(message);                            \
+    ::rstudio::core::log::logErrorMessage(message, ERROR_LOCATION);            \
   } while (0)
 
 
