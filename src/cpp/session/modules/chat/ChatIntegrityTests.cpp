@@ -345,7 +345,7 @@ TEST(ChatIntegrity, GetPackageInfoUnusableEntryReportsProtocolNotSupported)
 {
    // The update check only treats protocol_not_supported as "nothing to
    // offer"; any other code would leave a fresh installation looking current.
-   const int kNotSupported = boost::system::errc::protocol_not_supported;
+   const auto kNotSupported = boost::system::errc::protocol_not_supported;
    std::string packageVersion, downloadUrl;
 
    json::Object notAnObject;
@@ -354,7 +354,7 @@ TEST(ChatIntegrity, GetPackageInfoUnusableEntryReportsProtocolNotSupported)
    notAnObject["versions"] = versions;
    Error error = getPackageInfoFromManifest(
       notAnObject, "1.0", &packageVersion, &downloadUrl);
-   EXPECT_EQ(error.getCode(), kNotSupported);
+   EXPECT_TRUE(error.matches(kNotSupported));
 
    json::Object noUrl;
    noUrl["version"] = "1.0.0";
@@ -363,7 +363,7 @@ TEST(ChatIntegrity, GetPackageInfoUnusableEntryReportsProtocolNotSupported)
    missingUrl["versions"] = versions;
    error = getPackageInfoFromManifest(
       missingUrl, "1.0", &packageVersion, &downloadUrl);
-   EXPECT_EQ(error.getCode(), kNotSupported);
+   EXPECT_TRUE(error.matches(kNotSupported));
 
    json::Object noVersion;
    noVersion["url"] = "https://example.com/pkg.zip";
@@ -372,17 +372,17 @@ TEST(ChatIntegrity, GetPackageInfoUnusableEntryReportsProtocolNotSupported)
    missingVersion["versions"] = versions;
    error = getPackageInfoFromManifest(
       missingVersion, "1.0", &packageVersion, &downloadUrl);
-   EXPECT_EQ(error.getCode(), kNotSupported);
+   EXPECT_TRUE(error.matches(kNotSupported));
 
    json::Object http = makeManifest("1.0", "1.0.0", "http://example.com/pkg.zip");
    error = getPackageInfoFromManifest(
       http, "1.0", &packageVersion, &downloadUrl);
-   EXPECT_EQ(error.getCode(), kNotSupported);
+   EXPECT_TRUE(error.matches(kNotSupported));
 
    json::Object absent = makeManifest("2.0", "1.0.0", "https://example.com/pkg.zip");
    error = getPackageInfoFromManifest(
       absent, "1.0", &packageVersion, &downloadUrl);
-   EXPECT_EQ(error.getCode(), kNotSupported);
+   EXPECT_TRUE(error.matches(kNotSupported));
 }
 
 TEST(ChatIntegrity, GetPackageInfoIgnoresDifferentMajorVersion)

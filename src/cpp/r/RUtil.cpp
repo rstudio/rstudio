@@ -289,25 +289,27 @@ core::Error iconvstrImpl(const std::string& value,
       size_t outBytes = sizeof(buffer);
 
       size_t result = ::Riconv(handle, &pIn, &inBytes, &pOut, &outBytes);
+
+      // read errno before output.insert() or Riconv_close() can overwrite it
+      int errorCode = R_ERRNO;
+
       if (buffer != pOut)
          output.insert(output.end(), buffer, pOut);
 
       if (result == (size_t)(-1))
       {
-         if ((R_ERRNO == EILSEQ || R_ERRNO == EINVAL) && allowSubstitution)
+         if ((errorCode == EILSEQ || errorCode == EINVAL) && allowSubstitution)
          {
             output.push_back('?');
             pIn++;
             inBytes--;
          }
-         else if (R_ERRNO == E2BIG && pInOrig != pIn)
+         else if (errorCode == E2BIG && pInOrig != pIn)
          {
             continue;
          }
          else
          {
-            // read errno before Riconv_close() can overwrite it
-            int errorCode = R_ERRNO;
             ::Riconv_close(handle);
 
             Error error = genericError(errorCode, ERROR_LOCATION);

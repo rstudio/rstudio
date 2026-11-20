@@ -26,6 +26,7 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 #include <shared_core/Logger.hpp>
+#include <shared_core/Memory.hpp>
 #include <shared_core/SafeConvert.hpp>
 #include <shared_core/json/Json.hpp>
 
@@ -472,8 +473,9 @@ const std::string& Error::getName() const
 const std::string& Error::getDisplayName() const
 {
 #ifndef _WIN32
-   // errno errors are stored as generic, and have always been logged as "system error N"
-   static const std::string s_systemName = boost::system::system_category().name();
+   // errno errors are stored as generic, and have always been logged as "system error N". Leaked, since a detached
+   // thread can still log an error while exit() runs static destructors
+   static const std::string& s_systemName = make_leaked<std::string>(boost::system::system_category().name());
    if (impl().Name == boost::system::generic_category().name())
       return s_systemName;
 #endif

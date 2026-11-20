@@ -65,6 +65,11 @@ TEST(AsyncServerResourceExhaustion, ClassifiesResourceErrors)
    EXPECT_TRUE(isResourceExhaustionError(error::make_error_code(error::no_descriptors)));
    EXPECT_TRUE(isResourceExhaustionError(error::make_error_code(error::no_memory)));
 
+   // and as portable codes, in the generic category
+   namespace errc = boost::system::errc;
+   EXPECT_TRUE(isResourceExhaustionError(errc::make_error_code(errc::too_many_files_open)));
+   EXPECT_TRUE(isResourceExhaustionError(errc::make_error_code(errc::not_enough_memory)));
+
    // unrelated errors are not resource exhaustion
    EXPECT_FALSE(isResourceExhaustionError(error::make_error_code(error::connection_reset)));
    EXPECT_FALSE(isResourceExhaustionError(error::make_error_code(error::operation_aborted)));

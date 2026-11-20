@@ -249,7 +249,7 @@ test_that("C++ sources test error conditions with matches(), not equality", {
    # the error constructors are matched with up to one level of nested
    # parentheses, e.g. systemError(errc::timed_out, ErrorLocation())
    call <- "\\((?:[^;()]|\\([^;()]*\\))*\\)"
-   factory <- "(?:rstudio::)?(?:core::)?(?:systemError|Error)\\s*"
+   factory <- "(?:(?:rstudio::)?(?:core::)?(?:systemError|Error)|(?:boost::system::|std::)?error_code)\\s*"
    accessor <- "(?:getCode|value)\\s*\\(\\s*\\)"
    errc <- "(?:(?:boost::system::|std::)?errc::)"
    patterns <- c(
@@ -266,6 +266,7 @@ test_that("C++ sources test error conditions with matches(), not equality", {
       "error != core::systemError(\n   boost::system::errc::timed_out, ERROR_LOCATION)",
       "error == systemError(code, ERROR_LOCATION)",
       "error == Error(errc::no_such_file_or_directory, ERROR_LOCATION)",
+      "error != boost::system::error_code(boost::system::errc::address_in_use, boost::system::generic_category())",
       "systemError(errc::timed_out, ErrorLocation()) == error",
       "error.getCode() == boost::system::errc::permission_denied",
       "ec.value() != errc::too_many_files_open",
@@ -278,6 +279,7 @@ test_that("C++ sources test error conditions with matches(), not equality", {
       "ec == boost::system::errc::timed_out",
       "ec == boost::asio::error::operation_aborted",
       "error.getCode() == ERROR_ACCESS_DENIED",
+      "error == boost::system::error_code(ERROR_PIPE_BUSY, boost::system::system_category())",
       "EXPECT_EQ(error, systemError(errc::io_error, ERROR_LOCATION))",
       "Error error = systemError(errc::timed_out, ERROR_LOCATION);"
    )
