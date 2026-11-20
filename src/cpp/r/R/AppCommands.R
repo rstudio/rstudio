@@ -250,6 +250,7 @@
    restartR = "restartR",
    restartRClearOutput = "restartRClearOutput",
    restartRRunAllChunks = "restartRRunAllChunks",
+   switchRVersion = "switchRVersion",
    terminateR = "terminateR",
    activateConsole = "activateConsole",
    activateConsolePane = "activateConsolePane",
