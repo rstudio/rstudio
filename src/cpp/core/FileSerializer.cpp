@@ -403,15 +403,12 @@ int renameForAtomicWrite(const char* from, const char* to)
 #endif
 
 // True when error's code is a native one: a Win32 code on Windows, or an errno
-// value on POSIX. Our errno errors are generic-category, while Boost reports
-// the same errno values in the system category.
+// value on POSIX, where an Error is generic for errno whichever category
+// reported it.
 bool hasNativeCode(const Error& error)
 {
-   if (error.getName() == boost::system::system_category().name())
-      return true;
-
 #ifdef _WIN32
-   return false;
+   return error.getName() == boost::system::system_category().name();
 #else
    return error.getName() == boost::system::generic_category().name();
 #endif

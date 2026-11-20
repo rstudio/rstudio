@@ -238,9 +238,10 @@ expectNoCppOffenders <- function(pattern, header, skipComments = FALSE) {
 
 test_that("C++ sources test error conditions with matches(), not equality", {
 
-   # an error built from an errc value is in the generic category, while Boost
-   # reports the same errno condition in the system category (and on Windows a
-   # Win32 code for it), so comparing the two with == is quietly false. likewise
+   # an error built from an errc value is an errno value in the generic
+   # category, while on Windows Boost reports the same condition as a Win32
+   # code in the system category, so comparing the two with == is quietly false
+   # there, though it passes on POSIX, where both are errno values. likewise
    # comparing getCode() or value() with an errc value ignores the category, so
    # on Windows it compares a Win32 code with an errno number. use
    # error.matches(errc::X), or Boost's ec == errc::X for a raw error_code

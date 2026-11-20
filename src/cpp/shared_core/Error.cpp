@@ -43,6 +43,20 @@ namespace {
 constexpr const char* s_occurredAt = "OCCURRED AT";
 constexpr const char* s_causedBy = "CAUSED BY";
 
+// The category name an Error stores. On POSIX the system category's codes are errno values, the same codes the
+// generic category holds, and which of the two an errno value arrives in depends only on who reported it (Boost
+// reports errno in the system category). Storing both as generic means errors for the same errno value compare equal.
+// On Windows the system category holds Win32 codes, which are a different set of codes, so the two stay distinct.
+std::string canonicalCategoryName(std::string in_name)
+{
+#ifndef _WIN32
+   if (in_name == boost::system::system_category().name())
+      return boost::system::generic_category().name();
+#endif
+
+   return in_name;
+}
+
 } // anonymous namespace
 
 
@@ -150,27 +164,27 @@ struct Error::Impl
 
    Impl(int in_code, std::string in_name, ErrorLocation in_location) :
       Code(in_code),
-      Name(std::move(in_name)),
+      Name(canonicalCategoryName(std::move(in_name))),
       Location(std::move(in_location))
    { }
 
    Impl(int in_code, std::string in_name, const Error& in_cause, ErrorLocation in_location) :
       Code(in_code),
-      Name(std::move(in_name)),
+      Name(canonicalCategoryName(std::move(in_name))),
       Cause(in_cause),
       Location(std::move(in_location))
    { }
 
    Impl(int in_code, std::string in_name, std::string in_message, ErrorLocation in_location) :
       Code(in_code),
-      Name(std::move(in_name)),
+      Name(canonicalCategoryName(std::move(in_name))),
       Message(std::move(in_message)),
       Location(std::move(in_location))
    { }
 
    Impl(int in_code, std::string in_name, std::string in_message, const Error& in_cause, ErrorLocation in_location) :
       Code(in_code),
-      Name(std::move(in_name)),
+      Name(canonicalCategoryName(std::move(in_name))),
       Message(std::move(in_message)),
       Cause(in_cause),
       Location(std::move(in_location))
@@ -292,7 +306,7 @@ bool Error::operator==(const boost::system::error_code& in_ec) const
 {
    if ((m_impl == nullptr) || (m_impl->Code == 0))
       return in_ec.value() == 0;
-   return (m_impl->Code == in_ec.value()) && (m_impl->Name == in_ec.category().name());
+   return (m_impl->Code == in_ec.value()) && (m_impl->Name == canonicalCategoryName(in_ec.category().name()));
 }
 
 bool Error::operator!=(const rstudio::core::Error& in_other) const
@@ -315,8 +329,11 @@ bool Error::matches(boost::system::errc::errc_t in_condition) const
    if (m_impl->Name == generic_category().name())
       return m_impl->Code == in_condition;
 
+#ifdef _WIN32
+   // a Win32 code; on POSIX an errno value in the system category was stored as generic
    if (m_impl->Name == system_category().name())
       return error_code(m_impl->Code, system_category()) == errc::make_error_condition(in_condition);
+#endif
 
    return false;
 }
@@ -452,6 +469,18 @@ const std::string& Error::getName() const
    return impl().Name;
 }
 
+const std::string& Error::getDisplayName() const
+{
+#ifndef _WIN32
+   // errno errors are stored as generic, and have always been logged as "system error N"
+   static const std::string s_systemName = boost::system::system_category().name();
+   if (impl().Name == boost::system::generic_category().name())
+      return s_systemName;
+#endif
+
+   return impl().Name;
+}
+
 const ErrorProperties& Error::getProperties() const
 {
    return impl().Properties;
@@ -471,7 +500,7 @@ std::string Error::getProperty(const std::string& in_name) const
 std::string Error::getSummary() const
 {
    std::ostringstream ostr;
-   ostr << impl().Name << " error "
+   ostr << getDisplayName() << " error "
         << impl().Code << " (" << impl().Message << ")";
    return ostr.str();
 }
@@ -774,7 +803,7 @@ std::string errorMessage(const core::Error& error)
    }
    if (msg.length() == 0)
    {
-      msg = error.getName();
+      msg = error.getDisplayName();
    }
    return msg;
 }

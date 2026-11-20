@@ -349,7 +349,8 @@ public:
    bool operator==(const Error& in_other) const;
 
    /**
-    * @brief Equality operator. Two errors are equal if their codes and names are the same.
+    * @brief Equality operator. Two errors are equal if their codes and names are the same. On POSIX an errno value in
+    *        the system category is the same error as that value in the generic category; see getName().
     *
     * @param in_ec   The boost error code to compare with this error.
     *
@@ -377,8 +378,12 @@ public:
 
    /**
     * @brief Checks whether this error represents a portable condition. Prefer this to comparing against an error
-    *        built from an errc value: a native error never equals a generic one, and on Windows its code has a
-    *        different meaning. Boost maps a system-category code to its condition.
+    *        built from an errc value: on Windows a native error is a Win32 code, which never equals a generic error
+    *        and whose number has a different meaning.
+    *
+    *        A Win32 code matches by Boost's mapping of Win32 codes to conditions, which is many-to-one: for example,
+    *        ERROR_SHARING_VIOLATION and ERROR_WRITE_PROTECT are both permission_denied, and ERROR_INVALID_NAME is
+    *        no_such_file_or_directory. Compare the code itself where only particular Win32 codes should match.
     *
     * @param in_condition   The portable condition. (e.g. boost::system::errc::no_such_file_or_directory)
     *
@@ -494,11 +499,24 @@ public:
    const std::string& getMessage() const;
 
    /**
-    * @brief Gets the name of the error.
+    * @brief Gets the name of the error: for an error built from an error code, the name of the code's category.
+    *
+    *        On POSIX an errno value is "generic" whether it was reported in the generic or the system category, since
+    *        both hold errno values there; errors for the same errno value are then equal whoever reported them. On
+    *        Windows "system" is a Win32 code and "generic" an errno value, and the two are different errors.
     *
     * @return The name of the error.
     */
    const std::string& getName() const;
+
+   /**
+    * @brief Gets the name of the error as it is shown in logs and messages. This is getName(), except that on POSIX a
+    *        "generic" error is shown as "system", as errno errors always have been (e.g. "system error 13 (Permission
+    *        denied)"). Use getName() to test what kind of error this is.
+    *
+    * @return The name to show for the error.
+    */
+   const std::string& getDisplayName() const;
 
    /**
     * @brief Gets the custom properties of the error.

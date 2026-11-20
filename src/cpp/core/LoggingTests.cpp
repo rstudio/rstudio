@@ -779,7 +779,14 @@ TEST(LoggingTest, CanJsonLogError)
 
    ASSERT_EQ(boost::system::errc::no_such_file_or_directory, code);
    ASSERT_EQ(boost::system::generic_category().message(code), message);
+
+   // the error is generic on every platform; on POSIX it's logged as a system
+   // error, as errno errors always have been
+#ifndef _WIN32
+   ASSERT_EQ(std::string("system"), type);
+#else
    ASSERT_EQ(std::string("generic"), type);
+#endif
 
    std::string description;
    ASSERT_FALSE(json::readObject(errorProperties,

@@ -248,6 +248,67 @@ TEST(ErrorTest, LastSystemErrorReadsErrnoOnPosix)
    EXPECT_EQ(EACCES, error.getCode());
 }
 
+TEST(ErrorTest, ErrnoValuesAreOneErrorWhicheverCategoryReportsThemOnPosix)
+{
+   using namespace boost::system;
+
+   const Error ours = genericError(ENOENT, ERROR_LOCATION);
+
+   // the same errno value, as Boost (asio, filesystem) and the standard library may report it
+   const error_code boostSystem(ENOENT, system_category());
+   const Error native[] = {
+      Error(boostSystem, ERROR_LOCATION),
+      Error(boostSystem, "opening the file", ERROR_LOCATION),
+      Error(boostSystem, ours, ERROR_LOCATION),
+      Error(kSystem, ENOENT, ERROR_LOCATION),
+      systemError(std::error_code(ENOENT, std::system_category()), ERROR_LOCATION),
+      systemError(std::system_error(ENOENT, std::system_category()), ERROR_LOCATION),
+   };
+
+   for (const Error& error : native)
+   {
+      EXPECT_EQ(kGeneric, error.getName());
+      EXPECT_EQ(ENOENT, error.getCode());
+      EXPECT_EQ(ours, error);
+   }
+
+   // an error equals the error code in either category
+   EXPECT_TRUE(ours == boostSystem);
+   EXPECT_TRUE(ours == error_code(ENOENT, generic_category()));
+   EXPECT_TRUE(native[0] == boostSystem);
+   EXPECT_TRUE(native[0] == error_code(ENOENT, generic_category()));
+   EXPECT_TRUE(ours != error_code(EACCES, system_category()));
+
+   // other categories are left alone, even with the same number
+   const Error other(error_code(ENOENT, testCategory()), ERROR_LOCATION);
+   EXPECT_EQ("rstudio-test", other.getName());
+   EXPECT_NE(ours, other);
+}
+
+TEST(ErrorTest, ErrnoErrorsAreShownAsSystemErrorsOnPosix)
+{
+   // the stored name says what the code is; logs and messages keep the "system error N" form
+   const Error errors[] = {
+      genericError(EACCES, ERROR_LOCATION),
+      systemError(boost::system::errc::permission_denied, ERROR_LOCATION),
+      Error(boost::system::error_code(EACCES, boost::system::system_category()), ERROR_LOCATION),
+   };
+
+   const std::string message = boost::system::generic_category().message(EACCES);
+   for (const Error& error : errors)
+   {
+      EXPECT_EQ(kGeneric, error.getName());
+      EXPECT_EQ(kSystem, error.getDisplayName());
+      EXPECT_EQ("system error " + std::to_string(EACCES) + " (" + message + ")", error.getSummary());
+      EXPECT_EQ(0u, error.asString().find("system error "));
+   }
+
+   // only generic errors are renamed
+   Error other = systemError(TestFailure, ERROR_LOCATION);
+   EXPECT_EQ("rstudio-test", other.getDisplayName());
+   EXPECT_EQ("rstudio-test error 7 (test failure)", other.getSummary());
+}
+
 #else
 
 TEST(ErrorTest, Win32CodesUseTheSystemCategory)
@@ -277,6 +338,26 @@ TEST(ErrorTest, LastSystemErrorReadsGetLastErrorOnWindows)
    EXPECT_EQ(ERROR_SHARING_VIOLATION, error.getCode());
 }
 
+TEST(ErrorTest, ErrnoValuesAndWin32CodesStayDistinctOnWindows)
+{
+   using namespace boost::system;
+
+   // 5 is EIO as an errno value, and ERROR_ACCESS_DENIED as a Win32 code
+   const Error fromErrno = genericError(EIO, ERROR_LOCATION);
+   const Error fromWin32 = systemError(ERROR_ACCESS_DENIED, ERROR_LOCATION);
+   ASSERT_EQ(fromErrno.getCode(), fromWin32.getCode());
+
+   EXPECT_NE(fromErrno, fromWin32);
+   EXPECT_FALSE(fromErrno == error_code(EIO, system_category()));
+   EXPECT_FALSE(fromWin32 == error_code(ERROR_ACCESS_DENIED, generic_category()));
+
+   // and are shown as what they are, since the name says which codes the number belongs to
+   EXPECT_EQ(kGeneric, fromErrno.getDisplayName());
+   EXPECT_EQ(kSystem, fromWin32.getDisplayName());
+   EXPECT_EQ(0u, fromErrno.getSummary().find("generic error 5 ("));
+   EXPECT_EQ(0u, fromWin32.getSummary().find("system error 5 ("));
+}
+
 #endif
 
 TEST(ErrorTest, MatchesTestsForAPortableCondition)
@@ -294,11 +375,10 @@ TEST(ErrorTest, MatchesTestsForAPortableCondition)
    EXPECT_FALSE(other.matches(static_cast<errc_t>(TestFailure)));
 
 #ifndef _WIN32
-   // Boost reports errno values in the system category; that's a different error, but the same condition
+   // Boost reports errno values in the system category
    Error native(error_code(ENOENT, system_category()), ERROR_LOCATION);
-   EXPECT_EQ(kSystem, native.getName());
-   EXPECT_NE(native, systemError(errc::no_such_file_or_directory, ERROR_LOCATION));
    EXPECT_TRUE(native.matches(errc::no_such_file_or_directory));
+   EXPECT_FALSE(native.matches(errc::permission_denied));
 #else
    // both Win32 not-found codes are the portable condition, while staying distinct errors
    Error fileNotFound = systemError(ERROR_FILE_NOT_FOUND, ERROR_LOCATION);

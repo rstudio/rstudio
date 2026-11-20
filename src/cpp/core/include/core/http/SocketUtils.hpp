@@ -72,8 +72,8 @@ inline bool isWrongProtocolTypeError(const core::Error& error)
 inline bool isConnectionTerminatedError(const core::Error& error)
 {
    // look for errors that indicate the client closing the connection; the
-   // errno-valued ones are conditions, since our own errors carry them in the
-   // generic category while asio reports them in the system category
+   // errno-valued ones are conditions, since our own errors carry them as
+   // errno values while on Windows asio reports them as Winsock or Win32 codes
    bool timedOut = error.matches(boost::system::errc::timed_out);
    bool eof = error == boost::asio::error::eof;
    bool reset = error.matches(boost::system::errc::connection_reset);
