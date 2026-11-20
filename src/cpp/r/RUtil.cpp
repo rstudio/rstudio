@@ -280,7 +280,7 @@ core::Error iconvstrImpl(const std::string& value,
    if (handle == (void*)(-1))
    {
       int errorNumber = R_ERRNO;
-      return systemError(std::error_code(errorNumber, std::generic_category()), ERROR_LOCATION);
+      return genericError(errorNumber, ERROR_LOCATION);
    }
 
    const char* pIn = value.data();
@@ -313,7 +313,7 @@ core::Error iconvstrImpl(const std::string& value,
          else
          {
             ::Riconv_close(handle);
-            Error error = systemError(std::error_code(errorNumber, std::generic_category()), ERROR_LOCATION);
+            Error error = genericError(errorNumber, ERROR_LOCATION);
             error.addProperty("str", value);
             error.addProperty("len", gsl::narrow_cast<int>(value.length()));
             error.addProperty("from", from);

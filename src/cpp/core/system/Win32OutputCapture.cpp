@@ -179,7 +179,7 @@ Error redirectToPipe(DWORD stdHandle,
       {
          // read errno before ERROR_LOCATION's allocations can change it
          int errorNumber = errno;
-         return systemError(std::error_code(errorNumber, std::generic_category()), ERROR_LOCATION);
+         return genericError(errorNumber, ERROR_LOCATION);
       }
       *fpStdFile = *newStdHandle;
       stdDupFd = stdFd;
@@ -188,7 +188,7 @@ Error redirectToPipe(DWORD stdHandle,
    if (::_dup2(fd, stdDupFd))
    {
       int errorNumber = errno;
-      return systemError(std::error_code(errorNumber, std::generic_category()), ERROR_LOCATION);
+      return genericError(errorNumber, ERROR_LOCATION);
    }
 
    // turn off buffering

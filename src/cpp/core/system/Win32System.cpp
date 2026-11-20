@@ -582,7 +582,7 @@ Error captureCommand(const std::string& command, std::string* pOutput)
    {
       // read errno before ERROR_LOCATION's allocations can change it
       int errorNumber = errno;
-      return systemError(std::error_code(errorNumber, std::generic_category()), ERROR_LOCATION);
+      return genericError(errorNumber, ERROR_LOCATION);
    }
 
    // collect output
@@ -606,7 +606,7 @@ Error captureCommand(const std::string& command, std::string* pOutput)
       if (error)
          LOG_ERROR(error);
 
-      error = systemError(std::error_code(errorNumber, std::generic_category()), ERROR_LOCATION);
+      error = genericError(errorNumber, ERROR_LOCATION);
    }
 
    // return status

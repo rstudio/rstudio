@@ -645,6 +645,19 @@ Error systemError(const std::system_error& in_error,
    return error;
 }
 
+Error genericError(int in_code, const ErrorLocation& in_location)
+{
+   using namespace boost::system;
+   return Error(error_code(in_code, generic_category()), in_location);
+}
+
+Error genericError(int in_code, const std::string& in_description, const ErrorLocation& in_location)
+{
+   Error error = genericError(in_code, in_location);
+   error.addProperty("description", in_description);
+   return error;
+}
+
 Error systemCallError(const std::string& in_function,
                       int in_code,
                       const ErrorLocation& in_location)

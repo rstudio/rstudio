@@ -159,7 +159,7 @@ void setenv(const std::string& name, const std::string& value)
    errno_t status = ::_wputenv_s(nameWide.c_str(), valueWide.c_str());
    if (status != 0)
    {
-      Error error = systemError(std::error_code(status, std::generic_category()), ERROR_LOCATION);
+      Error error = genericError(status, ERROR_LOCATION);
       error.addProperty("name", name);
       LOG_ERROR(error);
    }
@@ -188,7 +188,7 @@ void unsetenv(const std::string& name)
    errno_t status = ::_wputenv_s(nameWide.c_str(), L"");
    if (status != 0)
    {
-      Error error = systemError(std::error_code(status, std::generic_category()), ERROR_LOCATION);
+      Error error = genericError(status, ERROR_LOCATION);
       error.addProperty("name", name);
       LOG_ERROR(error);
    }

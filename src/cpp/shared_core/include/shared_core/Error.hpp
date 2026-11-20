@@ -911,6 +911,39 @@ Error systemError(
    const ErrorLocation& in_location) = delete;
 
 /**
+ * @brief Function which creates a generic-category error from an errno value, such as one the C runtime sets on
+ *        Windows, where systemError(int) would read it as a Win32 error code. Read errno into a variable first:
+ *        ERROR_LOCATION may be evaluated before it, and can change it.
+ *
+ * @param in_code            The errno value. (e.g. EINVAL)
+ * @param in_location        The location of the error.
+ *
+ * @return A generic-category error.
+ */
+Error genericError(int in_code, const ErrorLocation& in_location);
+
+/**
+ * @brief Function which creates a generic-category error from an errno value, such as one the C runtime sets on
+ *        Windows, where systemError(int) would read it as a Win32 error code. Read errno into a variable first:
+ *        ERROR_LOCATION may be evaluated before it, and can change it.
+ *
+ * @param in_code            The errno value. (e.g. EINVAL)
+ * @param in_description     A detailed description of the error. (e.g. "Failed to open socket while attempting to
+ *                           connect to Kubernetes.")
+ * @param in_location        The location of the error.
+ *
+ * @return A generic-category error.
+ */
+Error genericError(int in_code, const std::string& in_description, const ErrorLocation& in_location);
+
+// genericError() takes errno values only: pass an errc (or another error code enum) to systemError() instead
+template <typename E, detail::EnableIfEnum<E> = 0>
+Error genericError(E in_code, const ErrorLocation& in_location) = delete;
+
+template <typename E, detail::EnableIfEnum<E> = 0>
+Error genericError(E in_code, const std::string& in_description, const ErrorLocation& in_location) = delete;
+
+/**
  * @brief Function which creates a system error associated with a particular system call.
  *
  * @param in_function        The name of the system call associated with this error.

@@ -165,6 +165,22 @@ static_assert(!CanMakeSystemError<PlainEnum>::value, "a plain enum has no catego
 static_assert(!CanMakeSystemError<StdOnlyErrc>::value, "an unscoped std error code enum needs std::error_code(value)");
 static_assert(!CanMakeSystemError<std::errc>::value, "a std::errc needs std::make_error_code()");
 
+// whether genericError(E, ErrorLocation) compiles
+template <typename E, typename = void>
+struct CanMakeGenericError : std::false_type
+{
+};
+
+template <typename E>
+struct CanMakeGenericError<E, decltype(void(genericError(std::declval<E>(), std::declval<const ErrorLocation&>())))>
+   : std::true_type
+{
+};
+
+static_assert(CanMakeGenericError<int>::value, "an errno value is a generic error");
+static_assert(!CanMakeGenericError<errc_t>::value, "an errc goes to systemError()");
+static_assert(!CanMakeGenericError<PlainEnum>::value, "a plain enum isn't an errno value");
+
 static_assert(CanMakeSystemCallError<int>::value, "a system call reports a system error code");
 static_assert(!CanMakeSystemCallError<errc_t>::value, "an errc isn't a system error code");
 static_assert(!CanMakeSystemCallError<PlainEnum>::value, "a plain enum isn't a system error code");
@@ -186,6 +202,18 @@ TEST(ErrorTest, ErrcErrorsUseTheGenericCategory)
    EXPECT_EQ("description", described.getProperty("description"));
    ASSERT_TRUE(described.hasCause());
    EXPECT_EQ(cause, described.getCause());
+}
+
+TEST(ErrorTest, GenericErrorsUseTheGenericCategory)
+{
+   // 21 is EISDIR as an errno value, but ERROR_NOT_READY as a Win32 code
+   expectGenericError(genericError(EISDIR, ErrorLocation()), boost::system::errc::is_a_directory);
+
+   Error described = genericError(EISDIR, "description", ErrorLocation());
+   expectGenericError(described, boost::system::errc::is_a_directory);
+   EXPECT_EQ("description", described.getProperty("description"));
+
+   EXPECT_EQ(systemError(boost::system::errc::is_a_directory, ErrorLocation()), genericError(EISDIR, ErrorLocation()));
 }
 
 TEST(ErrorTest, ErrcErrorsMatchTheSameErrcBuiltAnyWay)
