@@ -119,7 +119,7 @@ class AnimationHelper
 
    public void animate()
    {
-      Document.get().getBody().addClassName("rstudio-animating");
+      Document.get().getBody().addClassName(DualWindowLayoutPanel.ANIMATING_CLASS);
       
       panel_.setSplitterVisible(false);
 
@@ -175,7 +175,7 @@ class AnimationHelper
          setParentZindex(startWidgetBottom_, -10);
       setParentZindex(endWidgetBottom_, 0);
 
-      Document.get().getBody().removeClassName("rstudio-animating");
+      Document.get().getBody().removeClassName(DualWindowLayoutPanel.ANIMATING_CLASS);
       panel_.onResize();
    }
 
