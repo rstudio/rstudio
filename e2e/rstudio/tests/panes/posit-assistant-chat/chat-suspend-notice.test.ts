@@ -5,7 +5,7 @@ import { restartSessionWithSentinel, waitForSessionRestart } from '@utils/projec
 import { dismissBlockingModals } from '@pages/modals.page';
 import { executeInConsole } from '@pages/console_pane.page';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
-import type { Locator, Page } from 'playwright';
+import type { BrowserContext, Locator, Page } from 'playwright';
 import { setupPositAssistantChat } from './_chat-setup';
 
 // Regression tests for rstudio/rstudio#19695: suspend and Restart R stop the
@@ -81,6 +81,25 @@ async function waitForClientStateQuiet(page: Page): Promise<void> {
   } finally {
     page.off('request', onRequest);
   }
+}
+
+// Any RPC to a suspended session resumes it, and the client-state push runs
+// every 5s. Watch past that.
+const STAYS_SUSPENDED_WINDOW_MS = 8000;
+
+/** Fails if any page in the context starts an RPC within the window. */
+async function expectNoRpcs(context: BrowserContext, windowMs: number): Promise<void> {
+  const rpcs: string[] = [];
+  const onRequest = (request: { url(): string }): void => {
+    if (request.url().includes('/rpc/')) rpcs.push(request.url());
+  };
+  context.on('request', onRequest);
+  try {
+    await sleep(windowMs);
+  } finally {
+    context.off('request', onRequest);
+  }
+  expect(rpcs, 'RPCs sent while suspended').toEqual([]);
 }
 
 test.describe.serial('Posit Assistant across suspend and restart', {
@@ -200,8 +219,9 @@ test.describe.serial('Posit Assistant across suspend and restart', {
     await chatActions.waitForChatReady();
   });
 
-  // #19699: the popped-out window shows the notice too.
-  test('popped-out chat shows the suspended notice until resume', async ({
+  // #19699: saving the popped-out window's geometry on suspend dirtied client
+  // state, whose next push resumed the session. The window shows the notice too.
+  test('popped-out chat stays suspended and shows the notice until resume', async ({
     rstudioPage: page,
   }) => {
     const satellitePromise = page.context().waitForEvent('page', { timeout: 30000 });
@@ -214,16 +234,17 @@ test.describe.serial('Posit Assistant across suspend and restart', {
 
       await executeInConsole(page, '.rs.suspendSession(force = FALSE)', { wait: false });
       await expect(suspendedNotice(satellite)).toBeVisible({ timeout: 15000 });
+      await expectNoRpcs(page.context(), STAYS_SUSPENDED_WINDOW_MS);
+      await expect(suspendedNotice(satellite)).toBeVisible();
 
       await waitForSessionRestart(page);
       await dismissBlockingModals(page);
       await expect(suspendedNotice(satellite)).toBeHidden({ timeout: 15000 });
     } finally {
-      if (!satellite.isClosed()) {
-        const closed = satellite.waitForEvent('close', { timeout: 30000 });
-        await executeCommand(page, 'returnChatToMain');
-        await closed;
-      }
+      // On Server, reopening the window after resume returns chat to the main
+      // window but can leave this one open, so close it directly as well
+      await executeCommand(page, 'returnChatToMain');
+      await satellite.close();
     }
   });
 });

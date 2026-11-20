@@ -322,12 +322,6 @@ public class ChatPresenter extends BasePresenter
             {
                backendPollGeneration_++; // invalidate existing poll callbacks
                display_.hideReadlineNotification();
-               if (poppedOut_)
-               {
-                  // Save geometry; satellite stays open and shows its own
-                  // suspend overlay via SessionSerializationEvent forwarding
-                  updateSavedGeometry();
-               }
                // Only dim the chat UI if Posit Assistant was actually loaded and
                // running. If chat was never initialized (e.g., sidebar hidden at
                // startup) or another provider is selected, nothing will reconnect.
@@ -344,6 +338,11 @@ public class ChatPresenter extends BasePresenter
             else if (action == SessionSerializationAction.RESUME_SESSION)
             {
                backendPollGeneration_++; // new lifecycle generation
+
+               // Save the satellite's geometry now rather than at suspend:
+               // pushing dirty client state to a suspended session resumes it.
+               if (poppedOut_)
+                  updateSavedGeometry();
 
                // Any pre-suspend initialization is stale — the server process
                // restarted, so all in-flight RPCs are dead. Reset the guard.
