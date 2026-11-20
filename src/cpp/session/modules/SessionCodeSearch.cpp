@@ -1740,6 +1740,26 @@ SourceItem fromCppDefinition(const clang::CppDefinition& cppDefinition)
       cppDefinition.hidden);
 }
 
+SourceItem::Type xrefSourceType(const std::string& type)
+{
+   if (type == "fig")
+      return SourceItem::Figure;
+
+   if (type == "tab" || type == "tbl" || type == "lst")
+      return SourceItem::Table;
+
+   if (type == "h1" || type == "h2" || type == "h3" ||
+       type == "h4" || type == "h5" || type == "h6" || type == "sec")
+      return SourceItem::Section;
+
+   if (type == "thm" || type == "lem" || type == "cor" ||
+       type == "prp" || type == "cnj" || type == "def" ||
+       type == "exm" || type == "exr" || type == "eq")
+      return SourceItem::Math;
+
+   return SourceItem::None;
+}
+
 void fillFromCrossrefs(const std::string& term,
                        std::vector<SourceItem>* pSourceItems)
 {
@@ -1801,27 +1821,7 @@ void fillFromCrossrefs(const std::string& term,
       if (xref.getObject().hasMember("title"))
          title = xref.getObject()["title"].getString();
       
-      // figure out appropriate source item type
-      SourceItem::Type sourceType = SourceItem::None;
-      if (type == "fig")
-      {
-         sourceType = SourceItem::Figure;
-      }
-      else if (type == "tab" || type == "tbl" || type == "lst")
-      {
-         sourceType = SourceItem::Table;
-      }
-      else if (type == "h1" || type == "h2" || type == "h3" ||
-               type == "h4" || type == "h5" || type == "h6" || type == "sec")
-      {
-         sourceType = SourceItem::Section;
-      }
-      else if (type == "thm" || type == "lem" || type == "cor" ||
-               type == "prp" || type == "cnj" || type == "def" ||
-               type == "exm" || type == "exr" || type == "eq")
-      {
-         sourceType = SourceItem::Math;
-      }
+      SourceItem::Type sourceType = xrefSourceType(type);
       
       // form appropriate text for display
       std::string displayText;
@@ -2820,6 +2820,11 @@ SEXP rs_viewFunction(SEXP functionSEXP, SEXP nameSEXP, SEXP namespaceSEXP)
 }
 
 } // anonymous namespace
+
+int sourceItemTypeForXRef(const std::string& xrefType)
+{
+   return xrefSourceType(xrefType);
+}
    
 Error initialize()
 {
