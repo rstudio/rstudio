@@ -63,6 +63,10 @@ struct ConsoleAction
 // request the same allocation again, and fail with it: the buffer works out
 // how far to grow from its size and its storage, and a failed growth changes
 // neither.
+//
+// An empty buffer (e.g. just after clear(), which frees the storage) rethrows
+// the std::bad_alloc instead: a capacity of 0 would discard every action from
+// then on, where the next push can still try the allocation again.
 template <typename Allocator>
 bool pushConsoleAction(
    boost::circular_buffer_space_optimized<ConsoleAction, Allocator>& actions,
@@ -77,6 +81,8 @@ bool pushConsoleAction(
    {
       // push_back() grows the storage before it moves from the action, so
       // the action is still intact here
+      if (actions.empty())
+         throw;
    }
 
    // the storage is full, or it wouldn't have had to grow; a capacity equal
@@ -142,6 +148,11 @@ private:
    // allocates as actions are added rather than its whole capacity up front:
    // the capacity is the console_max_lines pref, which has no maximum
    boost::circular_buffer_space_optimized<ConsoleAction> actions_;
+
+   // the limit last set, which capacity() reports even while pushAction()
+   // holds actions_ below it: the console output queue trims each batch to
+   // it, and the client keeps that many lines
+   int capacity_ = 0;
    std::vector<std::string> pendingInput_;
 };
 

@@ -61,7 +61,7 @@ int ConsoleActions::capacity() const
 {
    LOCK_MUTEX(mutex_)
    {
-      return gsl::narrow_cast<int>(actions_.capacity());
+      return capacity_;
    }
    END_LOCK_MUTEX
 
@@ -75,6 +75,7 @@ void ConsoleActions::setCapacity(int capacity)
    {
       // Keep the newest actions when reducing the scrollback limit.
       actions_.rset_capacity(capacity);
+      capacity_ = capacity;
    }
    END_LOCK_MUTEX
 }

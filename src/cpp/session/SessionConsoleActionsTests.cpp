@@ -146,6 +146,32 @@ TEST(ConsoleActionsGrowthTest, FailedGrowthKeepsTheNewestActions)
    EXPECT_EQ(outputLine(added - static_cast<int>(size) - 1).data, actions.front().data);
 }
 
+TEST(ConsoleActionsGrowthTest, FailedGrowthAfterClearKeepsTheCapacity)
+{
+   typedef boost::circular_buffer_space_optimized<
+      ConsoleAction, LimitedAllocator<ConsoleAction>> Actions;
+
+   const std::size_t hugeCapacity = std::numeric_limits<int>::max();
+   s_allocationLimit = std::numeric_limits<std::size_t>::max();
+   Actions actions(hugeCapacity);
+   for (int i = 0; i < 10; i++)
+      ASSERT_TRUE(pushConsoleAction(actions, outputLine(i)));
+
+   // as ConsoleActions::reset() does, freeing the storage; the first push
+   // after it then has to allocate
+   actions.clear();
+   s_allocationLimit = 0;
+   EXPECT_THROW(pushConsoleAction(actions, outputLine(10)), std::bad_alloc);
+   EXPECT_TRUE(actions.empty());
+   EXPECT_EQ(hugeCapacity, static_cast<std::size_t>(actions.capacity()));
+
+   // so a later push tries the allocation again
+   s_allocationLimit = std::numeric_limits<std::size_t>::max();
+   EXPECT_TRUE(pushConsoleAction(actions, outputLine(11)));
+   ASSERT_EQ(1u, actions.size());
+   EXPECT_EQ(outputLine(11).data, actions.front().data);
+}
+
 // NOTE: these tests drive the process-wide consoleActions() singleton, so
 // state is reset around each test to keep them order-independent
 class ConsoleActionsTest : public ::testing::Test
