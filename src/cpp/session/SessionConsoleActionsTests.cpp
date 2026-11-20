@@ -141,10 +141,7 @@ TEST_F(ConsoleActionsTest, HugeCapacityKeepsQueuedConsoleOutput)
 {
    // drop output still queued from session startup
    rstudio::session::ClientEventQueue& queue = rstudio::session::clientEventQueue();
-   std::vector<rstudio::session::ClientEvent> events;
-   queue.flush();
-   queue.remove(&events);
-   consoleActions().reset();
+   queue.clear();
 
    // the client event queue trims each batch of console output to the
    // scrollback limit plus one line, which must not overflow at INT_MAX
@@ -156,7 +153,7 @@ TEST_F(ConsoleActionsTest, HugeCapacityKeepsQueuedConsoleOutput)
       rstudio::session::client_events::kConsoleWriteOutput,
       output));
    queue.flush();
-   events.clear();
+   std::vector<rstudio::session::ClientEvent> events;
    queue.remove(&events);
 
    std::string sent;
