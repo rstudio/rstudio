@@ -46,8 +46,7 @@ public class CodeSearchItemKindTests extends GWTTestCase
    {
       assertEquals("Theorem", CodeSearchItemKind.label(SourceItem.MATH, "thm"));
       assertEquals("Equation", CodeSearchItemKind.label(SourceItem.MATH, "eq"));
-      // the backend gives bookdown examples the NONE type
-      assertEquals("Example", CodeSearchItemKind.label(SourceItem.NONE, "exm"));
+      assertEquals("Example", CodeSearchItemKind.label(SourceItem.MATH, "exm"));
    }
 
    public void testHeadingXRefIncludesLevel()
