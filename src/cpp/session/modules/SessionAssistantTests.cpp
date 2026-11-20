@@ -24,6 +24,7 @@
 #include <core/system/Process.hpp>
 
 #include <session/SessionSourceDatabase.hpp>
+#include <session/prefs/UserPrefValues.hpp>
 
 #include "SessionLSP.hpp"
 
@@ -33,12 +34,15 @@ namespace tests {
 
 using core::FilePath;
 using modules::assistant::addPendingAgentRequestForTesting;
+using modules::assistant::agentPathOverrideApplies;
 using modules::assistant::AgentStderrTail;
 using modules::assistant::AgentStdoutReader;
 using modules::assistant::focusDocumentForTesting;
 using modules::assistant::agentRequestTimeout;
 using modules::assistant::agentStderrTail;
 using modules::assistant::agentStdoutErrorSummary;
+using modules::assistant::effectiveAssistantType;
+using modules::assistant::isNesMissing;
 using modules::assistant::nesLanguageServerPath;
 using modules::assistant::queueAgentNotificationForTesting;
 using modules::assistant::queueAgentReplyForTesting;
@@ -470,6 +474,75 @@ TEST(SessionAssistant, NesLanguageServerPathPrefersCjsScript)
              installDir.completeChildPath("dist/nes/language-server.cjs").getAbsolutePath());
 
    installDir.removeIfExists();
+}
+
+TEST(SessionAssistant, NesNotMissingWhenNoInstallationLocated)
+{
+   // With nothing installed yet, an install may still bring NES, so Posit AI
+   // stays selectable.
+   EXPECT_FALSE(isNesMissing(FilePath()));
+}
+
+TEST(SessionAssistant, NesMissingWhenInstallationHasNoNesScript)
+{
+   FilePath installDir;
+   FilePath::tempFilePath(installDir);
+   installDir.ensureDirectory();
+
+   EXPECT_TRUE(isNesMissing(installDir));
+
+   installDir.removeIfExists();
+}
+
+TEST(SessionAssistant, NesNotMissingWhenInstallationHasNesScript)
+{
+   FilePath installDir = createNesInstallation("language-server.cjs");
+
+   EXPECT_FALSE(isNesMissing(installDir));
+
+   installDir.removeIfExists();
+}
+
+TEST(SessionAssistant, EffectiveAssistantTypeIsNoneForPositWithoutNes)
+{
+   EXPECT_EQ(effectiveAssistantType(kAssistantPosit, true), kAssistantNone);
+}
+
+TEST(SessionAssistant, EffectiveAssistantTypeKeepsPositWithNes)
+{
+   EXPECT_EQ(effectiveAssistantType(kAssistantPosit, false), kAssistantPosit);
+}
+
+TEST(SessionAssistant, EffectiveAssistantTypeKeepsOtherAssistantsWithoutNes)
+{
+   EXPECT_EQ(effectiveAssistantType(kAssistantCopilot, true), kAssistantCopilot);
+   EXPECT_EQ(effectiveAssistantType(kAssistantNone, true), kAssistantNone);
+}
+
+TEST(SessionAssistant, AgentPathOverrideDoesNotApplyWhenAbsent)
+{
+   EXPECT_FALSE(agentPathOverrideApplies(kAssistantPosit, false, false, false));
+   EXPECT_FALSE(agentPathOverrideApplies(kAssistantCopilot, false, false, false));
+}
+
+TEST(SessionAssistant, AgentPathOverrideAppliesWithoutHelpers)
+{
+   EXPECT_TRUE(agentPathOverrideApplies(kAssistantPosit, true, false, false));
+   EXPECT_TRUE(agentPathOverrideApplies(kAssistantCopilot, true, false, false));
+}
+
+TEST(SessionAssistant, AgentPathOverrideIgnoredByPositHelper)
+{
+   // A Posit Assistant helper launches the installation's own language
+   // server, so the override can't supply NES for Posit AI.
+   EXPECT_FALSE(agentPathOverrideApplies(kAssistantPosit, true, true, false));
+   EXPECT_TRUE(agentPathOverrideApplies(kAssistantCopilot, true, true, false));
+}
+
+TEST(SessionAssistant, AgentPathOverrideIgnoredByCopilotHelper)
+{
+   EXPECT_FALSE(agentPathOverrideApplies(kAssistantCopilot, true, false, true));
+   EXPECT_TRUE(agentPathOverrideApplies(kAssistantPosit, true, false, true));
 }
 
 TEST(SessionAssistant, ServicedClockCountsShortGaps)

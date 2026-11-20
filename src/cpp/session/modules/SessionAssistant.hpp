@@ -103,6 +103,29 @@ std::string agentStdoutErrorSummary(const std::vector<std::string>& errors);
 // Exposed for testing.
 core::FilePath nesLanguageServerPath(const core::FilePath& installPath);
 
+// Whether a located Posit Assistant installation lacks the NES language
+// server. False when installPath is empty: with nothing installed yet, a later
+// install may include NES. Exposed for testing.
+bool isNesMissing(const core::FilePath& installPath);
+
+// The assistant to run for the selected one: Posit AI is run as (None) when
+// the installation lacks NES, so the selection is kept rather than rewritten.
+// Exposed for testing.
+std::string effectiveAssistantType(const std::string& selectedAssistant,
+                                   bool nesMissing);
+
+// Whether an RSTUDIO_AGENT_PATH override naming an existing file is used to
+// launch the given assistant. A helper configured for that assistant launches
+// the assistant's own language server instead. Exposed for testing.
+bool agentPathOverrideApplies(const std::string& assistant,
+                              bool overrideExists,
+                              bool positHelperConfigured,
+                              bool copilotHelperConfigured);
+
+// Whether the Posit Assistant installation lacked NES at the last
+// synchronize(), which is what the client is told.
+bool isPositAssistantNesMissing();
+
 // Accumulates the time the session spends servicing events, which is the only
 // time agent requests can be written and agent replies read. Each gap between
 // ticks counts for at most maxGap, so time R spends blocked in code that
