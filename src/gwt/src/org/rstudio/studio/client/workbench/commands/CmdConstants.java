@@ -3434,10 +3434,6 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("_Write Diagnostics Report") // $NON-NLS-1$
     String diagnosticsReportMenuLabel();
     
-    // openDeveloperConsole
-    @DefaultStringValue("_Open Developer Console") // $NON-NLS-1$
-    String openDeveloperConsoleMenuLabel();
-    
     // reloadUi
     @DefaultStringValue("Reload _UI") // $NON-NLS-1$
     String reloadUiMenuLabel();
