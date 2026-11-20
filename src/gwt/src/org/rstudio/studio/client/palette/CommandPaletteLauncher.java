@@ -15,10 +15,7 @@
 
 package org.rstudio.studio.client.palette;
 
-import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -26,13 +23,13 @@ import com.google.inject.Singleton;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.ShortcutManager;
-import org.rstudio.core.client.widget.ModalPopupPanel;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.palette.events.PaletteItemExecutedEvent;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteMruEntry;
 import org.rstudio.studio.client.palette.ui.CommandPalette;
+import org.rstudio.studio.client.palette.ui.PalettePopupPanel;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
@@ -168,28 +165,9 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       palette_ = new CommandPalette(providers,
          pPrefs_.get().commandPaletteMru().getValue() ? mru_ : null, this);
 
-      panel_ = new ModalPopupPanel(
-            true,  // Auto hide
-            true,  // Modal
-            false, // Glass (main window overlay)
-            true   // Close on Esc
-      );
-      
-      // Required for accessibility (see #6962)
-      panel_.getElement().setTabIndex(-1);
-      
-      // Copy classes from the root RStudio container onto this panel. This is
-      // necessary so that we can properly inherit theme colors.
-      Element root = Document.get().getElementById("rstudio_container");
-      if (root != null)
-      {
-         panel_.addStyleName(root.getClassName());
-      }
-      
-      // Assign the appropriate ARIA role to this panel
-      Element ele = panel_.getElement();
-      Roles.getDialogRole().set(ele);
-      Roles.getDialogRole().setAriaLabelProperty(ele, constants_.searchCmdsAriaLabelProperty());
+      panel_ = new PalettePopupPanel(
+            constants_.searchCmdsAriaLabelProperty(),
+            true /*closeOnEscape*/);
 
       // Find the center of the screen
       panel_.add(palette_);
@@ -198,8 +176,6 @@ public class CommandPaletteLauncher implements CommandPalette.Host
          panel_.setPopupPosition(Window.getClientWidth() / 2 - 300, 50);
       });
       
-      // Set z-index above panel splitters (otherwise they overlap the popup)
-      panel_.getElement().getStyle().setZIndex(250);
       palette_.focus();
 
       state_ = State.Showing;
@@ -228,7 +204,7 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       state_ = State.Hidden;
    }
    
-   private ModalPopupPanel panel_;
+   private PalettePopupPanel panel_;
    private CommandPalette palette_;
    private State state_;
    private ArrayList<CommandPaletteMruEntry> mru_;
