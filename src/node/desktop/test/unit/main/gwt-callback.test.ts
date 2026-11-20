@@ -21,6 +21,7 @@ import {
   BrowserWindow,
   clipboard,
   ClipboardItem,
+  dialog,
   ipcMain,
   IpcMainInvokeEvent,
   nativeImage,
@@ -354,20 +355,83 @@ describe('DesktopCallback', () => {
   });
 
   describe('dialogParentWindow', () => {
-    // a parentless native dialog activates the app on macOS, so automation
-    // runs must always get a parent even though the app is never focused
+    // on macOS a parentless native dialog is app-modal: every RStudio window
+    // beeps at a click while the alert may sit unseen behind another app
+    // (#19728), so a dialog gets a parent even when RStudio is not focused
     it('prefers the requested window, then the focused window', () => {
       const preferred = fakeBrowserWindow() as unknown as BrowserWindow;
       const focused = fakeBrowserWindow() as unknown as BrowserWindow;
+      const requester = fakeBrowserWindow() as unknown as BrowserWindow;
       sinon.stub(BrowserWindow, 'getFocusedWindow').returns(focused);
 
-      assert.strictEqual(callback.dialogParentWindow(preferred), preferred);
-      assert.strictEqual(callback.dialogParentWindow(), focused);
+      assert.strictEqual(callback.dialogParentWindow(preferred, requester), preferred);
+      assert.strictEqual(callback.dialogParentWindow(null, requester), focused);
     });
 
-    it('leaves the dialog parentless when nothing is focused', () => {
+    it('falls back to the window that asked, then the main window, when nothing is focused', () => {
+      const main = fakeBrowserWindow() as unknown as BrowserWindow;
+      const requester = fakeBrowserWindow() as unknown as BrowserWindow;
+      mainWindow.window = main;
       sinon.stub(BrowserWindow, 'getFocusedWindow').returns(null);
+
+      assert.strictEqual(callback.dialogParentWindow(null, requester), requester);
+      assert.strictEqual(callback.dialogParentWindow(null, null), main);
+      assert.strictEqual(
+        callback.dialogParentWindow(null, fakeBrowserWindow({ destroyed: true }) as unknown as BrowserWindow),
+        main,
+      );
+    });
+
+    it('prefers a window on screen to an off-screen window that asked', () => {
+      const main = fakeBrowserWindow() as unknown as BrowserWindow;
+      mainWindow.window = main;
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(null);
+
+      for (const state of [{ minimized: true }, { visible: false }]) {
+        const requester = fakeBrowserWindow(state) as unknown as BrowserWindow;
+        assert.strictEqual(callback.dialogParentWindow(null, requester), main, JSON.stringify(state));
+      }
+    });
+
+    // the sheet shows once the user brings the window back, while a parentless
+    // dialog would block every window from wherever it opened
+    it('parents on a minimized or hidden window on macOS outside automation mode', () => {
+      sinon.stub(process, 'platform').value('darwin');
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(null);
+
+      for (const state of [{ minimized: true }, { visible: false }]) {
+        const main = fakeBrowserWindow(state) as unknown as BrowserWindow;
+        mainWindow.window = main;
+        assert.strictEqual(callback.dialogParentWindow(), main, JSON.stringify(state));
+
+        // with every window off screen, the one that asked keeps the dialog
+        const requester = fakeBrowserWindow(state) as unknown as BrowserWindow;
+        assert.strictEqual(callback.dialogParentWindow(null, requester), requester, JSON.stringify(state));
+      }
+
+      mainWindow.window = fakeBrowserWindow({ destroyed: true }) as unknown as BrowserWindow;
       assert.isUndefined(callback.dialogParentWindow());
+    });
+
+    // a parentless dialog blocks no window there, while Windows may keep an
+    // owned dialog hidden with its minimized owner
+    it('stays parentless off macOS when every window is off screen', () => {
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(null);
+      const platform = sinon.stub(process, 'platform');
+
+      for (const name of ['win32', 'linux']) {
+        platform.value(name);
+        for (const state of [{ minimized: true }, { visible: false }]) {
+          mainWindow.window = fakeBrowserWindow(state) as unknown as BrowserWindow;
+          const requester = fakeBrowserWindow(state) as unknown as BrowserWindow;
+          assert.isUndefined(callback.dialogParentWindow(null, requester), `${name} ${JSON.stringify(state)}`);
+        }
+
+        // while a window on screen is still used
+        const main = fakeBrowserWindow() as unknown as BrowserWindow;
+        mainWindow.window = main;
+        assert.strictEqual(callback.dialogParentWindow(), main, name);
+      }
     });
 
     it('falls back to the main window in automation mode', () => {
@@ -393,10 +457,190 @@ describe('DesktopCallback', () => {
         for (const state of [{ minimized: true }, { visible: false }, { destroyed: true }]) {
           mainWindow.window = fakeBrowserWindow(state) as unknown as BrowserWindow;
           assert.isUndefined(callback.dialogParentWindow(), JSON.stringify(state));
+
+          // nor does an off-screen window that asked get it
+          const requester = fakeBrowserWindow({ minimized: true }) as unknown as BrowserWindow;
+          assert.isUndefined(callback.dialogParentWindow(null, requester), JSON.stringify(state));
         }
+
+        // nor is an off-screen window that asked used, while the main window is there
+        const main = fakeBrowserWindow() as unknown as BrowserWindow;
+        mainWindow.window = main;
+        const offScreen = fakeBrowserWindow({ minimized: true }) as unknown as BrowserWindow;
+        assert.strictEqual(callback.dialogParentWindow(null, offScreen), main);
+
+        // while a window that asked and is on screen is used with the main window off screen
+        mainWindow.window = fakeBrowserWindow({ minimized: true }) as unknown as BrowserWindow;
+        const onScreen = fakeBrowserWindow() as unknown as BrowserWindow;
+        assert.strictEqual(callback.dialogParentWindow(null, onScreen), onScreen);
       } finally {
         app.commandLine.removeSwitch('automation-agent');
       }
+    });
+  });
+
+  describe('desktop_show_message_box', () => {
+    // The window a message box asked for by `sender` is shown on, or
+    // undefined when it is shown parentless.
+    async function messageBoxParent(sender: object): Promise<unknown> {
+      const showMessageBox = sinon.stub(dialog, 'showMessageBox').resolves({ response: 1, checkboxChecked: false });
+
+      setApplication(new Application());
+      try {
+        const handler = invokeHandlers.get('desktop_show_message_box');
+        assert.isDefined(handler);
+        const event = { sender } as unknown as IpcMainInvokeEvent;
+        const result = await handler!(
+          event,
+          1,
+          'Update Available',
+          'A newer build is available.',
+          'Install|Later',
+          0,
+          1,
+        );
+        assert.deepEqual(result, { response: 1, checkboxChecked: false });
+      } finally {
+        clearApplicationSingleton();
+      }
+
+      assert.isTrue(showMessageBox.calledOnce);
+      const args = showMessageBox.firstCall.args as unknown[];
+      return args.length === 2 ? args[0] : undefined;
+    }
+
+    // e.g. the Update Available prompt at startup, which finishes while the
+    // user is in another app (#19728)
+    it('attaches to the window that asked when RStudio is not focused', async () => {
+      const requester = fakeBrowserWindow() as unknown as BrowserWindow;
+      const sender = {};
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(null);
+      sinon.stub(BrowserWindow, 'fromWebContents').callsFake((contents) => (contents === sender ? requester : null));
+
+      assert.strictEqual(await messageBoxParent(sender), requester);
+    });
+
+    it('attaches to the focused window over the window that asked', async () => {
+      const focused = fakeBrowserWindow() as unknown as BrowserWindow;
+      const requester = fakeBrowserWindow() as unknown as BrowserWindow;
+      const sender = {};
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(focused);
+      sinon.stub(BrowserWindow, 'fromWebContents').callsFake((contents) => (contents === sender ? requester : null));
+
+      assert.strictEqual(await messageBoxParent(sender), focused);
+    });
+
+    it('attaches to the main window when the sender has no window', async () => {
+      const main = fakeBrowserWindow() as unknown as BrowserWindow;
+      mainWindow.window = main;
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(null);
+      sinon.stub(BrowserWindow, 'fromWebContents').returns(null);
+
+      assert.strictEqual(await messageBoxParent({}), main);
+    });
+
+    it('is parentless off macOS when every window is off screen', async () => {
+      sinon.stub(process, 'platform').value('win32');
+      mainWindow.window = fakeBrowserWindow({ minimized: true }) as unknown as BrowserWindow;
+      const requester = fakeBrowserWindow({ minimized: true }) as unknown as BrowserWindow;
+      const sender = {};
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(null);
+      sinon.stub(BrowserWindow, 'fromWebContents').callsFake((contents) => (contents === sender ? requester : null));
+
+      assert.isUndefined(await messageBoxParent(sender));
+    });
+  });
+
+  describe('unimplemented callbacks', () => {
+    it('show their message on the main window when RStudio is not focused', async () => {
+      const main = fakeBrowserWindow() as unknown as BrowserWindow;
+      mainWindow.window = main;
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(null);
+      const showMessageBox = sinon.stub(dialog, 'showMessageBox').resolves({ response: 0, checkboxChecked: false });
+
+      setApplication(new Application());
+      try {
+        callback.unimpl('desktop_get_proxy_port_number');
+
+        // let the modal tracker settle before the application goes away
+        await new Promise((resolve) => setImmediate(resolve));
+      } finally {
+        clearApplicationSingleton();
+      }
+
+      assert.isTrue(showMessageBox.calledOnce);
+      assert.strictEqual(showMessageBox.firstCall.args[0] as unknown, main);
+    });
+  });
+
+  describe('file dialogs', () => {
+    const dir = os.tmpdir();
+
+    // each handler's arguments up to focusOwner, which it takes last
+    const cases: { channel: string; args: unknown[]; show: 'showOpenDialog' | 'showSaveDialog' }[] = [
+      { channel: 'desktop_get_open_file_name', args: ['Open', 'Open', dir, '', false], show: 'showOpenDialog' },
+      { channel: 'desktop_get_save_file_name', args: ['Save', 'Save', dir, '', false], show: 'showSaveDialog' },
+      { channel: 'desktop_get_existing_directory', args: ['Choose', 'Choose', dir], show: 'showOpenDialog' },
+    ];
+
+    async function assertFileDialogsShownOn(
+      expected: BrowserWindow,
+      sender: object,
+      focusOwner: boolean,
+    ): Promise<void> {
+      const shows = {
+        showOpenDialog: sinon.stub(dialog, 'showOpenDialog').resolves({ canceled: true, filePaths: [] }),
+        showSaveDialog: sinon.stub(dialog, 'showSaveDialog').resolves({ canceled: true, filePath: '' }),
+      };
+
+      setApplication(new Application());
+      try {
+        for (const { channel, args, show } of cases) {
+          shows[show].resetHistory();
+          const handler = invokeHandlers.get(channel);
+          assert.isDefined(handler, channel);
+          await handler!({ sender } as unknown as IpcMainInvokeEvent, ...args, focusOwner);
+
+          assert.isTrue(shows[show].calledOnce, channel);
+          assert.strictEqual(shows[show].firstCall.args[0] as unknown, expected, channel);
+        }
+      } finally {
+        clearApplicationSingleton();
+      }
+    }
+
+    it('attach to the window that asked when RStudio is not focused', async () => {
+      const requester = fakeBrowserWindow() as unknown as BrowserWindow;
+      mainWindow.window = fakeBrowserWindow() as unknown as BrowserWindow;
+      const sender = {};
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(null);
+      sinon.stub(BrowserWindow, 'fromWebContents').callsFake((contents) => (contents === sender ? requester : null));
+
+      await assertFileDialogsShownOn(requester, sender, false);
+    });
+
+    it('attach to the focused window over the window that asked', async () => {
+      const focused = fakeBrowserWindow() as unknown as BrowserWindow;
+      const requester = fakeBrowserWindow() as unknown as BrowserWindow;
+      const sender = {};
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(focused);
+      sinon.stub(BrowserWindow, 'fromWebContents').callsFake((contents) => (contents === sender ? requester : null));
+
+      await assertFileDialogsShownOn(focused, sender, false);
+    });
+
+    it('attach to the sending window with focusOwner, over the focused window', async () => {
+      const owner = fakeBrowserWindow() as unknown as BrowserWindow;
+      const sender = {};
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(fakeBrowserWindow() as unknown as BrowserWindow);
+      sinon.stub(BrowserWindow, 'fromWebContents').returns(null);
+      const getSender = sinon.stub(callback, 'getSender').returns({ window: owner } as never);
+
+      await assertFileDialogsShownOn(owner, sender, true);
+      assert.deepEqual(
+        getSender.getCalls().map((call) => call.args[0]),
+        cases.map(({ channel }) => channel),
+      );
     });
   });
 
