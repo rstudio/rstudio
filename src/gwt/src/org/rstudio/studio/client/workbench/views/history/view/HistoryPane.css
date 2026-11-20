@@ -79,7 +79,7 @@
 }
 
 .timestamp {
-   color: #6e6e6e;
+   color: #666;
    font-family: proportionalFont;
 }
 .editor_dark .ace_editor_theme tr.timestamp {
