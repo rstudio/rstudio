@@ -162,40 +162,65 @@ matchLines <- function(contents, pattern) {
 }
 
 # Whether each line of a C++ file is compiled only on Windows: every line of a
-# file with Win32 in its name, else the lines in an '#ifdef _WIN32' region or
-# the '#else' of an '#ifndef _WIN32'. Other conditions count as neither.
+# file with Win32 in its name, else the lines in a branch that needs _WIN32
+# ('#ifdef _WIN32', '#if _WIN32', '#if defined(_WIN32) && ...', or the
+# '#else'/'#elif' of an '#ifndef _WIN32'). Other conditions count as neither.
 windowsOnlyLines <- function(lines, windowsOnlyFile) {
 
    if (windowsOnlyFile)
       return(rep(TRUE, length(lines)))
 
-   isWindows <- "^\\s*#\\s*(ifdef\\s+_WIN32\\b|if\\s+defined\\s*\\(?\\s*_WIN32\\s*\\)?\\s*$)"
+   win32 <- "(defined\\s*\\(?\\s*_WIN32\\s*\\)?|_WIN32)"
+   isWindows <- paste0("^\\s*#\\s*(ifdef\\s+_WIN32\\b|if\\s+", win32, "\\s*$)")
+   isWindowsAnd <- paste0("^\\s*#\\s*if\\s+", win32, "\\s*&&")
    isNotWindows <- "^\\s*#\\s*(ifndef\\s+_WIN32\\b|if\\s+!\\s*defined\\s*\\(?\\s*_WIN32\\s*\\)?\\s*$)"
+   isElifWindows <- paste0("^\\s*#\\s*elif\\s+", win32, "\\s*$")
+
+   # branches that only Windows compiles; "-rest" states hold for every
+   # remaining branch of their #if
+   windowsStates <- c("windows", "windows-rest", "windows-and")
 
    result <- logical(length(lines))
    directives <- which(grepl("^\\s*#\\s*(if|elif|else|endif)", lines, perl = TRUE))
 
-   # one entry per open #if: "windows", "not-windows", or "unknown"
+   # one state per open #if
    stack <- character()
    previous <- 0L
    for (i in directives) {
 
       # the lines since the previous directive share its state
-      if (i > previous + 1L && "windows" %in% stack)
+      if (i > previous + 1L && any(stack %in% windowsStates))
          result[(previous + 1L):(i - 1L)] <- TRUE
 
       line <- lines[[i]]
       top <- length(stack)
       if (grepl(isWindows, line, perl = TRUE)) {
          stack <- c(stack, "windows")
+      } else if (grepl(isWindowsAnd, line, perl = TRUE)) {
+         stack <- c(stack, "windows-and")
       } else if (grepl(isNotWindows, line, perl = TRUE)) {
          stack <- c(stack, "not-windows")
       } else if (grepl("^\\s*#\\s*if", line, perl = TRUE)) {
          stack <- c(stack, "unknown")
       } else if (top > 0L && grepl("^\\s*#\\s*elif", line, perl = TRUE)) {
-         stack[[top]] <- "unknown"
+         elifWindows <- if (grepl(isElifWindows, line, perl = TRUE)) "windows" else "unknown"
+         stack[[top]] <- switch(
+            stack[[top]],
+            "windows" = "not-windows-rest",
+            "not-windows" = "windows-rest",
+            "windows-rest" = "windows-rest",
+            "not-windows-rest" = "not-windows-rest",
+            elifWindows
+         )
       } else if (top > 0L && grepl("^\\s*#\\s*else", line, perl = TRUE)) {
-         stack[[top]] <- switch(stack[[top]], "windows" = "not-windows", "not-windows" = "windows", "unknown")
+         stack[[top]] <- switch(
+            stack[[top]],
+            "windows" = "not-windows",
+            "not-windows" = "windows",
+            "windows-rest" = "windows-rest",
+            "not-windows-rest" = "not-windows-rest",
+            "unknown"
+         )
       } else if (top > 0L) {
          stack <- stack[-top]
       }
@@ -203,7 +228,7 @@ windowsOnlyLines <- function(lines, windowsOnlyFile) {
       previous <- i
    }
 
-   if (length(lines) > previous && "windows" %in% stack)
+   if (length(lines) > previous && any(stack %in% windowsStates))
       result[(previous + 1L):length(lines)] <- TRUE
 
    result
@@ -236,7 +261,7 @@ test_that("C++ sources don't treat errno values as system error codes", {
    # (ec == errc::X, or error == systemError(errc::X, ErrorLocation()))
    errcByValue <- paste0(
       "(getCode|value)\\(\\)\\s*[!=]=\\s*(boost::system::|std::)?errc::",
-      "|\\berrc::[a-z_]+\\s*[!=]=\\s*[A-Za-z_][A-Za-z0-9_.>-]*(getCode|value)\\(\\)"
+      "|\\berrc::[a-z_]+\\s*[!=]=\\s*[A-Za-z_][A-Za-z0-9_.>()-]*(getCode|value)\\(\\)"
    )
 
    # in code only Windows compiles, errno comes from the C runtime, and a
@@ -245,8 +270,8 @@ test_that("C++ sources don't treat errno values as system error codes", {
    # some errno values, e.g. ESTALE, have no errc to compare with)
    crtErrno <- paste0(codeArgument, "errno\\b")
    errnoByValue <- paste0(
-      "(getCode|value)\\(\\)\\s*[!=]=\\s*E[A-Z0-9]+\\b",
-      "|\\bE[A-Z0-9]+\\s*[!=]=\\s*[A-Za-z_][A-Za-z0-9_.>-]*(getCode|value)\\(\\)"
+      "(getCode|value)\\(\\)\\s*[!=]=\\s*E(?!OF\\b)[A-Z0-9]+\\b",
+      "|\\bE(?!OF\\b)[A-Z0-9]+\\s*[!=]=\\s*[A-Za-z_][A-Za-z0-9_.>()-]*(getCode|value)\\(\\)"
    )
 
    offending <- c(
@@ -275,7 +300,9 @@ test_that("C++ sources don't treat errno values as system error codes", {
    expect_false(grepl(errcByValue, "ec == boost::system::errc::too_many_files_open", perl = TRUE))
    expect_true(grepl(errnoByValue, "error.getCode() == ENOENT", perl = TRUE))
    expect_true(grepl(errnoByValue, "EACCES != error.getCode()", perl = TRUE))
+   expect_true(grepl(errnoByValue, "ENOENT == e.code().value()", perl = TRUE))
    expect_false(grepl(errnoByValue, "error.getCode() == ERROR_ACCESS_DENIED", perl = TRUE))
+   expect_false(grepl(errnoByValue, "input.value() == EOF", perl = TRUE))
 
    fixture <- c(
       "systemError(errno, ERROR_LOCATION);",
@@ -295,9 +322,24 @@ test_that("C++ sources don't treat errno values as system error codes", {
       "x",
       "#else",
       "x",
+      "#endif",
+      "#if _WIN32",
+      "x",
+      "#endif",
+      "#if defined(_WIN32) && defined(_DEBUG)",
+      "x",
+      "#else",
+      "x",
+      "#endif",
+      "#if defined(FOO)",
+      "x",
+      "#elif defined(_WIN32)",
+      "x",
+      "#else",
+      "x",
       "#endif"
    )
-   expect_identical(which(windowsOnlyLines(fixture, FALSE)), c(3L, 17L))
+   expect_identical(which(windowsOnlyLines(fixture, FALSE)), c(3L, 10L, 12L, 17L, 20L, 23L, 30L))
    expect_true(all(windowsOnlyLines(fixture, TRUE)))
 
    cppFiles <- list.files(

@@ -177,9 +177,28 @@ struct CanMakeGenericError<E, decltype(void(genericError(std::declval<E>(), std:
 {
 };
 
+// whether genericError(E, description, ErrorLocation) compiles
+template <typename E, typename = void>
+struct CanMakeDescribedGenericError : std::false_type
+{
+};
+
+template <typename E>
+struct CanMakeDescribedGenericError<
+   E,
+   decltype(void(genericError(
+      std::declval<E>(),
+      std::declval<const std::string&>(),
+      std::declval<const ErrorLocation&>())))> : std::true_type
+{
+};
+
 static_assert(CanMakeGenericError<int>::value, "an errno value is a generic error");
 static_assert(!CanMakeGenericError<errc_t>::value, "an errc goes to systemError()");
 static_assert(!CanMakeGenericError<PlainEnum>::value, "a plain enum isn't an errno value");
+static_assert(CanMakeDescribedGenericError<int>::value, "an errno value is a generic error");
+static_assert(!CanMakeDescribedGenericError<errc_t>::value, "an errc goes to systemError()");
+static_assert(!CanMakeDescribedGenericError<PlainEnum>::value, "a plain enum isn't an errno value");
 
 static_assert(CanMakeSystemCallError<int>::value, "a system call reports a system error code");
 static_assert(!CanMakeSystemCallError<errc_t>::value, "an errc isn't a system error code");
