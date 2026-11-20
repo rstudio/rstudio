@@ -694,6 +694,9 @@ jobs:
       - name: Install e2e test dependencies
         id: e2e_deps
         uses: ./.github/actions/os-e2e-deps
+        # See the same step in os-test-e2e-rstudio-desktop-linux.yml: this fails a
+        # stalled apt-get update fast instead of waiting out the job timeout.
+        timeout-minutes: 45
         with:
           r-libs-user: ${{ env.R_LIBS_USER }}
           save-cache: ${{ !inputs.skip_e2e_deps_cache_save }}

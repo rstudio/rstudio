@@ -854,6 +854,10 @@ jobs:
       - name: Install e2e test dependencies
         id: e2e_deps
         uses: ./.github/actions/os-e2e-deps
+        # A stalled apt-get update inside pak's system-requirements install hung
+        # one shard until the 120-minute job timeout. Cold-cache installs take up
+        # to ~33 minutes, so this fails a hang without cutting off a slow install.
+        timeout-minutes: 45
         with:
           r-libs-user: ${{ env.R_LIBS_USER }}
           save-cache: ${{ !inputs.skip_e2e_deps_cache_save }}
