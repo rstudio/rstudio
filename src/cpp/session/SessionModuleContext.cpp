@@ -1637,15 +1637,23 @@ shell_utils::ShellCommand rCmd(const core::FilePath& rBinDir)
 #endif
 }
 
+namespace {
+
+// set by startHttpConnectionListener, which also publishes it to child
+// processes as RSTUDIO_SESSION_PORT
+std::string s_sessionPort;
+
+} // anonymous namespace
+
+void setSessionPort(const std::string& port)
+{
+   s_sessionPort = port;
+}
+
 std::string sessionPort()
 {
-   // published by startHttpConnectionListener
-   if (options().programMode() == kSessionProgramModeDesktop)
-   {
-      std::string port = core::system::getenv(kRSessionPortNumber);
-      if (!port.empty())
-         return port;
-   }
+   if (!s_sessionPort.empty())
+      return s_sessionPort;
 
    return options().wwwPort();
 }

@@ -24,6 +24,7 @@
 #include "SessionUriHandlers.hpp"
 #include "SessionDirs.hpp"
 #include "SessionRpc.hpp"
+#include "SessionModuleContextInternal.hpp"
 #include "http/SessionTcpIpHttpConnectionListener.hpp"
 
 #include "session-config.h"
@@ -453,6 +454,31 @@ Error startHttpConnectionListener()
    if (error)
       return error;
 
+   if (options().programMode() == kSessionProgramModeDesktop)
+   {
+      // publish the port we're bound to, which the OS picks if www-port is 0,
+      // so rpostback and others can connect back into the session. bind
+      // before start() so the environment changes before the listener's
+      // threads run. a listener on a local stream (RS_LOCAL_PEER) has no port
+      // of its own
+      std::string port = options().wwwPort();
+      auto* pTcpListener =
+            dynamic_cast<TcpIpHttpConnectionListener*>(&httpConnectionListener());
+      if (pTcpListener)
+      {
+         error = pTcpListener->bindEndpoint();
+         if (error)
+            return error;
+
+         port = safe_convert::numberToString(pTcpListener->getLocalEndpoint().port());
+      }
+
+      module_context::setSessionPort(port);
+      auto rule = core::http::createNoProxyRule("127.0.0.1", port);
+      core::http::proxyUtils().addNoProxyRule(std::move(rule));
+      core::system::setenv(kRSessionPortNumber, port);
+   }
+
    error = httpConnectionListener().start();
    if (error)
       return error;
@@ -478,22 +504,6 @@ Error startHttpConnectionListener()
       // save the standalone port for possible session relaunches - launcher sessions
       // need to rebind to the same port
       persistentState().setReusedStandalonePort(port);
-   }
-
-   if (options().programMode() == kSessionProgramModeDesktop)
-   {
-      // publish the port we're bound to, which the OS picked if www-port is 0,
-      // so rpostback and others can connect back into the session. a listener
-      // on a local stream (RS_LOCAL_PEER) has no port of its own
-      std::string port = options().wwwPort();
-      auto* pTcpListener =
-            dynamic_cast<TcpIpHttpConnectionListener*>(&httpConnectionListener());
-      if (pTcpListener)
-         port = safe_convert::numberToString(pTcpListener->getLocalEndpoint().port());
-
-      auto rule = core::http::createNoProxyRule("127.0.0.1", port);
-      core::http::proxyUtils().addNoProxyRule(std::move(rule));
-      core::system::setenv(kRSessionPortNumber, port);
    }
 
    return Success();
