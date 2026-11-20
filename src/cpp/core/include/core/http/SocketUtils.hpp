@@ -97,11 +97,18 @@ inline bool isConnectionUnavailableError(const Error& error)
 {
    // determine whether the error connecting was caused by the session process 
    // not currently existing (and thus remediable by launching a new one)
-   
+
+   // a missing unix domain socket. On Windows only our own generic errors
+   // count: matches() would also accept permanent named-pipe errors such as
+   // ERROR_PATH_NOT_FOUND and ERROR_INVALID_NAME, and the retryable native
+   // codes are listed below
+   bool missingSocket = error.matches(boost::system::errc::no_such_file_or_directory);
+#ifdef _WIN32
+   missingSocket = missingSocket && error.getName() == boost::system::generic_category().name();
+#endif
+
    return (
-         // for unix domain sockets; not matches(), which on Windows would
-         // also accept permanent pipe errors such as ERROR_INVALID_NAME
-         isNotFoundError(error) ||
+         missingSocket ||
 
          // for tcp-ip and unix domain sockets
          error.matches(boost::system::errc::connection_refused)

@@ -63,9 +63,10 @@ TEST(SocketUtils, ConnectionUnavailableErrorsMatchEitherCategory)
    EXPECT_FALSE(isConnectionUnavailableError(Success()));
 
 #ifdef _WIN32
-   // a missing pipe is retried; a malformed or unreachable name is permanent,
-   // though Boost maps both to no_such_file_or_directory
+   // a missing pipe is retried; a bad, malformed or unreachable path is
+   // permanent, though Boost maps them all to no_such_file_or_directory
    EXPECT_TRUE(isConnectionUnavailableError(systemError(ERROR_FILE_NOT_FOUND, ERROR_LOCATION)));
+   EXPECT_FALSE(isConnectionUnavailableError(systemError(ERROR_PATH_NOT_FOUND, ERROR_LOCATION)));
    EXPECT_FALSE(isConnectionUnavailableError(systemError(ERROR_INVALID_NAME, ERROR_LOCATION)));
    EXPECT_FALSE(isConnectionUnavailableError(systemError(ERROR_BAD_NETPATH, ERROR_LOCATION)));
 #endif
