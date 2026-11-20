@@ -71,13 +71,15 @@ inline bool isWrongProtocolTypeError(const core::Error& error)
 
 inline bool isConnectionTerminatedError(const core::Error& error)
 {
-   // look for errors that indicate the client closing the connection
-   bool timedOut = error == boost::asio::error::timed_out;
+   // look for errors that indicate the client closing the connection; the
+   // errno-valued ones are conditions, since our own errors carry them in the
+   // generic category while asio reports them in the system category
+   bool timedOut = error.matches(boost::system::errc::timed_out);
    bool eof = error == boost::asio::error::eof;
-   bool reset = error == boost::asio::error::connection_reset;
+   bool reset = error.matches(boost::system::errc::connection_reset);
    bool shortRead = error == boost::asio::ssl::error::stream_truncated; // "short read"
-   bool badFile = error == boost::asio::error::bad_descriptor;
-   bool brokenPipe = error == boost::asio::error::broken_pipe;
+   bool badFile = error.matches(boost::system::errc::bad_file_descriptor);
+   bool brokenPipe = error.matches(boost::system::errc::broken_pipe);
    bool noFile = error.matches(boost::system::errc::no_such_file_or_directory);
 
 #ifdef _WIN32
@@ -100,7 +102,7 @@ inline bool isConnectionUnavailableError(const Error& error)
          error.matches(boost::system::errc::no_such_file_or_directory) ||
 
          // for tcp-ip and unix domain sockets
-         error == boost::asio::error::connection_refused
+         error.matches(boost::system::errc::connection_refused)
 
          // for windows named pipes
  #ifdef _WIN32

@@ -2098,11 +2098,14 @@ Error pathNotFoundError(const std::string& in_path, const ErrorLocation& in_loca
 bool isNotFoundError(const Error& in_error)
 {
 #ifdef _WIN32
-   return in_error == boost::system::windows_error::file_not_found ||
-          in_error == boost::system::windows_error::path_not_found;
-#else
-   return in_error.matches(boost::system::errc::no_such_file_or_directory);
+   // only these two native codes: matches() would also accept codes such as
+   // ERROR_INVALID_NAME and ERROR_BAD_NETPATH
+   if (in_error.getName() == boost::system::system_category().name())
+      return in_error == boost::system::windows_error::file_not_found ||
+             in_error == boost::system::windows_error::path_not_found;
 #endif
+
+   return in_error.matches(boost::system::errc::no_such_file_or_directory);
 }
 
 } // namespace core
