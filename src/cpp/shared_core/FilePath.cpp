@@ -701,7 +701,7 @@ Error FilePath::changeFileMode(FileMode in_fileMode, bool in_setStickyBit) const
          break;
 
       default:
-         return systemError(ENOTSUP, ERROR_LOCATION);
+         return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
    }
 
    // check for sticky bit

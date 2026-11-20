@@ -360,7 +360,7 @@ Error ChildProcess::terminate()
 {
    // only send signal if the process is open
    if (pImpl_->pid == -1)
-      return systemError(ESRCH, ERROR_LOCATION);
+      return systemError(boost::system::errc::no_such_process, ERROR_LOCATION);
 
    // special code path for pseudoterminal
    if (options_.pseudoterminal)

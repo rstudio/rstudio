@@ -130,7 +130,7 @@ Error restorePrivilegesImpl(uid_t in_uid)
       return systemError(errno, ERROR_LOCATION);
    // Verify
    if (::geteuid() != 0)
-      return systemError(EACCES, ERROR_LOCATION);
+      return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
 
    Error error = initSystemPriv(in_uid);
    if (error)
@@ -145,7 +145,7 @@ Error restorePrivilegesImpl(uid_t in_uid)
       return systemError(errno, ERROR_LOCATION);
    // Verify
    if (::getegid() != s_privGid)
-      return systemError(EACCES, ERROR_LOCATION);
+      return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
 
    return Success();
 
@@ -259,7 +259,7 @@ Error restorePrivileges()
       return systemError(errno, ERROR_LOCATION);
    // verify
    if (::geteuid() != suid)
-      return systemError(EACCES, ERROR_LOCATION);
+      return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
 
    Error error = initSystemPriv(suid);
    if (error)
@@ -277,7 +277,7 @@ Error restorePrivileges()
       return systemError(errno, ERROR_LOCATION);
    // verify
    if (::getegid() != sgid)
-      return systemError(EACCES, ERROR_LOCATION);
+      return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
 
    // success
    return Success();
@@ -312,13 +312,13 @@ Error temporarilyDropPrivileges(const User& in_user, const boost::optional<GidTy
    if (::setresgid(-1, targetGID, ::getegid()) < 0)
       return systemError(errno, ERROR_LOCATION);
    if (::getegid() != targetGID)
-      return systemError(EACCES, ERROR_LOCATION);
+      return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
 
    // set user and verify
    if (::setresuid(-1, in_user.getUserId(), ::geteuid()) < 0)
       return systemError(errno, ERROR_LOCATION);
    if (::geteuid() != in_user.getUserId())
-      return systemError(EACCES, ERROR_LOCATION);
+      return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
 
    // success
    return Success();
@@ -363,7 +363,7 @@ Error temporarilyDropPrivileges(const User& in_user, const boost::optional<GidTy
 
    // verify
    if (::getegid() != targetGID)
-      return systemError(EACCES, ERROR_LOCATION);
+      return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
 
 
    // set user
@@ -381,7 +381,7 @@ Error temporarilyDropPrivileges(const User& in_user, const boost::optional<GidTy
 
    // verify
    if (::geteuid() != in_user.getUserId())
-      return systemError(EACCES, ERROR_LOCATION);
+      return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
 
    // save privileged user id and gid info
    initSystemPriv(s_privUid);

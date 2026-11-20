@@ -579,7 +579,7 @@ Error captureCommand(const std::string& command, std::string* pOutput)
    // start process
    FILE* fp = ::_popen(command.c_str(), "r");
    if (fp == nullptr)
-      return systemError(errno, ERROR_LOCATION);
+      return systemError(std::error_code(errno, std::generic_category()), ERROR_LOCATION);
 
    // collect output
    const int kBuffSize = 1024;
@@ -599,7 +599,7 @@ Error captureCommand(const std::string& command, std::string* pOutput)
       if (error)
          LOG_ERROR(error);
 
-      error = systemError(errno, ERROR_LOCATION);
+      error = systemError(std::error_code(errno, std::generic_category()), ERROR_LOCATION);
    }
 
    // return status
@@ -1546,7 +1546,7 @@ Error getProcesses(std::vector<ProcessInfo> *pOutProcesses)
 Error getChildProcesses(std::vector<ProcessInfo> *pOutProcesses)
 {
    if (!pOutProcesses)
-      return systemError(EINVAL, ERROR_LOCATION);
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
 
    // get all processes
    std::vector<ProcessInfo> processes;

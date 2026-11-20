@@ -177,7 +177,7 @@ Error sendExactMatchRequest(int fd,
    if (sent < 0)
       return systemError(errno, "sendto(NETLINK_SOCK_DIAG exact-match request)", ERROR_LOCATION);
    if (static_cast<size_t>(sent) != sizeof(request))
-      return systemError(EIO, "short write sending NETLINK_SOCK_DIAG exact-match request", ERROR_LOCATION);
+      return systemError(boost::system::errc::io_error, "short write sending NETLINK_SOCK_DIAG exact-match request", ERROR_LOCATION);
 
    return Success();
 }
@@ -242,12 +242,12 @@ DiagLookupResult readSingleDiagReply(int fd, uid_t* pUid, uint8_t* pState, Error
    }
    if (received == 0)
    {
-      *pError = systemError(EIO, "NETLINK_SOCK_DIAG socket closed unexpectedly", ERROR_LOCATION);
+      *pError = systemError(boost::system::errc::io_error, "NETLINK_SOCK_DIAG socket closed unexpectedly", ERROR_LOCATION);
       return DiagLookupResult::Error;
    }
    if (msg.msg_flags & MSG_TRUNC)
    {
-      *pError = systemError(EMSGSIZE,
+      *pError = systemError(boost::system::errc::message_size,
                             "NETLINK_SOCK_DIAG reply truncated (buffer too small)",
                             ERROR_LOCATION);
       return DiagLookupResult::Error;
@@ -261,7 +261,7 @@ DiagLookupResult readSingleDiagReply(int fd, uid_t* pUid, uint8_t* pState, Error
        sender.nl_family != AF_NETLINK ||
        sender.nl_pid != 0)
    {
-      *pError = systemError(EIO, "NETLINK_SOCK_DIAG reply from unexpected sender", ERROR_LOCATION);
+      *pError = systemError(boost::system::errc::io_error, "NETLINK_SOCK_DIAG reply from unexpected sender", ERROR_LOCATION);
       return DiagLookupResult::Error;
    }
 
@@ -270,13 +270,13 @@ DiagLookupResult readSingleDiagReply(int fd, uid_t* pUid, uint8_t* pState, Error
 
    if (!NLMSG_OK(nlh, remaining))
    {
-      *pError = systemError(EIO, "malformed NETLINK_SOCK_DIAG reply", ERROR_LOCATION);
+      *pError = systemError(boost::system::errc::io_error, "malformed NETLINK_SOCK_DIAG reply", ERROR_LOCATION);
       return DiagLookupResult::Error;
    }
 
    if (nlh->nlmsg_seq != kNetlinkRequestSeq)
    {
-      *pError = systemError(EIO, "NETLINK_SOCK_DIAG reply sequence mismatch", ERROR_LOCATION);
+      *pError = systemError(boost::system::errc::io_error, "NETLINK_SOCK_DIAG reply sequence mismatch", ERROR_LOCATION);
       return DiagLookupResult::Error;
    }
 
@@ -300,7 +300,7 @@ DiagLookupResult readSingleDiagReply(int fd, uid_t* pUid, uint8_t* pState, Error
       return DiagLookupResult::Found;
    }
 
-   *pError = systemError(EIO, "unexpected NETLINK_SOCK_DIAG reply message type", ERROR_LOCATION);
+   *pError = systemError(boost::system::errc::io_error, "unexpected NETLINK_SOCK_DIAG reply message type", ERROR_LOCATION);
    return DiagLookupResult::Error;
 }
 

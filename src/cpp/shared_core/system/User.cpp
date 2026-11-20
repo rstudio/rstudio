@@ -75,7 +75,7 @@ struct User::Impl
                buffSize *= 2;
                if (buffSize > kGetPWMaxBufSize)
                {
-                  error = systemError(ERANGE, "Password entry too large for max buffer size", ERROR_LOCATION);
+                  error = systemError(boost::system::errc::result_out_of_range, "Password entry too large for max buffer size", ERROR_LOCATION);
                   error.addProperty("user-value", safe_convert::numberToString(in_value));
                   return error;
                }
@@ -96,7 +96,7 @@ struct User::Impl
                   // A successful result code but no user details means that we couldn't find the user.
                   // This could stem from a permissions issue but is more likely just an incorrectly
                   // formed username.
-                  error = systemError(ENOENT, "User not found.", ERROR_LOCATION);
+                  error = systemError(boost::system::errc::no_such_file_or_directory, "User not found.", ERROR_LOCATION);
                }
                else
                {

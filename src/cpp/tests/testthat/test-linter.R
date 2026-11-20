@@ -148,6 +148,72 @@ test_that("R source files do not use zero-padded string formats", {
 
 })
 
+test_that("C++ sources don't pass errno values as system error codes", {
+
+   # systemError(int) and systemCallError(name, int) build a system-category
+   # code, which holds Win32 error codes on Windows, so an errno value passed
+   # to them reads as an unrelated Win32 error there. pass an errc instead
+   # (systemError(boost::system::errc::invalid_argument, ...)); a POSIX-only
+   # test that needs the native code can build it with system_category()
+   errnoConstant <- "\\bsystem(Call)?Error\\(\\s*(\"[^\"]*\"\\s*,\\s*)?E[A-Z0-9]+\\s*[,)]"
+
+   # in Win32-only files, errno comes from the C runtime: use
+   # std::error_code(errno, std::generic_category())
+   crtErrno <- "\\bsystem(Call)?Error\\(\\s*(\"[^\"]*\"\\s*,\\s*)?errno\\b"
+
+   offending <- c(
+      "systemError(EINVAL, ERROR_LOCATION)",
+      "systemError(\n   EIO,\n   \"description\", ERROR_LOCATION)",
+      "systemCallError(\"open\", ENOENT, ERROR_LOCATION)"
+   )
+   expect_true(all(grepl(errnoConstant, offending, perl = TRUE)))
+
+   allowed <- c(
+      "systemError(errno, ERROR_LOCATION)",
+      "systemError(ERROR_ACCESS_DENIED, ERROR_LOCATION)",
+      "systemError(boost::system::errc::io_error, ERROR_LOCATION)"
+   )
+   expect_false(any(grepl(errnoConstant, allowed, perl = TRUE)))
+   expect_true(grepl(crtErrno, "systemCallError(\"_popen\", errno, ERROR_LOCATION)", perl = TRUE))
+
+   cppFiles <- list.files(
+      root,
+      pattern = "[.](cpp|hpp|h)$",
+      full.names = TRUE,
+      recursive = TRUE
+   )
+
+   offenders <- character()
+   for (cppFile in cppFiles) {
+
+      contents <- paste(readLines(cppFile, warn = FALSE), collapse = "\n")
+      patterns <- errnoConstant
+      if (startsWith(basename(cppFile), "Win32"))
+         patterns <- c(patterns, crtErrno)
+
+      for (pattern in patterns) {
+         starts <- gregexpr(pattern, contents, perl = TRUE)[[1L]]
+         if (starts[[1L]] == -1L)
+            next
+
+         # line numbers of the matches: one more than the newlines before them
+         newlines <- gregexpr("\n", contents, fixed = TRUE)[[1L]]
+         lines <- findInterval(starts, newlines[newlines > 0L]) + 1L
+         path <- sub(paste0(root, "/"), "", cppFile, fixed = TRUE)
+         offenders <- c(offenders, paste0(path, ":", lines))
+      }
+
+   }
+
+   failureMessage <- paste(
+      c("errno values passed as system error codes:", offenders),
+      collapse = "\n"
+   )
+
+   expect(length(offenders) == 0, failureMessage)
+
+})
+
 test_that("RStudio .R files can be linted", {
    
    rFiles <- list.files(

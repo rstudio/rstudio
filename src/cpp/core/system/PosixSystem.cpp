@@ -558,7 +558,7 @@ Error SignalBlocker::block(SignalType signal)
    // get signal
    int sig = signalForType(signal);
    if (sig < 0)
-      return systemError(EINVAL, ERROR_LOCATION);
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
    
    // create a mask for blocking the signal
    sigset_t blockMask;
@@ -618,7 +618,7 @@ Error handleSignal(SignalType signal, void (*handler)(int))
 {
    int sig = signalForType(signal);
    if (sig < 0)
-      return systemError(EINVAL, ERROR_LOCATION);
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
    
    ::signal(sig, handler);
    
@@ -629,7 +629,7 @@ core::Error ignoreSignal(SignalType signal)
 {
    int sig = signalForType(signal);
    if (sig < 0)
-      return systemError(EINVAL, ERROR_LOCATION);
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
    
    return posix::ignoreSignal(sig);
 }   
@@ -638,7 +638,8 @@ core::Error ignoreSignal(SignalType signal)
 Error useDefaultSignalHandler(SignalType signal)
 {
    int sig = signalForType(signal);
-   if (sig < 0)      return systemError(EINVAL, ERROR_LOCATION);
+   if (sig < 0)
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
    
    struct sigaction sa;
    ::memset(&sa, 0, sizeof sa);
@@ -1754,7 +1755,7 @@ Error osResourceLimit(ResourceLimit limit, int* pLimit)
    }
 
    if (*pLimit == -1)
-      return systemError(EINVAL, ERROR_LOCATION);
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
    else
       return Success();
 }
@@ -2210,7 +2211,7 @@ Error ProcessInfo::creationTime(boost::posix_time::ptime* pCreationTime) const
 
    // sysctl reports success with no data when the process does not exist
    if (size == 0)
-      return systemError(ESRCH, ERROR_LOCATION);
+      return systemError(boost::system::errc::no_such_process, ERROR_LOCATION);
 
    const struct timeval& start = info.kp_proc.p_starttime;
    double startSecs =
@@ -2887,7 +2888,7 @@ Error runProcessImpl(const std::string& path,
    {
       if (runAsUser != user.getUsername())
       {
-         return systemError(EPERM, "Attempt to run process '" + path + "' as user '" +
+         return systemError(boost::system::errc::operation_not_permitted, "Attempt to run process '" + path + "' as user '" +
                runAsUser + "' from unprivileged user account '" + user.getUsername() + "'",
                ERROR_LOCATION);
       }
@@ -3016,7 +3017,7 @@ Error getChildProcesses(
       bool populateUsername)
 {
    if (!pOutProcesses)
-      return systemError(EINVAL, ERROR_LOCATION);
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
 
    // get child processes
    const std::size_t N = 1024;
@@ -3077,7 +3078,7 @@ Error getChildProcesses(pid_t pid,
                         bool populateUsername)
 {
    if (!pOutProcesses)
-      return systemError(EINVAL, ERROR_LOCATION);
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
 
    // get all processes
    std::vector<ProcessInfo> processes;
@@ -3521,7 +3522,7 @@ Error setGroupId(GidType gid)
    if (::getresgid(&rgid, &egid, &sgid) < 0)
       return systemError(errno, ERROR_LOCATION);
    if (rgid != gid || egid != gid || sgid != gid)
-      return systemError(EACCES, ERROR_LOCATION);
+      return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
 
    return Success();
 }
@@ -3536,7 +3537,7 @@ Error setUserId(UidType uid)
    if (::getresuid(&ruid, &euid, &suid) < 0)
       return systemError(errno, ERROR_LOCATION);
    if (ruid != uid || euid != uid || suid != uid)
-      return systemError(EACCES, ERROR_LOCATION);
+      return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
 
    return Success();
 }
@@ -3551,7 +3552,7 @@ Error setGroupId(GidType gid)
 
    // verify
    if (::getgid() != gid || ::getegid() != gid)
-      return systemError(EACCES, ERROR_LOCATION);
+      return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
 
    return Success();
 }
@@ -3563,7 +3564,7 @@ Error setUserId(UidType uid)
 
    // verify
    if (::getuid() != uid || ::geteuid() != uid)
-      return systemError(EACCES, ERROR_LOCATION);
+      return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
 
    return Success();
 }

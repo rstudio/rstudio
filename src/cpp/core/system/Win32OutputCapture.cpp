@@ -180,13 +180,13 @@ Error redirectToPipe(DWORD stdHandle,
       // stdout/stderr will go somewhere.
       FILE* newStdHandle = ::_fdopen(stdFd, "w");
       if (newStdHandle == nullptr)
-         return systemError(errno, ERROR_LOCATION);
+         return systemError(std::error_code(errno, std::generic_category()), ERROR_LOCATION);
       *fpStdFile = *newStdHandle;
       stdDupFd = stdFd;
    }
 
    if (::_dup2(fd, stdDupFd))
-      return systemError(errno, ERROR_LOCATION);
+      return systemError(std::error_code(errno, std::generic_category()), ERROR_LOCATION);
 
    // turn off buffering
    if (::setvbuf(fpStdFile, nullptr, _IONBF, 0) != 0)

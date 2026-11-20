@@ -1225,14 +1225,14 @@ TEST_F(FileLockingTest, StalledFallbackPublicationPreservesSuccessor)
          lockFilePath_.setLastWriteTime(::time(nullptr) - 10);
          claimPathFor(lockFilePath_).setLastWriteTime(::time(nullptr) - 10);
          EXPECT_FALSE(successor.acquire(lockFilePath_));
-         return failWrite ? systemError(ENOSPC, ERROR_LOCATION) : Success();
+         return failWrite ? systemError(boost::system::errc::no_space_on_device, ERROR_LOCATION) : Success();
       });
 
       Error error = first.acquire(lockFilePath_);
       LinkBasedFileLock::setBeforeWriteForTesting({});
       EXPECT_TRUE(replaced);
       if (failWrite)
-         EXPECT_EQ(systemError(ENOSPC, ErrorLocation()), error);
+         EXPECT_EQ(systemError(boost::system::errc::no_space_on_device, ErrorLocation()), error);
       else
          EXPECT_TRUE(FileLock::isNoLockAvailable(error));
 
@@ -1253,12 +1253,12 @@ TEST_F(FileLockingTest, FailedFallbackPublicationCanExpire)
    LinkBasedFileLock::setBeforeWriteForTesting([&](int descriptor) -> Error
    {
       return descriptorRefersTo(descriptor, lockFilePath_)
-         ? systemError(ENOSPC, ERROR_LOCATION)
+         ? systemError(boost::system::errc::no_space_on_device, ERROR_LOCATION)
          : Success();
    });
 
    LinkBasedFileLock first;
-   EXPECT_EQ(systemError(ENOSPC, ErrorLocation()), first.acquire(lockFilePath_));
+   EXPECT_EQ(systemError(boost::system::errc::no_space_on_device, ErrorLocation()), first.acquire(lockFilePath_));
    LinkBasedFileLock::setBeforeWriteForTesting({});
 
    // The failed publication stays held until expiry, then normal takeover
@@ -1285,11 +1285,11 @@ TEST_F(FileLockingTest, FailedClaimPublicationPreservesSuccessorClaim)
       replaced = true;
       EXPECT_FALSE(claimPath.remove());
       EXPECT_FALSE(writeClaimContents(claimPath, fmt::format("{}\n", ::getpid())));
-      return systemError(ENOSPC, ERROR_LOCATION);
+      return systemError(boost::system::errc::no_space_on_device, ERROR_LOCATION);
    });
 
    LinkBasedFileLock lock;
-   EXPECT_EQ(systemError(ENOSPC, ErrorLocation()), lock.acquire(lockFilePath_));
+   EXPECT_EQ(systemError(boost::system::errc::no_space_on_device, ErrorLocation()), lock.acquire(lockFilePath_));
    LinkBasedFileLock::setBeforeWriteForTesting({});
    EXPECT_TRUE(replaced);
    EXPECT_TRUE(claimPath.exists());
@@ -2137,7 +2137,7 @@ TEST_F(FileLockingTest, ClaimNamespaceBasenameIsRejected)
    FilePath lockPath = root_.completePath(".rstudio-lock-claims-41c29");
    LinkBasedFileLock lock;
    Error error = lock.acquire(lockPath);
-   EXPECT_EQ(systemError(EINVAL, ErrorLocation()), error);
+   EXPECT_EQ(systemError(boost::system::errc::invalid_argument, ErrorLocation()), error);
    EXPECT_FALSE(lockPath.exists());
 }
 

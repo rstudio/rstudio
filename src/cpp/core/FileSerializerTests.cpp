@@ -886,12 +886,15 @@ TEST(FileSerializerTest, IsDiskSpaceErrorClassifies)
    EXPECT_TRUE(isDiskSpaceError(systemError(ERROR_DISK_FULL, ERROR_LOCATION)));
    EXPECT_TRUE(isDiskSpaceError(systemError(ERROR_HANDLE_DISK_FULL, ERROR_LOCATION)));
 #else
-   EXPECT_TRUE(isDiskSpaceError(systemError(ENOSPC, ERROR_LOCATION)));
+   // errno values as the system reports them
+   using boost::system::error_code;
+   using boost::system::system_category;
+   EXPECT_TRUE(isDiskSpaceError(Error(error_code(ENOSPC, system_category()), ERROR_LOCATION)));
 # ifdef EDQUOT
-   EXPECT_TRUE(isDiskSpaceError(systemError(EDQUOT, ERROR_LOCATION)));
+   EXPECT_TRUE(isDiskSpaceError(Error(error_code(EDQUOT, system_category()), ERROR_LOCATION)));
 # endif
    // an unrelated system error is not a disk-space error
-   EXPECT_FALSE(isDiskSpaceError(systemError(ENOENT, ERROR_LOCATION)));
+   EXPECT_FALSE(isDiskSpaceError(Error(error_code(ENOENT, system_category()), ERROR_LOCATION)));
 #endif
 }
 

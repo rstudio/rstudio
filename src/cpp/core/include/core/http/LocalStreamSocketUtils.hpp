@@ -219,7 +219,7 @@ inline Error claimLocalStream(
    }
    if (!S_ISREG(lockInfo.st_mode) || lockInfo.st_uid != ::geteuid())
    {
-      Error error = systemError(EACCES, ERROR_LOCATION);
+      Error error = systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
       error.addProperty("lock-file", lockPath);
       error.addProperty("description",
                         "The session's lock file is not a regular file owned by "

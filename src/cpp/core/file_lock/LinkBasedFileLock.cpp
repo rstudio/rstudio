@@ -2254,7 +2254,7 @@ Error applyClaimDirectoryPermissions(const FilePath& parent,
 #else
    if (!groupAligned)
    {
-      Error error = systemError(EPERM, ERROR_LOCATION);
+      Error error = systemError(boost::system::errc::operation_not_permitted, ERROR_LOCATION);
       error.addProperty("path", parent);
       return error;
    }
