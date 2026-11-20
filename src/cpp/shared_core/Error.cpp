@@ -305,6 +305,22 @@ bool Error::operator!=(const boost::system::error_code& in_ec) const
    return !(*this == in_ec);
 }
 
+bool Error::matches(boost::system::errc::errc_t in_condition) const
+{
+   using namespace boost::system;
+
+   if (!isError())
+      return in_condition == errc::success;
+
+   if (m_impl->Name == generic_category().name())
+      return m_impl->Code == in_condition;
+
+   if (m_impl->Name == system_category().name())
+      return error_code(m_impl->Code, system_category()) == errc::make_error_condition(in_condition);
+
+   return false;
+}
+
 void Error::addOrUpdateProperty(const std::string& in_name, const std::string& in_value)
 {
    copyOnWrite();
@@ -500,10 +516,138 @@ std::ostream& operator<<(std::ostream& io_ostream, const Error& in_error)
 }
 
 // Common error creation functions =====================================================================================
-Error systemError(int in_code, const ErrorLocation& in_location)
+Error systemError(boost::system::errc::errc_t in_code, const ErrorLocation& in_location)
 {
    using namespace boost::system;
-   return Error(error_code(in_code, system_category()), in_location);
+   return Error(error_code(in_code, generic_category()), in_location);
+}
+
+Error systemError(boost::system::errc::errc_t in_code, const Error& in_cause, const ErrorLocation& in_location)
+{
+   using namespace boost::system;
+   return Error(error_code(in_code, generic_category()), in_cause, in_location);
+}
+
+Error systemError(boost::system::errc::errc_t in_code,
+                  const std::string& in_description,
+                  const ErrorLocation& in_location)
+{
+   Error error = systemError(in_code, in_location);
+   error.addProperty("description", in_description);
+   return error;
+}
+
+Error systemError(boost::system::errc::errc_t in_code,
+                  const std::string& in_description,
+                  const Error& in_cause,
+                  const ErrorLocation& in_location)
+{
+   Error error = systemError(in_code, in_cause, in_location);
+   error.addProperty("description", in_description);
+   return error;
+}
+
+#ifndef _WIN32
+
+Error systemError(int in_code, const ErrorLocation& in_location)
+{
+   return genericError(in_code, in_location);
+}
+
+Error systemError(int in_code, const Error& in_cause, const ErrorLocation& in_location)
+{
+   using namespace boost::system;
+   return Error(error_code(in_code, generic_category()), in_cause, in_location);
+}
+
+Error systemError(int in_code,
+                  const std::string& in_description,
+                  const ErrorLocation& in_location)
+{
+   return genericError(in_code, in_description, in_location);
+}
+
+Error systemError(int in_code,
+                  const std::string& in_description,
+                  const Error& in_cause,
+                  const ErrorLocation& in_location)
+{
+   Error error = systemError(in_code, in_cause, in_location);
+   error.addProperty("description", in_description);
+   return error;
+}
+
+#else
+
+Error systemError(unsigned long in_code, const ErrorLocation& in_location)
+{
+   using namespace boost::system;
+   return Error(error_code(static_cast<int>(in_code), system_category()), in_location);
+}
+
+Error systemError(unsigned long in_code, const Error& in_cause, const ErrorLocation& in_location)
+{
+   using namespace boost::system;
+   return Error(error_code(static_cast<int>(in_code), system_category()), in_cause, in_location);
+}
+
+Error systemError(unsigned long in_code,
+                  const std::string& in_description,
+                  const ErrorLocation& in_location)
+{
+   Error error = systemError(in_code, in_location);
+   error.addProperty("description", in_description);
+   return error;
+}
+
+Error systemError(unsigned long in_code,
+                  const std::string& in_description,
+                  const Error& in_cause,
+                  const ErrorLocation& in_location)
+{
+   Error error = systemError(in_code, in_cause, in_location);
+   error.addProperty("description", in_description);
+   return error;
+}
+
+Error systemError(long in_code, const ErrorLocation& in_location)
+{
+   return systemError(static_cast<unsigned long>(in_code), in_location);
+}
+
+Error systemError(long in_code, const Error& in_cause, const ErrorLocation& in_location)
+{
+   return systemError(static_cast<unsigned long>(in_code), in_cause, in_location);
+}
+
+Error systemError(long in_code,
+                  const std::string& in_description,
+                  const ErrorLocation& in_location)
+{
+   return systemError(static_cast<unsigned long>(in_code), in_description, in_location);
+}
+
+Error systemError(long in_code,
+                  const std::string& in_description,
+                  const Error& in_cause,
+                  const ErrorLocation& in_location)
+{
+   return systemError(static_cast<unsigned long>(in_code), in_description, in_cause, in_location);
+}
+
+#endif // _WIN32
+
+Error genericError(int in_code, const ErrorLocation& in_location)
+{
+   using namespace boost::system;
+   return Error(error_code(in_code, generic_category()), in_location);
+}
+
+Error genericError(int in_code, const std::string& in_description, const ErrorLocation& in_location)
+{
+   Error error = genericError(in_code, in_location);
+   error.addProperty("description", in_description);
+   return error;
 }
 
 Error systemError(const std::error_code& in_code, const ErrorLocation& in_location)
@@ -514,14 +658,6 @@ Error systemError(const std::error_code& in_code, const ErrorLocation& in_locati
 Error systemError(const std::system_error& in_error, const ErrorLocation& in_location)
 {
    return Error(in_error.code().category().name(), in_error.code().value(), in_error.what(), in_location);
-}
-
-Error systemError(int in_code,
-                  const Error& in_cause,
-                  const ErrorLocation& in_location)
-{
-   using namespace boost::system;
-   return Error(error_code(in_code, system_category()), in_cause, in_location);
 }
 
 Error systemError(const std::error_code& in_code, const Error& in_cause, const ErrorLocation& in_location)
@@ -539,15 +675,6 @@ Error systemError(const std::system_error& in_error, const Error& in_cause, cons
       in_location);
 }
 
-Error systemError(int in_code,
-                  const std::string& in_description,
-                  const ErrorLocation& in_location)
-{
-   Error error = systemError(in_code, in_location);
-   error.addProperty("description", in_description);
-   return error;
-}
-
 Error systemError(const std::error_code& in_code,
                   const std::string& in_description,
                   const ErrorLocation& in_location)
@@ -562,16 +689,6 @@ Error systemError(const std::system_error& in_error,
                   const ErrorLocation& in_location)
 {
    Error error = systemError(in_error, in_location);
-   error.addProperty("description", in_description);
-   return error;
-}
-
-Error systemError(int in_code,
-                  const std::string& in_description,
-                  const Error& in_cause,
-                  const ErrorLocation& in_location)
-{
-   Error error = systemError(in_code, in_cause, in_location);
    error.addProperty("description", in_description);
    return error;
 }
@@ -596,11 +713,14 @@ Error systemError(const std::system_error& in_error,
    return error;
 }
 
+#ifndef _WIN32
+
 Error systemCallError(const std::string& in_function,
                       int in_code,
                       const ErrorLocation& in_location)
 {
-   return systemCallError(in_function, in_code, systemErrorMessage(in_code), in_location);
+   using namespace boost::system;
+   return systemCallError(in_function, in_code, generic_category().message(in_code), in_location);
 }
 
 Error systemCallError(const std::string& in_function,
@@ -608,9 +728,12 @@ Error systemCallError(const std::string& in_function,
                       const std::string& in_message,
                       const ErrorLocation& in_location)
 {
+   using namespace boost::system;
    std::string message = in_function + ": " + in_message;
-   return Error("system", in_code, message, in_location);
+   return Error(error_code(in_code, generic_category()), message, in_location);
 }
+
+#endif // _WIN32
 
 Error unknownError(const std::string& in_message, const ErrorLocation&  in_location)
 {

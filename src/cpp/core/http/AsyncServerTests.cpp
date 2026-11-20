@@ -62,17 +62,17 @@ TEST(AsyncServerResourceExhaustion, ClassifiesResourceErrors)
    using boost::system::generic_category;
    namespace errc = boost::system::errc;
 
-   // the two resource-exhaustion errors we back off on
+   // the two resource-exhaustion errors we back off on, as native POSIX codes
    EXPECT_TRUE(isResourceExhaustionError(
-      error_code(errc::too_many_files_open, system_category())));
+      error_code(EMFILE, system_category())));
    EXPECT_TRUE(isResourceExhaustionError(
-      error_code(errc::not_enough_memory, system_category())));
+      error_code(ENOMEM, system_category())));
 
    // unrelated system errors are not resource exhaustion
    EXPECT_FALSE(isResourceExhaustionError(
-      error_code(errc::connection_reset, system_category())));
+      error_code(ECONNRESET, system_category())));
    EXPECT_FALSE(isResourceExhaustionError(
-      error_code(errc::operation_canceled, system_category())));
+      error_code(ECANCELED, system_category())));
 
    // a success code (no error) is not resource exhaustion
    EXPECT_FALSE(isResourceExhaustionError(error_code()));

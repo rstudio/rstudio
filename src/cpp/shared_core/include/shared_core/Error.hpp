@@ -26,6 +26,7 @@
 
 #include <string>
 #include <system_error>
+#include <type_traits>
 #include <vector>
 
 #include <boost/current_function.hpp>
@@ -375,6 +376,17 @@ public:
    bool operator!=(const boost::system::error_code& in_ec) const;
 
    /**
+    * @brief Checks whether this error represents a portable condition. Prefer this to comparing against an error
+    *        built from an errc value: a native error never equals a generic one, and on Windows its code has a
+    *        different meaning. Boost maps a system-category code to its condition.
+    *
+    * @param in_condition   The portable condition. (e.g. boost::system::errc::no_such_file_or_directory)
+    *
+    * @return True if this error is a generic or system error representing in_condition; false otherwise.
+    */
+   bool matches(boost::system::errc::errc_t in_condition) const;
+
+   /**
     * @brief Add or updates a property of this error. If any properties with the specified name exist, they will all be
     *        updated.
     *
@@ -590,16 +602,6 @@ std::ostream& operator<<(std::ostream& io_ostream, const Error& in_error);
 /**
  * @brief Function which creates a system error.
  *
- * @param in_code            The error code. (e.g. 1)
- * @param in_location        The location of the error.
- *
- * @return A system error.
- */
-Error systemError(int in_code, const ErrorLocation& in_location);
-
-/**
- * @brief Function which creates a system error.
- *
  * @param in_code            The std system error code.
  * @param in_location        The location of the error.
  *
@@ -616,17 +618,6 @@ Error systemError(const std::error_code& in_code, const ErrorLocation& in_locati
  * @return A system error.
  */
 Error systemError(const std::system_error& in_error, const ErrorLocation& in_location);
-
-/**
- * @brief Function which creates a system error.
- *
- * @param in_code            The error code. (e.g. 1)
- * @param in_cause           The error which caused this error.
- * @param in_location        The location of the error.
- *
- * @return A system error.
- */
-Error systemError(int in_code, const Error& in_cause, const ErrorLocation& in_location);
 
 /**
  * @brief Function which creates a system error.
@@ -653,18 +644,6 @@ Error systemError(const std::system_error& in_error, const Error& in_cause, cons
 /**
  * @brief Function which creates a system error.
  *
- * @param in_code            The error code. (e.g. 1)
- * @param in_description     A detailed description of the error. (e.g. "Failed to open socket while attempting to
- *                           connect to Kubernetes.")
- * @param in_location        The location of the error.
- *
- * @return A system error.
- */
-Error systemError(int in_code, const std::string& in_description, const ErrorLocation& in_location);
-
-/**
- * @brief Function which creates a system error.
- *
  * @param in_code            The std system error code.
  * @param in_description     A detailed description of the error. (e.g. "Failed to open socket while attempting to
  *                           connect to Kubernetes.")
@@ -687,23 +666,6 @@ Error systemError(const std::error_code& in_code, const std::string& in_descript
 Error systemError(
    const std::system_error& in_error,
    const std::string& in_description,
-   const ErrorLocation& in_location);
-
-/**
- * @brief Function which creates a system error.
- *
- * @param in_code            The error code. (e.g. 1)
- * @param in_description     A detailed description of the error. (e.g. "Failed to open socket while attempting to
- *                           connect to Kubernetes.")
- * @param in_cause           The error which caused this error.
- * @param in_location        The location of the error.
- *
- * @return A system error.
- */
-Error systemError(
-   int in_code,
-   const std::string& in_description,
-   const Error& in_cause,
    const ErrorLocation& in_location);
 
 /**
@@ -741,13 +703,213 @@ Error systemError(
    const ErrorLocation& in_location);
 
 /**
- * @brief Function which creates a system error associated with a particular system call.
+ * @brief Functions which create a generic-category error from a portable errc value.
  *
- * @param in_function        The name of the system call associated with this error.
- * @param in_code            The error code -- typically errno, or an error number returned by the call itself.
+ * @param in_code            The portable error code. (e.g. boost::system::errc::no_such_file_or_directory)
+ * @param in_description     A detailed description of the error. (e.g. "Failed to open socket while attempting to
+ *                           connect to Kubernetes.")
+ * @param in_cause           The error which caused this error.
  * @param in_location        The location of the error.
  *
- * @return A system error.
+ * @return A generic-category error.
+ */
+Error systemError(boost::system::errc::errc_t in_code, const ErrorLocation& in_location);
+Error systemError(boost::system::errc::errc_t in_code, const Error& in_cause, const ErrorLocation& in_location);
+Error systemError(
+   boost::system::errc::errc_t in_code,
+   const std::string& in_description,
+   const ErrorLocation& in_location);
+Error systemError(
+   boost::system::errc::errc_t in_code,
+   const std::string& in_description,
+   const Error& in_cause,
+   const ErrorLocation& in_location);
+
+#ifndef _WIN32
+
+/**
+ * @brief Functions which create a generic-category error from an errno value: errno itself, or an error number
+ *        returned by a call such as pthread_create(). On POSIX every int error code is an errno value, so these are
+ *        the same as genericError().
+ *
+ * @param in_code            The errno value. (e.g. EINVAL)
+ * @param in_description     A detailed description of the error. (e.g. "Failed to open socket while attempting to
+ *                           connect to Kubernetes.")
+ * @param in_cause           The error which caused this error.
+ * @param in_location        The location of the error.
+ *
+ * @return A generic-category error.
+ */
+Error systemError(int in_code, const ErrorLocation& in_location);
+Error systemError(int in_code, const Error& in_cause, const ErrorLocation& in_location);
+Error systemError(int in_code, const std::string& in_description, const ErrorLocation& in_location);
+Error systemError(
+   int in_code,
+   const std::string& in_description,
+   const Error& in_cause,
+   const ErrorLocation& in_location);
+
+#else
+
+/**
+ * @brief Functions which create a system-category error from a Win32 error code: a DWORD from GetLastError(), or a
+ *        LONG returned by a call such as RegOpenKeyExW() or named by an ERROR_* constant. Prefer LAST_SYSTEM_ERROR()
+ *        to passing GetLastError() here.
+ *
+ *        There is no int overload on Windows, since an int may hold either an errno value or a Win32 code. Use
+ *        genericError() for an errno value set by the C runtime.
+ *
+ * @param in_code            The Win32 error code. (e.g. ERROR_ACCESS_DENIED)
+ * @param in_description     A detailed description of the error. (e.g. "Failed to open socket while attempting to
+ *                           connect to Kubernetes.")
+ * @param in_cause           The error which caused this error.
+ * @param in_location        The location of the error.
+ *
+ * @return A system-category error.
+ */
+Error systemError(unsigned long in_code, const ErrorLocation& in_location);
+Error systemError(unsigned long in_code, const Error& in_cause, const ErrorLocation& in_location);
+Error systemError(unsigned long in_code, const std::string& in_description, const ErrorLocation& in_location);
+Error systemError(
+   unsigned long in_code,
+   const std::string& in_description,
+   const Error& in_cause,
+   const ErrorLocation& in_location);
+Error systemError(long in_code, const ErrorLocation& in_location);
+Error systemError(long in_code, const Error& in_cause, const ErrorLocation& in_location);
+Error systemError(long in_code, const std::string& in_description, const ErrorLocation& in_location);
+Error systemError(
+   long in_code,
+   const std::string& in_description,
+   const Error& in_cause,
+   const ErrorLocation& in_location);
+
+#endif // _WIN32
+
+namespace detail {
+
+template <typename T>
+using EnableIfErrorCodeEnum = typename std::enable_if<boost::system::is_error_code_enum<T>::value, int>::type;
+
+#ifndef _WIN32
+template <typename T>
+using IsNativeErrorCodeType = std::is_same<T, int>;
+#else
+template <typename T>
+using IsNativeErrorCodeType =
+   std::integral_constant<bool, std::is_same<T, unsigned long>::value || std::is_same<T, long>::value>;
+#endif
+
+// std error code enums (e.g. std::io_errc) are left to the std::error_code overloads
+template <typename T>
+using EnableIfUncategorizedCode = typename std::enable_if<
+   (std::is_integral<T>::value && !IsNativeErrorCodeType<T>::value) ||
+      (std::is_enum<T>::value &&
+       !boost::system::is_error_code_enum<T>::value &&
+       !std::is_error_code_enum<T>::value),
+   int>::type;
+
+template <typename T>
+using EnableIfNotErrnoType = typename std::enable_if<
+   (std::is_integral<T>::value && !std::is_same<T, int>::value) || std::is_enum<T>::value,
+   int>::type;
+
+} // namespace detail
+
+/**
+ * @brief Functions which create an error from a registered Boost error code enum, in the enum's own category.
+ *
+ * @param in_code            The error code. (e.g. boost::asio::error::eof, json::errc::ParamInvalid)
+ * @param in_description     A detailed description of the error. (e.g. "Failed to open socket while attempting to
+ *                           connect to Kubernetes.")
+ * @param in_cause           The error which caused this error.
+ * @param in_location        The location of the error.
+ *
+ * @return An error in the enum's category.
+ */
+template <typename E, detail::EnableIfErrorCodeEnum<E> = 0>
+Error systemError(E in_code, const ErrorLocation& in_location)
+{
+   return Error(boost::system::error_code(in_code), in_location);
+}
+
+template <typename E, detail::EnableIfErrorCodeEnum<E> = 0>
+Error systemError(E in_code, const Error& in_cause, const ErrorLocation& in_location)
+{
+   return Error(boost::system::error_code(in_code), in_cause, in_location);
+}
+
+template <typename E, detail::EnableIfErrorCodeEnum<E> = 0>
+Error systemError(E in_code, const std::string& in_description, const ErrorLocation& in_location)
+{
+   Error error = systemError(in_code, in_location);
+   error.addProperty("description", in_description);
+   return error;
+}
+
+template <typename E, detail::EnableIfErrorCodeEnum<E> = 0>
+Error systemError(
+   E in_code,
+   const std::string& in_description,
+   const Error& in_cause,
+   const ErrorLocation& in_location)
+{
+   Error error = systemError(in_code, in_cause, in_location);
+   error.addProperty("description", in_description);
+   return error;
+}
+
+// Any other integer or enum would otherwise convert to the native code type, reading an errno value as a Win32 code
+// or the reverse. Pass an errc value, genericError() for errno from the C runtime, LAST_SYSTEM_ERROR() for
+// GetLastError(), or a std::error_code built with its category.
+template <typename T, detail::EnableIfUncategorizedCode<T> = 0>
+Error systemError(T in_code, const ErrorLocation& in_location) = delete;
+
+template <typename T, detail::EnableIfUncategorizedCode<T> = 0>
+Error systemError(T in_code, const Error& in_cause, const ErrorLocation& in_location) = delete;
+
+template <typename T, detail::EnableIfUncategorizedCode<T> = 0>
+Error systemError(T in_code, const std::string& in_description, const ErrorLocation& in_location) = delete;
+
+template <typename T, detail::EnableIfUncategorizedCode<T> = 0>
+Error systemError(
+   T in_code,
+   const std::string& in_description,
+   const Error& in_cause,
+   const ErrorLocation& in_location) = delete;
+
+/**
+ * @brief Functions which create a generic-category error from an errno value, on any platform. Use these for errno
+ *        set by the C runtime on Windows, where systemError() has no int overload. Read errno right after the failing
+ *        call, before any cleanup that might change it.
+ *
+ * @param in_code            The errno value. (e.g. EINVAL)
+ * @param in_description     A detailed description of the error. (e.g. "Failed to open socket while attempting to
+ *                           connect to Kubernetes.")
+ * @param in_location        The location of the error.
+ *
+ * @return A generic-category error.
+ */
+Error genericError(int in_code, const ErrorLocation& in_location);
+Error genericError(int in_code, const std::string& in_description, const ErrorLocation& in_location);
+
+// errno is an int; a DWORD from GetLastError() or an errc value belongs to systemError()
+template <typename T, detail::EnableIfNotErrnoType<T> = 0>
+Error genericError(T in_code, const ErrorLocation& in_location) = delete;
+
+template <typename T, detail::EnableIfNotErrnoType<T> = 0>
+Error genericError(T in_code, const std::string& in_description, const ErrorLocation& in_location) = delete;
+
+#ifndef _WIN32
+
+/**
+ * @brief Function which creates a generic-category error associated with a particular system call.
+ *
+ * @param in_function        The name of the system call associated with this error.
+ * @param in_code            The errno value -- typically errno, or an error number returned by the call itself.
+ * @param in_location        The location of the error.
+ *
+ * @return A generic-category error.
  */
 Error systemCallError(
    const std::string& in_function,
@@ -755,20 +917,22 @@ Error systemCallError(
    const ErrorLocation& in_location);
 
 /**
- * @brief Function which creates a system error associated with a particular system call.
+ * @brief Function which creates a generic-category error associated with a particular system call.
  *
  * @param in_function        The name of the system call associated with this error.
- * @param in_code            The error code -- typically errno, or an error number returned by the call itself.
+ * @param in_code            The errno value -- typically errno, or an error number returned by the call itself.
  * @param in_message         The error message. Overrides the default error message associated with the error code.
  * @param in_location        The location of the error.
  *
- * @return A system error.
+ * @return A generic-category error.
  */
 Error systemCallError(
    const std::string& in_function,
    int in_code,
    const std::string& in_message,
    const ErrorLocation& in_location);
+
+#endif // _WIN32
 
 /**
  * @brief Function which creates an unknown error. This should be used only when a specific error code cannot be

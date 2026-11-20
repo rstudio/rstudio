@@ -148,6 +148,51 @@ test_that("R source files do not use zero-padded string formats", {
 
 })
 
+test_that("C++ sources do not put errc values in the system category", {
+
+   # an errc value is a portable errno condition, so it belongs in the generic
+   # category; on Windows the system category reads it as an unrelated Win32
+   # code (errc::io_error, 5, as "Access is denied"). systemError(errc) picks
+   # the generic category, but an error_code built by hand bypasses it
+   pattern <- "errc::[A-Za-z_]+\\s*,\\s*((boost|std)::system::|std::)?system_category\\(\\)"
+
+   # the offending fixtures are assembled so this file passes its own lint
+   category <- paste0("system", "_category()")
+   offending <- c(
+      paste0("error_code(errc::io_error, ", category, ")"),
+      paste0("error_code(boost::system::errc::io_error,\n   boost::system::", category, ")")
+   )
+   expect_true(all(grepl(pattern, gsub("\\s+", " ", offending))))
+
+   allowed <- c(
+      "error_code(errc::io_error, generic_category())",
+      paste0("error_code(ERROR_ACCESS_DENIED, ", category, ")")
+   )
+   expect_false(any(grepl(pattern, allowed)))
+
+   cppFiles <- list.files(
+      root,
+      pattern = "[.](cpp|hpp|mm)$",
+      full.names = TRUE,
+      recursive = TRUE
+   )
+
+   offenders <- character()
+   for (cppFile in cppFiles) {
+      contents <- paste(readLines(cppFile, warn = FALSE), collapse = " ")
+      if (grepl(pattern, gsub("\\s+", " ", contents)))
+         offenders <- c(offenders, sub(paste0(root, "/"), "", cppFile, fixed = TRUE))
+   }
+
+   failureMessage <- paste(
+      c("errc values built in the system category:", offenders),
+      collapse = "\n"
+   )
+
+   expect(length(offenders) == 0, failureMessage)
+
+})
+
 test_that("RStudio .R files can be linted", {
    
    rFiles <- list.files(

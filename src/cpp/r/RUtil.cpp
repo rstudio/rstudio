@@ -276,7 +276,7 @@ core::Error iconvstrImpl(const std::string& value,
 
    void* handle = ::Riconv_open(to.c_str(), from.c_str());
    if (handle == (void*)(-1))
-      return systemError(R_ERRNO, ERROR_LOCATION);
+      return genericError(R_ERRNO, ERROR_LOCATION);
 
    const char* pIn = value.data();
    size_t inBytes = value.size();
@@ -307,7 +307,7 @@ core::Error iconvstrImpl(const std::string& value,
          else
          {
             ::Riconv_close(handle);
-            Error error = systemError(R_ERRNO, ERROR_LOCATION);
+            Error error = genericError(R_ERRNO, ERROR_LOCATION);
             error.addProperty("str", value);
             error.addProperty("len", gsl::narrow_cast<int>(value.length()));
             error.addProperty("from", from);

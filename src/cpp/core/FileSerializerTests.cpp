@@ -885,6 +885,10 @@ TEST(FileSerializerTest, IsDiskSpaceErrorClassifies)
    EXPECT_TRUE(isDiskSpaceError(systemError(ERROR_HANDLE_DISK_FULL, ERROR_LOCATION)));
 #else
    EXPECT_TRUE(isDiskSpaceError(systemError(ENOSPC, ERROR_LOCATION)));
+
+   // Boost reports the same errno value in the system category
+   using boost::system::error_code;
+   EXPECT_TRUE(isDiskSpaceError(Error(error_code(ENOSPC, boost::system::system_category()), ERROR_LOCATION)));
 # ifdef EDQUOT
    EXPECT_TRUE(isDiskSpaceError(systemError(EDQUOT, ERROR_LOCATION)));
 # endif

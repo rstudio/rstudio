@@ -190,7 +190,7 @@ Error readProcessStatus(const std::string& statusPath, ProcessStatus* pStatus)
 // if it was gone before the open, ESRCH if it was reaped before the read.
 bool isProcessGone(const Error& error)
 {
-   return isNotFoundError(error) || error == systemError(ESRCH, ErrorLocation());
+   return isNotFoundError(error) || error.matches(boost::system::errc::no_such_process);
 }
 
 // Returns the RSS + swap for the specified process, in kb.

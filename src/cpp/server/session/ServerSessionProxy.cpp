@@ -910,7 +910,7 @@ void proxyRequest(
    }
    else
    {
-      if (error != systemError(boost::system::errc::permission_denied, ErrorLocation()))
+      if (!error.matches(boost::system::errc::permission_denied))
       {
          // if the error returned was permission_denied then no user was found
          // we consider user not found to be an acceptable error as it should
@@ -920,7 +920,7 @@ void proxyRequest(
          // so reject access since we cannot verify the identity of the user
          Error permissionError(boost::system::error_code(
                                   boost::system::errc::permission_denied,
-                                  boost::system::system_category()),
+                                  boost::system::generic_category()),
                                error,
                                ERROR_LOCATION);
          errorHandler(permissionError);

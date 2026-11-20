@@ -66,7 +66,7 @@ Error closeSocket(SocketService& socket)
 
 inline bool isWrongProtocolTypeError(const core::Error& error)
 {
-   return error == systemError(boost::system::errc::wrong_protocol_type, ErrorLocation());
+   return error.matches(boost::system::errc::wrong_protocol_type);
 }
 
 inline bool isConnectionTerminatedError(const core::Error& error)
@@ -78,7 +78,7 @@ inline bool isConnectionTerminatedError(const core::Error& error)
    bool shortRead = error == boost::asio::ssl::error::stream_truncated; // "short read"
    bool badFile = error == boost::asio::error::bad_descriptor;
    bool brokenPipe = error == boost::asio::error::broken_pipe;
-   bool noFile = error == systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation());
+   bool noFile = error.matches(boost::system::errc::no_such_file_or_directory);
 
 #ifdef _WIN32
    int ec = error.getCode();
@@ -97,7 +97,7 @@ inline bool isConnectionUnavailableError(const Error& error)
    
    return (
          // for unix domain sockets
-         error == systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()) ||
+         error.matches(boost::system::errc::no_such_file_or_directory) ||
 
          // for tcp-ip and unix domain sockets
          error == boost::asio::error::connection_refused
