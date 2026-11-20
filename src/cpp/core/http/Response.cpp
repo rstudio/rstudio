@@ -32,6 +32,7 @@
 #include <shared_core/Hash.hpp>
 #include <core/RegexUtils.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/ZlibUtil.hpp>
 
 #ifndef _WIN32
 #include "zlib.h"
@@ -179,7 +180,7 @@ public:
                              kDefaultMemoryUsage,
                              Z_DEFAULT_STRATEGY);
       if (res != Z_OK)
-          return systemError(res, "ZLib initialization error", ERROR_LOCATION);
+         return zlib::zlibError(res, "ZLib initialization error", ERROR_LOCATION);
 
       return Success();
    }

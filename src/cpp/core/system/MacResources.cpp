@@ -16,6 +16,7 @@
 
 #include <sys/sysctl.h>  
 #include <mach/mach.h>
+#include <mach/mach_error.h>
 
 #include <shared_core/Error.hpp>
 #include <core/system/Resources.hpp>
@@ -24,6 +25,14 @@ namespace rstudio {
 namespace core {
 namespace system {
 namespace {
+
+// a kern_return_t isn't an errno value, so it doesn't belong in the system category
+Error machError(kern_return_t ret, const std::string& description, const ErrorLocation& location)
+{
+   Error error("mach", ret, mach_error_string(ret), location);
+   error.addProperty("description", description);
+   return error;
+}
 
 Error getHostStats(vm_statistics_data_t *pStats)
 {
@@ -38,7 +47,7 @@ Error getHostStats(vm_statistics_data_t *pStats)
         return Success();
     }
     
-    return systemError(ret, "Failed to get memory resource usage from host_statistics", ERROR_LOCATION);
+    return machError(ret, "Failed to get memory resource usage from host_statistics", ERROR_LOCATION);
 }
 
 } // anonymous namespace
@@ -90,7 +99,7 @@ Error getProcessMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
        return Success();
     }
 
-    return systemError(ret, "Failed to get memory resource usage from task_info", ERROR_LOCATION);
+    return machError(ret, "Failed to get memory resource usage from task_info", ERROR_LOCATION);
 }
 
 Error getProcessMemoryLimit(long *pLimitKb, MemoryProvider *pProvider)

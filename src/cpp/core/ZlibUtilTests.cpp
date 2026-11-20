@@ -21,6 +21,8 @@
 #include <iterator>
 #include <sstream>
 
+#include <zlib.h>
+
 namespace rstudio {
 namespace core {
 namespace zlib {
@@ -127,6 +129,11 @@ TEST(ZlibTest, InvalidCompressedStringFailsToDecompress)
    std::string uncompressed;
    Error error = decompressString(compressed, &uncompressed);
    ASSERT_TRUE(error);
+
+   // a zlib code, not an errno value or a Win32 error code
+   EXPECT_EQ("zlib", error.getName());
+   EXPECT_LT(error.getCode(), 0);
+   EXPECT_EQ(std::string(zError(error.getCode())), error.getMessage());
 }
 
 TEST(ZlibTest, GzipStreambufDecompressesGzipStream)
