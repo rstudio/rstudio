@@ -41,6 +41,11 @@ HttpConnectionListener* s_pHttpConnectionListener = nullptr;
 // the session stream's listener, once claimSessionStream has bound it
 LocalStreamHttpConnectionListener* s_pSessionStreamListener = nullptr;
 
+// whether the tcp listener's security settings have been logged:
+// startHttpConnectionListenerWithTimeout() rebuilds the listener on each
+// retry while its address is in use, and they don't change between tries
+bool s_loggedTcpListenerSecurity = false;
+
 bool usesSessionStream()
 {
    session::Options& options = session::options();
@@ -65,14 +70,42 @@ LocalStreamHttpConnectionListener* createSessionStreamListener()
             options.limitRpcClientUid());
 }
 
+void logTcpListenerSecurity(const std::string& wwwAddress,
+                            const std::string& bindPort,
+                            session::Options& options,
+                            const std::string& sharedSecret,
+                            const std::string& debugName)
+{
+   if (core::system::effectiveUserIsRoot())
+      LOG_WARNING_MESSAGE("Initializing tcp connection listener with effective user as 'root': verify request signatures diabled");
+
+   if (sharedSecret.empty())
+   {
+      DLOGF("No shared secret available [wwwAddress={} bindPort={} debugName={}]", wwwAddress, bindPort, debugName);
+      if (!options.standalone())
+         LOG_WARNING_MESSAGE("The tcp http listener initialized without signature validation: --standalone option missing");
+      if (!options.verifySignatures())
+         LOG_WARNING_MESSAGE("The tcp http listener initialized without signature validation: --verify-signatures option missing");
+      if (options.standalone() && options.verifySignatures() && !core::system::effectiveUserIsRoot())
+         LOG_DEBUG_MESSAGE("Verify signatures enabled for tcp http listener");
+   }
+   else
+   {
+      LOG_DEBUG_MESSAGE("Validating tcp http connections with a shared secret");
+   }
+}
+
 void initTcpHttpConnectionListener(const std::string& wwwAddress,
                                    const std::string& bindPort,
                                    session::Options& options,
                                    const std::string& sharedSecret,
                                    const std::string& debugName)
 {
-   if (core::system::effectiveUserIsRoot())
-      LOG_WARNING_MESSAGE("Initializing tcp connection listener with effective user as 'root': verify request signatures diabled");
+   if (!s_loggedTcpListenerSecurity)
+   {
+      logTcpListenerSecurity(wwwAddress, bindPort, options, sharedSecret, debugName);
+      s_loggedTcpListenerSecurity = true;
+   }
 
    if (!options.getOverlayOption(kSessionSslCertOption).empty())
    {
@@ -94,21 +127,6 @@ void initTcpHttpConnectionListener(const std::string& wwwAddress,
                                          wwwAddress,
                                          bindPort,
                                          options.sharedSecret());
-   }
-   
-   if (sharedSecret.empty())
-   {
-      DLOGF("No shared secret available [wwwAddress={} bindPort={} debugName={}]", wwwAddress, bindPort, debugName);
-      if (!options.standalone())
-         LOG_WARNING_MESSAGE("The tcp http listener initialized without signature validation: --standalone option missing");
-      if (!options.verifySignatures())
-         LOG_WARNING_MESSAGE("The tcp http listener initialized without signature validation: --verify-signatures option missing");
-      if (options.standalone() && options.verifySignatures() && !core::system::effectiveUserIsRoot())
-         LOG_DEBUG_MESSAGE("Verify signatures enabled for tcp http listener");
-   }
-   else
-   {
-      LOG_DEBUG_MESSAGE("Validating tcp http connections with a shared secret");
    }
 }
 
