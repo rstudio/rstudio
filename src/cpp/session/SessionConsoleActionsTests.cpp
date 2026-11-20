@@ -119,7 +119,7 @@ TEST(ConsoleActionsGrowthTest, FailedGrowthKeepsTheNewestActions)
    // the capacity is now what was allocated, and the action that didn't fit
    // replaced the oldest one
    std::size_t size = actions.size();
-   EXPECT_GT(size, 1u);
+   ASSERT_GT(size, 1u);
    EXPECT_LE(size, allocationLimit);
    EXPECT_EQ(size, static_cast<std::size_t>(actions.capacity()));
    EXPECT_EQ(outputLine(added - 1).data, actions.back().data);
