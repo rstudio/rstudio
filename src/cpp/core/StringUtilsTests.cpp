@@ -18,6 +18,7 @@
 #include <boost/scope_exit.hpp>
 
 #include <clocale>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -88,6 +89,30 @@ TEST(StringTest, TrimWhitespaceWorks)
    EXPECT_EQ(std::string("abc"), trimWhitespace(string));
    EXPECT_EQ(std::string("abc"), trimWhitespace("abc"));
    EXPECT_EQ(std::string(""), trimWhitespace(""));
+}
+
+TEST(StringTest, TrimLeadingLinesKeepsTheLastLines)
+{
+   std::string lines = "one\ntwo\nthree\nfour\n";
+   EXPECT_TRUE(trimLeadingLines(2, &lines));
+   EXPECT_EQ("\nthree\nfour\n", lines);
+}
+
+TEST(StringTest, TrimLeadingLinesTrimsBlankLines)
+{
+   // 14 bytes, fewer than twice the limit, but 11 lines
+   std::string lines = "old\n" + std::string(10, '\n');
+   EXPECT_TRUE(trimLeadingLines(10, &lines));
+   EXPECT_EQ(std::string(11, '\n'), lines);
+}
+
+TEST(StringTest, TrimLeadingLinesLeavesLinesWithinTheLimit)
+{
+   std::string lines = "one\ntwo\n";
+   EXPECT_FALSE(trimLeadingLines(2, &lines));
+   EXPECT_FALSE(trimLeadingLines(std::numeric_limits<int>::max(), &lines));
+   EXPECT_FALSE(trimLeadingLines(-1, &lines));
+   EXPECT_EQ("one\ntwo\n", lines);
 }
 
 TEST(StringTest, CountNewLinesWorksWithEmptyString)

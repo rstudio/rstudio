@@ -18,6 +18,7 @@
 #include <gsl/gsl-lite.hpp>
 
 #include <boost/algorithm/string/split.hpp>
+#include <boost/scope_exit.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
@@ -98,8 +99,17 @@ void ConsoleActions::flush()
 {
    // NOTE: helper method assumes mutex is already locked
 
-   // iterate over buffer data in chunks, split via newlines
+   // remove the data pushed as actions, retaining any held-back suffix for
+   // the next add(); also when a push throws (e.g. std::bad_alloc as the
+   // actions grow), so that the next flush doesn't push that data again
    std::size_t lhs = 0;
+   BOOST_SCOPE_EXIT(this_, &lhs)
+   {
+      this_->buffer_.data.erase(0, lhs);
+   }
+   BOOST_SCOPE_EXIT_END
+
+   // iterate over buffer data in chunks, split via newlines
    std::size_t rhs = buffer_.data.find('\n');
    while (rhs != std::string::npos)
    {
@@ -110,8 +120,9 @@ void ConsoleActions::flush()
          std::string data = buffer_.data.substr(lhs, kChunkSize);
          data.resize(data.size() - string_utils::utf8IncompleteSuffixLength(data));
 
-         lhs += data.size();
+         std::size_t size = data.size();
          pushAction(buffer_.type, std::move(data));
+         lhs += size;
       }
 
       // consume any remaining data on this line
@@ -133,13 +144,11 @@ void ConsoleActions::flush()
       std::string data = buffer_.data.substr(lhs);
       data.resize(data.size() - string_utils::utf8IncompleteSuffixLength(data));
 
-      lhs += data.size();
-      if (!data.empty())
+      std::size_t size = data.size();
+      if (size != 0)
          pushAction(buffer_.type, std::move(data));
+      lhs += size;
    }
-
-   // remove consumed data, retaining any held-back suffix for the next add()
-   buffer_.data.erase(0, lhs);
 }
 
 void ConsoleActions::add(int type, const std::string& data)
