@@ -13,6 +13,7 @@
 
 ### Fixed
 - ([#19745](https://github.com/rstudio/rstudio/issues/19745)): Fixed an issue on Windows where some error messages described an unrelated Windows error, e.g. an input/output error reported as "Access is denied".
+- ([#18946](https://github.com/rstudio/rstudio/issues/18946)): Fixed an issue where an R session could fail to start when the port it was given was still briefly in use. The session now retries for up to a second.
 - ([#19728](https://github.com/rstudio/rstudio/issues/19728)): Fixed an issue where RStudio Desktop on macOS could stop responding to clicks, beeping as though a dialog were open with none visible, after showing a message such as "Update Available" while another application was active. The message now opens on an RStudio window instead of as a separate alert.
 - ([#19703](https://github.com/rstudio/rstudio/issues/19703)): Fixed an issue where R code run by Posit Assistant kept running past the time limit Posit Assistant set for it, holding the Console busy (indefinitely, for code that never finished) after Posit Assistant had reported the call as timed out. The code is now interrupted when its time limit passes, and code still waiting for the Console when its time limit passes is not run.
 - ([#19718](https://github.com/rstudio/rstudio/issues/19718)): Fixed an issue where interrupting R code run by Posit Assistant (e.g. with Escape) just as it finished could leave some of the checks Posit Assistant places on file access applied to code run afterwards in the Console.

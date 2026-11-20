@@ -148,7 +148,7 @@ test_that("R source files do not use zero-padded string formats", {
 
 })
 
-test_that("C++ sources don't pass errno values as system error codes", {
+test_that("C++ sources don't treat errno values as system error codes", {
 
    # systemError(int) and systemCallError(name, int) build a system-category
    # code, which holds Win32 error codes on Windows, so an errno value passed
@@ -171,6 +171,14 @@ test_that("C++ sources don't pass errno values as system error codes", {
    # an errc is an errno value, never a system code
    errcAsSystem <- "\\berrc::[a-z_]+\\s*,\\s*(boost::system::|std::)?system_category\\(\\)"
 
+   # comparing a code's value with an errc ignores its category, so a Win32
+   # code matches whichever errc shares its number: compare as a condition
+   # (ec == errc::X, or error == systemError(errc::X, ErrorLocation()))
+   errcByValue <- paste0(
+      "(getCode|value)\\(\\)\\s*[!=]=\\s*(boost::system::|std::)?errc::",
+      "|\\berrc::[a-z_]+\\s*[!=]=\\s*[A-Za-z_][A-Za-z0-9_.>-]*(getCode|value)\\(\\)"
+   )
+
    offending <- c(
       "systemError(EINVAL, ERROR_LOCATION)",
       "systemError(\n   EIO,\n   \"description\", ERROR_LOCATION)",
@@ -191,6 +199,10 @@ test_that("C++ sources don't pass errno values as system error codes", {
    expect_true(grepl(crtErrno, "systemCallError(\"_popen\", errno, ERROR_LOCATION)", perl = TRUE))
    expect_true(grepl(errcAsSystem, "error_code(errc::io_error,\n   boost::system::system_category())", perl = TRUE))
    expect_false(grepl(errcAsSystem, "error_code(errc::io_error, generic_category())", perl = TRUE))
+   expect_true(grepl(errcByValue, "error.getCode() == boost::system::errc::permission_denied", perl = TRUE))
+   expect_true(grepl(errcByValue, "ec.value() != errc::bad_file_descriptor", perl = TRUE))
+   expect_true(grepl(errcByValue, "errc::timed_out == pError->getCode()", perl = TRUE))
+   expect_false(grepl(errcByValue, "ec == boost::system::errc::too_many_files_open", perl = TRUE))
 
    cppFiles <- list.files(
       root,
@@ -203,7 +215,7 @@ test_that("C++ sources don't pass errno values as system error codes", {
    for (cppFile in cppFiles) {
 
       contents <- paste(readLines(cppFile, warn = FALSE), collapse = "\n")
-      patterns <- c(errnoConstant, rErrno, errcAsSystem)
+      patterns <- c(errnoConstant, rErrno, errcAsSystem, errcByValue)
       if (grepl("Win32", basename(cppFile), fixed = TRUE))
          patterns <- c(patterns, crtErrno)
 
@@ -222,7 +234,7 @@ test_that("C++ sources don't pass errno values as system error codes", {
    }
 
    failureMessage <- paste(
-      c("errno values passed as system error codes:", offenders),
+      c("errno values treated as system error codes:", offenders),
       collapse = "\n"
    )
 

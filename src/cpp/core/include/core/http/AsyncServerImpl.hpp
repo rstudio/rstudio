@@ -80,8 +80,8 @@ public:
 inline bool isResourceExhaustionError(const boost::system::error_code& ec)
 {
    return ec.category() == boost::system::system_category() &&
-          (ec.value() == boost::system::errc::too_many_files_open ||
-           ec.value() == boost::system::errc::not_enough_memory);
+          (ec == boost::system::errc::too_many_files_open ||
+           ec == boost::system::errc::not_enough_memory);
 }
 
 template <typename ProtocolType>

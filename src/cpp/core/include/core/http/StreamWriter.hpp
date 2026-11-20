@@ -33,10 +33,12 @@ class StreamWriter : public boost::enable_shared_from_this<StreamWriter<SocketTy
                      boost::noncopyable
 {
 public:
+   // onError gets the write's error code itself: an Error keeps only its category's name, so the code can't be
+   // rebuilt from one
    StreamWriter(SocketType& socket,
                 const http::Response& response,
                 const boost::function<void(void)>& onComplete,
-                const core::http::ErrorHandler& onError) :
+                const boost::function<void(const boost::system::error_code&)>& onError) :
       socket_(socket),
       onComplete_(onComplete),
       onError_(onError),
@@ -169,7 +171,7 @@ private:
 
          if (!core::http::isConnectionTerminatedError(error))
          {
-            onError_(error);
+            onError_(ec);
          }
          else
          {
@@ -187,7 +189,7 @@ private:
 private:
    SocketType& socket_;
    boost::function<void(void)> onComplete_;
-   core::http::ErrorHandler onError_;
+   boost::function<void(const boost::system::error_code&)> onError_;
    boost::shared_ptr<http::Response> response_;
 };
 

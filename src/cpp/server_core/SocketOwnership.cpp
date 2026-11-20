@@ -532,7 +532,7 @@ Error verifyPeerUid(const boost::asio::ip::address& localAddress,
       // handshake timing since it has existed since well before this
       // connection attempt) rather than failing closed on an inconclusive
       // established-path result.
-      if (error && error.getCode() == boost::system::errc::no_such_file_or_directory)
+      if (error == systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()))
          error = lookupListeningSocketUid(remoteAddress, appPort, &ownerUid);
    }
 
@@ -660,7 +660,7 @@ OwnershipCheckMode probeOwnershipCheckMode()
 
       if (!queryMechanismWorks)
       {
-         if (probeError.getCode() == boost::system::errc::timed_out)
+         if (probeError == systemError(boost::system::errc::timed_out, ErrorLocation()))
          {
             // A timeout here reflects a transient hiccup (kernel/scheduling
             // delay), not a capability/permission problem -- unlike an

@@ -880,17 +880,16 @@ private:
       handler(boost::system::error_code(), -1);
    }
 
-   void handleStreamError(bool close, Socket::Handler handler, const Error& error)
+   void handleStreamError(bool close, Socket::Handler handler, const boost::system::error_code& ec)
    {
+      Error error(ec, ERROR_LOCATION);
       if (!core::http::isConnectionTerminatedError(error))
          logConnectionError(error);
       if (close)
          this->close();
-      // jcheng: boost::system::generic_category() isn't correct, but I don't
-      // know how to get an error_code category out of an Error object.
       // -1 isn't the correct number of bytes written, but we don't have access
       // to that information at this point.
-      handler(boost::system::error_code(error.getCode(), boost::system::generic_category()), -1);
+      handler(ec, -1);
    }
 
 private:

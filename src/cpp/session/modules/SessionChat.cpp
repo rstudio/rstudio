@@ -2609,7 +2609,7 @@ void handleReadFileContent(core::system::ProcessOperations& ops,
          {
             sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "File not found: " + path);
          }
-         else if (error.getCode() == boost::system::errc::permission_denied)
+         else if (error == systemError(boost::system::errc::permission_denied, ErrorLocation()))
          {
             sendJsonRpcError(ops, requestId, kJsonRpcInternalError, "Permission denied: " + path);
          }
@@ -2807,7 +2807,7 @@ void handleWriteFileContent(core::system::ProcessOperations& ops,
 
       if (error)
       {
-         if (error.getCode() == boost::system::errc::permission_denied)
+         if (error == systemError(boost::system::errc::permission_denied, ErrorLocation()))
          {
             sendJsonRpcError(ops, requestId, kJsonRpcInternalError, "Permission denied: " + path);
          }
@@ -3095,8 +3095,7 @@ void handleEditFileContent(core::system::ProcessOperations& ops,
             sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
                              "File not found: " + path);
          }
-         else if (error.getCode() ==
-                  boost::system::errc::permission_denied)
+         else if (error == systemError(boost::system::errc::permission_denied, ErrorLocation()))
          {
             sendJsonRpcError(ops, requestId, kJsonRpcInternalError,
                              "Permission denied: " + path);
@@ -3146,8 +3145,7 @@ void handleEditFileContent(core::system::ProcessOperations& ops,
 
       if (error)
       {
-         if (error.getCode() ==
-             boost::system::errc::permission_denied)
+         if (error == systemError(boost::system::errc::permission_denied, ErrorLocation()))
          {
             sendJsonRpcError(ops, requestId, kJsonRpcInternalError,
                              "Permission denied: " + path);
@@ -4793,7 +4791,7 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
       // Protocol version not in manifest: only block if there's no installed
       // version to fall back on. Other errors leave the installed version
       // running (updateAvailable stays false).
-      if (error.getCode() == boost::system::errc::protocol_not_supported &&
+      if (error == systemError(boost::system::errc::protocol_not_supported, ErrorLocation()) &&
           installedVersion == "0.0.0")
       {
          noCompatibleVersion = true;

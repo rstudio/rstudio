@@ -113,7 +113,7 @@ public:
                            response,
                            boost::bind(&HttpConnectionImpl::onStreamComplete,
                                        HttpConnectionImpl<ProtocolType>::shared_from_this()),
-                           boost::bind(&HttpConnectionImpl::handleError,
+                           boost::bind(&HttpConnectionImpl::handleStreamError,
                                        HttpConnectionImpl<ProtocolType>::shared_from_this(),
                                        _1)));
 
@@ -127,7 +127,7 @@ public:
                            response,
                            boost::bind(&HttpConnectionImpl::onStreamComplete,
                                        HttpConnectionImpl<ProtocolType>::shared_from_this()),
-                           boost::bind(&HttpConnectionImpl::handleError,
+                           boost::bind(&HttpConnectionImpl::handleStreamError,
                                        HttpConnectionImpl<ProtocolType>::shared_from_this(),
                                        _1)));
                pWriter->write();
@@ -441,6 +441,11 @@ private:
    {
       LOG_ERROR(error);
       close();
+   }
+
+   void handleStreamError(const boost::system::error_code& ec)
+   {
+      handleError(core::Error(ec, ERROR_LOCATION));
    }
 
 private:

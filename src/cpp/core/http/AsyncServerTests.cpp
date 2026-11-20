@@ -23,10 +23,10 @@
 // the backoff branch -- to compile and confirms ordinary request handling was
 // not broken by the refactor.
 
-#include <cerrno>
 #include <chrono>
 #include <string>
 
+#include <boost/asio/error.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/system_timer.hpp>
 #include <boost/make_shared.hpp>
@@ -55,25 +55,26 @@ void handlePing(const http::Request& request, http::Response* pResponse)
 } // anonymous namespace
 
 // The predicate that decides whether an accept error triggers the backoff path:
-// only EMFILE/ENOMEM in the system category, and nothing else.
+// only out-of-descriptors/out-of-memory in the system category, and nothing else.
 TEST(AsyncServerResourceExhaustion, ClassifiesResourceErrors)
 {
    using boost::system::error_code;
-   using boost::system::system_category;
    using boost::system::generic_category;
    namespace errc = boost::system::errc;
+   namespace asio_error = boost::asio::error;
 
-   // the two resource-exhaustion errors we back off on
+   // the two resource-exhaustion errors we back off on, as asio reports them:
+   // EMFILE/ENOMEM on POSIX, WSAEMFILE/ERROR_OUTOFMEMORY on Windows
    EXPECT_TRUE(isResourceExhaustionError(
-      error_code(EMFILE, system_category())));
+      asio_error::make_error_code(asio_error::no_descriptors)));
    EXPECT_TRUE(isResourceExhaustionError(
-      error_code(ENOMEM, system_category())));
+      asio_error::make_error_code(asio_error::no_memory)));
 
    // unrelated system errors are not resource exhaustion
    EXPECT_FALSE(isResourceExhaustionError(
-      error_code(ECONNRESET, system_category())));
+      asio_error::make_error_code(asio_error::connection_reset)));
    EXPECT_FALSE(isResourceExhaustionError(
-      error_code(ECANCELED, system_category())));
+      asio_error::make_error_code(asio_error::operation_aborted)));
 
    // a success code (no error) is not resource exhaustion
    EXPECT_FALSE(isResourceExhaustionError(error_code()));
