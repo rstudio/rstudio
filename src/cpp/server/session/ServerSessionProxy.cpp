@@ -33,6 +33,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <shared_core/SafeConvert.hpp>
 #include <core/BoostErrors.hpp>
 #include <core/Log.hpp>
@@ -910,9 +911,8 @@ void proxyRequest(
    }
    else
    {
-      if (error != systemError(boost::system::errc::permission_denied, ErrorLocation()))
+      if (!isNotFoundError(error))
       {
-         // if the error returned was permission_denied then no user was found
          // we consider user not found to be an acceptable error as it should
          // be created later by PAM profiles
          //

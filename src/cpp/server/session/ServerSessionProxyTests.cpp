@@ -30,6 +30,7 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/make_shared.hpp>
 
+#include <shared_core/FilePath.hpp>
 #include <shared_core/system/User.hpp>
 #include <core/http/AsyncConnection.hpp>
 #include <core/http/FixedBufferProxy.hpp>
@@ -688,6 +689,22 @@ TEST(ProxyLocalhostUidResolutionTests, FailsClosedForUnknownUser)
    // closed and reject the request (setNotFoundError) rather than proceed
    // without an ownership check.
    EXPECT_TRUE(error);
+}
+
+// The local stream proxy lets a user who isn't in passwd yet through without
+// uid validation (PAM creates the account later), and rejects every other
+// lookup failure. It tells them apart with isNotFoundError(), so the lookup
+// must report a missing user that way; it once checked for permission_denied
+// long after the lookup had stopped reporting one.
+TEST(ProxyLocalhostUidResolutionTests, UnknownUserIsANotFoundError)
+{
+   const std::string unknownUser = "rstudio-pro-11470-nonexistent-user";
+
+   UidType uid = static_cast<UidType>(-1);
+   Error error = session_proxy::userIdForUsernameForTest(unknownUser, &uid);
+
+   ASSERT_TRUE(error);
+   EXPECT_TRUE(isNotFoundError(error)) << error.asString();
 }
 
 TEST(ProxyLocalhostResponseTests, NormalizesChunkedRedirectBeforeRewritingHeaders)
