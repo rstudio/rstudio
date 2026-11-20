@@ -27,6 +27,11 @@
 #include <core/FileSerializer.hpp>
 #include <core/StringUtils.hpp>
 
+#include <session/SessionClientEvent.hpp>
+
+#include "SessionClientEventQueue.hpp"
+#include "modules/SessionConsole.hpp"
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -55,15 +60,18 @@ protected:
    void SetUp() override
    {
       consoleActions().reset();
+      originalCapacity_ = consoleActions().capacity();
       ASSERT_FALSE(FilePath::tempFilePath(tempFile_));
    }
 
    void TearDown() override
    {
       consoleActions().reset();
+      consoleActions().setCapacity(originalCapacity_);
       tempFile_.removeIfExists();
    }
 
+   int originalCapacity_ = 0;
    FilePath tempFile_;
 };
 
@@ -106,15 +114,15 @@ TEST_F(ConsoleActionsTest, ReducingCapacityKeepsNewestActions)
 TEST_F(ConsoleActionsTest, HugeCapacityIsNotAllocatedUpFront)
 {
    ConsoleActions& actions = consoleActions();
-   int originalCapacity = actions.capacity();
 
-   // a scrollback limit meant as "unlimited" (the pref has no maximum);
-   // reserving all of it up front, tens of GB, throws std::bad_alloc where
-   // the OS won't provide that much: Windows commits it, and Linux refuses
-   // more than RAM + swap unless set to always overcommit. macOS reserves it
-   // lazily, so there this passes either way (#19738)
+   // a scrollback limit meant as "unlimited" (the pref has no maximum).
+   // reserving all of it up front, tens of GB, fails where the OS won't
+   // provide that much: Windows commits it, and Linux refuses more than
+   // RAM + swap unless set to always overcommit. setCapacity() logs the
+   // failure and keeps the old capacity. macOS reserves it lazily, so there
+   // this passes either way (#19738)
    int hugeCapacity = std::numeric_limits<int>::max();
-   ASSERT_NO_THROW(actions.setCapacity(hugeCapacity));
+   actions.setCapacity(hugeCapacity);
    EXPECT_EQ(hugeCapacity, actions.capacity());
 
    // the storage grows as actions arrive, moving them as it does
@@ -127,8 +135,43 @@ TEST_F(ConsoleActionsTest, HugeCapacityIsNotAllocatedUpFront)
    ASSERT_EQ(1000u, dataArray.getSize());
    EXPECT_EQ("line 0\n", dataArray[0].getString());
    EXPECT_EQ("line 999\n", dataArray[999].getString());
+}
 
-   actions.setCapacity(originalCapacity);
+TEST_F(ConsoleActionsTest, HugeCapacityKeepsQueuedConsoleOutput)
+{
+   // drop output still queued from session startup
+   rstudio::session::ClientEventQueue& queue = rstudio::session::clientEventQueue();
+   std::vector<rstudio::session::ClientEvent> events;
+   queue.flush();
+   queue.remove(&events);
+   consoleActions().reset();
+
+   // the client event queue trims each batch of console output to the
+   // scrollback limit plus one line, which must not overflow at INT_MAX
+   consoleActions().setCapacity(std::numeric_limits<int>::max());
+
+   const std::string output = "line 0\nline 1\nline 2\n";
+   queue.add(rstudio::session::ClientEvent(
+      rstudio::session::client_events::kConsoleWriteOutput,
+      output));
+   queue.flush();
+   events.clear();
+   queue.remove(&events);
+
+   std::string sent;
+   for (const rstudio::session::ClientEvent& event : events)
+   {
+      if (event.type() == rstudio::session::client_events::kConsoleWriteOutput)
+      {
+         json::Object payload = event.data().getObject();
+         sent.append(payload[kConsoleText].getString());
+      }
+   }
+   EXPECT_EQ(output, sent);
+
+   json::Object actionsJson;
+   consoleActions().asJson(&actionsJson);
+   EXPECT_EQ(output, consoleData(actionsJson));
 }
 
 TEST_F(ConsoleActionsTest, ChunkingDoesNotSplitUtf8Sequences)

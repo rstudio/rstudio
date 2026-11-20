@@ -15,6 +15,7 @@
 
 #include "SessionClientEventQueue.hpp"
 
+#include <limits>
 #include <string>
 
 #include <boost/regex/v5/regex.hpp>
@@ -418,7 +419,9 @@ void ClientEventQueue::flushBufferedOutput(int event, std::string* pOutput)
    
    if (isConsoleOutputEvent(event))
    {
-      int limit = r::session::consoleActions().capacity() + 1;
+      // the capacity can be INT_MAX (console_max_lines has no maximum)
+      int capacity = r::session::consoleActions().capacity();
+      int limit = (capacity < std::numeric_limits<int>::max()) ? capacity + 1 : capacity;
       string_utils::trimLeadingLines(limit, pOutput);
    }
 
