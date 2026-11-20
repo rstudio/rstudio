@@ -165,9 +165,14 @@ public class ChatSatelliteWindow extends SatelliteWindow
       content.add(icon);
       content.add(suspendedNoticeLabel_);
 
+      FlowPanel notice = new FlowPanel();
+      notice.setStyleName(styles.chatUpdateNotification());
+      notice.add(content);
+
+      // A transparent layer over the whole frame area, so the notice takes its
+      // content's height and rewraps when the window is resized
       suspendedNotice_ = new FlowPanel();
-      suspendedNotice_.setStyleName(styles.chatUpdateNotification());
-      suspendedNotice_.add(content);
+      suspendedNotice_.add(notice);
    }
 
    // Shown over the top of the dimmed frame, as the frame is inactive until
@@ -180,20 +185,10 @@ public class ChatSatelliteWindow extends SatelliteWindow
       if (suspendedNotice_.getParent() != panel)
       {
          panel.add(suspendedNotice_);
+         panel.setWidgetTopBottom(suspendedNotice_, 29, Unit.PX, 0, Unit.PX);
          panel.setWidgetLeftRight(suspendedNotice_, 0, Unit.PX, 0, Unit.PX);
          panel.getWidgetContainerElement(suspendedNotice_).getStyle().setZIndex(1);
       }
-
-      // Lay out at a minimal height so the content overflows, then measure it
-      panel.setWidgetTopHeight(suspendedNotice_, 29, Unit.PX, 1, Unit.PX);
-      panel.forceLayout();
-      Scheduler.get().scheduleDeferred(() ->
-      {
-         if (suspendedNotice_.getParent() != panel)
-            return;
-         int height = suspendedNotice_.getElement().getScrollHeight();
-         panel.setWidgetTopHeight(suspendedNotice_, 29, Unit.PX, height, Unit.PX);
-      });
    }
 
    private void hideSuspendedNotice()
