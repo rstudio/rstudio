@@ -47,6 +47,14 @@ public class CodeSearchSuggestionTests extends GWTTestCase
       assertEquals("Theorem", img.getAttribute("alt"));
    }
 
+   public void testListingXRefShowsSnippetIcon()
+   {
+      Element img = iconOf(new CodeSearchSuggestion(xrefItem(9, "lst", "code1"), null));
+      assertEquals(new ImageResource2x(CodeIcons.INSTANCE.snippet2x()).getSafeUri().asString(),
+            img.getAttribute("src"));
+      assertEquals("Listing", img.getAttribute("alt"));
+   }
+
    // Examples are theorem-style blocks, so they share the theorem icon.
    public void testExampleXRefShowsTheoremIcon()
    {
