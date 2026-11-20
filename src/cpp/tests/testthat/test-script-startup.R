@@ -15,7 +15,11 @@
 
 context("script startup")
 
-runSessionScript <- function(blockSourceDatabase = FALSE) {
+runSessionScript <- function(blockSourceDatabase = FALSE,
+                             script = "writeLines('executed', 'script-ran')",
+                             seedPortZeroRestartContext = FALSE,
+                             sessionArgs = "--program-mode=desktop",
+                             localPeer = FALSE) {
    skip_if_not_installed("processx")
 
    buildDir <- Sys.getenv("TESTTHAT_OUTPUT_DIR")
@@ -42,10 +46,24 @@ runSessionScript <- function(blockSourceDatabase = FALSE) {
    if (blockSourceDatabase)
       writeLines("not a directory", file.path(root, "data", "sources"))
 
+   # What a session suspended for restart would leave in this scope, were its
+   # restart context named for www-port 0 rather than for the port it bound:
+   # saved state, here an R option (see .rs.restoreOptions), for its successor
+   # to restore.
+   if (seedPortZeroRestartContext)
+   {
+      restartContext <- file.path(root, "data", "ctx", "ctx-0")
+      dir.create(restartContext, recursive = TRUE)
+      opt <- list(rstudio.tests.portZeroRestartContext = "restored")
+      save(opt, file = file.path(restartContext, "options"))
+   }
+
    # Set only the child's environment; changing this session's environment
-   # would race its worker threads. Avoid inheriting an active IDE's identity.
+   # would race its worker threads. Avoid inheriting an active IDE's identity,
+   # or its local peer, which puts a desktop session on a local stream (except
+   # on Windows) rather than TCP.
    env <- Sys.getenv()
-   env <- env[!grepl("^RSTUDIO_", names(env))]
+   env <- env[!grepl("^(RSTUDIO_|RS_LOCAL_PEER$)", names(env))]
    if (.Platform$OS.type == "windows")
    {
       # Use the Windows default locale; inherited POSIX names such as C.UTF-8
@@ -57,9 +75,18 @@ runSessionScript <- function(blockSourceDatabase = FALSE) {
       file.path(root, c("data", "config", "home", "home", "no-profile",
                        "no-environ", "tmp", "tmp", "tmp"))
 
-   args <- c(paste0("--config-file=", config), "--program-mode=desktop",
+   # Have a desktop session listen on a local stream. A socket's path has to
+   # be short, so it isn't put under root.
+   if (localPeer)
+   {
+      peer <- tempfile("rs-peer-", tmpdir = "/tmp")
+      on.exit(unlink(peer), add = TRUE)
+      env[["RS_LOCAL_PEER"]] <- peer
+   }
+
+   args <- c(paste0("--config-file=", config), sessionArgs,
              "--www-port=0", "--r-run-rprofile=0", "--r-restore-workspace=0",
-             "--log-stderr=1", "--run-script", "writeLines('executed', 'script-ran')")
+             "--log-stderr=1", "--run-script", script)
    if (identical(Sys.info()[["sysname"]], "Darwin"))
    {
       # Match rstudio-tests: macOS needs a controlling TTY for clean teardown,
@@ -79,7 +106,10 @@ runSessionScript <- function(blockSourceDatabase = FALSE) {
       error_on_status = FALSE
    )
    result$output <- paste(result$stdout, result$stderr, sep = "\n")
-   result$scriptRan <- file.exists(file.path(root, "home", "script-ran"))
+   scriptOutput <- file.path(root, "home", "script-ran")
+   result$scriptRan <- file.exists(scriptOutput)
+   if (result$scriptRan)
+      result$scriptOutput <- readLines(scriptOutput)
    result
 }
 
@@ -87,6 +117,89 @@ test_that("run-script executes after successful initialization", {
    result <- runSessionScript()
    expect_equal(result$status, 0L, info = result$output)
    expect_true(result$scriptRan, info = result$output)
+})
+
+test_that("a desktop session on www-port 0 publishes the port it listens on", {
+   # rpostback and other requests back into the session go to the published
+   # port, so it must be one the session accepts connections on (#19744)
+   script <- paste(
+      "port <- Sys.getenv('RSTUDIO_SESSION_PORT')",
+      "reachable <- tryCatch({ close(socketConnection('127.0.0.1', as.integer(port), open = 'r+b', timeout = 5)); TRUE }, condition = function(cnd) FALSE)",
+      "writeLines(c(port, reachable), 'script-ran')",
+      sep = "; "
+   )
+
+   result <- runSessionScript(script = script)
+   expect_equal(result$status, 0L, info = result$output)
+   expect_true(result$scriptRan, info = result$output)
+
+   # the script wrote nothing to check; the failures above say why
+   if (!result$scriptRan)
+      return()
+
+   port <- result$scriptOutput[[1L]]
+   expect_match(port, "^[1-9][0-9]*$")
+   expect_equal(result$scriptOutput[[2L]], "TRUE", info = port)
+})
+
+test_that("a desktop session on www-port 0 doesn't restore a restart context for port 0", {
+   # the restart context is named for the port the session bound, so sessions
+   # started with www-port 0 in the same scope don't restore each other's
+   # (#19744)
+   script <- "writeLines(getOption('rstudio.tests.portZeroRestartContext', 'not restored'), 'script-ran')"
+
+   result <- runSessionScript(script = script, seedPortZeroRestartContext = TRUE)
+   expect_equal(result$status, 0L, info = result$output)
+   expect_true(result$scriptRan, info = result$output)
+
+   # the script wrote nothing to check; the failures above say why
+   if (!result$scriptRan)
+      return()
+
+   expect_equal(result$scriptOutput, "not restored", info = result$output)
+})
+
+test_that("a desktop session on a local stream publishes no session port", {
+   # sessions on Windows listen on TCP, whatever RS_LOCAL_PEER says
+   skip_on_os("windows")
+
+   # requests back into the session go to RSTUDIO_SESSION_PORT if it's set,
+   # and only otherwise to the stream, which is where this session listens
+   script <- "writeLines(Sys.getenv('RSTUDIO_SESSION_PORT', 'unset'), 'script-ran')"
+
+   result <- runSessionScript(script = script, localPeer = TRUE)
+   expect_equal(result$status, 0L, info = result$output)
+   expect_true(result$scriptRan, info = result$output)
+
+   # the script wrote nothing to check; the failures above say why
+   if (!result$scriptRan)
+      return()
+
+   expect_equal(result$scriptOutput, "unset", info = result$output)
+})
+
+test_that("a standalone session on www-port 0 gives help the port it listens on", {
+   # a server session takes help over from R: R's help server is given the
+   # session's port and never started. Given port 0, R starts one of its own
+   # the first time help is asked for
+   script <- paste(
+      "port <- Sys.getenv('RSTUDIO_STANDALONE_PORT')",
+      "writeLines(c(port, .rs.httpdPort(), suppressMessages(tools::startDynamicHelp(NA))), 'script-ran')",
+      sep = "; "
+   )
+
+   result <- runSessionScript(script = script,
+                              sessionArgs = c("--program-mode=server", "--standalone=1"))
+   expect_equal(result$status, 0L, info = result$output)
+   expect_true(result$scriptRan, info = result$output)
+
+   # the script wrote nothing to check; the failures above say why
+   if (!result$scriptRan)
+      return()
+
+   port <- result$scriptOutput[[1L]]
+   expect_match(port, "^[1-9][0-9]*$")
+   expect_equal(result$scriptOutput[-1L], c(port, port), info = result$output)
 })
 
 test_that("run-script stops when source-database initialization fails", {

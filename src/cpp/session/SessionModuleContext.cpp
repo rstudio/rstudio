@@ -1637,6 +1637,27 @@ shell_utils::ShellCommand rCmd(const core::FilePath& rBinDir)
 #endif
 }
 
+namespace {
+
+// set by startHttpConnectionListener, which also publishes it to child
+// processes (as RSTUDIO_SESSION_PORT or RSTUDIO_STANDALONE_PORT)
+std::string s_sessionPort;
+
+} // anonymous namespace
+
+void setSessionPort(const std::string& port)
+{
+   s_sessionPort = port;
+}
+
+std::string sessionPort()
+{
+   if (!s_sessionPort.empty())
+      return s_sessionPort;
+
+   return options().wwwPort();
+}
+
 // get the R local help port
 std::string rLocalHelpPort()
 {
