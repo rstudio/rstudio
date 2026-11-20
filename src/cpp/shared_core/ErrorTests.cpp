@@ -25,6 +25,9 @@
 
 #include <cerrno>
 #include <string>
+#include <system_error>
+#include <type_traits>
+#include <utility>
 
 #include <boost/system/error_code.hpp>
 
@@ -38,6 +41,57 @@ namespace rstudio {
 namespace core {
 namespace {
 
+// an error code enum with its own category, like boost::asio::error::misc_errors
+enum class TestErrc
+{
+   Failure = 21
+};
+
+class TestCategory : public boost::system::error_category
+{
+public:
+   const char* name() const noexcept override
+   {
+      return "test";
+   }
+
+   std::string message(int) const override
+   {
+      return "test failure";
+   }
+};
+
+const boost::system::error_category& testCategory()
+{
+   static TestCategory category;
+   return category;
+}
+
+boost::system::error_code make_error_code(TestErrc in_code)
+{
+   return boost::system::error_code(static_cast<int>(in_code), testCategory());
+}
+
+} // anonymous namespace
+} // namespace core
+} // namespace rstudio
+
+namespace RSTUDIO_BOOST_NAMESPACE {
+namespace system {
+
+template <>
+struct is_error_code_enum<rstudio::core::TestErrc>
+{
+   static const bool value = true;
+};
+
+} // namespace system
+} // namespace RSTUDIO_BOOST_NAMESPACE
+
+namespace rstudio {
+namespace core {
+namespace {
+
 using boost::system::errc::errc_t;
 
 void expectGenericError(const Error& in_error, errc_t in_errc)
@@ -46,6 +100,37 @@ void expectGenericError(const Error& in_error, errc_t in_errc)
    EXPECT_EQ(static_cast<int>(in_errc), in_error.getCode());
    EXPECT_EQ(boost::system::generic_category().message(in_errc), in_error.getMessage());
 }
+
+void expectTestError(const Error& in_error)
+{
+   EXPECT_EQ("test", in_error.getName());
+   EXPECT_EQ(static_cast<int>(TestErrc::Failure), in_error.getCode());
+   EXPECT_EQ("test failure", in_error.getMessage());
+}
+
+// whether systemError(E, ErrorLocation) compiles
+template <typename E, typename = void>
+struct CanMakeSystemError : std::false_type
+{
+};
+
+template <typename E>
+struct CanMakeSystemError<E, decltype(void(systemError(std::declval<E>(), std::declval<const ErrorLocation&>())))>
+   : std::true_type
+{
+};
+
+enum PlainEnum
+{
+   kPlainValue = 21
+};
+
+static_assert(CanMakeSystemError<int>::value, "an int is a system error code");
+static_assert(CanMakeSystemError<errc_t>::value, "an errc is a generic error");
+static_assert(CanMakeSystemError<TestErrc>::value, "an error code enum has its own category");
+static_assert(CanMakeSystemError<std::io_errc>::value, "a std error code enum converts to std::error_code");
+static_assert(!CanMakeSystemError<PlainEnum>::value, "a plain enum has no category");
+static_assert(!CanMakeSystemError<std::errc>::value, "a std::errc needs std::make_error_code()");
 
 } // anonymous namespace
 
@@ -93,7 +178,7 @@ TEST(ErrorTest, ErrcErrorsMatchEquivalentSystemErrors)
    // ... but system codes match only themselves
    EXPECT_NE(fileNotFound, pathNotFound);
 #else
-   Error fileNotFound = systemError(ENOENT, ErrorLocation());
+   Error fileNotFound = Error(boost::system::error_code(ENOENT, boost::system::system_category()), ErrorLocation());
 #endif
 
    EXPECT_EQ(fileNotFound, error);
@@ -120,6 +205,25 @@ TEST(ErrorTest, ErrcErrorsDoNotMatchUnrelatedErrors)
    EXPECT_NE(error, Error("OtherCategory", static_cast<int>(errc), ErrorLocation()));
    EXPECT_NE(Success(), error);
    EXPECT_NE(error, Success());
+}
+
+TEST(ErrorTest, ErrorCodeEnumsUseTheirOwnCategory)
+{
+   Error cause = systemError(boost::system::errc::io_error, ErrorLocation());
+
+   expectTestError(systemError(TestErrc::Failure, ErrorLocation()));
+   expectTestError(systemError(TestErrc::Failure, cause, ErrorLocation()));
+   expectTestError(systemError(TestErrc::Failure, "description", ErrorLocation()));
+   expectTestError(systemError(TestErrc::Failure, "description", cause, ErrorLocation()));
+
+   Error described = systemError(TestErrc::Failure, "description", cause, ErrorLocation());
+   EXPECT_EQ("description", described.getProperty("description"));
+   ASSERT_TRUE(described.hasCause());
+   EXPECT_EQ(cause, described.getCause());
+
+   // the category isn't system or generic, so the same number elsewhere doesn't match
+   EXPECT_NE(systemError(boost::system::errc::is_a_directory, ErrorLocation()),
+             systemError(TestErrc::Failure, ErrorLocation()));
 }
 
 } // namespace core

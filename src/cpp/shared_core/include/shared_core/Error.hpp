@@ -26,6 +26,7 @@
 
 #include <string>
 #include <system_error>
+#include <type_traits>
 #include <vector>
 
 #include <boost/current_function.hpp>
@@ -800,6 +801,111 @@ Error systemError(
    const std::string& in_description,
    const Error& in_cause,
    const ErrorLocation& in_location);
+
+// An enum argument would otherwise convert to int and be read as a system error code: route the enums that know
+// their error category (boost::system::is_error_code_enum, e.g. boost::asio::error::eof) through that category, and
+// reject the rest at compile time. boost::system::errc::errc_t has its own overloads above; std::error_code enums
+// convert to std::error_code.
+namespace detail {
+
+template <typename E>
+using EnableIfErrorCodeEnum = typename std::enable_if<boost::system::is_error_code_enum<E>::value, int>::type;
+
+template <typename E>
+using EnableIfEnumWithoutCategory = typename std::enable_if<
+   std::is_enum<E>::value &&
+      !boost::system::is_error_code_enum<E>::value &&
+      !std::is_error_code_enum<E>::value &&
+      !std::is_same<E, boost::system::errc::errc_t>::value,
+   int>::type;
+
+} // namespace detail
+
+/**
+ * @brief Function which creates an error from an error code enum, in the enum's own category.
+ *
+ * @param in_code            The error code. (e.g. boost::asio::error::eof)
+ * @param in_location        The location of the error.
+ *
+ * @return An error in the enum's category.
+ */
+template <typename E, detail::EnableIfErrorCodeEnum<E> = 0>
+Error systemError(E in_code, const ErrorLocation& in_location)
+{
+   return Error(boost::system::error_code(in_code), in_location);
+}
+
+/**
+ * @brief Function which creates an error from an error code enum, in the enum's own category.
+ *
+ * @param in_code            The error code. (e.g. boost::asio::error::eof)
+ * @param in_cause           The error which caused this error.
+ * @param in_location        The location of the error.
+ *
+ * @return An error in the enum's category.
+ */
+template <typename E, detail::EnableIfErrorCodeEnum<E> = 0>
+Error systemError(E in_code, const Error& in_cause, const ErrorLocation& in_location)
+{
+   return Error(boost::system::error_code(in_code), in_cause, in_location);
+}
+
+/**
+ * @brief Function which creates an error from an error code enum, in the enum's own category.
+ *
+ * @param in_code            The error code. (e.g. boost::asio::error::eof)
+ * @param in_description     A detailed description of the error. (e.g. "Failed to open socket while attempting to
+ *                           connect to Kubernetes.")
+ * @param in_location        The location of the error.
+ *
+ * @return An error in the enum's category.
+ */
+template <typename E, detail::EnableIfErrorCodeEnum<E> = 0>
+Error systemError(E in_code, const std::string& in_description, const ErrorLocation& in_location)
+{
+   Error error = systemError(in_code, in_location);
+   error.addProperty("description", in_description);
+   return error;
+}
+
+/**
+ * @brief Function which creates an error from an error code enum, in the enum's own category.
+ *
+ * @param in_code            The error code. (e.g. boost::asio::error::eof)
+ * @param in_description     A detailed description of the error. (e.g. "Failed to open socket while attempting to
+ *                           connect to Kubernetes.")
+ * @param in_cause           The error which caused this error.
+ * @param in_location        The location of the error.
+ *
+ * @return An error in the enum's category.
+ */
+template <typename E, detail::EnableIfErrorCodeEnum<E> = 0>
+Error systemError(
+   E in_code,
+   const std::string& in_description,
+   const Error& in_cause,
+   const ErrorLocation& in_location)
+{
+   Error error = systemError(in_code, in_cause, in_location);
+   error.addProperty("description", in_description);
+   return error;
+}
+
+template <typename E, detail::EnableIfEnumWithoutCategory<E> = 0>
+Error systemError(E in_code, const ErrorLocation& in_location) = delete;
+
+template <typename E, detail::EnableIfEnumWithoutCategory<E> = 0>
+Error systemError(E in_code, const Error& in_cause, const ErrorLocation& in_location) = delete;
+
+template <typename E, detail::EnableIfEnumWithoutCategory<E> = 0>
+Error systemError(E in_code, const std::string& in_description, const ErrorLocation& in_location) = delete;
+
+template <typename E, detail::EnableIfEnumWithoutCategory<E> = 0>
+Error systemError(
+   E in_code,
+   const std::string& in_description,
+   const Error& in_cause,
+   const ErrorLocation& in_location) = delete;
 
 /**
  * @brief Function which creates a system error associated with a particular system call.
