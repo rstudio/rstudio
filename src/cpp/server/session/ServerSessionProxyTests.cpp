@@ -691,11 +691,10 @@ TEST(ProxyLocalhostUidResolutionTests, FailsClosedForUnknownUser)
    EXPECT_TRUE(error);
 }
 
-// The local stream proxy lets a user who isn't in passwd yet through without
-// uid validation (PAM creates the account later), and rejects every other
-// lookup failure. It tells them apart with isNotFoundError(), so the lookup
-// must report a missing user that way; it once checked for permission_denied
-// long after the lookup had stopped reporting one.
+// A missing user is reported as not found, so callers can tell it from a
+// failed lookup of the password database. (The local stream proxy once let
+// permission_denied through as "no user", long after the lookup had stopped
+// reporting a missing user that way.)
 TEST(ProxyLocalhostUidResolutionTests, UnknownUserIsANotFoundError)
 {
    const std::string unknownUser = "rstudio-pro-11470-nonexistent-user";

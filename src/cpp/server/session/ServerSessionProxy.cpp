@@ -33,7 +33,6 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <shared_core/Error.hpp>
-#include <shared_core/FilePath.hpp>
 #include <shared_core/SafeConvert.hpp>
 #include <core/BoostErrors.hpp>
 #include <core/Log.hpp>
@@ -906,27 +905,21 @@ void proxyRequest(
    Error error = userIdForUsername(context.username, &uid);
    if (!error)
    {
-      // if the user exists on the system, do uid validation
       validateUid = uid;
    }
    else
    {
-      if (!isNotFoundError(error))
-      {
-         // we consider user not found to be an acceptable error as it should
-         // be created later by PAM profiles
-         //
-         // other errors indicate potential issues enumerating the passwd file
-         // so reject access since we cannot verify the identity of the user
-         Error permissionError = systemError(boost::system::errc::permission_denied, error, ERROR_LOCATION);
-         errorHandler(permissionError);
-         return;
-      }
+      // reject any lookup failure, including a user who isn't in passwd yet:
+      // any local user can create a socket in the streams directory, so
+      // without the uid we can't tell the session's stream from an impostor's
+      Error permissionError = systemError(boost::system::errc::permission_denied, error, ERROR_LOCATION);
+      errorHandler(permissionError);
+      return;
    }
 
    // create client
-   // if the user is available on the system pass in the uid for validation to ensure
-   // that we only connect to the socket if it was created by the user
+   // pass in the uid for validation to ensure that we only connect to the
+   // socket if it was created by the user
    boost::shared_ptr<http::LocalStreamAsyncClient> pStreamClient(new http::LocalStreamAsyncClient(
       ptrConnection->ioContext(),
       streamPath,
