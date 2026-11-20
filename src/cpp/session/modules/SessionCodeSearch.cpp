@@ -1818,7 +1818,7 @@ void fillFromCrossrefs(const std::string& term,
       }
       else if (type == "thm" || type == "lem" || type == "cor" ||
                type == "prp" || type == "cnj" || type == "def" ||
-               type == "exr" || type == "eq")
+               type == "exm" || type == "exr" || type == "eq")
       {
          sourceType = SourceItem::Math;
       }

@@ -284,6 +284,7 @@ class CodeSearchSuggestion implements Suggestion
       map.put("prp", CodeIcons.INSTANCE.function2x());
       map.put("cnj", CodeIcons.INSTANCE.function2x());
       map.put("def", CodeIcons.INSTANCE.function2x());
+      map.put("exm", CodeIcons.INSTANCE.function2x());
       map.put("exr", CodeIcons.INSTANCE.function2x());
       map.put("eq",  CodeIcons.INSTANCE.function2x());
       

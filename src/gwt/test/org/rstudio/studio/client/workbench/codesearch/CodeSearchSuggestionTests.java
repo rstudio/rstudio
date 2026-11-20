@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.codesearch;
 
+import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.studio.client.common.icons.code.CodeIcons;
 import org.rstudio.studio.client.workbench.codesearch.model.FileItem;
 import org.rstudio.studio.client.workbench.codesearch.model.SourceItem;
 
@@ -41,12 +43,17 @@ public class CodeSearchSuggestionTests extends GWTTestCase
 
    public void testXRefResultIconIsNamedByXRefType()
    {
-      SourceItem item = JsonUtils.safeEval(
-            "{\"type\": 10, \"name\": \"thm:pythagoras\", \"context\": \"~/book\", " +
-            "\"metadata\": {\"type\": \"xref\", \"xref\": " +
-            "{\"file\": \"01-intro.Rmd\", \"type\": \"thm\", \"id\": \"pythagoras\"}}}");
-      Element img = iconOf(new CodeSearchSuggestion(item, null));
+      Element img = iconOf(new CodeSearchSuggestion(xrefItem(10, "thm", "pythagoras"), null));
       assertEquals("Theorem", img.getAttribute("alt"));
+   }
+
+   // Examples are theorem-style blocks, so they share the theorem icon.
+   public void testExampleXRefShowsTheoremIcon()
+   {
+      Element img = iconOf(new CodeSearchSuggestion(xrefItem(10, "exm", "fizz"), null));
+      assertEquals(new ImageResource2x(CodeIcons.INSTANCE.function2x()).getSafeUri().asString(),
+            img.getAttribute("src"));
+      assertEquals("Example", img.getAttribute("alt"));
    }
 
    // The file name's extension already says what the file-type icon shows.
@@ -57,6 +64,15 @@ public class CodeSearchSuggestionTests extends GWTTestCase
       Element img = iconOf(new CodeSearchSuggestion(item));
       assertTrue(img.hasAttribute("alt"));
       assertEquals("", img.getAttribute("alt"));
+   }
+
+   private static SourceItem xrefItem(int type, String xrefType, String id)
+   {
+      return JsonUtils.safeEval(
+            "{\"type\": " + type + ", \"name\": \"" + xrefType + ":" + id + "\", " +
+            "\"context\": \"~/book\", \"metadata\": {\"type\": \"xref\", \"xref\": " +
+            "{\"file\": \"01-intro.Rmd\", \"type\": \"" + xrefType + "\", " +
+            "\"id\": \"" + id + "\"}}}");
    }
 
    private static Element iconOf(CodeSearchSuggestion suggestion)
