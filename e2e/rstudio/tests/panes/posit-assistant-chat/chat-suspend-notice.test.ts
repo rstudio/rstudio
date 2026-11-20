@@ -21,6 +21,7 @@ const restartingNotice = (page: Page): Locator =>
   page.getByText(/Restarting R\. Posit Assistant will reconnect/);
 
 const CHAT_IFRAME = "iframe[title='Posit Assistant']";
+const RETURN_TO_MAIN_BTN = '#rstudio_chat_return_to_main_button';
 
 /** The URL of the document currently loaded in the chat iframe ('' if none). */
 async function chatDocumentUrl(page: Page): Promise<string> {
@@ -197,5 +198,32 @@ test.describe.serial('Posit Assistant across suspend and restart', {
     }, { selector: CHAT_IFRAME, before: suspendedDocumentUrl }, { timeout: 30000 });
     await expect(lostBanner(page)).toBeHidden();
     await chatActions.waitForChatReady();
+  });
+
+  // #19699: the popped-out window shows the notice too.
+  test('popped-out chat shows the suspended notice until resume', async ({
+    rstudioPage: page,
+  }) => {
+    const satellitePromise = page.context().waitForEvent('page', { timeout: 30000 });
+    await executeCommand(page, 'popOutChat');
+    const satellite = await satellitePromise;
+    try {
+      await expect(satellite.locator(RETURN_TO_MAIN_BTN)).toBeVisible({ timeout: 15000 });
+      // Popping out saves client state
+      await waitForClientStateQuiet(page);
+
+      await executeInConsole(page, '.rs.suspendSession(force = FALSE)', { wait: false });
+      await expect(suspendedNotice(satellite)).toBeVisible({ timeout: 15000 });
+
+      await waitForSessionRestart(page);
+      await dismissBlockingModals(page);
+      await expect(suspendedNotice(satellite)).toBeHidden({ timeout: 15000 });
+    } finally {
+      if (!satellite.isClosed()) {
+        const closed = satellite.waitForEvent('close', { timeout: 30000 });
+        await executeCommand(page, 'returnChatToMain');
+        await closed;
+      }
+    }
   });
 });

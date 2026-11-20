@@ -48,6 +48,7 @@ import org.rstudio.studio.client.workbench.views.chat.events.ChatCheckForUpdates
 import org.rstudio.studio.client.workbench.views.chat.events.ChatPaneActiveEvent;
 import org.rstudio.studio.client.workbench.views.chat.events.ChatReturnToMainEvent;
 import org.rstudio.studio.client.workbench.views.chat.events.ChatSatelliteActionEvent;
+import org.rstudio.studio.client.workbench.views.chat.events.ChatSuspendedNoticeEvent;
 import org.rstudio.studio.client.workbench.views.chat.model.ChatSatelliteParams;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
@@ -332,9 +333,12 @@ public class ChatPresenter extends BasePresenter
                // startup) or another provider is selected, nothing will reconnect.
                if (cachedUrl_ != null && paiUtil_.isChatProviderPosit())
                {
-                  display_.showSuspendedMessage(restartingR_
+                  String notice = restartingR_
                      ? constants_.chatRestartingRNotice()
-                     : constants_.chatSessionSuspendedNotice());
+                     : constants_.chatSessionSuspendedNotice();
+                  display_.showSuspendedMessage(notice);
+                  if (poppedOut_)
+                     showSuspendedNoticeInSatellite(notice);
                }
             }
             else if (action == SessionSerializationAction.RESUME_SESSION)
@@ -1014,6 +1018,14 @@ public class ChatPresenter extends BasePresenter
          commands_.popOutChat().setEnabled(true);
          display_.hidePoppedOutPlaceholder();
       }
+   }
+
+   private void showSuspendedNoticeInSatellite(String notice)
+   {
+      WindowEx window = satelliteManager_.getSatelliteWindowObject(
+         ChatSatellite.NAME);
+      if (window != null)
+         events_.fireEventToSatellite(new ChatSuspendedNoticeEvent(notice), window);
    }
 
    private void updateSavedGeometry()
