@@ -2572,6 +2572,19 @@ core::Error UserPrefValues::setReuseSessionsForProjectLinks(bool val)
 }
 
 /**
+ * Whether the R version selector groups R installations by version and offers a type-down search, instead of a single flat menu. Applies to RStudio Pro and RStudio Workbench sessions that show the R version selector; ignored elsewhere.
+ */
+bool UserPrefValues::rVersionQuickPick()
+{
+   return readPref<bool>("r_version_quick_pick");
+}
+
+core::Error UserPrefValues::setRVersionQuickPick(bool val)
+{
+   return writePref("r_version_quick_pick", val);
+}
+
+/**
  * Whether to enable RStudio's version control system interface.
  */
 bool UserPrefValues::vcsEnabled()
@@ -4265,6 +4278,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kRootDocument,
       kShowUserHomePage,
       kReuseSessionsForProjectLinks,
+      kRVersionQuickPick,
       kVcsEnabled,
       kVcsAutorefresh,
       kGitExePath,
