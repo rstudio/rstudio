@@ -804,7 +804,7 @@ Error systemError(
 
 // An unscoped enum argument would otherwise convert to int and be read as a system error code: route the enums that
 // know their error category (boost::system::is_error_code_enum, e.g. boost::asio::error::eof) through that category,
-// and reject the rest at compile time (wrap a std error code enum in std::make_error_code()).
+// and reject the rest at compile time (convert a std error code enum with std::error_code(value)).
 // boost::system::errc::errc_t has its own overloads above.
 namespace detail {
 

@@ -162,7 +162,7 @@ static_assert(CanMakeSystemError<errc_t>::value, "an errc is a generic error");
 static_assert(CanMakeSystemError<TestErrc>::value, "an error code enum has its own category");
 static_assert(CanMakeSystemError<std::io_errc>::value, "a scoped std error code enum converts to std::error_code");
 static_assert(!CanMakeSystemError<PlainEnum>::value, "a plain enum has no category");
-static_assert(!CanMakeSystemError<StdOnlyErrc>::value, "an unscoped std error code enum needs std::make_error_code()");
+static_assert(!CanMakeSystemError<StdOnlyErrc>::value, "an unscoped std error code enum needs std::error_code(value)");
 static_assert(!CanMakeSystemError<std::errc>::value, "a std::errc needs std::make_error_code()");
 
 static_assert(CanMakeSystemCallError<int>::value, "a system call reports a system error code");
