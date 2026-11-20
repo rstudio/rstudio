@@ -41,6 +41,7 @@ public interface CodeSearchConstants extends com.google.gwt.i18n.client.Messages
     String propositionKind();
     String conjectureKind();
     String definitionKind();
+    String exampleKind();
     String exerciseKind();
     String equationKind();
 }

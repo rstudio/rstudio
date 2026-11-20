@@ -46,6 +46,8 @@ public class CodeSearchItemKindTests extends GWTTestCase
    {
       assertEquals("Theorem", CodeSearchItemKind.label(SourceItem.MATH, "thm"));
       assertEquals("Equation", CodeSearchItemKind.label(SourceItem.MATH, "eq"));
+      // the backend gives bookdown examples the NONE type
+      assertEquals("Example", CodeSearchItemKind.label(SourceItem.NONE, "exm"));
    }
 
    public void testHeadingXRefIncludesLevel()
@@ -59,9 +61,10 @@ public class CodeSearchItemKindTests extends GWTTestCase
       assertEquals("Table", CodeSearchItemKind.label(SourceItem.TABLE, "tbl"));
    }
 
-   // An unrecognized xref type has no known kind; it must not read as "Variable".
+   // An unrecognized xref type, such as a Quarto custom cross-reference type,
+   // has no known kind; it must not read as "Variable".
    public void testUnknownXRefTypeIsUnlabeled()
    {
-      assertEquals("", CodeSearchItemKind.label(SourceItem.NONE, "exm"));
+      assertEquals("", CodeSearchItemKind.label(SourceItem.NONE, "custom"));
    }
 }

@@ -70,6 +70,7 @@ class CodeSearchItemKind
       case "prp": return constants_.propositionKind();
       case "cnj": return constants_.conjectureKind();
       case "def": return constants_.definitionKind();
+      case "exm": return constants_.exampleKind();
       case "exr": return constants_.exerciseKind();
       case "eq":  return constants_.equationKind();
       default:    return "";
