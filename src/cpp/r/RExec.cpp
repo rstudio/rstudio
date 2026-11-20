@@ -16,6 +16,9 @@
 #define R_INTERNAL_FUNCTIONS
 #include <r/RExec.hpp>
 
+#include <algorithm>
+#include <cstring>
+
 #include <boost/scoped_ptr.hpp>
 
 #include <shared_core/FilePath.hpp>
@@ -693,6 +696,17 @@ void errorCall(SEXP call, const std::string& message)
 std::string getErrorMessage()
 {
    return R_curErrorBuf();
+}
+
+void setErrorMessage(const std::string& message)
+{
+   // R exports no setter (seterrmessage()'s is internal), but R_curErrorBuf()
+   // returns R's own buffer, which is writable; BUFSIZE in R's Defn.h
+   constexpr std::size_t kErrorBufSize = 8192;
+   char* pErrorBuf = const_cast<char*>(R_curErrorBuf());
+   std::size_t length = std::min(message.size(), kErrorBufSize - 1);
+   std::memcpy(pErrorBuf, message.data(), length);
+   pErrorBuf[length] = '\0';
 }
    
 

@@ -43,6 +43,7 @@
 #include <r/RRuntime.hpp>
 #include <r/RSexpInternal.hpp>
 #include <r/RUtil.hpp>
+#include <r/RVersion.hpp>
 #include <r/session/RSession.hpp>
 
 // clean out global definitions of TRUE and FALSE so we can
@@ -154,7 +155,8 @@ bool hasNul(const std::string& value)
 
 // NulCheckScope's state. it's kept here rather than in the scope, so that an R
 // error longjmping past a scope (skipping its destructor) leaves no pointer to
-// it behind, only create() still making NA for a nul
+// it behind, only create() still making NA for a nul until the next top-level
+// prompt (see endStrayNulCheckScopes())
 int s_nulCheckDepth = 0;
 bool s_nulFound = false;
 
@@ -247,14 +249,10 @@ SEXP caughtEvaluationHandler(SEXP conditionSEXP, void* data)
 
 // before R 3.6.2, R_tryCatch() transferred control for every condition, so a
 // warning or message would read as a failure; executeSafely() has the right
-// semantics there, at the cost of printing a caught error. only a true answer
-// is cached, as a check that fails (say, interrupted) also answers false
+// semantics there, at the cost of printing a caught error
 bool tryCatchIsSelective()
 {
-   static bool s_selective = false;
-   if (!s_selective)
-      s_selective = r::util::hasRequiredVersion("3.6.2");
-
+   static const bool s_selective = r::version() >= core::Version("3.6.2");
    return s_selective;
 }
 
@@ -296,12 +294,14 @@ SEXP evaluateCaught(SEXP (*evaluate)(CaughtEvaluation*), SEXP firstSEXP, SEXP se
    }
 
    // an interrupt is meant for R code that's running (as when a request is
-   // handled while the user's code runs), not for the lookup; re-arm it, so
-   // that code sees it when it next checks. at the top-level prompt (as in
-   // its change detection) none is running, and one still pending arrived as
-   // a command finished; the lookup uses it up, as R's jump to top level
-   // would have, rather than leave it for the user's next command
-   if (evaluation.interrupted && !r::session::atTopLevelPrompt())
+   // handled while the user's code runs, or a later callback runs from the
+   // idle loop at the prompt, #19236), not for the lookup; re-arm it, so
+   // that code sees it when it next checks. at the top-level prompt itself
+   // (as in its change detection) none is running, and one still pending
+   // arrived as a command finished; the lookup uses it up, as R's jump to
+   // top level would have, rather than leave it for the user's next command
+   bool codeRunning = !r::session::atTopLevelPrompt() || r::session::inputHandlersRunning();
+   if (evaluation.interrupted && codeRunning)
       r::exec::setInterruptsPending(true);
 
    if (evaluation.caught || evaluation.unbound)
@@ -1987,6 +1987,16 @@ NulCheckScope::~NulCheckScope()
 bool NulCheckScope::foundNul() const
 {
    return s_nulFound;
+}
+
+void endStrayNulCheckScopes()
+{
+   if (s_nulCheckDepth == 0)
+      return;
+
+   WLOGF("Ending {} NulCheckScope(s) an R error left active", s_nulCheckDepth);
+   s_nulCheckDepth = 0;
+   s_nulFound = false;
 }
 
 bool containsNul(const std::string& value)

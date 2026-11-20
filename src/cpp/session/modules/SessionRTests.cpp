@@ -23,6 +23,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <new>
 #include <set>
 #include <string>
 #include <thread>
@@ -709,9 +710,11 @@ TEST(SessionRTest, LookupsCatchErrorsFromBindings) {
    ASSERT_FALSE(error) << error.asString();
 
    bool wasAtTopLevelPrompt = r::session::atTopLevelPrompt();
-   BOOST_SCOPE_EXIT(wasAtTopLevelPrompt)
+   bool inputHandlersWereRunning = r::session::inputHandlersRunning();
+   BOOST_SCOPE_EXIT(wasAtTopLevelPrompt, inputHandlersWereRunning)
    {
       r::session::setAtTopLevelPrompt(wasAtTopLevelPrompt);
+      r::session::setInputHandlersRunning(inputHandlersWereRunning);
       r::exec::executeString(R"EOF(
          detach("rstudio-test-shadowed")
          rm(list = c(".rs.test.failingBinding", ".rs.test.failingPromise", ".rs.test.workingBinding",
@@ -770,13 +773,15 @@ TEST(SessionRTest, LookupsCatchErrorsFromBindings) {
 
    // a binding that warns is still read, as only errors and interrupts are
    // caught; one that signals an interrupt reads as unbound, and the
-   // interrupt is re-armed for R code that's running, but not at the
-   // top-level prompt, where none is; and a missing argument ends
-   // findFunction()'s search, as it ends R's
+   // interrupt is re-armed for R code that's running (a later callback the
+   // idle loop runs at the prompt, too), but not at the top-level prompt
+   // itself, where none is; and a missing argument ends findFunction()'s
+   // search, as it ends R's
    SEXP warningSEXP = nullptr;
    SEXP interruptingSEXP = R_GlobalEnv;
    bool interruptRearmed = false;
    bool interruptRearmedAtPrompt = true;
+   bool interruptRearmedForInputHandler = false;
    SEXP missingFunctionSEXP = R_GlobalEnv;
    lookupError = r::exec::executeSafely([&]()
    {
@@ -788,9 +793,16 @@ TEST(SessionRTest, LookupsCatchErrorsFromBindings) {
       r::exec::setInterruptsPending(false);
 
       r::session::setAtTopLevelPrompt(true);
+      r::session::setInputHandlersRunning(false);
       r::sexp::findVar(".rs.test.interruptingBinding", R_GlobalEnv);
       interruptRearmedAtPrompt = r::exec::interruptsPending();
       r::exec::setInterruptsPending(false);
+
+      r::session::setInputHandlersRunning(true);
+      r::sexp::findVar(".rs.test.interruptingBinding", R_GlobalEnv);
+      interruptRearmedForInputHandler = r::exec::interruptsPending();
+      r::exec::setInterruptsPending(false);
+      r::session::setInputHandlersRunning(false);
 
       missingFunctionSEXP = r::sexp::findFunction(".rs.test.missingBinding");
    });
@@ -805,6 +817,7 @@ TEST(SessionRTest, LookupsCatchErrorsFromBindings) {
       EXPECT_EQ(nullptr, interruptingSEXP);
       EXPECT_TRUE(interruptRearmed);
       EXPECT_FALSE(interruptRearmedAtPrompt);
+      EXPECT_TRUE(interruptRearmedForInputHandler);
    }
 
    // findFunction() forces the promise, catching the error
@@ -965,6 +978,34 @@ TEST(SessionRTest, CreateMakesNaForANulInANulCheckScope) {
    EXPECT_EQ("a", nameAfterScopes);
 }
 
+TEST(SessionRTest, StrayNulCheckScopesAreEnded) {
+   // an R error longjmping past a NulCheckScope skips its destructor, leaving
+   // create() making NA for a nul outside any scope until the top-level
+   // prompt ends the stray scope; placement new stands in for the jump
+   alignas(r::sexp::NulCheckScope) unsigned char storage[sizeof(r::sexp::NulCheckScope)];
+   new (storage) r::sexp::NulCheckScope();
+
+   bool strayMadeNa = false;
+   Error error = r::exec::executeSafely([&]()
+   {
+      r::sexp::Protect protect;
+      SEXP valueSEXP = r::sexp::create(std::string("a\0b", 3), &protect);
+      strayMadeNa = STRING_ELT(valueSEXP, 0) == NA_STRING;
+   });
+   r::sexp::endStrayNulCheckScopes();
+   ASSERT_FALSE(error) << error.asString();
+   EXPECT_TRUE(strayMadeNa);
+
+   // once it's ended, R raises its error for the nul again
+   error = r::exec::executeSafely([&]()
+   {
+      r::sexp::Protect protect;
+      r::sexp::create(std::string("a\0b", 3), &protect);
+   });
+   EXPECT_TRUE(error);
+   EXPECT_NE(std::string::npos, error.getProperty("errormsg").find("embedded nul")) << error.asString();
+}
+
 TEST(SessionRTest, CreateTurnsACyclicYamlAliasIntoNull) {
    // an alias can refer to a node that contains it; following it recursed
    // until the stack overflowed, crashing the session (as for a _quarto.yml
@@ -1072,6 +1113,26 @@ TEST(SessionRTest, InvokeRpcHandlerAnswersARequestAnRErrorInterrupted) {
    EXPECT_TRUE(responseError == r::errc::CodeExecutionError) << responseError.asString();
    EXPECT_NE(std::string::npos, responseError.getProperty("errormsg").find("handler failed"));
 
+   // and again, when R's last message is already that error (a client
+   // retrying a request that fails the same way): the error isn't taken for
+   // an interrupt, which leaves the message as it was
+   reset();
+   EXPECT_TRUE(invoke(failing));
+   EXPECT_EQ(1, responses);
+   EXPECT_NE(std::string::npos, responseError.getProperty("errormsg").find("handler failed"))
+         << responseError.getProperty("errormsg");
+
+   // what geterrmessage() returns in R, which the backstop clears while a
+   // handler runs and then restores
+   auto lastErrorMessage = []()
+   {
+      std::string message;
+      Error error = r::exec::evaluateString("base::geterrmessage()", &message);
+      if (error)
+         return error.asString();
+      return message;
+   };
+
 #ifndef _WIN32
    // an interrupt writes no error message, so the reply doesn't quote the one
    // R reported last; Rf_onintr() is R's own path for a pending interrupt
@@ -1100,6 +1161,9 @@ TEST(SessionRTest, InvokeRpcHandlerAnswersARequestAnRErrorInterrupted) {
    std::string interruptedMessage = responseError.getProperty("errormsg");
    EXPECT_EQ(std::string::npos, interruptedMessage.find("a stale error")) << interruptedMessage;
    EXPECT_NE(std::string::npos, interruptedMessage.find("interrupted")) << interruptedMessage;
+
+   // R's last message is still the one from before the request
+   EXPECT_NE(std::string::npos, lastErrorMessage().find("a stale error")) << lastErrorMessage();
 #endif
 
    // one that responded before the error isn't answered again
@@ -1130,6 +1194,12 @@ TEST(SessionRTest, InvokeRpcHandlerAnswersARequestAnRErrorInterrupted) {
    EXPECT_TRUE(invoke(responds));
    EXPECT_EQ(1, responses);
    EXPECT_NE(std::string::npos, responseError.getProperty("errormsg").find("failed before sending"));
+
+   // a handler that raises no R error leaves R's last message as it was
+   reset();
+   EXPECT_FALSE(invoke(responds));
+   EXPECT_EQ(1, responses);
+   EXPECT_NE(std::string::npos, lastErrorMessage().find("failed before sending")) << lastErrorMessage();
 
    // a response another thread has claimed, but not yet sent, is left to it:
    // the backstop doesn't answer, and that thread's response is the one sent

@@ -210,12 +210,22 @@ struct RpcHandlerInvocation
    // leave R's context stack pointing at its frame; it's rethrown after
    std::exception_ptr exception;
 
-   // R's error message from before the handler ran. an interrupt writes no
-   // message, and clears R's pending flag and RStudio's wasInterrupted (the
-   // newline R prints) before it unwinds, so an unchanged message is how the
-   // backstop tells one from an error
+   // R's error message from before the handler ran, which is cleared while it
+   // runs. an interrupt writes no message, and clears R's pending flag and
+   // RStudio's wasInterrupted (the newline R prints) before it unwinds, so an
+   // empty message is how the backstop tells one from an error; comparing
+   // with this one instead would take a repeat of the same error for one
    std::string previousErrorMessage;
 };
+
+// puts back R's error message from before the handler ran, unless the handler
+// wrote another: R code the request was handled during (the user's, say) may
+// read it with geterrmessage()
+void restorePreviousErrorMessage(const RpcHandlerInvocation& invocation)
+{
+   if (r::exec::getErrorMessage().empty())
+      r::exec::setErrorMessage(invocation.previousErrorMessage);
+}
 
 SEXP invokeRpcHandlerImpl(void* data)
 {
@@ -242,6 +252,10 @@ void answerInterruptedRpc(void* data, Rboolean jump)
    RpcHandlerInvocation* pInvocation = static_cast<RpcHandlerInvocation*>(data);
    RpcDelivery* pDelivery = pInvocation->pDelivery;
 
+   std::string errorMessage = r::exec::getErrorMessage();
+   bool interrupted = errorMessage.empty();
+   restorePreviousErrorMessage(*pInvocation);
+
    // the unwinding carries on past invokeRpcHandler(), so held after-response
    // work is dropped, as the handler's remaining work is, and a continuation
    // the handler kept runs its own
@@ -259,9 +273,8 @@ void answerInterruptedRpc(void* data, Rboolean jump)
    try
    {
       const std::string& method = pInvocation->pRequest->method;
-      std::string errorMessage = r::exec::getErrorMessage();
       Error error = r::rCodeExecutionError(
-               errorMessage == pInvocation->previousErrorMessage ?
+               interrupted ?
                   "R code was interrupted while handling '" + method + "'" :
                   "R error while handling '" + method + "': " + errorMessage,
                ERROR_LOCATION);
@@ -335,7 +348,9 @@ void invokeRpcHandler(const json::JsonRpcAsyncFunction& handler,
    r::sexp::Protect protect;
    SEXP tokenSEXP;
    protect.add(tokenSEXP = R_MakeUnwindCont());
+   r::exec::setErrorMessage(std::string());
    R_UnwindProtect(invokeRpcHandlerImpl, &invocation, answerInterruptedRpc, &invocation, tokenSEXP);
+   restorePreviousErrorMessage(invocation);
    pDelivery->deferAfterResponse = false;
 
    boost::function<void()> afterResponse;

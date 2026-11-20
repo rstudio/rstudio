@@ -235,6 +235,10 @@ private:
    bool enclosingFoundNul_;
 };
 
+// ends any NulCheckScope an R error longjmped past, skipping its destructor;
+// called at R's top-level prompt, where none can still be active
+void endStrayNulCheckScopes();
+
 bool containsNul(const std::string& value);
 
 // Create a raw vector (binary data)

@@ -353,6 +353,11 @@ void error(const std::string& message);
 void errorCall(SEXP call, const std::string& message);
 std::string getErrorMessage();
 
+// sets the message geterrmessage() returns, in R's native encoding (as
+// getErrorMessage() returns it); unlike seterrmessage(), it runs no R code,
+// so it can't be interrupted
+void setErrorMessage(const std::string& message);
+
 bool interruptsPending();
 void setInterruptsPending(bool pending);
 void checkUserInterrupt();

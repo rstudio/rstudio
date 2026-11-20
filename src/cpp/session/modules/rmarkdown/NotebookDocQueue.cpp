@@ -158,7 +158,7 @@ core::Error NotebookDocQueue::fromJson(const core::json::Object& source,
    if (r::sexp::containsNul(docId))
       return Error(json::errc::ParamInvalid, ERROR_LOCATION);
 
-   *pQueue =boost::make_shared<NotebookDocQueue>(docId, jobDesc, workingDir,
+   *pQueue = boost::make_shared<NotebookDocQueue>(docId, jobDesc, workingDir,
          static_cast<CommitMode>(commitMode), pixelWidth, charWidth,
          maxUnits);
 
