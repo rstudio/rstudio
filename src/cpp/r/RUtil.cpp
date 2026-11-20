@@ -306,8 +306,11 @@ core::Error iconvstrImpl(const std::string& value,
          }
          else
          {
+            // read errno before Riconv_close() can overwrite it
+            int errorCode = R_ERRNO;
             ::Riconv_close(handle);
-            Error error = genericError(R_ERRNO, ERROR_LOCATION);
+
+            Error error = genericError(errorCode, ERROR_LOCATION);
             error.addProperty("str", value);
             error.addProperty("len", gsl::narrow_cast<int>(value.length()));
             error.addProperty("from", from);

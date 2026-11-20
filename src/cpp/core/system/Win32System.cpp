@@ -595,11 +595,14 @@ Error captureCommand(const std::string& command, std::string* pOutput)
    // close file
    if (::_pclose(fp) == -1)
    {
+      // read errno before LOG_ERROR's file I/O can overwrite it
+      int errorCode = errno;
+
       // log existing error before overwriting it
       if (error)
          LOG_ERROR(error);
 
-      error = genericError(errno, ERROR_LOCATION);
+      error = genericError(errorCode, ERROR_LOCATION);
    }
 
    // return status

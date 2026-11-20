@@ -50,8 +50,15 @@ TEST(SocketUtils, ConnectionTerminatedErrorsMatchEitherCategory)
    expectBothForms(isConnectionTerminatedError, asio_error::broken_pipe, errc::broken_pipe);
 
    EXPECT_TRUE(isConnectionTerminatedError(Error(asio_error::make_error_code(asio_error::eof), ERROR_LOCATION)));
+   EXPECT_TRUE(isConnectionTerminatedError(systemError(errc::no_such_file_or_directory, ERROR_LOCATION)));
    EXPECT_FALSE(isConnectionTerminatedError(systemError(errc::permission_denied, ERROR_LOCATION)));
    EXPECT_FALSE(isConnectionTerminatedError(Success()));
+
+#ifdef _WIN32
+   // see #19756 for whether ERROR_PATH_NOT_FOUND should count too
+   EXPECT_TRUE(isConnectionTerminatedError(systemError(ERROR_FILE_NOT_FOUND, ERROR_LOCATION)));
+   EXPECT_FALSE(isConnectionTerminatedError(systemError(ERROR_PATH_NOT_FOUND, ERROR_LOCATION)));
+#endif
 }
 
 TEST(SocketUtils, ConnectionUnavailableErrorsMatchEitherCategory)

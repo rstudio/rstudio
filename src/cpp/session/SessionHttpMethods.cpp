@@ -1477,7 +1477,7 @@ WaitResult startHttpConnectionListenerWithTimeout()
    // available; therefore, retry connection, but only for address_in_use error
    if (!error)
        return WaitResult(WaitSuccess, Success());
-   else if (error != boost::system::error_code(boost::system::errc::address_in_use, boost::system::generic_category()))
+   else if (!error.matches(boost::system::errc::address_in_use))
       return WaitResult(WaitError, error);
    else
       return WaitResult(WaitContinue, error);

@@ -25,7 +25,6 @@
 #endif
 
 #include <shared_core/Error.hpp>
-#include <shared_core/FilePath.hpp>
 
 namespace rstudio {
 namespace core {
@@ -81,9 +80,14 @@ inline bool isConnectionTerminatedError(const core::Error& error)
    bool shortRead = error == boost::asio::ssl::error::stream_truncated; // "short read"
    bool badFile = error.matches(boost::system::errc::bad_file_descriptor);
    bool brokenPipe = error.matches(boost::system::errc::broken_pipe);
-   bool noFile = isNotFoundError(error);
+   bool noFile = error.matches(boost::system::errc::no_such_file_or_directory);
 
 #ifdef _WIN32
+   // of the native not-found codes, only ERROR_FILE_NOT_FOUND, as before; see
+   // #19756 for whether ERROR_PATH_NOT_FOUND and the others belong here too
+   if (error.getName() == boost::system::system_category().name())
+      noFile = error == boost::system::windows_error::file_not_found;
+
    int ec = error.getCode();
    bool noData = (error.getName() == boost::system::system_category().name()) && (ec == ERROR_NO_DATA);
 #else
