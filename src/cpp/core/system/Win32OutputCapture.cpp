@@ -139,11 +139,7 @@ void standardStreamCaptureThread(
 
 Error ioError(const std::string& description, const ErrorLocation& location)
 {
-   boost::system::error_code ec(boost::system::errc::io_error,
-                                boost::system::system_category());
-   Error error(ec, location);
-   error.addProperty("description", description);
-   return error;
+   return systemError(boost::system::errc::io_error, description, location);
 }
 
 Error redirectToPipe(DWORD stdHandle,

@@ -802,10 +802,10 @@ Error systemError(
    const Error& in_cause,
    const ErrorLocation& in_location);
 
-// An enum argument would otherwise convert to int and be read as a system error code: route the enums that know
-// their error category (boost::system::is_error_code_enum, e.g. boost::asio::error::eof) through that category, and
-// reject the rest at compile time. boost::system::errc::errc_t has its own overloads above; std::error_code enums
-// convert to std::error_code.
+// An unscoped enum argument would otherwise convert to int and be read as a system error code: route the enums that
+// know their error category (boost::system::is_error_code_enum, e.g. boost::asio::error::eof) through that category,
+// and reject the rest at compile time (wrap a std error code enum in std::make_error_code()).
+// boost::system::errc::errc_t has its own overloads above.
 namespace detail {
 
 template <typename E>
@@ -814,10 +814,13 @@ using EnableIfErrorCodeEnum = typename std::enable_if<boost::system::is_error_co
 template <typename E>
 using EnableIfEnumWithoutCategory = typename std::enable_if<
    std::is_enum<E>::value &&
+      std::is_convertible<E, int>::value &&
       !boost::system::is_error_code_enum<E>::value &&
-      !std::is_error_code_enum<E>::value &&
       !std::is_same<E, boost::system::errc::errc_t>::value,
    int>::type;
+
+template <typename E>
+using EnableIfEnum = typename std::enable_if<std::is_enum<E>::value, int>::type;
 
 } // namespace detail
 
@@ -936,6 +939,18 @@ Error systemCallError(
    int in_code,
    const std::string& in_message,
    const ErrorLocation& in_location);
+
+// systemCallError() reads its code as a system error code, so an enum (even an errc) has no place there; use
+// systemError() with a description instead.
+template <typename E, detail::EnableIfEnum<E> = 0>
+Error systemCallError(const std::string& in_function, E in_code, const ErrorLocation& in_location) = delete;
+
+template <typename E, detail::EnableIfEnum<E> = 0>
+Error systemCallError(
+   const std::string& in_function,
+   E in_code,
+   const std::string& in_message,
+   const ErrorLocation& in_location) = delete;
 
 /**
  * @brief Function which creates an unknown error. This should be used only when a specific error code cannot be

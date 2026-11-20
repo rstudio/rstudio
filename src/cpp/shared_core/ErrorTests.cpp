@@ -72,9 +72,24 @@ boost::system::error_code make_error_code(TestErrc in_code)
    return boost::system::error_code(static_cast<int>(in_code), testCategory());
 }
 
+// an unscoped error code enum known only to std, so it would convert to int
+enum StdOnlyErrc
+{
+   kStdOnlyFailure = 21
+};
+
 } // anonymous namespace
 } // namespace core
 } // namespace rstudio
+
+namespace std {
+
+template <>
+struct is_error_code_enum<rstudio::core::StdOnlyErrc> : true_type
+{
+};
+
+} // namespace std
 
 namespace RSTUDIO_BOOST_NAMESPACE {
 namespace system {
@@ -120,6 +135,22 @@ struct CanMakeSystemError<E, decltype(void(systemError(std::declval<E>(), std::d
 {
 };
 
+// whether systemCallError(name, E, ErrorLocation) compiles
+template <typename E, typename = void>
+struct CanMakeSystemCallError : std::false_type
+{
+};
+
+template <typename E>
+struct CanMakeSystemCallError<
+   E,
+   decltype(void(systemCallError(
+      std::declval<const std::string&>(),
+      std::declval<E>(),
+      std::declval<const ErrorLocation&>())))> : std::true_type
+{
+};
+
 enum PlainEnum
 {
    kPlainValue = 21
@@ -128,9 +159,14 @@ enum PlainEnum
 static_assert(CanMakeSystemError<int>::value, "an int is a system error code");
 static_assert(CanMakeSystemError<errc_t>::value, "an errc is a generic error");
 static_assert(CanMakeSystemError<TestErrc>::value, "an error code enum has its own category");
-static_assert(CanMakeSystemError<std::io_errc>::value, "a std error code enum converts to std::error_code");
+static_assert(CanMakeSystemError<std::io_errc>::value, "a scoped std error code enum converts to std::error_code");
 static_assert(!CanMakeSystemError<PlainEnum>::value, "a plain enum has no category");
+static_assert(!CanMakeSystemError<StdOnlyErrc>::value, "an unscoped std error code enum needs std::make_error_code()");
 static_assert(!CanMakeSystemError<std::errc>::value, "a std::errc needs std::make_error_code()");
+
+static_assert(CanMakeSystemCallError<int>::value, "a system call reports a system error code");
+static_assert(!CanMakeSystemCallError<errc_t>::value, "an errc isn't a system error code");
+static_assert(!CanMakeSystemCallError<PlainEnum>::value, "a plain enum isn't a system error code");
 
 } // anonymous namespace
 

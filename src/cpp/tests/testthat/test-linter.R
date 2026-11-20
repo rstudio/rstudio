@@ -152,14 +152,22 @@ test_that("C++ sources don't pass errno values as system error codes", {
 
    # systemError(int) and systemCallError(name, int) build a system-category
    # code, which holds Win32 error codes on Windows, so an errno value passed
-   # to them reads as an unrelated Win32 error there. pass an errc instead
-   # (systemError(boost::system::errc::invalid_argument, ...)); a POSIX-only
-   # test that needs the native code can build it with system_category()
+   # to them reads as an unrelated Win32 error there. for an errno constant,
+   # use systemError(boost::system::errc::invalid_argument, ...), with a
+   # description in place of systemCallError()'s name; for a C runtime errno,
+   # use systemError(std::error_code(errno, std::generic_category()), ...).
+   # a POSIX-only test that needs the native code can build it with
+   # system_category() from the errno constant
    errnoConstant <- "\\bsystem(Call)?Error\\(\\s*(\"[^\"]*\"\\s*,\\s*)?E[A-Z0-9]+\\s*[,)]"
 
-   # in Win32-only files, errno comes from the C runtime: use
-   # std::error_code(errno, std::generic_category())
+   # R_ERRNO is the C runtime's errno on every platform
+   rErrno <- "\\bsystem(Call)?Error\\(\\s*(\"[^\"]*\"\\s*,\\s*)?(R_ERRNO|MSVC_ERRNO)\\b"
+
+   # in Win32-only files, errno comes from the C runtime
    crtErrno <- "\\bsystem(Call)?Error\\(\\s*(\"[^\"]*\"\\s*,\\s*)?errno\\b"
+
+   # an errc is an errno value, never a system code
+   errcAsSystem <- "\\berrc::[a-z_]+\\s*,\\s*(boost::system::|std::)?system_category\\(\\)"
 
    offending <- c(
       "systemError(EINVAL, ERROR_LOCATION)",
@@ -174,7 +182,11 @@ test_that("C++ sources don't pass errno values as system error codes", {
       "systemError(boost::system::errc::io_error, ERROR_LOCATION)"
    )
    expect_false(any(grepl(errnoConstant, allowed, perl = TRUE)))
+
+   expect_true(grepl(rErrno, "systemError(R_ERRNO, ERROR_LOCATION)", perl = TRUE))
    expect_true(grepl(crtErrno, "systemCallError(\"_popen\", errno, ERROR_LOCATION)", perl = TRUE))
+   expect_true(grepl(errcAsSystem, "error_code(errc::io_error,\n   boost::system::system_category())", perl = TRUE))
+   expect_false(grepl(errcAsSystem, "error_code(errc::io_error, generic_category())", perl = TRUE))
 
    cppFiles <- list.files(
       root,
@@ -187,7 +199,7 @@ test_that("C++ sources don't pass errno values as system error codes", {
    for (cppFile in cppFiles) {
 
       contents <- paste(readLines(cppFile, warn = FALSE), collapse = "\n")
-      patterns <- errnoConstant
+      patterns <- c(errnoConstant, rErrno, errcAsSystem)
       if (startsWith(basename(cppFile), "Win32"))
          patterns <- c(patterns, crtErrno)
 

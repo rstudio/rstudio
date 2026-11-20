@@ -274,9 +274,10 @@ core::Error iconvstrImpl(const std::string& value,
    std::vector<char> output;
    output.reserve(value.length());
 
+   // R_ERRNO is the C runtime's errno, also on Windows: a generic code, not a system one
    void* handle = ::Riconv_open(to.c_str(), from.c_str());
    if (handle == (void*)(-1))
-      return systemError(R_ERRNO, ERROR_LOCATION);
+      return systemError(std::error_code(R_ERRNO, std::generic_category()), ERROR_LOCATION);
 
    const char* pIn = value.data();
    size_t inBytes = value.size();
@@ -289,25 +290,26 @@ core::Error iconvstrImpl(const std::string& value,
       size_t outBytes = sizeof(buffer);
 
       size_t result = ::Riconv(handle, &pIn, &inBytes, &pOut, &outBytes);
+      int errorNumber = R_ERRNO;
       if (buffer != pOut)
          output.insert(output.end(), buffer, pOut);
 
       if (result == (size_t)(-1))
       {
-         if ((R_ERRNO == EILSEQ || R_ERRNO == EINVAL) && allowSubstitution)
+         if ((errorNumber == EILSEQ || errorNumber == EINVAL) && allowSubstitution)
          {
             output.push_back('?');
             pIn++;
             inBytes--;
          }
-         else if (R_ERRNO == E2BIG && pInOrig != pIn)
+         else if (errorNumber == E2BIG && pInOrig != pIn)
          {
             continue;
          }
          else
          {
             ::Riconv_close(handle);
-            Error error = systemError(R_ERRNO, ERROR_LOCATION);
+            Error error = systemError(std::error_code(errorNumber, std::generic_category()), ERROR_LOCATION);
             error.addProperty("str", value);
             error.addProperty("len", gsl::narrow_cast<int>(value.length()));
             error.addProperty("from", from);

@@ -129,11 +129,22 @@ TEST(ZlibTest, InvalidCompressedStringFailsToDecompress)
    std::string uncompressed;
    Error error = decompressString(compressed, &uncompressed);
    ASSERT_TRUE(error);
+}
+
+TEST(ZlibTest, DecompressErrorsAreZlibErrors)
+{
+   // a valid header check, but compression method 0, which isn't deflate
+   const std::vector<unsigned char> compressed = {0x00, 0x00};
+
+   std::string uncompressed;
+   Error error = decompressString(compressed, &uncompressed);
+   ASSERT_TRUE(error);
 
    // a zlib code, not an errno value or a Win32 error code
    EXPECT_EQ("zlib", error.getName());
-   EXPECT_LT(error.getCode(), 0);
-   EXPECT_EQ(std::string(zError(error.getCode())), error.getMessage());
+   EXPECT_EQ(Z_DATA_ERROR, error.getCode());
+   EXPECT_EQ(std::string(zError(Z_DATA_ERROR)), error.getMessage());
+   EXPECT_EQ("ZLib inflation error", error.getProperty("description"));
 }
 
 TEST(ZlibTest, GzipStreambufDecompressesGzipStream)

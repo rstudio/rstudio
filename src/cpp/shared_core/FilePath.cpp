@@ -791,7 +791,7 @@ Error FilePath::completeChildPath(const std::string& in_filePath, FilePath& out_
                "absolute path not permitted",
                boost::system::error_code(
                   boost::system::errc::no_such_file_or_directory,
-                  boost::system::system_category()));
+                  boost::system::generic_category()));
          }
 
          out_childPath = completePath(in_filePath);
@@ -802,7 +802,7 @@ Error FilePath::completeChildPath(const std::string& in_filePath, FilePath& out_
                "child path must be inside parent path",
                boost::system::error_code(
                   boost::system::errc::no_such_file_or_directory,
-                  boost::system::system_category()));
+                  boost::system::generic_category()));
          }
       }
    }

@@ -918,11 +918,7 @@ void proxyRequest(
          //
          // other errors indicate potential issues enumerating the passwd file
          // so reject access since we cannot verify the identity of the user
-         Error permissionError(boost::system::error_code(
-                                  boost::system::errc::permission_denied,
-                                  boost::system::system_category()),
-                               error,
-                               ERROR_LOCATION);
+         Error permissionError = systemError(boost::system::errc::permission_denied, error, ERROR_LOCATION);
          errorHandler(permissionError);
          return;
       }
