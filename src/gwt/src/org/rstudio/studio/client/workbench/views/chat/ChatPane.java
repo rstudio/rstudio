@@ -1398,7 +1398,8 @@ public class ChatPane
       String chatUpdateMessage();
    }
 
-   private static Resources RES = GWT.create(Resources.class);
+   // Shared with ChatSatelliteWindow, whose suspended notice matches the pane's
+   static final Resources RES = GWT.create(Resources.class);
    static
    {
       RES.styles().ensureInjected();
