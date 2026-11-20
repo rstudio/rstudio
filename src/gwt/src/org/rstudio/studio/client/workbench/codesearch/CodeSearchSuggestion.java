@@ -46,8 +46,9 @@ class CodeSearchSuggestion implements Suggestion
       ImageResource image = 
          fileTypeRegistry_.getIconForFilename(fileItem.getFilename()).getImageResource();
    
+      // decorative: the file name's extension already conveys its type
       displayString_ = createDisplayString(
-            image, RES.styles().fileImage(),
+            image, "", RES.styles().fileImage(),
             fileItem.getFilename(), RES.styles().fileItem(),
             null, null,
             null, null);
@@ -127,6 +128,9 @@ class CodeSearchSuggestion implements Suggestion
       
       // get icon
       ImageResource image = iconForSourceItem(sourceItem);
+      String altText = CodeSearchItemKind.label(
+            sourceItem.getType(),
+            sourceItem.hasXRef() ? sourceItem.getXRef().getType() : null);
       
       // adjust context for parent context
       String context = sourceItem.getContext();
@@ -156,7 +160,7 @@ class CodeSearchSuggestion implements Suggestion
       if (sourceItem.hasXRef())
       {
          displayString_ = createDisplayString(
-               image, RES.styles().xrefImage(),
+               image, altText, RES.styles().xrefImage(),
                name, RES.styles().xrefItem(),
                sourceItem.getExtraInfo(), RES.styles().itemContext(),
                context, RES.styles().itemContext());
@@ -164,7 +168,7 @@ class CodeSearchSuggestion implements Suggestion
       else if (image.getHeight() < 16)
       {
          displayString_ = createDisplayString(
-               image, RES.styles().smallCodeImage(),
+               image, altText, RES.styles().smallCodeImage(),
                name, RES.styles().smallCodeItem(),
                sourceItem.getExtraInfo(), RES.styles().itemContext(),
                context, RES.styles().smallItemContext());
@@ -172,7 +176,7 @@ class CodeSearchSuggestion implements Suggestion
       else
       {
          displayString_ = createDisplayString(
-               image, RES.styles().codeImage(),
+               image, altText, RES.styles().codeImage(),
                name, RES.styles().codeItem(),
                sourceItem.getExtraInfo(), RES.styles().itemContext(),
                context, RES.styles().itemContext());
@@ -196,8 +200,9 @@ class CodeSearchSuggestion implements Suggestion
       FileIcon icon = fileTypeRegistry_.getIconForFilename(fileName);
       ImageResource image = icon.getImageResource();
       
+      // decorative: the file name's extension already conveys its type
       displayString_ = createDisplayString(
-            image, RES.styles().fileImage(),
+            image, "", RES.styles().fileImage(),
             displayString, RES.styles().fileItem(),
             null, null,
             null, null);
@@ -220,6 +225,7 @@ class CodeSearchSuggestion implements Suggestion
    }
    
    private String createDisplayString(ImageResource image,
+                                      String altText,
                                       String imageStyle,
                                       String name,
                                       String nameStyle,
@@ -233,6 +239,7 @@ class CodeSearchSuggestion implements Suggestion
       sb.append(SafeHtmlUtil.createOpenTag("div", "class", imageStyle));
       sb.append(SafeHtmlUtil.createOpenTag("img",
             "src", image.getSafeUri().asString(),
+            "alt", altText,
             "width", Integer.toString(image.getWidth()),
             "height", Integer.toString(image.getHeight())));
       sb.appendHtmlConstant("</img>");
