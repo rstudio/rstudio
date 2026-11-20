@@ -361,7 +361,7 @@ public:
    bool operator==(const boost::system::error_code& in_ec) const;
 
    /**
-    * @brief Inequality operator. Two errors are equal if their codes and names are the same.
+    * @brief Inequality operator. The negation of operator==.
     *
     * @param in_other   The error to compare with this error.
     *
@@ -370,7 +370,7 @@ public:
    bool operator!=(const Error& in_other) const;
 
    /**
-    * @brief Inequality operator. Two errors are equal if their codes and names are the same.
+    * @brief Inequality operator. The negation of operator==.
     *
     * @param in_ec   The boost error code to compare with this error.
     *
