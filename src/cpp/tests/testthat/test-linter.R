@@ -252,22 +252,6 @@ windowsOnlyLines <- function(lines, windowsOnlyFile) {
 
 test_that("C++ sources capture and compare error codes with their categories", {
 
-   # systemError(int) and systemCallError(name, int) build a system-category
-   # code, which holds Win32 error codes on Windows, so an errno value passed
-   # to them reads as an unrelated Win32 error there. for an errno constant,
-   # use systemError(boost::system::errc::invalid_argument, ...), with a
-   # description in place of systemCallError()'s name; for a C runtime errno,
-   # save it right after the failed call (ERROR_LOCATION may be evaluated
-   # first and change it), then pass it to genericError(). a POSIX-only test
-   # that needs the native code can build it with system_category() from the
-   # errno constant
-   # the code is systemError()'s first argument, systemCallError()'s second
-   codeArgument <- "(\\bsystemError\\(|\\bsystemCallError\\([^,()]*,)\\s*"
-   errnoConstant <- paste0(codeArgument, "E[A-Z0-9]+\\s*[,)]")
-
-   # R_ERRNO is the C runtime's errno on every platform
-   rErrno <- paste0(codeArgument, "(R_ERRNO|MSVC_ERRNO)\\b")
-
    # an errc is an errno value, never a system code
    errcAsSystem <- "\\berrc::[a-z_]+\\s*,\\s*(boost::system::|std::)?system_category\\(\\)"
 
@@ -279,8 +263,6 @@ test_that("C++ sources capture and compare error codes with their categories", {
       "|\\berrc::[a-z_]+\\s*[!=]=\\s*[A-Za-z_][A-Za-z0-9_.>()-]*(getCode|value)\\(\\)"
    )
 
-   lastErrorCall <- "\\bsystemError\\s*\\(\\s*(?:::)?GetLastError\\s*\\(\\s*\\)\\s*,\\s*ERROR_LOCATION\\s*\\)"
-
    # Match the whole call in either operand position. The lookahead selects a
    # portable errc as the first argument. The recursive group balances nested
    # parentheses in the remaining arguments (including ErrorLocation()).
@@ -290,37 +272,16 @@ test_that("C++ sources capture and compare error codes with their categories", {
       "(\\((?:[^();]++|(?-1))*\\))"
    )
    errcComparison <- paste0("[!=]=\\s*", errcCall, "(?!\\s*\\.)|", errcCall, "\\s*[!=]=")
-   captureRule <- c("capture the native error with LAST_SYSTEM_ERROR()" = lastErrorCall)
-   conditionRule <- c("use Error::matches() to test a portable condition" = errcComparison)
 
    # in code only Windows compiles, errno comes from the C runtime, and a
    # code's value is a Win32 code, not an errno value. (cross-platform code
    # isn't checked for these: POSIX-only files aren't marked as such, and
    # some errno values, e.g. ESTALE, have no errc to compare with)
-   crtErrno <- paste0(codeArgument, "errno\\b")
    errnoByValue <- paste0(
       "(getCode|value)\\(\\)\\s*[!=]=\\s*E(?!OF\\b)[A-Z0-9]+\\b",
       "|\\bE(?!OF\\b)[A-Z0-9]+\\s*[!=]=\\s*[A-Za-z_][A-Za-z0-9_.>()-]*(getCode|value)\\(\\)"
    )
 
-   offending <- c(
-      "systemError(EINVAL, ERROR_LOCATION)",
-      "systemError(\n   EIO,\n   \"description\", ERROR_LOCATION)",
-      "systemCallError(\"open\", ENOENT, ERROR_LOCATION)",
-      "systemCallError(operation, ENOENT, ERROR_LOCATION)"
-   )
-   expect_true(all(grepl(errnoConstant, offending, perl = TRUE)))
-
-   allowed <- c(
-      "systemError(errno, ERROR_LOCATION)",
-      "systemCallError(\"open\", errno, ERROR_LOCATION)",
-      "systemError(ERROR_ACCESS_DENIED, ERROR_LOCATION)",
-      "systemError(boost::system::errc::io_error, ERROR_LOCATION)"
-   )
-   expect_false(any(grepl(errnoConstant, allowed, perl = TRUE)))
-
-   expect_true(grepl(rErrno, "systemError(R_ERRNO, ERROR_LOCATION)", perl = TRUE))
-   expect_true(grepl(crtErrno, "systemCallError(\"_popen\", errno, ERROR_LOCATION)", perl = TRUE))
    expect_true(grepl(errcAsSystem, "error_code(errc::io_error,\n   boost::system::system_category())", perl = TRUE))
    expect_false(grepl(errcAsSystem, "error_code(errc::io_error, generic_category())", perl = TRUE))
    expect_true(grepl(errcByValue, "error.getCode() == boost::system::errc::permission_denied", perl = TRUE))
@@ -334,10 +295,6 @@ test_that("C++ sources capture and compare error codes with their categories", {
    expect_false(grepl(errnoByValue, "input.value() == EOF", perl = TRUE))
 
    fixture <- paste(c(
-      "return core::systemError(::GetLastError(), ERROR_LOCATION);",
-      "return systemError(\n  GetLastError(), ERROR_LOCATION);",
-      "// systemError(::GetLastError(), ERROR_LOCATION)",
-      "return systemError(savedCode, ERROR_LOCATION);",
       "if (error == ::rstudio::core::systemError(boost::system::errc::timed_out, ERROR_LOCATION))",
       "if (systemError(errc::timed_out,\n  describe(context()), ErrorLocation()) != error)",
       "if (error != core::systemError(errc::timed_out, loc))",
@@ -351,15 +308,14 @@ test_that("C++ sources capture and compare error codes with their categories", {
       "auto delay = 1'000; if (error == systemError(errc::timed_out, loc))"
    ), collapse = "\n")
    code <- maskCppNonCode(fixture)
-   expect_equal(matchLines(code, lastErrorCall), c(1L, 2L))
-   expect_equal(matchLines(code, errcComparison), c(6L, 7L, 9L, 10L, 17L))
+   expect_equal(matchLines(code, errcComparison), c(1L, 2L, 4L, 5L, 12L))
 
    fixture <- c(
-      "systemError(errno, ERROR_LOCATION);",
+      "if (error.getCode() == ENOENT) {}",
       "#ifdef _WIN32",
-      "systemError(errno, ERROR_LOCATION);",
+      "if (error.getCode() == ENOENT) {}",
       "#else",
-      "systemError(errno, ERROR_LOCATION);",
+      "if (error.getCode() == ENOENT) {}",
       "#endif",
       "#ifndef _WIN32",
       "x",
@@ -406,9 +362,9 @@ test_that("C++ sources capture and compare error codes with their categories", {
       contents <- paste(lines, collapse = "\n")
       path <- sub(paste0(root, "/"), "", cppFile, fixed = TRUE)
 
-      hits <- unlist(lapply(c(errnoConstant, rErrno, errcAsSystem, errcByValue), matchLines, contents = contents))
+      hits <- unlist(lapply(c(errcAsSystem, errcByValue), matchLines, contents = contents))
 
-      windowsHits <- unlist(lapply(c(crtErrno, errnoByValue), matchLines, contents = contents))
+      windowsHits <- matchLines(contents, errnoByValue)
       if (length(windowsHits)) {
          windowsOnly <- windowsOnlyLines(lines, grepl("Win32", basename(cppFile), fixed = TRUE))
          hits <- c(hits, windowsHits[windowsOnly[windowsHits]])
@@ -417,17 +373,11 @@ test_that("C++ sources capture and compare error codes with their categories", {
       if (length(hits))
          offenders <- c(offenders, paste0(path, ":", sort(hits)))
 
-      if (grepl("systemError", contents, fixed = TRUE)) {
-         code <- maskCppNonCode(contents)
-         rules <- captureRule
-         # Unit tests may deliberately assert exact equality between error codes.
-         if (!endsWith(cppFile, "Tests.cpp"))
-            rules <- c(rules, conditionRule)
-         for (advice in names(rules)) {
-            hits <- matchLines(code, rules[[advice]])
-            if (length(hits))
-               offenders <- c(offenders, paste0(path, ":", hits, " - ", advice))
-         }
+      # Unit tests may deliberately assert exact equality between error codes.
+      if (!endsWith(cppFile, "Tests.cpp") && grepl("systemError", contents, fixed = TRUE)) {
+         hits <- matchLines(maskCppNonCode(contents), errcComparison)
+         if (length(hits))
+            offenders <- c(offenders, paste0(path, ":", hits, " - use Error::matches() to test a portable condition"))
       }
 
    }

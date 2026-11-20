@@ -224,15 +224,10 @@ Error addWatch(const FileInfo& fileInfo,
    int wd = ::inotify_add_watch(fd, fileInfo.absolutePath().c_str(), mask);
    if (wd < 0)
    {
-      // save errno
-      int errorNumber = errno;
-
-      // report more useful error message for ENOSPC
-      std::string message = (errorNumber == ENOSPC)
-         ? "No watches available"
-         : systemErrorMessage(errorNumber);
-
-      Error error = systemCallError("inotify_add_watch", errorNumber, message, ERROR_LOCATION);
+      const int errorNumber = errno;
+      const boost::system::error_code code(errorNumber, boost::system::system_category());
+      const std::string message = errorNumber == ENOSPC ? "No watches available" : code.message();
+      Error error = systemCallError("inotify_add_watch", code, message, ERROR_LOCATION);
       error.addProperty("path", fileInfo.absolutePath());
       return error;
    }
@@ -265,7 +260,7 @@ void removeWatch(int fd, const Watch& watch)
    // filesystem has been unmounted or the root directory has been deleted)
    if (result < 0 && errno != EINVAL)
    {
-      Error error = systemError(errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("path", watch.path);
       LOG_ERROR(error);
    }
@@ -435,7 +430,9 @@ Handle registrationFailure(int errorNumber,
                            const ErrorLocation& location)
 {
    closeContext(pContext);
-   callbacks.onRegistrationError(systemError(errorNumber, location));
+   callbacks.onRegistrationError(systemError(
+      boost::system::error_code(errorNumber, boost::system::system_category()),
+      location));
    return Handle();
 }
 
@@ -595,7 +592,7 @@ void run(const boost::function<void()>& checkForInput)
                // otherwise terminate this watch (notify user and break
                // out of the read loop for this context)
                terminateWithMonitoringError(pContext,
-                                            systemError(errno, ERROR_LOCATION));
+                                            LAST_SYSTEM_ERROR());
                break;
             }
 

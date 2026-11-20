@@ -2322,7 +2322,7 @@ void onShutdown(bool)
       // leaves an orphan behind, and this log is the only artifact of that.
       WLOG("Agent process {} did not exit at session shutdown; sending SIGKILL.", agentPid);
       if (::kill(-agentPid, SIGKILL) == -1 && errno != ESRCH)
-         LOG_ERROR(systemError(errno, ERROR_LOCATION));
+         LOG_ERROR(LAST_SYSTEM_ERROR());
 #else
       // On Windows, terminateProcess() is already TerminateProcess(), and the
       // session's kill-on-close job object kills stragglers.

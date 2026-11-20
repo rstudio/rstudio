@@ -80,7 +80,7 @@ Error initSystemPriv(uid_t in_uid)
    struct passwd* pPrivPasswd = ::getpwuid(in_uid);
    if (pPrivPasswd == nullptr)
    {
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    }
 
    s_privUid = in_uid;
@@ -127,7 +127,7 @@ Error restorePrivilegesImpl(uid_t in_uid)
 
    // Change the effective user to root.
    if (::seteuid(in_uid) < 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    // Verify
    if (::geteuid() != 0)
       return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
@@ -138,11 +138,11 @@ Error restorePrivilegesImpl(uid_t in_uid)
 
    // Supplemental groups from cache
    if (::setgroups(s_privNumGroups, s_privGids) < 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 
    // Set effective group
    if (::setegid(s_privGid) < 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    // Verify
    if (::getegid() != s_privGid)
       return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
@@ -158,7 +158,7 @@ Error enableCoreDumps()
 #ifdef __linux__
    int res = ::prctl(PR_SET_DUMPABLE, 1);
    if (res == -1)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 #endif
 
    return Success();
@@ -180,7 +180,7 @@ Error getIpAddresses(std::vector<IpAddress>& out_addresses, bool in_includeIPv6)
     // get addrs
     struct ifaddrs* pAddrs;
     if (::getifaddrs(&pAddrs) == -1)
-        return systemError(errno, ERROR_LOCATION);
+        return LAST_SYSTEM_ERROR();
 
     // iterate through the linked list
     for (struct ifaddrs* pAddr = pAddrs; pAddr != nullptr; pAddr = pAddr->ifa_next)
@@ -201,7 +201,7 @@ Error getIpAddresses(std::vector<IpAddress>& out_addresses, bool in_includeIPv6)
                           host, NI_MAXHOST,
                           nullptr, 0, NI_NUMERICHOST) != 0)
         {
-            log::logError(systemError(errno, ERROR_LOCATION));
+            log::logError(LAST_SYSTEM_ERROR());
             continue;
         }
 
@@ -225,7 +225,7 @@ Error ignoreSignal(int in_signal)
    int result = ::sigaction(in_signal, &sa, nullptr);
    if (result != 0)
    {
-      Error error = systemError(result, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("signal", in_signal);
       return error;
    }
@@ -254,9 +254,9 @@ Error restorePrivileges()
    // set user
    uid_t ruid, euid, suid;
    if (::getresuid(&ruid, &euid, &suid) < 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    if (::setresuid(-1, suid, -1) < 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    // verify
    if (::geteuid() != suid)
       return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
@@ -267,14 +267,14 @@ Error restorePrivileges()
 
    // Supplemental groups from cache
    if (::setgroups(s_privNumGroups, s_privGids) < 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 
    // set group
    gid_t rgid, egid, sgid;
    if (::getresgid(&rgid, &egid, &sgid) < 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    if (::setresgid(-1, sgid, -1) < 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    // verify
    if (::getegid() != sgid)
       return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
@@ -306,17 +306,17 @@ Error temporarilyDropPrivileges(const User& in_user, const boost::optional<GidTy
    // with the alternate group results in the process running with only a single
    // group.
    if (::initgroups(in_user.getUsername().c_str(), in_user.getGroupId()) < 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 
    // set group and verify
    if (::setresgid(-1, targetGID, ::getegid()) < 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    if (::getegid() != targetGID)
       return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
 
    // set user and verify
    if (::setresuid(-1, in_user.getUserId(), ::geteuid()) < 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    if (::geteuid() != in_user.getUserId())
       return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
 
@@ -346,7 +346,7 @@ Error temporarilyDropPrivileges(const User& in_user, const boost::optional<GidTy
    // with the alternate group results in the process running with only a single
    // group.
    if (::initgroups(in_user.getUsername().c_str(), in_user.getGroupId()) < 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 
    // set group
 
@@ -355,11 +355,11 @@ Error temporarilyDropPrivileges(const User& in_user, const boost::optional<GidTy
 
    // copy EGUID to SGID
    if (::setregid(::getgid(), oldEGUID) < 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 
    // set new EGID
    if (::setegid(targetGID) < 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 
    // verify
    if (::getegid() != targetGID)
@@ -373,11 +373,11 @@ Error temporarilyDropPrivileges(const User& in_user, const boost::optional<GidTy
 
    // copy EUID to SUID
    if (::setreuid(::getuid(), oldEUID) < 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 
    // set new EUID
    if (::seteuid(in_user.getUserId()) < 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 
    // verify
    if (::geteuid() != in_user.getUserId())

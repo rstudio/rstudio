@@ -92,7 +92,7 @@ void standardStreamCaptureThread(
                      skipEchoWrite = true;
 
                      LOG_ERROR(systemError(
-                                  writeError,
+                                  boost::system::error_code(writeError, boost::system::system_category()),
                                   streamName + " echo to the attached console failed. Output will no longer be echoed to the console.",
                                   ERROR_LOCATION));
                   }
@@ -110,7 +110,7 @@ void standardStreamCaptureThread(
             if (readError == ERROR_BROKEN_PIPE || readError == ERROR_INVALID_HANDLE)
             {
                LOG_ERROR(systemError(
-                            readError,
+                            boost::system::error_code(readError, boost::system::system_category()),
                             streamName + " capture pipe is no longer readable. Output capture stopped.",
                             ERROR_LOCATION));
                return;
@@ -125,7 +125,7 @@ void standardStreamCaptureThread(
             {
                loggedReadError = true;
                LOG_ERROR(systemError(
-                            readError,
+                            boost::system::error_code(readError, boost::system::system_category()),
                             streamName + " capture pipe read failed.",
                             ERROR_LOCATION));
             }

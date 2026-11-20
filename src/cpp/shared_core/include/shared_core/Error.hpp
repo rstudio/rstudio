@@ -579,34 +579,11 @@ public:
  */
 std::ostream& operator<<(std::ostream& io_ostream, const Error& in_error);
 
-#ifdef _WIN32
-
-// Use this macro instead of systemError(::GetLastError(), ERROR_LOCATION) otherwise
-// the ERROR_LOCATION macro may evaluate first and reset the Win32 error code to
-// zero (no error), causing the wrong value to be passed to systemError. This is currently
-// the case on debug builds using MSVC.
-# define LAST_SYSTEM_ERROR() []() {auto lastErr = ::GetLastError(); return systemError(lastErr, ERROR_LOCATION);}()
-
-#else
-
-# define LAST_SYSTEM_ERROR() []() { auto _errno = errno; return systemError(_errno, ERROR_LOCATION); }()
-
-#endif // _WIN32
-
+// Capture the native error before constructing an ErrorLocation, which may overwrite it.
+Error lastSystemError(const char* in_function, const char* in_file, long in_line, const char* in_systemCall = nullptr);
 
 /**
- * @brief Function which creates a system error.
- *
- * @param in_code            The error code. (e.g. 1)
- * @param in_location        The location of the error.
- *
- * @return A system error.
- */
-Error systemError(int in_code, const ErrorLocation& in_location);
-
-/**
- * @brief Function which creates a generic-category error from an errc value. An errc value is an errno value, which
- *        the int overload would read as a Win32 error code on Windows.
+ * @brief Function which creates a generic-category error from a portable errc value.
  *
  * @param in_code            The error code. (e.g. boost::system::errc::no_such_file_or_directory)
  * @param in_location        The location of the error.
@@ -636,19 +613,7 @@ Error systemError(const std::error_code& in_code, const ErrorLocation& in_locati
 Error systemError(const std::system_error& in_error, const ErrorLocation& in_location);
 
 /**
- * @brief Function which creates a system error.
- *
- * @param in_code            The error code. (e.g. 1)
- * @param in_cause           The error which caused this error.
- * @param in_location        The location of the error.
- *
- * @return A system error.
- */
-Error systemError(int in_code, const Error& in_cause, const ErrorLocation& in_location);
-
-/**
- * @brief Function which creates a generic-category error from an errc value. An errc value is an errno value, which
- *        the int overload would read as a Win32 error code on Windows.
+ * @brief Function which creates a generic-category error from a portable errc value.
  *
  * @param in_code            The error code. (e.g. boost::system::errc::no_such_file_or_directory)
  * @param in_cause           The error which caused this error.
@@ -681,20 +646,7 @@ Error systemError(const std::error_code& in_code, const Error& in_cause, const E
 Error systemError(const std::system_error& in_error, const Error& in_cause, const ErrorLocation& in_location);
 
 /**
- * @brief Function which creates a system error.
- *
- * @param in_code            The error code. (e.g. 1)
- * @param in_description     A detailed description of the error. (e.g. "Failed to open socket while attempting to
- *                           connect to Kubernetes.")
- * @param in_location        The location of the error.
- *
- * @return A system error.
- */
-Error systemError(int in_code, const std::string& in_description, const ErrorLocation& in_location);
-
-/**
- * @brief Function which creates a generic-category error from an errc value. An errc value is an errno value, which
- *        the int overload would read as a Win32 error code on Windows.
+ * @brief Function which creates a generic-category error from a portable errc value.
  *
  * @param in_code            The error code. (e.g. boost::system::errc::no_such_file_or_directory)
  * @param in_description     A detailed description of the error. (e.g. "Failed to open socket while attempting to
@@ -736,25 +688,7 @@ Error systemError(
    const ErrorLocation& in_location);
 
 /**
- * @brief Function which creates a system error.
- *
- * @param in_code            The error code. (e.g. 1)
- * @param in_description     A detailed description of the error. (e.g. "Failed to open socket while attempting to
- *                           connect to Kubernetes.")
- * @param in_cause           The error which caused this error.
- * @param in_location        The location of the error.
- *
- * @return A system error.
- */
-Error systemError(
-   int in_code,
-   const std::string& in_description,
-   const Error& in_cause,
-   const ErrorLocation& in_location);
-
-/**
- * @brief Function which creates a generic-category error from an errc value. An errc value is an errno value, which
- *        the int overload would read as a Win32 error code on Windows.
+ * @brief Function which creates a generic-category error from a portable errc value.
  *
  * @param in_code            The error code. (e.g. boost::system::errc::no_such_file_or_directory)
  * @param in_description     A detailed description of the error. (e.g. "Failed to open socket while attempting to
@@ -804,14 +738,15 @@ Error systemError(
    const Error& in_cause,
    const ErrorLocation& in_location);
 
-// An unscoped enum argument would otherwise convert to int and be read as a system error code: route the enums that
-// know their error category (boost::system::is_error_code_enum, e.g. boost::asio::error::eof) through that category,
-// and reject the rest at compile time (convert a std error code enum with std::error_code(value)).
+// Use the registered category of a Boost error-code enum. An unscoped std-only enum
+// can be passed explicitly as std::error_code(value).
 // boost::system::errc::errc_t has its own overloads above.
 namespace detail {
 
 template <typename E>
-using EnableIfErrorCodeEnum = typename std::enable_if<boost::system::is_error_code_enum<E>::value, int>::type;
+using EnableIfBoostErrorCode = typename std::enable_if<
+   std::is_same<E, boost::system::error_code>::value || boost::system::is_error_code_enum<E>::value,
+   int>::type;
 
 template <typename E>
 using EnableIfEnumWithoutCategory = typename std::enable_if<
@@ -827,21 +762,21 @@ using EnableIfEnum = typename std::enable_if<std::is_enum<E>::value, int>::type;
 } // namespace detail
 
 /**
- * @brief Function which creates an error from an error code enum, in the enum's own category.
+ * @brief Function which creates an error from a Boost error code or a registered enum in its own category.
  *
  * @param in_code            The error code. (e.g. boost::asio::error::eof)
  * @param in_location        The location of the error.
  *
  * @return An error in the enum's category.
  */
-template <typename E, detail::EnableIfErrorCodeEnum<E> = 0>
+template <typename E, detail::EnableIfBoostErrorCode<E> = 0>
 Error systemError(E in_code, const ErrorLocation& in_location)
 {
    return Error(boost::system::error_code(in_code), in_location);
 }
 
 /**
- * @brief Function which creates an error from an error code enum, in the enum's own category.
+ * @brief Function which creates an error from a Boost error code or a registered enum in its own category.
  *
  * @param in_code            The error code. (e.g. boost::asio::error::eof)
  * @param in_cause           The error which caused this error.
@@ -849,14 +784,14 @@ Error systemError(E in_code, const ErrorLocation& in_location)
  *
  * @return An error in the enum's category.
  */
-template <typename E, detail::EnableIfErrorCodeEnum<E> = 0>
+template <typename E, detail::EnableIfBoostErrorCode<E> = 0>
 Error systemError(E in_code, const Error& in_cause, const ErrorLocation& in_location)
 {
    return Error(boost::system::error_code(in_code), in_cause, in_location);
 }
 
 /**
- * @brief Function which creates an error from an error code enum, in the enum's own category.
+ * @brief Function which creates an error from a Boost error code or a registered enum in its own category.
  *
  * @param in_code            The error code. (e.g. boost::asio::error::eof)
  * @param in_description     A detailed description of the error. (e.g. "Failed to open socket while attempting to
@@ -865,7 +800,7 @@ Error systemError(E in_code, const Error& in_cause, const ErrorLocation& in_loca
  *
  * @return An error in the enum's category.
  */
-template <typename E, detail::EnableIfErrorCodeEnum<E> = 0>
+template <typename E, detail::EnableIfBoostErrorCode<E> = 0>
 Error systemError(E in_code, const std::string& in_description, const ErrorLocation& in_location)
 {
    Error error = systemError(in_code, in_location);
@@ -874,7 +809,7 @@ Error systemError(E in_code, const std::string& in_description, const ErrorLocat
 }
 
 /**
- * @brief Function which creates an error from an error code enum, in the enum's own category.
+ * @brief Function which creates an error from a Boost error code or a registered enum in its own category.
  *
  * @param in_code            The error code. (e.g. boost::asio::error::eof)
  * @param in_description     A detailed description of the error. (e.g. "Failed to open socket while attempting to
@@ -884,7 +819,7 @@ Error systemError(E in_code, const std::string& in_description, const ErrorLocat
  *
  * @return An error in the enum's category.
  */
-template <typename E, detail::EnableIfErrorCodeEnum<E> = 0>
+template <typename E, detail::EnableIfBoostErrorCode<E> = 0>
 Error systemError(
    E in_code,
    const std::string& in_description,
@@ -914,7 +849,7 @@ Error systemError(
 
 /**
  * @brief Function which creates a generic-category error from an errno value, such as one the C runtime sets on
- *        Windows, where systemError(int) would read it as a Win32 error code. Read errno into a variable first:
+ *        Windows. Save errno immediately after the failing operation because
  *        ERROR_LOCATION may be evaluated before it, and can change it.
  *
  * @param in_code            The errno value. (e.g. EINVAL)
@@ -926,7 +861,7 @@ Error genericError(int in_code, const ErrorLocation& in_location);
 
 /**
  * @brief Function which creates a generic-category error from an errno value, such as one the C runtime sets on
- *        Windows, where systemError(int) would read it as a Win32 error code. Read errno into a variable first:
+ *        Windows. Save errno immediately after the failing operation because
  *        ERROR_LOCATION may be evaluated before it, and can change it.
  *
  * @param in_code            The errno value. (e.g. EINVAL)
@@ -949,21 +884,21 @@ Error genericError(E in_code, const std::string& in_description, const ErrorLoca
  * @brief Function which creates a system error associated with a particular system call.
  *
  * @param in_function        The name of the system call associated with this error.
- * @param in_code            The error code -- typically errno, or an error number returned by the call itself.
+ * @param in_code            The error code with the category supplied by the system call.
  * @param in_location        The location of the error.
  *
  * @return A system error.
  */
 Error systemCallError(
    const std::string& in_function,
-   int in_code,
+   const boost::system::error_code& in_code,
    const ErrorLocation& in_location);
 
 /**
  * @brief Function which creates a system error associated with a particular system call.
  *
  * @param in_function        The name of the system call associated with this error.
- * @param in_code            The error code -- typically errno, or an error number returned by the call itself.
+ * @param in_code            The error code with the category supplied by the system call.
  * @param in_message         The error message. Overrides the default error message associated with the error code.
  * @param in_location        The location of the error.
  *
@@ -971,12 +906,11 @@ Error systemCallError(
  */
 Error systemCallError(
    const std::string& in_function,
-   int in_code,
+   const boost::system::error_code& in_code,
    const std::string& in_message,
    const ErrorLocation& in_location);
 
-// systemCallError() reads its code as a system error code, so an enum (even an errc) has no place there; use
-// systemError() with a description instead.
+// A named system call takes a categorized error code.
 template <typename E, detail::EnableIfEnum<E> = 0>
 Error systemCallError(const std::string& in_function, E in_code, const ErrorLocation& in_location) = delete;
 
@@ -1025,12 +959,14 @@ std::string systemErrorMessage(int code);
 } // namespace rstudio
 
 #ifdef STRIPPED_FILENAME
-#define ERROR_LOCATION rstudio::core::ErrorLocation( \
-      BOOST_CURRENT_FUNCTION, STRIPPED_FILENAME, __LINE__)
+#define RSTUDIO_ERROR_LOCATION_ARGS BOOST_CURRENT_FUNCTION, STRIPPED_FILENAME, __LINE__
 #else
-#define ERROR_LOCATION rstudio::core::ErrorLocation( \
-      BOOST_CURRENT_FUNCTION, __FILE__, __LINE__)
+#define RSTUDIO_ERROR_LOCATION_ARGS BOOST_CURRENT_FUNCTION, __FILE__, __LINE__
 #endif
+
+#define ERROR_LOCATION rstudio::core::ErrorLocation(RSTUDIO_ERROR_LOCATION_ARGS)
+#define LAST_SYSTEM_ERROR() ::rstudio::core::lastSystemError(RSTUDIO_ERROR_LOCATION_ARGS)
+#define LAST_SYSTEM_CALL_ERROR(name) ::rstudio::core::lastSystemError(RSTUDIO_ERROR_LOCATION_ARGS, (name))
 
 #define CATCH_UNEXPECTED_EXCEPTION                                                  \
    catch(const std::exception& e)                                                   \

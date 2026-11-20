@@ -255,7 +255,7 @@ void processFileChanges(FileEventContext* pContext,
       if( (DWORD)((BYTE*)pBuffer - &(pContext->handlingBuffer[0])) >
           dwNumberOfBytesTransfered )
       {
-         Error error = systemError(ERROR_BUFFER_OVERFLOW, ERROR_LOCATION);
+         Error error(boost::system::error_code(ERROR_BUFFER_OVERFLOW, boost::system::system_category()), ERROR_LOCATION);
          LOG_ERROR(error);
          break;
       }

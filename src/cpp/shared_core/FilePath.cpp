@@ -323,7 +323,7 @@ inline Error changeFileModeImpl(const std::string& filePath, mode_t mode)
    errno = 0;
    if (::chmod(filePath.c_str(), mode) < 0)
    {
-      Error error = systemError(errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("path", filePath);
       return error;
    }
@@ -1075,7 +1075,7 @@ Error FilePath::getFileMode(FileMode& out_fileMode) const
    struct stat st;
    if (::stat(getAbsolutePath().c_str(), &st) == -1)
    {
-      Error error = systemError(errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("path", getAbsolutePath());
       return error;
    }
@@ -1123,7 +1123,7 @@ Error FilePath::getFileOwner(std::string* pUsername) const
    struct stat st;
    if (::stat(getAbsolutePath().c_str(), &st) == -1)
    {
-      Error error = systemError(errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("path", getAbsolutePath());
       return error;
    }
@@ -1131,7 +1131,7 @@ Error FilePath::getFileOwner(std::string* pUsername) const
    struct passwd* pw = ::getpwuid(st.st_uid);
    if (pw == nullptr)
    {
-      Error error = systemError(errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("path", getAbsolutePath());
       return error;
    }
@@ -1145,7 +1145,7 @@ Error FilePath::getFileOwner(uid_t& out_fileOwner) const
    struct stat st;
    if (::stat(getAbsolutePath().c_str(), &st) == -1)
    {
-      Error error = systemError(errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("path", getAbsolutePath());
       return error;
    }
@@ -1410,7 +1410,7 @@ Error FilePath::isReadable(bool &out_readable) const
    else
    {
       // some other error (unexpected)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    }
 
    return Success();
@@ -1507,7 +1507,7 @@ Error FilePath::isWriteable(bool &out_writeable) const
    else if (errno == EACCES)
       out_writeable = false;
    else
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 
    return Success();
 }
@@ -1626,14 +1626,14 @@ Error FilePath::isWriteable(bool &out_writeable) const
    // which reads as a non sequitur wherever it surfaces.
    if (lastError == ERROR_FILE_EXISTS)
    {
-      Error error = systemError(lastError,
+      Error error = systemError(boost::system::error_code(lastError, boost::system::system_category()),
                                 "Could not find an unused probe file name in this folder",
                                 ERROR_LOCATION);
       error.addProperty("path", getAbsolutePath());
       return error;
    }
 
-   Error error = systemError(lastError, ERROR_LOCATION);
+   Error error(boost::system::error_code(lastError, boost::system::system_category()), ERROR_LOCATION);
    error.addProperty("path", getAbsolutePath());
    return error;
 }
@@ -1747,7 +1747,7 @@ Error FilePath::openForRead(std::shared_ptr<std::istream>& out_stream) const
          // for permission denied) instead of always assuming not-found.
          int errorCode = errno;
          Error error = errorCode != 0
-            ? systemError(errorCode, ERROR_LOCATION)
+            ? systemError(boost::system::error_code(errorCode, boost::system::system_category()), ERROR_LOCATION)
             : systemError(boost::system::errc::no_such_file_or_directory, ERROR_LOCATION);
 #else
          Error error = systemError(boost::system::errc::no_such_file_or_directory, ERROR_LOCATION);

@@ -71,7 +71,7 @@ Error scanDir(const std::string& dirPath, std::vector<std::string>* pNames)
                            alphasort);
    if (entries == -1)
    {
-      Error error = systemError(errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("path", dirPath);
       return error;
    }
@@ -158,7 +158,7 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
             fromNode->setScanFailed(true);
             if (scanErrno != EACCES)
             {
-               Error error = systemError(scanErrno, ERROR_LOCATION);
+               Error error(boost::system::error_code(scanErrno, boost::system::system_category()), ERROR_LOCATION);
                error.addProperty("path", path);
                LOG_ERROR(error);
             }

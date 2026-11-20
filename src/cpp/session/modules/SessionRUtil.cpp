@@ -453,7 +453,10 @@ Error openRegistryKey(const std::string& path, REGSAM access, core::system::Regi
    else if (hive == "HKCR" || hive == "HKEY_CLASSES_ROOT")
       hKey = HKEY_CLASSES_ROOT;
    else
-      return systemError(ERROR_INVALID_PARAMETER, "unknown registry hive in " + path, ERROR_LOCATION);
+      return systemError(
+         boost::system::error_code(ERROR_INVALID_PARAMETER, boost::system::system_category()),
+         "unknown registry hive in " + path,
+         ERROR_LOCATION);
 
    return pKey->open(hKey, subKey, access);
 }

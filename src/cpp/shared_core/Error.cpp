@@ -21,6 +21,7 @@
  *
  */
 
+#include <cerrno>
 #include <ostream>
 
 #include <shared_core/Error.hpp>
@@ -32,6 +33,7 @@
 #include <boost/optional.hpp>
 
 #ifdef _WIN32
+#include <windows.h>
 #include <boost/system/windows_error.hpp>
 #endif
 
@@ -510,10 +512,18 @@ std::ostream& operator<<(std::ostream& io_ostream, const Error& in_error)
 }
 
 // Common error creation functions =====================================================================================
-Error systemError(int in_code, const ErrorLocation& in_location)
+Error lastSystemError(const char* in_function, const char* in_file, long in_line, const char* in_systemCall)
 {
-   using namespace boost::system;
-   return Error(error_code(in_code, system_category()), in_location);
+#ifdef _WIN32
+   const int value = static_cast<int>(::GetLastError());
+#else
+   const int value = errno;
+#endif
+   const boost::system::error_code code(value, boost::system::system_category());
+   const ErrorLocation location(in_function, in_file, in_line);
+   if (in_systemCall)
+      return systemCallError(in_systemCall, code, location);
+   return Error(code, location);
 }
 
 Error systemError(boost::system::errc::errc_t in_code, const ErrorLocation& in_location)
@@ -530,14 +540,6 @@ Error systemError(const std::error_code& in_code, const ErrorLocation& in_locati
 Error systemError(const std::system_error& in_error, const ErrorLocation& in_location)
 {
    return Error(in_error.code().category().name(), in_error.code().value(), in_error.what(), in_location);
-}
-
-Error systemError(int in_code,
-                  const Error& in_cause,
-                  const ErrorLocation& in_location)
-{
-   using namespace boost::system;
-   return Error(error_code(in_code, system_category()), in_cause, in_location);
 }
 
 Error systemError(boost::system::errc::errc_t in_code, const Error& in_cause, const ErrorLocation& in_location)
@@ -559,15 +561,6 @@ Error systemError(const std::system_error& in_error, const Error& in_cause, cons
       in_error.what(),
       in_cause,
       in_location);
-}
-
-Error systemError(int in_code,
-                  const std::string& in_description,
-                  const ErrorLocation& in_location)
-{
-   Error error = systemError(in_code, in_location);
-   error.addProperty("description", in_description);
-   return error;
 }
 
 Error systemError(boost::system::errc::errc_t in_code,
@@ -593,16 +586,6 @@ Error systemError(const std::system_error& in_error,
                   const ErrorLocation& in_location)
 {
    Error error = systemError(in_error, in_location);
-   error.addProperty("description", in_description);
-   return error;
-}
-
-Error systemError(int in_code,
-                  const std::string& in_description,
-                  const Error& in_cause,
-                  const ErrorLocation& in_location)
-{
-   Error error = systemError(in_code, in_cause, in_location);
    error.addProperty("description", in_description);
    return error;
 }
@@ -651,19 +634,19 @@ Error genericError(int in_code, const std::string& in_description, const ErrorLo
 }
 
 Error systemCallError(const std::string& in_function,
-                      int in_code,
+                      const boost::system::error_code& in_code,
                       const ErrorLocation& in_location)
 {
-   return systemCallError(in_function, in_code, systemErrorMessage(in_code), in_location);
+   return systemCallError(in_function, in_code, in_code.message(), in_location);
 }
 
 Error systemCallError(const std::string& in_function,
-                      int in_code,
+                      const boost::system::error_code& in_code,
                       const std::string& in_message,
                       const ErrorLocation& in_location)
 {
    std::string message = in_function + ": " + in_message;
-   return Error("system", in_code, message, in_location);
+   return Error(in_code, message, in_location);
 }
 
 Error unknownError(const std::string& in_message, const ErrorLocation&  in_location)

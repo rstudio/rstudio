@@ -207,7 +207,7 @@ Error initJobObject(bool* detachFromJob)
 
       // the job never gained a member, so this just destroys it
       ::CloseHandle(hJob);
-      return systemError(lastErr, ERROR_LOCATION);
+      return systemError(boost::system::error_code(lastErr, boost::system::system_category()), ERROR_LOCATION);
    }
 
    // NOTE: hJob is deliberately left open. KILL_ON_JOB_CLOSE fires when the
@@ -440,8 +440,7 @@ bool effectiveUserIsRoot()
    HANDLE hProcessToken = nullptr;
    if (!OpenProcessToken(::GetCurrentProcess(), TOKEN_QUERY, &hProcessToken))
    {
-      auto lastErr = ::GetLastError();
-      LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
+      LOG_ERROR(LAST_SYSTEM_ERROR());
       return false;
    }
    core::system::CloseHandleOnExitScope processTokenScope(&hProcessToken, ERROR_LOCATION);
@@ -452,8 +451,7 @@ bool effectiveUserIsRoot()
    if (!::GetTokenInformation(hProcessToken, TokenElevationType, &tokenElevationType,
                               sizeof(tokenElevationType), &bytesUsed))
    {
-      auto lastErr = ::GetLastError();
-      LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
+      LOG_ERROR(LAST_SYSTEM_ERROR());
       return false;
    }
 
@@ -462,8 +460,7 @@ bool effectiveUserIsRoot()
       HANDLE hUnfiltered;
       if (!::GetTokenInformation(hProcessToken, TokenLinkedToken, &hUnfiltered, sizeof(HANDLE), &bytesUsed))
       {
-         auto lastErr = ::GetLastError();
-         LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
+         LOG_ERROR(LAST_SYSTEM_ERROR());
          return false;
       }
       core::system::CloseHandleOnExitScope unfilteredHandle(&hUnfiltered, ERROR_LOCATION);
@@ -473,16 +470,14 @@ bool effectiveUserIsRoot()
 
       if (!::CreateWellKnownSid(WinBuiltinAdministratorsSid, 0, &adminSID, &sidSize))
       {
-         auto lastErr = ::GetLastError();
-         LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
+         LOG_ERROR(LAST_SYSTEM_ERROR());
          return false;
       }
 
       BOOL isMember = FALSE;
       if (::CheckTokenMembership(hUnfiltered, &adminSID, &isMember))
       {
-         auto lastErr = ::GetLastError();
-         LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
+         LOG_ERROR(LAST_SYSTEM_ERROR());
          return false;
       }
       isAdmin = (isMember != FALSE);
@@ -1063,7 +1058,9 @@ Error expandEnvironmentVariables(std::string value, std::string* pResult)
       return LAST_SYSTEM_ERROR();
    }
    else if (result > buffer.capacity())
-      return systemError(ERROR_MORE_DATA, ERROR_LOCATION); // not expected
+      return systemError(
+         boost::system::error_code(ERROR_MORE_DATA, boost::system::system_category()),
+         ERROR_LOCATION); // not expected
 
    *pResult = std::string(&buffer[0]);
    return Success();

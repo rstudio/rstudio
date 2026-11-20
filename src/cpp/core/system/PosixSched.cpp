@@ -45,7 +45,7 @@ Error getCpuAffinity(CpuAffinity* pCpus)
    cpu_set_t cs;
    CPU_ZERO(&cs);
    if (::sched_getaffinity(0, sizeof(cs), &cs) == -1)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 
    pCpus->clear();
    int cpus = cpuCount();
@@ -79,7 +79,7 @@ Error setCpuAffinity(const CpuAffinity& cpus)
    }
 
    if (::sched_setaffinity(0, sizeof(cs), &cs) == -1)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 
    return Success();
 #else

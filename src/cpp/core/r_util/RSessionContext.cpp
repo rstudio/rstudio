@@ -280,7 +280,7 @@ bool isSharedPath(const std::string& projectPath,
       {
          // if we can't get the supplementary groups due to a system-level
          // error, ignore them but complain in the logs
-         LOG_ERROR(systemError(errno, ERROR_LOCATION));
+         LOG_ERROR(LAST_SYSTEM_ERROR());
       }
 
       for (int i = 0; i < ngroups; ++i) {
@@ -296,7 +296,7 @@ bool isSharedPath(const std::string& projectPath,
    }
    else
    {
-      error = systemError(errno, ERROR_LOCATION);
+      error = LAST_SYSTEM_ERROR();
       error.addProperty("path", projectDir.getAbsolutePath());
       LOG_ERROR(error);
    }

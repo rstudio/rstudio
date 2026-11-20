@@ -364,7 +364,7 @@ bool suspendSession(bool force, int status)
    // API to do so and at least on Linux this is only possible via cgroups.
    if (setpriority(PRIO_PROCESS, 0, 10) < 0)
    {
-      core::Error error = core::systemError(errno, ERROR_LOCATION);
+      core::Error error = LAST_SYSTEM_ERROR();
       error.addProperty("description",
                         "Failed to lower CPU priority during suspend");
       LOG_ERROR(error);

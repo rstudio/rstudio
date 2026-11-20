@@ -165,9 +165,7 @@ private:
                // contrary to the documentation
                if (endpoint_iterator == boost::asio::ip::tcp::resolver::results_type::iterator())
                {
-                  handleErrorCode(boost::system::error_code(boost::system::errc::io_error,
-                                                            boost::system::generic_category()),
-                                  ERROR_LOCATION);
+                  handleErrorCode(make_error_code(boost::system::errc::io_error), ERROR_LOCATION);
                   return;
                }
 

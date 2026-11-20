@@ -488,7 +488,7 @@ Error temporaryUserDataDir(FilePath* pDir)
    std::string path = dir.getAbsolutePath();
    if (::mkdir(path.c_str(), 0700) != 0 && errno != EEXIST)
    {
-      error = systemError(errno, ERROR_LOCATION);
+      error = LAST_SYSTEM_ERROR();
       error.addProperty("path", path);
       return error;
    }
@@ -498,7 +498,7 @@ Error temporaryUserDataDir(FilePath* pDir)
    struct stat info;
    if (::lstat(path.c_str(), &info) != 0)
    {
-      error = systemError(errno, ERROR_LOCATION);
+      error = LAST_SYSTEM_ERROR();
       error.addProperty("path", path);
       return error;
    }
@@ -515,7 +515,7 @@ Error temporaryUserDataDir(FilePath* pDir)
 
    if ((info.st_mode & 077) != 0 && ::chmod(path.c_str(), 0700) != 0)
    {
-      error = systemError(errno, ERROR_LOCATION);
+      error = LAST_SYSTEM_ERROR();
       error.addProperty("path", path);
       return error;
    }

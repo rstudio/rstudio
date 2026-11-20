@@ -42,7 +42,7 @@ core::Error statWithCacheClear(const core::FilePath& path,
    // get the file's initial attributes (may be stale)
    if (::stat(path.getAbsolutePath().c_str(), pSt) == -1)
    {
-      Error error = systemError(errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("path", path.getAbsolutePath());
       return error;
    }

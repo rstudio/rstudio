@@ -81,7 +81,11 @@ Error setRecvTimeout(int fd)
    tv.tv_sec = kNetlinkRecvTimeoutSeconds;
    tv.tv_usec = 0;
    if (::setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0)
-      return systemError(errno, "setsockopt(NETLINK_SOCK_DIAG, SO_RCVTIMEO)", ERROR_LOCATION);
+   {
+      Error error = LAST_SYSTEM_ERROR();
+      error.addProperty("description", "setsockopt(NETLINK_SOCK_DIAG, SO_RCVTIMEO)");
+      return error;
+   }
    return Success();
 }
 
@@ -175,7 +179,11 @@ Error sendExactMatchRequest(int fd,
                             reinterpret_cast<sockaddr*>(&dest),
                             sizeof(dest));
    if (sent < 0)
-      return systemError(errno, "sendto(NETLINK_SOCK_DIAG exact-match request)", ERROR_LOCATION);
+   {
+      Error error = LAST_SYSTEM_ERROR();
+      error.addProperty("description", "sendto(NETLINK_SOCK_DIAG exact-match request)");
+      return error;
+   }
    if (static_cast<size_t>(sent) != sizeof(request))
       return systemError(boost::system::errc::io_error, "short write sending NETLINK_SOCK_DIAG exact-match request", ERROR_LOCATION);
 
@@ -236,7 +244,8 @@ DiagLookupResult readSingleDiagReply(int fd, uid_t* pUid, uint8_t* pState, Error
       }
       else
       {
-         *pError = systemError(errno, "recvmsg(NETLINK_SOCK_DIAG)", ERROR_LOCATION);
+         *pError = LAST_SYSTEM_ERROR();
+         pError->addProperty("description", "recvmsg(NETLINK_SOCK_DIAG)");
       }
       return DiagLookupResult::Error;
    }
@@ -286,7 +295,7 @@ DiagLookupResult readSingleDiagReply(int fd, uid_t* pUid, uint8_t* pState, Error
       if (err->error == -ENOENT)
          return DiagLookupResult::NotFound;
 
-      *pError = systemError(-err->error,
+      *pError = systemError(boost::system::error_code(-err->error, boost::system::system_category()),
                             "NETLINK_SOCK_DIAG exact-match query rejected by kernel",
                             ERROR_LOCATION);
       return DiagLookupResult::Error;
@@ -362,7 +371,11 @@ Error lookupEstablishedSocketUid(const boost::asio::ip::address& localAddress,
 {
    int fd = ::socket(AF_NETLINK, SOCK_RAW | SOCK_CLOEXEC, NETLINK_SOCK_DIAG);
    if (fd < 0)
-      return systemError(errno, "socket(NETLINK_SOCK_DIAG)", ERROR_LOCATION);
+   {
+      Error error = LAST_SYSTEM_ERROR();
+      error.addProperty("description", "socket(NETLINK_SOCK_DIAG)");
+      return error;
+   }
 
    Error timeoutError = setRecvTimeout(fd);
    if (timeoutError)
@@ -421,7 +434,11 @@ Error lookupListeningSocketUid(const boost::asio::ip::address& listenAddress,
 {
    int fd = ::socket(AF_NETLINK, SOCK_RAW | SOCK_CLOEXEC, NETLINK_SOCK_DIAG);
    if (fd < 0)
-      return systemError(errno, "socket(NETLINK_SOCK_DIAG)", ERROR_LOCATION);
+   {
+      Error error = LAST_SYSTEM_ERROR();
+      error.addProperty("description", "socket(NETLINK_SOCK_DIAG)");
+      return error;
+   }
 
    Error timeoutError = setRecvTimeout(fd);
    if (timeoutError)
@@ -589,7 +606,8 @@ DiagLookupResult probeEstablishedUidReporting(uid_t* pUid, Error* pError)
    int fd = ::socket(AF_NETLINK, SOCK_RAW | SOCK_CLOEXEC, NETLINK_SOCK_DIAG);
    if (fd < 0)
    {
-      *pError = systemError(errno, "socket(NETLINK_SOCK_DIAG)", ERROR_LOCATION);
+      *pError = LAST_SYSTEM_ERROR();
+      pError->addProperty("description", "socket(NETLINK_SOCK_DIAG)");
       return DiagLookupResult::Error;
    }
    setRecvTimeout(fd); // best-effort; an unbounded probe query is acceptable at startup

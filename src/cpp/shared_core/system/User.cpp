@@ -100,7 +100,10 @@ struct User::Impl
                }
                else
                {
-                  error = systemError(result, "Failed password entry database lookup for user", ERROR_LOCATION);
+                  error = systemError(
+                     boost::system::error_code(result, boost::system::system_category()),
+                     "Failed password entry database lookup for user",
+                     ERROR_LOCATION);
                }
 
                error.addProperty("user-value", safe_convert::numberToString(in_value));

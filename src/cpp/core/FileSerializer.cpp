@@ -61,12 +61,9 @@ bool isFileLockedError(const Error& error)
 #endif
 }
 
-// Build an Error describing a failed file operation, annotated with the path.
-// The code is captured by the caller immediately after the failing syscall so
-// that it is not clobbered by any intervening cleanup (close, etc.).
-Error fileError(int code, const FilePath& filePath, const ErrorLocation& location)
+// Record the path on the error captured at the failing call.
+Error fileError(Error error, const FilePath& filePath)
 {
-   Error error = systemError(code, location);
    error.addProperty("path", filePath.getAbsolutePath());
    return error;
 }
@@ -104,11 +101,7 @@ Error writeAll(HANDLE hFile, const std::string& contents, const FilePath& filePa
 
       DWORD written = 0;
       if (!::WriteFile(hFile, data, toWrite, &written, nullptr))
-      {
-         Error error = LAST_SYSTEM_ERROR();
-         error.addProperty("path", filePath.getAbsolutePath());
-         return error;
-      }
+         return fileError(LAST_SYSTEM_ERROR(), filePath);
 
       data += written;
       remaining -= written;
@@ -134,11 +127,7 @@ Error writeContentsToFile(const FilePath& filePath,
       nullptr);
 
    if (hFile == INVALID_HANDLE_VALUE)
-   {
-      Error error = LAST_SYSTEM_ERROR();
-      error.addProperty("path", filePath.getAbsolutePath());
-      return error;
-   }
+      return fileError(LAST_SYSTEM_ERROR(), filePath);
 
    // in append mode, move to the end of the file before writing -- a GENERIC_WRITE
    // handle does not auto-append the way a FILE_APPEND_DATA-only handle would
@@ -173,11 +162,7 @@ Error writeContentsToFile(const FilePath& filePath,
    }
 
    if (!::CloseHandle(hFile))
-   {
-      Error error = LAST_SYSTEM_ERROR();
-      error.addProperty("path", filePath.getAbsolutePath());
-      return error;
-   }
+      return fileError(LAST_SYSTEM_ERROR(), filePath);
 
    return Success();
 }
@@ -198,7 +183,7 @@ Error writeAll(int fd, const std::string& contents, const FilePath& filePath)
          if (errno == EINTR)
             continue;
 
-         return fileError(errno, filePath, ERROR_LOCATION);
+         return fileError(LAST_SYSTEM_ERROR(), filePath);
       }
 
       data += written;
@@ -238,7 +223,7 @@ Error syncFile(int fd, const FilePath& filePath)
 #endif
 
    if (rc == -1)
-      return fileError(errno, filePath, ERROR_LOCATION);
+      return fileError(LAST_SYSTEM_ERROR(), filePath);
 
    return Success();
 }
@@ -249,7 +234,7 @@ Error syncFile(int fd, const FilePath& filePath)
 Error closeFile(int fd, const FilePath& filePath)
 {
    if (::close(fd) == -1 && errno != EINTR)
-      return fileError(errno, filePath, ERROR_LOCATION);
+      return fileError(LAST_SYSTEM_ERROR(), filePath);
 
    return Success();
 }
@@ -270,7 +255,7 @@ Error writeContentsToFile(const FilePath& filePath,
    while (fd == -1 && errno == EINTR);
 
    if (fd == -1)
-      return fileError(errno, filePath, ERROR_LOCATION);
+      return fileError(LAST_SYSTEM_ERROR(), filePath);
 
    // when durability is requested, flush to physical storage; this is the point
    // at which a full disk or an exceeded quota is reliably reported
@@ -381,7 +366,10 @@ Error writeAllForAtomicWrite(int fd, const std::string& contents, const FilePath
 {
 #ifdef RSTUDIO_UNIT_TESTS_ENABLED
    if (s_atomicWriteWriteErrno != 0)
-      return fileError(s_atomicWriteWriteErrno, filePath, ERROR_LOCATION);
+   {
+      const boost::system::error_code code(s_atomicWriteWriteErrno, boost::system::system_category());
+      return fileError(Error(code, ERROR_LOCATION), filePath);
+   }
 #endif
 
    return writeAll(fd, contents, filePath);
@@ -491,7 +479,10 @@ Error writeInPlace(const FilePath& targetPath,
       int code = errno;
       struct stat st;
       if (::stat(targetPath.getAbsolutePath().c_str(), &st) == -1 || (st.st_mode & 077) != 0)
-         return fileError(code, targetPath, ERROR_LOCATION);
+      {
+         const boost::system::error_code ec(code, boost::system::system_category());
+         return fileError(Error(ec, ERROR_LOCATION), targetPath);
+      }
 
       DLOGF("Couldn't chmod '{}' (errno {}); writing it in place since it's already private to uid {}", targetPath.getAbsolutePath(), code, st.st_uid);
    }
@@ -507,12 +498,9 @@ Error writeInPlace(const FilePath& targetPath,
 // The error for a failed step of an atomic write. It names the file being
 // written, which is what the caller and the user know about; the temporary
 // file is recorded separately.
-Error atomicWriteError(int code,
-                       const FilePath& targetPath,
-                       const FilePath& tempPath,
-                       const ErrorLocation& location)
+Error atomicWriteError(Error error, const FilePath& targetPath, const FilePath& tempPath)
 {
-   Error error = fileError(code, targetPath, location);
+   error.addProperty("path", targetPath.getAbsolutePath());
    error.addProperty("temp-path", tempPath.getAbsolutePath());
    return error;
 }
@@ -551,7 +539,7 @@ Error createTempFile(const FilePath& targetPath,
       nullptr);
 
    if (pTemp->handle == INVALID_HANDLE_VALUE)
-      return atomicWriteError(::GetLastError(), targetPath, pTemp->path, ERROR_LOCATION);
+      return atomicWriteError(LAST_SYSTEM_ERROR(), targetPath, pTemp->path);
 
    return Success();
 }
@@ -565,7 +553,7 @@ Error writeTempFile(TempFile* pTemp,
 {
    Error error = writeAll(pTemp->handle, contents, targetPath);
    if (!error && options.durable && !::FlushFileBuffers(pTemp->handle))
-      error = atomicWriteError(::GetLastError(), targetPath, pTemp->path, ERROR_LOCATION);
+      error = atomicWriteError(LAST_SYSTEM_ERROR(), targetPath, pTemp->path);
 
    if (error)
    {
@@ -577,7 +565,7 @@ Error writeTempFile(TempFile* pTemp,
 
    if (!::CloseHandle(pTemp->handle))
    {
-      error = atomicWriteError(::GetLastError(), targetPath, pTemp->path, ERROR_LOCATION);
+      error = atomicWriteError(LAST_SYSTEM_ERROR(), targetPath, pTemp->path);
       pTemp->path.removeIfExists();
       return error;
    }
@@ -722,7 +710,10 @@ Error replaceFile(const FilePath& tempPath,
                    (code == ERROR_ACCESS_DENIED && isAccessDeniedTransient(targetPath));
 
       if (!inUse || microsec_clock::universal_time() >= deadline)
-         return atomicWriteError(static_cast<int>(code), targetPath, tempPath, ERROR_LOCATION);
+      {
+         const boost::system::error_code ec(static_cast<int>(code), boost::system::system_category());
+         return atomicWriteError(Error(ec, ERROR_LOCATION), targetPath, tempPath);
+      }
 
       boost::this_thread::sleep(milliseconds(50));
    }
@@ -770,7 +761,7 @@ Error createTempFile(const FilePath& targetPath,
    while (pTemp->fd == -1 && errno == EINTR);
 
    if (pTemp->fd == -1)
-      return atomicWriteError(errno, targetPath, pTemp->path, ERROR_LOCATION);
+      return atomicWriteError(LAST_SYSTEM_ERROR(), targetPath, pTemp->path);
 
    return Success();
 }
@@ -869,7 +860,7 @@ Error replaceFile(const FilePath& tempPath,
                   const AtomicWriteOptions& options)
 {
    if (renameForAtomicWrite(tempPath.getAbsolutePath().c_str(), targetPath.getAbsolutePath().c_str()) == -1)
-      return atomicWriteError(errno, targetPath, tempPath, ERROR_LOCATION);
+      return atomicWriteError(LAST_SYSTEM_ERROR(), targetPath, tempPath);
 
    // the file's contents were flushed before the rename; flush the directory
    // as well, so that the rename itself survives a crash

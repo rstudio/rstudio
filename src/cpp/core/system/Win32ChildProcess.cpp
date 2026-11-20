@@ -164,7 +164,7 @@ Error readPipeUntilDone(HANDLE hPipe, std::string* pOutput)
 
          else
          {
-            return systemError(error, ERROR_LOCATION);
+            return systemError(boost::system::error_code(error, boost::system::system_category()), ERROR_LOCATION);
          }
       }
    }
@@ -182,7 +182,7 @@ Error readPipeAvailable(HANDLE hPipe, std::string* pOutput)
       DWORD lastErr = ::GetLastError();
       if (lastErr == ERROR_BROKEN_PIPE)
          return Success();
-      return systemError(lastErr, ERROR_LOCATION);
+      return systemError(boost::system::error_code(lastErr, boost::system::system_category()), ERROR_LOCATION);
    }
    if (dwAvail == 0)
       return Success();

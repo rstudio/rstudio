@@ -6286,7 +6286,7 @@ void stopChatBackendForSessionExit(const std::string& reason, int gracePeriodMs)
          // a live process we could not signal) leaves an orphan behind, and
          // this log is the only artifact of that.
          if (::kill(-backendPid, SIGKILL) == -1 && errno != ESRCH)
-            LOG_ERROR(systemError(errno, ERROR_LOCATION));
+            LOG_ERROR(LAST_SYSTEM_ERROR());
       }
 #endif
    }

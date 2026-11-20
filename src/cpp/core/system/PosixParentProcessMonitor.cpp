@@ -71,14 +71,14 @@ Error wrapFork(boost::function<void()> func)
    int fds[2];
    int result = ::pipe(fds);
    if (result != 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 
    result = setFdEnv("RS_PPM_FD_READ", fds[0]);
    if (result != 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    result = setFdEnv("RS_PPM_FD_WRITE", fds[1]);
    if (result != 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 
    func();
 

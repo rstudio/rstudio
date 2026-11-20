@@ -1093,7 +1093,7 @@ Error readProcFileDescriptor(int fd, std::string* pContents)
    {
       ssize_t bytesRead = posix::posixCall<ssize_t>([&]() { return ::read(fd, buffer, sizeof(buffer)); });
       if (bytesRead == -1)
-         return systemError(errno, ERROR_LOCATION);
+         return LAST_SYSTEM_ERROR();
 
       if (bytesRead == 0)
          return Success();

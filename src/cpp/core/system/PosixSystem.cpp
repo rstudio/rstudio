@@ -266,7 +266,7 @@ Error realPath(const FilePath& filePath, FilePath* pRealPath)
    char* realPath = ::realpath(path.c_str(), buffer);
    if (realPath == nullptr)
    {
-      Error error = systemError(errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("path", filePath);
       return error;
    }
@@ -281,7 +281,7 @@ Error realPath(const std::string& path, FilePath* pRealPath)
    char* realPath = ::realpath(path.c_str(), buffer);
    if (realPath == nullptr)
    {
-      Error error = systemError(errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("path", path);
       return error;
    }
@@ -477,10 +477,10 @@ Error ignoreChildExits()
    reapchildren.sa_flags = SA_NOCLDWAIT;
    int result = ::sigaction( SIGCHLD, &reapchildren, 0);
    if (result != 0)
-      return systemError(result, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 #else // other systems
    if (::signal(SIGCHLD, SIG_IGN) == SIG_ERR)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 #endif // NO_CLDWAIT   
    
    return Success();
@@ -510,7 +510,7 @@ Error reapChildren()
    // install it
    int result = ::sigaction(SIGCHLD, &sa, nullptr);
    if (result != 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    else
       return Success();
 }
@@ -539,7 +539,7 @@ struct SignalBlocker::Impl
       // install mask
       int result = ::pthread_sigmask(SIG_BLOCK, pBlockMask, &oldMask);
       if (result != 0)
-         return systemError(result, ERROR_LOCATION);
+         return systemError(boost::system::error_code(result, boost::system::system_category()), ERROR_LOCATION);
       
       // set restore bit and return success
       blocked = true;
@@ -597,7 +597,9 @@ SignalBlocker::~SignalBlocker()
          // restore old mask
          int result = ::pthread_sigmask(SIG_SETMASK, &(pImpl_->oldMask), nullptr);
          if (result != 0)
-            LOG_ERROR(systemError(result, ERROR_LOCATION));
+            LOG_ERROR(systemError(
+               boost::system::error_code(result, boost::system::system_category()),
+               ERROR_LOCATION));
       }
    }
    catch(...)
@@ -609,7 +611,7 @@ Error clearSignalMask()
 {
    int result = signal_safe::clearSignalMask();
    if (result != 0)
-      return systemError(result, ERROR_LOCATION);
+      return systemError(boost::system::error_code(result, boost::system::system_category()), ERROR_LOCATION);
    else
       return Success();
 }
@@ -647,7 +649,7 @@ Error useDefaultSignalHandler(SignalType signal)
    int result = ::sigaction(sig, &sa, nullptr);
    if (result != 0)
    {
-      Error error = systemError(result, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       return error;
    }
    else
@@ -733,7 +735,7 @@ Error closeFileDescriptorsFrom(int fdStart)
    // get limit
    struct rlimit rl;
    if (::getrlimit(RLIMIT_NOFILE, &rl) < 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    if (rl.rlim_max == RLIM_INFINITY)
       rl.rlim_max = 1024; // default on linux
 
@@ -741,7 +743,7 @@ Error closeFileDescriptorsFrom(int fdStart)
    for (int i=fdStart; i< (int)rl.rlim_max; i++)
    {
       if (::close(i) < 0 && errno != EBADF)
-         return systemError(errno, ERROR_LOCATION);
+         return LAST_SYSTEM_ERROR();
    }
 
    return Success();
@@ -761,7 +763,7 @@ Error closeFileDescriptorsFrom(int fdStart)
       if (fd >= fdStart)
       {
          if (::close(fd) < 0 && errno != EBADF)
-            return systemError(errno, ERROR_LOCATION);
+            return LAST_SYSTEM_ERROR();
       }
    }
 
@@ -817,7 +819,7 @@ Error getOpenFds(pid_t pid, std::vector<uint32_t> *pFds)
    // get size of the buffer needed to hold the list of fds
    int bufferSize = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, nullptr, 0);
    if (bufferSize <= 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 
    // get the list of open fds
    struct proc_fdinfo* procFdInfo = static_cast<struct proc_fdinfo*>(malloc(bufferSize));
@@ -826,7 +828,7 @@ Error getOpenFds(pid_t pid, std::vector<uint32_t> *pFds)
 
    int filledSize = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, procFdInfo, bufferSize);
    if (filledSize <= 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    
    int numFds = filledSize / PROC_PIDLISTFD_SIZE;
    for (int i = 0; i < numFds; ++i)
@@ -1028,15 +1030,15 @@ void attachStdFileDescriptorsToDevNull()
 {
    int fd0 = ::open("/dev/null", O_RDWR);
    if (fd0 == -1)
-      LOG_ERROR(systemError(errno, ERROR_LOCATION));
+      LOG_ERROR(LAST_SYSTEM_ERROR());
 
    int fd1 = ::dup(fd0);
    if (fd1 == -1)
-       LOG_ERROR(systemError(errno, ERROR_LOCATION));
+       LOG_ERROR(LAST_SYSTEM_ERROR());
 
    int fd2 = ::dup(fd0);
    if (fd2 == -1)
-      LOG_ERROR(systemError(errno, ERROR_LOCATION));
+      LOG_ERROR(LAST_SYSTEM_ERROR());
 }
 
 void setStandardStreamsToDevNull()
@@ -1068,7 +1070,7 @@ bool isReadOnly(const FilePath& filePath)
       }
       else
       {
-         Error error = systemError(errno, ERROR_LOCATION);
+         Error error = LAST_SYSTEM_ERROR();
          error.addProperty("path", filePath);
          LOG_ERROR(error);
          return false;
@@ -1097,7 +1099,7 @@ bool isRemotePath(const FilePath& filePath)
       // log the unexpected errno (e.g. EIO/ETIMEDOUT on a hung mount, ENOTCONN
       // on a stale NFS handle) so an "optimization never activates on my share"
       // report is debuggable; the fail-safe answer is still "not remote".
-      Error error = systemError(errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("path", filePath);
       LOG_ERROR(error);
       return false;
@@ -1115,7 +1117,7 @@ bool isRemotePath(const FilePath& filePath)
       // log the unexpected errno (e.g. EIO/ETIMEDOUT on a hung mount, ENOTCONN
       // on a stale NFS handle) so an "optimization never activates on my share"
       // report is debuggable; the fail-safe answer is still "not remote".
-      Error error = systemError(errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("path", filePath);
       LOG_ERROR(error);
       return false;
@@ -1263,7 +1265,7 @@ Error terminateProcess(PidType pid)
 Error killProcess(PidType pid, int signal)
 {
    if (::kill(pid, signal))
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    else
       return Success();
 }
@@ -1513,7 +1515,7 @@ FilePath currentWorkingDirMac(PidType pid)
    // check for explicit failure
    if (size <= 0)
    {
-      LOG_ERROR(systemError(errno, ERROR_LOCATION));
+      LOG_ERROR(LAST_SYSTEM_ERROR());
       return FilePath();
    }
 
@@ -1660,7 +1662,7 @@ Error daemonize(const std::string& pidFile)
    PidType pid = ::fork();
    if (pid < 0)
    {
-      return systemError(errno, ERROR_LOCATION); // fork error
+      return LAST_SYSTEM_ERROR(); // fork error
    }
    else if (pid > 0)
    {
@@ -1780,7 +1782,7 @@ Error getResourceLimit(ResourceLimit resourceLimit,
    // get limits
    struct rlimit rl;
    if (::getrlimit(resource, &rl) < 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 
    // set out params and return success
    *pSoft = rl.rlim_cur;
@@ -1808,7 +1810,7 @@ Error setResourceLimit(ResourceLimit resourceLimit,
    rl.rlim_cur = soft;
    rl.rlim_max = hard;
    if (::setrlimit(resource, &rl) == -1)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    else
       return Success();
 }
@@ -1820,7 +1822,7 @@ Error systemInformation(SysInfo* pSysInfo)
 #ifdef __linux__
    struct sysinfo info;
    if (::sysinfo(&info) == -1)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 
    pSysInfo->load1 = info.loads[0] / (float)(1 << SI_LOAD_SHIFT);
    pSysInfo->load5 = info.loads[1] / (float)(1 << SI_LOAD_SHIFT);
@@ -1828,7 +1830,7 @@ Error systemInformation(SysInfo* pSysInfo)
 #else
    double loads[3];
    if (::getloadavg(loads, 3) == -1)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    pSysInfo->load1 = loads[0];
    pSysInfo->load5 = loads[1];
    pSysInfo->load15 = loads[2];
@@ -1889,7 +1891,7 @@ Error processInfo(const std::string& process,
       // open the /proc directory
       pDir = ::opendir("/proc");
       if (pDir == nullptr)
-         return systemError(errno, ERROR_LOCATION);
+         return LAST_SYSTEM_ERROR();
 
       struct dirent *pDirent;
       while ( (pDirent = ::readdir(pDir)) )
@@ -2005,7 +2007,7 @@ Error processInfo(pid_t pid, ProcessInfo* pInfo, bool populateUsername)
    struct stat st;
    if (::stat(cmdlineFile.getAbsolutePath().c_str(), &st) == -1)
    {
-      Error error = systemError(errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("path", cmdlineFile);
       return error;
    }
@@ -2059,7 +2061,7 @@ Error ProcessInfo::creationTime(boost::posix_time::ptime* pCreationTime) const
    // get clock ticks (bail if we can't)
    double clockTicks = ::sysconf(_SC_CLK_TCK);
    if (clockTicks == -1)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 
    // get boot time
    double bootTime = 0.0;
@@ -2207,7 +2209,7 @@ Error ProcessInfo::creationTime(boost::posix_time::ptime* pCreationTime) const
    std::size_t size = sizeof(info);
    int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, static_cast<int>(pid) };
    if (::sysctl(name, 4, &info, &size, nullptr, 0) == -1)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 
    // sysctl reports success with no data when the process does not exist
    if (size == 0)
@@ -2496,7 +2498,7 @@ Error restrictCoreDumps()
 #ifdef __linux__
    int res = ::prctl(PR_SET_DUMPABLE, 0);
    if (res == -1)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 #endif
 
    return Success();
@@ -2527,7 +2529,7 @@ void printCoreDumpable(const std::string& context)
 #ifdef __linux__
    int dumpable = ::prctl(PR_GET_DUMPABLE, nullptr, nullptr, nullptr, nullptr);
    if (dumpable == -1)
-      LOG_ERROR(systemError(errno, ERROR_LOCATION));
+      LOG_ERROR(LAST_SYSTEM_ERROR());
    ostr << "  pr_get_dumpable: " << dumpable << std::endl;
 #endif
 
@@ -2628,7 +2630,7 @@ void setProcessLimits(const ProcessLimits& limits, const boost::function<void(co
    if (limits.priority != 0)
    {
       if (::setpriority(PRIO_PROCESS, 0, limits.priority) == -1)
-         logError(systemError(errno, ERROR_LOCATION));
+         logError(LAST_SYSTEM_ERROR());
    }
 
    // cpu affinity
@@ -2692,7 +2694,7 @@ Error waitForProcessExit(PidType processId)
          else
          {
             // some other unexpected error
-            return systemError(errno, ERROR_LOCATION);
+            return LAST_SYSTEM_ERROR();
          }
       }
       else // a totally unexpected return from waitpid
@@ -2766,7 +2768,7 @@ Error launchChildProcess(std::string path,
    // error
    if (pid < 0)
    {
-      Error error = systemError(errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("commmand", path);
       return error;
    }
@@ -2778,7 +2780,7 @@ Error launchChildProcess(std::string path,
       // lifetime isn't tied to our parent's lifetime
       if (::setpgid(0,0) == -1)
       {
-         Error error = systemError(errno, ERROR_LOCATION);
+         Error error = LAST_SYSTEM_ERROR();
          // Use safe logger in 'after fork before exec'
          safeLogToSyslog(path, log::LogLevel::ERR, error.asString());
          ::_exit(EXIT_FAILURE);
@@ -2990,7 +2992,7 @@ Error runProcessImpl(const std::string& path,
    // in the normal case control should never return from execv (it starts
    // anew at main of the process pointed to by path). therefore, if we get
    // here then there was an error
-   error = systemError(errno, ERROR_LOCATION);
+   error = LAST_SYSTEM_ERROR();
    error.addProperty("child-path", path);
    
    // clean up allocated memory
@@ -3024,7 +3026,7 @@ Error getChildProcesses(
    std::vector<pid_t> pids(N);
    int count = proc_listchildpids(pid, pids.data(), N * sizeof(pid_t));
    if (count == -1)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    
    // build process info
    for (auto i = 0; i < count; i++)
@@ -3129,7 +3131,7 @@ Error terminateChildProcesses(pid_t pid,
          // call to getChildProcesses (sh, ps, awk). This results in a
          // regular stream of error messages at the dev console, so we
          // suppress that particular error to prevent bogus error states.
-         Error error = systemError(errno, ERROR_LOCATION);
+         Error error = LAST_SYSTEM_ERROR();
 #ifdef __APPLE__
          if (!error.matches(boost::system::errc::no_such_process))
 #endif
@@ -3162,7 +3164,7 @@ Error terminateProcessTree(PidType pid)
    for (const ProcessInfo& process : descendants)
    {
       if (::kill(process.pid, SIGTERM) != 0 && errno != ESRCH)
-         LOG_ERROR(systemError(errno, ERROR_LOCATION));
+         LOG_ERROR(LAST_SYSTEM_ERROR());
    }
 
    return error;
@@ -3485,7 +3487,7 @@ Error resetKeyring()
       if (errno == EPERM)
          return Success();
 
-      Error error = systemError(errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("description", "Unable to create new session keyring");
       return error;
    }
@@ -3498,7 +3500,7 @@ Error resetKeyring()
 
    if (ret < 0)
    {
-      Error error = systemError(errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("description", "Unable to link new session keyring with the user keyring");
       return error;
    }
@@ -3515,12 +3517,12 @@ namespace {
 Error setGroupId(GidType gid)
 {
    if (::setresgid(gid, gid, gid) < 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 
    // verify
    gid_t rgid, egid, sgid;
    if (::getresgid(&rgid, &egid, &sgid) < 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    if (rgid != gid || egid != gid || sgid != gid)
       return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
 
@@ -3530,12 +3532,12 @@ Error setGroupId(GidType gid)
 Error setUserId(UidType uid)
 {
    if (::setresuid(uid, uid, uid) < 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 
    // verify
    uid_t ruid, euid, suid;
    if (::getresuid(&ruid, &euid, &suid) < 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    if (ruid != uid || euid != uid || suid != uid)
       return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
 
@@ -3548,7 +3550,7 @@ Error setUserId(UidType uid)
 Error setGroupId(GidType gid)
 {
    if (::setregid(gid, gid) < 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 
    // verify
    if (::getgid() != gid || ::getegid() != gid)
@@ -3560,7 +3562,7 @@ Error setGroupId(GidType gid)
 Error setUserId(UidType uid)
 {
    if (::setreuid(uid, uid) < 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 
    // verify
    if (::getuid() != uid || ::geteuid() != uid)
@@ -3650,7 +3652,7 @@ Error permanentlyDropPriv(const std::string& newUsername, const std::string& new
    // with the alternate group results in the process running with only a single
    // group.
    if (::initgroups(user.getUsername().c_str(), user.getGroupId()) < 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 
    return permanentlyDropPrivImpl(user.getUserId(), targetGID, logErrorToLogger);
 }
@@ -3674,7 +3676,7 @@ Error permanentlyDropPrivAfterFork(const ResolvedUser& user)
    // kernel accepts
    int numGroups = static_cast<int>(std::min<std::size_t>(user.groupIds.size(), NGROUPS_MAX));
    if (::setgroups(numGroups, user.groupIds.data()) < 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 
    return permanentlyDropPrivImpl(user.user.getUserId(), user.user.getGroupId(), logErrorAfterFork);
 }

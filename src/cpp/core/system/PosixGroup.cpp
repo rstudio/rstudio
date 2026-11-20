@@ -94,7 +94,7 @@ Error groupFrom(const boost::function<int(
    {
       if (result == 0) // will happen if group is not found
          result = kNotFoundError;
-      Error error = systemError(result, ERROR_LOCATION);
+      Error error(boost::system::error_code(result, boost::system::system_category()), ERROR_LOCATION);
       error.addProperty("group-value", safe_convert::numberToString(value));
       return error;
    }
@@ -354,9 +354,10 @@ Error queryUserGroupIds(const User& user, std::vector<GidType>* pGroupIds, const
          {
             // a failed lookup needn't have filled anything in (nor set errno), so
             // publish nothing: the zeroed buffer would read as membership in gid 0
+            const int code = errno != 0 ? errno : ENOENT;
             pGroupIds->clear();
 
-            Error error = systemError(errno != 0 ? errno : ENOENT, ERROR_LOCATION);
+            Error error(boost::system::error_code(code, boost::system::system_category()), ERROR_LOCATION);
             error.addProperty("description", "Error retrieving groups for: " + username);
             return error;
          }

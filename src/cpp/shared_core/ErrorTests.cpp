@@ -124,40 +124,46 @@ void expectTestError(const Error& in_error)
    EXPECT_EQ("test failure", in_error.getMessage());
 }
 
-// whether systemError(E, ErrorLocation) compiles
-template <typename E, typename = void>
-struct CanMakeSystemError : std::false_type
-{
-};
+// Check the public overloads without requiring an intentionally failing build.
+template <typename E, typename... Args>
+auto canMakeSystemError(int) -> decltype(systemError(
+   std::declval<E>(), std::declval<Args>()..., std::declval<const ErrorLocation&>()), std::true_type{});
 
-template <typename E>
-struct CanMakeSystemError<E, decltype(void(systemError(std::declval<E>(), std::declval<const ErrorLocation&>())))>
-   : std::true_type
-{
-};
+template <typename E, typename... Args>
+std::false_type canMakeSystemError(...);
 
-// whether systemCallError(name, E, ErrorLocation) compiles
-template <typename E, typename = void>
-struct CanMakeSystemCallError : std::false_type
-{
-};
+template <typename E, typename... Args>
+using CanMakeSystemError = decltype(canMakeSystemError<E, Args...>(0));
 
-template <typename E>
-struct CanMakeSystemCallError<
-   E,
-   decltype(void(systemCallError(
-      std::declval<const std::string&>(),
-      std::declval<E>(),
-      std::declval<const ErrorLocation&>())))> : std::true_type
+template <typename E, typename... Args>
+auto canMakeSystemCallError(int) -> decltype(systemCallError(
+   std::declval<const std::string&>(), std::declval<E>(), std::declval<Args>()...,
+   std::declval<const ErrorLocation&>()), std::true_type{});
+
+template <typename E, typename... Args>
+std::false_type canMakeSystemCallError(...);
+
+template <typename E, typename... Args>
+using CanMakeSystemCallError = decltype(canMakeSystemCallError<E, Args...>(0));
+
+template <typename T>
+constexpr bool rejectsRawCode()
 {
-};
+   return !CanMakeSystemError<T>::value &&
+          !CanMakeSystemError<T, Error>::value &&
+          !CanMakeSystemError<T, std::string>::value &&
+          !CanMakeSystemError<T, std::string, Error>::value &&
+          !CanMakeSystemCallError<T>::value &&
+          !CanMakeSystemCallError<T, std::string>::value;
+}
 
 enum PlainEnum
 {
    kPlainValue = 21
 };
 
-static_assert(CanMakeSystemError<int>::value, "an int is a system error code");
+static_assert(rejectsRawCode<int>(), "an errno value needs an explicit category");
+static_assert(rejectsRawCode<unsigned long>(), "a raw Win32 code needs an explicit category");
 static_assert(CanMakeSystemError<errc_t>::value, "an errc is a generic error");
 static_assert(CanMakeSystemError<TestErrc>::value, "an error code enum has its own category");
 static_assert(CanMakeSystemError<std::io_errc>::value, "a scoped std error code enum converts to std::error_code");
@@ -200,7 +206,7 @@ static_assert(CanMakeDescribedGenericError<int>::value, "an errno value is a gen
 static_assert(!CanMakeDescribedGenericError<errc_t>::value, "an errc goes to systemError()");
 static_assert(!CanMakeDescribedGenericError<PlainEnum>::value, "a plain enum isn't an errno value");
 
-static_assert(CanMakeSystemCallError<int>::value, "a system call reports a system error code");
+static_assert(CanMakeSystemCallError<boost::system::error_code>::value, "a named call accepts a categorized code");
 static_assert(!CanMakeSystemCallError<errc_t>::value, "an errc isn't a system error code");
 static_assert(!CanMakeSystemCallError<PlainEnum>::value, "a plain enum isn't a system error code");
 
@@ -221,6 +227,56 @@ TEST(ErrorTest, ErrcErrorsUseTheGenericCategory)
    EXPECT_EQ("description", described.getProperty("description"));
    ASSERT_TRUE(described.hasCause());
    EXPECT_EQ(cause, described.getCause());
+}
+
+TEST(ErrorTest, CategorizedCodesKeepTheirCategory)
+{
+   const auto code = make_error_code(kTestFailure);
+   const Error cause = systemError(boost::system::errc::io_error, ErrorLocation());
+   expectTestError(systemError(code, ErrorLocation()));
+   expectTestError(systemError(code, cause, ErrorLocation()));
+   expectTestError(systemError(code, "details", ErrorLocation()));
+   const Error described = systemError(code, "details", cause, ErrorLocation());
+   expectTestError(described);
+   EXPECT_EQ("details", described.getProperty("description"));
+   ASSERT_TRUE(described.hasCause());
+   EXPECT_EQ(cause, described.getCause());
+
+   const Error named = systemCallError("read", code, ErrorLocation());
+   EXPECT_TRUE(named == code);
+   EXPECT_EQ("read: test failure", named.getMessage());
+   const Error custom = systemCallError("read", code, "details", ErrorLocation());
+   EXPECT_TRUE(custom == code);
+   EXPECT_EQ("read: details", custom.getMessage());
+}
+
+TEST(ErrorTest, LastSystemErrorCapturesTheNativeCodeAndCallSite)
+{
+#ifdef _WIN32
+   const int value = ERROR_ACCESS_DENIED;
+   const auto previous = ::GetLastError();
+   ::SetLastError(value);
+   const Error error = LAST_SYSTEM_ERROR();
+   ::SetLastError(value);
+   const Error named = LAST_SYSTEM_CALL_ERROR("open");
+   ::SetLastError(previous);
+#else
+   const int value = EACCES;
+   const int previous = errno;
+   errno = value;
+   const Error error = LAST_SYSTEM_ERROR();
+   errno = value;
+   const Error named = LAST_SYSTEM_CALL_ERROR("open");
+   errno = previous;
+#endif
+
+   const boost::system::error_code native(value, boost::system::system_category());
+   EXPECT_TRUE(error == native);
+   EXPECT_EQ(native.message(), error.getMessage());
+   EXPECT_TRUE(named == native);
+   EXPECT_EQ("open: " + native.message(), named.getMessage());
+   EXPECT_EQ(BOOST_CURRENT_FUNCTION, error.getLocation().getFunction());
+   EXPECT_EQ(BOOST_CURRENT_FUNCTION, named.getLocation().getFunction());
 }
 
 TEST(ErrorTest, GenericErrorsUseTheGenericCategory)
@@ -252,17 +308,18 @@ TEST(ErrorTest, DistinctCodesCanMatchTheSameCondition)
    Error generic = systemError(missing, ErrorLocation());
 
 #ifdef _WIN32
-   const int nativeCode = ERROR_FILE_NOT_FOUND;
-   Error path = systemError(ERROR_PATH_NOT_FOUND, ErrorLocation());
+   const error_code native(ERROR_FILE_NOT_FOUND, boost::system::system_category());
+#else
+   const error_code native(ENOENT, boost::system::system_category());
+#endif
+   Error file(native, ErrorLocation());
+#ifdef _WIN32
+   const error_code nativePath(ERROR_PATH_NOT_FOUND, boost::system::system_category());
+   Error path(nativePath, ErrorLocation());
    EXPECT_TRUE(path.matches(missing));
    EXPECT_NE(path, generic);
-   EXPECT_NE(path, systemError(nativeCode, ErrorLocation()));
-#else
-   const int nativeCode = ENOENT;
+   EXPECT_NE(path, file);
 #endif
-
-   error_code native(nativeCode, boost::system::system_category());
-   Error file(native, ErrorLocation());
    EXPECT_TRUE(file.matches(missing));
    EXPECT_TRUE(generic.matches(missing));
    EXPECT_NE(file, generic);
@@ -279,11 +336,12 @@ TEST(ErrorTest, ErrcErrorsDoNotMatchUnrelatedErrors)
 
 #ifdef _WIN32
    // the same number in the system category is ERROR_NOT_READY
-   Error sameNumber = systemError(static_cast<int>(errc), ErrorLocation());
+   const boost::system::error_code native(ERROR_NOT_READY, boost::system::system_category());
+   Error sameNumber(native, ErrorLocation());
    EXPECT_FALSE(sameNumber.matches(errc));
    EXPECT_NE(sameNumber, error);
    EXPECT_NE(error, sameNumber);
-   EXPECT_FALSE(error == boost::system::error_code(errc, boost::system::system_category()));
+   EXPECT_FALSE(error == native);
 #endif
 
    EXPECT_NE(systemError(boost::system::errc::not_a_directory, ErrorLocation()), error);

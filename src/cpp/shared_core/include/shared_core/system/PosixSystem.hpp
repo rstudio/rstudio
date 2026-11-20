@@ -155,7 +155,10 @@ Error posixCall(const std::function<T()>& in_posixFunction,
 
    // return status
    if (result == ERR)
-      return systemError(errno, in_errorLocation);
+   {
+      const int savedErrno = errno;
+      return Error(boost::system::error_code(savedErrno, boost::system::system_category()), in_errorLocation);
+   }
    else
       return Success();
 }

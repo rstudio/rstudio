@@ -300,7 +300,7 @@ Error ensureAdvisoryLockFile(const FilePath& lockFilePath)
       if (errno == EEXIST)
          return Success();
 
-      Error error = systemCallError("open", errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_CALL_ERROR("open");
       error.addProperty("lock-file", lockFilePath);
       return error;
    }
@@ -308,7 +308,7 @@ Error ensureAdvisoryLockFile(const FilePath& lockFilePath)
    Error error;
    if (::fchmod(descriptor, 0666) == -1)
    {
-      error = systemCallError("fchmod", errno, ERROR_LOCATION);
+      error = LAST_SYSTEM_CALL_ERROR("fchmod");
       error.addProperty("lock-file", lockFilePath);
    }
 
@@ -341,7 +341,7 @@ Error inodeKey(const FilePath& lockFilePath, std::string* pKey)
       if (errno == ENOENT)
          return Success();
 
-      Error error = systemError(errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("lock-file", lockFilePath);
       return error;
    }
@@ -470,7 +470,7 @@ Error AdvisoryFileLock::isLocked(const FilePath& lockFilePath,
 
    if (descriptor == -1)
    {
-      Error error = systemError(errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("lock-file", lockFilePath);
       return error;
    }
@@ -482,7 +482,7 @@ Error AdvisoryFileLock::isLocked(const FilePath& lockFilePath,
    struct stat info;
    if (::fstat(descriptor, &info) == -1)
    {
-      Error error = systemCallError("fstat", errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_CALL_ERROR("fstat");
       error.addProperty("lock-file", lockFilePath);
       ::close(descriptor);
       return error;
@@ -516,7 +516,7 @@ Error AdvisoryFileLock::isLocked(const FilePath& lockFilePath,
    if (::fcntl(descriptor, F_SETLK, &request) == 0)
       *pIsLocked = false;
    else if (errno != EAGAIN && errno != EACCES)
-      error = systemCallError("fcntl", errno, ERROR_LOCATION);
+      error = LAST_SYSTEM_CALL_ERROR("fcntl");
 
    // closing releases the lock just taken, if any
    ::close(descriptor);
@@ -574,7 +574,7 @@ Error AdvisoryFileLock::isLocked(const FilePath& lockFilePath,
       if (locked || lockError == ERROR_LOCK_VIOLATION)
          return Success();
 
-      Error probeError = systemError(lockError, ERROR_LOCATION);
+      Error probeError(boost::system::error_code(lockError, boost::system::system_category()), ERROR_LOCATION);
       probeError.addProperty("lock-file", lockFilePath);
       return probeError;
    }
@@ -715,7 +715,7 @@ Error AdvisoryFileLock::acquire(const FilePath& lockFilePath)
 
    if (descriptor == -1)
    {
-      Error openError = systemCallError("open", errno, ERROR_LOCATION);
+      Error openError = LAST_SYSTEM_CALL_ERROR("open");
       openError.addProperty("lock-file", lockFilePath);
       return openError;
    }
@@ -726,7 +726,7 @@ Error AdvisoryFileLock::acquire(const FilePath& lockFilePath)
    struct stat openedInfo;
    if (::fstat(descriptor, &openedInfo) == -1)
    {
-      Error statError = systemCallError("fstat", errno, ERROR_LOCATION);
+      Error statError = LAST_SYSTEM_CALL_ERROR("fstat");
       statError.addProperty("lock-file", lockFilePath);
       // Without an identity, closing could drop a lock this process already
       // holds on the opened inode through another name.
@@ -768,7 +768,10 @@ Error AdvisoryFileLock::acquire(const FilePath& lockFilePath)
       if (errorNumber == EAGAIN || errorNumber == EACCES)
          return noLockAvailableError(lockFilePath);
 
-      Error lockError = systemCallError("fcntl", errorNumber, ERROR_LOCATION);
+      Error lockError = systemCallError(
+         "fcntl",
+         boost::system::error_code(errorNumber, boost::system::system_category()),
+         ERROR_LOCATION);
       lockError.addProperty("lock-file", lockFilePath);
       return lockError;
    }
@@ -852,7 +855,7 @@ Error AdvisoryFileLock::release()
       while (status == -1 && errno == EINTR);
       if (status == -1)
       {
-         error = systemCallError("fcntl", errno, ERROR_LOCATION);
+         error = LAST_SYSTEM_CALL_ERROR("fcntl");
          error.addProperty("lock-file", pImpl_->lockFilePath);
       }
       else

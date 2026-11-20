@@ -425,7 +425,9 @@ void ConPty::readerLoop()
          // Log a genuinely unexpected failure even when some bytes were read.
          if (!ok && err != ERROR_BROKEN_PIPE &&
              err != ERROR_HANDLE_EOF && err != ERROR_OPERATION_ABORTED)
-            LOG_ERROR(systemError(err, ERROR_LOCATION));
+            LOG_ERROR(systemError(
+               boost::system::error_code(err, boost::system::system_category()),
+               ERROR_LOCATION));
          return;
       }
       std::unique_lock<std::mutex> lock(outMutex_);

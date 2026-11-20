@@ -227,7 +227,7 @@ Error readFileInfoLStat(const std::string& path, FileInfo* pFileInfo)
    struct stat st;
    if (::lstat(path.c_str(), &st) == -1)
    {
-      Error error = systemError(errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("path", path);
       return error;
    }

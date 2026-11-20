@@ -878,17 +878,18 @@ TEST(FileSerializerTest, WriteStringAtomicReadOnlyTargetFailsWithoutRetrying)
 // not misclassify unrelated errors or success.
 TEST(FileSerializerTest, IsDiskSpaceErrorClassifies)
 {
+   using boost::system::error_code;
+   using boost::system::system_category;
+
    EXPECT_FALSE(isDiskSpaceError(Success()));
    EXPECT_TRUE(isDiskSpaceError(systemError(boost::system::errc::no_space_on_device, ERROR_LOCATION)));
    EXPECT_FALSE(isDiskSpaceError(systemError(boost::system::errc::no_such_file_or_directory, ERROR_LOCATION)));
 
 #ifdef _WIN32
-   EXPECT_TRUE(isDiskSpaceError(systemError(ERROR_DISK_FULL, ERROR_LOCATION)));
-   EXPECT_TRUE(isDiskSpaceError(systemError(ERROR_HANDLE_DISK_FULL, ERROR_LOCATION)));
+   EXPECT_TRUE(isDiskSpaceError(Error(error_code(ERROR_DISK_FULL, system_category()), ERROR_LOCATION)));
+   EXPECT_TRUE(isDiskSpaceError(Error(error_code(ERROR_HANDLE_DISK_FULL, system_category()), ERROR_LOCATION)));
 #else
    // errno values as the system reports them
-   using boost::system::error_code;
-   using boost::system::system_category;
    EXPECT_TRUE(isDiskSpaceError(Error(error_code(ENOSPC, system_category()), ERROR_LOCATION)));
 # ifdef EDQUOT
    EXPECT_TRUE(isDiskSpaceError(Error(error_code(EDQUOT, system_category()), ERROR_LOCATION)));

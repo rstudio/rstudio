@@ -85,6 +85,9 @@
 namespace rstudio {
 namespace core {
 
+using boost::system::error_code;
+using boost::system::system_category;
+
 namespace {
 
 const char * const kLegacyFileLockPrefix = ".rstudio-lock-41c29";
@@ -287,7 +290,7 @@ Error unlinkPath(const FilePath& filePath)
       return Success();
    }
 
-   Error error = systemError(errno, ERROR_LOCATION);
+   Error error = LAST_SYSTEM_ERROR();
    error.addProperty("path", filePath);
    return error;
 }
@@ -321,7 +324,7 @@ Error writeDescriptorContents(int descriptor, const std::string& contents)
       {
          if (errno == EINTR)
             continue;
-         return systemCallError("write", errno, ERROR_LOCATION);
+         return LAST_SYSTEM_CALL_ERROR("write");
       }
       written += static_cast<std::size_t>(result);
    }
@@ -342,11 +345,11 @@ Error stampWriteTime(int descriptor, bool released = false)
    // of their timeout or small differences between host clocks.
    struct timeval now = {0, 0};
    if (!released && ::gettimeofday(&now, nullptr) == -1)
-      return systemCallError("gettimeofday", errno, ERROR_LOCATION);
+      return LAST_SYSTEM_CALL_ERROR("gettimeofday");
 
    struct timeval times[2] = {now, now};
    if (::futimes(descriptor, times) == -1)
-      return systemCallError("futimes", errno, ERROR_LOCATION);
+      return LAST_SYSTEM_CALL_ERROR("futimes");
 
    return Success();
 }
@@ -378,14 +381,14 @@ Error writeLockContents(int descriptor, bool released)
 {
    std::string contents = lockContents(released);
    if (::lseek(descriptor, 0, SEEK_SET) == -1)
-      return systemCallError("lseek", errno, ERROR_LOCATION);
+      return LAST_SYSTEM_CALL_ERROR("lseek");
 
    Error error = writeDescriptorContents(descriptor, contents);
    if (error)
       return error;
 
    if (::ftruncate(descriptor, static_cast<off_t>(contents.size())) == -1)
-      return systemCallError("ftruncate", errno, ERROR_LOCATION);
+      return LAST_SYSTEM_CALL_ERROR("ftruncate");
 
    stampWriteTimeBestEffort(descriptor, released);
    return Success();
@@ -397,7 +400,7 @@ Error descriptorIdentity(int descriptor,
 {
    struct stat info;
    if (::fstat(descriptor, &info) == -1)
-      return systemCallError("fstat", errno, ERROR_LOCATION);
+      return LAST_SYSTEM_CALL_ERROR("fstat");
 
    pMetadata->device = info.st_dev;
    pMetadata->inode = info.st_ino;
@@ -425,7 +428,7 @@ Error readDescriptorMetadata(int descriptor,
       {
          if (errno == EINTR)
             continue;
-         return systemCallError("read", errno, ERROR_LOCATION);
+         return LAST_SYSTEM_CALL_ERROR("read");
       }
       if (result == 0)
          break;
@@ -451,7 +454,7 @@ Error readLockMetadata(const FilePath& lockFilePath,
       O_RDONLY | O_NONBLOCK | O_CLOEXEC);
    if (descriptor == -1)
    {
-      Error error = systemError(errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("lock-file", lockFilePath);
       return error;
    }
@@ -494,7 +497,7 @@ Error hasExpectedIdentity(const FilePath& filePath,
       if (errno == ENOENT)
          return Success();
 
-      Error error = systemError(errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("path", filePath);
       return error;
    }
@@ -526,7 +529,7 @@ Error hasExpectedIdentityAt(int directoryDescriptor,
       if (errno == ENOENT)
          return Success();
 
-      Error error = systemError(errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("path", filePath);
       return error;
    }
@@ -546,7 +549,7 @@ Error unlinkAt(int directoryDescriptor, const FilePath& filePath)
       return Success();
    }
 
-   Error error = systemError(errno, ERROR_LOCATION);
+   Error error = LAST_SYSTEM_ERROR();
    error.addProperty("path", filePath);
    return error;
 }
@@ -598,7 +601,7 @@ Error removeIfSameIdentityAt(int directoryDescriptor,
       if (errno == ENOENT)
          return Success();
 
-      Error error = systemError(errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("path", filePath);
       return error;
    }
@@ -650,7 +653,7 @@ Error removeIfSameIdentityAt(int directoryDescriptor,
 
    if (!restored)
    {
-      Error restoreError = systemCallError("linkat", linkError, ERROR_LOCATION);
+      Error restoreError = systemCallError("linkat", error_code(linkError, system_category()), ERROR_LOCATION);
       restoreError.addProperty("path", filePath);
       restoreError.addProperty("description",
                                "Could not restore a displaced claim entry");
@@ -714,7 +717,7 @@ Error removeIfSameIdentity(const FilePath& filePath,
       if (errno == ENOENT)
          return Success();
 
-      Error error = systemError(errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("path", filePath);
       return error;
    }
@@ -766,7 +769,7 @@ Error removeIfSameIdentity(const FilePath& filePath,
 
    if (!restored)
    {
-      Error restoreError = systemCallError("linkat", linkError, ERROR_LOCATION);
+      Error restoreError = systemCallError("linkat", error_code(linkError, system_category()), ERROR_LOCATION);
       restoreError.addProperty("path", filePath);
       restoreError.addProperty("description",
                                "Could not restore a displaced lock entry");
@@ -900,7 +903,7 @@ Error inspectLockFile(const FilePath& lockFilePath,
       if (errno == ENOENT)
          return Success();
 
-      Error error = systemError(errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("lock-file", lockFilePath);
       return error;
    }
@@ -912,7 +915,7 @@ Error inspectLockFile(const FilePath& lockFilePath,
       {
          if (errno != ENOENT)
          {
-            Error error = systemError(errno, ERROR_LOCATION);
+            Error error = LAST_SYSTEM_ERROR();
             error.addProperty("lock-file", lockFilePath);
             return error;
          }
@@ -987,7 +990,7 @@ Error inspectClaimFileAt(int directoryDescriptor,
       if (errno == ENOENT)
          return Success();
 
-      Error error = systemError(errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("path", claimFilePath);
       return error;
    }
@@ -1021,7 +1024,7 @@ Error inspectClaimFileAt(int directoryDescriptor,
       }
       if (!isPermissionError(errno))
       {
-         Error error = systemError(errno, ERROR_LOCATION);
+         Error error = LAST_SYSTEM_ERROR();
          error.addProperty("path", claimFilePath);
          return error;
       }
@@ -1150,7 +1153,7 @@ void sweepStaleArtifacts(const FilePath& directory, const FilePath& ownPath)
              errno != ENOENT && errno != ENOTEMPTY && errno != EEXIST &&
              !isPermissionError(errno))
          {
-            Error removeError = systemError(errno, ERROR_LOCATION);
+            Error removeError = LAST_SYSTEM_ERROR();
             removeError.addProperty("path", child);
             LOG_ERROR(removeError);
          }
@@ -1220,7 +1223,7 @@ void sweepStaleClaims(int directoryDescriptor,
    {
       if (!isPermissionError(errno))
       {
-         Error error = systemError(errno, ERROR_LOCATION);
+         Error error = LAST_SYSTEM_ERROR();
          error.addProperty("path", directory);
          LOG_ERROR(error);
       }
@@ -1232,7 +1235,7 @@ void sweepStaleClaims(int directoryDescriptor,
    {
       int errorNumber = errno;
       ::close(scanDescriptor);
-      Error error = systemError(errorNumber, ERROR_LOCATION);
+      Error error(error_code(errorNumber, system_category()), ERROR_LOCATION);
       error.addProperty("path", directory);
       LOG_ERROR(error);
       return;
@@ -1296,7 +1299,7 @@ void sweepStaleClaims(int directoryDescriptor,
    ::closedir(entries);
    if (readError != 0)
    {
-      Error error = systemError(readError, ERROR_LOCATION);
+      Error error(error_code(readError, system_category()), ERROR_LOCATION);
       error.addProperty("path", directory);
       LOG_ERROR(error);
    }
@@ -1423,7 +1426,7 @@ Error claimLockFile(const FilePath& claimFilePath,
 
       if (errno != EEXIST)
       {
-         Error error = systemError(errno, ERROR_LOCATION);
+         Error error = LAST_SYSTEM_ERROR();
          error.addProperty("path", claimFilePath);
          return error;
       }
@@ -1465,7 +1468,7 @@ Error verifyClaimDirectory(const FilePath& claimDirectory)
    struct stat info;
    if (::lstat(claimDirectory.getAbsolutePathNative().c_str(), &info) == -1)
    {
-      Error error = systemError(errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("path", claimDirectory);
       return error;
    }
@@ -1506,13 +1509,13 @@ Error currentGroups(std::vector<gid_t>* pGroups)
 
    int count = ::getgroups(0, nullptr);
    if (count == -1)
-      return systemCallError("getgroups", errno, ERROR_LOCATION);
+      return LAST_SYSTEM_CALL_ERROR("getgroups");
    if (count == 0)
       return Success();
 
    std::vector<gid_t> supplementary(static_cast<std::size_t>(count));
    if (::getgroups(count, supplementary.data()) == -1)
-      return systemCallError("getgroups", errno, ERROR_LOCATION);
+      return LAST_SYSTEM_CALL_ERROR("getgroups");
    pGroups->insert(
       pGroups->end(),
       supplementary.begin(),
@@ -1618,7 +1621,7 @@ Error aclCallError(const char* operation,
                    int errorNumber,
                    const FilePath& path)
 {
-   Error error = systemCallError(operation, errorNumber, ERROR_LOCATION);
+   Error error = systemCallError(operation, error_code(errorNumber, system_category()), ERROR_LOCATION);
    error.addProperty("path", path);
    return error;
 }
@@ -1628,23 +1631,23 @@ Error readAclPermissions(acl_entry_t entry, mode_t* pPermissions)
    *pPermissions = 0;
    acl_permset_t permissionSet;
    if (::acl_get_permset(entry, &permissionSet) == -1)
-      return systemCallError("acl_get_permset", errno, ERROR_LOCATION);
+      return LAST_SYSTEM_CALL_ERROR("acl_get_permset");
 
    int result = ::acl_get_perm(permissionSet, ACL_READ);
    if (result == -1)
-      return systemCallError("acl_get_perm", errno, ERROR_LOCATION);
+      return LAST_SYSTEM_CALL_ERROR("acl_get_perm");
    if (result == 1)
       *pPermissions |= 04;
 
    result = ::acl_get_perm(permissionSet, ACL_WRITE);
    if (result == -1)
-      return systemCallError("acl_get_perm", errno, ERROR_LOCATION);
+      return LAST_SYSTEM_CALL_ERROR("acl_get_perm");
    if (result == 1)
       *pPermissions |= 02;
 
    result = ::acl_get_perm(permissionSet, ACL_EXECUTE);
    if (result == -1)
-      return systemCallError("acl_get_perm", errno, ERROR_LOCATION);
+      return LAST_SYSTEM_CALL_ERROR("acl_get_perm");
    if (result == 1)
       *pPermissions |= 01;
 
@@ -1788,31 +1791,31 @@ Error addPosixAclEntry(acl_t* pAcl,
 {
    acl_entry_t entry;
    if (::acl_create_entry(pAcl, &entry) == -1)
-      return systemCallError("acl_create_entry", errno, ERROR_LOCATION);
+      return LAST_SYSTEM_CALL_ERROR("acl_create_entry");
    if (::acl_set_tag_type(entry, tag) == -1)
-      return systemCallError("acl_set_tag_type", errno, ERROR_LOCATION);
+      return LAST_SYSTEM_CALL_ERROR("acl_set_tag_type");
    if (pQualifier && ::acl_set_qualifier(entry, pQualifier) == -1)
-      return systemCallError("acl_set_qualifier", errno, ERROR_LOCATION);
+      return LAST_SYSTEM_CALL_ERROR("acl_set_qualifier");
 
    acl_permset_t permissionSet;
    if (::acl_get_permset(entry, &permissionSet) == -1)
-      return systemCallError("acl_get_permset", errno, ERROR_LOCATION);
+      return LAST_SYSTEM_CALL_ERROR("acl_get_permset");
    if (::acl_clear_perms(permissionSet) == -1)
-      return systemCallError("acl_clear_perms", errno, ERROR_LOCATION);
+      return LAST_SYSTEM_CALL_ERROR("acl_clear_perms");
    if ((permissions & 04) &&
        ::acl_add_perm(permissionSet, ACL_READ) == -1)
    {
-      return systemCallError("acl_add_perm", errno, ERROR_LOCATION);
+      return LAST_SYSTEM_CALL_ERROR("acl_add_perm");
    }
    if ((permissions & 02) &&
        ::acl_add_perm(permissionSet, ACL_WRITE) == -1)
    {
-      return systemCallError("acl_add_perm", errno, ERROR_LOCATION);
+      return LAST_SYSTEM_CALL_ERROR("acl_add_perm");
    }
    if ((permissions & 01) &&
        ::acl_add_perm(permissionSet, ACL_EXECUTE) == -1)
    {
-      return systemCallError("acl_add_perm", errno, ERROR_LOCATION);
+      return LAST_SYSTEM_CALL_ERROR("acl_add_perm");
    }
 
    return Success();
@@ -1932,17 +1935,17 @@ Error applyTranslatedPosixAcl(const FilePath& parent,
    if (!error && (!namedUsers.empty() || !namedGroups.empty()) &&
        ::acl_calc_mask(&childAcl) == -1)
    {
-      error = systemCallError("acl_calc_mask", errno, ERROR_LOCATION);
+      error = LAST_SYSTEM_CALL_ERROR("acl_calc_mask");
    }
    if (!error && ::acl_valid(childAcl) == -1)
-      error = systemCallError("acl_valid", errno, ERROR_LOCATION);
+      error = LAST_SYSTEM_CALL_ERROR("acl_valid");
    if (!error)
    {
       int errorNumber;
       if (setDescriptorAcl(descriptor, childAcl, &errorNumber) == 0)
          *pApplied = true;
       else if (!isAclUnapplicable(errorNumber, preparedInfo))
-         error = systemCallError("acl_set_fd", errorNumber, ERROR_LOCATION);
+         error = systemCallError("acl_set_fd", error_code(errorNumber, system_category()), ERROR_LOCATION);
    }
 
    ::acl_free(childAcl);
@@ -1982,7 +1985,7 @@ Error effectiveDirectoryPermissions(const FilePath& directory,
       }
       else if (!isPermissionError(errno))
       {
-         Error error = systemCallError("faccessat", errno, ERROR_LOCATION);
+         Error error = LAST_SYSTEM_CALL_ERROR("faccessat");
          error.addProperty("path", directory);
          return error;
       }
@@ -2002,27 +2005,27 @@ Error addDarwinAclEntry(acl_t* pAcl,
    {
       *pAcl = ::acl_init(1);
       if (!*pAcl)
-         return systemCallError("acl_init", errno, ERROR_LOCATION);
+         return LAST_SYSTEM_CALL_ERROR("acl_init");
    }
 
    acl_entry_t entry;
    if (::acl_create_entry(pAcl, &entry) == -1)
-      return systemCallError("acl_create_entry", errno, ERROR_LOCATION);
+      return LAST_SYSTEM_CALL_ERROR("acl_create_entry");
    if (::acl_set_tag_type(entry, ACL_EXTENDED_ALLOW) == -1)
-      return systemCallError("acl_set_tag_type", errno, ERROR_LOCATION);
+      return LAST_SYSTEM_CALL_ERROR("acl_set_tag_type");
    if (::acl_set_qualifier(entry, identity) == -1)
-      return systemCallError("acl_set_qualifier", errno, ERROR_LOCATION);
+      return LAST_SYSTEM_CALL_ERROR("acl_set_qualifier");
 
    acl_permset_t permissionSet;
    if (::acl_get_permset(entry, &permissionSet) == -1)
-      return systemCallError("acl_get_permset", errno, ERROR_LOCATION);
+      return LAST_SYSTEM_CALL_ERROR("acl_get_permset");
    if (::acl_clear_perms(permissionSet) == -1)
-      return systemCallError("acl_clear_perms", errno, ERROR_LOCATION);
+      return LAST_SYSTEM_CALL_ERROR("acl_clear_perms");
 
    if ((permissions & 04) &&
        ::acl_add_perm(permissionSet, ACL_LIST_DIRECTORY) == -1)
    {
-      return systemCallError("acl_add_perm", errno, ERROR_LOCATION);
+      return LAST_SYSTEM_CALL_ERROR("acl_add_perm");
    }
    if (permissions & 02)
    {
@@ -2034,20 +2037,20 @@ Error addDarwinAclEntry(acl_t* pAcl,
       for (acl_perm_t permission : writePermissions)
       {
          if (::acl_add_perm(permissionSet, permission) == -1)
-            return systemCallError("acl_add_perm", errno, ERROR_LOCATION);
+            return LAST_SYSTEM_CALL_ERROR("acl_add_perm");
       }
    }
    if ((permissions & 01) &&
        ::acl_add_perm(permissionSet, ACL_SEARCH) == -1)
    {
-      return systemCallError("acl_add_perm", errno, ERROR_LOCATION);
+      return LAST_SYSTEM_CALL_ERROR("acl_add_perm");
    }
 
    acl_flagset_t flagSet;
    if (::acl_get_flagset_np(entry, &flagSet) == -1)
-      return systemCallError("acl_get_flagset_np", errno, ERROR_LOCATION);
+      return LAST_SYSTEM_CALL_ERROR("acl_get_flagset_np");
    if (::acl_clear_flags_np(flagSet) == -1)
-      return systemCallError("acl_clear_flags_np", errno, ERROR_LOCATION);
+      return LAST_SYSTEM_CALL_ERROR("acl_clear_flags_np");
    return Success();
 }
 
@@ -2062,7 +2065,7 @@ Error translateDarwinAcl(const FilePath& parent,
       uuid_t ownerIdentity;
       int status = ::mbr_uid_to_uuid(parentInfo.st_uid, ownerIdentity);
       if (status != 0)
-         return systemCallError("mbr_uid_to_uuid", status, ERROR_LOCATION);
+         return systemCallError("mbr_uid_to_uuid", error_code(status, system_category()), ERROR_LOCATION);
 
       Error error = addDarwinAclEntry(
          pAcl,
@@ -2077,7 +2080,7 @@ Error translateDarwinAcl(const FilePath& parent,
       uuid_t groupIdentity;
       int status = ::mbr_gid_to_uuid(parentInfo.st_gid, groupIdentity);
       if (status != 0)
-         return systemCallError("mbr_gid_to_uuid", status, ERROR_LOCATION);
+         return systemCallError("mbr_gid_to_uuid", error_code(status, system_category()), ERROR_LOCATION);
 
       Error error = addDarwinAclEntry(
          pAcl,
@@ -2088,7 +2091,7 @@ Error translateDarwinAcl(const FilePath& parent,
    }
 
    if (*pAcl && ::acl_valid(*pAcl) == -1)
-      return systemCallError("acl_valid", errno, ERROR_LOCATION);
+      return LAST_SYSTEM_CALL_ERROR("acl_valid");
    return Success();
 }
 
@@ -2107,7 +2110,7 @@ Error applyClaimDirectoryPermissions(const FilePath& parent,
       ACL_TYPE_EXTENDED);
    if (!parentAcl && errno != ENOENT && !isAclUnsupported(errno))
    {
-      Error error = systemCallError("acl_get_file", errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_CALL_ERROR("acl_get_file");
       error.addProperty("path", parent);
       return error;
    }
@@ -2140,7 +2143,7 @@ Error applyClaimDirectoryPermissions(const FilePath& parent,
          if (parentAcl)
             ::acl_free(parentAcl);
 #endif
-         Error error = systemError(errorNumber, ERROR_LOCATION);
+         Error error(error_code(errorNumber, system_category()), ERROR_LOCATION);
          error.addProperty("path", parent);
          return error;
       }
@@ -2163,7 +2166,7 @@ Error applyClaimDirectoryPermissions(const FilePath& parent,
       struct stat appliedInfo;
       if (::fstat(descriptor, &appliedInfo) == -1)
       {
-         Error statError = systemCallError("fstat", errno, ERROR_LOCATION);
+         Error statError = LAST_SYSTEM_CALL_ERROR("fstat");
          statError.addProperty("path", parent);
          return statError;
       }
@@ -2190,7 +2193,7 @@ Error applyClaimDirectoryPermissions(const FilePath& parent,
 
    if (::fchmod(descriptor, mode) == -1)
    {
-      Error chmodError = systemCallError("fchmod", errno, ERROR_LOCATION);
+      Error chmodError = LAST_SYSTEM_CALL_ERROR("fchmod");
       chmodError.addProperty("path", parent);
       return chmodError;
    }
@@ -2230,7 +2233,7 @@ Error applyClaimDirectoryPermissions(const FilePath& parent,
       {
          Error error = systemCallError(
             "acl_set_fd",
-            errorNumber,
+            error_code(errorNumber, system_category()),
             ERROR_LOCATION);
          error.addProperty("path", parent);
          return error;
@@ -2247,7 +2250,7 @@ Error applyClaimDirectoryPermissions(const FilePath& parent,
                  (parentInfo.st_mode & 07);
    if (::fchmod(descriptor, mode) == -1)
    {
-      Error chmodError = systemCallError("fchmod", errno, ERROR_LOCATION);
+      Error chmodError = LAST_SYSTEM_CALL_ERROR("fchmod");
       chmodError.addProperty("path", parent);
       return chmodError;
    }
@@ -2261,7 +2264,7 @@ Error applyClaimDirectoryPermissions(const FilePath& parent,
    mode_t mode = parentInfo.st_mode & (S_ISGID | 0777);
    if (::fchmod(descriptor, mode) == -1)
    {
-      Error error = systemCallError("fchmod", errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_CALL_ERROR("fchmod");
       error.addProperty("path", parent);
       return error;
    }
@@ -2284,7 +2287,7 @@ Error ensureClaimDirectory(const FilePath& lockFilePath,
    }
    else if (errno != ENOENT)
    {
-      Error error = systemError(errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("path", claimDirectory);
       return error;
    }
@@ -2294,7 +2297,7 @@ Error ensureClaimDirectory(const FilePath& lockFilePath,
           lockFilePath.getParent().getAbsolutePathNative().c_str(),
           &parentInfo) == -1)
    {
-      Error error = systemError(errno, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("path", lockFilePath.getParent());
       return error;
    }
@@ -2311,7 +2314,7 @@ Error ensureClaimDirectory(const FilePath& lockFilePath,
          break;
       if (errno != EEXIST)
       {
-         Error error = systemError(errno, ERROR_LOCATION);
+         Error error = LAST_SYSTEM_ERROR();
          error.addProperty("path", preparedDirectory);
          return error;
       }
@@ -2341,7 +2344,7 @@ Error ensureClaimDirectory(const FilePath& lockFilePath,
    {
       int errorNumber = errno;
       ::rmdir(preparedDirectory.getAbsolutePathNative().c_str());
-      Error error = systemError(errorNumber, ERROR_LOCATION);
+      Error error(error_code(errorNumber, system_category()), ERROR_LOCATION);
       error.addProperty("path", preparedDirectory);
       return error;
    }
@@ -2352,7 +2355,7 @@ Error ensureClaimDirectory(const FilePath& lockFilePath,
       int errorNumber = errno;
       ::close(descriptor);
       ::rmdir(preparedDirectory.getAbsolutePathNative().c_str());
-      Error error = systemError(errorNumber, ERROR_LOCATION);
+      Error error(error_code(errorNumber, system_category()), ERROR_LOCATION);
       error.addProperty("path", preparedDirectory);
       return error;
    }
@@ -2394,7 +2397,7 @@ Error ensureClaimDirectory(const FilePath& lockFilePath,
       ::rmdir(preparedDirectory.getAbsolutePathNative().c_str());
       if (renameError != EEXIST && renameError != ENOTEMPTY)
       {
-         Error error = systemError(renameError, ERROR_LOCATION);
+         Error error(error_code(renameError, system_category()), ERROR_LOCATION);
          error.addProperty("path", claimDirectory);
          return error;
       }
@@ -2442,7 +2445,7 @@ Error acquireClaimAt(const FilePath& lockFilePath,
          flags);
       if (claimDirectoryDescriptor == -1)
       {
-         error = systemError(errno, ERROR_LOCATION);
+         error = LAST_SYSTEM_ERROR();
          error.addProperty("path", claimFilePath.getParent());
          return error;
       }
@@ -2455,7 +2458,7 @@ Error acquireClaimAt(const FilePath& lockFilePath,
       {
          int errorNumber = errno;
          ::close(claimDirectoryDescriptor);
-         error = systemError(errorNumber, ERROR_LOCATION);
+         error = systemError(error_code(errorNumber, system_category()), ERROR_LOCATION);
          error.addProperty("path", claimFilePath.getParent());
          return error;
       }
@@ -2631,7 +2634,7 @@ Error createProxyFile(const FilePath& lockFilePath,
          if (errno == EEXIST)
             continue;
 
-         Error error = systemError(errno, ERROR_LOCATION);
+         Error error = LAST_SYSTEM_ERROR();
          error.addProperty("lock-file", lockFilePath);
          return error;
       }
@@ -2807,7 +2810,7 @@ Error writeLockFile(const FilePath& lockFilePath,
       ::close(proxyDescriptor);
       unlinkBestEffort(proxyPath);
 
-      Error openError = systemError(errorNumber, ERROR_LOCATION);
+      Error openError(error_code(errorNumber, system_category()), ERROR_LOCATION);
       openError.addProperty("lock-file", lockFilePath);
       return openError;
    }
@@ -2904,7 +2907,7 @@ public:
       int registeredDescriptor = ::fcntl(descriptor, F_DUPFD_CLOEXEC, 0);
       if (registeredDescriptor == -1)
       {
-         return systemCallError("fcntl", errno, ERROR_LOCATION);
+         return LAST_SYSTEM_CALL_ERROR("fcntl");
       }
 
       auto existing = registration_.find(key);
@@ -2950,7 +2953,7 @@ public:
          {
             int descriptor = ::fcntl(entry.second.descriptor, F_DUPFD_CLOEXEC, 0);
             if (descriptor == -1)
-               LOG_ERROR(systemCallError("fcntl", errno, ERROR_LOCATION));
+               LOG_ERROR(LAST_SYSTEM_CALL_ERROR("fcntl"));
             else
             {
                locks.push_back(entry.second);

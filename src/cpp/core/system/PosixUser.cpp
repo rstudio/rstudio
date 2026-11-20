@@ -59,7 +59,7 @@ Error socketPeerCredentials(int socket, struct ucred* pCred)
 {
    socklen_t length = sizeof(struct ucred);
    if (::getsockopt(socket, SOL_SOCKET, SO_PEERCRED, pCred, &length) < 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 
    return Success();
 }
@@ -85,7 +85,7 @@ Error socketPeerIdentity(int socket, UserIdentity* pIdentity)
    uid_t uid;
    gid_t gid;
    if (::getpeereid(socket, &uid, &gid) < 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    
    pIdentity->userId = uid;
    pIdentity->groupId = gid;
@@ -116,7 +116,7 @@ Error socketPeerPid(int socket, pid_t* pPid)
    pid_t pid = 0;
    socklen_t length = sizeof(pid);
    if (::getsockopt(socket, SOL_LOCAL, LOCAL_PEERPID, &pid, &length) < 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 
    *pPid = pid;
    return Success();

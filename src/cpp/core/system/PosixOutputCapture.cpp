@@ -56,7 +56,7 @@ void readFromPipe(
    if (bytesRead == -1)
    {
       if (errno != EAGAIN && errno != EINTR)
-         LOG_ERROR(systemError(errno, ERROR_LOCATION));
+         LOG_ERROR(LAST_SYSTEM_ERROR());
    }
 }
 
@@ -105,7 +105,10 @@ void standardStreamCaptureThread(
                       descriptorType + " descriptor " + core::safe_convert::numberToString(dupFd) +
                       " is no longer writable. Output will no longer be echoed to the original descriptor.";
 
-                LOG_ERROR(systemError(errorNumber, description, ERROR_LOCATION));
+                LOG_ERROR(systemError(
+                   boost::system::error_code(errorNumber, boost::system::system_category()),
+                   description,
+                   ERROR_LOCATION));
              }
           }
        }
@@ -153,7 +156,7 @@ void standardStreamCaptureThread(
          }
          else if (errno != EINTR)
          {
-            LOG_ERROR(systemError(errno, ERROR_LOCATION));
+            LOG_ERROR(LAST_SYSTEM_ERROR());
          }
       }
    }
@@ -166,18 +169,18 @@ Error redirectToPipe(int fd, int* pPipeReadFd)
    // create pipe
    int pipe[2];
    if (::pipe(pipe) == -1)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 
    // redirect
    if (::dup2(pipe[1], fd) == -1)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 
    // set read fds to non-blocking
    if (::fcntl(pipe[0],
                F_SETFL,
                ::fcntl(pipe[0], F_GETFL) | O_NONBLOCK) == -1)
    {
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    }
 
    // return read fds
@@ -191,7 +194,7 @@ Error redirectToPipe(int fd,
 {
    int newFd = ::dup(fd);
    if (newFd == -1)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 
    Error error = redirectToPipe(fd, pPipeReadFd);
    if (error)

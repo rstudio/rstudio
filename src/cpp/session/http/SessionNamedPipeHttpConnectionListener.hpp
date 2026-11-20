@@ -334,7 +334,9 @@ private:
             // check for error
             if (hPipe == INVALID_HANDLE_VALUE)
             {
-               LOG_ERROR(systemError(lastError, ERROR_LOCATION));
+               LOG_ERROR(systemError(
+                  boost::system::error_code(lastError, boost::system::system_category()),
+                  ERROR_LOCATION));
                continue;
             }
 
@@ -357,7 +359,9 @@ private:
             }
             else
             {
-               LOG_ERROR(systemError(lastError, ERROR_LOCATION));
+               LOG_ERROR(systemError(
+                  boost::system::error_code(lastError, boost::system::system_category()),
+                  ERROR_LOCATION));
             }
          }
       }
@@ -471,7 +475,9 @@ private:
          auto lastErr = ::GetLastError();
          if (lastErr != ERROR_INSUFFICIENT_BUFFER)
          {
-            return systemError(lastErr, ERROR_LOCATION);
+            return systemError(
+               boost::system::error_code(lastErr, boost::system::system_category()),
+               ERROR_LOCATION);
          }
       }
 

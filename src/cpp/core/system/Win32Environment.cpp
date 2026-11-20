@@ -178,7 +178,7 @@ void unsetenv(const std::string& name)
       DWORD errorCode = ::GetLastError();
       if (errorCode != ERROR_ENVVAR_NOT_FOUND)
       {
-         Error error = systemError(errorCode, ERROR_LOCATION);
+         Error error(boost::system::error_code(errorCode, boost::system::system_category()), ERROR_LOCATION);
          error.addProperty("name", name);
          LOG_ERROR(error);
       }

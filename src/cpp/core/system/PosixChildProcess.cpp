@@ -54,6 +54,9 @@ namespace rstudio {
 namespace core {
 namespace system {
 
+using boost::system::error_code;
+using boost::system::system_category;
+
 namespace {
 
 // pipe handle indexes
@@ -138,7 +141,7 @@ Error readPipe(int pipeFd, std::string* pOutput, bool *pEOF = nullptr)
             return Success();
          }
          else
-            return systemError(errno, ERROR_LOCATION);
+            return LAST_SYSTEM_ERROR();
       }
 
       // check for eof
@@ -330,7 +333,7 @@ Error ChildProcess::ptySetSize(int cols, int rows)
    // set it
    int res = ::ioctl(pImpl_->fdMaster, TIOCSWINSZ, &winp);
    if (res == -1)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    else
       return Success();
 }
@@ -386,7 +389,7 @@ Error ChildProcess::terminate()
          if (errno == EPERM) // see note below on carve out for EPERM
             return Success();
          else
-            return systemError(errno, ERROR_LOCATION);
+            return LAST_SYSTEM_ERROR();
       }
       else
          return Success();
@@ -412,7 +415,7 @@ Error ChildProcess::terminate()
          else if (errno == ESRCH)
             return Success();
          else
-            return systemError(errno, ERROR_LOCATION);
+            return LAST_SYSTEM_ERROR();
       }
       else
          return Success();
@@ -448,7 +451,7 @@ Error ChildProcess::run()
    // verify that the executable pointed at via 'exe_' is executable
    int status = ::access(exe_.c_str(), X_OK);
    if (status == -1)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 
    // declarations
    PidType pid = 0;
@@ -647,7 +650,7 @@ Error ChildProcess::run()
             {
                if (::setsid() == -1)
                {
-                  LOG_ERROR(systemError(errno, ERROR_LOCATION));
+                  LOG_ERROR(LAST_SYSTEM_ERROR());
                   // intentionally fail forward (see note above)
                }
             }
@@ -663,7 +666,7 @@ Error ChildProcess::run()
                // may want to kill all children from the processSupervisor on exit
                if (::setpgid(0,0) == -1)
                {
-                  LOG_ERROR(systemError(errno, ERROR_LOCATION));
+                  LOG_ERROR(LAST_SYSTEM_ERROR());
                   // intentionally fail forward (see note above)
                }
             }
@@ -757,10 +760,12 @@ Error ChildProcess::run()
          {
             if (::chdir(options_.workingDir.getAbsolutePath().c_str()))
             {
+               Error error = LAST_SYSTEM_ERROR();
                std::string message = "Error changing directory: '";
                message += options_.workingDir.getAbsolutePath().c_str();
                message += "'";
-               LOG_ERROR(systemError(errno, message.c_str(), ERROR_LOCATION));
+               error.addProperty("description", message);
+               LOG_ERROR(error);
             }
          }
       }
@@ -831,7 +836,7 @@ Error ChildProcess::run()
 #ifndef __APPLE__
          // set a bit indicating we want to die when our parent dies
          if (::prctl(PR_SET_PDEATHSIG, SIGTERM) == -1)
-            LOG_ERROR(systemError(errno, ERROR_LOCATION));
+            LOG_ERROR(LAST_SYSTEM_ERROR());
 #endif
       }
 
@@ -854,7 +859,7 @@ Error ChildProcess::run()
       // here then there was an error
       if (!options_.threadSafe)
       {
-         Error error = systemError(errno, ERROR_LOCATION);
+         Error error = LAST_SYSTEM_ERROR();
          error.addProperty("exe", exe_);
          LOG_ERROR(error);
       }
@@ -963,7 +968,7 @@ Error SyncChildProcess::waitForExit(ProcessResult* pResult)
       if (waitErrno == ECHILD) // carve out for child already reaped
          return Success();
       else
-         return systemError(waitErrno, ERROR_LOCATION);
+         return systemError(error_code(waitErrno, system_category()), ERROR_LOCATION);
    }
    else
    {
@@ -1254,7 +1259,7 @@ void AsyncChildProcess::poll()
       // expect this to occur as the only documented error codes are
       // EINTR and ECHILD, and EINTR is handled internally by posixCall)
       if (result == -1 && waitErrno != ECHILD && waitErrno != ENOENT)
-         LOG_ERROR(systemError(waitErrno, ERROR_LOCATION));
+         LOG_ERROR(systemError(error_code(waitErrno, system_category()), ERROR_LOCATION));
    }
 
    // Perform optional periodic operations
@@ -1798,7 +1803,7 @@ Error forkAndRunImpl(const boost::function<int(void)>& func,
 {
    pid_t pid = ::fork();
    if (pid < 0)
-      return systemError(errno, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
 
    if (pid == 0)
    {
@@ -1843,13 +1848,13 @@ Error forkAndRunImpl(const boost::function<int(void)>& func,
          if (errno == ECHILD) // carve out for child already reaped
             return Success();
          else
-            return systemError(errno, ERROR_LOCATION);
+            return LAST_SYSTEM_ERROR();
       }
       else
       {
          int exitStatus = resolveExitStatus(status);
          if (exitStatus != 0)
-            return systemError(exitStatus, ERROR_LOCATION);
+            return systemError(error_code(exitStatus, system_category()), ERROR_LOCATION);
 
          return Success();
       }

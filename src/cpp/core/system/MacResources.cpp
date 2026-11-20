@@ -78,7 +78,9 @@ Error getTotalMemory(long *pTotalKb, MemoryProvider *pProvider)
     int result = ::sysctl(flags, 2, &mem, &len, NULL, 0);
     if (result == -1)
     {
-        return systemError(errno, "Failed to get total physical memory from sysctl", ERROR_LOCATION);
+        Error error = LAST_SYSTEM_ERROR();
+        error.addProperty("description", "Failed to get total physical memory from sysctl");
+        return error;
     }
 
     *pTotalKb = mem / 1024;

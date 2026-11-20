@@ -23,6 +23,9 @@ namespace rstudio {
 namespace core {
 namespace system {
 
+using boost::system::error_code;
+using boost::system::system_category;
+
 RegistryKey::RegistryKey()
    : hKey_(nullptr)
 {
@@ -51,7 +54,7 @@ Error RegistryKey::open(HKEY hKey, std::string subKey, REGSAM samDesired)
    if (error != ERROR_SUCCESS)
    {
       hKey_ = nullptr;
-      return systemError(error, ERROR_LOCATION);
+      return systemError(error_code(error, system_category()), ERROR_LOCATION);
    }
 
    return Success();
@@ -75,7 +78,7 @@ Error RegistryKey::create(HKEY hKey, std::string subKey, REGSAM samDesired)
    if (error != ERROR_SUCCESS)
    {
       hKey_ = nullptr;
-      return systemError(error, ERROR_LOCATION);
+      return systemError(error_code(error, system_category()), ERROR_LOCATION);
    }
 
    return Success();
@@ -89,7 +92,7 @@ bool RegistryKey::isOpen()
 Error RegistryKey::getValue(const std::string& name, std::string* pData, DWORD* pType)
 {
    if (!hKey_)
-      return systemError(ERROR_INVALID_HANDLE, ERROR_LOCATION);
+      return systemError(error_code(ERROR_INVALID_HANDLE, system_category()), ERROR_LOCATION);
 
    std::wstring wideName = string_utils::utf8ToWide(name);
    std::vector<BYTE> buffer(512);
@@ -105,10 +108,10 @@ Error RegistryKey::getValue(const std::string& name, std::string* pData, DWORD* 
       }
 
       if (result != ERROR_SUCCESS)
-         return systemError(result, ERROR_LOCATION);
+         return systemError(error_code(result, system_category()), ERROR_LOCATION);
 
       if (type != REG_SZ && type != REG_EXPAND_SZ)
-         return systemError(ERROR_INVALID_DATATYPE, ERROR_LOCATION);
+         return systemError(error_code(ERROR_INVALID_DATATYPE, system_category()), ERROR_LOCATION);
 
       // the stored data may or may not end in a null terminator
       std::wstring data(reinterpret_cast<const wchar_t*>(&buffer[0]), size / sizeof(wchar_t));
@@ -125,10 +128,10 @@ Error RegistryKey::getValue(const std::string& name, std::string* pData, DWORD* 
 Error RegistryKey::setValue(const std::string& name, const std::string& data, DWORD type)
 {
    if (!hKey_)
-      return systemError(ERROR_INVALID_HANDLE, ERROR_LOCATION);
+      return systemError(error_code(ERROR_INVALID_HANDLE, system_category()), ERROR_LOCATION);
 
    if (type != REG_SZ && type != REG_EXPAND_SZ)
-      return systemError(ERROR_INVALID_DATATYPE, ERROR_LOCATION);
+      return systemError(error_code(ERROR_INVALID_DATATYPE, system_category()), ERROR_LOCATION);
 
    std::wstring wideName = string_utils::utf8ToWide(name);
    std::wstring wideData = string_utils::utf8ToWide(data);
@@ -141,7 +144,7 @@ Error RegistryKey::setValue(const std::string& name, const std::string& data, DW
                                   reinterpret_cast<const BYTE*>(wideData.c_str()),
                                   size);
    if (result != ERROR_SUCCESS)
-      return systemError(result, ERROR_LOCATION);
+      return systemError(error_code(result, system_category()), ERROR_LOCATION);
 
    return Success();
 }
@@ -149,12 +152,12 @@ Error RegistryKey::setValue(const std::string& name, const std::string& data, DW
 Error RegistryKey::deleteValue(const std::string& name)
 {
    if (!hKey_)
-      return systemError(ERROR_INVALID_HANDLE, ERROR_LOCATION);
+      return systemError(error_code(ERROR_INVALID_HANDLE, system_category()), ERROR_LOCATION);
 
    std::wstring wideName = string_utils::utf8ToWide(name);
    LONG result = ::RegDeleteValueW(hKey_, wideName.c_str());
    if (result != ERROR_SUCCESS)
-      return systemError(result, ERROR_LOCATION);
+      return systemError(error_code(result, system_category()), ERROR_LOCATION);
 
    return Success();
 }
@@ -177,7 +180,7 @@ std::string RegistryKey::getStringValue(std::string name,
 Error RegistryKey::getStringValue(std::string name, std::string *pValue)
 {
    if (!hKey_)
-      return systemError(ERROR_INVALID_HANDLE, ERROR_LOCATION);
+      return systemError(error_code(ERROR_INVALID_HANDLE, system_category()), ERROR_LOCATION);
 
    std::vector<char> buffer(256);
    while (true)
@@ -196,7 +199,7 @@ Error RegistryKey::getStringValue(std::string name, std::string *pValue)
       case ERROR_SUCCESS:
          {
             if (type != REG_SZ && type != REG_EXPAND_SZ)
-               return systemError(ERROR_INVALID_DATATYPE, ERROR_LOCATION);
+               return systemError(error_code(ERROR_INVALID_DATATYPE, system_category()), ERROR_LOCATION);
 
             *pValue = std::string(&buffer[0], buffer.capacity());
 
@@ -221,7 +224,7 @@ Error RegistryKey::getStringValue(std::string name, std::string *pValue)
          continue;
 
       default:
-         return systemError(result, ERROR_LOCATION);
+         return systemError(error_code(result, system_category()), ERROR_LOCATION);
       }
    }
 }
@@ -258,7 +261,7 @@ std::vector<std::string> RegistryKey::keyNames()
       case ERROR_NO_MORE_ITEMS:
          return results;
       default:
-         Error error = systemError(result, ERROR_LOCATION);
+         Error error(error_code(result, system_category()), ERROR_LOCATION);
          LOG_ERROR(error);
          break;
       }

@@ -446,7 +446,8 @@ TEST(SharedCoreTest, NotFoundHelpersMatchFileAndPathErrors)
    EXPECT_TRUE(isNotFoundError(pathError));
    EXPECT_TRUE(isNotFoundError(systemError(boost::system::errc::no_such_file_or_directory, ERROR_LOCATION)));
 #ifdef _WIN32
-   EXPECT_FALSE(isNotFoundError(systemError(ERROR_BAD_NETPATH, ERROR_LOCATION)));
+   const boost::system::error_code badNetPath(ERROR_BAD_NETPATH, boost::system::system_category());
+   EXPECT_FALSE(isNotFoundError(Error(badNetPath, ERROR_LOCATION)));
 #endif
 
    Error otherError = fileExistsError(ERROR_LOCATION);

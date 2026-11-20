@@ -68,7 +68,7 @@ void setupForkHandlers()
 {
    int rc = ::pthread_atfork(prepareFork, atForkParent, atForkChild);
    if (rc != 0)
-      LOG_ERROR(systemError(errno, ERROR_LOCATION));
+      LOG_ERROR(systemError(boost::system::error_code(rc, boost::system::system_category()), ERROR_LOCATION));
 }
 #else
 void setupForkHandlers()

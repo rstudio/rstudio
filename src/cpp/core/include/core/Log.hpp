@@ -40,11 +40,17 @@ std::string errorAsLogEntry(const Error& error);
 // Defined in LogOptions.cpp, declared here for use by macros below
 bool logCodeLocations();
 
+// Evaluate the error expression before constructing the logging location. In
+// particular, constructing the location must not clobber LAST_SYSTEM_ERROR().
+inline void logErrorAt(const Error& error, const char* function, const char* file, long line)
+{
+   logError(error, ErrorLocation(function, file, line));
+}
+
 // Macros for automatic inclusion of ERROR_LOCATION and easy ability to 
 // compile out logging calls
 
-#define LOG_ERROR(error) rstudio::core::log::logError(error, \
-                                                      ERROR_LOCATION)
+#define LOG_ERROR(error) rstudio::core::log::logErrorAt((error), RSTUDIO_ERROR_LOCATION_ARGS)
 
 #define LOG_ERROR_NAMED(logSection, error) rstudio::core::log::logError(error, \
                                                                         logSection, \
