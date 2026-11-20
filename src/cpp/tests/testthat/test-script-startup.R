@@ -19,7 +19,8 @@ runSessionScript <- function(blockSourceDatabase = FALSE,
                              script = "writeLines('executed', 'script-ran')",
                              seedPortZeroRestartContext = FALSE,
                              sessionArgs = "--program-mode=desktop",
-                             localPeer = FALSE) {
+                             localPeer = FALSE,
+                             inheritedEnv = character()) {
    skip_if_not_installed("processx")
 
    buildDir <- Sys.getenv("TESTTHAT_OUTPUT_DIR")
@@ -48,14 +49,16 @@ runSessionScript <- function(blockSourceDatabase = FALSE,
 
    # What a session suspended for restart would leave in this scope, were its
    # restart context named for www-port 0 rather than for the port it bound:
-   # saved state, here an R option (see .rs.restoreOptions), for its successor
-   # to restore.
+   # saved state for its successor to restore. Here that's an R option (see
+   # .rs.restoreOptions), and the environment, with the port the suspended
+   # session listened on, which a successor mustn't take for its own.
    if (seedPortZeroRestartContext)
    {
       restartContext <- file.path(root, "data", "ctx", "ctx-0")
       dir.create(restartContext, recursive = TRUE)
       opt <- list(rstudio.tests.portZeroRestartContext = "restored")
       save(opt, file = file.path(restartContext, "options"))
+      writeLines("RSTUDIO_SESSION_PORT=1", file.path(restartContext, "environment_vars"))
    }
 
    # Set only the child's environment; changing this session's environment
@@ -75,13 +78,26 @@ runSessionScript <- function(blockSourceDatabase = FALSE,
       file.path(root, c("data", "config", "home", "home", "no-profile",
                        "no-environ", "tmp", "tmp", "tmp"))
 
+   # A server session won't start for a user id below this, 100 unless set,
+   # and the runner may be root.
+   env[["RSTUDIO_MINIMUM_USER_ID"]] <- "0"
+
+   env[names(inheritedEnv)] <- inheritedEnv
+
    # Have a desktop session listen on a local stream. A socket's path has to
-   # be short, so it isn't put under root.
+   # be short, so it isn't put under root. The session leaves a lock file
+   # beside it, so it gets a directory of its own.
    if (localPeer)
    {
-      peer <- tempfile("rs-peer-", tmpdir = "/tmp")
-      on.exit(unlink(c(peer, paste0(peer, ".pid"))), add = TRUE)
-      env[["RS_LOCAL_PEER"]] <- peer
+      peerDir <- tempfile("rs-peer-", tmpdir = "/tmp")
+      dir.create(peerDir, mode = "0700")
+      on.exit({
+         # unlink(recursive = TRUE) takes the socket for a directory (its
+         # mode shares S_IFDIR's bit) and fails to remove it, or peerDir
+         unlink(list.files(peerDir, all.files = TRUE, full.names = TRUE, no.. = TRUE))
+         unlink(peerDir, recursive = TRUE)
+      }, add = TRUE)
+      env[["RS_LOCAL_PEER"]] <- file.path(peerDir, "peer")
    }
 
    args <- c(paste0("--config-file=", config), sessionArgs,
@@ -159,11 +175,16 @@ test_that("a desktop session on www-port 0 doesn't restore a restart context for
    expect_equal(result$scriptOutput, "not restored", info = result$output)
 })
 
-test_that("a server session on www-port 0 restores a restart context for port 0", {
+test_that("a server session on www-port 0 restores a restart context for port 0, but not its port", {
    # a server session has a scope of its own and keeps the configured port as
    # its restart context's name. This is also what shows that the context
-   # seeded for the test above is one a session would restore
-   script <- "writeLines(getOption('rstudio.tests.portZeroRestartContext', 'not restored'), 'script-ran')"
+   # seeded for the test above is one a session would restore. The port saved
+   # with it isn't restored: a server session publishes none, and
+   # sendSessionRequest would take one for its own
+   script <- paste(
+      "writeLines(c(getOption('rstudio.tests.portZeroRestartContext', 'not restored'),",
+      "Sys.getenv('RSTUDIO_SESSION_PORT', 'unset')), 'script-ran')"
+   )
 
    result <- runSessionScript(script = script, seedPortZeroRestartContext = TRUE,
                               sessionArgs = c("--program-mode=server", "--standalone=1"))
@@ -174,18 +195,27 @@ test_that("a server session on www-port 0 restores a restart context for port 0"
    if (!result$scriptRan)
       return()
 
-   expect_equal(result$scriptOutput, "restored", info = result$output)
+   expect_equal(result$scriptOutput, c("restored", "unset"), info = result$output)
 })
 
 test_that("a desktop session on a local stream publishes no session port", {
    # sessions on Windows listen on TCP, whatever RS_LOCAL_PEER says
    skip_on_os("windows")
 
-   # requests back into the session go to RSTUDIO_SESSION_PORT if it's set,
-   # and only otherwise to the stream, which is where this session listens
-   script <- "writeLines(Sys.getenv('RSTUDIO_SESSION_PORT', 'unset'), 'script-ran')"
+   # requests back into the session go to RS_LOCAL_PEER only when none of
+   # these is set, whether inherited (as from an IDE session this one was
+   # started in) or saved with the restart context it restores. With no port
+   # bound, that context is the one for www-port 0
+   vars <- c("RSTUDIO_SESSION_PORT", "RSTUDIO_STANDALONE_PORT", "RSTUDIO_SESSION_STREAM")
+   inheritedEnv <- setNames(c("2", "3", "parent-session"), vars)
+   script <- sprintf(
+      "writeLines(c(getOption('rstudio.tests.portZeroRestartContext', 'not restored'), Sys.getenv(c(%s), 'unset')), 'script-ran')",
+      paste0("'", vars, "'", collapse = ", ")
+   )
 
-   result <- runSessionScript(script = script, localPeer = TRUE)
+   result <- runSessionScript(script = script, localPeer = TRUE,
+                              seedPortZeroRestartContext = TRUE,
+                              inheritedEnv = inheritedEnv)
    expect_equal(result$status, 0L, info = result$output)
    expect_true(result$scriptRan, info = result$output)
 
@@ -193,7 +223,8 @@ test_that("a desktop session on a local stream publishes no session port", {
    if (!result$scriptRan)
       return()
 
-   expect_equal(result$scriptOutput, "unset", info = result$output)
+   expect_equal(result$scriptOutput, c("restored", "unset", "unset", "unset"),
+                info = result$output)
 })
 
 test_that("a standalone session on www-port 0 gives help the port it listens on", {
