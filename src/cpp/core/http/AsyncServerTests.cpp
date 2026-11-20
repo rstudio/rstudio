@@ -54,32 +54,26 @@ void handlePing(const http::Request& request, http::Response* pResponse)
 } // anonymous namespace
 
 // The predicate that decides whether an accept error triggers the backoff path:
-// only EMFILE/ENOMEM in the system category, and nothing else.
+// out of descriptors or memory, and nothing else.
 TEST(AsyncServerResourceExhaustion, ClassifiesResourceErrors)
 {
    using boost::system::error_code;
-   using boost::system::system_category;
-   using boost::system::generic_category;
-   namespace errc = boost::system::errc;
+   namespace error = boost::asio::error;
 
-   // the two resource-exhaustion errors we back off on, as native POSIX codes
-   EXPECT_TRUE(isResourceExhaustionError(
-      error_code(EMFILE, system_category())));
-   EXPECT_TRUE(isResourceExhaustionError(
-      error_code(ENOMEM, system_category())));
+   // the two resource-exhaustion errors we back off on, as asio reports them:
+   // native codes, so WSAEMFILE and ERROR_OUTOFMEMORY on Windows
+   EXPECT_TRUE(isResourceExhaustionError(error::make_error_code(error::no_descriptors)));
+   EXPECT_TRUE(isResourceExhaustionError(error::make_error_code(error::no_memory)));
 
-   // unrelated system errors are not resource exhaustion
-   EXPECT_FALSE(isResourceExhaustionError(
-      error_code(ECONNRESET, system_category())));
-   EXPECT_FALSE(isResourceExhaustionError(
-      error_code(ECANCELED, system_category())));
+   // unrelated errors are not resource exhaustion
+   EXPECT_FALSE(isResourceExhaustionError(error::make_error_code(error::connection_reset)));
+   EXPECT_FALSE(isResourceExhaustionError(error::make_error_code(error::operation_aborted)));
 
    // a success code (no error) is not resource exhaustion
    EXPECT_FALSE(isResourceExhaustionError(error_code()));
 
-   // the right value but the wrong category must not match
-   EXPECT_FALSE(isResourceExhaustionError(
-      error_code(errc::too_many_files_open, generic_category())));
+   // EMFILE's number in another category is not the condition
+   EXPECT_FALSE(isResourceExhaustionError(error_code(EMFILE, error::get_misc_category())));
 }
 
 TEST(AsyncServerSmoke, ServesABasicRequest)

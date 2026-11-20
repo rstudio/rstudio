@@ -198,6 +198,7 @@ TEST(ErrorTest, GenericErrorsUseTheGenericCategory)
 
    // the same error, whichever way it's spelled
    EXPECT_EQ(error, systemError(errc::invalid_argument, ERROR_LOCATION));
+   EXPECT_EQ(error, Error(errc::invalid_argument, ERROR_LOCATION));
    EXPECT_EQ(error, systemError(std::make_error_code(std::errc::invalid_argument), ERROR_LOCATION));
 }
 
