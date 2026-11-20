@@ -15,7 +15,11 @@
 
 #include <r/session/RConsoleActions.hpp>
 
+#include <cstddef>
 #include <limits>
+#include <memory>
+#include <new>
+#include <string>
 
 #include <gtest/gtest.h>
 
@@ -50,7 +54,97 @@ std::string consoleData(json::Object& actionsJson)
    return data;
 }
 
+// the largest allocation, in actions, that LimitedAllocator provides
+std::size_t s_allocationLimit = std::numeric_limits<std::size_t>::max();
+
+// refuses allocations over s_allocationLimit, as the OS refuses a block
+// larger than it can commit
+template <typename T>
+struct LimitedAllocator
+{
+   typedef T value_type;
+
+   LimitedAllocator() = default;
+
+   template <typename U>
+   LimitedAllocator(const LimitedAllocator<U>&) {}
+
+   T* allocate(std::size_t n)
+   {
+      if (n > s_allocationLimit)
+         throw std::bad_alloc();
+      return std::allocator<T>().allocate(n);
+   }
+
+   void deallocate(T* p, std::size_t n)
+   {
+      std::allocator<T>().deallocate(p, n);
+   }
+};
+
+template <typename T, typename U>
+bool operator==(const LimitedAllocator<T>&, const LimitedAllocator<U>&)
+{
+   return true;
+}
+
+template <typename T, typename U>
+bool operator!=(const LimitedAllocator<T>&, const LimitedAllocator<U>&)
+{
+   return false;
+}
+
+ConsoleAction outputLine(int i)
+{
+   return ConsoleAction{ kConsoleActionOutput, "line " + std::to_string(i) + "\n" };
+}
+
 } // anonymous namespace
+
+TEST(ConsoleActionsGrowthTest, FailedGrowthKeepsTheNewestActions)
+{
+   typedef boost::circular_buffer_space_optimized<
+      ConsoleAction, LimitedAllocator<ConsoleAction>> Actions;
+
+   // as ConsoleActions holds them: a limit far beyond what can be allocated
+   const std::size_t allocationLimit = 100;
+   s_allocationLimit = allocationLimit;
+   Actions actions(std::numeric_limits<int>::max());
+
+   // add actions until the storage can't grow any further
+   int added = 0;
+   while (pushConsoleAction(actions, outputLine(added++)))
+      ASSERT_LT(added, 1000) << "the storage grew past the allocation limit";
+
+   // the capacity is now what was allocated, and the action that didn't fit
+   // replaced the oldest one
+   std::size_t size = actions.size();
+   EXPECT_GT(size, 1u);
+   EXPECT_LE(size, allocationLimit);
+   EXPECT_EQ(size, static_cast<std::size_t>(actions.capacity()));
+   EXPECT_EQ(outputLine(added - 1).data, actions.back().data);
+   EXPECT_EQ(outputLine(added - static_cast<int>(size)).data, actions.front().data);
+
+   // the storage is not asked to grow again: before, each of these pushes
+   // would have requested the same block and failed with it
+   for (int i = 0; i < 250; i++)
+      ASSERT_TRUE(pushConsoleAction(actions, outputLine(added++)));
+
+   // in order, ending at the newest
+   ASSERT_EQ(size, actions.size());
+   int expected = added - static_cast<int>(size);
+   for (const ConsoleAction& action : actions)
+      EXPECT_EQ(outputLine(expected++).data, action.data);
+
+   // setting the capacity again, as a change to the pref does, lets the
+   // storage grow once the memory is there
+   s_allocationLimit = std::numeric_limits<std::size_t>::max();
+   actions.rset_capacity(std::numeric_limits<int>::max());
+   EXPECT_TRUE(pushConsoleAction(actions, outputLine(added++)));
+   EXPECT_EQ(size + 1, actions.size());
+   EXPECT_EQ(outputLine(added - 1).data, actions.back().data);
+   EXPECT_EQ(outputLine(added - static_cast<int>(size) - 1).data, actions.front().data);
+}
 
 // NOTE: these tests drive the process-wide consoleActions() singleton, so
 // state is reset around each test to keep them order-independent

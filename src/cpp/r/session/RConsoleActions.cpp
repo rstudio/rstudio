@@ -92,7 +92,21 @@ void ConsoleActions::pushAction(int type, std::string data)
    ConsoleAction action;
    action.type = type;
    action.data = std::move(data);
-   actions_.push_back(std::move(action));
+   pushAction(std::move(action));
+}
+
+void ConsoleActions::pushAction(ConsoleAction action)
+{
+   // NOTE: helper method assumes mutex is already locked
+
+   // the limit stays lowered until setCapacity() is next called, so this
+   // is logged once for each limit that couldn't be reached
+   if (!pushConsoleAction(actions_, std::move(action)))
+   {
+      ELOGF("Couldn't allocate memory for more than {} console actions; "
+            "discarding the oldest as new ones are added",
+            actions_.size());
+   }
 }
 
 void ConsoleActions::flush()
@@ -225,8 +239,11 @@ void ConsoleActions::asJson(json::Object* pActions)
 {
    LOCK_MUTEX(mutex_)
    {
-      // clear inbound
+      // clear inbound; callers index the arrays without checking for them,
+      // so provide them even if an allocation below fails
       pActions->clear();
+      pActions->operator[](kActionType) = json::Array();
+      pActions->operator[](kActionData) = json::Array();
 
       // flush any pending console output
       flush();
@@ -315,7 +332,7 @@ Error ConsoleActions::loadFromFile(const FilePath& filePath)
          ConsoleAction action;
          action.type = typeArray[i].getInt();
          action.data = dataArray[i].getString();
-         actions_.push_back(std::move(action));
+         pushAction(std::move(action));
       }
 
       if (skipped != 0)

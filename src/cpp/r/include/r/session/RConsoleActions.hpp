@@ -16,6 +16,11 @@
 #ifndef R_SESSION_CONSOLE_ACTIONS_HPP
 #define R_SESSION_CONSOLE_ACTIONS_HPP
 
+#include <new>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include <boost/utility.hpp>
 #include <boost/circular_buffer.hpp>
 
@@ -49,6 +54,37 @@ struct ConsoleAction
    int type;
    std::string data;
 };
+
+// Add an action to a buffer that allocates its storage as it fills.
+//
+// Returns false if the storage couldn't grow. The buffer's capacity is then
+// lowered to the actions it holds, so the new action replaces the oldest one,
+// as it would at the capacity asked for. Otherwise every later push would
+// request the same allocation again, and fail with it: the buffer works out
+// how far to grow from its size and its storage, and a failed growth changes
+// neither.
+template <typename Allocator>
+bool pushConsoleAction(
+   boost::circular_buffer_space_optimized<ConsoleAction, Allocator>& actions,
+   ConsoleAction action)
+{
+   try
+   {
+      actions.push_back(std::move(action));
+      return true;
+   }
+   catch (const std::bad_alloc&)
+   {
+      // push_back() grows the storage before it moves from the action, so
+      // the action is still intact here
+   }
+
+   // the storage is full, or it wouldn't have had to grow; a capacity equal
+   // to it is one that neither this nor the push below allocates for
+   actions.rset_capacity(actions.size());
+   actions.push_back(std::move(action));
+   return false;
+}
 
 class ConsoleActions : boost::noncopyable
 {
@@ -96,6 +132,7 @@ private:
    // NOTE: helper methods assume mutex is already locked
    void flush();
    void pushAction(int type, std::string data);
+   void pushAction(ConsoleAction action);
 
    // protect data using a mutex because background threads (e.g.
    // console output capture threads) can interact with console actions
