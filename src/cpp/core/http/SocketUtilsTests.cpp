@@ -39,15 +39,17 @@ void expectBothForms(bool (*classify)(const Error&), AsioCode asioCode, errc_t c
 
 TEST(SocketUtils, ConnectionTerminatedErrorsMatchEitherCategory)
 {
-   using namespace boost::asio::error;
+   // no using-directive for asio::error: its 'eof' is ambiguous with the
+   // Windows CRT's global ::eof(int) from <io.h>
+   namespace asio_error = boost::asio::error;
    namespace errc = boost::system::errc;
 
-   expectBothForms(isConnectionTerminatedError, timed_out, errc::timed_out);
-   expectBothForms(isConnectionTerminatedError, connection_reset, errc::connection_reset);
-   expectBothForms(isConnectionTerminatedError, bad_descriptor, errc::bad_file_descriptor);
-   expectBothForms(isConnectionTerminatedError, broken_pipe, errc::broken_pipe);
+   expectBothForms(isConnectionTerminatedError, asio_error::timed_out, errc::timed_out);
+   expectBothForms(isConnectionTerminatedError, asio_error::connection_reset, errc::connection_reset);
+   expectBothForms(isConnectionTerminatedError, asio_error::bad_descriptor, errc::bad_file_descriptor);
+   expectBothForms(isConnectionTerminatedError, asio_error::broken_pipe, errc::broken_pipe);
 
-   EXPECT_TRUE(isConnectionTerminatedError(Error(make_error_code(eof), ERROR_LOCATION)));
+   EXPECT_TRUE(isConnectionTerminatedError(Error(asio_error::make_error_code(asio_error::eof), ERROR_LOCATION)));
    EXPECT_FALSE(isConnectionTerminatedError(systemError(errc::permission_denied, ERROR_LOCATION)));
    EXPECT_FALSE(isConnectionTerminatedError(Success()));
 }
