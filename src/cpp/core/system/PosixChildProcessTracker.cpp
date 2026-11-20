@@ -124,7 +124,8 @@ void ChildProcessTracker::attemptToReapProcess(
          return;
       }
 
-      Error error = LAST_SYSTEM_ERROR();
+      const int savedErrno = errno;
+      Error error = genericError(savedErrno, ERROR_LOCATION);
       error.addProperty("pid", pid);
       LOG_ERROR(error);
    }

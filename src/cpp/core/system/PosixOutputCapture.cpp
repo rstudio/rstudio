@@ -56,7 +56,10 @@ void readFromPipe(
    if (bytesRead == -1)
    {
       if (errno != EAGAIN && errno != EINTR)
-         LOG_ERROR(LAST_SYSTEM_ERROR());
+      {
+         const int savedErrno = errno;
+         LOG_ERROR(genericError(savedErrno, ERROR_LOCATION));
+      }
    }
 }
 
@@ -156,7 +159,8 @@ void standardStreamCaptureThread(
          }
          else if (errno != EINTR)
          {
-            LOG_ERROR(LAST_SYSTEM_ERROR());
+            const int savedErrno = errno;
+            LOG_ERROR(genericError(savedErrno, ERROR_LOCATION));
          }
       }
    }
@@ -169,18 +173,25 @@ Error redirectToPipe(int fd, int* pPipeReadFd)
    // create pipe
    int pipe[2];
    if (::pipe(pipe) == -1)
-      return LAST_SYSTEM_ERROR();
+   {
+      const int savedErrno = errno;
+      return genericError(savedErrno, ERROR_LOCATION);
+   }
 
    // redirect
    if (::dup2(pipe[1], fd) == -1)
-      return LAST_SYSTEM_ERROR();
+   {
+      const int savedErrno = errno;
+      return genericError(savedErrno, ERROR_LOCATION);
+   }
 
    // set read fds to non-blocking
    if (::fcntl(pipe[0],
                F_SETFL,
                ::fcntl(pipe[0], F_GETFL) | O_NONBLOCK) == -1)
    {
-      return LAST_SYSTEM_ERROR();
+      const int savedErrno = errno;
+      return genericError(savedErrno, ERROR_LOCATION);
    }
 
    // return read fds
@@ -194,7 +205,10 @@ Error redirectToPipe(int fd,
 {
    int newFd = ::dup(fd);
    if (newFd == -1)
-      return LAST_SYSTEM_ERROR();
+   {
+      const int savedErrno = errno;
+      return genericError(savedErrno, ERROR_LOCATION);
+   }
 
    Error error = redirectToPipe(fd, pPipeReadFd);
    if (error)

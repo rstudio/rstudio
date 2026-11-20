@@ -71,7 +71,8 @@ Error scanDir(const std::string& dirPath, std::vector<std::string>* pNames)
                            alphasort);
    if (entries == -1)
    {
-      Error error = LAST_SYSTEM_ERROR();
+      const int savedErrno = errno;
+      Error error = genericError(savedErrno, ERROR_LOCATION);
       error.addProperty("path", dirPath);
       return error;
    }

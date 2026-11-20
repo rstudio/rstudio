@@ -250,34 +250,22 @@ TEST(ErrorTest, CategorizedCodesKeepTheirCategory)
    EXPECT_EQ("read: details", custom.getMessage());
 }
 
-TEST(ErrorTest, LastSystemErrorCapturesTheNativeCodeAndCallSite)
-{
 #ifdef _WIN32
-   const int value = ERROR_ACCESS_DENIED;
+TEST(ErrorTest, LastSystemErrorCapturesGetLastError)
+{
    const auto previous = ::GetLastError();
-   ::SetLastError(value);
+   ::SetLastError(ERROR_ACCESS_DENIED);
    const Error error = LAST_SYSTEM_ERROR();
-   ::SetLastError(value);
-   const Error named = LAST_SYSTEM_CALL_ERROR("open");
    ::SetLastError(previous);
-#else
-   const int value = EACCES;
-   const int previous = errno;
-   errno = value;
-   const Error error = LAST_SYSTEM_ERROR();
-   errno = value;
-   const Error named = LAST_SYSTEM_CALL_ERROR("open");
-   errno = previous;
-#endif
 
-   const boost::system::error_code native(value, boost::system::system_category());
+   const boost::system::error_code native(ERROR_ACCESS_DENIED, boost::system::system_category());
    EXPECT_TRUE(error == native);
    EXPECT_EQ(native.message(), error.getMessage());
-   EXPECT_TRUE(named == native);
-   EXPECT_EQ("open: " + native.message(), named.getMessage());
    EXPECT_EQ(BOOST_CURRENT_FUNCTION, error.getLocation().getFunction());
-   EXPECT_EQ(BOOST_CURRENT_FUNCTION, named.getLocation().getFunction());
 }
+#elif defined(LAST_SYSTEM_ERROR)
+#error LAST_SYSTEM_ERROR is only available on Windows
+#endif
 
 TEST(ErrorTest, GenericErrorsUseTheGenericCategory)
 {

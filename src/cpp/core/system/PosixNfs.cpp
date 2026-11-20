@@ -15,6 +15,7 @@
 
 #include <core/system/PosixNfs.hpp>
 
+#include <cerrno>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -42,7 +43,8 @@ core::Error statWithCacheClear(const core::FilePath& path,
    // get the file's initial attributes (may be stale)
    if (::stat(path.getAbsolutePath().c_str(), pSt) == -1)
    {
-      Error error = LAST_SYSTEM_ERROR();
+      const int savedErrno = errno;
+      Error error = genericError(savedErrno, ERROR_LOCATION);
       error.addProperty("path", path.getAbsolutePath());
       return error;
    }

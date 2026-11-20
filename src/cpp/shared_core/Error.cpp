@@ -21,7 +21,6 @@
  *
  */
 
-#include <cerrno>
 #include <ostream>
 
 #include <shared_core/Error.hpp>
@@ -512,19 +511,14 @@ std::ostream& operator<<(std::ostream& io_ostream, const Error& in_error)
 }
 
 // Common error creation functions =====================================================================================
-Error lastSystemError(const char* in_function, const char* in_file, long in_line, const char* in_systemCall)
-{
 #ifdef _WIN32
-   const int value = static_cast<int>(::GetLastError());
-#else
-   const int value = errno;
-#endif
-   const boost::system::error_code code(value, boost::system::system_category());
-   const ErrorLocation location(in_function, in_file, in_line);
-   if (in_systemCall)
-      return systemCallError(in_systemCall, code, location);
-   return Error(code, location);
+Error lastSystemError(const char* in_function, const char* in_file, long in_line)
+{
+   const int lastError = static_cast<int>(::GetLastError());
+   const boost::system::error_code code(lastError, boost::system::system_category());
+   return Error(code, ErrorLocation(in_function, in_file, in_line));
 }
+#endif
 
 Error systemError(boost::system::errc::errc_t in_code, const ErrorLocation& in_location)
 {

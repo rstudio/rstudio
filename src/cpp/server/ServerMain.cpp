@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include <cerrno>
 #include <cstdlib>
 
 #include <core/FileLock.hpp>
@@ -447,7 +448,10 @@ Error waitForSignals()
    sa.sa_flags = SA_NOCLDSTOP;
    int result = ::sigaction(SIGCHLD, &sa, nullptr);
    if (result != 0)
-      return LAST_SYSTEM_ERROR();
+   {
+      const int savedErrno = errno;
+      return genericError(savedErrno, ERROR_LOCATION);
+   }
 
    // block signals that we want to sigwait on
    sigset_t wait_mask;
@@ -595,7 +599,10 @@ Error waitForSignals()
          sa.sa_handler = SIG_DFL;
          int result = ::sigaction(sig, &sa, nullptr);
          if (result != 0)
-            LOG_ERROR(LAST_SYSTEM_ERROR());
+         {
+            const int savedErrno = errno;
+            LOG_ERROR(genericError(savedErrno, ERROR_LOCATION));
+         }
 
          // re-raise the signal
          ::kill(::getpid(), sig);
@@ -996,7 +1003,8 @@ int main(int argc, char * const argv[])
       struct stat st;
       if (::stat(serverDataDir.getAbsolutePath().c_str(), &st) == -1)
       {
-         Error error = LAST_SYSTEM_ERROR();
+         const int savedErrno = errno;
+         Error error = genericError(savedErrno, ERROR_LOCATION);
          error.addProperty(
             "description",
             "Could not determine permissions on specified 'server-data-dir' directory (" +

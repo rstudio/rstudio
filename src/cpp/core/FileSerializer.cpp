@@ -183,7 +183,8 @@ Error writeAll(int fd, const std::string& contents, const FilePath& filePath)
          if (errno == EINTR)
             continue;
 
-         return fileError(LAST_SYSTEM_ERROR(), filePath);
+         const int savedErrno = errno;
+         return fileError(genericError(savedErrno, ERROR_LOCATION), filePath);
       }
 
       data += written;
@@ -223,7 +224,10 @@ Error syncFile(int fd, const FilePath& filePath)
 #endif
 
    if (rc == -1)
-      return fileError(LAST_SYSTEM_ERROR(), filePath);
+   {
+      const int savedErrno = errno;
+      return fileError(genericError(savedErrno, ERROR_LOCATION), filePath);
+   }
 
    return Success();
 }
@@ -234,7 +238,10 @@ Error syncFile(int fd, const FilePath& filePath)
 Error closeFile(int fd, const FilePath& filePath)
 {
    if (::close(fd) == -1 && errno != EINTR)
-      return fileError(LAST_SYSTEM_ERROR(), filePath);
+   {
+      const int savedErrno = errno;
+      return fileError(genericError(savedErrno, ERROR_LOCATION), filePath);
+   }
 
    return Success();
 }
@@ -255,7 +262,10 @@ Error writeContentsToFile(const FilePath& filePath,
    while (fd == -1 && errno == EINTR);
 
    if (fd == -1)
-      return fileError(LAST_SYSTEM_ERROR(), filePath);
+   {
+      const int savedErrno = errno;
+      return fileError(genericError(savedErrno, ERROR_LOCATION), filePath);
+   }
 
    // when durability is requested, flush to physical storage; this is the point
    // at which a full disk or an exceeded quota is reliably reported
@@ -395,14 +405,12 @@ int renameForAtomicWrite(const char* from, const char* to)
 // writable file mounted into a read-only container image.
 bool isPermissionError(const Error& error)
 {
-   if (!error || error.getName() != boost::system::system_category().name())
-      return false;
-
 #ifdef _WIN32
-   return error.getCode() == ERROR_ACCESS_DENIED;
+   return error == boost::system::error_code(ERROR_ACCESS_DENIED, boost::system::system_category());
 #else
-   int code = error.getCode();
-   return code == EACCES || code == EPERM || code == EROFS;
+   using namespace boost::system::errc;
+   return error.matches(permission_denied) || error.matches(operation_not_permitted) ||
+          error.matches(read_only_file_system);
 #endif
 }
 
@@ -414,9 +422,8 @@ bool isMountPointError(const Error& error)
 #ifdef _WIN32
    return false;
 #else
-   using boost::system::error_code;
-   using boost::system::system_category;
-   return error == error_code(EBUSY, system_category()) || error == error_code(EXDEV, system_category());
+   using namespace boost::system::errc;
+   return error.matches(device_or_resource_busy) || error.matches(cross_device_link);
 #endif
 }
 
@@ -760,7 +767,10 @@ Error createTempFile(const FilePath& targetPath,
    while (pTemp->fd == -1 && errno == EINTR);
 
    if (pTemp->fd == -1)
-      return atomicWriteError(LAST_SYSTEM_ERROR(), targetPath, pTemp->path);
+   {
+      const int savedErrno = errno;
+      return atomicWriteError(genericError(savedErrno, ERROR_LOCATION), targetPath, pTemp->path);
+   }
 
    return Success();
 }
@@ -859,7 +869,10 @@ Error replaceFile(const FilePath& tempPath,
                   const AtomicWriteOptions& options)
 {
    if (renameForAtomicWrite(tempPath.getAbsolutePath().c_str(), targetPath.getAbsolutePath().c_str()) == -1)
-      return atomicWriteError(LAST_SYSTEM_ERROR(), targetPath, tempPath);
+   {
+      const int savedErrno = errno;
+      return atomicWriteError(genericError(savedErrno, ERROR_LOCATION), targetPath, tempPath);
+   }
 
    // the file's contents were flushed before the rename; flush the directory
    // as well, so that the rename itself survives a crash
@@ -1015,7 +1028,9 @@ bool isDiskSpaceError(const Error& error)
 {
 #if !defined(_WIN32) && defined(EDQUOT)
    // POSIX reports an exceeded quota separately from a full disk.
-   if (error == boost::system::error_code(EDQUOT, boost::system::system_category()))
+   using boost::system::error_code;
+   if (error == error_code(EDQUOT, boost::system::generic_category()) ||
+       error == error_code(EDQUOT, boost::system::system_category()))
       return true;
 #endif
    return error.matches(boost::system::errc::no_space_on_device);

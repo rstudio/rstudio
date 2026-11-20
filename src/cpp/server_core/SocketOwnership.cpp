@@ -82,7 +82,8 @@ Error setRecvTimeout(int fd)
    tv.tv_usec = 0;
    if (::setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0)
    {
-      Error error = LAST_SYSTEM_ERROR();
+      const int savedErrno = errno;
+      Error error = genericError(savedErrno, ERROR_LOCATION);
       error.addProperty("description", "setsockopt(NETLINK_SOCK_DIAG, SO_RCVTIMEO)");
       return error;
    }
@@ -180,7 +181,8 @@ Error sendExactMatchRequest(int fd,
                             sizeof(dest));
    if (sent < 0)
    {
-      Error error = LAST_SYSTEM_ERROR();
+      const int savedErrno = errno;
+      Error error = genericError(savedErrno, ERROR_LOCATION);
       error.addProperty("description", "sendto(NETLINK_SOCK_DIAG exact-match request)");
       return error;
    }
@@ -244,7 +246,8 @@ DiagLookupResult readSingleDiagReply(int fd, uid_t* pUid, uint8_t* pState, Error
       }
       else
       {
-         *pError = LAST_SYSTEM_ERROR();
+         const int savedErrno = errno;
+         *pError = genericError(savedErrno, ERROR_LOCATION);
          pError->addProperty("description", "recvmsg(NETLINK_SOCK_DIAG)");
       }
       return DiagLookupResult::Error;
@@ -372,7 +375,8 @@ Error lookupEstablishedSocketUid(const boost::asio::ip::address& localAddress,
    int fd = ::socket(AF_NETLINK, SOCK_RAW | SOCK_CLOEXEC, NETLINK_SOCK_DIAG);
    if (fd < 0)
    {
-      Error error = LAST_SYSTEM_ERROR();
+      const int savedErrno = errno;
+      Error error = genericError(savedErrno, ERROR_LOCATION);
       error.addProperty("description", "socket(NETLINK_SOCK_DIAG)");
       return error;
    }
@@ -435,7 +439,8 @@ Error lookupListeningSocketUid(const boost::asio::ip::address& listenAddress,
    int fd = ::socket(AF_NETLINK, SOCK_RAW | SOCK_CLOEXEC, NETLINK_SOCK_DIAG);
    if (fd < 0)
    {
-      Error error = LAST_SYSTEM_ERROR();
+      const int savedErrno = errno;
+      Error error = genericError(savedErrno, ERROR_LOCATION);
       error.addProperty("description", "socket(NETLINK_SOCK_DIAG)");
       return error;
    }
@@ -606,7 +611,8 @@ DiagLookupResult probeEstablishedUidReporting(uid_t* pUid, Error* pError)
    int fd = ::socket(AF_NETLINK, SOCK_RAW | SOCK_CLOEXEC, NETLINK_SOCK_DIAG);
    if (fd < 0)
    {
-      *pError = LAST_SYSTEM_ERROR();
+      const int savedErrno = errno;
+      *pError = genericError(savedErrno, ERROR_LOCATION);
       pError->addProperty("description", "socket(NETLINK_SOCK_DIAG)");
       return DiagLookupResult::Error;
    }

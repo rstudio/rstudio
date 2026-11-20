@@ -579,8 +579,10 @@ public:
  */
 std::ostream& operator<<(std::ostream& io_ostream, const Error& in_error);
 
-// Capture the native error before constructing an ErrorLocation, which may overwrite it.
-Error lastSystemError(const char* in_function, const char* in_file, long in_line, const char* in_systemCall = nullptr);
+#ifdef _WIN32
+// Capture GetLastError() after a Win32 failure, before constructing the ErrorLocation.
+Error lastSystemError(const char* in_function, const char* in_file, long in_line);
+#endif
 
 /**
  * @brief Function which creates a generic-category error from a portable errc value.
@@ -965,8 +967,9 @@ std::string systemErrorMessage(int code);
 #endif
 
 #define ERROR_LOCATION rstudio::core::ErrorLocation(RSTUDIO_ERROR_LOCATION_ARGS)
+#ifdef _WIN32
 #define LAST_SYSTEM_ERROR() ::rstudio::core::lastSystemError(RSTUDIO_ERROR_LOCATION_ARGS)
-#define LAST_SYSTEM_CALL_ERROR(name) ::rstudio::core::lastSystemError(RSTUDIO_ERROR_LOCATION_ARGS, (name))
+#endif
 
 #define CATCH_UNEXPECTED_EXCEPTION                                                  \
    catch(const std::exception& e)                                                   \

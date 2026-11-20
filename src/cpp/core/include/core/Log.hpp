@@ -41,7 +41,7 @@ std::string errorAsLogEntry(const Error& error);
 bool logCodeLocations();
 
 // Evaluate the error expression before constructing the logging location. In
-// particular, constructing the location must not clobber LAST_SYSTEM_ERROR().
+// particular, constructing the location can overwrite errno or the Win32 last error.
 inline void logErrorAt(const Error& error, const char* function, const char* file, long line)
 {
    logError(error, ErrorLocation(function, file, line));

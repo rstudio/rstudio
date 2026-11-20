@@ -27,6 +27,7 @@
 # define STDERR_FILENO 2
 #endif
 
+#include <cerrno>
 #include <fcntl.h>
 
 #include <core/Exec.hpp>
@@ -79,7 +80,8 @@ public:
       int fd = ::open(filename, O_WRONLY | O_APPEND | O_CREAT, 0600);
       if (fd == -1)
       {
-         LOG_ERROR(LAST_SYSTEM_ERROR());
+         const int savedErrno = errno;
+         LOG_ERROR(genericError(savedErrno, ERROR_LOCATION));
          return;
       }
       

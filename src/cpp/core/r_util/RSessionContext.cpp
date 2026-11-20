@@ -15,6 +15,7 @@
 
 #include <core/r_util/RSessionContext.hpp>
 
+#include <cerrno>
 #include <iostream>
 
 #include <boost/format.hpp>
@@ -280,7 +281,8 @@ bool isSharedPath(const std::string& projectPath,
       {
          // if we can't get the supplementary groups due to a system-level
          // error, ignore them but complain in the logs
-         LOG_ERROR(LAST_SYSTEM_ERROR());
+         const int savedErrno = errno;
+         LOG_ERROR(genericError(savedErrno, ERROR_LOCATION));
       }
 
       for (int i = 0; i < ngroups; ++i) {
@@ -296,7 +298,8 @@ bool isSharedPath(const std::string& projectPath,
    }
    else
    {
-      error = LAST_SYSTEM_ERROR();
+      const int savedErrno = errno;
+      error = genericError(savedErrno, ERROR_LOCATION);
       error.addProperty("path", projectDir.getAbsolutePath());
       LOG_ERROR(error);
    }

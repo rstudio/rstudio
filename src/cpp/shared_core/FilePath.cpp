@@ -323,7 +323,8 @@ inline Error changeFileModeImpl(const std::string& filePath, mode_t mode)
    errno = 0;
    if (::chmod(filePath.c_str(), mode) < 0)
    {
-      Error error = LAST_SYSTEM_ERROR();
+      const int savedErrno = errno;
+      Error error = genericError(savedErrno, ERROR_LOCATION);
       error.addProperty("path", filePath);
       return error;
    }
@@ -1075,7 +1076,8 @@ Error FilePath::getFileMode(FileMode& out_fileMode) const
    struct stat st;
    if (::stat(getAbsolutePath().c_str(), &st) == -1)
    {
-      Error error = LAST_SYSTEM_ERROR();
+      const int savedErrno = errno;
+      Error error = genericError(savedErrno, ERROR_LOCATION);
       error.addProperty("path", getAbsolutePath());
       return error;
    }
@@ -1123,7 +1125,8 @@ Error FilePath::getFileOwner(std::string* pUsername) const
    struct stat st;
    if (::stat(getAbsolutePath().c_str(), &st) == -1)
    {
-      Error error = LAST_SYSTEM_ERROR();
+      const int savedErrno = errno;
+      Error error = genericError(savedErrno, ERROR_LOCATION);
       error.addProperty("path", getAbsolutePath());
       return error;
    }
@@ -1131,7 +1134,8 @@ Error FilePath::getFileOwner(std::string* pUsername) const
    struct passwd* pw = ::getpwuid(st.st_uid);
    if (pw == nullptr)
    {
-      Error error = LAST_SYSTEM_ERROR();
+      const int savedErrno = errno;
+      Error error = genericError(savedErrno, ERROR_LOCATION);
       error.addProperty("path", getAbsolutePath());
       return error;
    }
@@ -1145,7 +1149,8 @@ Error FilePath::getFileOwner(uid_t& out_fileOwner) const
    struct stat st;
    if (::stat(getAbsolutePath().c_str(), &st) == -1)
    {
-      Error error = LAST_SYSTEM_ERROR();
+      const int savedErrno = errno;
+      Error error = genericError(savedErrno, ERROR_LOCATION);
       error.addProperty("path", getAbsolutePath());
       return error;
    }
@@ -1410,7 +1415,8 @@ Error FilePath::isReadable(bool &out_readable) const
    else
    {
       // some other error (unexpected)
-      return LAST_SYSTEM_ERROR();
+      const int savedErrno = errno;
+      return genericError(savedErrno, ERROR_LOCATION);
    }
 
    return Success();
@@ -1507,7 +1513,10 @@ Error FilePath::isWriteable(bool &out_writeable) const
    else if (errno == EACCES)
       out_writeable = false;
    else
-      return LAST_SYSTEM_ERROR();
+   {
+      const int savedErrno = errno;
+      return genericError(savedErrno, ERROR_LOCATION);
+   }
 
    return Success();
 }

@@ -109,14 +109,18 @@ inline Error isLocalStreamListening(const FilePath& localStreamPath, bool* pList
 
    int fd = ::socket(AF_UNIX, SOCK_STREAM, 0);
    if (fd == -1)
-      return LAST_SYSTEM_ERROR();
+   {
+      const int savedErrno = errno;
+      return genericError(savedErrno, ERROR_LOCATION);
+   }
 
    // a listener whose backlog is full is still listening; find that out
    // without waiting for it to accept
    int flags = ::fcntl(fd, F_GETFL, 0);
    if (flags == -1 || ::fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
    {
-      Error error = LAST_SYSTEM_ERROR();
+      const int savedErrno = errno;
+      Error error = genericError(savedErrno, ERROR_LOCATION);
       ::close(fd);
       return error;
    }
@@ -158,7 +162,8 @@ inline Error getLocalStreamIdentity(const FilePath& localStreamPath,
    struct stat info;
    if (::lstat(localStreamPath.getAbsolutePath().c_str(), &info) == -1)
    {
-      Error error = LAST_SYSTEM_ERROR();
+      const int savedErrno = errno;
+      Error error = genericError(savedErrno, ERROR_LOCATION);
       error.addProperty("stream", localStreamPath);
       return error;
    }
@@ -197,7 +202,8 @@ inline Error claimLocalStream(
       S_IRUSR | S_IWUSR);
    if (lockFd == -1)
    {
-      Error error = LAST_SYSTEM_ERROR();
+      const int savedErrno = errno;
+      Error error = genericError(savedErrno, ERROR_LOCATION);
       error.addProperty("lock-file", lockPath);
       return error;
    }
@@ -213,7 +219,8 @@ inline Error claimLocalStream(
    struct stat lockInfo;
    if (::fstat(lockFd, &lockInfo) == -1)
    {
-      Error error = LAST_SYSTEM_ERROR();
+      const int savedErrno = errno;
+      Error error = genericError(savedErrno, ERROR_LOCATION);
       error.addProperty("lock-file", lockPath);
       return error;
    }
@@ -231,7 +238,8 @@ inline Error claimLocalStream(
    {
       if (errno != EINTR)
       {
-         Error error = LAST_SYSTEM_ERROR();
+         const int savedErrno = errno;
+         Error error = genericError(savedErrno, ERROR_LOCATION);
          error.addProperty("lock-file", lockPath);
          return error;
       }

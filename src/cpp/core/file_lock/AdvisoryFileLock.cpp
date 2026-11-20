@@ -300,7 +300,8 @@ Error ensureAdvisoryLockFile(const FilePath& lockFilePath)
       if (errno == EEXIST)
          return Success();
 
-      Error error = LAST_SYSTEM_CALL_ERROR("open");
+      const int savedErrno = errno;
+      Error error = systemCallError("open", {savedErrno, boost::system::generic_category()}, ERROR_LOCATION);
       error.addProperty("lock-file", lockFilePath);
       return error;
    }
@@ -308,7 +309,8 @@ Error ensureAdvisoryLockFile(const FilePath& lockFilePath)
    Error error;
    if (::fchmod(descriptor, 0666) == -1)
    {
-      error = LAST_SYSTEM_CALL_ERROR("fchmod");
+      const int savedErrno = errno;
+      error = systemCallError("fchmod", {savedErrno, boost::system::generic_category()}, ERROR_LOCATION);
       error.addProperty("lock-file", lockFilePath);
    }
 
@@ -341,7 +343,8 @@ Error inodeKey(const FilePath& lockFilePath, std::string* pKey)
       if (errno == ENOENT)
          return Success();
 
-      Error error = LAST_SYSTEM_ERROR();
+      const int savedErrno = errno;
+      Error error = genericError(savedErrno, ERROR_LOCATION);
       error.addProperty("lock-file", lockFilePath);
       return error;
    }
@@ -470,7 +473,8 @@ Error AdvisoryFileLock::isLocked(const FilePath& lockFilePath,
 
    if (descriptor == -1)
    {
-      Error error = LAST_SYSTEM_ERROR();
+      const int savedErrno = errno;
+      Error error = genericError(savedErrno, ERROR_LOCATION);
       error.addProperty("lock-file", lockFilePath);
       return error;
    }
@@ -482,7 +486,8 @@ Error AdvisoryFileLock::isLocked(const FilePath& lockFilePath,
    struct stat info;
    if (::fstat(descriptor, &info) == -1)
    {
-      Error error = LAST_SYSTEM_CALL_ERROR("fstat");
+      const int savedErrno = errno;
+      Error error = systemCallError("fstat", {savedErrno, boost::system::generic_category()}, ERROR_LOCATION);
       error.addProperty("lock-file", lockFilePath);
       ::close(descriptor);
       return error;
@@ -516,7 +521,10 @@ Error AdvisoryFileLock::isLocked(const FilePath& lockFilePath,
    if (::fcntl(descriptor, F_SETLK, &request) == 0)
       *pIsLocked = false;
    else if (errno != EAGAIN && errno != EACCES)
-      error = LAST_SYSTEM_CALL_ERROR("fcntl");
+   {
+      const int savedErrno = errno;
+      error = systemCallError("fcntl", {savedErrno, boost::system::generic_category()}, ERROR_LOCATION);
+   }
 
    // closing releases the lock just taken, if any
    ::close(descriptor);
@@ -715,7 +723,8 @@ Error AdvisoryFileLock::acquire(const FilePath& lockFilePath)
 
    if (descriptor == -1)
    {
-      Error openError = LAST_SYSTEM_CALL_ERROR("open");
+      const int savedErrno = errno;
+      Error openError = systemCallError("open", {savedErrno, boost::system::generic_category()}, ERROR_LOCATION);
       openError.addProperty("lock-file", lockFilePath);
       return openError;
    }
@@ -726,7 +735,8 @@ Error AdvisoryFileLock::acquire(const FilePath& lockFilePath)
    struct stat openedInfo;
    if (::fstat(descriptor, &openedInfo) == -1)
    {
-      Error statError = LAST_SYSTEM_CALL_ERROR("fstat");
+      const int savedErrno = errno;
+      Error statError = systemCallError("fstat", {savedErrno, boost::system::generic_category()}, ERROR_LOCATION);
       statError.addProperty("lock-file", lockFilePath);
       // Without an identity, closing could drop a lock this process already
       // holds on the opened inode through another name.
@@ -855,7 +865,8 @@ Error AdvisoryFileLock::release()
       while (status == -1 && errno == EINTR);
       if (status == -1)
       {
-         error = LAST_SYSTEM_CALL_ERROR("fcntl");
+         const int savedErrno = errno;
+         error = systemCallError("fcntl", {savedErrno, boost::system::generic_category()}, ERROR_LOCATION);
          error.addProperty("lock-file", pImpl_->lockFilePath);
       }
       else

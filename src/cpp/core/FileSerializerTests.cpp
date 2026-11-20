@@ -893,6 +893,7 @@ TEST(FileSerializerTest, IsDiskSpaceErrorClassifies)
    EXPECT_TRUE(isDiskSpaceError(Error(error_code(ENOSPC, system_category()), ERROR_LOCATION)));
 # ifdef EDQUOT
    EXPECT_TRUE(isDiskSpaceError(Error(error_code(EDQUOT, system_category()), ERROR_LOCATION)));
+   EXPECT_TRUE(isDiskSpaceError(genericError(EDQUOT, ERROR_LOCATION)));
 # endif
    // an unrelated system error is not a disk-space error
    EXPECT_FALSE(isDiskSpaceError(Error(error_code(ENOENT, system_category()), ERROR_LOCATION)));

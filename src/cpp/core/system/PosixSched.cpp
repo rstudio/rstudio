@@ -15,6 +15,7 @@
 
 #include <core/system/PosixSched.hpp>
 
+#include <cerrno>
 #include <algorithm>
 #include <sched.h>
 
@@ -45,7 +46,10 @@ Error getCpuAffinity(CpuAffinity* pCpus)
    cpu_set_t cs;
    CPU_ZERO(&cs);
    if (::sched_getaffinity(0, sizeof(cs), &cs) == -1)
-      return LAST_SYSTEM_ERROR();
+   {
+      const int savedErrno = errno;
+      return genericError(savedErrno, ERROR_LOCATION);
+   }
 
    pCpus->clear();
    int cpus = cpuCount();
@@ -79,7 +83,10 @@ Error setCpuAffinity(const CpuAffinity& cpus)
    }
 
    if (::sched_setaffinity(0, sizeof(cs), &cs) == -1)
-      return LAST_SYSTEM_ERROR();
+   {
+      const int savedErrno = errno;
+      return genericError(savedErrno, ERROR_LOCATION);
+   }
 
    return Success();
 #else

@@ -13,6 +13,7 @@
  *
  */
 
+#include <cerrno>
 #include <cstdlib>
 #include <signal.h>
 #include <unordered_set>
@@ -364,7 +365,8 @@ bool suspendSession(bool force, int status)
    // API to do so and at least on Linux this is only possible via cgroups.
    if (setpriority(PRIO_PROCESS, 0, 10) < 0)
    {
-      core::Error error = LAST_SYSTEM_ERROR();
+      const int savedErrno = errno;
+      core::Error error = genericError(savedErrno, ERROR_LOCATION);
       error.addProperty("description",
                         "Failed to lower CPU priority during suspend");
       LOG_ERROR(error);

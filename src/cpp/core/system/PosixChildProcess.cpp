@@ -141,7 +141,10 @@ Error readPipe(int pipeFd, std::string* pOutput, bool *pEOF = nullptr)
             return Success();
          }
          else
-            return LAST_SYSTEM_ERROR();
+         {
+            const int savedErrno = errno;
+            return genericError(savedErrno, ERROR_LOCATION);
+         }
       }
 
       // check for eof
@@ -333,7 +336,10 @@ Error ChildProcess::ptySetSize(int cols, int rows)
    // set it
    int res = ::ioctl(pImpl_->fdMaster, TIOCSWINSZ, &winp);
    if (res == -1)
-      return LAST_SYSTEM_ERROR();
+   {
+      const int savedErrno = errno;
+      return genericError(savedErrno, ERROR_LOCATION);
+   }
    else
       return Success();
 }
@@ -389,7 +395,10 @@ Error ChildProcess::terminate()
          if (errno == EPERM) // see note below on carve out for EPERM
             return Success();
          else
-            return LAST_SYSTEM_ERROR();
+         {
+            const int savedErrno = errno;
+            return genericError(savedErrno, ERROR_LOCATION);
+         }
       }
       else
          return Success();
@@ -415,7 +424,10 @@ Error ChildProcess::terminate()
          else if (errno == ESRCH)
             return Success();
          else
-            return LAST_SYSTEM_ERROR();
+         {
+            const int savedErrno = errno;
+            return genericError(savedErrno, ERROR_LOCATION);
+         }
       }
       else
          return Success();
@@ -451,7 +463,10 @@ Error ChildProcess::run()
    // verify that the executable pointed at via 'exe_' is executable
    int status = ::access(exe_.c_str(), X_OK);
    if (status == -1)
-      return LAST_SYSTEM_ERROR();
+   {
+      const int savedErrno = errno;
+      return genericError(savedErrno, ERROR_LOCATION);
+   }
 
    // declarations
    PidType pid = 0;
@@ -650,7 +665,8 @@ Error ChildProcess::run()
             {
                if (::setsid() == -1)
                {
-                  LOG_ERROR(LAST_SYSTEM_ERROR());
+                  const int savedErrno = errno;
+                  LOG_ERROR(genericError(savedErrno, ERROR_LOCATION));
                   // intentionally fail forward (see note above)
                }
             }
@@ -666,7 +682,8 @@ Error ChildProcess::run()
                // may want to kill all children from the processSupervisor on exit
                if (::setpgid(0,0) == -1)
                {
-                  LOG_ERROR(LAST_SYSTEM_ERROR());
+                  const int savedErrno = errno;
+                  LOG_ERROR(genericError(savedErrno, ERROR_LOCATION));
                   // intentionally fail forward (see note above)
                }
             }
@@ -760,7 +777,8 @@ Error ChildProcess::run()
          {
             if (::chdir(options_.workingDir.getAbsolutePath().c_str()))
             {
-               Error error = LAST_SYSTEM_ERROR();
+               const int savedErrno = errno;
+               Error error = genericError(savedErrno, ERROR_LOCATION);
                std::string message = "Error changing directory: '";
                message += options_.workingDir.getAbsolutePath().c_str();
                message += "'";
@@ -836,7 +854,10 @@ Error ChildProcess::run()
 #ifndef __APPLE__
          // set a bit indicating we want to die when our parent dies
          if (::prctl(PR_SET_PDEATHSIG, SIGTERM) == -1)
-            LOG_ERROR(LAST_SYSTEM_ERROR());
+         {
+            const int savedErrno = errno;
+            LOG_ERROR(genericError(savedErrno, ERROR_LOCATION));
+         }
 #endif
       }
 
@@ -859,7 +880,7 @@ Error ChildProcess::run()
       // here then there was an error
       if (!options_.threadSafe)
       {
-         Error error = LAST_SYSTEM_ERROR();
+         Error error = genericError(savedErrno, ERROR_LOCATION);
          error.addProperty("exe", exe_);
          LOG_ERROR(error);
       }
@@ -1803,7 +1824,10 @@ Error forkAndRunImpl(const boost::function<int(void)>& func,
 {
    pid_t pid = ::fork();
    if (pid < 0)
-      return LAST_SYSTEM_ERROR();
+   {
+      const int savedErrno = errno;
+      return genericError(savedErrno, ERROR_LOCATION);
+   }
 
    if (pid == 0)
    {
@@ -1848,7 +1872,10 @@ Error forkAndRunImpl(const boost::function<int(void)>& func,
          if (errno == ECHILD) // carve out for child already reaped
             return Success();
          else
-            return LAST_SYSTEM_ERROR();
+         {
+            const int savedErrno = errno;
+            return genericError(savedErrno, ERROR_LOCATION);
+         }
       }
       else
       {

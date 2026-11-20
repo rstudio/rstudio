@@ -14,6 +14,7 @@
  */
 
 
+#include <cerrno>
 #include <sys/sysctl.h>  
 #include <mach/mach.h>
 #include <mach/mach_error.h>
@@ -78,7 +79,8 @@ Error getTotalMemory(long *pTotalKb, MemoryProvider *pProvider)
     int result = ::sysctl(flags, 2, &mem, &len, NULL, 0);
     if (result == -1)
     {
-        Error error = LAST_SYSTEM_ERROR();
+        const int savedErrno = errno;
+        Error error = genericError(savedErrno, ERROR_LOCATION);
         error.addProperty("description", "Failed to get total physical memory from sysctl");
         return error;
     }

@@ -19,6 +19,7 @@
 
 #include <sys/stat.h>
 
+#include <cerrno>
 #include <algorithm>
 #include <map>
 #include <vector>
@@ -227,7 +228,8 @@ Error readFileInfoLStat(const std::string& path, FileInfo* pFileInfo)
    struct stat st;
    if (::lstat(path.c_str(), &st) == -1)
    {
-      Error error = LAST_SYSTEM_ERROR();
+      const int savedErrno = errno;
+      Error error = genericError(savedErrno, ERROR_LOCATION);
       error.addProperty("path", path);
       return error;
    }

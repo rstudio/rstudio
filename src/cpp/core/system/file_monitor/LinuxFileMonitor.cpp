@@ -260,7 +260,8 @@ void removeWatch(int fd, const Watch& watch)
    // filesystem has been unmounted or the root directory has been deleted)
    if (result < 0 && errno != EINVAL)
    {
-      Error error = LAST_SYSTEM_ERROR();
+      const int savedErrno = errno;
+      Error error = genericError(savedErrno, ERROR_LOCATION);
       error.addProperty("path", watch.path);
       LOG_ERROR(error);
    }
@@ -591,8 +592,8 @@ void run(const boost::function<void()>& checkForInput)
 
                // otherwise terminate this watch (notify user and break
                // out of the read loop for this context)
-               terminateWithMonitoringError(pContext,
-                                            LAST_SYSTEM_ERROR());
+               const int savedErrno = errno;
+               terminateWithMonitoringError(pContext, genericError(savedErrno, ERROR_LOCATION));
                break;
             }
 
