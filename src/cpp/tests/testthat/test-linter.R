@@ -195,6 +195,47 @@ test_that("C++ sources do not put errc values in the system category", {
 
 })
 
+#' Expect No C++ Offenders
+#'
+#' Fail, listing each file and line, when a pattern matches any C++ source
+#' under src/cpp. Matches may span lines.
+#'
+#' @param pattern A Perl regular expression.
+#' @param header The first line of the failure message.
+#' @param skipComments Whether to ignore matches on lines that start with '//'.
+expectNoCppOffenders <- function(pattern, header, skipComments = FALSE) {
+
+   cppFiles <- list.files(
+      root,
+      pattern = "[.](cpp|hpp|mm)$",
+      full.names = TRUE,
+      recursive = TRUE
+   )
+
+   offenders <- character()
+   for (cppFile in cppFiles) {
+      fileLines <- readLines(cppFile, warn = FALSE)
+      contents <- paste(fileLines, collapse = "\n")
+      starts <- gregexpr(pattern, contents, perl = TRUE, useBytes = TRUE)[[1L]]
+      if (starts[[1L]] == -1L)
+         next
+
+      # report the line each match starts on
+      newlines <- gregexpr("\n", contents, fixed = TRUE, useBytes = TRUE)[[1L]]
+      lines <- findInterval(starts, newlines[newlines > 0L]) + 1L
+      if (skipComments)
+         lines <- lines[!grepl("^\\s*//", fileLines[lines], useBytes = TRUE)]
+      if (length(lines) == 0L)
+         next
+
+      path <- sub(paste0(root, "/"), "", cppFile, fixed = TRUE)
+      offenders <- c(offenders, paste0(path, ":", lines))
+   }
+
+   expect(length(offenders) == 0, paste(c(header, offenders), collapse = "\n"))
+
+}
+
 test_that("C++ sources test error conditions with matches(), not equality", {
 
    # an error built from an errc value is in the generic category, while Boost
@@ -241,33 +282,63 @@ test_that("C++ sources test error conditions with matches(), not equality", {
    )
    expect_false(any(grepl(pattern, allowed, perl = TRUE)))
 
-   cppFiles <- list.files(
-      root,
-      pattern = "[.](cpp|hpp|mm)$",
-      full.names = TRUE,
-      recursive = TRUE
+   expectNoCppOffenders(pattern, "error conditions compared with == instead of matches():")
+
+})
+
+test_that("C++ sources read GetLastError() before building ERROR_LOCATION", {
+
+   # the order in which a call's arguments are evaluated is unspecified, and
+   # MSVC debug builds construct ERROR_LOCATION first, resetting the last error
+   # to 0 (no error) before systemError() sees it. LAST_SYSTEM_ERROR() reads
+   # the code first; otherwise save it in a DWORD before the call
+   pattern <- "\\bsystemError\\s*\\(\\s*(?:::)?GetLastError\\s*\\(\\s*\\)"
+
+   offending <- c(
+      "return systemError(::GetLastError(), ERROR_LOCATION);",
+      "systemError(GetLastError(), \"description\", ERROR_LOCATION)"
+   )
+   expect_true(all(grepl(pattern, offending, perl = TRUE)))
+
+   allowed <- c(
+      "return LAST_SYSTEM_ERROR();",
+      "DWORD lastErr = ::GetLastError();\nreturn systemError(lastErr, ERROR_LOCATION);"
+   )
+   expect_false(any(grepl(pattern, allowed, perl = TRUE)))
+
+   # Error.hpp names the pattern in a comment recommending LAST_SYSTEM_ERROR()
+   expectNoCppOffenders(
+      pattern,
+      "systemError(GetLastError(), ...) instead of LAST_SYSTEM_ERROR():",
+      skipComments = TRUE
    )
 
-   offenders <- character()
-   for (cppFile in cppFiles) {
-      contents <- paste(readLines(cppFile, warn = FALSE), collapse = "\n")
-      starts <- gregexpr(pattern, contents, perl = TRUE, useBytes = TRUE)[[1L]]
-      if (starts[[1L]] == -1L)
-         next
+})
 
-      # report the line each match starts on
-      newlines <- gregexpr("\n", contents, fixed = TRUE, useBytes = TRUE)[[1L]]
-      lines <- findInterval(starts, newlines[newlines > 0L]) + 1L
-      path <- sub(paste0(root, "/"), "", cppFile, fixed = TRUE)
-      offenders <- c(offenders, paste0(path, ":", lines))
-   }
+test_that("C++ sources do not assign a newly built error in a condition", {
 
-   failureMessage <- paste(
-      c("error conditions compared with == instead of matches():", offenders),
-      collapse = "\n"
+   # a newly built error is always an error, so a condition that assigns one,
+   # if ((error = systemError(errc::timed_out, ...))), is always true; it is
+   # almost always a typo for a comparison, which should use matches(). an
+   # assignment from a call that may succeed, (error = readParam(...)), is fine
+   factory <- "(?:rstudio::)?(?:core::)?(?:systemError|genericError|unknownError|Error)"
+   pattern <- paste0("\\(\\s*!?\\s*\\w+\\s*=\\s*", factory, "\\s*\\(")
+
+   offending <- c(
+      "if ((error = systemError(errc::timed_out, ErrorLocation())))",
+      "else if (error = core::Error(errc::io_error, ERROR_LOCATION))"
    )
+   expect_true(all(grepl(pattern, offending, perl = TRUE)))
 
-   expect(length(offenders) == 0, failureMessage)
+   allowed <- c(
+      "else if ((error = readParam(jsonRpcRequest.params, 0, &force)))",
+      "if (error.matches(errc::timed_out))",
+      "Error error = systemError(errc::timed_out, ERROR_LOCATION);",
+      "if (error == systemError(errc::timed_out, ERROR_LOCATION))"
+   )
+   expect_false(any(grepl(pattern, allowed, perl = TRUE)))
+
+   expectNoCppOffenders(pattern, "newly built errors assigned in a condition:")
 
 })
 
