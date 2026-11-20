@@ -532,7 +532,7 @@ Error verifyPeerUid(const boost::asio::ip::address& localAddress,
       // handshake timing since it has existed since well before this
       // connection attempt) rather than failing closed on an inconclusive
       // established-path result.
-      if (error == systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()))
+      if (error && error == systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()))
          error = lookupListeningSocketUid(remoteAddress, appPort, &ownerUid);
    }
 

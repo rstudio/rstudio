@@ -155,7 +155,8 @@ test_that("C++ sources don't treat errno values as system error codes", {
    # to them reads as an unrelated Win32 error there. for an errno constant,
    # use systemError(boost::system::errc::invalid_argument, ...), with a
    # description in place of systemCallError()'s name; for a C runtime errno,
-   # use systemError(std::error_code(errno, std::generic_category()), ...).
+   # save it right after the failed call (ERROR_LOCATION may be evaluated
+   # first and change it), then pass std::error_code(saved, generic_category()).
    # a POSIX-only test that needs the native code can build it with
    # system_category() from the errno constant
    # the code is systemError()'s first argument, systemCallError()'s second
