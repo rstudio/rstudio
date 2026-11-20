@@ -158,13 +158,15 @@ test_that("C++ sources don't pass errno values as system error codes", {
    # use systemError(std::error_code(errno, std::generic_category()), ...).
    # a POSIX-only test that needs the native code can build it with
    # system_category() from the errno constant
-   errnoConstant <- "\\bsystem(Call)?Error\\(\\s*(\"[^\"]*\"\\s*,\\s*)?E[A-Z0-9]+\\s*[,)]"
+   # the code is systemError()'s first argument, systemCallError()'s second
+   codeArgument <- "(\\bsystemError\\(|\\bsystemCallError\\([^,()]*,)\\s*"
+   errnoConstant <- paste0(codeArgument, "E[A-Z0-9]+\\s*[,)]")
 
    # R_ERRNO is the C runtime's errno on every platform
-   rErrno <- "\\bsystem(Call)?Error\\(\\s*(\"[^\"]*\"\\s*,\\s*)?(R_ERRNO|MSVC_ERRNO)\\b"
+   rErrno <- paste0(codeArgument, "(R_ERRNO|MSVC_ERRNO)\\b")
 
-   # in Win32-only files, errno comes from the C runtime
-   crtErrno <- "\\bsystem(Call)?Error\\(\\s*(\"[^\"]*\"\\s*,\\s*)?errno\\b"
+   # in Windows-only files (Win32 in the name), errno comes from the C runtime
+   crtErrno <- paste0(codeArgument, "errno\\b")
 
    # an errc is an errno value, never a system code
    errcAsSystem <- "\\berrc::[a-z_]+\\s*,\\s*(boost::system::|std::)?system_category\\(\\)"
@@ -172,12 +174,14 @@ test_that("C++ sources don't pass errno values as system error codes", {
    offending <- c(
       "systemError(EINVAL, ERROR_LOCATION)",
       "systemError(\n   EIO,\n   \"description\", ERROR_LOCATION)",
-      "systemCallError(\"open\", ENOENT, ERROR_LOCATION)"
+      "systemCallError(\"open\", ENOENT, ERROR_LOCATION)",
+      "systemCallError(operation, ENOENT, ERROR_LOCATION)"
    )
    expect_true(all(grepl(errnoConstant, offending, perl = TRUE)))
 
    allowed <- c(
       "systemError(errno, ERROR_LOCATION)",
+      "systemCallError(\"open\", errno, ERROR_LOCATION)",
       "systemError(ERROR_ACCESS_DENIED, ERROR_LOCATION)",
       "systemError(boost::system::errc::io_error, ERROR_LOCATION)"
    )
@@ -200,7 +204,7 @@ test_that("C++ sources don't pass errno values as system error codes", {
 
       contents <- paste(readLines(cppFile, warn = FALSE), collapse = "\n")
       patterns <- c(errnoConstant, rErrno, errcAsSystem)
-      if (startsWith(basename(cppFile), "Win32"))
+      if (grepl("Win32", basename(cppFile), fixed = TRUE))
          patterns <- c(patterns, crtErrno)
 
       for (pattern in patterns) {

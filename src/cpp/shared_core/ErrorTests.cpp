@@ -41,10 +41,11 @@ namespace rstudio {
 namespace core {
 namespace {
 
-// an error code enum with its own category, like boost::asio::error::misc_errors
-enum class TestErrc
+// an error code enum with its own category, like boost::asio::error::misc_errors; unscoped (as those and
+// json::errc are), so it would also convert to int
+enum TestErrc
 {
-   Failure = 21
+   kTestFailure = 21
 };
 
 class TestCategory : public boost::system::error_category
@@ -119,7 +120,7 @@ void expectGenericError(const Error& in_error, errc_t in_errc)
 void expectTestError(const Error& in_error)
 {
    EXPECT_EQ("test", in_error.getName());
-   EXPECT_EQ(static_cast<int>(TestErrc::Failure), in_error.getCode());
+   EXPECT_EQ(static_cast<int>(kTestFailure), in_error.getCode());
    EXPECT_EQ("test failure", in_error.getMessage());
 }
 
@@ -247,19 +248,19 @@ TEST(ErrorTest, ErrorCodeEnumsUseTheirOwnCategory)
 {
    Error cause = systemError(boost::system::errc::io_error, ErrorLocation());
 
-   expectTestError(systemError(TestErrc::Failure, ErrorLocation()));
-   expectTestError(systemError(TestErrc::Failure, cause, ErrorLocation()));
-   expectTestError(systemError(TestErrc::Failure, "description", ErrorLocation()));
-   expectTestError(systemError(TestErrc::Failure, "description", cause, ErrorLocation()));
+   expectTestError(systemError(kTestFailure, ErrorLocation()));
+   expectTestError(systemError(kTestFailure, cause, ErrorLocation()));
+   expectTestError(systemError(kTestFailure, "description", ErrorLocation()));
+   expectTestError(systemError(kTestFailure, "description", cause, ErrorLocation()));
 
-   Error described = systemError(TestErrc::Failure, "description", cause, ErrorLocation());
+   Error described = systemError(kTestFailure, "description", cause, ErrorLocation());
    EXPECT_EQ("description", described.getProperty("description"));
    ASSERT_TRUE(described.hasCause());
    EXPECT_EQ(cause, described.getCause());
 
    // the category isn't system or generic, so the same number elsewhere doesn't match
    EXPECT_NE(systemError(boost::system::errc::is_a_directory, ErrorLocation()),
-             systemError(TestErrc::Failure, ErrorLocation()));
+             systemError(kTestFailure, ErrorLocation()));
 }
 
 } // namespace core
