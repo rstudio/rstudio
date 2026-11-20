@@ -15,6 +15,8 @@
 
 #include <r/session/RConsoleActions.hpp>
 
+#include <algorithm>
+
 #include <gsl/gsl-lite.hpp>
 
 #include <boost/algorithm/string/split.hpp>
@@ -352,93 +354,219 @@ Error ConsoleActions::saveToFile(const core::FilePath& filePath)
    return writeStringToFileAtomic(filePath, contents);
 }
 
+namespace {
+
+// The console's lines are read from its actions as if their data had been
+// joined into one string. The helpers below locate and read lines within
+// that string without building it, so that reading a page of lines costs
+// about as much as the page, and not as much as the whole scrollback. They
+// are templates only so as not to depend on the type of the actions buffer.
+
+// The start of a line: an offset into the data of the action at an index.
+// Lines needn't start at the start of an action, nor end in the action that
+// they start in.
+struct LineStart
+{
+   std::size_t index;
+   std::size_t offset;
+};
+
+// Whether a line ends after this action, though its data doesn't end with a
+// newline. That's so for input, and for output whose line is still to be
+// completed, but not for prompts (the input follows on the same line), nor
+// for actions of exactly kChunkSize bytes: flush() splits long lines into
+// chunks of that size, so such an action continues in the next one. Ending
+// the line there would break it apart, and could cut an escape sequence in
+// half, hiding it from the ANSI stripping.
+bool endsLine(const ConsoleAction& action)
+{
+   return action.type != kConsoleActionPrompt &&
+          !action.data.empty() &&
+          action.data.back() != '\n' &&
+          action.data.size() != kChunkSize;
+}
+
+// Read the line starting at *pStart into *pLine (which may be null, to skip
+// the line), without its newline, and advance *pStart to the line after it.
+// Returns false for the last line: the one that no newline follows.
+template <typename Actions>
+bool readLine(const Actions& actions, LineStart* pStart, std::string* pLine)
+{
+   std::size_t index = pStart->index;
+   std::size_t offset = pStart->offset;
+
+   for (std::size_t n = actions.size(); index < n; index++, offset = 0)
+   {
+      const ConsoleAction& action = actions[index];
+
+      std::size_t newline = action.data.find('\n', offset);
+      if (newline != std::string::npos)
+      {
+         if (pLine)
+            pLine->append(action.data, offset, newline - offset);
+
+         *pStart = {index, newline + 1};
+         return true;
+      }
+
+      if (pLine)
+         pLine->append(action.data, offset, std::string::npos);
+
+      if (endsLine(action))
+      {
+         *pStart = {index + 1, 0};
+         return true;
+      }
+   }
+
+   *pStart = {index, 0};
+   return false;
+}
+
+// Find the page of up to 'take' lines that ends 'skip' lines above the last
+// line, by walking backwards from the end of the actions. Sets *pStart to the
+// start of the page's first line, and returns the number of lines in the page:
+// fewer than 'take' if the page runs off the top, and zero or less if all of
+// it lies above the top.
+template <typename Actions>
+long long findPageFromBottom(const Actions& actions,
+                             long long skip,
+                             long long take,
+                             LineStart* pStart)
+{
+   // the number of line starts seen so far, and the number to see before the
+   // one at the top of the page is reached
+   long long found = 0;
+   long long wanted = 0;
+
+   // whether the last line is empty, and so isn't counted as a line
+   bool lastLineEmpty = false;
+
+   // called with each line start, from the last line's upwards; returns true
+   // once the top of the page is reached
+   auto visit = [&](std::size_t index, std::size_t offset) {
+      *pStart = {index, offset};
+
+      if (found == 0)
+      {
+         std::string line;
+         LineStart start = *pStart;
+         readLine(actions, &start, &line);
+         text::stripAnsiCodes(&line);
+         lastLineEmpty = line.empty();
+         wanted = skip + take + (lastLineEmpty ? 1 : 0);
+      }
+
+      return ++found == wanted;
+   };
+
+   // a line starts after each newline, including the ones implied at the
+   // ends of actions ...
+   bool done = false;
+   for (std::size_t index = actions.size(); index > 0 && !done; index--)
+   {
+      const ConsoleAction& action = actions[index - 1];
+
+      if (endsLine(action))
+         done = visit(index, 0);
+
+      std::size_t newline = action.data.size();
+      while (!done && newline > 0)
+      {
+         newline = action.data.rfind('\n', newline - 1);
+         if (newline == std::string::npos)
+            break;
+
+         done = visit(index - 1, newline + 1);
+      }
+   }
+
+   // ... and at the very start
+   if (!done)
+      visit(0, 0);
+
+   return found - (lastLineEmpty ? 1 : 0) - skip;
+}
+
+// The lines that getConsoleLines() returns.
+template <typename Actions>
+std::vector<std::string> readConsoleLines(const Actions& actions,
+                                          int limit,
+                                          int offset,
+                                          bool fromBottom,
+                                          int maxChars)
+{
+   std::vector<std::string> result;
+
+   // the page, as a number of lines to skip (from the bottom or the top) and
+   // then a number of lines to take. a negative offset skips nothing, and
+   // shortens the page instead
+   long long skip = std::max(offset, 0);
+   long long take = static_cast<long long>(limit) + std::min(offset, 0);
+   if (take <= 0)
+      return result;
+
+   // find the first line of the page
+   LineStart start = {0, 0};
+   if (fromBottom)
+   {
+      take = std::min(take, findPageFromBottom(actions, skip, take, &start));
+   }
+   else
+   {
+      for (long long i = 0; i < skip; i++)
+      {
+         if (!readLine(actions, &start, nullptr))
+            return result;
+      }
+   }
+
+   // read the page's lines, for as long as they fit within maxChars
+   long long totalChars = 0;
+   for (long long i = 0; i < take; i++)
+   {
+      // escape sequences (colors, cursor positioning, etc.) are stripped a
+      // line at a time, as none can contain a newline
+      std::string line;
+      bool isLastLine = !readLine(actions, &start, &line);
+      text::stripAnsiCodes(&line);
+
+      // an empty last line is what follows the final newline; not a line
+      if (isLastLine && line.empty())
+         break;
+
+      long long lineChars = static_cast<long long>(line.size());
+      if (totalChars + lineChars > maxChars)
+         break;
+
+      result.push_back(std::move(line));
+      totalChars += lineChars;
+
+      if (isLastLine)
+         break;
+   }
+
+   return result;
+}
+
+} // anonymous namespace
+
 std::vector<std::string> ConsoleActions::getConsoleLines(int limit,
                                                          int offset,
                                                          bool fromBottom,
                                                          int maxChars)
 {
-   std::vector<std::string> result;
-
    LOCK_MUTEX(mutex_)
    {
       // Flush pending output to ensure we have all data
       flush();
 
-      // Concatenate all action data into a single string
-      // Only add newlines after input/output/error actions that don't have them
-      // (prompts should NOT get newlines since input follows on the same line)
-      std::string allContent;
-      for (const auto& action : actions_)
-      {
-         allContent.append(action.data);
-
-         // Add newline after input/output/error if missing (but not prompts).
-         // Actions of exactly kChunkSize bytes are also excluded: flush()
-         // splits long lines into kChunkSize chunks, so such an action
-         // continues in the next one -- a synthetic newline here would break
-         // the line apart and could cut an escape sequence in half, defeating
-         // the ANSI stripping below
-         if (action.type != kConsoleActionPrompt &&
-             !action.data.empty() &&
-             action.data.back() != '\n' &&
-             action.data.size() != kChunkSize)
-         {
-            allContent.push_back('\n');
-         }
-      }
-
-      // Strip ANSI escape sequences (colors, cursor positioning, etc.)
-      text::stripAnsiCodes(&allContent);
-
-      // Split by newlines to get individual lines
-      std::vector<std::string> allLines;
-      boost::algorithm::split(allLines, allContent, boost::algorithm::is_any_of("\n"));
-
-      // Remove trailing empty line if present (from trailing newline)
-      if (!allLines.empty() && allLines.back().empty())
-      {
-         allLines.pop_back();
-      }
-
-      // Calculate start and end indices based on direction
-      int totalLines = gsl::narrow_cast<int>(allLines.size());
-      int startIdx, endIdx;
-
-      if (fromBottom)
-      {
-         // Start from bottom (most recent)
-         // offset=0 means start at the last line
-         endIdx = totalLines - offset;
-         startIdx = std::max(0, endIdx - limit);
-      }
-      else
-      {
-         // Start from top (oldest)
-         startIdx = offset;
-         endIdx = std::min(totalLines, startIdx + limit);
-      }
-
-      // Collect lines within bounds, respecting maxChars
-      int totalChars = 0;
-      for (int i = startIdx; i < endIdx && i < totalLines; ++i)
-      {
-         if (i < 0)
-            continue;
-
-         const std::string& line = allLines[i];
-         int lineChars = gsl::narrow_cast<int>(line.size());
-
-         // Check if adding this line would exceed maxChars
-         if (totalChars + lineChars > maxChars)
-            break;
-
-         result.push_back(line);
-         totalChars += lineChars;
-      }
+      return readConsoleLines(actions_, limit, offset, fromBottom, maxChars);
    }
    END_LOCK_MUTEX
 
-   return result;
+   // keep compiler happy
+   return std::vector<std::string>();
 }
 
 bool ConsoleActions::containsOutput(const std::string& text)
