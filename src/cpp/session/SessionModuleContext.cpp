@@ -1637,6 +1637,19 @@ shell_utils::ShellCommand rCmd(const core::FilePath& rBinDir)
 #endif
 }
 
+std::string sessionPort()
+{
+   // published by startHttpConnectionListener
+   if (options().programMode() == kSessionProgramModeDesktop)
+   {
+      std::string port = core::system::getenv(kRSessionPortNumber);
+      if (!port.empty())
+         return port;
+   }
+
+   return options().wwwPort();
+}
+
 // get the R local help port
 std::string rLocalHelpPort()
 {

@@ -479,6 +479,21 @@ Error startHttpConnectionListener()
       // need to rebind to the same port
       persistentState().setReusedStandalonePort(port);
    }
+   else if (options().programMode() == kSessionProgramModeDesktop)
+   {
+      // publish the port we're bound to, which the OS picked if www-port is 0,
+      // so rpostback and others can connect back into the session. a listener
+      // on a local stream (RS_LOCAL_PEER) has no port of its own
+      std::string port = options().wwwPort();
+      auto* pTcpListener =
+            dynamic_cast<TcpIpHttpConnectionListener*>(&httpConnectionListener());
+      if (pTcpListener)
+         port = safe_convert::numberToString(pTcpListener->getLocalEndpoint().port());
+
+      auto rule = core::http::createNoProxyRule("127.0.0.1", port);
+      core::http::proxyUtils().addNoProxyRule(std::move(rule));
+      core::system::setenv(kRSessionPortNumber, port);
+   }
 
    return Success();
 }

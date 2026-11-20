@@ -2761,16 +2761,10 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
  
       // set the rstudio user identity environment variable (can differ from
       // username in debug configurations). this is provided so that
-      // rpostback knows what local stream to connect back to
+      // rpostback knows what local stream to connect back to (desktop mode's
+      // port is published once the listener binds; see
+      // startHttpConnectionListener)
       core::system::setenv(kRStudioUserIdentity, options.userIdentity());
-      if (desktopMode)
-      {
-         // do the same for port number, for rpostback in rdesktop configs
-         std::string port = options.wwwPort();
-         auto rule = core::http::createNoProxyRule("127.0.0.1", port);
-         core::http::proxyUtils().addNoProxyRule(std::move(rule));
-         core::system::setenv(kRSessionPortNumber, port);
-      }
 
       // provide session stream for postback in server mode
       if (serverMode)
@@ -3100,6 +3094,9 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
       rOptions.scopedScratchPath = module_context::scopedScratchPath();
       rOptions.sessionScratchPath = module_context::sessionScratchPath();
       rOptions.logPath = options.userLogPath();
+      // the configured port, not the bound one (module_context::sessionPort):
+      // it names the restart context, which the restarted session, launched
+      // with the same www-port, must find even when that's 0
       rOptions.sessionPort = options.wwwPort();
       rOptions.startupEnvironmentFilePath = getStartupEnvironmentFilePath();
       rOptions.rEnvironmentDir = boost::bind(dirs::rEnvironmentDir);

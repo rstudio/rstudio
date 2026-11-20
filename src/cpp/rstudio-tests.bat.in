@@ -49,17 +49,16 @@ if /I "%~1" == "--filter" (
     goto :parse
 )
 
-REM rsession reports a bad port only when it fails to bind it, and 0 binds but
-REM breaks requests back into the session, which go to the configured port.
-REM A value that set /a gives back unchanged is decimal, not octal (leading 0),
-REM hex, overflowed, or other text.
+REM rsession reports a bad port only when it fails to bind it. A value that
+REM set /a gives back unchanged is decimal, not octal (leading 0), hex,
+REM overflowed, or other text.
 if /I "%~1" == "--www-port" (
     if "%~2" == "" goto :missing_value
     set "WWW_PORT=%~2"
     set "PORT_NUM="
     set /a "PORT_NUM=WWW_PORT" 2>nul
     if not "!PORT_NUM!" == "!WWW_PORT!" goto :bad_port
-    if !PORT_NUM! LSS 1 goto :bad_port
+    if !PORT_NUM! LSS 0 goto :bad_port
     if !PORT_NUM! GTR 65535 goto :bad_port
     shift
     shift
@@ -110,9 +109,18 @@ set "R_LIB_DIR=@LIBR_LIB_DIR@"
 REM marker for rsession to detect that --run-tests was launched via this helper
 set "RSTUDIO_TESTS_HELPER=1"
 
-REM prefer rsession-dev.conf when present (server builds), else rdesktop-dev.conf
+REM prefer rsession-dev.conf when present (server builds), else rdesktop-dev.conf.
+REM Desktop mode listens on TCP www-port, so take one the OS picks (0): a dev
+REM server or another test run may hold any fixed port. Server mode doesn't
+REM listen on it, but R's help server takes its port from www-port, and 0 there
+REM means it isn't running, so keep the default that server sessions run with.
 set "SESSION_CONF=@CMAKE_CURRENT_BINARY_DIR@/conf/rdesktop-dev.conf"
-if exist "@CMAKE_CURRENT_BINARY_DIR@/conf/rsession-dev.conf" set "SESSION_CONF=@CMAKE_CURRENT_BINARY_DIR@/conf/rsession-dev.conf"
+set "SESSION_WWW_PORT=0"
+if exist "@CMAKE_CURRENT_BINARY_DIR@/conf/rsession-dev.conf" (
+    set "SESSION_CONF=@CMAKE_CURRENT_BINARY_DIR@/conf/rsession-dev.conf"
+    set "SESSION_WWW_PORT=8787"
+)
+if defined WWW_PORT set "SESSION_WWW_PORT=!WWW_PORT!"
 
 REM --- run requested scopes --------------------------------------------------
 call :has_scope core
@@ -218,18 +226,8 @@ REM ===========================================================================
 :setup_session_test_environment
 REM Give each scope fresh state/config, overriding any inherited IDE paths.
 REM Fresh cmd processes can repeat the same RANDOM sequence; use a GUID instead.
-REM
-REM The same PowerShell call picks a port for the session: desktop mode listens
-REM on TCP www-port (8787 unless set), which a dev server or another test run
-REM may already hold. As in the Unix runner, the port comes from below the
-REM dynamic range (49152+) that outgoing connections take ports from, and it
-REM must be one a loopback listener can bind, as the session will.
 set "RSTUDIO_TEST_TMP="
-set "FREE_PORT="
-for /f "tokens=1,2" %%G in ('powershell.exe -NoProfile -NonInteractive -Command "$p = $null; foreach ($i in 1..20) { $c = Get-Random -Minimum 20000 -Maximum 32768; try { $l = New-Object Net.Sockets.TcpListener([Net.IPAddress]::Loopback, $c); $l.Start(); $l.Stop(); $p = $c; break } catch {} }; [guid]::NewGuid().ToString() + [char]32 + $p"') do (
-    set "RSTUDIO_TEST_TMP=%TEMP%\rstudio-tests-%%G"
-    set "FREE_PORT=%%H"
-)
+for /f %%G in ('powershell.exe -NoProfile -NonInteractive -Command "[guid]::NewGuid().ToString()"') do set "RSTUDIO_TEST_TMP=%TEMP%\rstudio-tests-%%G"
 if not defined RSTUDIO_TEST_TMP (
     echo DIAGNOSTICS: failed to generate a temporary directory name 1>&2
     set "TEST_FAILURE=1"
@@ -247,14 +245,6 @@ REM Prevent startup from migrating the user's legacy RStudio state here.
 mkdir "!RSTUDIO_DATA_HOME!\client-state" 2>nul && mkdir "!RSTUDIO_CONFIG_HOME!" 2>nul
 if errorlevel 1 (
     echo DIAGNOSTICS: failed to initialize temp dir !RSTUDIO_TEST_TMP! 1>&2
-    set "TEST_FAILURE=1"
-    exit /b 1
-)
-
-set "SESSION_WWW_PORT=!WWW_PORT!"
-if not defined SESSION_WWW_PORT set "SESSION_WWW_PORT=!FREE_PORT!"
-if not defined SESSION_WWW_PORT (
-    echo DIAGNOSTICS: failed to find a free port for the session tests 1>&2
     set "TEST_FAILURE=1"
     exit /b 1
 )
@@ -302,7 +292,7 @@ echo ERROR: missing value for option 1>&2
 goto :usage_err
 
 :bad_port
-echo ERROR: --www-port takes a port number in 1-65535 1>&2
+echo ERROR: --www-port takes a port number in 0-65535 1>&2
 goto :usage_err
 
 :print_usage
@@ -316,8 +306,8 @@ echo               '--scope core,rsession', '--scope core rsession', and
 echo               '--scope core --scope rsession' are all equivalent.
 echo               Scopes always run in the order listed above.
 echo   --filter    Run a subset of R tests matching the pattern ^(implies --scope r^).
-echo   --www-port  Port for the rsession and r scopes' session to listen on
-echo               ^(default: a free port, chosen for each scope^).
+echo   --www-port  Port for the rsession and r scopes' session to listen on in
+echo               desktop builds ^(default: 0, a free port the OS picks^).
 echo   --help      Show this help.
 echo.
 echo With no options, all scopes are run.

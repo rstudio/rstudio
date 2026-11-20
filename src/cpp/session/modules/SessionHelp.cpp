@@ -104,12 +104,12 @@ std::string replaceRPort(const std::string& url,
    if (scope.empty())
    {
       std::vector<std::string> splat = core::algorithm::split(url, "?");
-      boost::algorithm::replace_last(splat[0], rPort, session::options().wwwPort());
+      boost::algorithm::replace_last(splat[0], rPort, module_context::sessionPort());
       return core::algorithm::join(splat, "?");
    }
    else
    {
-      return boost::algorithm::replace_last_copy(url, rPort, session::options().wwwPort());
+      return boost::algorithm::replace_last_copy(url, rPort, module_context::sessionPort());
    }
 }
 
@@ -1258,7 +1258,7 @@ Error initialize()
 
    // init help
    bool isDesktop = options().programMode() == kSessionProgramModeDesktop;
-   int port = safe_convert::stringTo<int>(session::options().wwwPort(), 0);
+   int port = safe_convert::stringTo<int>(module_context::sessionPort(), 0);
    error = r::exec::RFunction(".rs.initHelp", port, isDesktop).call(
                                                             &s_handleCustom);
    if (error)
