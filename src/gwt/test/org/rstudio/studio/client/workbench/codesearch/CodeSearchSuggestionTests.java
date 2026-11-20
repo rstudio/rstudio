@@ -65,11 +65,15 @@ public class CodeSearchSuggestionTests extends GWTTestCase
    }
 
    // The file name's extension already says what the file-type icon shows.
+   // The oracle replaces every file row's display string through
+   // setFileDisplayString, so that is the rendering users see.
    public void testFileResultIconIsDecorative()
    {
       FileItem item = JsonUtils.safeEval(
             "{\"filename\": \"addOne.R\", \"path\": \"~/addOne.R\"}");
-      Element img = iconOf(new CodeSearchSuggestion(item));
+      CodeSearchSuggestion suggestion = new CodeSearchSuggestion(item);
+      suggestion.setFileDisplayString("~/addOne.R", "addOne.R");
+      Element img = iconOf(suggestion);
       assertTrue(img.hasAttribute("alt"));
       assertEquals("", img.getAttribute("alt"));
    }
