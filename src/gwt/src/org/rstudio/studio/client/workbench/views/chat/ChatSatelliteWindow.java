@@ -139,7 +139,8 @@ public class ChatSatelliteWindow extends SatelliteWindow
             else if (action == SessionSerializationAction.RESUME_SESSION)
             {
                // With the notice up, the old chat page stays dead until the
-               // main window reloads it here; reactivate() clears both then
+               // main window reloads this window or calls reactivate(), either
+               // of which clears both
                if (suspendedNotice_.getParent() != getMainPanel())
                   hideSuspendOverlay();
             }
