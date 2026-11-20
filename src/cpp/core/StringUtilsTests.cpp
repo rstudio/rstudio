@@ -104,6 +104,10 @@ TEST(StringTest, TrimLeadingLinesTrimsBlankLines)
    std::string lines = "old\n" + std::string(10, '\n');
    EXPECT_TRUE(trimLeadingLines(10, &lines));
    EXPECT_EQ(std::string(11, '\n'), lines);
+
+   // trimming again has nothing left to remove
+   EXPECT_FALSE(trimLeadingLines(10, &lines));
+   EXPECT_EQ(std::string(11, '\n'), lines);
 }
 
 TEST(StringTest, TrimLeadingLinesLeavesLinesWithinTheLimit)

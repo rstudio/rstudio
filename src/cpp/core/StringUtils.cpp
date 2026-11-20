@@ -966,8 +966,12 @@ bool trimLeadingLines(int maxLines, std::string* pLines)
          {
             if (++lineCount > limit)
             {
-               pLines->erase(pLines->begin(), pos);
-               didTrim = true;
+               // a cutoff at the start leaves nothing to remove
+               if (pos != begin)
+               {
+                  pLines->erase(pLines->begin(), pos);
+                  didTrim = true;
+               }
                break;
             }
          }
