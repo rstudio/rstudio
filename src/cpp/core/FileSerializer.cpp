@@ -414,10 +414,9 @@ bool isMountPointError(const Error& error)
 #ifdef _WIN32
    return false;
 #else
-   if (!error || error.getName() != boost::system::system_category().name())
-      return false;
-
-   return error.getCode() == EBUSY || error.getCode() == EXDEV;
+   using boost::system::error_code;
+   using boost::system::system_category;
+   return error == error_code(EBUSY, system_category()) || error == error_code(EXDEV, system_category());
 #endif
 }
 

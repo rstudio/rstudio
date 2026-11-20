@@ -176,80 +176,6 @@ maskCppNonCode <- function(contents) {
    contents
 }
 
-# Whether each line of a C++ file is compiled only on Windows: every line of a
-# file with Win32 in its name, else the lines in a branch that needs _WIN32
-# ('#ifdef _WIN32', '#if _WIN32', '#if defined(_WIN32) && ...', or the
-# '#else'/'#elif' of an '#ifndef _WIN32'). Other conditions count as neither.
-windowsOnlyLines <- function(lines, windowsOnlyFile) {
-
-   if (windowsOnlyFile)
-      return(rep(TRUE, length(lines)))
-
-   win32 <- "(defined\\s*\\(?\\s*_WIN32\\s*\\)?|_WIN32)"
-   isWindows <- paste0("^\\s*#\\s*(ifdef\\s+_WIN32\\b|if\\s+", win32, "\\s*$)")
-   isWindowsAnd <- paste0("^\\s*#\\s*if\\s+", win32, "\\s*&&")
-   isNotWindows <- "^\\s*#\\s*(ifndef\\s+_WIN32\\b|if\\s+!\\s*defined\\s*\\(?\\s*_WIN32\\s*\\)?\\s*$)"
-   isElifWindows <- paste0("^\\s*#\\s*elif\\s+", win32, "\\s*$")
-
-   # branches that only Windows compiles; "-rest" states hold for every
-   # remaining branch of their #if
-   windowsStates <- c("windows", "windows-rest", "windows-and")
-
-   result <- logical(length(lines))
-   directives <- which(grepl("^\\s*#\\s*(if|elif|else|endif)", lines, perl = TRUE))
-
-   # one state per open #if
-   stack <- character()
-   previous <- 0L
-   for (i in directives) {
-
-      # the lines since the previous directive share its state
-      if (i > previous + 1L && any(stack %in% windowsStates))
-         result[(previous + 1L):(i - 1L)] <- TRUE
-
-      line <- lines[[i]]
-      top <- length(stack)
-      if (grepl(isWindows, line, perl = TRUE)) {
-         stack <- c(stack, "windows")
-      } else if (grepl(isWindowsAnd, line, perl = TRUE)) {
-         stack <- c(stack, "windows-and")
-      } else if (grepl(isNotWindows, line, perl = TRUE)) {
-         stack <- c(stack, "not-windows")
-      } else if (grepl("^\\s*#\\s*if", line, perl = TRUE)) {
-         stack <- c(stack, "unknown")
-      } else if (top > 0L && grepl("^\\s*#\\s*elif", line, perl = TRUE)) {
-         elifWindows <- if (grepl(isElifWindows, line, perl = TRUE)) "windows" else "unknown"
-         stack[[top]] <- switch(
-            stack[[top]],
-            "windows" = "not-windows-rest",
-            "not-windows" = "windows-rest",
-            "windows-rest" = "windows-rest",
-            "not-windows-rest" = "not-windows-rest",
-            elifWindows
-         )
-      } else if (top > 0L && grepl("^\\s*#\\s*else", line, perl = TRUE)) {
-         stack[[top]] <- switch(
-            stack[[top]],
-            "windows" = "not-windows",
-            "not-windows" = "windows",
-            "windows-rest" = "windows-rest",
-            "not-windows-rest" = "not-windows-rest",
-            "unknown"
-         )
-      } else if (top > 0L) {
-         stack <- stack[-top]
-      }
-
-      previous <- i
-   }
-
-   if (length(lines) > previous && any(stack %in% windowsStates))
-      result[(previous + 1L):length(lines)] <- TRUE
-
-   result
-
-}
-
 test_that("C++ sources capture and compare error codes with their categories", {
 
    # an errc is an errno value, never a system code
@@ -273,10 +199,8 @@ test_that("C++ sources capture and compare error codes with their categories", {
    )
    errcComparison <- paste0("[!=]=\\s*", errcCall, "(?!\\s*\\.)|", errcCall, "\\s*[!=]=")
 
-   # in code only Windows compiles, errno comes from the C runtime, and a
-   # code's value is a Win32 code, not an errno value. (cross-platform code
-   # isn't checked for these: POSIX-only files aren't marked as such, and
-   # some errno values, e.g. ESTALE, have no errc to compare with)
+   # A raw value comparison drops the category in shared and platform-specific
+   # code alike. For a native-only errno, compare the complete error_code.
    errnoByValue <- paste0(
       "(getCode|value)\\(\\)\\s*[!=]=\\s*E(?!OF\\b)[A-Z0-9]+\\b",
       "|\\bE(?!OF\\b)[A-Z0-9]+\\s*[!=]=\\s*[A-Za-z_][A-Za-z0-9_.>()-]*(getCode|value)\\(\\)"
@@ -310,43 +234,16 @@ test_that("C++ sources capture and compare error codes with their categories", {
    code <- maskCppNonCode(fixture)
    expect_equal(matchLines(code, errcComparison), c(1L, 2L, 4L, 5L, 12L))
 
-   fixture <- c(
+   fixture <- paste(c(
       "if (error.getCode() == ENOENT) {}",
       "#ifdef _WIN32",
-      "if (error.getCode() == ENOENT) {}",
+      "if (EACCES != e.code().value()) {}",
       "#else",
-      "if (error.getCode() == ENOENT) {}",
+      "if (error == error_code(ESTALE, system_category())) {}",
       "#endif",
-      "#ifndef _WIN32",
-      "x",
-      "#elif defined(FOO)",
-      "x",
-      "#else",
-      "x",
-      "#endif",
-      "#if !defined(_WIN32)",
-      "x",
-      "#else",
-      "x",
-      "#endif",
-      "#if _WIN32",
-      "x",
-      "#endif",
-      "#if defined(_WIN32) && defined(_DEBUG)",
-      "x",
-      "#else",
-      "x",
-      "#endif",
-      "#if defined(FOO)",
-      "x",
-      "#elif defined(_WIN32)",
-      "x",
-      "#else",
-      "x",
-      "#endif"
-   )
-   expect_identical(which(windowsOnlyLines(fixture, FALSE)), c(3L, 10L, 12L, 17L, 20L, 23L, 30L))
-   expect_true(all(windowsOnlyLines(fixture, TRUE)))
+      "// if (error.getCode() == ENOENT) {}"
+   ), collapse = "\n")
+   expect_equal(matchLines(maskCppNonCode(fixture), errnoByValue), c(1L, 3L))
 
    cppFiles <- list.files(
       root,
@@ -358,24 +255,17 @@ test_that("C++ sources capture and compare error codes with their categories", {
    offenders <- character()
    for (cppFile in cppFiles) {
 
-      lines <- readLines(cppFile, warn = FALSE)
-      contents <- paste(lines, collapse = "\n")
+      contents <- paste(readLines(cppFile, warn = FALSE), collapse = "\n")
+      code <- maskCppNonCode(contents)
       path <- sub(paste0(root, "/"), "", cppFile, fixed = TRUE)
-
-      hits <- unlist(lapply(c(errcAsSystem, errcByValue), matchLines, contents = contents))
-
-      windowsHits <- matchLines(contents, errnoByValue)
-      if (length(windowsHits)) {
-         windowsOnly <- windowsOnlyLines(lines, grepl("Win32", basename(cppFile), fixed = TRUE))
-         hits <- c(hits, windowsHits[windowsOnly[windowsHits]])
-      }
+      hits <- unlist(lapply(c(errcAsSystem, errcByValue, errnoByValue), matchLines, contents = code))
 
       if (length(hits))
          offenders <- c(offenders, paste0(path, ":", sort(hits)))
 
       # Unit tests may deliberately assert exact equality between error codes.
-      if (!endsWith(cppFile, "Tests.cpp") && grepl("systemError", contents, fixed = TRUE)) {
-         hits <- matchLines(maskCppNonCode(contents), errcComparison)
+      if (!endsWith(cppFile, "Tests.cpp") && grepl("systemError", code, fixed = TRUE)) {
+         hits <- matchLines(code, errcComparison)
          if (length(hits))
             offenders <- c(offenders, paste0(path, ":", hits, " - use Error::matches() to test a portable condition"))
       }

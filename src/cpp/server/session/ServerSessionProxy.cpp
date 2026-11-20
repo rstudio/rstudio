@@ -901,13 +901,8 @@ void proxyRequest(
 
    // determine the uid for the username (for validation)
    UidType uid;
-   boost::optional<UidType> validateUid;
    Error error = userIdForUsername(context.username, &uid);
-   if (!error)
-   {
-      validateUid = uid;
-   }
-   else
+   if (error)
    {
       // reject any lookup failure, including a user who isn't in passwd yet:
       // any local user can create a socket in the streams directory, so
@@ -924,7 +919,7 @@ void proxyRequest(
       ptrConnection->ioContext(),
       streamPath,
       false,
-      validateUid));
+      uid));
    boost::shared_ptr<http::IAsyncClient> pClient = pStreamClient;
 
    // setup retry context
@@ -1535,16 +1530,8 @@ void proxyLocalhostRequest(
    // destination port is actually owned by them before proxying (rstudio-pro#11470),
    // unless the admin has disabled this via www-proxy-localhost-verify-port-owner.
    //
-   // Unlike the local-stream uid validation above (which validates a target that is
-   // already scoped to context.username by construction -- the stream path is derived
-   // from the caller's own session context, so a resolution failure there can only
-   // affect the caller's own access), the target port here is attacker-controlled:
-   // it comes from decoding a client-supplied token and may name *any* user's port.
-   // The uid check is therefore the sole access-control boundary on this path, and we
-   // must fail closed on *any* resolution error, including "user not found"
-   // (permission_denied) -- a leftover-cache/NSS-lookup failure or a not-yet-provisioned
-   // account must not silently disable ownership enforcement for a request whose
-   // destination the caller fully controls.
+   // The client supplies the destination port. If the user lookup fails, including
+   // when the account does not exist yet, we cannot verify who owns that port.
    if (server::options().wwwProxyLocalhostVerifyPortOwner())
    {
       UidType uid;

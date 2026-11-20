@@ -1489,10 +1489,10 @@ Error verifyClaimDirectory(const FilePath& claimDirectory)
 
 bool isClaimDirectoryRetryError(const Error& error)
 {
-   if (error.getCode() == ENOENT)
+   if (isNotFoundError(error))
       return true;
-#ifdef ESTALE
-   return error.getCode() == ESTALE;
+#if !defined(_WIN32) && defined(ESTALE)
+   return error == error_code(ESTALE, system_category());
 #else
    return false;
 #endif

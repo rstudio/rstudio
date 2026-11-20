@@ -628,7 +628,7 @@ TEST(PosixTests, TerminateProcessTreeRejectsNegativePid)
          ::_exit(3);
 
       Error error = terminateProcessTree(-::getpid());
-      if (!error || error.getCode() != EINVAL)
+      if (!error.matches(boost::system::errc::invalid_argument))
          ::_exit(1);
 
       sigset_t pending;
