@@ -148,6 +148,68 @@ test_that("R source files do not use zero-padded string formats", {
 
 })
 
+# The line numbers at which a regular expression matches a file's contents.
+matchLines <- function(contents, pattern) {
+
+   starts <- gregexpr(pattern, contents, perl = TRUE)[[1L]]
+   if (starts[[1L]] == -1L)
+      return(integer())
+
+   # one more than the newlines before each match
+   newlines <- gregexpr("\n", contents, fixed = TRUE)[[1L]]
+   findInterval(starts, newlines[newlines > 0L]) + 1L
+
+}
+
+# Whether each line of a C++ file is compiled only on Windows: every line of a
+# file with Win32 in its name, else the lines in an '#ifdef _WIN32' region or
+# the '#else' of an '#ifndef _WIN32'. Other conditions count as neither.
+windowsOnlyLines <- function(lines, windowsOnlyFile) {
+
+   if (windowsOnlyFile)
+      return(rep(TRUE, length(lines)))
+
+   isWindows <- "^\\s*#\\s*(ifdef\\s+_WIN32\\b|if\\s+defined\\s*\\(?\\s*_WIN32\\s*\\)?\\s*$)"
+   isNotWindows <- "^\\s*#\\s*(ifndef\\s+_WIN32\\b|if\\s+!\\s*defined\\s*\\(?\\s*_WIN32\\s*\\)?\\s*$)"
+
+   result <- logical(length(lines))
+   directives <- which(grepl("^\\s*#\\s*(if|elif|else|endif)", lines, perl = TRUE))
+
+   # one entry per open #if: "windows", "not-windows", or "unknown"
+   stack <- character()
+   previous <- 0L
+   for (i in directives) {
+
+      # the lines since the previous directive share its state
+      if (i > previous + 1L && "windows" %in% stack)
+         result[(previous + 1L):(i - 1L)] <- TRUE
+
+      line <- lines[[i]]
+      top <- length(stack)
+      if (grepl(isWindows, line, perl = TRUE)) {
+         stack <- c(stack, "windows")
+      } else if (grepl(isNotWindows, line, perl = TRUE)) {
+         stack <- c(stack, "not-windows")
+      } else if (grepl("^\\s*#\\s*if", line, perl = TRUE)) {
+         stack <- c(stack, "unknown")
+      } else if (top > 0L && grepl("^\\s*#\\s*elif", line, perl = TRUE)) {
+         stack[[top]] <- "unknown"
+      } else if (top > 0L && grepl("^\\s*#\\s*else", line, perl = TRUE)) {
+         stack[[top]] <- switch(stack[[top]], "windows" = "not-windows", "not-windows" = "windows", "unknown")
+      } else if (top > 0L) {
+         stack <- stack[-top]
+      }
+
+      previous <- i
+   }
+
+   if (length(lines) > previous && "windows" %in% stack)
+      result[(previous + 1L):length(lines)] <- TRUE
+
+   result
+
+}
+
 test_that("C++ sources don't treat errno values as system error codes", {
 
    # systemError(int) and systemCallError(name, int) build a system-category
@@ -156,18 +218,15 @@ test_that("C++ sources don't treat errno values as system error codes", {
    # use systemError(boost::system::errc::invalid_argument, ...), with a
    # description in place of systemCallError()'s name; for a C runtime errno,
    # save it right after the failed call (ERROR_LOCATION may be evaluated
-   # first and change it), then pass std::error_code(saved, generic_category()).
-   # a POSIX-only test that needs the native code can build it with
-   # system_category() from the errno constant
+   # first and change it), then pass it to genericError(). a POSIX-only test
+   # that needs the native code can build it with system_category() from the
+   # errno constant
    # the code is systemError()'s first argument, systemCallError()'s second
    codeArgument <- "(\\bsystemError\\(|\\bsystemCallError\\([^,()]*,)\\s*"
    errnoConstant <- paste0(codeArgument, "E[A-Z0-9]+\\s*[,)]")
 
    # R_ERRNO is the C runtime's errno on every platform
    rErrno <- paste0(codeArgument, "(R_ERRNO|MSVC_ERRNO)\\b")
-
-   # in Windows-only files (Win32 in the name), errno comes from the C runtime
-   crtErrno <- paste0(codeArgument, "errno\\b")
 
    # an errc is an errno value, never a system code
    errcAsSystem <- "\\berrc::[a-z_]+\\s*,\\s*(boost::system::|std::)?system_category\\(\\)"
@@ -178,6 +237,16 @@ test_that("C++ sources don't treat errno values as system error codes", {
    errcByValue <- paste0(
       "(getCode|value)\\(\\)\\s*[!=]=\\s*(boost::system::|std::)?errc::",
       "|\\berrc::[a-z_]+\\s*[!=]=\\s*[A-Za-z_][A-Za-z0-9_.>-]*(getCode|value)\\(\\)"
+   )
+
+   # in code only Windows compiles, errno comes from the C runtime, and a
+   # code's value is a Win32 code, not an errno value. (cross-platform code
+   # isn't checked for these: POSIX-only files aren't marked as such, and
+   # some errno values, e.g. ESTALE, have no errc to compare with)
+   crtErrno <- paste0(codeArgument, "errno\\b")
+   errnoByValue <- paste0(
+      "(getCode|value)\\(\\)\\s*[!=]=\\s*E[A-Z0-9]+\\b",
+      "|\\bE[A-Z0-9]+\\s*[!=]=\\s*[A-Za-z_][A-Za-z0-9_.>-]*(getCode|value)\\(\\)"
    )
 
    offending <- c(
@@ -204,6 +273,32 @@ test_that("C++ sources don't treat errno values as system error codes", {
    expect_true(grepl(errcByValue, "ec.value() != errc::bad_file_descriptor", perl = TRUE))
    expect_true(grepl(errcByValue, "errc::timed_out == pError->getCode()", perl = TRUE))
    expect_false(grepl(errcByValue, "ec == boost::system::errc::too_many_files_open", perl = TRUE))
+   expect_true(grepl(errnoByValue, "error.getCode() == ENOENT", perl = TRUE))
+   expect_true(grepl(errnoByValue, "EACCES != error.getCode()", perl = TRUE))
+   expect_false(grepl(errnoByValue, "error.getCode() == ERROR_ACCESS_DENIED", perl = TRUE))
+
+   fixture <- c(
+      "systemError(errno, ERROR_LOCATION);",
+      "#ifdef _WIN32",
+      "systemError(errno, ERROR_LOCATION);",
+      "#else",
+      "systemError(errno, ERROR_LOCATION);",
+      "#endif",
+      "#ifndef _WIN32",
+      "x",
+      "#elif defined(FOO)",
+      "x",
+      "#else",
+      "x",
+      "#endif",
+      "#if !defined(_WIN32)",
+      "x",
+      "#else",
+      "x",
+      "#endif"
+   )
+   expect_identical(which(windowsOnlyLines(fixture, FALSE)), c(3L, 17L))
+   expect_true(all(windowsOnlyLines(fixture, TRUE)))
 
    cppFiles <- list.files(
       root,
@@ -215,22 +310,20 @@ test_that("C++ sources don't treat errno values as system error codes", {
    offenders <- character()
    for (cppFile in cppFiles) {
 
-      contents <- paste(readLines(cppFile, warn = FALSE), collapse = "\n")
-      patterns <- c(errnoConstant, rErrno, errcAsSystem, errcByValue)
-      if (grepl("Win32", basename(cppFile), fixed = TRUE))
-         patterns <- c(patterns, crtErrno)
+      lines <- readLines(cppFile, warn = FALSE)
+      contents <- paste(lines, collapse = "\n")
+      path <- sub(paste0(root, "/"), "", cppFile, fixed = TRUE)
 
-      for (pattern in patterns) {
-         starts <- gregexpr(pattern, contents, perl = TRUE)[[1L]]
-         if (starts[[1L]] == -1L)
-            next
+      hits <- unlist(lapply(c(errnoConstant, rErrno, errcAsSystem, errcByValue), matchLines, contents = contents))
 
-         # line numbers of the matches: one more than the newlines before them
-         newlines <- gregexpr("\n", contents, fixed = TRUE)[[1L]]
-         lines <- findInterval(starts, newlines[newlines > 0L]) + 1L
-         path <- sub(paste0(root, "/"), "", cppFile, fixed = TRUE)
-         offenders <- c(offenders, paste0(path, ":", lines))
+      windowsHits <- unlist(lapply(c(crtErrno, errnoByValue), matchLines, contents = contents))
+      if (length(windowsHits)) {
+         windowsOnly <- windowsOnlyLines(lines, grepl("Win32", basename(cppFile), fixed = TRUE))
+         hits <- c(hits, windowsHits[windowsOnly[windowsHits]])
       }
+
+      if (length(hits))
+         offenders <- c(offenders, paste0(path, ":", sort(hits)))
 
    }
 
