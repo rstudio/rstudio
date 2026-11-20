@@ -62,6 +62,7 @@ TEST(ErrorTest, ErrcErrorsUseTheGenericCategory)
 
    Error described = systemError(errc, "description", cause, ErrorLocation());
    EXPECT_EQ("description", described.getProperty("description"));
+   ASSERT_TRUE(described.hasCause());
    EXPECT_EQ(cause, described.getCause());
 }
 

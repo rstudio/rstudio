@@ -1026,6 +1026,10 @@ bool isDiskSpaceError(const Error& error)
    if (!error)
       return false;
 
+   // an errc error is in the generic category on every platform
+   if (error == systemError(boost::system::errc::no_space_on_device, ErrorLocation()))
+      return true;
+
    // ENOSPC / EDQUOT (and the Windows equivalents) are reported in the system
    // category: errno on POSIX, the Win32 error code on Windows
    if (error.getName() != boost::system::system_category().name())

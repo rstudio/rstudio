@@ -879,6 +879,8 @@ TEST(FileSerializerTest, WriteStringAtomicReadOnlyTargetFailsWithoutRetrying)
 TEST(FileSerializerTest, IsDiskSpaceErrorClassifies)
 {
    EXPECT_FALSE(isDiskSpaceError(Success()));
+   EXPECT_TRUE(isDiskSpaceError(systemError(boost::system::errc::no_space_on_device, ERROR_LOCATION)));
+   EXPECT_FALSE(isDiskSpaceError(systemError(boost::system::errc::no_such_file_or_directory, ERROR_LOCATION)));
 
 #ifdef _WIN32
    EXPECT_TRUE(isDiskSpaceError(systemError(ERROR_DISK_FULL, ERROR_LOCATION)));
