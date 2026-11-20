@@ -142,6 +142,12 @@ Error initializeHttpConnectionListener()
    if (s_pSessionStreamListener)
       return Success();
 
+   // startHttpConnectionListenerWithTimeout() calls this again while the
+   // address is in use; replace the listener that failed to bind (it never
+   // started, so nothing else holds it)
+   delete s_pHttpConnectionListener;
+   s_pHttpConnectionListener = nullptr;
+
    // alias options
    session::Options& options = session::options();
 

@@ -339,7 +339,9 @@ public:
    bool operator!() const;
 
    /**
-    * @brief Equality operator. Two errors are equal if their codes and names are the same.
+    * @brief Equality operator. Two errors are equal if their codes and names are the same, or if one is a
+    *        generic-category error (an errc value) and the other is a system error that boost maps to that errc
+    *        (as boost::system::error_code == boost::system::error_condition does).
     *
     * @param in_other   The error to compare with this error.
     *
@@ -348,11 +350,13 @@ public:
    bool operator==(const Error& in_other) const;
 
    /**
-    * @brief Equality operator. Two errors are equal if their codes and names are the same.
+    * @brief Equality operator. Two errors are equal if their codes and names are the same, or if one is a
+    *        generic-category error (an errc value) and the other is a system error that boost maps to that errc
+    *        (as boost::system::error_code == boost::system::error_condition does).
     *
     * @param in_ec   The boost error code to compare with this error.
     *
-    * @return True if in_ec has the same error code and category name as this error; false otherwise.
+    * @return True if in_ec is equal to this error; false otherwise.
     */
    bool operator==(const boost::system::error_code& in_ec) const;
 
@@ -598,6 +602,17 @@ std::ostream& operator<<(std::ostream& io_ostream, const Error& in_error);
 Error systemError(int in_code, const ErrorLocation& in_location);
 
 /**
+ * @brief Function which creates a generic-category error from an errc value. An errc value is an errno value, which
+ *        the int overload would read as a Win32 error code on Windows.
+ *
+ * @param in_code            The error code. (e.g. boost::system::errc::no_such_file_or_directory)
+ * @param in_location        The location of the error.
+ *
+ * @return A generic-category error.
+ */
+Error systemError(boost::system::errc::errc_t in_code, const ErrorLocation& in_location);
+
+/**
  * @brief Function which creates a system error.
  *
  * @param in_code            The std system error code.
@@ -627,6 +642,18 @@ Error systemError(const std::system_error& in_error, const ErrorLocation& in_loc
  * @return A system error.
  */
 Error systemError(int in_code, const Error& in_cause, const ErrorLocation& in_location);
+
+/**
+ * @brief Function which creates a generic-category error from an errc value. An errc value is an errno value, which
+ *        the int overload would read as a Win32 error code on Windows.
+ *
+ * @param in_code            The error code. (e.g. boost::system::errc::no_such_file_or_directory)
+ * @param in_cause           The error which caused this error.
+ * @param in_location        The location of the error.
+ *
+ * @return A generic-category error.
+ */
+Error systemError(boost::system::errc::errc_t in_code, const Error& in_cause, const ErrorLocation& in_location);
 
 /**
  * @brief Function which creates a system error.
@@ -661,6 +688,22 @@ Error systemError(const std::system_error& in_error, const Error& in_cause, cons
  * @return A system error.
  */
 Error systemError(int in_code, const std::string& in_description, const ErrorLocation& in_location);
+
+/**
+ * @brief Function which creates a generic-category error from an errc value. An errc value is an errno value, which
+ *        the int overload would read as a Win32 error code on Windows.
+ *
+ * @param in_code            The error code. (e.g. boost::system::errc::no_such_file_or_directory)
+ * @param in_description     A detailed description of the error. (e.g. "Failed to open socket while attempting to
+ *                           connect to Kubernetes.")
+ * @param in_location        The location of the error.
+ *
+ * @return A generic-category error.
+ */
+Error systemError(
+   boost::system::errc::errc_t in_code,
+   const std::string& in_description,
+   const ErrorLocation& in_location);
 
 /**
  * @brief Function which creates a system error.
@@ -702,6 +745,24 @@ Error systemError(
  */
 Error systemError(
    int in_code,
+   const std::string& in_description,
+   const Error& in_cause,
+   const ErrorLocation& in_location);
+
+/**
+ * @brief Function which creates a generic-category error from an errc value. An errc value is an errno value, which
+ *        the int overload would read as a Win32 error code on Windows.
+ *
+ * @param in_code            The error code. (e.g. boost::system::errc::no_such_file_or_directory)
+ * @param in_description     A detailed description of the error. (e.g. "Failed to open socket while attempting to
+ *                           connect to Kubernetes.")
+ * @param in_cause           The error which caused this error.
+ * @param in_location        The location of the error.
+ *
+ * @return A generic-category error.
+ */
+Error systemError(
+   boost::system::errc::errc_t in_code,
    const std::string& in_description,
    const Error& in_cause,
    const ErrorLocation& in_location);

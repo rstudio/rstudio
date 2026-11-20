@@ -78,6 +78,11 @@ Error initializeHttpConnectionListener()
       LOG_DEBUG_MESSAGE(msg);
    }
 
+   // startHttpConnectionListenerWithTimeout() calls this again while the
+   // address is in use; replace the listener that failed to bind (it never
+   // started, so nothing else holds it)
+   delete s_pHttpConnectionListener;
+
    s_pHttpConnectionListener = new TcpIpHttpConnectionListener(
                                       options.wwwAddress(),
                                       options.wwwPort(),
