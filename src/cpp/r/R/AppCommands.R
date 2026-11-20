@@ -541,7 +541,6 @@
    forceQuitSession = "forceQuitSession",
    updateCredentials = "updateCredentials",
    diagnosticsReport = "diagnosticsReport",
-   openDeveloperConsole = "openDeveloperConsole",
    reloadUi = "reloadUi",
    showGpuDiagnostics = "showGpuDiagnostics",
    toggleGpuExclusionList = "toggleGpuExclusionList",

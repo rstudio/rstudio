@@ -158,8 +158,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     String temporarilyOfflineCaption();
     String unknownModeText();
     String signOutButtonText();
-    String errorOpeningDevToolsCaption();
-    String cannotActivateDevtoolsMessage();
     String errorCheckingUpdatesMessage();
     String errorOccurredCheckingUpdatesMessage();
     String quitDownloadButtonLabel();

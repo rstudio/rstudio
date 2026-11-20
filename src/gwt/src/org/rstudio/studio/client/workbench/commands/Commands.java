@@ -606,7 +606,6 @@ public abstract class
    public abstract AppCommand forceQuitSession();
    public abstract AppCommand updateCredentials();
    public abstract AppCommand diagnosticsReport();
-   public abstract AppCommand openDeveloperConsole();
    public abstract AppCommand reloadUi();
    public abstract AppCommand showGpuDiagnostics();
    public abstract AppCommand toggleGpuExclusionList();

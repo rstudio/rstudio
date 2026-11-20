@@ -37,7 +37,6 @@ import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.DesktopHooks;
-import org.rstudio.studio.client.application.DesktopInfo;
 import org.rstudio.studio.client.application.IgnoredUpdates;
 import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.events.DesktopMouseNavigateEvent;
@@ -79,7 +78,6 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -361,25 +359,6 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          }
       }.schedule(1000);
 
-   }
-
-   @Handler
-   void onOpenDeveloperConsole()
-   {
-      int port = DesktopInfo.getChromiumDevtoolsPort();
-      if (port == 0)
-      {
-         globalDisplay_.showErrorMessage(
-               constants_.errorOpeningDevToolsCaption(),
-               constants_.cannotActivateDevtoolsMessage());
-      }
-      else
-      {
-         globalDisplay_.openMinimalWindow(
-               ("http://127.0.0.1:" + DesktopInfo.getChromiumDevtoolsPort()),
-               Window.getClientWidth() - 20,
-               Window.getClientHeight() - 20);
-      }
    }
 
    @Handler
