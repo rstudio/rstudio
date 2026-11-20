@@ -177,10 +177,7 @@ Error ConsoleHistory::loadFromFile(const FilePath& filePath,
    if (!filePath.exists())
    {
       if (verifyFile)
-      {
-         return systemError(std::make_error_code(std::errc::no_such_file_or_directory),
-                            ERROR_LOCATION);
-      }
+         return systemError(boost::system::errc::no_such_file_or_directory, ERROR_LOCATION);
 
       // tolerate file not found -- the user may not have any prior history
       historyBuffer_.clear();
@@ -188,14 +185,9 @@ Error ConsoleHistory::loadFromFile(const FilePath& filePath,
    }
 
    // libc++ opens a directory and reads it as an empty file, which would
-   // replace the history with nothing. a bare errc value would go to
-   // systemError(int), which on Windows reads 21 as a Win32 code: "The device
-   // is not ready"
+   // replace the history with nothing
    if (filePath.isDirectory())
-   {
-      return systemError(std::make_error_code(std::errc::is_a_directory),
-                         ERROR_LOCATION);
-   }
+      return systemError(boost::system::errc::is_a_directory, ERROR_LOCATION);
 
    HistoryBuffer loaded(historyBuffer_.capacity());
    Error error = core::readCollectionFromFile<HistoryBuffer>(

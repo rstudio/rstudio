@@ -75,7 +75,7 @@ test_that("savehistory() saves only the last R_HISTSIZE commands", {
 # utils::loadhistory() on Windows; they exist on every platform, so these tests
 # call them directly. a failed save reports the system's message, which on
 # Windows is the Win32 text rather than strerror()'s. a failed load reports a
-# generic errc message, which MSVC gives in lower case.
+# generic errc message.
 
 test_that(".rs.savehistory() reports a file it can't write", {
    path <- file.path(tempfile("no-such-dir-"), "history.Rhistory")
