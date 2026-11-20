@@ -438,6 +438,35 @@ test_that("installed.packages() survives guardrails under a restrictive umask", 
 
 })
 
+test_that("restoreBindings restores the bindings with interrupts suspended", {
+
+   # An interrupt partway through would leave bindings hooked (#19718)
+   .rs.chat.injectBindings()
+   on.exit(.rs.chat.restoreBindings(), add = TRUE)
+
+   # tools:rstudio can't be mocked with local_mocked_bindings()
+   rsEnv <- as.environment("tools:rstudio")
+   replaceBinding <- get(".rs.replaceBinding", envir = rsEnv)
+   on.exit(
+      assign(".rs.replaceBinding", replaceBinding, envir = rsEnv),
+      add = TRUE,
+      after = FALSE
+   )
+
+   suspended <- logical()
+   assign(".rs.replaceBinding", function(...) {
+      suspended <<- c(suspended, .Internal(interruptsSuspended()))
+      replaceBinding(...)
+   }, envir = rsEnv)
+
+   .rs.chat.restoreBindings()
+
+   expect_gt(length(suspended), 0L)
+   expect_true(all(suspended))
+   expect_false(.rs.chat.bindingsInjected)
+
+})
+
 # -- hasTrustedCallerImpl ----------------------------------------------------
 
 test_that("hasTrustedCallerImpl returns TRUE for safe functions", {

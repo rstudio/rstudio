@@ -42,6 +42,15 @@ jobs:
         (github.event_name == 'issues' && contains(github.event.issue.body, '@claude') && contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.issue.author_association)) ||
         (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude') && contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.review.author_association))
       )
+    # Keyed per mention, so a duplicate delivery waits for the first run and
+    # then finds its eyes reaction (see Acknowledge mention); otherwise two
+    # runs starting together could both see 201 and both relay. Only
+    # duplicates share a key, so GitHub's one-pending-run-per-group limit
+    # never drops a distinct mention. Never cancel in progress: that would
+    # cancel the first run, perhaps mid-dispatch, in favor of the duplicate.
+    concurrency:
+      group: os-claude-${{ github.event_name }}-${{ github.event.comment.id || github.event.review.id || github.event.issue.number }}
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -97,8 +106,52 @@ jobs:
           echo "number=${NUMBER}" >> "$GITHUB_OUTPUT"
           echo "branch-prefix=claude/${NUMBER}-${SLUG}-" >> "$GITHUB_OUTPUT"
 
-      - name: Generate token for GitHub App
+      # The ack doubles as a duplicate check: GitHub sometimes starts this
+      # workflow twice for one comment, which would relay it twice and get
+      # two replies. The reactions API answers 200 rather than 201 when this
+      # account's eyes reaction already exists, so on a first attempt a 200
+      # means another run already acknowledged the mention. That holds only
+      # while no other workflow here adds an eyes reaction as
+      # github-actions[bot]: one that did would make every mention it touched
+      # look like a duplicate, and those would never be relayed. A failed
+      # reaction never blocks the relay. Reviews have no reactions API, so
+      # they get neither; there the only ack is Claude's reply.
+      - name: Acknowledge mention
         if: steps.mention.outputs.found == 'true'
+        id: ack
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          REPO: ${{ github.repository }}
+          NUMBER: ${{ steps.payload.outputs.number }}
+          COMMENT_ID: ${{ github.event.comment.id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          case "$EVENT_NAME" in
+            issue_comment) TARGET="issues/comments/${COMMENT_ID}" ;;
+            pull_request_review_comment) TARGET="pulls/comments/${COMMENT_ID}" ;;
+            issues) TARGET="issues/${NUMBER}" ;;
+            *) exit 0 ;;
+          esac
+
+          # Prints the headers, then the reaction's id as the last line.
+          if ! RESPONSE=$(gh api --include --method POST "repos/${REPO}/${TARGET}/reactions" -f content=eyes --jq .id); then
+            echo "::warning::Failed to add the eyes reaction"
+            exit 0
+          fi
+          STATUS=$(awk 'NR == 1 { print $2 }' <<< "$RESPONSE")
+
+          # A re-run relays even on a 200, so re-run the run that failed: a
+          # re-run of the one that skipped as a duplicate relays a second time.
+          if [ "$STATUS" = 200 ] && [ "$RUN_ATTEMPT" = 1 ]; then
+            echo "::notice::Another run already acknowledged this mention; skipping."
+            echo "duplicate=true" >> "$GITHUB_OUTPUT"
+          elif [ "$STATUS" = 201 ]; then
+            echo "reaction=repos/${REPO}/${TARGET}/reactions/$(tail -n 1 <<< "$RESPONSE")" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Generate token for GitHub App
+        if: steps.mention.outputs.found == 'true' && steps.ack.outputs.duplicate != 'true'
         id: generate-token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
@@ -109,7 +162,7 @@ jobs:
           permission-contents: write
 
       - name: Relay to rstudio-pro
-        if: steps.mention.outputs.found == 'true'
+        if: steps.mention.outputs.found == 'true' && steps.ack.outputs.duplicate != 'true'
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
           EVENT_NAME: ${{ github.event_name }}
@@ -131,25 +184,14 @@ jobs:
             -f "client_payload[actor]=${ACTOR}" \
             -f "client_payload[branch_prefix]=${BRANCH_PREFIX}"
 
-      # Runs after the dispatch so a failed reaction never blocks the relay.
-      # Reviews have no reactions API; there the only ack is Claude's reply.
-      - name: Acknowledge mention
-        if: steps.mention.outputs.found == 'true'
+      # Eyes would otherwise promise a reply that is not coming. Removing the
+      # reaction also lets a duplicate delivery queued behind this run get a
+      # 201 and relay in its place. Only a reaction this run added is removed.
+      # A job that hits timeout-minutes is cancelled, not failed, so
+      # failure() alone would miss a dispatch that hung.
+      - name: Withdraw the acknowledgment
+        if: (failure() || cancelled()) && steps.ack.outputs.reaction != ''
         env:
           GH_TOKEN: ${{ github.token }}
-          EVENT_NAME: ${{ github.event_name }}
-          REPO: ${{ github.repository }}
-          NUMBER: ${{ steps.payload.outputs.number }}
-          COMMENT_ID: ${{ github.event.comment.id }}
-        run: |
-          case "$EVENT_NAME" in
-            issue_comment)
-              gh api "repos/${REPO}/issues/comments/${COMMENT_ID}/reactions" -f content=eyes
-              ;;
-            pull_request_review_comment)
-              gh api "repos/${REPO}/pulls/comments/${COMMENT_ID}/reactions" -f content=eyes
-              ;;
-            issues)
-              gh api "repos/${REPO}/issues/${NUMBER}/reactions" -f content=eyes
-              ;;
-          esac
+          REACTION: ${{ steps.ack.outputs.reaction }}
+        run: gh api --method DELETE "$REACTION"

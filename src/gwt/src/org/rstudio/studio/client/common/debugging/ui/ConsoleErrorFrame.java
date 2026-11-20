@@ -30,7 +30,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
-import com.google.gwt.user.client.ui.Anchor;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
@@ -55,6 +55,9 @@ public class ConsoleErrorFrame extends Composite
       boolean hasSource = !frame.getFileName().isEmpty();
       functionName.setText(constants_.functionNameText(frame.getFunctionName(), (hasSource ? " " + constants_.atText() : "")));
       frameNumber.setText((Integer.valueOf(number)).toString() + ".");
+
+      // An empty button would still be a tab stop
+      sourceLink.setVisible(hasSource);
       if (hasSource)
       {
          sourceLink.setText(
@@ -93,7 +96,7 @@ public class ConsoleErrorFrame extends Composite
    @UiField
    Label functionName;
    @UiField
-   Anchor sourceLink;
+   Button sourceLink;
    @UiField
    Label frameNumber;
 
