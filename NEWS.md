@@ -131,5 +131,5 @@
 - Copilot Language Server 1.570.0
 - Node.js 24.22.3 (GitHub Copilot, Posit Assistant)
 - Quarto 1.11.9
-- Electron 44.11.4
+- Electron 44.11.5
 
