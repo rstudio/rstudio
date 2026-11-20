@@ -2663,7 +2663,7 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
       // settings, source database, etc.), so that a duplicate launch of a
       // session that's already running stops here (#18941)
       error = claimSessionStream();
-      if (error == boost::asio::error::make_error_code(boost::asio::error::address_in_use))
+      if (error.matches(boost::system::errc::address_in_use))
       {
          std::string pid;
          FilePath pidFile(error.getProperty("stream") + ".pid");

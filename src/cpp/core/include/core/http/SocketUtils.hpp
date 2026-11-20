@@ -66,19 +66,22 @@ Error closeSocket(SocketService& socket)
 
 inline bool isWrongProtocolTypeError(const core::Error& error)
 {
-   return error == systemError(boost::system::errc::wrong_protocol_type, ErrorLocation());
+   return error.matches(boost::system::errc::wrong_protocol_type);
 }
 
 inline bool isConnectionTerminatedError(const core::Error& error)
 {
    // look for errors that indicate the client closing the connection
-   bool timedOut = error == boost::asio::error::timed_out;
+   namespace errc = boost::system::errc;
+   // Only the socket timeout indicates a closed connection. Other Win32 timeouts
+   // (e.g. WAIT_TIMEOUT) also map to the portable timed_out condition.
+   bool timedOut = error == boost::asio::error::timed_out || error == errc::make_error_code(errc::timed_out);
    bool eof = error == boost::asio::error::eof;
-   bool reset = error == boost::asio::error::connection_reset;
+   bool reset = error.matches(errc::connection_reset);
    bool shortRead = error == boost::asio::ssl::error::stream_truncated; // "short read"
-   bool badFile = error == boost::asio::error::bad_descriptor;
-   bool brokenPipe = error == boost::asio::error::broken_pipe;
-   bool noFile = error == systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation());
+   bool badFile = error.matches(errc::bad_file_descriptor);
+   bool brokenPipe = error.matches(errc::broken_pipe);
+   bool noFile = error.matches(errc::no_such_file_or_directory);
 
 #ifdef _WIN32
    int ec = error.getCode();
@@ -97,15 +100,14 @@ inline bool isConnectionUnavailableError(const Error& error)
    
    return (
          // for unix domain sockets
-         error == systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()) ||
+         error.matches(boost::system::errc::no_such_file_or_directory) ||
 
          // for tcp-ip and unix domain sockets
-         error == boost::asio::error::connection_refused
+         error.matches(boost::system::errc::connection_refused)
 
          // for windows named pipes
  #ifdef _WIN32
-         || error == boost::system::windows_error::file_not_found
-         || error == boost::system::windows_error::broken_pipe
+         || error.matches(boost::system::errc::broken_pipe)
          || error == boost::system::error_code(ERROR_PIPE_BUSY, boost::system::system_category())
  #endif
    );

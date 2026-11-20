@@ -1023,31 +1023,12 @@ Error writeStringToFile(const FilePath& filePath,
 
 bool isDiskSpaceError(const Error& error)
 {
-   if (!error)
-      return false;
-
-   // an errc error is in the generic category on every platform
-   if (error == systemError(boost::system::errc::no_space_on_device, ErrorLocation()))
+#if !defined(_WIN32) && defined(EDQUOT)
+   // POSIX reports an exceeded quota separately from a full disk.
+   if (error == boost::system::error_code(EDQUOT, boost::system::system_category()))
       return true;
-
-   // ENOSPC / EDQUOT (and the Windows equivalents) are reported in the system
-   // category: errno on POSIX, the Win32 error code on Windows
-   if (error.getName() != boost::system::system_category().name())
-      return false;
-
-   int code = error.getCode();
-
-#ifdef _WIN32
-   return code == ERROR_DISK_FULL || code == ERROR_HANDLE_DISK_FULL;
-#else
-   if (code == ENOSPC)
-      return true;
-# ifdef EDQUOT
-   if (code == EDQUOT)
-      return true;
-# endif
-   return false;
 #endif
+   return error.matches(boost::system::errc::no_space_on_device);
 }
 
 Error writeStringToFileAtomic(const FilePath& filePath,

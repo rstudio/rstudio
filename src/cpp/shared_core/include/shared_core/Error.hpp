@@ -340,9 +340,7 @@ public:
    bool operator!() const;
 
    /**
-    * @brief Equality operator. Two errors are equal if their codes and names are the same, or if one is a
-    *        generic-category error (an errc value) and the other is a system error that boost maps to that errc
-    *        (as boost::system::error_code == boost::system::error_condition does).
+    * @brief Two errors compare equal if their codes and category names match. All zero codes represent success.
     *
     * @param in_other   The error to compare with this error.
     *
@@ -351,9 +349,7 @@ public:
    bool operator==(const Error& in_other) const;
 
    /**
-    * @brief Equality operator. Two errors are equal if their codes and names are the same, or if one is a
-    *        generic-category error (an errc value) and the other is a system error that boost maps to that errc
-    *        (as boost::system::error_code == boost::system::error_condition does).
+    * @brief Compare the code and category name. All zero codes represent success.
     *
     * @param in_ec   The boost error code to compare with this error.
     *
@@ -378,6 +374,12 @@ public:
     * @return True if !(this == in_ec) would return true; false otherwise.
     */
    bool operator!=(const boost::system::error_code& in_ec) const;
+
+   /**
+    * @brief Test for a portable condition. Generic errors carry the condition directly.
+    *        For system errors, Boost maps the native code to its condition.
+    */
+   bool matches(boost::system::errc::errc_t in_condition) const;
 
    /**
     * @brief Add or updates a property of this error. If any properties with the specified name exist, they will all be

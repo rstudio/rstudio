@@ -245,30 +245,31 @@ TEST(ErrorTest, ErrcErrorsMatchTheSameErrcBuiltAnyWay)
    EXPECT_TRUE(error == boost::system::error_code(errc, boost::system::generic_category()));
 }
 
-TEST(ErrorTest, ErrcErrorsMatchEquivalentSystemErrors)
+TEST(ErrorTest, DistinctCodesCanMatchTheSameCondition)
 {
-   errc_t errc = boost::system::errc::no_such_file_or_directory;
-   Error error = systemError(errc, ErrorLocation());
+   using boost::system::error_code;
+   const errc_t missing = boost::system::errc::no_such_file_or_directory;
+   Error generic = systemError(missing, ErrorLocation());
 
 #ifdef _WIN32
-   // Windows reports a missing file and a missing folder with different codes
-   // for the same condition
-   Error fileNotFound = systemError(ERROR_FILE_NOT_FOUND, ErrorLocation());
-   Error pathNotFound = systemError(ERROR_PATH_NOT_FOUND, ErrorLocation());
-   EXPECT_EQ(pathNotFound, error);
-   EXPECT_EQ(error, pathNotFound);
-   EXPECT_TRUE(error == boost::system::error_code(ERROR_PATH_NOT_FOUND, boost::system::system_category()));
-
-   // ... but system codes match only themselves
-   EXPECT_NE(fileNotFound, pathNotFound);
+   const int nativeCode = ERROR_FILE_NOT_FOUND;
+   Error path = systemError(ERROR_PATH_NOT_FOUND, ErrorLocation());
+   EXPECT_TRUE(path.matches(missing));
+   EXPECT_NE(path, generic);
+   EXPECT_NE(path, systemError(nativeCode, ErrorLocation()));
 #else
-   Error fileNotFound = Error(boost::system::error_code(ENOENT, boost::system::system_category()), ErrorLocation());
+   const int nativeCode = ENOENT;
 #endif
 
-   EXPECT_EQ(fileNotFound, error);
-   EXPECT_EQ(error, fileNotFound);
-   EXPECT_TRUE(fileNotFound == boost::system::error_code(errc, boost::system::generic_category()));
-   EXPECT_TRUE(error == boost::system::error_code(fileNotFound.getCode(), boost::system::system_category()));
+   error_code native(nativeCode, boost::system::system_category());
+   Error file(native, ErrorLocation());
+   EXPECT_TRUE(file.matches(missing));
+   EXPECT_TRUE(generic.matches(missing));
+   EXPECT_NE(file, generic);
+   EXPECT_NE(generic, file);
+   EXPECT_TRUE(file == native);
+   EXPECT_FALSE(generic == native);
+   EXPECT_FALSE(file == boost::system::errc::make_error_code(missing));
 }
 
 TEST(ErrorTest, ErrcErrorsDoNotMatchUnrelatedErrors)
@@ -279,6 +280,7 @@ TEST(ErrorTest, ErrcErrorsDoNotMatchUnrelatedErrors)
 #ifdef _WIN32
    // the same number in the system category is ERROR_NOT_READY
    Error sameNumber = systemError(static_cast<int>(errc), ErrorLocation());
+   EXPECT_FALSE(sameNumber.matches(errc));
    EXPECT_NE(sameNumber, error);
    EXPECT_NE(error, sameNumber);
    EXPECT_FALSE(error == boost::system::error_code(errc, boost::system::system_category()));
@@ -289,6 +291,10 @@ TEST(ErrorTest, ErrcErrorsDoNotMatchUnrelatedErrors)
    EXPECT_NE(error, Error("OtherCategory", static_cast<int>(errc), ErrorLocation()));
    EXPECT_NE(Success(), error);
    EXPECT_NE(error, Success());
+   EXPECT_FALSE(error.matches(boost::system::errc::not_a_directory));
+   EXPECT_FALSE(Error("OtherCategory", static_cast<int>(errc), ErrorLocation()).matches(errc));
+   EXPECT_FALSE(Success().matches(errc));
+   EXPECT_TRUE(Success().matches(boost::system::errc::success));
 }
 
 TEST(ErrorTest, ErrorCodeEnumsUseTheirOwnCategory)

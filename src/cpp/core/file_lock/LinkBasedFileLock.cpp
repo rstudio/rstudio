@@ -3234,9 +3234,7 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
    if (error)
    {
       LOG("Failed to acquire lock: " << lockFilePath.getAbsolutePath() << " (" << error.getSummary() << ")");
-      if (error == systemError(
-                     boost::system::errc::file_exists,
-                     ErrorLocation()))
+      if (error.matches(boost::system::errc::file_exists))
       {
          return noLockAvailableError(lockFilePath);
       }

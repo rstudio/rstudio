@@ -55,8 +55,8 @@ public:
          // a stream created by root and then torn down after yielding
          // privilege to a different user)
          if (error && (
-                error != systemError(boost::system::errc::permission_denied, ErrorLocation()) &&
-                error != systemError(boost::system::errc::operation_not_permitted, ErrorLocation())
+                !error.matches(boost::system::errc::permission_denied) &&
+                !error.matches(boost::system::errc::operation_not_permitted)
             ))
             LOG_ERROR(error);
       }

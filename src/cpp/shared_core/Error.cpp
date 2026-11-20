@@ -43,24 +43,6 @@ namespace {
 constexpr const char* s_occurredAt = "OCCURRED AT";
 constexpr const char* s_causedBy = "CAUSED BY";
 
-// Error keeps only the name of its category. A generic-category code is an errc value, so it matches like an
-// error_condition: a check written as `error == systemError(errc::X, ...)` must also match the errno (POSIX) or
-// Win32 (Windows) code that the system reported for X.
-bool isSameError(int in_code, const std::string& in_name, int in_otherCode, const std::string& in_otherName)
-{
-   if (in_name == in_otherName)
-      return in_code == in_otherCode;
-
-   using namespace boost::system;
-   if (in_name == system_category().name() && in_otherName == generic_category().name())
-      return error_code(in_code, system_category()) == error_condition(in_otherCode, generic_category());
-
-   if (in_name == generic_category().name() && in_otherName == system_category().name())
-      return error_code(in_otherCode, system_category()) == error_condition(in_code, generic_category());
-
-   return false;
-}
-
 } // anonymous namespace
 
 
@@ -303,14 +285,14 @@ bool Error::operator==(const Error& in_other) const
       return (in_other.m_impl == nullptr) || (in_other.m_impl->Code == 0);
    if ((in_other.m_impl == nullptr) || (in_other.m_impl->Code == 0))
       return false; // This error is neither empty nor 0.
-   return isSameError(m_impl->Code, m_impl->Name, in_other.m_impl->Code, in_other.m_impl->Name);
+   return m_impl->Code == in_other.m_impl->Code && m_impl->Name == in_other.m_impl->Name;
 }
 
 bool Error::operator==(const boost::system::error_code& in_ec) const
 {
    if ((m_impl == nullptr) || (m_impl->Code == 0))
       return in_ec.value() == 0;
-   return isSameError(m_impl->Code, m_impl->Name, in_ec.value(), in_ec.category().name());
+   return m_impl->Code == in_ec.value() && m_impl->Name == in_ec.category().name();
 }
 
 bool Error::operator!=(const rstudio::core::Error& in_other) const
@@ -321,6 +303,16 @@ bool Error::operator!=(const rstudio::core::Error& in_other) const
 bool Error::operator!=(const boost::system::error_code& in_ec) const
 {
    return !(*this == in_ec);
+}
+
+bool Error::matches(boost::system::errc::errc_t in_condition) const
+{
+   using namespace boost::system;
+   if (!isError())
+      return in_condition == errc::success;
+   if (m_impl->Name == generic_category().name())
+      return m_impl->Code == in_condition;
+   return m_impl->Name == system_category().name() && error_code(m_impl->Code, system_category()) == in_condition;
 }
 
 void Error::addOrUpdateProperty(const std::string& in_name, const std::string& in_value)

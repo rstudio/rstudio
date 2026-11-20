@@ -437,7 +437,7 @@ TEST_F(LocalStreamSocketUtilsTest, IdentityOfMissingPathIsAnError)
    LocalStreamIdentity identity;
    Error error = getLocalStreamIdentity(streamPath_, &identity);
    ASSERT_TRUE(error);
-   EXPECT_EQ(error, systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()));
+   EXPECT_TRUE(error.matches(boost::system::errc::no_such_file_or_directory));
 }
 
 } // namespace tests

@@ -2609,7 +2609,7 @@ void handleReadFileContent(core::system::ProcessOperations& ops,
          {
             sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "File not found: " + path);
          }
-         else if (error == systemError(boost::system::errc::permission_denied, ErrorLocation()))
+         else if (error.matches(boost::system::errc::permission_denied))
          {
             sendJsonRpcError(ops, requestId, kJsonRpcInternalError, "Permission denied: " + path);
          }
@@ -2807,7 +2807,7 @@ void handleWriteFileContent(core::system::ProcessOperations& ops,
 
       if (error)
       {
-         if (error == systemError(boost::system::errc::permission_denied, ErrorLocation()))
+         if (error.matches(boost::system::errc::permission_denied))
          {
             sendJsonRpcError(ops, requestId, kJsonRpcInternalError, "Permission denied: " + path);
          }
@@ -3095,7 +3095,7 @@ void handleEditFileContent(core::system::ProcessOperations& ops,
             sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
                              "File not found: " + path);
          }
-         else if (error == systemError(boost::system::errc::permission_denied, ErrorLocation()))
+         else if (error.matches(boost::system::errc::permission_denied))
          {
             sendJsonRpcError(ops, requestId, kJsonRpcInternalError,
                              "Permission denied: " + path);
@@ -3145,7 +3145,7 @@ void handleEditFileContent(core::system::ProcessOperations& ops,
 
       if (error)
       {
-         if (error == systemError(boost::system::errc::permission_denied, ErrorLocation()))
+         if (error.matches(boost::system::errc::permission_denied))
          {
             sendJsonRpcError(ops, requestId, kJsonRpcInternalError,
                              "Permission denied: " + path);
@@ -4791,7 +4791,7 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
       // Protocol version not in manifest: only block if there's no installed
       // version to fall back on. Other errors leave the installed version
       // running (updateAvailable stays false).
-      if (error == systemError(boost::system::errc::protocol_not_supported, ErrorLocation()) &&
+      if (error.matches(boost::system::errc::protocol_not_supported) &&
           installedVersion == "0.0.0")
       {
          noCompatibleVersion = true;

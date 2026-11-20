@@ -258,7 +258,7 @@ test_that("C++ sources don't treat errno values as system error codes", {
 
    # comparing a code's value with an errc ignores its category, so a Win32
    # code matches whichever errc shares its number: compare as a condition
-   # (ec == errc::X, or error == systemError(errc::X, ErrorLocation()))
+   # (ec == errc::X, or error.matches(errc::X))
    errcByValue <- paste0(
       "(getCode|value)\\(\\)\\s*[!=]=\\s*(boost::system::|std::)?errc::",
       "|\\berrc::[a-z_]+\\s*[!=]=\\s*[A-Za-z_][A-Za-z0-9_.>()-]*(getCode|value)\\(\\)"
