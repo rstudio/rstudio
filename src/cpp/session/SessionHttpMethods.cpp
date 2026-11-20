@@ -454,17 +454,16 @@ Error startHttpConnectionListener()
    if (error)
       return error;
 
-   // desktop and standalone sessions listen on a tcp port, which the OS picks
-   // if www-port is 0. publish the port we're bound to, so rpostback and
-   // others can connect back into the session, and so help uses a port that
-   // is ours (see module_context::sessionPort). bind before start() so the
-   // environment changes before the listener's threads run
+   // a session that listens on a tcp port (desktop and standalone sessions,
+   // and any session on Windows) is given one by the OS if www-port is 0.
+   // record the port we're bound to (see module_context::sessionPort), and in
+   // desktop and standalone modes publish it, so rpostback and others can
+   // connect back into the session. bind before start() so the environment
+   // changes before the listener's threads run
    bool desktopMode = options().programMode() == kSessionProgramModeDesktop;
    bool standalone = options().standalone();
-   TcpIpHttpConnectionListener* pTcpListener = nullptr;
-   if (desktopMode || standalone)
-      pTcpListener = dynamic_cast<TcpIpHttpConnectionListener*>(&httpConnectionListener());
-
+   auto* pTcpListener =
+         dynamic_cast<TcpIpHttpConnectionListener*>(&httpConnectionListener());
    if (pTcpListener)
    {
       error = pTcpListener->bindEndpoint();

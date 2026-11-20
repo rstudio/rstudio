@@ -29,8 +29,7 @@ Run RStudio unit tests. Available flags:
 --filter         Run a subset of R tests, matching the requested filter.
 --only-database  Restrict the rserver scope to the database-backed fixture tests.
 --www-port       Port for the rsession and r scopes' session to listen on in
-                 desktop builds (default: 0, a free port the OS picks). Server
-                 builds don't listen on it, and don't take 0.
+                 desktop builds (default: 0, a free port the OS picks).
 EOF
 
 section () {
@@ -459,25 +458,6 @@ while [ $# -gt 0 ]; do
    esac
 done
 
-# Setup for the rsession and r scopes, here so that a port this build can't
-# use is reported before any scope runs. Desktop mode listens on TCP www-port,
-# so take one the OS picks (0): a dev server or another test run may hold any
-# fixed port. Server mode listens on a socket in RS_SESSION_TMP_DIR instead,
-# but R's help server takes its port from www-port, and 0 there means it isn't
-# running, so keep the default that server sessions run with and don't take 0.
-if [ -e "@CMAKE_CURRENT_BINARY_DIR@/conf/rsession-dev.conf" ]; then
-   if [ "${WWW_PORT}" = "0" ]; then
-      echo "Usage: ./rstudio-tests --www-port <port>, a port number in 1-65535 (0 is for desktop builds; this one runs its sessions in server mode)"
-      exit 1
-   fi
-
-   SESSION_CONF_FILE="@CMAKE_CURRENT_BINARY_DIR@/conf/rsession-dev.conf"
-   SESSION_WWW_PORT="${WWW_PORT:-8787}"
-else
-   SESSION_CONF_FILE="@CMAKE_CURRENT_BINARY_DIR@/conf/rdesktop-dev.conf"
-   SESSION_WWW_PORT="${WWW_PORT:-0}"
-fi
-
 # try to find libSegFault if available
 findLibSegFault
 
@@ -567,6 +547,17 @@ if has-scope "rserver"; then
    fi
 
 fi
+
+# Setup for rsession tests. Desktop mode listens on TCP www-port, so take one
+# the OS picks (0): a dev server or another test run may hold any fixed port.
+# Server mode listens on a socket in RS_SESSION_TMP_DIR instead, and has no
+# use for the port.
+if [ -e "@CMAKE_CURRENT_BINARY_DIR@/conf/rsession-dev.conf" ]; then
+   SESSION_CONF_FILE="@CMAKE_CURRENT_BINARY_DIR@/conf/rsession-dev.conf"
+else
+   SESSION_CONF_FILE="@CMAKE_CURRENT_BINARY_DIR@/conf/rdesktop-dev.conf"
+fi
+SESSION_WWW_PORT="${WWW_PORT:-0}"
 
 if has-scope "rsession"; then
 
