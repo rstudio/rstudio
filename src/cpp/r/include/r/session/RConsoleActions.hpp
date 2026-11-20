@@ -101,7 +101,10 @@ private:
    // console output capture threads) can interact with console actions
    mutable boost::mutex mutex_;
    ConsoleAction buffer_;
-   boost::circular_buffer<ConsoleAction> actions_;
+
+   // allocates as actions are added rather than its whole capacity up front:
+   // the capacity is the console_max_lines pref, which has no maximum
+   boost::circular_buffer_space_optimized<ConsoleAction> actions_;
    std::vector<std::string> pendingInput_;
 };
 

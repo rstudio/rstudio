@@ -15,6 +15,8 @@
 
 #include <r/session/RConsoleActions.hpp>
 
+#include <limits>
+
 #include <gtest/gtest.h>
 
 #include <shared_core/Error.hpp>
@@ -99,6 +101,34 @@ TEST_F(ConsoleActionsTest, ReducingCapacityKeepsNewestActions)
    EXPECT_EQ("line 10\nline 11\nline 12\nline 13\nline 14\n"
              "line 15\nline 16\nline 17\nline 18\nline 19\nline 20\n",
              consoleData(actionsJson));
+}
+
+TEST_F(ConsoleActionsTest, HugeCapacityIsNotAllocatedUpFront)
+{
+   ConsoleActions& actions = consoleActions();
+   int originalCapacity = actions.capacity();
+
+   // a scrollback limit meant as "unlimited" (the pref has no maximum);
+   // reserving all of it up front, tens of GB, throws std::bad_alloc where
+   // the OS won't provide that much: Windows commits it, and Linux refuses
+   // more than RAM + swap unless set to always overcommit. macOS reserves it
+   // lazily, so there this passes either way (#19738)
+   int hugeCapacity = std::numeric_limits<int>::max();
+   ASSERT_NO_THROW(actions.setCapacity(hugeCapacity));
+   EXPECT_EQ(hugeCapacity, actions.capacity());
+
+   // the storage grows as actions arrive, moving them as it does
+   for (int i = 0; i < 1000; i++)
+      actions.add(kConsoleActionOutput, "line " + std::to_string(i) + "\n");
+
+   json::Object actionsJson;
+   actions.asJson(&actionsJson);
+   json::Array dataArray = actionsJson["data"].getArray();
+   ASSERT_EQ(1000u, dataArray.getSize());
+   EXPECT_EQ("line 0\n", dataArray[0].getString());
+   EXPECT_EQ("line 999\n", dataArray[999].getString());
+
+   actions.setCapacity(originalCapacity);
 }
 
 TEST_F(ConsoleActionsTest, ChunkingDoesNotSplitUtf8Sequences)
