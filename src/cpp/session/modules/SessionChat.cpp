@@ -3095,8 +3095,7 @@ void handleEditFileContent(core::system::ProcessOperations& ops,
             sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
                              "File not found: " + path);
          }
-         else if (error.getCode() ==
-                  boost::system::errc::permission_denied)
+         else if (error.matches(boost::system::errc::permission_denied))
          {
             sendJsonRpcError(ops, requestId, kJsonRpcInternalError,
                              "Permission denied: " + path);
@@ -3146,8 +3145,7 @@ void handleEditFileContent(core::system::ProcessOperations& ops,
 
       if (error)
       {
-         if (error.getCode() ==
-             boost::system::errc::permission_denied)
+         if (error.matches(boost::system::errc::permission_denied))
          {
             sendJsonRpcError(ops, requestId, kJsonRpcInternalError,
                              "Permission denied: " + path);

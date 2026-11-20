@@ -195,6 +195,82 @@ test_that("C++ sources do not put errc values in the system category", {
 
 })
 
+test_that("C++ sources test error conditions with matches(), not equality", {
+
+   # an error built from an errc value is in the generic category, while Boost
+   # reports the same errno condition in the system category (and on Windows a
+   # Win32 code for it), so comparing the two with == is quietly false. likewise
+   # comparing getCode() or value() with an errc value ignores the category, so
+   # on Windows it compares a Win32 code with an errno number. use
+   # error.matches(errc::X), or Boost's ec == errc::X for a raw error_code
+   #
+   # the error constructors are matched with up to one level of nested
+   # parentheses, e.g. systemError(errc::timed_out, ErrorLocation())
+   call <- "\\((?:[^;()]|\\([^;()]*\\))*\\)"
+   factory <- "(?:rstudio::)?(?:core::)?(?:systemError|Error)\\s*"
+   accessor <- "(?:getCode|value)\\s*\\(\\s*\\)"
+   errc <- "(?:(?:boost::system::|std::)?errc::)"
+   patterns <- c(
+      paste0("[!=]=\\s*", factory, "\\(\\s*", errc),
+      paste0("[!=]=\\s*(?:rstudio::)?(?:core::)?systemError\\s*\\("),
+      paste0("\\bsystemError\\s*", call, "\\s*[!=]="),
+      paste0(accessor, "\\s*[!=]=\\s*", errc),
+      paste0(errc, "\\w+\\s*[!=]=\\s*[\\w.>()-]*", accessor)
+   )
+   pattern <- paste(patterns, collapse = "|")
+
+   offending <- c(
+      "error == systemError(errc::timed_out, ErrorLocation())",
+      "error != core::systemError(\n   boost::system::errc::timed_out, ERROR_LOCATION)",
+      "error == systemError(code, ERROR_LOCATION)",
+      "error == Error(errc::no_such_file_or_directory, ERROR_LOCATION)",
+      "systemError(errc::timed_out, ErrorLocation()) == error",
+      "error.getCode() == boost::system::errc::permission_denied",
+      "ec.value() != errc::too_many_files_open",
+      "errc::io_error == error.getCode()"
+   )
+   expect_true(all(grepl(pattern, offending, perl = TRUE)))
+
+   allowed <- c(
+      "error.matches(errc::timed_out)",
+      "ec == boost::system::errc::timed_out",
+      "ec == boost::asio::error::operation_aborted",
+      "error.getCode() == ERROR_ACCESS_DENIED",
+      "EXPECT_EQ(error, systemError(errc::io_error, ERROR_LOCATION))",
+      "Error error = systemError(errc::timed_out, ERROR_LOCATION);"
+   )
+   expect_false(any(grepl(pattern, allowed, perl = TRUE)))
+
+   cppFiles <- list.files(
+      root,
+      pattern = "[.](cpp|hpp|mm)$",
+      full.names = TRUE,
+      recursive = TRUE
+   )
+
+   offenders <- character()
+   for (cppFile in cppFiles) {
+      contents <- paste(readLines(cppFile, warn = FALSE), collapse = "\n")
+      starts <- gregexpr(pattern, contents, perl = TRUE, useBytes = TRUE)[[1L]]
+      if (starts[[1L]] == -1L)
+         next
+
+      # report the line each match starts on
+      newlines <- gregexpr("\n", contents, fixed = TRUE, useBytes = TRUE)[[1L]]
+      lines <- findInterval(starts, newlines[newlines > 0L]) + 1L
+      path <- sub(paste0(root, "/"), "", cppFile, fixed = TRUE)
+      offenders <- c(offenders, paste0(path, ":", lines))
+   }
+
+   failureMessage <- paste(
+      c("error conditions compared with == instead of matches():", offenders),
+      collapse = "\n"
+   )
+
+   expect(length(offenders) == 0, failureMessage)
+
+})
+
 test_that("RStudio .R files can be linted", {
    
    rFiles <- list.files(
