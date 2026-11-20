@@ -196,8 +196,10 @@ export async function assertRootsCoverWindow(page: Page): Promise<void> {
   const clipping = await page.evaluate(() => [document.documentElement, document.body]
     .filter((el) => getComputedStyle(el).overflow === 'hidden')
     .map((el) => ({ tag: el.tagName.toLowerCase(), rect: el.getBoundingClientRect() }))
+    // innerWidth/innerHeight are rounded, but at fractional display scaling a
+    // root that fills the window can end a fraction of a pixel short of them.
     .filter(({ rect }) => rect.left > 0 || rect.top > 0 ||
-      rect.right < window.innerWidth || rect.bottom < window.innerHeight)
+      rect.right < window.innerWidth - 1 || rect.bottom < window.innerHeight - 1)
     .map(({ tag, rect }) => `<${tag}> is ${Math.round(rect.width)}x${Math.round(rect.height)}px ` +
       `at (${Math.round(rect.left)}, ${Math.round(rect.top)}) in a ` +
       `${window.innerWidth}x${window.innerHeight}px window`));

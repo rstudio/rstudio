@@ -39,6 +39,12 @@ test('scan guard rejects root elements that hide the page from axe', { tag: ['@a
       await assertRootsCoverWindow(page);
     });
 
+    await test.step('a root a fraction of a pixel short, as at 125% scaling: guard passes',
+      async () => {
+        await page.setContent(pageHtml('height: calc(100% - 0.5px);'));
+        await assertRootsCoverWindow(page);
+      });
+
     await test.step('a root without overflow: hidden never clips, whatever its size', async () => {
       await page.setContent('<!doctype html><html lang="en"><body><p>Short page</p></body></html>');
       await assertRootsCoverWindow(page);
