@@ -454,56 +454,58 @@ Error startHttpConnectionListener()
    if (error)
       return error;
 
-   if (options().programMode() == kSessionProgramModeDesktop)
+   // desktop and standalone sessions listen on a tcp port, which the OS picks
+   // if www-port is 0. publish the port we're bound to, so rpostback and
+   // others can connect back into the session, and so help uses a port that
+   // is ours (see module_context::sessionPort). bind before start() so the
+   // environment changes before the listener's threads run
+   bool desktopMode = options().programMode() == kSessionProgramModeDesktop;
+   bool standalone = options().standalone();
+   TcpIpHttpConnectionListener* pTcpListener = nullptr;
+   if (desktopMode || standalone)
+      pTcpListener = dynamic_cast<TcpIpHttpConnectionListener*>(&httpConnectionListener());
+
+   if (pTcpListener)
    {
-      // publish the port we're bound to, which the OS picks if www-port is 0,
-      // so rpostback and others can connect back into the session. bind
-      // before start() so the environment changes before the listener's
-      // threads run. a listener on a local stream (RS_LOCAL_PEER) has no port
-      // of its own
-      std::string port = options().wwwPort();
-      auto* pTcpListener =
-            dynamic_cast<TcpIpHttpConnectionListener*>(&httpConnectionListener());
-      if (pTcpListener)
-      {
-         error = pTcpListener->bindEndpoint();
-         if (error)
-            return error;
+      error = pTcpListener->bindEndpoint();
+      if (error)
+         return error;
 
-         port = safe_convert::numberToString(pTcpListener->getLocalEndpoint().port());
-      }
-
+      std::string port = safe_convert::numberToString(pTcpListener->getLocalEndpoint().port());
       module_context::setSessionPort(port);
       auto rule = core::http::createNoProxyRule("127.0.0.1", port);
       core::http::proxyUtils().addNoProxyRule(std::move(rule));
-      core::system::setenv(kRSessionPortNumber, port);
+      if (desktopMode)
+         core::system::setenv(kRSessionPortNumber, port);
+      if (standalone)
+         core::system::setenv(kRSessionStandalonePortNumber, port);
+   }
+   else if (desktopMode)
+   {
+      // a desktop listener on a local stream (RS_LOCAL_PEER, not on Windows)
+      // has no port. publish none, so requests back into the session go to
+      // the stream (see sendSessionRequest) rather than to www-port, which
+      // the session isn't listening on
+      core::system::unsetenv(kRSessionPortNumber);
    }
 
    error = httpConnectionListener().start();
    if (error)
       return error;
 
-   if (options().standalone())
+   if (pTcpListener && standalone)
    {
       // log the endpoint to which we have bound to so other services can discover us
-      TcpIpHttpConnectionListener& listener =
-            static_cast<TcpIpHttpConnectionListener&>(httpConnectionListener());
+      boost::asio::ip::tcp::endpoint endpoint = pTcpListener->getLocalEndpoint();
 
-      boost::asio::ip::tcp::endpoint endpoint = listener.getLocalEndpoint();
-
-      std::string protocol = listener.isSsl() ? " https" : "";
+      std::string protocol = pTcpListener->isSsl() ? " https" : "";
 
       std::cout << "Listener bound to address " << endpoint.address().to_string()
                 << " port " << endpoint.port() << protocol << std::endl;
 
-      // set the standalone port so rpostback and others know how to
-      // connect back into the session process
-      std::string port = safe_convert::numberToString(endpoint.port());
-      core::system::setenv(kRSessionStandalonePortNumber, port);
-
       // save the standalone port for possible session relaunches - launcher sessions
       // need to rebind to the same port
-      persistentState().setReusedStandalonePort(port);
+      persistentState().setReusedStandalonePort(safe_convert::numberToString(endpoint.port()));
    }
 
    return Success();

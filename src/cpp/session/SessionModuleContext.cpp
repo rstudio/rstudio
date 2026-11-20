@@ -1640,7 +1640,7 @@ shell_utils::ShellCommand rCmd(const core::FilePath& rBinDir)
 namespace {
 
 // set by startHttpConnectionListener, which also publishes it to child
-// processes as RSTUDIO_SESSION_PORT
+// processes (as RSTUDIO_SESSION_PORT or RSTUDIO_STANDALONE_PORT)
 std::string s_sessionPort;
 
 } // anonymous namespace

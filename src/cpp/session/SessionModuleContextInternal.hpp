@@ -51,7 +51,7 @@ void onBackgroundProcessing(bool isIdle);
 // source diagnostics
 core::FilePath sourceDiagnostics();
 
-// record the port the desktop listener bound (see sessionPort)
+// record the port the session's tcp listener bound (see sessionPort)
 void setSessionPort(const std::string& port);
 
 } // namespace module_context

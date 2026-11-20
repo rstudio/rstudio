@@ -113,10 +113,12 @@ REM prefer rsession-dev.conf when present (server builds), else rdesktop-dev.con
 REM Desktop mode listens on TCP www-port, so take one the OS picks (0): a dev
 REM server or another test run may hold any fixed port. Server mode doesn't
 REM listen on it, but R's help server takes its port from www-port, and 0 there
-REM means it isn't running, so keep the default that server sessions run with.
+REM means it isn't running, so keep the default that server sessions run with
+REM and don't take 0.
 set "SESSION_CONF=@CMAKE_CURRENT_BINARY_DIR@/conf/rdesktop-dev.conf"
 set "SESSION_WWW_PORT=0"
 if exist "@CMAKE_CURRENT_BINARY_DIR@/conf/rsession-dev.conf" (
+    if "!WWW_PORT!" == "0" goto :bad_server_port
     set "SESSION_CONF=@CMAKE_CURRENT_BINARY_DIR@/conf/rsession-dev.conf"
     set "SESSION_WWW_PORT=8787"
 )
@@ -295,6 +297,10 @@ goto :usage_err
 echo ERROR: --www-port takes a port number in 0-65535 1>&2
 goto :usage_err
 
+:bad_server_port
+echo ERROR: --www-port 0 is for desktop builds; this one runs its sessions in server mode 1>&2
+goto :usage_err
+
 :print_usage
 echo Run RStudio unit tests. Available options:
 echo.
@@ -307,7 +313,8 @@ echo               '--scope core --scope rsession' are all equivalent.
 echo               Scopes always run in the order listed above.
 echo   --filter    Run a subset of R tests matching the pattern ^(implies --scope r^).
 echo   --www-port  Port for the rsession and r scopes' session to listen on in
-echo               desktop builds ^(default: 0, a free port the OS picks^).
+echo               desktop builds ^(default: 0, a free port the OS picks^). Server
+echo               builds don't listen on it, and don't take 0.
 echo   --help      Show this help.
 echo.
 echo With no options, all scopes are run.

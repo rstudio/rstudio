@@ -2774,7 +2774,9 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
          core::system::setenv(kRStudioSessionStream, stream);
       }
 
-      // set the standalone port if we are running in standalone mode
+      // set the standalone port if we are running in standalone mode (the
+      // port the listener binds replaces it, as www-port may be 0; see
+      // startHttpConnectionListener)
       if (options.standalone())
       {
          std::string port = options.wwwPort();
@@ -3094,10 +3096,15 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
       rOptions.scopedScratchPath = module_context::scopedScratchPath();
       rOptions.sessionScratchPath = module_context::sessionScratchPath();
       rOptions.logPath = options.userLogPath();
-      // the configured port, not the bound one (module_context::sessionPort):
-      // it names the restart context, which the restarted session, launched
-      // with the same www-port, must find even when that's 0
-      rOptions.sessionPort = options.wwwPort();
+      // names the restart context. in desktop mode, the bound port, so
+      // sessions started with www-port 0 in the same scope each get their own
+      // rather than sharing (and restoring) one named for port 0. a restart
+      // that keeps the client's page has to relaunch on the port that page is
+      // connected to, so the restarted session is given this port and finds
+      // the context. a server session has a scope of its own, and may be
+      // relaunched with www-port 0 and bind another port, so it keeps the
+      // configured one
+      rOptions.sessionPort = desktopMode ? module_context::sessionPort() : options.wwwPort();
       rOptions.startupEnvironmentFilePath = getStartupEnvironmentFilePath();
       rOptions.rEnvironmentDir = boost::bind(dirs::rEnvironmentDir);
       rOptions.rHistoryDir = boost::bind(dirs::rHistoryDir);
