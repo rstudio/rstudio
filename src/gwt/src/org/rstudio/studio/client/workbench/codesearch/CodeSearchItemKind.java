@@ -14,9 +14,13 @@
  */
 package org.rstudio.studio.client.workbench.codesearch;
 
+import org.rstudio.core.client.container.SafeMap;
+import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.studio.client.common.icons.code.CodeIcons;
 import org.rstudio.studio.client.workbench.codesearch.model.SourceItem;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.resources.client.ImageResource;
 
 // Names the kind of a code search result, used as alt text for its icon.
 // Labels follow the item's type rather than its icon, since several kinds
@@ -28,7 +32,10 @@ class CodeSearchItemKind
    static String label(int type, String xrefType)
    {
       if (xrefType != null)
-         return xrefLabel(xrefType);
+      {
+         XRefKind kind = XREF_KINDS.get(xrefType);
+         return kind == null ? "" : kind.label;
+      }
 
       switch (type)
       {
@@ -49,33 +56,61 @@ class CodeSearchItemKind
       }
    }
 
-   private static String xrefLabel(String xrefType)
+   // Returns null for a cross-reference type with no icon of its own.
+   static ImageResource xrefIcon(String xrefType)
    {
-      switch (xrefType)
+      XRefKind kind = XREF_KINDS.get(xrefType);
+      return kind == null ? null : new ImageResource2x(kind.icon);
+   }
+
+   private static class XRefKind
+   {
+      XRefKind(ImageResource icon, String label)
       {
-      case "h1": return constants_.headingKind(1);
-      case "h2": return constants_.headingKind(2);
-      case "h3": return constants_.headingKind(3);
-      case "h4": return constants_.headingKind(4);
-      case "h5": return constants_.headingKind(5);
-      case "h6": return constants_.headingKind(6);
-      case "sec": return constants_.sectionKind();
-      case "fig": return constants_.figureKind();
-      case "tab":
-      case "tbl": return constants_.tableKind();
-      case "lst": return constants_.listingKind();
-      case "thm": return constants_.theoremKind();
-      case "lem": return constants_.lemmaKind();
-      case "cor": return constants_.corollaryKind();
-      case "prp": return constants_.propositionKind();
-      case "cnj": return constants_.conjectureKind();
-      case "def": return constants_.definitionKind();
-      case "exm": return constants_.exampleKind();
-      case "exr": return constants_.exerciseKind();
-      case "eq":  return constants_.equationKind();
-      default:    return "";
+         this.icon = icon;
+         this.label = label;
       }
+
+      final ImageResource icon;
+      final String label;
+   }
+
+   // One entry per cross-reference type, so a type can't get an icon
+   // without a label or the reverse.
+   private static SafeMap<String, XRefKind> createXRefKinds()
+   {
+      CodeIcons icons = CodeIcons.INSTANCE;
+      SafeMap<String, XRefKind> map = new SafeMap<>();
+
+      // section headers
+      map.put("h1", new XRefKind(icons.sectionH12x(), constants_.headingKind(1)));
+      map.put("h2", new XRefKind(icons.sectionH22x(), constants_.headingKind(2)));
+      map.put("h3", new XRefKind(icons.sectionH32x(), constants_.headingKind(3)));
+      map.put("h4", new XRefKind(icons.sectionH42x(), constants_.headingKind(4)));
+      map.put("h5", new XRefKind(icons.sectionH52x(), constants_.headingKind(5)));
+      map.put("h6", new XRefKind(icons.sectionH62x(), constants_.headingKind(6)));
+      map.put("sec", new XRefKind(icons.section2x(), constants_.sectionKind()));
+
+      // figures, tables, and code listings
+      map.put("fig", new XRefKind(icons.figure2x(), constants_.figureKind()));
+      map.put("tab", new XRefKind(icons.table2x(), constants_.tableKind()));
+      map.put("tbl", new XRefKind(icons.table2x(), constants_.tableKind()));
+      map.put("lst", new XRefKind(icons.snippet2x(), constants_.listingKind()));
+
+      // math-related sections (e.g. theorems)
+      map.put("thm", new XRefKind(icons.function2x(), constants_.theoremKind()));
+      map.put("lem", new XRefKind(icons.function2x(), constants_.lemmaKind()));
+      map.put("cor", new XRefKind(icons.function2x(), constants_.corollaryKind()));
+      map.put("prp", new XRefKind(icons.function2x(), constants_.propositionKind()));
+      map.put("cnj", new XRefKind(icons.function2x(), constants_.conjectureKind()));
+      map.put("def", new XRefKind(icons.function2x(), constants_.definitionKind()));
+      map.put("exm", new XRefKind(icons.function2x(), constants_.exampleKind()));
+      map.put("exr", new XRefKind(icons.function2x(), constants_.exerciseKind()));
+      map.put("eq", new XRefKind(icons.function2x(), constants_.equationKind()));
+
+      return map;
    }
 
    private static final CodeSearchConstants constants_ = GWT.create(CodeSearchConstants.class);
+   private static final SafeMap<String, XRefKind> XREF_KINDS = createXRefKinds();
 }

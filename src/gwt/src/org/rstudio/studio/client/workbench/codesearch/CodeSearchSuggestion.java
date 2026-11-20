@@ -17,8 +17,6 @@ package org.rstudio.studio.client.workbench.codesearch;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.XRef;
-import org.rstudio.core.client.container.SafeMap;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -54,22 +52,12 @@ class CodeSearchSuggestion implements Suggestion
             null, null);
    }
    
-   private ImageResource iconForXRef(XRef xref)
-   {
-      String type = xref.getType();
-      if (XREF_ICON_MAP.containsKey(type))
-         return new ImageResource2x(XREF_ICON_MAP.get(type));
-      
-      return null;
-   }
-   
    private ImageResource iconForSourceItem(SourceItem sourceItem)
    {
       // check for bookdown xref
       if (sourceItem.hasXRef())
       {
-         XRef xref = sourceItem.getXRef();
-         ImageResource icon = iconForXRef(xref);
+         ImageResource icon = CodeSearchItemKind.xrefIcon(sourceItem.getXRef().getType());
          if (icon != null)
             return icon;
       }
@@ -258,43 +246,6 @@ class CodeSearchSuggestion implements Suggestion
       return sb.toSafeHtml().asString();
    }
    
-   private static final SafeMap<String, ImageResource> createXRefIconMap()
-   {
-      SafeMap<String, ImageResource> map = new SafeMap<>();
-      
-      // section headers
-      map.put("h1", CodeIcons.INSTANCE.sectionH12x());
-      map.put("h2", CodeIcons.INSTANCE.sectionH22x());
-      map.put("h3", CodeIcons.INSTANCE.sectionH32x());
-      map.put("h4", CodeIcons.INSTANCE.sectionH42x());
-      map.put("h5", CodeIcons.INSTANCE.sectionH52x());
-      map.put("h6", CodeIcons.INSTANCE.sectionH62x());
-      
-      // figures
-      map.put("fig", CodeIcons.INSTANCE.figure2x());
-      
-      // tables
-      map.put("tab", CodeIcons.INSTANCE.table2x());
-      map.put("tbl", CodeIcons.INSTANCE.table2x());
-
-      // code listings
-      map.put("lst", CodeIcons.INSTANCE.snippet2x());
-      
-      // math-related sections (e.g. theorems)
-      map.put("thm", CodeIcons.INSTANCE.function2x());
-      map.put("lem", CodeIcons.INSTANCE.function2x());
-      map.put("cor", CodeIcons.INSTANCE.function2x());
-      map.put("prp", CodeIcons.INSTANCE.function2x());
-      map.put("cnj", CodeIcons.INSTANCE.function2x());
-      map.put("def", CodeIcons.INSTANCE.function2x());
-      map.put("exm", CodeIcons.INSTANCE.function2x());
-      map.put("exr", CodeIcons.INSTANCE.function2x());
-      map.put("eq",  CodeIcons.INSTANCE.function2x());
-      
-      return map;
-      
-   }
-   
    private final boolean isFileTarget_;
    private final CodeNavigationTarget navigationTarget_;
    private final String matchedString_;
@@ -302,5 +253,4 @@ class CodeSearchSuggestion implements Suggestion
    private static final FileTypeRegistry fileTypeRegistry_ =
                               RStudioGinjector.INSTANCE.getFileTypeRegistry();
    private static final CodeSearchResources RES = CodeSearchResources.INSTANCE;
-   private static final SafeMap<String, ImageResource> XREF_ICON_MAP = createXRefIconMap();
 }
