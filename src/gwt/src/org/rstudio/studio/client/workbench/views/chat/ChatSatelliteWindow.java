@@ -138,7 +138,10 @@ public class ChatSatelliteWindow extends SatelliteWindow
             }
             else if (action == SessionSerializationAction.RESUME_SESSION)
             {
-               hideSuspendOverlay();
+               // With the notice up, the old chat page stays dead until the
+               // main window reloads it here; reactivate() clears both then
+               if (suspendedNotice_.getParent() != getMainPanel())
+                  hideSuspendOverlay();
             }
          });
 
@@ -179,8 +182,6 @@ public class ChatSatelliteWindow extends SatelliteWindow
    // the session resumes and the chat page is reloaded
    private void showSuspendedNotice(String notice)
    {
-      suspendedNoticeLabel_.setText(notice);
-
       LayoutPanel panel = getMainPanel();
       if (suspendedNotice_.getParent() != panel)
       {
@@ -189,6 +190,11 @@ public class ChatSatelliteWindow extends SatelliteWindow
          panel.setWidgetLeftRight(suspendedNotice_, 0, Unit.PX, 0, Unit.PX);
          panel.getWidgetContainerElement(suspendedNotice_).getStyle().setZIndex(1);
       }
+
+      // Screen readers announce a status region's text only when it changes
+      // after the region is in the document
+      suspendedNoticeLabel_.setText("");
+      Scheduler.get().scheduleDeferred(() -> suspendedNoticeLabel_.setText(notice));
    }
 
    private void hideSuspendedNotice()
