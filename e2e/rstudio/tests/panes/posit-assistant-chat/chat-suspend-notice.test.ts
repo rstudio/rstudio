@@ -241,8 +241,9 @@ test.describe.serial('Posit Assistant across suspend and restart', {
       await dismissBlockingModals(page);
       await expect(suspendedNotice(satellite)).toBeHidden({ timeout: 15000 });
     } finally {
-      // On Server, reopening the window after resume returns chat to the main
-      // window but can leave this one open, so close it directly as well
+      // Under Playwright, chat can be back in the main window after resume
+      // with this window still open, so returnChatToMain doesn't close it.
+      // Manual testing in Chrome keeps chat popped out.
       await executeCommand(page, 'returnChatToMain');
       await satellite.close();
     }
