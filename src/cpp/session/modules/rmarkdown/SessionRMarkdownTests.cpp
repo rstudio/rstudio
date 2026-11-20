@@ -37,16 +37,22 @@ TEST(SessionRMarkdownTest, NotebookQueuesRefuseDocumentIdsWithANul)
    // would be read up to it, naming another document (#19697). a json::Value
    // assigned from a std::string stops at a nul, so the JSON is parsed
    const std::string unitTemplate = R"({
-      "code": "1", "doc_id": "%DOC_ID%", "chunk_id": "c1", "doc_type": "%DOC_TYPE%",
+      "code": "1", "doc_id": "%DOC_ID%", "chunk_id": "%CHUNK_ID%", "doc_type": "%DOC_TYPE%",
       "completed": [], "pending": [], "exec_mode": 0, "exec_scope": 0
    })";
 
-   auto readUnit = [&](const std::string& docId, const std::string& docType)
+   auto unitText = [&](const std::string& docId, const std::string& docType, const std::string& chunkId)
    {
       std::string text = boost::algorithm::replace_all_copy(unitTemplate, "%DOC_ID%", docId);
       boost::algorithm::replace_all(text, "%DOC_TYPE%", docType);
+      boost::algorithm::replace_all(text, "%CHUNK_ID%", chunkId);
+      return text;
+   };
+
+   auto readUnit = [&](const std::string& docId, const std::string& docType, const std::string& chunkId = "c1")
+   {
       json::Value value;
-      EXPECT_FALSE(value.parse(text));
+      EXPECT_FALSE(value.parse(unitText(docId, docType, chunkId)));
 
       auto pUnit = boost::make_shared<notebook::NotebookQueueUnit>();
       return notebook::NotebookQueueUnit::fromJson(value.getObject(), &pUnit);
@@ -55,15 +61,17 @@ TEST(SessionRMarkdownTest, NotebookQueuesRefuseDocumentIdsWithANul)
    EXPECT_FALSE(readUnit("ABCD1234", "rmarkdown"));
    EXPECT_EQ(static_cast<int>(json::errc::ParamInvalid), readUnit("ABCD1234\\u0000x", "rmarkdown").getCode());
    EXPECT_EQ(static_cast<int>(json::errc::ParamInvalid), readUnit("ABCD1234", "rmark\\u0000down").getCode());
+   EXPECT_EQ(static_cast<int>(json::errc::ParamInvalid), readUnit("ABCD1234", "rmarkdown", "c1\\u0000x").getCode());
 
    const std::string queueTemplate = R"({
       "doc_id": "%DOC_ID%", "job_desc": "", "working_dir": "", "commit_mode": 0,
-      "pixel_width": 0, "char_width": 0, "units": [], "max_units": 0
+      "pixel_width": 0, "char_width": 0, "units": [%UNITS%], "max_units": 0
    })";
 
-   auto readQueue = [&](const std::string& docId)
+   auto readQueue = [&](const std::string& docId, const std::string& units = std::string())
    {
       std::string text = boost::algorithm::replace_all_copy(queueTemplate, "%DOC_ID%", docId);
+      boost::algorithm::replace_all(text, "%UNITS%", units);
       json::Value value;
       EXPECT_FALSE(value.parse(text));
 
@@ -73,6 +81,13 @@ TEST(SessionRMarkdownTest, NotebookQueuesRefuseDocumentIdsWithANul)
 
    EXPECT_FALSE(readQueue("ABCD1234"));
    EXPECT_EQ(static_cast<int>(json::errc::ParamInvalid), readQueue("ABCD1234\\u0000x").getCode());
+
+   // a unit the queue can't hold refuses the whole queue, rather than leave
+   // it short of the units it counts (or with none, blocking those after it)
+   std::string goodUnit = unitText("ABCD1234", "rmarkdown", "c1");
+   std::string badUnit = unitText("ABCD1234", "rmarkdown", "c2\\u0000x");
+   EXPECT_FALSE(readQueue("ABCD1234", goodUnit));
+   EXPECT_EQ(static_cast<int>(json::errc::ParamInvalid), readQueue("ABCD1234", goodUnit + "," + badUnit).getCode());
 }
 
 TEST(SessionRMarkdownTest, KnownSafeRenderFunctionsDoNotRequireConfirmation)

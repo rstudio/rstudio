@@ -670,11 +670,14 @@ TEST(SessionRTest, LookupsCatchErrorsFromBindings) {
       # not return once the binding that shadows it fails, as R wouldn't;
       # attached first, as checking for conflicts would read the binding
       attach(list(.rs.test.failingBinding = function() NULL,
-                  .rs.test.missingBinding = function() NULL),
+                  .rs.test.missingBinding = function() NULL,
+                  .rs.test.missingPromise = function() NULL),
              name = "rstudio-test-shadowed", warn.conflicts = FALSE)
 
-      # a missing argument, an error for R's lookup of a function too
+      # a missing argument, an error for R's lookup of a function too, and a
+      # promise whose value is one
       assign(".rs.test.missingBinding", quote(expr = ), envir = globalenv())
+      delayedAssign(".rs.test.missingPromise", quote(expr = ), assign.env = globalenv())
 
       # bindings that warn, or signal an interrupt, while being read
       makeActiveBinding(".rs.test.warningBinding", function() {
@@ -702,8 +705,9 @@ TEST(SessionRTest, LookupsCatchErrorsFromBindings) {
       # a promise for a function, which counts how often it's forced
       assign(".rs.test.functionPromiseForces", 0L, envir = globalenv())
       delayedAssign(".rs.test.functionPromise", {
-         forces <- get(".rs.test.functionPromiseForces", envir = globalenv())
-         assign(".rs.test.functionPromiseForces", forces + 1L, envir = globalenv())
+         assign(".rs.test.functionPromiseForces",
+                get(".rs.test.functionPromiseForces", envir = globalenv()) + 1L,
+                envir = globalenv())
          function() NULL
       }, assign.env = globalenv())
    )EOF");
@@ -720,7 +724,8 @@ TEST(SessionRTest, LookupsCatchErrorsFromBindings) {
          rm(list = c(".rs.test.failingBinding", ".rs.test.failingPromise", ".rs.test.workingBinding",
                      ".rs.test.bindingCalls", ".rs.test.promiseForced", ".rs.test.missingBinding",
                      ".rs.test.warningBinding", ".rs.test.interruptingBinding",
-                     ".rs.test.functionPromise", ".rs.test.functionPromiseForces"),
+                     ".rs.test.functionPromise", ".rs.test.functionPromiseForces",
+                     ".rs.test.missingPromise"),
             envir = globalenv())
       )EOF");
    }
@@ -783,6 +788,7 @@ TEST(SessionRTest, LookupsCatchErrorsFromBindings) {
    bool interruptRearmedAtPrompt = true;
    bool interruptRearmedForInputHandler = false;
    SEXP missingFunctionSEXP = R_GlobalEnv;
+   SEXP missingPromiseFunctionSEXP = R_GlobalEnv;
    lookupError = r::exec::executeSafely([&]()
    {
       warningSEXP = r::sexp::findVar(".rs.test.warningBinding", R_GlobalEnv);
@@ -805,10 +811,12 @@ TEST(SessionRTest, LookupsCatchErrorsFromBindings) {
       r::session::setInputHandlersRunning(false);
 
       missingFunctionSEXP = r::sexp::findFunction(".rs.test.missingBinding");
+      missingPromiseFunctionSEXP = r::sexp::findFunction(".rs.test.missingPromise");
    });
    ASSERT_FALSE(lookupError) << lookupError.asString();
    EXPECT_TRUE(warningSEXP != nullptr && TYPEOF(warningSEXP) == INTSXP);
    EXPECT_EQ(nullptr, missingFunctionSEXP);
+   EXPECT_EQ(nullptr, missingPromiseFunctionSEXP);
 
    // before R 3.6.2, R_ToplevelExec() is used, under which signalling an
    // interrupt condition is a no-op

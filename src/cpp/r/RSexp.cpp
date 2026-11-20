@@ -936,8 +936,9 @@ SEXP findFunction(const std::string& name, const std::string& ns)
 
       if (resultSEXP != nullptr && TYPEOF(resultSEXP) == PROMSXP)
       {
+         // as can a promise's value, e.g. delayedAssign("f", quote(expr = ))
          resultSEXP = forcePromiseCaught(resultSEXP);
-         if (resultSEXP == nullptr)
+         if (resultSEXP == nullptr || resultSEXP == R_MissingArg)
             return nullptr;
 
          protect.add(resultSEXP);

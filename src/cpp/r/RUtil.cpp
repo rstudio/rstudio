@@ -81,10 +81,11 @@ namespace {
 
 bool versionTest(const std::string& comparator, const std::string& version)
 {
-   // both functions from base, so that a user's definitions can't mask them
+   // both functions from base, and evaluated there, so that a user's
+   // definitions (an Ops.numeric_version method, say) can't mask them
    std::string versionTest("base::`" + comparator + "`(base::getRversion(), \"" + version + "\")");
    bool hasVersion = false;
-   Error error = r::exec::evaluateString(versionTest, &hasVersion);
+   Error error = r::exec::evaluateString(versionTest, R_BaseEnv, &hasVersion);
    if (error)
    {
       LOG_ERROR(error);

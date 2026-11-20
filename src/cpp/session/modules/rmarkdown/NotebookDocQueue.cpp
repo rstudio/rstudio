@@ -171,11 +171,17 @@ core::Error NotebookDocQueue::fromJson(const core::json::Object& source,
 
       boost::shared_ptr<NotebookQueueUnit> pUnit = 
          boost::make_shared<NotebookQueueUnit>();
+      // a unit refused here refuses the whole queue: one left without units
+      // would block the queues after it, and maxUnits would count units it
+      // doesn't hold
       Error error = NotebookQueueUnit::fromJson(val.getObject(), &pUnit);
       if (error)
-         LOG_ERROR(error);
-      else
-         (*pQueue)->queue_.push_back(pUnit);
+      {
+         pQueue->reset();
+         return error;
+      }
+
+      (*pQueue)->queue_.push_back(pUnit);
    }
 
    return Success();
