@@ -274,10 +274,14 @@ core::Error iconvstrImpl(const std::string& value,
    std::vector<char> output;
    output.reserve(value.length());
 
-   // R_ERRNO is the C runtime's errno, also on Windows: a generic code, not a system one
+   // R_ERRNO is the C runtime's errno, also on Windows: a generic code, not a system one.
+   // read it before ERROR_LOCATION's allocations can change it
    void* handle = ::Riconv_open(to.c_str(), from.c_str());
    if (handle == (void*)(-1))
-      return systemError(std::error_code(R_ERRNO, std::generic_category()), ERROR_LOCATION);
+   {
+      int errorNumber = R_ERRNO;
+      return systemError(std::error_code(errorNumber, std::generic_category()), ERROR_LOCATION);
+   }
 
    const char* pIn = value.data();
    size_t inBytes = value.size();

@@ -579,7 +579,11 @@ Error captureCommand(const std::string& command, std::string* pOutput)
    // start process
    FILE* fp = ::_popen(command.c_str(), "r");
    if (fp == nullptr)
-      return systemError(std::error_code(errno, std::generic_category()), ERROR_LOCATION);
+   {
+      // read errno before ERROR_LOCATION's allocations can change it
+      int errorNumber = errno;
+      return systemError(std::error_code(errorNumber, std::generic_category()), ERROR_LOCATION);
+   }
 
    // collect output
    const int kBuffSize = 1024;
