@@ -871,7 +871,71 @@ TEST(FileSerializerTest, WriteStringAtomicReadOnlyTargetFailsWithoutRetrying)
    dir.remove();
 }
 
+// A file another program holds open fails to open with a sharing violation.
+// Boost counts that as permission_denied, though what it calls for is closing
+// the file in the other program, so isFileInUseError() is what tells the two
+// apart.
+TEST(FileSerializerTest, FileHeldOpenByAnotherHandleIsInUse)
+{
+   FilePath dir = scratchDir();
+   FilePath filePath = dir.completePath("report.csv");
+   ASSERT_FALSE(writeStringToFile(filePath, "original\n"));
+
+   // as a program does that keeps the file open for writing, sharing reads
+   HANDLE hOther = ::CreateFileW(
+      filePath.getAbsolutePathW().c_str(),
+      GENERIC_READ | GENERIC_WRITE,
+      FILE_SHARE_READ,
+      nullptr,
+      OPEN_EXISTING,
+      FILE_ATTRIBUTE_NORMAL,
+      nullptr);
+   ASSERT_NE(INVALID_HANDLE_VALUE, hOther);
+
+   Error writeError = writeStringToFile(filePath,
+                                        "replaced\n",
+                                        string_utils::LineEndingPassthrough,
+                                        true /* truncate */,
+                                        0 /* maxOpenRetrySeconds */,
+                                        false /* logError */);
+   EXPECT_TRUE(isFileInUseError(writeError)) << writeError.asString();
+   EXPECT_TRUE(writeError.matches(boost::system::errc::permission_denied));
+
+   // our readers don't share writes, so the read fails the same way
+   std::string contents;
+   Error readError = readStringFromFile(filePath, &contents);
+   EXPECT_TRUE(isFileInUseError(readError)) << readError.asString();
+   EXPECT_TRUE(readError.matches(boost::system::errc::permission_denied));
+
+   ASSERT_NE(FALSE, ::CloseHandle(hOther));
+
+   EXPECT_FALSE(readStringFromFile(filePath, &contents));
+   EXPECT_EQ("original\n", contents);
+
+   dir.remove();
+}
+
 #endif
+
+TEST(FileSerializerTest, IsFileInUseErrorClassifies)
+{
+   EXPECT_FALSE(isFileInUseError(Success()));
+
+#ifdef _WIN32
+   EXPECT_TRUE(isFileInUseError(systemError(ERROR_SHARING_VIOLATION, ERROR_LOCATION)));
+
+   // a file we aren't allowed to open isn't one that's in use
+   EXPECT_FALSE(isFileInUseError(systemError(ERROR_ACCESS_DENIED, ERROR_LOCATION)));
+
+   // the same number as an errno value (EPIPE) is a different error
+   EXPECT_FALSE(isFileInUseError(genericError(static_cast<int>(ERROR_SHARING_VIOLATION), ERROR_LOCATION)));
+#else
+   // there is no exclusive file access on POSIX
+   EXPECT_FALSE(isFileInUseError(systemError(EACCES, ERROR_LOCATION)));
+   EXPECT_FALSE(isFileInUseError(systemError(EBUSY, ERROR_LOCATION)));
+   EXPECT_FALSE(isFileInUseError(systemError(ETXTBSY, ERROR_LOCATION)));
+#endif
+}
 
 // isDiskSpaceError must recognize the full-disk / over-quota error codes (so a
 // raw write failure can be turned into a recovery-oriented message) and must

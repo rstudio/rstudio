@@ -51,16 +51,6 @@ namespace core {
 
 namespace {
 
-bool isFileLockedError(const Error& error)
-{
-   // exclusive file access is only present on Windows
-#ifndef _WIN32
-   return false;
-#else
-   return (error && error.getCode() == ERROR_SHARING_VIOLATION);
-#endif
-}
-
 // Annotate the Error for a failed file operation with the path. The caller
 // builds the Error right after the failing call, before any cleanup (close,
 // etc.) can change errno or GetLastError(). Taking an int code here instead
@@ -315,7 +305,7 @@ Error writeContentsToFileWithRetry(const FilePath& filePath,
       Error error = writeContentsToFile(filePath, contents, truncate, durable);
 
       // success and all non-sharing-violation errors are returned immediately
-      if (!isFileLockedError(error))
+      if (!isFileInUseError(error))
          return error;
 
       error.addOrUpdateProperty("open-attempts", ++numTries);
@@ -1028,6 +1018,19 @@ Error writeStringToFile(const FilePath& filePath,
       LOG_ERROR(error);
 
    return error;
+}
+
+bool isFileInUseError(const Error& error)
+{
+   // exclusive file access is only present on Windows
+#ifndef _WIN32
+   return false;
+#else
+   // a Win32 code: as an errno value, the same number is EPIPE
+   return error &&
+          error.getName() == boost::system::system_category().name() &&
+          error.getCode() == ERROR_SHARING_VIOLATION;
+#endif
 }
 
 bool isDiskSpaceError(const Error& error)
