@@ -228,6 +228,14 @@
 
 body.windows, body.macintosh, body.linux {}
 
+/* The layout is absolutely positioned, so html and body would otherwise be 0px tall.
+   Window.enableScrolling(false) makes html overflow: hidden, and axe-core treats a 0px
+   overflow: hidden ancestor as clipping its content, so it skips nearly every element
+   when checking color contrast. */
+html, body {
+   height: 100%;
+}
+
 body {
    background: BACKGROUNDGRADIENT repeat-x top #e1e2e5;
 }
@@ -2508,10 +2516,14 @@ input[type="checkbox"]:checked:before {
    font-family: proportionalFont;
    text-transform: uppercase;
    font-size: 11px;
-   color: #909090;
+   color: #707070;
    padding-left: 28px;
    padding-top: 2px;
    padding-bottom: 2px;
+}
+
+.rstudio-themes-dark-menus .menuSubheader {
+   color: #a8a8a8;
 }
 
 .menuItemSubtitle {

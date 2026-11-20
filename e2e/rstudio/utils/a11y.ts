@@ -187,6 +187,30 @@ function scanOutput(testInfo: TestInfo, subState: string | undefined): (file: st
 }
 
 /**
+ * Fail if html or body would hide the page from axe. axe-core counts an
+ * element outside an `overflow: hidden` ancestor's box as off screen and skips
+ * it, so a root element shorter than the window (e.g. 0px tall above an
+ * absolutely positioned layout) makes rules like color-contrast check almost nothing.
+ */
+export async function assertRootsCoverWindow(page: Page): Promise<void> {
+  const clipping = await page.evaluate(() => [document.documentElement, document.body]
+    .filter((el) => getComputedStyle(el).overflow === 'hidden')
+    .map((el) => ({ tag: el.tagName.toLowerCase(), rect: el.getBoundingClientRect() }))
+    // innerWidth/innerHeight are rounded, but at fractional display scaling a
+    // root that fills the window can end a fraction of a pixel short of them.
+    .filter(({ rect }) => rect.left > 0 || rect.top > 0 ||
+      rect.right < window.innerWidth - 1 || rect.bottom < window.innerHeight - 1)
+    .map(({ tag, rect }) => `<${tag}> is ${Math.round(rect.width)}x${Math.round(rect.height)}px ` +
+      `at (${Math.round(rect.left)}, ${Math.round(rect.top)}) in a ` +
+      `${window.innerWidth}x${window.innerHeight}px window`));
+  if (clipping.length > 0) {
+    throw new Error(`scanA11y: ${clipping.join('; ')}, with overflow: hidden. axe-core would ` +
+      'treat content outside it as hidden and skip it. Make html and body fill the window ' +
+      '(see html, body in src/gwt/src/org/rstudio/core/client/theme/res/themeStyles.css).');
+  }
+}
+
+/**
  * Scan the page as it is now and report the results on the test: a
  * screenshot of what was scanned, rule-set and incomplete-count annotations,
  * the raw results, and a readable violations list. Files go to the test's
@@ -208,6 +232,7 @@ export async function scanA11y(
   await testInfo.attach(attachment(SCREENSHOT_FILE),
     { path: screenshot, contentType: 'image/png' });
 
+  await assertRootsCoverWindow(page);
   const results = await runAxe(page, selected);
 
   if (!testInfo.annotations.some((a) => a.type === 'a11y-rules'))
