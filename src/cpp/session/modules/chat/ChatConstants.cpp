@@ -69,6 +69,7 @@ const std::vector<std::string>& rstudioCapabilities()
       "runtime/getDetailedContext",
       "runtime/executeCode",
       "runtime/executeCode/interleavingPrimitives",
+      "runtime/executeCode/timeout",
       "runtime/getConsoleContent",
       "workspace/readFileContent",
       "workspace/writeFileContent",
