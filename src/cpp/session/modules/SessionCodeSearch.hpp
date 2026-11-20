@@ -114,6 +114,10 @@ bool isIgnoredDirectory(const core::FilePath& directory, bool isPackageProject);
 
 void addAllProjectSymbols(std::set<std::string>* pSymbols);
 
+// The result type sent to the client (SourceItem.java's constants) for a
+// bookdown or Quarto cross-reference type, e.g. 10 (MATH) for "thm".
+int sourceItemTypeForXRef(const std::string& xrefType);
+
 core::Error initialize();
    
 } // namespace code_search

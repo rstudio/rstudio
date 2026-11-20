@@ -51,6 +51,8 @@ import org.rstudio.studio.client.application.ApplicationUtilsTests;
 import org.rstudio.studio.client.application.ui.WarningBarListTests;
 import org.rstudio.studio.client.application.ui.ApplicationWindowTests;
 import org.rstudio.studio.client.workbench.WorkbenchWarningTests;
+import org.rstudio.studio.client.workbench.codesearch.CodeSearchItemKindTests;
+import org.rstudio.studio.client.workbench.codesearch.CodeSearchSuggestionTests;
 import org.rstudio.studio.client.application.QuitGateTests;
 import org.rstudio.studio.client.application.model.UpdateCheckResultTests;
 import org.rstudio.studio.client.application.model.SessionScopeTests;
@@ -163,6 +165,8 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(FileIconRendererTests.class);
       suite.addTestSuite(ChunkContextUiTests.class);
       suite.addTestSuite(SafeHtmlUtilTests.class);
+      suite.addTestSuite(CodeSearchItemKindTests.class);
+      suite.addTestSuite(CodeSearchSuggestionTests.class);
       suite.addTestSuite(CommandShortcutReferenceTests.class);
       suite.addTestSuite(LintItemTests.class);
       suite.addTestSuite(PositAiInstallManagerTests.class);
