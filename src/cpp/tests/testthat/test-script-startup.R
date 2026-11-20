@@ -44,9 +44,11 @@ runSessionScript <- function(blockSourceDatabase = FALSE,
       writeLines("not a directory", file.path(root, "data", "sources"))
 
    # Set only the child's environment; changing this session's environment
-   # would race its worker threads. Avoid inheriting an active IDE's identity.
+   # would race its worker threads. Avoid inheriting an active IDE's identity,
+   # or its local peer, which puts a desktop session on a local stream (except
+   # on Windows) rather than TCP.
    env <- Sys.getenv()
-   env <- env[!grepl("^RSTUDIO_", names(env))]
+   env <- env[!grepl("^(RSTUDIO_|RS_LOCAL_PEER$)", names(env))]
    if (.Platform$OS.type == "windows")
    {
       # Use the Windows default locale; inherited POSIX names such as C.UTF-8

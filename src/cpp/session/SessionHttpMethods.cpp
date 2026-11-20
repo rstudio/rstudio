@@ -479,7 +479,8 @@ Error startHttpConnectionListener()
       // need to rebind to the same port
       persistentState().setReusedStandalonePort(port);
    }
-   else if (options().programMode() == kSessionProgramModeDesktop)
+
+   if (options().programMode() == kSessionProgramModeDesktop)
    {
       // publish the port we're bound to, which the OS picked if www-port is 0,
       // so rpostback and others can connect back into the session. a listener
