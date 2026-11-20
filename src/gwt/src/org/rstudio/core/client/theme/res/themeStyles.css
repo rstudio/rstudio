@@ -2516,10 +2516,14 @@ input[type="checkbox"]:checked:before {
    font-family: proportionalFont;
    text-transform: uppercase;
    font-size: 11px;
-   color: #909090;
+   color: #707070;
    padding-left: 28px;
    padding-top: 2px;
    padding-bottom: 2px;
+}
+
+.rstudio-themes-dark-menus .menuSubheader {
+   color: #a8a8a8;
 }
 
 .menuItemSubtitle {
