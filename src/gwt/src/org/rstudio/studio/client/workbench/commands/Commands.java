@@ -329,8 +329,6 @@ public abstract class
    public abstract AppCommand layoutZoomVcs();
    public abstract AppCommand vcsResolve();
 
-   // PDF
-
    // HTML preview
    public abstract AppCommand openHtmlExternal();
    public abstract AppCommand saveHtmlPreviewAsLocalFile();
