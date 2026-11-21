@@ -133,10 +133,6 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          // to handle the mouse event
          addBackForwardMouseDownHandlers();
       }
-      else
-      {
-         commands.showA11yDiagnostics().remove();
-      }
       
       events.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
       {
