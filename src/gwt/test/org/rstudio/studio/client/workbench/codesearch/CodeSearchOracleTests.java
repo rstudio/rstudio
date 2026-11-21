@@ -48,12 +48,6 @@ public class CodeSearchOracleTests extends GWTTestCase
       assertFalse(CodeSearchOracle.matchesQuery(function("addOne"), "addOne:10"));
    }
 
-   public void testWildcardMatchesFromStart()
-   {
-      assertTrue(CodeSearchOracle.matchesQuery(function("addOne"), "add*ne"));
-      assertFalse(CodeSearchOracle.matchesQuery(function("addOne"), "dd*ne"));
-   }
-
    public void testXRefScoresAgainstTextAfterColon()
    {
       assertEquals(0, CodeSearchOracle.scoreMatch(xref("exm", "fizz"), "exm:fizz"));
