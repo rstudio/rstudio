@@ -62,7 +62,7 @@ public class CodeSearchOracle extends SuggestOracle
                              suggestion.isFileTarget());
 
       String name = suggestion.getNameMatchedString();
-      if (!name.isEmpty() && StringUtil.isSubsequence(name, localQuery, true))
+      if (!name.isEmpty() && matchesText(name, suggestion, query))
          score = Math.min(score, scoreMatch(name, localQuery, false));
 
       return score;
