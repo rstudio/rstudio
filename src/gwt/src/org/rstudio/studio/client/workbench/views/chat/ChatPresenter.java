@@ -322,6 +322,12 @@ public class ChatPresenter extends BasePresenter
             {
                backendPollGeneration_++; // invalidate existing poll callbacks
                display_.hideReadlineNotification();
+
+               // Keep the bounds in case the window is closed while suspended,
+               // without dirtying client state: pushing it would resume the session
+               if (poppedOut_)
+                  captureSavedGeometry();
+
                // Only dim the chat UI if Posit Assistant was actually loaded and
                // running. If chat was never initialized (e.g., sidebar hidden at
                // startup) or another provider is selected, nothing will reconnect.
@@ -339,7 +345,7 @@ public class ChatPresenter extends BasePresenter
             {
                backendPollGeneration_++; // new lifecycle generation
 
-               // Save the satellite's geometry now rather than at suspend:
+               // Persist the geometry now; suspend only captures it, since
                // pushing dirty client state to a suspended session resumes it.
                if (poppedOut_)
                   updateSavedGeometry();
@@ -1029,28 +1035,35 @@ public class ChatPresenter extends BasePresenter
 
    private void updateSavedGeometry()
    {
+      if (captureSavedGeometry())
+         stateDirty_ = true;
+   }
+
+   /** Copies the open satellite's bounds into savedGeometry_; false if it's closed. */
+   private boolean captureSavedGeometry()
+   {
       WindowEx window = satelliteManager_.getSatelliteWindowObject(
          ChatSatellite.NAME);
-      if (window != null)
-      {
-         // In desktop mode, use outer dimensions because Electron's
-         // setSize() sets the outer window size including title bar.
-         // In web mode, use inner dimensions because window.open()
-         // width/height set the content area size.
-         int width = Desktop.hasDesktopFrame()
-            ? window.getOuterWidth()
-            : window.getInnerWidth();
-         int height = Desktop.hasDesktopFrame()
-            ? window.getOuterHeight()
-            : window.getInnerHeight();
-         savedGeometry_ = SatelliteWindowGeometry.create(
-            0,
-            window.getScreenX(),
-            window.getScreenY(),
-            width,
-            height);
-         stateDirty_ = true;
-      }
+      if (window == null)
+         return false;
+
+      // In desktop mode, use outer dimensions because Electron's
+      // setSize() sets the outer window size including title bar.
+      // In web mode, use inner dimensions because window.open()
+      // width/height set the content area size.
+      int width = Desktop.hasDesktopFrame()
+         ? window.getOuterWidth()
+         : window.getInnerWidth();
+      int height = Desktop.hasDesktopFrame()
+         ? window.getOuterHeight()
+         : window.getInnerHeight();
+      savedGeometry_ = SatelliteWindowGeometry.create(
+         0,
+         window.getScreenX(),
+         window.getScreenY(),
+         width,
+         height);
+      return true;
    }
 
    private void returnChatToMain()
