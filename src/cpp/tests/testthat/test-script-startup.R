@@ -50,15 +50,24 @@ runSessionScript <- function(blockSourceDatabase = FALSE,
    # What a session suspended for restart would leave in this scope, were its
    # restart context named for www-port 0 rather than for the port it bound:
    # saved state for its successor to restore. Here that's an R option (see
-   # .rs.restoreOptions), and the environment, with the port the suspended
-   # session listened on, which a successor mustn't take for its own.
+   # .rs.restoreOptions), and the environment, with where the suspended
+   # session was reached (its ports, stream, and local peer), which a
+   # successor mustn't take for its own.
    if (seedPortZeroRestartContext)
    {
       restartContext <- file.path(root, "data", "ctx", "ctx-0")
       dir.create(restartContext, recursive = TRUE)
       opt <- list(rstudio.tests.portZeroRestartContext = "restored")
       save(opt, file = file.path(restartContext, "options"))
-      writeLines("RSTUDIO_SESSION_PORT=1", file.path(restartContext, "environment_vars"))
+      writeLines(
+         c(
+            "RSTUDIO_SESSION_PORT=1",
+            "RSTUDIO_STANDALONE_PORT=4",
+            "RSTUDIO_SESSION_STREAM=saved-session",
+            "RS_LOCAL_PEER=/saved/peer"
+         ),
+         file.path(restartContext, "environment_vars")
+      )
    }
 
    # Set only the child's environment; changing this session's environment
@@ -87,6 +96,7 @@ runSessionScript <- function(blockSourceDatabase = FALSE,
    # Have a desktop session listen on a local stream. A socket's path has to
    # be short, so it isn't put under root. The session leaves a lock file
    # beside it, so it gets a directory of its own.
+   localPeerPath <- NULL
    if (localPeer)
    {
       peerDir <- tempfile("rs-peer-", tmpdir = "/tmp")
@@ -97,7 +107,8 @@ runSessionScript <- function(blockSourceDatabase = FALSE,
          unlink(list.files(peerDir, all.files = TRUE, full.names = TRUE, no.. = TRUE))
          unlink(peerDir, recursive = TRUE)
       }, add = TRUE)
-      env[["RS_LOCAL_PEER"]] <- file.path(peerDir, "peer")
+      localPeerPath <- file.path(peerDir, "peer")
+      env[["RS_LOCAL_PEER"]] <- localPeerPath
    }
 
    args <- c(paste0("--config-file=", config), sessionArgs,
@@ -122,6 +133,7 @@ runSessionScript <- function(blockSourceDatabase = FALSE,
       error_on_status = FALSE
    )
    result$output <- paste(result$stdout, result$stderr, sep = "\n")
+   result$localPeer <- localPeerPath
    scriptOutput <- file.path(root, "home", "script-ran")
    result$scriptRan <- file.exists(scriptOutput)
    if (result$scriptRan)
@@ -205,12 +217,13 @@ test_that("a desktop session on a local stream publishes no session port", {
    # requests back into the session go to RS_LOCAL_PEER only when none of
    # these is set, whether inherited (as from an IDE session this one was
    # started in) or saved with the restart context it restores. With no port
-   # bound, that context is the one for www-port 0
+   # bound, that context is the one for www-port 0. Nor may that context's
+   # RS_LOCAL_PEER replace the one the session listens on
    vars <- c("RSTUDIO_SESSION_PORT", "RSTUDIO_STANDALONE_PORT", "RSTUDIO_SESSION_STREAM")
    inheritedEnv <- setNames(c("2", "3", "parent-session"), vars)
    script <- sprintf(
       "writeLines(c(getOption('rstudio.tests.portZeroRestartContext', 'not restored'), Sys.getenv(c(%s), 'unset')), 'script-ran')",
-      paste0("'", vars, "'", collapse = ", ")
+      paste0("'", c(vars, "RS_LOCAL_PEER"), "'", collapse = ", ")
    )
 
    result <- runSessionScript(script = script, localPeer = TRUE,
@@ -223,7 +236,8 @@ test_that("a desktop session on a local stream publishes no session port", {
    if (!result$scriptRan)
       return()
 
-   expect_equal(result$scriptOutput, c("restored", "unset", "unset", "unset"),
+   expect_equal(result$scriptOutput,
+                c("restored", "unset", "unset", "unset", result$localPeer),
                 info = result$output)
 })
 
