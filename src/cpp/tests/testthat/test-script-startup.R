@@ -50,9 +50,9 @@ runSessionScript <- function(blockSourceDatabase = FALSE,
    # What a session suspended for restart would leave in this scope, were its
    # restart context named for www-port 0 rather than for the port it bound:
    # saved state for its successor to restore. Here that's an R option (see
-   # .rs.restoreOptions), and the environment, with where the suspended
-   # session was reached (its ports, stream, and local peer), which a
-   # successor mustn't take for its own.
+   # .rs.restoreOptions), and the environment: a variable it set, and where
+   # the suspended session was reached (its ports, stream, and local peer),
+   # which a successor mustn't take for its own.
    if (seedPortZeroRestartContext)
    {
       restartContext <- file.path(root, "data", "ctx", "ctx-0")
@@ -61,6 +61,7 @@ runSessionScript <- function(blockSourceDatabase = FALSE,
       save(opt, file = file.path(restartContext, "options"))
       writeLines(
          c(
+            "RSTUDIO_TESTS_PORT_ZERO_RESTART_CONTEXT=restored",
             "RSTUDIO_SESSION_PORT=1",
             "RSTUDIO_STANDALONE_PORT=4",
             "RSTUDIO_SESSION_STREAM=saved-session",
@@ -192,10 +193,12 @@ test_that("a server session on www-port 0 restores a restart context for port 0,
    # its restart context's name. This is also what shows that the context
    # seeded for the test above is one a session would restore. The port saved
    # with it isn't restored: a server session publishes none, and
-   # sendSessionRequest would take one for its own
-   script <- paste(
-      "writeLines(c(getOption('rstudio.tests.portZeroRestartContext', 'not restored'),",
-      "Sys.getenv('RSTUDIO_SESSION_PORT', 'unset')), 'script-ran')"
+   # sendSessionRequest would take one for its own. Nor is the local peer: a
+   # desktop session started from this one would listen there
+   vars <- c("RSTUDIO_TESTS_PORT_ZERO_RESTART_CONTEXT", "RSTUDIO_SESSION_PORT", "RS_LOCAL_PEER")
+   script <- sprintf(
+      "writeLines(c(getOption('rstudio.tests.portZeroRestartContext', 'not restored'), Sys.getenv(c(%s), 'unset')), 'script-ran')",
+      paste0("'", vars, "'", collapse = ", ")
    )
 
    result <- runSessionScript(script = script, seedPortZeroRestartContext = TRUE,
@@ -207,7 +210,8 @@ test_that("a server session on www-port 0 restores a restart context for port 0,
    if (!result$scriptRan)
       return()
 
-   expect_equal(result$scriptOutput, c("restored", "unset"), info = result$output)
+   expect_equal(result$scriptOutput, c("restored", "restored", "unset", "unset"),
+                info = result$output)
 })
 
 test_that("a desktop session on a local stream publishes no session port", {
@@ -217,13 +221,14 @@ test_that("a desktop session on a local stream publishes no session port", {
    # requests back into the session go to RS_LOCAL_PEER only when none of
    # these is set, whether inherited (as from an IDE session this one was
    # started in) or saved with the restart context it restores. With no port
-   # bound, that context is the one for www-port 0. Nor may that context's
-   # RS_LOCAL_PEER replace the one the session listens on
+   # bound, that context is the one for www-port 0, whose other variables are
+   # restored. Nor may that context's RS_LOCAL_PEER replace the one the
+   # session listens on
    vars <- c("RSTUDIO_SESSION_PORT", "RSTUDIO_STANDALONE_PORT", "RSTUDIO_SESSION_STREAM")
    inheritedEnv <- setNames(c("2", "3", "parent-session"), vars)
    script <- sprintf(
       "writeLines(c(getOption('rstudio.tests.portZeroRestartContext', 'not restored'), Sys.getenv(c(%s), 'unset')), 'script-ran')",
-      paste0("'", c(vars, "RS_LOCAL_PEER"), "'", collapse = ", ")
+      paste0("'", c("RSTUDIO_TESTS_PORT_ZERO_RESTART_CONTEXT", vars, "RS_LOCAL_PEER"), "'", collapse = ", ")
    )
 
    result <- runSessionScript(script = script, localPeer = TRUE,
@@ -237,7 +242,7 @@ test_that("a desktop session on a local stream publishes no session port", {
       return()
 
    expect_equal(result$scriptOutput,
-                c("restored", "unset", "unset", "unset", result$localPeer),
+                c("restored", "restored", "unset", "unset", "unset", result$localPeer),
                 info = result$output)
 })
 

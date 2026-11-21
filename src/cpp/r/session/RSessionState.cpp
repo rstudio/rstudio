@@ -257,14 +257,13 @@ void setEnvVar(const std::string& name, const std::string& value)
    // picks anew on each start when www-port is 0, or its stream. the session
    // publishes these before R restores its state (once its listener binds),
    // or clears them for a desktop session listening on a local stream, which
-   // a saved value would misdirect
+   // a saved value would misdirect. nor the local stream a desktop session
+   // listens on, given at launch, if at all: a saved one would point requests
+   // elsewhere, and have a desktop session started from this one listen there
    if (name == "RSTUDIO_SESSION_PORT" ||
        name == "RSTUDIO_STANDALONE_PORT" ||
-       name == "RSTUDIO_SESSION_STREAM")
-      return;
-
-   // nor the local stream a desktop session listens on
-   if (name == "RS_LOCAL_PEER" && !core::system::getenv(name).empty())
+       name == "RSTUDIO_SESSION_STREAM" ||
+       name == "RS_LOCAL_PEER")
       return;
 
    // don't restore socket path environment variables (should be set by main session initialization)
