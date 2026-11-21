@@ -50,26 +50,44 @@ public class CodeSearchOracle extends SuggestOracle
       workbenchContext_ = workbenchContext;
    }
    
+   // A result with a name, such as a named theorem, ranks by whichever of
+   // its text and its name the query matches better.
    static int scoreMatch(CodeSearchSuggestion suggestion, String query)
    {
-      return scoreMatch(suggestion.getMatchedString(),
-                        queryFor(suggestion, query),
-                        suggestion.isFileTarget());
+      String localQuery = queryFor(suggestion, query);
+      int score = scoreMatch(suggestion.getMatchedString(),
+                             localQuery,
+                             suggestion.isFileTarget());
+
+      String name = suggestion.getNameMatchedString();
+      if (!name.isEmpty())
+         score = Math.min(score, scoreMatch(name, localQuery, false));
+
+      return score;
    }
 
-   // Whether a cached result also matches a longer query, decided as the
-   // server decides which results a query returns.
+   // Whether a cached result also matches a longer query, by its text or,
+   // like a named theorem, by its name.
    static boolean matchesQuery(CodeSearchSuggestion suggestion, String query)
    {
-      String name = suggestion.getMatchedString().toLowerCase();
+      String name = suggestion.getNameMatchedString();
+      return matchesText(suggestion.getMatchedString(), suggestion, query) ||
+             (!name.isEmpty() && matchesText(name, suggestion, query));
+   }
+
+   private static boolean matchesText(String text,
+                                      CodeSearchSuggestion suggestion,
+                                      String query)
+   {
+      String textLower = text.toLowerCase();
       String queryLower = query.toLowerCase();
       if (queryLower.indexOf('*') != -1)
       {
-         Match match = patternForTerm(queryLower).match(name, 0);
+         Match match = patternForTerm(queryLower).match(textLower, 0);
          return match != null && match.getIndex() == 0;
       }
 
-      return StringUtil.isSubsequence(name, queryFor(suggestion, query), true);
+      return StringUtil.isSubsequence(textLower, queryFor(suggestion, query), true);
    }
 
    // A file query may end in :<line>:<col> (see navigationTarget), so the

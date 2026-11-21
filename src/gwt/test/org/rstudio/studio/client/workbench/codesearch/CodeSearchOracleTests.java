@@ -67,10 +67,41 @@ public class CodeSearchOracleTests extends GWTTestCase
                    CodeSearchOracle.scoreMatch(file("addOne.R"), "addOne.R:10"));
    }
 
+   public void testNamedXRefMatchesLabelOrName()
+   {
+      CodeSearchSuggestion theorem = xref("thm", "pyth", "Pythagoras");
+      assertTrue(CodeSearchOracle.matchesQuery(theorem, "thm:pyth"));
+      assertTrue(CodeSearchOracle.matchesQuery(theorem, "Pythag"));
+      assertFalse(CodeSearchOracle.matchesQuery(theorem, "Euclid"));
+   }
+
+   // R functions send their signature as extra info; the query doesn't match it.
+   public void testFunctionDoesNotMatchExtraInfo()
+   {
+      SourceItem item = JsonUtils.safeEval(
+            "{\"type\": 1, \"name\": \"addOne\", \"extra_info\": \"(x)\", " +
+            "\"context\": \"~/addOne.R\"}");
+      assertFalse(CodeSearchOracle.matchesQuery(new CodeSearchSuggestion(item, null), "x"));
+   }
+
+   public void testNamedXRefRanksByName()
+   {
+      assertEquals(0, CodeSearchOracle.scoreMatch(
+            xref("thm", "pyth", "Pythagoras"), "Pythagoras"));
+      assertTrue(CodeSearchOracle.scoreMatch(xref("thm", "pyth", "Pythagoras"), "Pythagoras") <
+                 CodeSearchOracle.scoreMatch(xref("thm", "pyth"), "Pythagoras"));
+   }
+
    private static CodeSearchSuggestion xref(String xrefType, String id)
+   {
+      return xref(xrefType, id, "");
+   }
+
+   private static CodeSearchSuggestion xref(String xrefType, String id, String name)
    {
       SourceItem item = JsonUtils.safeEval(
             "{\"type\": 10, \"name\": \"" + xrefType + ":" + id + "\", " +
+            "\"extra_info\": \"" + name + "\", " +
             "\"context\": \"~/book\", \"metadata\": {\"type\": \"xref\", \"xref\": " +
             "{\"file\": \"01-intro.Rmd\", \"type\": \"" + xrefType + "\", " +
             "\"id\": \"" + id + "\"}}}");

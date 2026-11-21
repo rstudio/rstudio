@@ -39,6 +39,7 @@ class CodeSearchSuggestion implements Suggestion
       isFileTarget_ = true;
       navigationTarget_ = new CodeNavigationTarget(fileItem.getPath());
       matchedString_ = fileItem.getFilename();
+      nameMatchedString_ = "";
             
       // compute display string
       ImageResource image = 
@@ -113,6 +114,12 @@ class CodeSearchSuggestion implements Suggestion
       isFileTarget_ = false;
       navigationTarget_ = sourceItem.toCodeNavigationTarget();
       matchedString_ = sourceItem.getName();
+
+      // the server sends a cross-reference's name (e.g. a theorem's) as its
+      // extra info, and finds the cross-reference by that name too
+      nameMatchedString_ = sourceItem.hasXRef()
+            ? StringUtil.notNull(sourceItem.getExtraInfo())
+            : "";
       
       // get icon
       ImageResource image = iconForSourceItem(sourceItem);
@@ -174,6 +181,12 @@ class CodeSearchSuggestion implements Suggestion
    public String getMatchedString()
    {
       return matchedString_;
+   }
+
+   // a second string the query can match, or "" if there is none
+   public String getNameMatchedString()
+   {
+      return nameMatchedString_;
    }
 
    @Override
@@ -249,6 +262,7 @@ class CodeSearchSuggestion implements Suggestion
    private final boolean isFileTarget_;
    private final CodeNavigationTarget navigationTarget_;
    private final String matchedString_;
+   private final String nameMatchedString_;
    private String displayString_;
    private static final FileTypeRegistry fileTypeRegistry_ =
                               RStudioGinjector.INSTANCE.getFileTypeRegistry();

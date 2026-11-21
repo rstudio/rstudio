@@ -59,3 +59,70 @@ TEST(CodeSearchXRef, OtherTypesAreNone)
    for (const char* type : {"nte", "rem", ""})
       EXPECT_EQ(kNone, sourceItemTypeForXRef(type)) << type;
 }
+
+TEST(CodeSearchXRef, TheoremStyleResultShowsItsName)
+{
+   XRefResult result = xrefResult("thm", "pyth", "Pythagoras", false);
+   EXPECT_EQ("thm:pyth", result.text);
+   EXPECT_EQ("Pythagoras", result.extraInfo);
+}
+
+TEST(CodeSearchXRef, UnnamedTheoremStyleResultHasNoName)
+{
+   XRefResult result = xrefResult("exm", "fizz", "", false);
+   EXPECT_EQ("exm:fizz", result.text);
+   EXPECT_EQ("", result.extraInfo);
+}
+
+// A figure's or table's title is its caption, which isn't shown.
+TEST(CodeSearchXRef, FigureResultShowsOnlyItsLabel)
+{
+   XRefResult result = xrefResult("fig", "plot", "A scatter plot", false);
+   EXPECT_EQ("fig:plot", result.text);
+   EXPECT_EQ("", result.extraInfo);
+}
+
+TEST(CodeSearchXRef, HeadingResultIsItsTitle)
+{
+   XRefResult result = xrefResult("h1", "intro", "Introduction", false);
+   EXPECT_EQ("Introduction", result.text);
+   EXPECT_EQ("", result.extraInfo);
+}
+
+TEST(CodeSearchXRef, QuartoResultShowsOnlyItsLabel)
+{
+   XRefResult result = xrefResult("thm", "pyth", "Pythagoras", true);
+   EXPECT_EQ("thm-pyth", result.text);
+   EXPECT_EQ("", result.extraInfo);
+}
+
+TEST(CodeSearchXRef, TheoremIsFoundByLabelOrName)
+{
+   XRefResult result = xrefResult("thm", "pyth", "Pythagoras", false);
+   EXPECT_TRUE(xrefMatches(result, "thm:pyth"));
+   EXPECT_TRUE(xrefMatches(result, "pyth"));
+   EXPECT_TRUE(xrefMatches(result, "Pythagoras"));
+   EXPECT_TRUE(xrefMatches(result, "goras"));
+   EXPECT_FALSE(xrefMatches(result, "Euclid"));
+}
+
+TEST(CodeSearchXRef, UnnamedResultIsNotFoundByEmptyName)
+{
+   XRefResult result = xrefResult("exm", "fizz", "", false);
+   EXPECT_TRUE(xrefMatches(result, "exm:fizz"));
+   EXPECT_FALSE(xrefMatches(result, "buzz"));
+}
+
+// Without the name, "Pythagoras" leaves most of its characters unmatched
+// in "thm:pyth" and ranks far below other results.
+TEST(CodeSearchXRef, NameMatchRanksByTheName)
+{
+   EXPECT_EQ(0, scoreXRefMatch("thm:pyth", "Pythagoras", "Pythagoras"));
+   EXPECT_LT(scoreXRefMatch("thm:pyth", "Pythagoras", "Pythagoras"),
+             scoreXRefMatch("thm:pyth", "", "Pythagoras"));
+}
+
+TEST(CodeSearchXRef, LabelMatchRanksByTheLabel)
+{
+   EXPECT_EQ(0, scoreXRefMatch("thm:pyth", "Pythagoras", "thm:pyth"));
+}

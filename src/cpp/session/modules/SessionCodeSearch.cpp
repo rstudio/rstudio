@@ -1636,6 +1636,14 @@ public:
    bool hidden() const { return hidden_; }
    const json::Object& metadata() const { return metadata_; }
 
+   bool isXRef() const
+   {
+      json::Object::Iterator it = metadata_.find("type");
+      return it != metadata_.end() &&
+             (*it).getValue().isString() &&
+             (*it).getValue().getString() == "xref";
+   }
+
 private:
    Type type_;
    std::string name_;
@@ -1821,40 +1829,13 @@ void fillFromCrossrefs(const std::string& term,
       if (xref.getObject().hasMember("title"))
          title = xref.getObject()["title"].getString();
       
-      SourceItem::Type sourceType = xrefSourceType(type);
-      
-      // form appropriate text for display
-      std::string displayText;
-      
-      if (isQuarto)
-      {
-         displayText = type + "-" + id;
-      }
-      else
-      {
-         switch (sourceType)
-         {
-         case SourceItem::Figure:
-         case SourceItem::Table:
-         case SourceItem::Math:
-            displayText = type + ":" + id;
-            break;
-
-         default:
-            displayText = title;
-            break;
-         }
-      }
-
-      
-      // check to see if this is a subsequence match of the
-      // user-provided search term
-      if (!string_utils::isSubsequence(displayText, term, true))
+      XRefResult result = xrefResult(type, id, title, isQuarto);
+      if (!xrefMatches(result, term))
          continue;
 
       // add the suffix (if any)
       if (xref.getObject().hasMember("suffix"))
-         displayText += xref.getObject()["suffix"].getString();
+         result.text += xref.getObject()["suffix"].getString();
       
       // bundle xref into source item
       json::Object meta;
@@ -1863,7 +1844,7 @@ void fillFromCrossrefs(const std::string& term,
       
       // we found a match: construct source item and add to list
       SourceItem item(
-               sourceType, displayText, "", "",
+               xrefSourceType(type), result.text, "", result.extraInfo,
                module_context::createAliasedPath(
                   basePath.completeChildPath(file)),
                -1, -1, 
@@ -1965,7 +1946,9 @@ Error searchCode(const json::JsonRpcRequest& request,
       if (item.hidden())
          continue;
       
-      int score = scoreMatch(item.name(), term, false);
+      int score = item.isXRef()
+            ? scoreXRefMatch(item.name(), item.extraInfo(), term)
+            : scoreMatch(item.name(), term, false);
       srcItemScores.push_back(std::make_pair(gsl::narrow_cast<int>(i), score));
    }
    std::sort(srcItemScores.begin(), srcItemScores.end(), ScorePairComparator());
@@ -2824,6 +2807,45 @@ SEXP rs_viewFunction(SEXP functionSEXP, SEXP nameSEXP, SEXP namespaceSEXP)
 int sourceItemTypeForXRef(const std::string& xrefType)
 {
    return xrefSourceType(xrefType);
+}
+
+XRefResult xrefResult(const std::string& type,
+                      const std::string& id,
+                      const std::string& title,
+                      bool isQuarto)
+{
+   if (isQuarto)
+      return XRefResult{type + "-" + id, ""};
+
+   switch (xrefSourceType(type))
+   {
+   case SourceItem::Figure:
+   case SourceItem::Table:
+      return XRefResult{type + ":" + id, ""};
+
+   case SourceItem::Math:
+      return XRefResult{type + ":" + id, title};
+
+   default:
+      return XRefResult{title, ""};
+   }
+}
+
+bool xrefMatches(const XRefResult& result, const std::string& term)
+{
+   return string_utils::isSubsequence(result.text, term, true) ||
+          (!result.extraInfo.empty() &&
+           string_utils::isSubsequence(result.extraInfo, term, true));
+}
+
+int scoreXRefMatch(const std::string& text,
+                   const std::string& extraInfo,
+                   const std::string& term)
+{
+   int score = scoreMatch(text, term, false);
+   if (!extraInfo.empty())
+      score = std::min(score, scoreMatch(extraInfo, term, false));
+   return score;
 }
    
 Error initialize()
