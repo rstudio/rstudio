@@ -68,7 +68,7 @@ TEST(SessionRMarkdownTest, NotebookQueuesRefuseDocumentIdsWithANul)
       "pixel_width": 0, "char_width": 0, "units": [%UNITS%], "max_units": 0
    })";
 
-   auto readQueue = [&](const std::string& docId, const std::string& units = std::string())
+   auto readQueue = [&](const std::string& docId, const std::string& units)
    {
       std::string text = boost::algorithm::replace_all_copy(queueTemplate, "%DOC_ID%", docId);
       boost::algorithm::replace_all(text, "%UNITS%", units);
@@ -79,14 +79,13 @@ TEST(SessionRMarkdownTest, NotebookQueuesRefuseDocumentIdsWithANul)
       return notebook::NotebookDocQueue::fromJson(value.getObject(), &pQueue);
    };
 
-   EXPECT_FALSE(readQueue("ABCD1234"));
-   EXPECT_EQ(static_cast<int>(json::errc::ParamInvalid), readQueue("ABCD1234\\u0000x").getCode());
+   std::string goodUnit = unitText("ABCD1234", "rmarkdown", "c1");
+   EXPECT_FALSE(readQueue("ABCD1234", goodUnit));
+   EXPECT_EQ(static_cast<int>(json::errc::ParamInvalid), readQueue("ABCD1234\\u0000x", goodUnit).getCode());
 
    // a unit the queue can't hold refuses the whole queue, rather than leave
    // it short of the units it counts (or with none, blocking those after it)
-   std::string goodUnit = unitText("ABCD1234", "rmarkdown", "c1");
    std::string badUnit = unitText("ABCD1234", "rmarkdown", "c2\\u0000x");
-   EXPECT_FALSE(readQueue("ABCD1234", goodUnit));
    EXPECT_EQ(static_cast<int>(json::errc::ParamInvalid), readQueue("ABCD1234", goodUnit + "," + badUnit).getCode());
 }
 

@@ -986,6 +986,20 @@ TEST(SessionRTest, CreateMakesNaForANulInANulCheckScope) {
    EXPECT_EQ("a", nameAfterScopes);
 }
 
+TEST(SessionRTest, VersionChecksIgnoreAGlobalVersionMethod) {
+   // the comparison is evaluated in base, which finds base's own
+   // Ops.numeric_version before one defined in the global environment
+   Error error = r::exec::executeString("Ops.numeric_version <- function(e1, e2) FALSE");
+   ASSERT_FALSE(error) << error.asString();
+   BOOST_SCOPE_EXIT(void)
+   {
+      r::exec::executeString("rm(Ops.numeric_version, envir = globalenv())");
+   }
+   BOOST_SCOPE_EXIT_END
+
+   EXPECT_TRUE(r::util::hasRequiredVersion("3.0.0"));
+}
+
 TEST(SessionRTest, StrayNulCheckScopesAreEnded) {
    // an R error longjmping past a NulCheckScope skips its destructor, leaving
    // create() making NA for a nul outside any scope until the top-level
