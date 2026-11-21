@@ -899,43 +899,31 @@ void proxyRequest(
    std::string streamFile = r_util::sessionContextFile(context);
    FilePath streamPath = server_core::sessions::local_streams::streamPath(streamFile);
 
-   // determine the uid for the username (for validation)
+   // determine the uid for the username; the stream has to belong to that user
    UidType uid;
-   boost::optional<UidType> validateUid;
    Error error = userIdForUsername(context.username, &uid);
-   if (!error)
+   if (error)
    {
-      // if the user exists on the system, do uid validation
-      validateUid = uid;
-   }
-   else
-   {
-      if (error != systemError(boost::system::errc::permission_denied, ErrorLocation()))
-      {
-         // if the error returned was permission_denied then no user was found
-         // we consider user not found to be an acceptable error as it should
-         // be created later by PAM profiles
-         //
-         // other errors indicate potential issues enumerating the passwd file
-         // so reject access since we cannot verify the identity of the user
-         Error permissionError(boost::system::error_code(
-                                  boost::system::errc::permission_denied,
-                                  boost::system::system_category()),
-                               error,
-                               ERROR_LOCATION);
-         errorHandler(permissionError);
-         return;
-      }
+      // without the uid there is no way to tell whose stream this is, so
+      // reject the request. That includes a user who has no account yet: they
+      // have no session to connect to either
+      Error permissionError(boost::system::error_code(
+                               boost::system::errc::permission_denied,
+                               boost::system::system_category()),
+                            error,
+                            ERROR_LOCATION);
+      errorHandler(permissionError);
+      return;
    }
 
-   // create client
-   // if the user is available on the system pass in the uid for validation to ensure
-   // that we only connect to the socket if it was created by the user
+   // create client, which only connects to a stream that the user created,
+   // and only sends the request to a peer that is running as the user
    boost::shared_ptr<http::LocalStreamAsyncClient> pStreamClient(new http::LocalStreamAsyncClient(
       ptrConnection->ioContext(),
       streamPath,
       false,
-      validateUid));
+      uid));
+   pStreamClient->setExpectedPeerUid(uid);
    boost::shared_ptr<http::IAsyncClient> pClient = pStreamClient;
 
    // setup retry context

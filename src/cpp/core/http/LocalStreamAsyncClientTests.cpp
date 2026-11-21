@@ -70,6 +70,16 @@ public:
       thread_ = std::thread([this]() { ioc_.run(); });
    }
 
+   // the number of request bytes the accepted connection delivered. Waits for
+   // that connection to be served, so call it only once the client is done
+   std::size_t requestBytes()
+   {
+      if (thread_.joinable())
+         thread_.join();
+
+      return requestBytes_;
+   }
+
 private:
    void serve(const boost::system::error_code& acceptError)
    {
@@ -80,6 +90,7 @@ private:
 
       boost::asio::streambuf buf;
       boost::asio::read_until(socket_, buf, "\r\n\r\n", ec);
+      requestBytes_ = buf.size();
 
       if (respond_)
       {
@@ -100,6 +111,7 @@ private:
    stream_protocol::acceptor acceptor_;
    stream_protocol::socket socket_;
    bool respond_;
+   std::size_t requestBytes_ = 0;
    std::thread thread_;
 };
 
@@ -203,6 +215,107 @@ TEST_F(LocalStreamAsyncClientTest, ConnectionFailureCarriesNoPeerPid)
    ASSERT_TRUE(responseError);
    EXPECT_EQ("", responseError.getProperty(kLocalStreamPeerPidProperty));
    EXPECT_EQ(-1, pClient->peerPid());
+}
+
+TEST_F(LocalStreamAsyncClientTest, RequestIsSentToPeerRunningAsExpectedUser)
+{
+   // the server runs in this process, so the peer runs as this user
+   LocalStreamServer server(streamPath_, true);
+   server.start();
+
+   boost::asio::io_context ioc;
+   boost::shared_ptr<LocalStreamAsyncClient> pClient(new LocalStreamAsyncClient(ioc, streamPath_));
+   pClient->setExpectedPeerUid(::geteuid());
+   pClient->request().setMethod("GET");
+   pClient->request().setUri("/");
+
+   bool responded = false;
+   Error responseError;
+   pClient->execute(
+      [&](const Response& response) {
+         responded = true;
+         EXPECT_EQ(200, response.statusCode());
+      },
+      [&](const Error& error) {
+         responseError = error;
+      });
+   ioc.run();
+
+   EXPECT_TRUE(responded);
+   EXPECT_FALSE(responseError) << responseError.asString();
+   EXPECT_GT(server.requestBytes(), 0u);
+}
+
+TEST_F(LocalStreamAsyncClientTest, RequestIsNotSentToPeerRunningAsAnotherUser)
+{
+   LocalStreamServer server(streamPath_, true);
+   server.start();
+
+   boost::asio::io_context ioc;
+   boost::shared_ptr<LocalStreamAsyncClient> pClient(new LocalStreamAsyncClient(ioc, streamPath_));
+   pClient->setExpectedPeerUid(::geteuid() + 1);
+   pClient->request().setMethod("GET");
+   pClient->request().setUri("/");
+
+   bool responded = false;
+   Error responseError;
+   pClient->execute(
+      [&](const Response&) {
+         responded = true;
+      },
+      [&](const Error& error) {
+         responseError = error;
+      });
+   ioc.run();
+
+   EXPECT_FALSE(responded);
+   ASSERT_TRUE(responseError);
+   EXPECT_EQ(boost::system::errc::permission_denied, responseError.getCode());
+
+   // the peer was refused, so the error is not an outcome it produced
+   EXPECT_EQ("", responseError.getProperty(kLocalStreamPeerPidProperty));
+   EXPECT_EQ(-1, pClient->peerPid());
+
+   // and it was refused before any of the request reached it
+   EXPECT_EQ(0u, server.requestBytes());
+}
+
+TEST_F(LocalStreamAsyncClientTest, PeerRunningAsAnotherUserIsNotRetried)
+{
+   // a retry profile is how rserver waits for a session to start; a peer
+   // that is running as the wrong user is not one to wait for
+   LocalStreamServer server(streamPath_, true);
+   server.start();
+
+   int recoveryAttempts = 0;
+   ConnectionRetryProfile retryProfile(
+      boost::posix_time::seconds(10),
+      boost::posix_time::milliseconds(10),
+      [&](const Request&, bool) {
+         recoveryAttempts++;
+         return Success();
+      });
+
+   boost::asio::io_context ioc;
+   boost::shared_ptr<LocalStreamAsyncClient> pClient(new LocalStreamAsyncClient(ioc, streamPath_));
+   pClient->setExpectedPeerUid(::geteuid() + 1);
+   pClient->setConnectionRetryProfile(retryProfile);
+   pClient->request().setMethod("GET");
+   pClient->request().setUri("/");
+
+   Error responseError;
+   pClient->execute(
+      [&](const Response&) {
+      },
+      [&](const Error& error) {
+         responseError = error;
+      });
+   ioc.run();
+
+   ASSERT_TRUE(responseError);
+   EXPECT_EQ(boost::system::errc::permission_denied, responseError.getCode());
+   EXPECT_EQ(0, recoveryAttempts);
+   EXPECT_EQ(0u, server.requestBytes());
 }
 
 } // namespace tests
