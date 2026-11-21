@@ -175,6 +175,13 @@ inline void makeZStream(ByteBuffer& srcBuff,
 
 } // anonymous namespace
 
+Error zlibError(int code, const std::string& description, const ErrorLocation& location)
+{
+   Error error("zlib", code, zError(code), location);
+   error.addProperty("description", description);
+   return error;
+}
+
 Error compressString(const std::string& toCompress, std::vector<unsigned char>* compressedData)
 {
    if (toCompress.empty())
@@ -195,7 +202,7 @@ Error compressString(const std::string& toCompress, std::vector<unsigned char>* 
 
    int res = deflateInit(&zStream, Z_BEST_COMPRESSION);
    if (res != Z_OK)
-      return systemError(res, "ZLib initialization error", ERROR_LOCATION);
+      return zlibError(res, "ZLib initialization error", ERROR_LOCATION);
 
    while (res != Z_STREAM_END)
    {
@@ -207,7 +214,7 @@ Error compressString(const std::string& toCompress, std::vector<unsigned char>* 
          deflateEnd(&zStream);
          LOG_DEBUG_MESSAGE("Could not compress string \"" +
                            toCompress + "\"");
-         return systemError(res, "ZLib deflation error", ERROR_LOCATION);
+         return zlibError(res, "ZLib deflation error", ERROR_LOCATION);
       }
       updateIn(&srcBuff, &remainIn, &zStream);
    }
@@ -241,7 +248,7 @@ Error decompressString(const std::vector<unsigned char>& compressedData,
 
    int res = inflateInit(&zStream);
    if (res != Z_OK)
-      return systemError(res, "ZLib initialization error", ERROR_LOCATION);
+      return zlibError(res, "ZLib initialization error", ERROR_LOCATION);
 
    while (res != Z_STREAM_END)
    {
@@ -256,7 +263,7 @@ Error decompressString(const std::vector<unsigned char>& compressedData,
          LOG_DEBUG_MESSAGE("Could not decompress data\"" +
                            std::string(reinterpret_cast<const char*>(compressedData.data()), dataLen) +
                            "\"");
-         return systemError(res, "ZLib inflation error", ERROR_LOCATION);
+         return zlibError(res, "ZLib inflation error", ERROR_LOCATION);
       }
 
       updateIn(&srcBuff, &remainIn, &zStream);

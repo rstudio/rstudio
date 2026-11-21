@@ -79,11 +79,11 @@ Error contentFileInfo(const std::string& contentUrl,
       if ((pos+1) < contentUrl.length())
          queryString = contentUrl.substr(pos+1);
       else
-         return systemError(ENOENT, ERROR_LOCATION);
+         return systemError(boost::system::errc::no_such_file_or_directory, ERROR_LOCATION);
    }
    else
    {
-      return systemError(ENOENT, ERROR_LOCATION);
+      return systemError(boost::system::errc::no_such_file_or_directory, ERROR_LOCATION);
    }
    http::Fields fields;
    http::util::parseQueryString(queryString, &fields);
@@ -99,7 +99,7 @@ Error contentFileInfo(const std::string& contentUrl,
    // get file parameter
    std::string contentFile = http::util::fieldValue(fields, "file");
    if (contentFile.empty())
-       return systemError(ENOENT, ERROR_LOCATION);
+       return systemError(boost::system::errc::no_such_file_or_directory, ERROR_LOCATION);
    *pFilePath = contentUrlPath().completePath(contentFile);
 
    // return success
