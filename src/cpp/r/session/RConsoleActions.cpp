@@ -359,7 +359,8 @@ namespace {
 // The console's lines are read from its actions as if their data had been
 // joined into one string. The helpers below locate and read lines within
 // that string without building it, so that reading a page of lines costs
-// about as much as the page, and not as much as the whole scrollback. They
+// about as much as the lines skipped to reach it (which are scanned, but not
+// copied) and the lines in it, and not as much as the whole scrollback. They
 // are templates only so as not to depend on the type of the actions buffer.
 
 // The start of a line: an offset into the data of the action at an index.
@@ -369,6 +370,18 @@ struct LineStart
 {
    std::size_t index;
    std::size_t offset;
+
+   bool operator==(const LineStart& other) const
+   {
+      return index == other.index && offset == other.offset;
+   }
+};
+
+// A line, stripped of escape sequences, and where it starts.
+struct Line
+{
+   LineStart start;
+   std::string text;
 };
 
 // Whether the action at an index is a chunk of a long line, which continues
@@ -457,12 +470,16 @@ bool readLine(const Actions& actions, LineStart* pStart, std::string* pLine)
 // line, by walking backwards from the end of the actions. Sets *pStart to the
 // start of the page's first line, and returns the number of lines in the page:
 // fewer than 'take' if the page runs off the top, and zero or less if all of
-// it lies above the top.
+// it lies above the top. Also sets *pLastLine to the last line, which has to
+// be read to find the page, so that it needn't be read again: flush() stores
+// an unfinished line as one action however long it grows (as a progress bar's
+// can), and this is all under the console actions mutex.
 template <typename Actions>
 long long findPageFromBottom(const Actions& actions,
                              long long skip,
                              long long take,
-                             LineStart* pStart)
+                             LineStart* pStart,
+                             Line* pLastLine)
 {
    // the number of line starts seen so far, and the number to see before the
    // one at the top of the page is reached
@@ -479,11 +496,11 @@ long long findPageFromBottom(const Actions& actions,
 
       if (found == 0)
       {
-         std::string line;
+         pLastLine->start = *pStart;
          LineStart start = *pStart;
-         readLine(actions, &start, &line);
-         text::stripAnsiCodes(&line);
-         lastLineEmpty = line.empty();
+         readLine(actions, &start, &pLastLine->text);
+         text::stripAnsiCodes(&pLastLine->text);
+         lastLineEmpty = pLastLine->text.empty();
          wanted = skip + take + (lastLineEmpty ? 1 : 0);
       }
 
@@ -538,9 +555,10 @@ std::vector<std::string> readConsoleLines(const Actions& actions,
 
    // find the first line of the page
    LineStart start = {0, 0};
+   Line lastLine = {};
    if (fromBottom)
    {
-      take = std::min(take, findPageFromBottom(actions, skip, take, &start));
+      take = std::min(take, findPageFromBottom(actions, skip, take, &start, &lastLine));
    }
    else
    {
@@ -555,11 +573,20 @@ std::vector<std::string> readConsoleLines(const Actions& actions,
    long long totalChars = 0;
    for (long long i = 0; i < take; i++)
    {
-      // escape sequences (colors, cursor positioning, etc.) are stripped a
-      // line at a time, as none can contain a newline
       std::string line;
-      bool isLastLine = !readLine(actions, &start, &line);
-      text::stripAnsiCodes(&line);
+      bool isLastLine;
+      if (fromBottom && start == lastLine.start)
+      {
+         line = std::move(lastLine.text);
+         isLastLine = true;
+      }
+      else
+      {
+         // escape sequences (colors, cursor positioning, etc.) are stripped a
+         // line at a time, as none can contain a newline
+         isLastLine = !readLine(actions, &start, &line);
+         text::stripAnsiCodes(&line);
+      }
 
       // an empty last line is what follows the final newline; not a line
       if (isLastLine && line.empty())

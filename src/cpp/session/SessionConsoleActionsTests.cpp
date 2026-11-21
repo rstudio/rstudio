@@ -896,6 +896,10 @@ TEST_F(ConsoleActionsTest, GetConsoleLinesMatchesWholeScrollbackReference)
       actions.asJson(&actionsJson);
       const Lines allLines = referenceConsoleLines(actionsJson);
 
+      // loadFromFile() quietly drops what it can't read, which would leave
+      // the pages below to compare less than was generated
+      ASSERT_EQ(input.size(), actionsJson["data"].getArray().getSize());
+
       // a sample of the pages that could be asked for
       for (int page = 0; page < 60; page++)
       {
