@@ -125,6 +125,7 @@ import org.rstudio.studio.client.tests.events.TestsStartedEvent;
 import org.rstudio.studio.client.tests.model.TestsResult;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.addins.events.AddinRegistryUpdatedEvent;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantNesMissingChangedEvent;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantRuntimeStatusChangedEvent;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.events.ActivatePaneEvent;
@@ -1242,6 +1243,11 @@ public class ClientEventDispatcher
          {
             AssistantRuntimeStatusChangedEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new AssistantRuntimeStatusChangedEvent(data.getStatus()));
+         }
+         else if (type == ClientEvent.AssistantNesMissingChanged)
+         {
+            AssistantNesMissingChangedEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new AssistantNesMissingChangedEvent(data.getNesMissing()));
          }
          else if (type == ClientEvent.ChatBackendExit)
          {

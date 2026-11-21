@@ -277,6 +277,11 @@ bool s_isSessionShuttingDown = false;
 // Project-specific assistant options.
 projects::RProjectAssistantOptions s_assistantProjectOptions;
 
+// Whether the Posit Assistant installation lacks NES, as of the last
+// synchronize(). Cached so the session and the client agree on it between
+// installs, and so resolving the assistant type stays off the filesystem.
+bool s_positNesMissing = false;
+
 // A queue of pending files to be indexed.
 std::vector<FileInfo> s_indexQueue;
 std::size_t s_indexBatchSize = 200;
@@ -508,6 +513,51 @@ FilePath paiLanguageServerPath()
    return FilePath();
 }
 
+// The RSTUDIO_AGENT_PATH override to launch the given assistant's agent from,
+// or an empty path when there is none or it doesn't apply to that assistant.
+FilePath agentPathOverrideFor(const std::string& assistant)
+{
+   std::string value = core::system::getenv("RSTUDIO_AGENT_PATH");
+   bool overrideExists = !value.empty() && FilePath::exists(value);
+   if (!agentPathOverrideApplies(assistant,
+                                 overrideExists,
+                                 !session::options().positAssistantHelper().isEmpty(),
+                                 !session::options().copilotHelper().isEmpty()))
+   {
+      return FilePath();
+   }
+
+   return FilePath(value);
+}
+
+// Refresh s_positNesMissing, telling the client when it changes. An
+// RSTUDIO_AGENT_PATH override that Posit AI would launch from supplies its
+// own language server, so NES is never missing while one is in effect.
+void refreshPositNesMissing()
+{
+   // Where Posit Assistant can't be used, Posit AI isn't offered regardless,
+   // so skip scanning for an installation.
+   if (!isPositAssistantAllowedByAdmin())
+      return;
+
+   bool overrideInEffect = !agentPathOverrideFor(kAssistantPosit).isEmpty();
+   FilePath installPath = chat::installation::locatePositAssistantInstallation();
+   bool nesMissing = !overrideInEffect && isNesMissing(installPath);
+   if (nesMissing == s_positNesMissing)
+      return;
+
+   s_positNesMissing = nesMissing;
+   if (nesMissing)
+      DLOG("Posit Assistant installation '{}' doesn't include NES; "
+           "treating a Posit AI assistant selection as (None).",
+           installPath.getAbsolutePath());
+
+   json::Object dataJson;
+   dataJson["nes_missing"] = nesMissing;
+   ClientEvent event(client_events::kAssistantNesMissingChanged, dataJson);
+   module_context::enqueClientEvent(event);
+}
+
 FilePath copilotLanguageServerPath()
 {
    FilePath copilotPath;
@@ -559,23 +609,25 @@ std::string getConfiguredAssistantType(const std::string& assistantType = "")
       return assistantType;
 
    // Check for project-level override
-   std::string projectAssistant = s_assistantProjectOptions.assistant;
-   if (!projectAssistant.empty() && projectAssistant != "default")
-      return projectAssistant;
+   std::string selectedAssistant = s_assistantProjectOptions.assistant;
+   if (selectedAssistant.empty() || selectedAssistant == "default")
+   {
+      // Fall back to global preference
+      selectedAssistant = prefs::userPrefs().assistant();
+   }
 
-   // Fall back to global preference
-   return prefs::userPrefs().assistant();
+   return effectiveAssistantType(selectedAssistant, s_positNesMissing);
 }
 
 FilePath assistantLanguageServerPath(const std::string& assistantType)
 {
-   // Allow override via environment variable
-   std::string rstudioAgentPath = core::system::getenv("RSTUDIO_AGENT_PATH");
-   if (!rstudioAgentPath.empty() && FilePath::exists(rstudioAgentPath))
-      return FilePath(rstudioAgentPath);
-
    // Get the configured assistant type
    std::string assistant = getConfiguredAssistantType(assistantType);
+
+   // Allow override via environment variable, as startAgent() launches it
+   FilePath agentPathOverride = agentPathOverrideFor(assistant);
+   if (!agentPathOverride.isEmpty())
+      return agentPathOverride;
 
    if (assistant == kAssistantPosit)
    {
@@ -1407,39 +1459,22 @@ Error startAgent(const std::string& assistantType = "")
 
    node_tools::applySystemCaOption(&environment, nodePath);
 
-   // The RSTUDIO_AGENT_PATH override is pinned once here: the direct launch
-   // branch reuses the pinned path rather than re-reading the environment,
-   // so an override that disappears cannot silently fall back to a
-   // different source mid-start.
-   bool positHelperConfigured =
-      !session::options().positAssistantHelper().isEmpty();
-   FilePath agentPathOverride;
-   std::string agentPathOverrideValue =
-      core::system::getenv("RSTUDIO_AGENT_PATH");
-   if (!agentPathOverrideValue.empty() &&
-       FilePath::exists(agentPathOverrideValue))
-   {
-      agentPathOverride = FilePath(agentPathOverrideValue);
-   }
-   bool overrideInEffect = !agentPathOverride.isEmpty();
-
    uint64_t agentGeneration = ++s_agentGeneration;
    resetForNewAgent();
 
    // Resolve the agent executable once and reuse it in the launch branches
-   // below.
-   FilePath resolvedAgentPath;
-   if (assistant == kAssistantPosit && positHelperConfigured)
-      resolvedAgentPath = paiLanguageServerPath();
-   else if (assistant == kAssistantCopilot &&
-            !session::options().copilotHelper().isEmpty())
-      resolvedAgentPath = copilotLanguageServerPath();
-   else if (overrideInEffect)
-      resolvedAgentPath = agentPathOverride;
-   else if (assistant == kAssistantPosit)
-      resolvedAgentPath = paiLanguageServerPath();
-   else if (assistant == kAssistantCopilot)
-      resolvedAgentPath = copilotLanguageServerPath();
+   // below. The RSTUDIO_AGENT_PATH override is pinned here too: the direct
+   // launch branch reuses the pinned path rather than re-reading the
+   // environment, so an override that disappears cannot silently fall back
+   // to a different source mid-start.
+   FilePath resolvedAgentPath = agentPathOverrideFor(assistant);
+   if (resolvedAgentPath.isEmpty())
+   {
+      if (assistant == kAssistantPosit)
+         resolvedAgentPath = paiLanguageServerPath();
+      else if (assistant == kAssistantCopilot)
+         resolvedAgentPath = copilotLanguageServerPath();
+   }
 
    // Set up process callbacks
    core::system::ProcessCallbacks callbacks;
@@ -2247,6 +2282,7 @@ void synchronize()
       return;
 
    // Update cached enabled state.
+   refreshPositNesMissing();
    s_assistantEnabled = isAssistantEnabled();
 
    // Start or stop the agent as appropriate.
@@ -3199,6 +3235,42 @@ FilePath nesLanguageServerPath(const FilePath& installPath)
    }
 
    return FilePath();
+}
+
+bool isNesMissing(const FilePath& installPath)
+{
+   return !installPath.isEmpty() && nesLanguageServerPath(installPath).isEmpty();
+}
+
+std::string effectiveAssistantType(const std::string& selectedAssistant,
+                                   bool nesMissing)
+{
+   if (selectedAssistant == kAssistantPosit && nesMissing)
+      return kAssistantNone;
+
+   return selectedAssistant;
+}
+
+bool agentPathOverrideApplies(const std::string& assistant,
+                              bool overrideExists,
+                              bool positHelperConfigured,
+                              bool copilotHelperConfigured)
+{
+   if (!overrideExists)
+      return false;
+
+   if (assistant == kAssistantPosit)
+      return !positHelperConfigured;
+
+   if (assistant == kAssistantCopilot)
+      return !copilotHelperConfigured;
+
+   return true;
+}
+
+bool isPositAssistantNesMissing()
+{
+   return s_positNesMissing;
 }
 
 ServicedClock::ServicedClock(std::chrono::steady_clock::duration maxGap)

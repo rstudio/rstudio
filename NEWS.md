@@ -13,6 +13,7 @@
 
 ### Fixed
 - ([#19738](https://github.com/rstudio/rstudio/issues/19738)): Fixed an issue where the R session reserved memory for every line of the Console's scrollback limit (Tools > Global Options > Console > Maximum lines of output to keep in the console) when the limit was set, rather than as output arrived. A very large limit, such as 1,000,000,000, reserved tens of gigabytes, which on Windows counted against the system's commit limit even while unused; where the system refused to reserve that much, the previous limit stayed in effect for the output restored when the Console reloads. A limit of exactly 2,147,483,647 also made the Console drop nearly all output.
+- ([#19736](https://github.com/rstudio/rstudio/issues/19736)): Fixed an issue where, with S7 1.0.0, the R session stopped responding and had to be terminated when an S7 generic was printed while one of its methods had a breakpoint set.
 - ([#19728](https://github.com/rstudio/rstudio/issues/19728)): Fixed an issue where RStudio Desktop on macOS could stop responding to clicks, beeping as though a dialog were open with none visible, after showing a message such as "Update Available" while another application was active. The message now opens on an RStudio window instead of as a separate alert.
 - ([#19703](https://github.com/rstudio/rstudio/issues/19703)): Fixed an issue where R code run by Posit Assistant kept running past the time limit Posit Assistant set for it, holding the Console busy (indefinitely, for code that never finished) after Posit Assistant had reported the call as timed out. The code is now interrupted when its time limit passes, and code still waiting for the Console when its time limit passes is not run.
 - ([#19718](https://github.com/rstudio/rstudio/issues/19718)): Fixed an issue where interrupting R code run by Posit Assistant (e.g. with Escape) just as it finished could leave some of the checks Posit Assistant places on file access applied to code run afterwards in the Console.
@@ -121,6 +122,7 @@
 - ([#5960](https://github.com/rstudio/rstudio/issues/5960)): [Accessibility] Fixed an issue where moving through a toolbar with the keyboard took a Tab press per button. The arrow keys now move between a toolbar's buttons, and Home and End move to its first and last. Tab stops once on each run of buttons, on the button used last, and once on each text box, such as Go to File/Function, which keeps the arrow keys for editing.
 - ([#19656](https://github.com/rstudio/rstudio/issues/19656)): [Accessibility] Fixed an issue where VoiceOver in Chrome announced "group" after the text of most menu items, such as those in the File menu and the source editor's tab overflow menu.
 - ([#19637](https://github.com/rstudio/rstudio/issues/19637)): [Accessibility] Fixed an issue where the "Show Traceback" and "Rerun with Debug" links on a Console error, and the source file links in its traceback, could only be used with the mouse. They are now buttons, and the new Focus Last Console Error command (Ctrl+Option+7 on macOS, Alt+Shift+7 elsewhere) moves focus from anywhere to the most recent error. From there, Tab and Shift+Tab move between the buttons, Enter or Space activates one, and Escape returns to the Console input. Screen readers now announce whether the traceback is shown.
+- ([#19746](https://github.com/rstudio/rstudio/issues/19746)): [Accessibility] Fixed an issue where the "Show Traceback" and "Rerun with Debug" text on a Console error didn't have enough contrast against the error's background in several light editor themes, including the default Textmate. With Textmate, contrast is now 5.4:1, up from 3.8:1.
 
 ### Deprecated / Removed
 - ([#19608](https://github.com/rstudio/rstudio/issues/19608)): Removed the startup splash screen from RStudio Desktop, along with its "Show splash screen when RStudio is starting" preference, the Show Splash Screen command, the `RS_NO_SPLASH` environment variable, and the `--startup-delay` command-line switch. With faster startup ([#12235](https://github.com/rstudio/rstudio/issues/12235)), it is no longer needed.
@@ -131,5 +133,5 @@
 - Copilot Language Server 1.570.0
 - Node.js 24.22.3 (GitHub Copilot, Posit Assistant)
 - Quarto 1.11.9
-- Electron 44.11.4
+- Electron 44.11.5
 
