@@ -62,14 +62,14 @@ TEST(CodeSearchXRef, OtherTypesAreNone)
 
 TEST(CodeSearchXRef, TheoremStyleResultShowsItsName)
 {
-   XRefResult result = xrefResult("thm", "pyth", "Pythagoras", false);
+   XRefResult result = xrefResult("thm", "pyth", "Pythagoras", "", false);
    EXPECT_EQ("thm:pyth", result.text);
    EXPECT_EQ("Pythagoras", result.extraInfo);
 }
 
 TEST(CodeSearchXRef, UnnamedTheoremStyleResultHasNoName)
 {
-   XRefResult result = xrefResult("exm", "fizz", "", false);
+   XRefResult result = xrefResult("exm", "fizz", "", "", false);
    EXPECT_EQ("exm:fizz", result.text);
    EXPECT_EQ("", result.extraInfo);
 }
@@ -77,28 +77,28 @@ TEST(CodeSearchXRef, UnnamedTheoremStyleResultHasNoName)
 // A figure's or table's title is its caption, which isn't shown.
 TEST(CodeSearchXRef, FigureResultShowsOnlyItsLabel)
 {
-   XRefResult result = xrefResult("fig", "plot", "A scatter plot", false);
+   XRefResult result = xrefResult("fig", "plot", "A scatter plot", "", false);
    EXPECT_EQ("fig:plot", result.text);
    EXPECT_EQ("", result.extraInfo);
 }
 
 TEST(CodeSearchXRef, HeadingResultIsItsTitle)
 {
-   XRefResult result = xrefResult("h1", "intro", "Introduction", false);
+   XRefResult result = xrefResult("h1", "intro", "Introduction", "", false);
    EXPECT_EQ("Introduction", result.text);
    EXPECT_EQ("", result.extraInfo);
 }
 
 TEST(CodeSearchXRef, QuartoResultShowsOnlyItsLabel)
 {
-   XRefResult result = xrefResult("thm", "pyth", "Pythagoras", true);
+   XRefResult result = xrefResult("thm", "pyth", "Pythagoras", "", true);
    EXPECT_EQ("thm-pyth", result.text);
    EXPECT_EQ("", result.extraInfo);
 }
 
 TEST(CodeSearchXRef, TheoremIsFoundByLabelOrName)
 {
-   XRefResult result = xrefResult("thm", "pyth", "Pythagoras", false);
+   XRefResult result = xrefResult("thm", "pyth", "Pythagoras", "", false);
    EXPECT_TRUE(xrefMatches(result, "thm:pyth"));
    EXPECT_TRUE(xrefMatches(result, "pyth"));
    EXPECT_TRUE(xrefMatches(result, "Pythagoras"));
@@ -108,7 +108,7 @@ TEST(CodeSearchXRef, TheoremIsFoundByLabelOrName)
 
 TEST(CodeSearchXRef, UnnamedResultIsNotFoundByEmptyName)
 {
-   XRefResult result = xrefResult("exm", "fizz", "", false);
+   XRefResult result = xrefResult("exm", "fizz", "", "", false);
    EXPECT_TRUE(xrefMatches(result, "exm:fizz"));
    EXPECT_FALSE(xrefMatches(result, "buzz"));
 }
@@ -134,4 +134,13 @@ TEST(CodeSearchXRef, UnmatchedNameDoesNotAffectRank)
    const std::string label = "thm:very-long-label-pq";
    EXPECT_EQ(scoreXRefMatch(label, "", "pq"),
              scoreXRefMatch(label, "Pythagoras", "pq"));
+}
+
+// Typing a key's full label, suffix included, finds that use of it.
+TEST(CodeSearchXRef, ResultIsFoundByItsSuffix)
+{
+   XRefResult result = xrefResult("thm", "pyth", "", "-2", false);
+   EXPECT_EQ("thm:pyth-2", result.text);
+   EXPECT_TRUE(xrefMatches(result, "thm:pyth-2"));
+   EXPECT_FALSE(xrefMatches(result, "thm:pyth-3"));
 }

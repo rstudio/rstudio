@@ -1829,13 +1829,14 @@ void fillFromCrossrefs(const std::string& term,
       if (xref.getObject().hasMember("title"))
          title = xref.getObject()["title"].getString();
       
-      XRefResult result = xrefResult(type, id, title, isQuarto);
+      // a key used more than once is listed once per use, e.g. thm:pyth-2
+      std::string suffix;
+      if (xref.getObject().hasMember("suffix"))
+         suffix = xref.getObject()["suffix"].getString();
+
+      XRefResult result = xrefResult(type, id, title, suffix, isQuarto);
       if (!xrefMatches(result, term))
          continue;
-
-      // add the suffix (if any)
-      if (xref.getObject().hasMember("suffix"))
-         result.text += xref.getObject()["suffix"].getString();
       
       // bundle xref into source item
       json::Object meta;
@@ -2812,23 +2813,36 @@ int sourceItemTypeForXRef(const std::string& xrefType)
 XRefResult xrefResult(const std::string& type,
                       const std::string& id,
                       const std::string& title,
+                      const std::string& suffix,
                       bool isQuarto)
 {
+   XRefResult result;
    if (isQuarto)
-      return XRefResult{type + "-" + id, ""};
-
-   switch (xrefSourceType(type))
    {
-   case SourceItem::Figure:
-   case SourceItem::Table:
-      return XRefResult{type + ":" + id, ""};
-
-   case SourceItem::Math:
-      return XRefResult{type + ":" + id, title};
-
-   default:
-      return XRefResult{title, ""};
+      result.text = type + "-" + id;
    }
+   else
+   {
+      switch (xrefSourceType(type))
+      {
+      case SourceItem::Figure:
+      case SourceItem::Table:
+         result.text = type + ":" + id;
+         break;
+
+      case SourceItem::Math:
+         result.text = type + ":" + id;
+         result.extraInfo = title;
+         break;
+
+      default:
+         result.text = title;
+         break;
+      }
+   }
+
+   result.text += suffix;
+   return result;
 }
 
 bool xrefMatches(const XRefResult& result, const std::string& term)

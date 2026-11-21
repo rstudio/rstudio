@@ -119,7 +119,8 @@ void addAllProjectSymbols(std::set<std::string>* pSymbols);
 int sourceItemTypeForXRef(const std::string& xrefType);
 
 // How Go to File/Function lists a bookdown or Quarto cross-reference: the
-// result's text, and a name shown beside it (e.g. "Pythagoras" for thm:pyth).
+// result's text, ending in the key's suffix (e.g. "-2") if it has one, and a
+// name shown beside it (e.g. "Pythagoras" for thm:pyth).
 struct XRefResult
 {
    std::string text;
@@ -129,6 +130,7 @@ struct XRefResult
 XRefResult xrefResult(const std::string& type,
                       const std::string& id,
                       const std::string& title,
+                      const std::string& suffix,
                       bool isQuarto);
 
 // A search term finds a cross-reference by its text or its name, and it
