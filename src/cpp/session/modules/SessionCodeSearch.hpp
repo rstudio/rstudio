@@ -118,6 +118,11 @@ void addAllProjectSymbols(std::set<std::string>* pSymbols);
 // bookdown or Quarto cross-reference type, e.g. 10 (MATH) for "thm".
 int sourceItemTypeForXRef(const std::string& xrefType);
 
+// How well a search term matches a file name (lower is better). Like file
+// matching, it ignores everything from the term's first ':', since a file
+// query may end in a position such as :10:4.
+int scoreFileMatch(const std::string& filename, const std::string& term);
+
 // How Go to File/Function lists a bookdown or Quarto cross-reference: the
 // result's text, ending in the key's suffix (e.g. "-2") if it has one, and a
 // name shown beside it (e.g. "Pythagoras" for thm:pyth).

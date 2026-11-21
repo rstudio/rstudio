@@ -144,3 +144,14 @@ TEST(CodeSearchXRef, ResultIsFoundByItsSuffix)
    EXPECT_TRUE(xrefMatches(result, "thm:pyth-2"));
    EXPECT_FALSE(xrefMatches(result, "thm:pyth-3"));
 }
+
+TEST(CodeSearchFile, ScoreIgnoresLineAndColumn)
+{
+   EXPECT_EQ(scoreFileMatch("addOne.R", "addOne.R"), scoreFileMatch("addOne.R", "addOne.R:10"));
+   EXPECT_EQ(scoreFileMatch("addOne.R", "addOne.R"), scoreFileMatch("addOne.R", "addOne.R:10:4"));
+}
+
+TEST(CodeSearchFile, ScoreUsesWholeTermWithoutColon)
+{
+   EXPECT_LT(scoreFileMatch("addOne.R", "addOne"), scoreFileMatch("addOne.R", "subOne"));
+}

@@ -1932,7 +1932,7 @@ Error searchCode(const json::JsonRpcRequest& request,
    for (std::size_t i = 0; i < paths.size(); ++i)
    {
       fileScores.push_back(std::make_pair(gsl::narrow_cast<int>(i),
-                                          scoreMatch(names[i], term, true)));
+                                          scoreFileMatch(names[i], term)));
    }
 
    // sort by score (lower is better)
@@ -2850,6 +2850,11 @@ bool xrefMatches(const XRefResult& result, const std::string& term)
    return string_utils::isSubsequence(result.text, term, true) ||
           (!result.extraInfo.empty() &&
            string_utils::isSubsequence(result.extraInfo, term, true));
+}
+
+int scoreFileMatch(const std::string& filename, const std::string& term)
+{
+   return scoreMatch(filename, term.substr(0, term.find(':')), true);
 }
 
 int scoreXRefMatch(const std::string& text,
