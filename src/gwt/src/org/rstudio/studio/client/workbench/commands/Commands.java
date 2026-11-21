@@ -132,7 +132,6 @@ public abstract class
    public abstract AppCommand quartoRenderDocument();
    public abstract AppCommand knitDocument();
    public abstract AppCommand previewHTML();
-   public abstract AppCommand publishHTML();
    public abstract AppCommand compilePDF();
    public abstract AppCommand compileNotebook();
    public abstract AppCommand synctexSearch();
@@ -277,16 +276,9 @@ public abstract class
    // ---
    public abstract AppCommand touchSourceDoc();
    public abstract AppCommand touchTextDoc();
-   public abstract AppCommand touchCDoc();
    public abstract AppCommand touchCppDoc();
-   public abstract AppCommand touchHeaderDoc();
-   public abstract AppCommand touchMarkdownDoc();
    public abstract AppCommand touchPythonDoc();
-   public abstract AppCommand touchShellDoc();
    public abstract AppCommand touchStanDoc();
-   public abstract AppCommand touchHtmlDoc();
-   public abstract AppCommand touchJavaScriptDoc();
-   public abstract AppCommand touchCssDoc();
    public abstract AppCommand touchD3Doc();
    public abstract AppCommand touchSweaveDoc();
    public abstract AppCommand touchRMarkdownDoc();
@@ -338,7 +330,6 @@ public abstract class
    public abstract AppCommand vcsResolve();
 
    // PDF
-   public abstract AppCommand showPdfExternal();
 
    // HTML preview
    public abstract AppCommand openHtmlExternal();
@@ -424,12 +415,10 @@ public abstract class
 
    // Workspace
    public abstract AppCommand clearWorkspace();
-   public abstract AppCommand refreshWorkspace();
    public abstract AppCommand saveWorkspace();
    public abstract AppCommand loadWorkspace();
    public abstract AppCommand importDatasetFromFile();
    public abstract AppCommand importDatasetFromURL();
-   public abstract AppCommand importDatasetFromCsv();
    public abstract AppCommand importDatasetFromCsvUsingReadr();
    public abstract AppCommand importDatasetFromCsvUsingBase();
    public abstract AppCommand importDatasetFromSAV();
@@ -573,7 +562,6 @@ public abstract class
    public abstract AppCommand tutorialPopout();
    public abstract AppCommand tutorialBack();
    public abstract AppCommand tutorialForward();
-   public abstract AppCommand tutorialZoom();
    public abstract AppCommand tutorialRefresh();
    public abstract AppCommand tutorialStop();
    public abstract AppCommand tutorialHome();
@@ -626,7 +614,6 @@ public abstract class
    public abstract AppCommand buildIncremental();
    public abstract AppCommand buildFull();
    public abstract AppCommand devtoolsLoadAll();
-   public abstract AppCommand serveQuartoSite();
    public abstract AppCommand cleanAll();
    public abstract AppCommand buildSourcePackage();
    public abstract AppCommand buildBinaryPackage();
