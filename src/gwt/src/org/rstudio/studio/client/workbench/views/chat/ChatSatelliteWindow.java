@@ -14,10 +14,13 @@ package org.rstudio.studio.client.workbench.views.chat;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.command.ApplicationCommandManager;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.ThemeColorExtractor;
+import org.rstudio.core.client.widget.DecorativeImage;
 import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.images.MessageDialogImages;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
@@ -26,14 +29,18 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.chat.events.ChatReturnToMainEvent;
 import org.rstudio.studio.client.workbench.views.chat.events.ChatSatelliteActionEvent;
+import org.rstudio.studio.client.workbench.views.chat.events.ChatSuspendedNoticeEvent;
 import org.rstudio.studio.client.workbench.views.chat.model.ChatSatelliteParams;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -98,6 +105,7 @@ public class ChatSatelliteWindow extends SatelliteWindow
       suspendedOverlay_ = new HTML();
       suspendedOverlay_.setSize("100%", "100%");
       updateSuspendedOverlayStyle();
+      createSuspendedNotice();
 
       // Add toolbar and frame to main panel
       mainPanel.add(toolbar);
@@ -130,9 +138,71 @@ public class ChatSatelliteWindow extends SatelliteWindow
             }
             else if (action == SessionSerializationAction.RESUME_SESSION)
             {
-               hideSuspendOverlay();
+               // With the notice up, the old chat page stays dead until the
+               // main window reloads this window or calls reactivate(), either
+               // of which clears both
+               if (suspendedNotice_.getParent() != getMainPanel())
+                  hideSuspendOverlay();
             }
          });
+
+      pEventBus_.get().addHandler(
+         ChatSuspendedNoticeEvent.TYPE,
+         event -> showSuspendedNotice(event.getNotice()));
+   }
+
+   private void createSuspendedNotice()
+   {
+      ChatPane.Styles styles = ChatPane.RES.styles();
+
+      DecorativeImage icon = new DecorativeImage(
+         new ImageResource2x(MessageDialogImages.INSTANCE.dialog_info2x()));
+      icon.setPixelSize(24, 24);
+      icon.getElement().getStyle().setProperty("flexShrink", "0");
+
+      suspendedNoticeLabel_ = new Label();
+      suspendedNoticeLabel_.setStyleName(styles.chatUpdateMessage());
+      Roles.getStatusRole().set(suspendedNoticeLabel_.getElement());
+
+      FlowPanel content = new FlowPanel();
+      content.setStyleName(styles.chatNotificationContent());
+      content.add(icon);
+      content.add(suspendedNoticeLabel_);
+
+      FlowPanel notice = new FlowPanel();
+      notice.setStyleName(styles.chatUpdateNotification());
+      notice.add(content);
+
+      // A transparent layer over the whole frame area, so the notice takes its
+      // content's height and rewraps when the window is resized
+      suspendedNotice_ = new FlowPanel();
+      suspendedNotice_.add(notice);
+   }
+
+   // Shown over the top of the dimmed frame, as the frame is inactive until
+   // the session resumes and the chat page is reloaded
+   private void showSuspendedNotice(String notice)
+   {
+      LayoutPanel panel = getMainPanel();
+      if (suspendedNotice_.getParent() != panel)
+      {
+         panel.add(suspendedNotice_);
+         panel.setWidgetTopBottom(suspendedNotice_, 29, Unit.PX, 0, Unit.PX);
+         panel.setWidgetLeftRight(suspendedNotice_, 0, Unit.PX, 0, Unit.PX);
+         panel.getWidgetContainerElement(suspendedNotice_).getStyle().setZIndex(1);
+      }
+
+      // Screen readers announce a status region's text only when it changes
+      // after the region is in the document
+      suspendedNoticeLabel_.setText("");
+      Scheduler.get().scheduleDeferred(() -> suspendedNoticeLabel_.setText(notice));
+   }
+
+   private void hideSuspendedNotice()
+   {
+      LayoutPanel panel = getMainPanel();
+      if (suspendedNotice_.getParent() == panel)
+         panel.remove(suspendedNotice_);
    }
 
    private void updateSuspendedOverlayStyle()
@@ -157,6 +227,8 @@ public class ChatSatelliteWindow extends SatelliteWindow
 
    private void hideSuspendOverlay()
    {
+      hideSuspendedNotice();
+
       LayoutPanel panel = getMainPanel();
       if (suspendedOverlay_.getParent() == panel)
       {
@@ -228,6 +300,8 @@ public class ChatSatelliteWindow extends SatelliteWindow
 
    private RStudioThemedFrame frame_;
    private HTML suspendedOverlay_;
+   private FlowPanel suspendedNotice_;
+   private Label suspendedNoticeLabel_;
    private final Provider<EventBus> pEventBus_;
    private final Commands commands_;
    private final ApplicationCommandManager appCommandManager_;
