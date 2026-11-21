@@ -16,7 +16,6 @@ package org.rstudio.studio.client.application.ui.impl;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StartupTiming;
 import org.rstudio.core.client.StringUtil;
@@ -126,13 +125,10 @@ public class DesktopApplicationHeader implements ApplicationHeader,
       commands.diagnosticsReport().setVisible(true);
       commands.showFolder().setVisible(true);
       
-      if (BrowseCap.isElectron())
-      {
-         // we use a preview listener because we need to ensure the event
-         // is handled before anything else in the IDE surface might try
-         // to handle the mouse event
-         addBackForwardMouseDownHandlers();
-      }
+      // we use a preview listener because we need to ensure the event
+      // is handled before anything else in the IDE surface might try
+      // to handle the mouse event
+      addBackForwardMouseDownHandlers();
       
       events.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
       {
@@ -288,21 +284,13 @@ public class DesktopApplicationHeader implements ApplicationHeader,
 
    @Handler
    void onUndoDummy() {
-      if (BrowseCap.isElectron()) {
-         undoAce();
-      } else {
-         Desktop.getFrame().undo();
-      }
+      undoAce();
    }
 
    @Handler
    void onRedoDummy()
    {
-      if (BrowseCap.isElectron()) {
-         redoAce();
-      } else {
-         Desktop.getFrame().redo();
-      }
+      redoAce();
    }
 
    @Handler
