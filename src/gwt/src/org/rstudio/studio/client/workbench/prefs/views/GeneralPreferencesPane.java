@@ -150,8 +150,15 @@ public class GeneralPreferencesPane extends PreferencesPane
          rememberRVersionForProjects_.setValue(true);
          Style style = rememberRVersionForProjects_.getElement().getStyle();
          style.setMarginTop(5, Unit.PX);
-         style.setMarginBottom(12, Unit.PX);
+         // 4px to match the lessSpaced rhythm of adjacent checkboxes.
+         style.setMarginBottom(4, Unit.PX);
          basic.add(rememberRVersionForProjects_);
+
+         // Spaced, not lessSpaced: it closes this block off from the working
+         // directory chooser that follows.
+         CheckBox rVersionQuickPick = checkboxPref(prefs_.rVersionQuickPick(), false /*defaultSpaced*/);
+         spaced(rVersionQuickPick);
+         basic.add(rVersionQuickPick);
       }
 
       dirChooser_ = new DirectoryChooserTextBox(

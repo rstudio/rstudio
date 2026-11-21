@@ -35,7 +35,7 @@
       color: inherit;
       font-family: proportionalFont;
       font-size: 80%;
-      opacity: 0.50;
+      opacity: 0.60;
       cursor: pointer;
       /* The container's 80% line-height lets text hit areas spill into the next row;
          an inline-block with its own line-height keeps each link's hit area to its row. */

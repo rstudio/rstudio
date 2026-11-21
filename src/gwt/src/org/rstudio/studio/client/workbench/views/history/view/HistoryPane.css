@@ -79,8 +79,11 @@
 }
 
 .timestamp {
-   color: #999;
+   color: #666;
    font-family: proportionalFont;
+}
+.editor_dark .ace_editor_theme tr.timestamp {
+   color: #999;
 }
 .historyTable td.timestamp {
    padding-right: 3px;
