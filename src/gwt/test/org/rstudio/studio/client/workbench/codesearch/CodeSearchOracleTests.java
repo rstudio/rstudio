@@ -86,6 +86,14 @@ public class CodeSearchOracleTests extends GWTTestCase
                  CodeSearchOracle.scoreMatch(xref("thm", "pyth"), "Pythagoras"));
    }
 
+   // "Pythagoras" lacks "q", yet would outscore the label's late matches.
+   public void testUnmatchedNameDoesNotAffectRank()
+   {
+      assertEquals(CodeSearchOracle.scoreMatch(xref("thm", "very-long-label-pq"), "pq"),
+                   CodeSearchOracle.scoreMatch(
+                         xref("thm", "very-long-label-pq", "Pythagoras"), "pq"));
+   }
+
    private static CodeSearchSuggestion xref(String xrefType, String id)
    {
       return xref(xrefType, id, "");

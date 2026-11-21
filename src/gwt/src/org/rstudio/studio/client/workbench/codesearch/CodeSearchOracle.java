@@ -51,7 +51,9 @@ public class CodeSearchOracle extends SuggestOracle
    }
    
    // A result with a name, such as a named theorem, ranks by whichever of
-   // its text and its name the query matches better.
+   // its text and its name the query matches better. A name the query
+   // doesn't match is skipped: unmatched characters cost little for a short
+   // query, so it could still score well.
    static int scoreMatch(CodeSearchSuggestion suggestion, String query)
    {
       String localQuery = queryFor(suggestion, query);
@@ -60,7 +62,7 @@ public class CodeSearchOracle extends SuggestOracle
                              suggestion.isFileTarget());
 
       String name = suggestion.getNameMatchedString();
-      if (!name.isEmpty())
+      if (!name.isEmpty() && StringUtil.isSubsequence(name, localQuery, true))
          score = Math.min(score, scoreMatch(name, localQuery, false));
 
       return score;

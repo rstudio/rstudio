@@ -126,3 +126,12 @@ TEST(CodeSearchXRef, LabelMatchRanksByTheLabel)
 {
    EXPECT_EQ(0, scoreXRefMatch("thm:pyth", "Pythagoras", "thm:pyth"));
 }
+
+// "Pythagoras" lacks "q", yet its score for "pq" (two characters unmatched,
+// at most) beats the label's, whose matches come late.
+TEST(CodeSearchXRef, UnmatchedNameDoesNotAffectRank)
+{
+   const std::string label = "thm:very-long-label-pq";
+   EXPECT_EQ(scoreXRefMatch(label, "", "pq"),
+             scoreXRefMatch(label, "Pythagoras", "pq"));
+}

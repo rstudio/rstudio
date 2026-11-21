@@ -2842,8 +2842,10 @@ int scoreXRefMatch(const std::string& text,
                    const std::string& extraInfo,
                    const std::string& term)
 {
+   // a name the term doesn't match could still score well, since unmatched
+   // characters cost little for a short term
    int score = scoreMatch(text, term, false);
-   if (!extraInfo.empty())
+   if (!extraInfo.empty() && string_utils::isSubsequence(extraInfo, term, true))
       score = std::min(score, scoreMatch(extraInfo, term, false));
    return score;
 }
