@@ -50,9 +50,38 @@ public class CodeSearchOracle extends SuggestOracle
       workbenchContext_ = workbenchContext;
    }
    
-   private static int scoreMatch(CodeSearchSuggestion suggestion, String query)
+   static int scoreMatch(CodeSearchSuggestion suggestion, String query)
    {
-      return scoreMatch(suggestion.getMatchedString(), query, suggestion.isFileTarget());
+      return scoreMatch(suggestion.getMatchedString(),
+                        queryFor(suggestion, query),
+                        suggestion.isFileTarget());
+   }
+
+   // Whether a cached result also matches a longer query, decided as the
+   // server decides which results a query returns.
+   static boolean matchesQuery(CodeSearchSuggestion suggestion, String query)
+   {
+      String name = suggestion.getMatchedString().toLowerCase();
+      String queryLower = query.toLowerCase();
+      if (queryLower.indexOf('*') != -1)
+      {
+         Match match = patternForTerm(queryLower).match(name, 0);
+         return match != null && match.getIndex() == 0;
+      }
+
+      return StringUtil.isSubsequence(name, queryFor(suggestion, query), true);
+   }
+
+   // A file query may end in :<line>:<col> (see navigationTarget), so the
+   // server matches files against the query up to its first ':'. Other
+   // results, such as the cross-reference exm:fizz, match the whole query.
+   private static String queryFor(CodeSearchSuggestion suggestion, String query)
+   {
+      int colonIndex = query.indexOf(":");
+      if (!suggestion.isFileTarget() || colonIndex == -1)
+         return query;
+
+      return StringUtil.substring(query, 0, colonIndex);
    }
    
    // NOTE: When modifying this function, you should ensure that the associated
@@ -155,34 +184,13 @@ public class CodeSearchOracle extends SuggestOracle
          if (!res.getMoreAvailable() && 
              request.getQuery().startsWith(res.getQuery()))
          {
-            Pattern pattern = null;
             String query = request.getQuery();
-            String queryLower = query.toLowerCase();
-            
-            if (queryLower.indexOf('*') != -1)
-               pattern = patternForTerm(queryLower);
-            
             ArrayList<CodeSearchSuggestion> suggestions = new ArrayList<>();
             for (int s=0; s<res.getSuggestions().size(); s++)
             {
                CodeSearchSuggestion sugg = res.getSuggestions().get(s);
-               
-               String name = sugg.getMatchedString().toLowerCase();
-               if (pattern != null)
-               {
-                  Match match = pattern.match(name, 0);
-                  if (match != null && match.getIndex() == 0)
-                     suggestions.add(sugg);
-               }
-               else
-               {
-                  int colonIndex = query.indexOf(":");
-                  if (colonIndex == -1)
-                     colonIndex = query.length();
-                  
-                  if (StringUtil.isSubsequence(name, StringUtil.substring(query, 0, colonIndex), true))
-                     suggestions.add(sugg);
-               }
+               if (matchesQuery(sugg, query))
+                  suggestions.add(sugg);
             }
             
             // process and cache suggestions. note that this adds an item to
@@ -263,7 +271,7 @@ public class CodeSearchOracle extends SuggestOracle
       return true;
    }
    
-   private Pattern patternForTerm(String term)
+   private static Pattern patternForTerm(String term)
    {
       // split the term on *
       StringBuilder regex = new StringBuilder();
@@ -370,11 +378,6 @@ public class CodeSearchOracle extends SuggestOracle
    {
       // sort the suggestions -- we want suggestions for which
       // the query matches the start to come first
-      int colonIndex = query.indexOf(":");
-      final String localQuery = colonIndex > 0 ?
-            StringUtil.substring(query, 0, colonIndex) :
-            query;
-      
       java.util.Collections.sort(suggestions,
             new Comparator<CodeSearchSuggestion>() {
 
@@ -382,8 +385,8 @@ public class CodeSearchOracle extends SuggestOracle
          public int compare(CodeSearchSuggestion lhs,
                             CodeSearchSuggestion rhs)
          {
-            int lhsScore = scoreMatch(lhs, localQuery);
-            int rhsScore = scoreMatch(rhs, localQuery);
+            int lhsScore = scoreMatch(lhs, query);
+            int rhsScore = scoreMatch(rhs, query);
 
             if (lhsScore == rhsScore)
             {
