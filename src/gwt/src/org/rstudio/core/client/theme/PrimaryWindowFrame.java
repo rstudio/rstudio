@@ -114,6 +114,8 @@ public class PrimaryWindowFrame extends WindowFrame
    public void setSubtitle(String subtitle)
    {
       subtitle_.setText(subtitle);
+      // The header may shorten the subtitle; the tooltip shows all of it
+      subtitle_.setTitle(subtitle);
    }
 
    public Widget getSubtitleWidget()

@@ -103,6 +103,8 @@ public class ConsolePane extends WorkbenchPane
    public void setWorkingDirectory(String directory)
    {
       workingDir_.setText(directory);
+      // The toolbar may shorten the path; the tooltip shows all of it
+      workingDir_.setTitle(directory);
    }
 
    public void updateConsoleInterpreterVersion()

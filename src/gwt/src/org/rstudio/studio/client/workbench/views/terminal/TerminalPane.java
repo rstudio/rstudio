@@ -1058,6 +1058,8 @@ public class TerminalPane extends WorkbenchPane
    private void setTerminalTitle(String title)
    {
       terminalTitle_.setText(title);
+      // The toolbar may shorten the title; the tooltip shows all of it
+      terminalTitle_.setTitle(title);
    }
 
    @Override
