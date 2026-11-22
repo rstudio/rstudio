@@ -370,10 +370,10 @@ public class Toolbar extends ResizeComposite implements HasResizeHandlers
       leftCell.setProperty("maxWidth", "0");
 
       // Once the widget is fully shrunk, clip the left widgets that still don't
-      // fit rather than draw them over the right ones. The margin spares focus
-      // outlines, which extend past their controls.
-      leftCell.setProperty("overflow", "clip");
-      leftCell.setProperty("overflowClipMargin", "2px");
+      // fit rather than draw them over the right ones. Only the right edge
+      // clips; elsewhere 2px is left for focus outlines, which extend past
+      // their controls. (WebKit ignores overflow-clip-margin.)
+      leftCell.setProperty("clipPath", "inset(-2px 0 -2px -2px)");
    }
    
    public interface MenuSource
