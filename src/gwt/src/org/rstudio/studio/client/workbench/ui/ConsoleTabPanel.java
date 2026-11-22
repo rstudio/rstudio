@@ -37,7 +37,6 @@ import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
 import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputTab;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
@@ -61,7 +60,6 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
       consoleInterruptProfiler_ = consoleInterruptProfiler;
       consoleClearButton_ = consoleClearButton;
       consoleFindButton_ = commands.consoleFind().createToolbarButton();
-      consoleFindIcon_ = commands.consoleFind().getImageResource();
       consoleInterpreterVersion_ = consoleInterpreterVersion;
       userPrefs_ = uiPrefs;
       session_ = session;
@@ -440,22 +438,11 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
             owner_.setMainWidget(consolePane_);
             owner_.addLeftWidget(goToWorkingDirButton_);
             
-            owner_.setContextButton(consoleClearButton_,
-                                    consoleClearButton_.getWidth(),
-                                    consoleClearButton_.getHeight(),
-                                    0);
-            owner_.setContextButton(consoleFindButton_,
-                                    consoleFindIcon_.getWidth() + 6,
-                                    consoleFindIcon_.getHeight(),
-                                    1);
-            owner_.setContextButton(consoleInterrupt_,
-                                    consoleInterrupt_.getWidth(),
-                                    consoleInterrupt_.getHeight(),
-                                    2);
-            owner_.setContextButton(consoleInterruptProfiler_,
-                                    consoleInterruptProfiler_.getWidth(),
-                                    consoleInterruptProfiler_.getHeight(),
-                                    3);
+            // Same left-to-right order as the Console toolbar these replace
+            owner_.addRightWidget(consoleInterruptProfiler_);
+            owner_.addRightWidget(consoleInterrupt_);
+            owner_.addRightWidget(consoleFindButton_);
+            owner_.addRightWidget(consoleClearButton_);
             
                   
             consolePane_.onBeforeSelected();
@@ -466,10 +453,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          {
             consolePane_.onBeforeUnselected();
             owner_.setFillWidget(this);
-            owner_.setContextButton(null, 0, 0, 0);
-            owner_.setContextButton(null, 0, 0, 1);
-            owner_.setContextButton(null, 0, 0, 2);
-            owner_.setContextButton(null, 0, 0, 3);
+            owner_.clearRightWidgets();
          }
       }
       
@@ -545,7 +529,6 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    private ConsoleInterruptProfilerButton consoleInterruptProfiler_;
    private ConsoleClearButton consoleClearButton_;
    private ToolbarButton consoleFindButton_;
-   private ImageResource consoleFindIcon_;
    @SuppressWarnings("unused")
    private ConsoleInterpreterVersion consoleInterpreterVersion_;
    private final ToolbarButton goToWorkingDirButton_;

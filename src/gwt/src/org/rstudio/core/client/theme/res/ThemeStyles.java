@@ -31,6 +31,7 @@ public interface ThemeStyles extends CssResource
    String windowframe();
 
    String primaryWindowFrameHeader();
+   String primaryWindowFrameHeaderButtons();
    String title();
    String subtitle();
 

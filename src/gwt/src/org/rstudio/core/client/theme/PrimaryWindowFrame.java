@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.theme;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -64,6 +65,12 @@ public class PrimaryWindowFrame extends WindowFrame
       {
          public void onClick(ClickEvent event)
          {
+            // The buttons act on their own; focusing the pane here would take
+            // focus from whatever they open, and a double click would maximize.
+            Element target = Element.as(event.getNativeEvent().getEventTarget());
+            if (buttons_.getElement().isOrHasChild(target))
+               return;
+
             focus();
             event.preventDefault();
             event.stopPropagation();
@@ -79,9 +86,13 @@ public class PrimaryWindowFrame extends WindowFrame
       subtitle_ = new Label();
       subtitle_.setStylePrimaryName(styles.subtitle());
 
+      buttons_ = new FlowPanel();
+      buttons_.setStylePrimaryName(styles.primaryWindowFrameHeaderButtons());
+
       panel_.add(title_);
       panel_.add(separator_);
       panel_.add(subtitle_);
+      panel_.add(buttons_);
 
       setHeaderWidget(panel_);
 
@@ -112,12 +123,23 @@ public class PrimaryWindowFrame extends WindowFrame
 
    public void addLeftWidget(Widget widget)
    {
-      panel_.add(widget);
+      panel_.insert(widget, panel_.getWidgetIndex(buttons_));
+   }
+
+   public void addRightWidget(Widget widget)
+   {
+      buttons_.add(widget);
+   }
+
+   public void clearRightWidgets()
+   {
+      buttons_.clear();
    }
 
    private final DoubleClickState doubleClickState_ = new DoubleClickState();
    private Widget title_;
    private final HTML separator_;
    private final Label subtitle_;
+   private final FlowPanel buttons_;
    private final ClickFlowPanel panel_;
 }
