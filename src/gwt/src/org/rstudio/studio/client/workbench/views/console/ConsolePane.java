@@ -200,11 +200,18 @@ public class ConsolePane extends WorkbenchPane
       separator.addStyleName(ThemeStyles.INSTANCE.toolbarDotSeparator());
       toolbar.addLeftWidget(separator);
       
+      ConsoleResources.ConsoleStyles styles = ConsoleResources.INSTANCE.consoleStyles();
       workingDir_ = new Label();
       workingDir_.setStyleName(ThemeStyles.INSTANCE.subtitle());
-      toolbar.addLeftWidget(workingDir_);
-      
-      toolbar.addLeftWidget(commands_.goToWorkingDir().createToolbarButton());
+      workingDir_.addStyleName(styles.workingDir());
+
+      // A long path shortens so the buttons after it stay in view
+      FlowPanel workingDirPanel = new FlowPanel();
+      workingDirPanel.addStyleName(styles.workingDirPanel());
+      workingDirPanel.add(workingDir_);
+      workingDirPanel.add(commands_.goToWorkingDir().createToolbarButton());
+      toolbar.addLeftWidget(workingDirPanel);
+      toolbar.setLeftWidgetShrinkable(workingDirPanel);
       
       consoleInterruptButton_ = commands_.interruptR().createToolbarButton();
       consoleClearButton_ = commands_.consoleClear().createToolbarButton();

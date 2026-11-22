@@ -19,6 +19,7 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -348,6 +349,29 @@ public class Toolbar extends ResizeComposite implements HasResizeHandlers
    {
       leftToolbarPanel_.setCellWidth(w, "");
       leftToolbarPanel_.setWidth("");
+   }
+
+   /**
+    * Lets a left widget take the toolbar's spare width, and give up width when
+    * the toolbar is too narrow so the right widgets stay in view. The widget
+    * must clip its own content, e.g. with an ellipsis.
+    *
+    * @param w The widget, already added with addLeftWidget
+    */
+   public void setLeftWidgetShrinkable(Widget w)
+   {
+      setLeftWidgetWidth(w, "100%");
+      horizontalPanel_.setCellWidth(leftToolbarPanel_, "100%");
+
+      // A table cell otherwise grows to fit its content, widening the toolbar
+      // past its container; a zero maximum leaves it only the width to spare.
+      w.getElement().getParentElement().getStyle().setProperty("maxWidth", "0");
+      Style leftCell = leftToolbarPanel_.getElement().getParentElement().getStyle();
+      leftCell.setProperty("maxWidth", "0");
+
+      // Once the widget is fully shrunk, clip the left widgets that still don't
+      // fit rather than draw them over the right ones
+      leftCell.setProperty("overflowX", "clip");
    }
    
    public interface MenuSource
