@@ -438,7 +438,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
             owner_.setMainWidget(consolePane_);
             owner_.addLeftWidget(goToWorkingDirButton_);
             
-            // Same left-to-right order as the Console toolbar these replace
+            // Same left-to-right order as in the Console toolbar
             owner_.addRightWidget(consoleInterruptProfiler_);
             owner_.addRightWidget(consoleInterrupt_);
             owner_.addRightWidget(consoleFindButton_);
