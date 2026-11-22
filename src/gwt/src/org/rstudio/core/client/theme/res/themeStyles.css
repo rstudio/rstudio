@@ -1069,6 +1069,14 @@ table.header > tbody > tr > td {
    display: none;
 }
 
+/* WindowFrame sizes these buttons to 24px targets around their 14px icons */
+.windowframe .minimize,
+.windowframe .maximize,
+.windowframe .close {
+   background-position: center;
+   background-repeat: no-repeat;
+}
+
 .windowframe .close {
    background-image: CLOSEPANE;
    z-index: 50;
@@ -1191,13 +1199,14 @@ table.header > tbody > tr > td {
    bottom: 0px !important;
 }
 
+/* WindowFrame's button slots, less the shadow insets this frame drops */
 .windowFrameObject.consoleOnlyWindowFrame .consoleMinimizeLayout {
-   top: 5px !important;
-   right: 25px !important;
+   top: 0px !important;
+   right: 26px !important;
 }
 .windowFrameObject.consoleOnlyWindowFrame .consoleMaximizeLayout {
-   top: 5px !important;
-   right: 7px !important;
+   top: 0px !important;
+   right: 2px !important;
 }
 
 .macintosh #rstudio_console_input {
@@ -2978,26 +2987,26 @@ input[type="checkbox"]:checked:before {
    padding-top: 1px;
 }
 
-.rstheme_minimizedWindowObject .minimize {
-   padding-top: 3px;
+/* 24px squares meet the WCAG 2.5.8 minimum target size */
+.rstheme_minimizedWindowObject .minimize,
+.rstheme_minimizedWindowObject .maximize {
+   width: 24px;
+   height: 24px;
+   /* offsets the 3px .rstheme_center padding so the strip doesn't clip them */
+   margin-top: -2px;
+}
+
+.moduleTabPanel.rstheme_minimizedWindowObject .minimize,
+.moduleTabPanel.rstheme_minimizedWindowObject .maximize {
    margin-top: 1px;
-   width: 16px;
+}
+
+.rstheme_minimizedWindowObject .minimize {
    margin-right: 0px;
 }
 
-.moduleTabPanel.rstheme_minimizedWindowObject .minimize {
-   padding-top: 10px;
-}
-
 .rstheme_minimizedWindowObject .maximize {
-   padding-top: 3px;
-   margin-top: 1px;
-   width: 20px;
-   margin-right: 6px;
-}
-
-.moduleTabPanel.rstheme_minimizedWindowObject .maximize {
-   padding-top: 10px;
+   margin-right: 4px;
 }
 
 .rstheme_minimizedWindowObject .primaryWindowFrameHeader {

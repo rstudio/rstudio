@@ -102,47 +102,33 @@ public class WindowFrame extends Composite
       frame_.addStyleName(styles.windowFrameObject());
 
       if (showMinimizeButton)
-      {
-         frame_.add(minimizeButton_);
-         frame_.setWidgetTopHeight(minimizeButton_,
-               TOP_SHADOW_WIDTH + 4, Style.Unit.PX,
-               14, Style.Unit.PX);
-         frame_.setWidgetRightWidth(minimizeButton_,
-               RIGHT_SHADOW_WIDTH + 25, Style.Unit.PX,
-               14, Style.Unit.PX);
-      }
+         addFrameButton(minimizeButton_, 1);
 
       // When a close button is shown, shift maximize left to make room
-      int maximizeRightOffset = showCloseButton
-            ? RIGHT_SHADOW_WIDTH + 25
-            : RIGHT_SHADOW_WIDTH + 7;
-
       if (showMaximizeButton)
-      {
-         frame_.add(maximizeButton_);
-         frame_.setWidgetTopHeight(maximizeButton_,
-                                   TOP_SHADOW_WIDTH + 4, Style.Unit.PX,
-                                   14, Style.Unit.PX);
-         frame_.setWidgetRightWidth(maximizeButton_,
-                                    maximizeRightOffset, Style.Unit.PX,
-                                    14, Style.Unit.PX);
-      }
+         addFrameButton(maximizeButton_, showCloseButton ? 1 : 0);
 
       if (showCloseButton)
-      {
-         frame_.add(closeButton_);
-         frame_.setWidgetTopHeight(closeButton_,
-                                   TOP_SHADOW_WIDTH + 4, Style.Unit.PX,
-                                   14, Style.Unit.PX);
-         frame_.setWidgetRightWidth(closeButton_,
-                                    RIGHT_SHADOW_WIDTH + 7, Style.Unit.PX,
-                                    14, Style.Unit.PX);
-      }
+         addFrameButton(closeButton_, 0);
 
       buttonsArea_ = new FlowPanel();
       frame_.add(buttonsArea_);
 
       initWidget(frame_);
+   }
+
+   /**
+    * Places a title bar button in a slot counted from the right edge.
+    */
+   private void addFrameButton(WindowFrameButton button, int slot)
+   {
+      frame_.add(button);
+      frame_.setWidgetTopHeight(button,
+                                FRAME_BUTTON_TOP, Style.Unit.PX,
+                                FRAME_BUTTON_SIZE, Style.Unit.PX);
+      frame_.setWidgetRightWidth(button,
+                                 FRAME_BUTTON_RIGHT + slot * FRAME_BUTTON_SIZE, Style.Unit.PX,
+                                 FRAME_BUTTON_SIZE, Style.Unit.PX);
    }
 
    public String getName()
@@ -314,7 +300,7 @@ public class WindowFrame extends Composite
          frame_.setWidgetLeftRight(
                header_,
                LEFT_SHADOW_WIDTH, Style.Unit.PX,
-               RIGHT_SHADOW_WIDTH + 39, Style.Unit.PX);
+               FRAME_BUTTONS_EXTENT, Style.Unit.PX);
          frame_.setWidgetTopHeight(
                header_,
                TOP_SHADOW_WIDTH, Style.Unit.PX,
@@ -392,7 +378,8 @@ public class WindowFrame extends Composite
          button.getElement().getStyle().setFloat(Float.RIGHT);
 
          buttonsArea_.add(button);
-         frame_.setWidgetRightWidth(buttonsArea_, 48, Unit.PX, width * contextButtons_.size(), Unit.PX);
+         frame_.setWidgetRightWidth(buttonsArea_, FRAME_BUTTONS_EXTENT + 6, Unit.PX,
+                                    width * contextButtons_.size(), Unit.PX);
          frame_.setWidgetTopHeight(buttonsArea_, 3, Unit.PX, height, Unit.PX);
          // Without z-index, the header widget will obscure the context button
          // if the former is set after the latter.
@@ -530,6 +517,13 @@ public class WindowFrame extends Composite
                             BOTTOM_SHADOW_WIDTH = 5,
                             TITLEBAR_REGION_BOTTOM = 26,
                             CONTENT_REGION_TOP = 26;
+
+   // Title bar buttons are 24px squares, the WCAG 2.5.8 minimum target size,
+   // laid out right to left in slots; CSS centers each 14px icon in its square.
+   private static final int FRAME_BUTTON_SIZE = 24,
+                            FRAME_BUTTON_TOP = 2,
+                            FRAME_BUTTON_RIGHT = RIGHT_SHADOW_WIDTH + 2,
+                            FRAME_BUTTONS_EXTENT = FRAME_BUTTON_RIGHT + 2 * FRAME_BUTTON_SIZE;
    // Injected ----
    private EventBus events_;
    String name_;
