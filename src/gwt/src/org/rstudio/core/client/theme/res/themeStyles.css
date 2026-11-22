@@ -3154,6 +3154,14 @@ body.windows .search {
 
 }
 
+/* A long title, such as the working directory, shortens so the buttons after
+   it stay in view */
+.subtitle.terminalTitle {
+   display: block;
+   overflow: hidden;
+   text-overflow: ellipsis;
+}
+
 .terminalClearButton {
 
 }

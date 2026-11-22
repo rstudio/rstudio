@@ -206,6 +206,7 @@ public interface ThemeStyles extends CssResource
    String findBuildButton();
    String consoleClearButton();
    String terminalClearButton();
+   String terminalTitle();
    String refreshToolbarButton();
 
    String tabIcon();
