@@ -1181,6 +1181,9 @@ table.header > tbody > tr > td {
    border-bottom: solid 1px #d6dadc;
    display: flex;
    align-items: center;
+   /* Once the path can shrink no further, the row overflows at its left end,
+      which is clipped, rather than pushing the buttons under Minimize */
+   justify-content: flex-end;
    /* clears the Minimize and Maximize buttons placed below, plus a gap */
    padding-right: 56px;
 }
