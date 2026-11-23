@@ -584,6 +584,16 @@ test_that("agent code can move within the allowed roots and back", {
    .rs.chat.withGuardrails(setwd(dirs$user))
    expect_equal(workingDirectory(), dirs$user)
 
+   # as it does when the evaluation that moved away ended in an error
+   result <- .rs.chat.safeEval(quote({
+      setwd("sub")
+      stop("failed after moving")
+   }))
+   expect_s3_class(result, "error")
+   expect_equal(workingDirectory(), dirs$sub)
+   .rs.chat.withGuardrails(setwd(".."))
+   expect_equal(workingDirectory(), dirs$user)
+
 })
 
 test_that("a working directory chosen by the user replaces the remembered one", {
