@@ -596,16 +596,25 @@ delayedAssign(
 #' @return `TRUE` if `fn` is one of `chat.workingDirectoryCallers`.
 .rs.addFunction("chat.isWorkingDirectoryCaller", function(fn)
 {
+   if (!is.function(fn))
+      return(FALSE)
+
    # resolved on each call rather than captured up front: source() and
    # sys.source() are hooked themselves, so the function on the stack
-   # while the guardrails are active is the hooked one
+   # while the guardrails are active is usually the hooked one. A
+   # reference taken before they were activated is the original.
    callers <- .rs.chat.workingDirectoryCallers
    for (package in names(callers))
    {
-      envir <- asNamespace(package)
+      current <- asNamespace(package)
+      originals <- .rs.chat.hookedBindings[[package]]
+
       for (name in callers[[package]])
       {
-         if (identical(fn, get0(name, envir = envir, inherits = FALSE)))
+         if (identical(fn, get0(name, envir = current, inherits = FALSE)))
+            return(TRUE)
+
+         if (!is.null(originals) && identical(fn, originals[[name]]))
             return(TRUE)
       }
    }
@@ -622,23 +631,33 @@ delayedAssign(
 #' directory can be the only root containing that one, and it stops being
 #' a root as soon as agent code moves elsewhere.
 #'
-#' Changes made by package code, or by one of `chat.workingDirectoryCallers`,
-#' are not checked. The latter must be the caller of `setwd()` itself: a
-#' `setwd()` call within a sourced script is as much agent code as one
-#' outside it.
+#' A change is not checked when the function calling `setwd()` belongs to
+#' a package, or is one of `chat.workingDirectoryCallers`. Only that caller
+#' counts, not the rest of the call stack: a `setwd()` call within a
+#' sourced script, or within a function the agent passes to a package, is
+#' as much agent code as one outside it.
 #'
 #' @param action The name of the function changing the working directory.
 #' @param dir The new working directory.
 #' @param caller The function that called `action`.
 .rs.addFunction("chat.validateWorkingDirectory", function(action, dir, caller)
 {
-   if (.rs.chat.isWorkingDirectoryCaller(caller) || .rs.chat.hasTrustedCaller())
+   if (.rs.chat.isWorkingDirectoryCaller(caller) || .rs.chat.hasTrustedCallerImpl(list(caller)))
       return(TRUE)
 
    roots <- .rs.chat.allowedRoots()
    userDir <- .rs.chat.guardrailState$userWorkingDirectory
    if (!is.null(userDir))
-      roots <- c(roots, .rs.chat.normalizePath(userDir))
+   {
+      # matched exactly as well as used as a root: a filesystem root is
+      # never taken to contain other paths (see chat.isPathWithin), so
+      # one the user chose would otherwise be unreachable
+      userDir <- .rs.chat.normalizePath(userDir)
+      if (identical(.rs.chat.normalizePath(dir), userDir))
+         return(TRUE)
+
+      roots <- c(roots, userDir)
+   }
 
    .rs.chat.validateFileEdit(action, dir, roots)
 })
