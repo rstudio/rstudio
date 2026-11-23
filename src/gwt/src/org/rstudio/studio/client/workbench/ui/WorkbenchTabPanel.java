@@ -200,10 +200,6 @@ class WorkbenchTabPanel
       if (areTabsIdentical(tabs))
          return;
 
-      // Re-adding a tab hides it until it is selected again, so focus inside
-      // it is moved out first and restored if its tab ends up visible.
-      Element focused = blurFocusWithin(tabPanel_.getElement());
-
       clearing_ = true;
       tabEventRegistrations_.detach();
       tabPanel_.clear();
@@ -214,22 +210,15 @@ class WorkbenchTabPanel
          add(tab);
 
       updateEmptyStateVisibility();
-
-      if (focused != null)
-         focused.focus();
    }
 
    // Hiding a tab sets aria-hidden on it, which Chromium blocks (and warns
-   // about) while a descendant has focus (#19788). Returns the element that
-   // was blurred, or null if focus was elsewhere.
-   private static Element blurFocusWithin(Element container)
+   // about) while a descendant has focus (#19788).
+   private static void blurFocusWithin(Element container)
    {
       Element focused = DomUtils.getActiveElement();
-      if (focused == null || !container.isOrHasChild(focused))
-         return null;
-
-      focused.blur();
-      return focused;
+      if (focused != null && container.isOrHasChild(focused))
+         focused.blur();
    }
 
    private boolean areTabsIdentical(ArrayList<WorkbenchTab> tabs)
