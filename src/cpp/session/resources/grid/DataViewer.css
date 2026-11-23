@@ -1439,7 +1439,7 @@ body.overlay-scrollbars #sidebarContent::-webkit-scrollbar {
 /* The NA stat is always rendered for a uniform footer; dim the zero case
    so columns with real missingness stand out when scanning the list. */
 .sidebar-col-na.zero {
-   opacity: 0.5;
+   opacity: 0.7;
 }
 
 /* --- Expand button --- */

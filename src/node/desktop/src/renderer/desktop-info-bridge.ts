@@ -26,6 +26,5 @@ export function getDesktopInfoBridge() {
     proportionalFont: ipcRenderer.sendSync('desktop_get_proportional_font'),
     desktopSynctexViewer: '',
     zoomLevel: ipcRenderer.sendSync('desktop_get_zoom_level'),
-    chromiumDevtoolsPort: 0,
   };
 }

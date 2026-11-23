@@ -228,6 +228,14 @@
 
 body.windows, body.macintosh, body.linux {}
 
+/* The layout is absolutely positioned, so html and body would otherwise be 0px tall.
+   Window.enableScrolling(false) makes html overflow: hidden, and axe-core treats a 0px
+   overflow: hidden ancestor as clipping its content, so it skips nearly every element
+   when checking color contrast. */
+html, body {
+   height: 100%;
+}
+
 body {
    background: BACKGROUNDGRADIENT repeat-x top #e1e2e5;
 }
@@ -1061,6 +1069,14 @@ table.header > tbody > tr > td {
    display: none;
 }
 
+/* WindowFrame sizes these buttons to 24px targets around their 14px icons */
+.windowframe .minimize,
+.windowframe .maximize,
+.windowframe .close {
+   background-position: center;
+   background-repeat: no-repeat;
+}
+
 .windowframe .close {
    background-image: CLOSEPANE;
    z-index: 50;
@@ -1099,16 +1115,6 @@ table.header > tbody > tr > td {
 
 .consoleHeaderLayout {
 
-}
-
-.consoleHeaderLayout .subtitle {
-	position: relative;
-	top: -4px;
-}
-
-.consoleHeaderLayout .toolbarDotSeparator {
-	position: relative;
-	top: -4px;
 }
 
 .consoleMinimizeLayout {
@@ -1173,6 +1179,31 @@ table.header > tbody > tr > td {
    margin-right: 0px;
    margin-bottom: 2px;
    border-bottom: solid 1px #d6dadc;
+   display: flex;
+   align-items: center;
+   /* Once the path can shrink no further, the row overflows at its left end,
+      which is clipped, rather than pushing the buttons under Minimize */
+   justify-content: flex-end;
+   /* clears the Minimize and Maximize buttons placed below, plus a gap */
+   padding-right: 56px;
+}
+
+.windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader > * {
+   flex: none;
+}
+
+/* A long working directory gives way to the buttons after it */
+.windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader > .subtitle {
+   flex: 0 1 auto;
+   min-width: 0;
+   overflow: hidden;
+   text-overflow: ellipsis;
+}
+
+.windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeaderButtons {
+   display: flex;
+   align-items: center;
+   margin-left: auto;
 }
 
 .windowFrameObject.consoleOnlyWindowFrame div.consoleWidgetLayout {
@@ -1183,13 +1214,14 @@ table.header > tbody > tr > td {
    bottom: 0px !important;
 }
 
+/* WindowFrame's button slots, less the shadow insets this frame drops */
 .windowFrameObject.consoleOnlyWindowFrame .consoleMinimizeLayout {
-   top: 5px !important;
-   right: 25px !important;
+   top: 0px !important;
+   right: 26px !important;
 }
 .windowFrameObject.consoleOnlyWindowFrame .consoleMaximizeLayout {
-   top: 5px !important;
-   right: 7px !important;
+   top: 0px !important;
+   right: 2px !important;
 }
 
 .macintosh #rstudio_console_input {
@@ -2418,10 +2450,10 @@ input[type="checkbox"]:checked:before {
 }
 
 .dialogTabPanel .gwt-TabLayoutPanelTab-selected {
-   background: #9c9c9c -moz-linear-gradient(top, rgba(0,0,0,0.1) 0%, rgba(255,255,255,0) 20%, rgba(0,0,0,0.01) 85%, rgba(0,0,0,0.1) 100%);
-   background: #9c9c9c -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(0,0,0,0.1)), color-stop(20%,rgba(255,255,255,0)), color-stop(85%,rgba(0,0,0,0.01)), color-stop(100%,rgba(0,0,0,0.1)));
-   background: #9c9c9c -webkit-linear-gradient(top, rgba(0,0,0,0.1) 0%,rgba(255,255,255,0) 20%,rgba(0,0,0,0.01) 85%,rgba(0,0,0,0.1) 100%);
-   background: #9c9c9c linear-gradient(to bottom, rgba(0,0,0,0.1) 0%,rgba(255,255,255,0) 20%,rgba(0,0,0,0.01) 85%,rgba(0,0,0,0.1) 100%);
+   background: #707070 -moz-linear-gradient(top, rgba(0,0,0,0.1) 0%, rgba(255,255,255,0) 20%, rgba(0,0,0,0.01) 85%, rgba(0,0,0,0.1) 100%);
+   background: #707070 -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(0,0,0,0.1)), color-stop(20%,rgba(255,255,255,0)), color-stop(85%,rgba(0,0,0,0.01)), color-stop(100%,rgba(0,0,0,0.1)));
+   background: #707070 -webkit-linear-gradient(top, rgba(0,0,0,0.1) 0%,rgba(255,255,255,0) 20%,rgba(0,0,0,0.01) 85%,rgba(0,0,0,0.1) 100%);
+   background: #707070 linear-gradient(to bottom, rgba(0,0,0,0.1) 0%,rgba(255,255,255,0) 20%,rgba(0,0,0,0.01) 85%,rgba(0,0,0,0.1) 100%);
    color: #ffffff;
 }
 
@@ -2508,10 +2540,14 @@ input[type="checkbox"]:checked:before {
    font-family: proportionalFont;
    text-transform: uppercase;
    font-size: 11px;
-   color: #909090;
+   color: #707070;
    padding-left: 28px;
    padding-top: 2px;
    padding-bottom: 2px;
+}
+
+.rstudio-themes-dark-menus .menuSubheader {
+   color: #a8a8a8;
 }
 
 .menuItemSubtitle {
@@ -2966,26 +3002,26 @@ input[type="checkbox"]:checked:before {
    padding-top: 1px;
 }
 
-.rstheme_minimizedWindowObject .minimize {
-   padding-top: 3px;
+/* 24px squares meet the WCAG 2.5.8 minimum target size */
+.rstheme_minimizedWindowObject .minimize,
+.rstheme_minimizedWindowObject .maximize {
+   width: 24px;
+   height: 24px;
+   /* offsets the 3px .rstheme_center padding so the strip doesn't clip them */
+   margin-top: -2px;
+}
+
+.moduleTabPanel.rstheme_minimizedWindowObject .minimize,
+.moduleTabPanel.rstheme_minimizedWindowObject .maximize {
    margin-top: 1px;
-   width: 16px;
+}
+
+.rstheme_minimizedWindowObject .minimize {
    margin-right: 0px;
 }
 
-.moduleTabPanel.rstheme_minimizedWindowObject .minimize {
-   padding-top: 10px;
-}
-
 .rstheme_minimizedWindowObject .maximize {
-   padding-top: 3px;
-   margin-top: 1px;
-   width: 20px;
-   margin-right: 6px;
-}
-
-.moduleTabPanel.rstheme_minimizedWindowObject .maximize {
-   padding-top: 10px;
+   margin-right: 4px;
 }
 
 .rstheme_minimizedWindowObject .primaryWindowFrameHeader {
@@ -3116,6 +3152,14 @@ body.windows .search {
 
 .findBuildButton {
 
+}
+
+/* A long title, such as the working directory, shortens so the buttons after
+   it stay in view */
+.subtitle.terminalTitle {
+   display: block;
+   overflow: hidden;
+   text-overflow: ellipsis;
 }
 
 .terminalClearButton {

@@ -147,14 +147,15 @@ Error ConsoleProcessSocket::ensureServerRunning()
       {
          try
          {
-            if (session::options().standalone())
+            // a standalone desktop session on a local stream has no tcp
+            // listener, so it binds to loopback below
+            auto* pTcpListener =
+                  dynamic_cast<TcpIpHttpConnectionListener*>(&httpConnectionListener());
+            if (session::options().standalone() && pTcpListener)
             {
                // if we are in standalone mode, try to bind to the same address
                // that the server bound to
-               TcpIpHttpConnectionListener& listener =
-                     static_cast<TcpIpHttpConnectionListener&>(httpConnectionListener());
-
-               boost::asio::ip::tcp::endpoint endpoint = listener.getLocalEndpoint();
+               boost::asio::ip::tcp::endpoint endpoint = pTcpListener->getLocalEndpoint();
                pwsServer_->listen(endpoint.address(), static_cast<uint16_t>(port));
             }
             else

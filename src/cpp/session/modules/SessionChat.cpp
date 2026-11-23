@@ -5319,11 +5319,11 @@ Error startChatBackend(bool resumeConversation)
    // Not needed in server mode where embedded origin lockdown is disabled.
    if (options().programMode() == kSessionProgramModeDesktop)
    {
-      std::string wwwPort = options().wwwPort();
-      if (!wwwPort.empty())
+      std::string sessionPort = module_context::sessionPort();
+      if (!sessionPort.empty())
       {
          args.push_back("--allowed-origin");
-         args.push_back("http://127.0.0.1:" + wwwPort);
+         args.push_back("http://127.0.0.1:" + sessionPort);
       }
    }
 

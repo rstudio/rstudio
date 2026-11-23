@@ -51,8 +51,6 @@ public class ConsoleInterruptButton extends Composite
             interruptCommand.getTooltip(),
             icon,
             interruptCommand);
-      width_ = icon.getWidth() + 6;
-      height_ = icon.getHeight();
       panel.setWidget(button);
 
       initWidget(panel);
@@ -92,18 +90,6 @@ public class ConsoleInterruptButton extends Composite
       });
    }
 
-   public int getWidth()
-   {
-      return width_;
-   }
-
-   public int getHeight()
-   {
-      return height_;
-   }
-
    private final DelayFadeInHelper fadeInHelper_;
-   private final int width_;
-   private final int height_;
    private final Commands commands_;
 }

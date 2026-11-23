@@ -114,6 +114,39 @@ bool isIgnoredDirectory(const core::FilePath& directory, bool isPackageProject);
 
 void addAllProjectSymbols(std::set<std::string>* pSymbols);
 
+// The result type sent to the client (SourceItem.java's constants) for a
+// bookdown or Quarto cross-reference type, e.g. 10 (MATH) for "thm".
+int sourceItemTypeForXRef(const std::string& xrefType);
+
+// The length of a file query without a trailing position, such as the
+// ":10:4" in "foo.R:10:4". Files are matched and scored on that part alone.
+std::size_t fileQueryLength(const std::string& term);
+
+// How well a search term matches a file name (lower is better).
+int scoreFileMatch(const std::string& filename, const std::string& term);
+
+// How Go to File/Function lists a bookdown or Quarto cross-reference: the
+// result's text, ending in the key's suffix (e.g. "-2") if it has one, and a
+// name shown beside it (e.g. "Pythagoras" for thm:pyth).
+struct XRefResult
+{
+   std::string text;
+   std::string extraInfo;
+};
+
+XRefResult xrefResult(const std::string& type,
+                      const std::string& id,
+                      const std::string& title,
+                      const std::string& suffix,
+                      bool isQuarto);
+
+// A search term finds a cross-reference by its text or its name, and it
+// ranks by whichever of the two the term matches better (lower is better).
+bool xrefMatches(const XRefResult& result, const std::string& term);
+int scoreXRefMatch(const std::string& text,
+                   const std::string& extraInfo,
+                   const std::string& term);
+
 core::Error initialize();
    
 } // namespace code_search
