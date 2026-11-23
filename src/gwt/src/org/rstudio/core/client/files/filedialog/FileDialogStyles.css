@@ -1,4 +1,4 @@
-@external gwt-CheckBox-FilesSelectAll;
+@external gwt-CheckBox, gwt-CheckBox-FilesSelectAll;
 @external gwt-DialogBox;
 @external gwt-MenuItem-selected;
 @external breadcrumb, breadcrumb-filepane;
@@ -86,14 +86,17 @@
    color: black;
 }
 
-.gwt-CheckBox-FilesSelectAll {
-   margin-left: 2px;
-   margin-top: 2px;
+/* The Files pane's select-all checkbox sits over the file list's checkbox
+   column, with its center 12.5px from the toolbar's top edge and from the
+   breadcrumb: WCAG 2.5.8 spacing for a 13px target. Block layout and these
+   margins override the platform checkbox margins and font-based alignment. */
+.gwt-CheckBox.gwt-CheckBox-FilesSelectAll {
+   margin: 0;
 }
 
-body.windows .gwt-CheckBox-FilesSelectAll {
-   margin-left: 4px;
-   margin-top: 3px;
+.gwt-CheckBox.gwt-CheckBox-FilesSelectAll input[type="checkbox"] {
+   display: block;
+   margin: 6px 0 0 11px;
 }
 
 .gwt-DialogBox .breadcrumbFrame {

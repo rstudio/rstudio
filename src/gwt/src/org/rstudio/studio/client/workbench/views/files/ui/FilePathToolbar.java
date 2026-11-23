@@ -141,7 +141,9 @@ public class FilePathToolbar extends Composite
 
       layout.add(selectAllCheckBox);
       layout.setWidgetTopBottom(selectAllCheckBox, 0, Unit.PX, 0, Unit.PX);
-      layout.setWidgetLeftWidth(selectAllCheckBox, 0, Unit.PX, 20, Unit.PX);
+      layout.setWidgetLeftWidth(selectAllCheckBox,
+                                0, Unit.PX,
+                                FilesList.CHECK_COLUMN_WIDTH_PIXELS, Unit.PX);
 
       // breadcrumb widget
       fileSystemContext_ = new FileSystemContextImpl();
@@ -171,7 +173,9 @@ public class FilePathToolbar extends Composite
 
       layout.add(pathBreadcrumbWidget_);
       layout.setWidgetTopBottom(pathBreadcrumbWidget_, 0, Unit.PX, 0, Unit.PX);
-      layout.setWidgetLeftRight(pathBreadcrumbWidget_, 21, Unit.PX, 0, Unit.PX);
+      layout.setWidgetLeftRight(pathBreadcrumbWidget_,
+                                FilesList.CHECK_COLUMN_WIDTH_PIXELS, Unit.PX,
+                                0, Unit.PX);
    }
 
    public void setPath(String path, String lastBrowseable)
