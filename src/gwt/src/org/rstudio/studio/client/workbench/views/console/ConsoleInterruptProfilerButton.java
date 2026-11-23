@@ -54,11 +54,8 @@ public class ConsoleInterruptProfilerButton extends Composite
       SimplePanel panel = new SimplePanel();
       panel.getElement().getStyle().setPosition(Position.RELATIVE);
 
-      ImageResource icon = new ImageResource2x(FileIconResources.INSTANCE.iconProfiler2x());
       Image button = CreateProfilerButton();
 
-      width_ = icon.getWidth() + 6;
-      height_ = icon.getHeight();
       panel.setWidget(button);
 
       initWidget(panel);
@@ -80,18 +77,6 @@ public class ConsoleInterruptProfilerButton extends Composite
       });
    }
 
-   public int getWidth()
-   {
-      return width_;
-   }
-
-   public int getHeight()
-   {
-      return height_;
-   }
-
    private final DelayFadeInHelper fadeInHelper_;
-   private final int width_;
-   private final int height_;
    private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
 }

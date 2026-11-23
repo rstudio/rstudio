@@ -5,7 +5,7 @@ import { restartSessionWithSentinel, waitForSessionRestart } from '@utils/projec
 import { dismissBlockingModals } from '@pages/modals.page';
 import { executeInConsole } from '@pages/console_pane.page';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
-import type { Locator, Page } from 'playwright';
+import type { BrowserContext, Locator, Page } from 'playwright';
 import { setupPositAssistantChat } from './_chat-setup';
 
 // Regression tests for rstudio/rstudio#19695: suspend and Restart R stop the
@@ -21,6 +21,7 @@ const restartingNotice = (page: Page): Locator =>
   page.getByText(/Restarting R\. Posit Assistant will reconnect/);
 
 const CHAT_IFRAME = "iframe[title='Posit Assistant']";
+const RETURN_TO_MAIN_BTN = '#rstudio_chat_return_to_main_button';
 
 /** The URL of the document currently loaded in the chat iframe ('' if none). */
 async function chatDocumentUrl(page: Page): Promise<string> {
@@ -80,6 +81,25 @@ async function waitForClientStateQuiet(page: Page): Promise<void> {
   } finally {
     page.off('request', onRequest);
   }
+}
+
+// Any RPC to a suspended session resumes it, and the client-state push runs
+// every 5s. Watch past that.
+const STAYS_SUSPENDED_WINDOW_MS = 8000;
+
+/** Fails if any page in the context starts an RPC within the window. */
+async function expectNoRpcs(context: BrowserContext, windowMs: number): Promise<void> {
+  const rpcs: string[] = [];
+  const onRequest = (request: { url(): string }): void => {
+    if (request.url().includes('/rpc/')) rpcs.push(request.url());
+  };
+  context.on('request', onRequest);
+  try {
+    await sleep(windowMs);
+  } finally {
+    context.off('request', onRequest);
+  }
+  expect(rpcs, 'RPCs sent while suspended').toEqual([]);
 }
 
 test.describe.serial('Posit Assistant across suspend and restart', {
@@ -197,5 +217,34 @@ test.describe.serial('Posit Assistant across suspend and restart', {
     }, { selector: CHAT_IFRAME, before: suspendedDocumentUrl }, { timeout: 30000 });
     await expect(lostBanner(page)).toBeHidden();
     await chatActions.waitForChatReady();
+  });
+
+  // #19699: saving the popped-out window's geometry on suspend dirtied client
+  // state, whose next push resumed the session. The window shows the notice too.
+  test('popped-out chat stays suspended and shows the notice until resume', async ({
+    rstudioPage: page,
+  }) => {
+    const satellitePromise = page.context().waitForEvent('page', { timeout: 30000 });
+    await executeCommand(page, 'popOutChat');
+    const satellite = await satellitePromise;
+    try {
+      await expect(satellite.locator(RETURN_TO_MAIN_BTN)).toBeVisible({ timeout: 15000 });
+      // Popping out saves client state
+      await waitForClientStateQuiet(page);
+
+      await executeInConsole(page, '.rs.suspendSession(force = FALSE)', { wait: false });
+      await expect(suspendedNotice(satellite)).toBeVisible({ timeout: 15000 });
+      await expectNoRpcs(page.context(), STAYS_SUSPENDED_WINDOW_MS);
+      await expect(suspendedNotice(satellite)).toBeVisible();
+
+      await waitForSessionRestart(page);
+      await dismissBlockingModals(page);
+      await expect(suspendedNotice(satellite)).toBeHidden({ timeout: 15000 });
+    } finally {
+      // Closing the window returns chat to the main window. Under Playwright,
+      // chat can already be back there after resume with this window still
+      // open (manual testing in Chrome keeps chat popped out).
+      await satellite.close();
+    }
   });
 });

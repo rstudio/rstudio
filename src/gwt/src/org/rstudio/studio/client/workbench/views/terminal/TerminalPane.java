@@ -142,7 +142,9 @@ public class TerminalPane extends WorkbenchPane
       toolbar.addLeftSeparator();
       terminalTitle_ = new Label();
       terminalTitle_.setStyleName(ThemeStyles.INSTANCE.subtitle());
+      terminalTitle_.addStyleName(ThemeStyles.INSTANCE.terminalTitle());
       toolbar.addLeftWidget(terminalTitle_);
+      toolbar.setLeftWidgetShrinkable(terminalTitle_);
 
       clearButton_ = commands_.clearTerminalScrollbackBuffer().createToolbarButton();
       clearButton_.addStyleName(ThemeStyles.INSTANCE.terminalClearButton());
@@ -1056,6 +1058,8 @@ public class TerminalPane extends WorkbenchPane
    private void setTerminalTitle(String title)
    {
       terminalTitle_.setText(title);
+      // The toolbar may shorten the title; the tooltip shows all of it
+      terminalTitle_.setTitle(title);
    }
 
    @Override

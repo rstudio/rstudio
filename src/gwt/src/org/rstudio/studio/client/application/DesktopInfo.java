@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.application;
 
 import org.rstudio.studio.client.common.satellite.Satellite;
-import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 
 import com.google.inject.Inject;
@@ -25,8 +24,7 @@ import com.google.inject.Singleton;
 public class DesktopInfo
 {
    @Inject
-   public DesktopInfo(Session session,
-                      Commands commands)
+   public DesktopInfo(Session session)
    {
       // do no work in server mode
       if (!Desktop.hasDesktopFrame())
@@ -34,11 +32,6 @@ public class DesktopInfo
 
       session.withSessionInfo(info ->
       {
-         // disable devtools command when unavailable
-         boolean devtoolsEnabled = getChromiumDevtoolsPort() > 0;
-         commands.openDeveloperConsole().setEnabled(devtoolsEnabled);
-         commands.openDeveloperConsole().setVisible(devtoolsEnabled);
-
          if (Satellite.isCurrentWindowSatellite())
             return;
 
@@ -100,11 +93,6 @@ public class DesktopInfo
    public static final native void setZoomLevel(double zoomLevel)
    /*-{
       $wnd.desktopInfo.zoomLevel = zoomLevel;
-   }-*/;
-
-   public static final native int getChromiumDevtoolsPort()
-   /*-{
-      return $wnd.desktopInfo.chromiumDevtoolsPort || 0;
    }-*/;
 
 }
