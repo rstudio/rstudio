@@ -586,8 +586,14 @@ delayedAssign(
    state <- .rs.chat.guardrailState
 
    workDir <- getwd()
-   if (!identical(workDir, state$agentWorkingDirectory))
-      state$userWorkingDirectory <- workDir
+   if (identical(workDir, state$agentWorkingDirectory))
+      return(invisible())
+
+   # resolved now, so the record keeps naming the directory the user was
+   # in whatever later happens to that path. NULL when the working
+   # directory no longer exists.
+   state$userWorkingDirectory <- if (!is.null(workDir))
+      .rs.chat.normalizePath(workDir)
 })
 
 #' Check whether a function may change the working directory freely.
@@ -649,6 +655,11 @@ delayedAssign(
       if (isNamespace(envir))
          return(!getNamespaceName(envir) %in% .rs.chat.basePackages)
 
+      # any other environment on the search path (e.g. one the user
+      # attached) has tools:rstudio among its enclosures too
+      if (!is.null(attr(envir, "name")))
+         return(FALSE)
+
       envir <- parent.env(envir)
    }
 
@@ -692,7 +703,6 @@ delayedAssign(
       # matched exactly as well as used as a root: a filesystem root is
       # never taken to contain other paths (see chat.isPathWithin), so
       # one the user chose would otherwise be unreachable
-      userDir <- .rs.chat.normalizePath(userDir)
       if (identical(.rs.chat.normalizePath(dir), userDir))
          return(TRUE)
 

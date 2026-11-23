@@ -478,6 +478,21 @@ test_that("unlink() accepts NULL under the guardrails", {
 
 })
 
+test_that("unlink() checks the paths its argument is coerced to", {
+
+   outside <- tempfile("chat-guardrails-unlink-", tmpdir = dirname(tempdir()))
+   allowed <- tempfile("chat-guardrails-unlink-")
+   file.create(c(outside, allowed))
+   on.exit(unlink(c(outside, allowed)), add = TRUE)
+
+   expect_error(.rs.chat.withGuardrails(unlink(factor(outside))), "Action: unlink()", fixed = TRUE)
+   expect_true(file.exists(outside))
+
+   .rs.chat.withGuardrails(unlink(factor(allowed)))
+   expect_false(file.exists(allowed))
+
+})
+
 # -- working directory ---------------------------------------------------------
 
 # Create a 'user' directory (with a 'sub' directory inside) and an 'outside'
@@ -628,12 +643,37 @@ test_that("RStudio's own R code can change the working directory", {
 
    # .rs.api.initializeProject() changes into the directory it is given
    # to look for a project file, from a function defined within it
-   projectFile <- file.path(dirs$outside, "outside.Rproj")
+   projectFile <- file.path(dirs$outside, "analysis.Rproj")
    writeLines("Version: 1.0", projectFile)
 
    path <- .rs.chat.withGuardrails(.rs.api.initializeProject(dirs$outside))
    expect_equal(.rs.chat.normalizePath(path), .rs.chat.normalizePath(projectFile))
    expect_equal(workingDirectory(), dirs$user)
+
+   # the name it would give a project file of its own, had it found none
+   expect_false(file.exists(file.path(dirs$outside, "outside.Rproj")))
+
+})
+
+test_that("isTrustedFunction tells package and RStudio code from agent code", {
+
+   expect_true(.rs.chat.isTrustedFunction(testthat::test_that))
+   expect_true(.rs.chat.isTrustedFunction(.rs.chat.allowedRoots))
+
+   expect_false(.rs.chat.isTrustedFunction(base::source))
+   expect_false(.rs.chat.isTrustedFunction(base::`+`))
+   expect_false(.rs.chat.isTrustedFunction(NULL))
+
+   fn <- function() NULL
+   environment(fn) <- globalenv()
+   expect_false(.rs.chat.isTrustedFunction(fn))
+
+   # an environment the user attached sits above tools:rstudio on the
+   # search path, so it has RStudio's environment among its enclosures
+   attach(NULL, name = "chat-guardrails-attached")
+   on.exit(detach("chat-guardrails-attached"), add = TRUE)
+   environment(fn) <- as.environment("chat-guardrails-attached")
+   expect_false(.rs.chat.isTrustedFunction(fn))
 
 })
 
