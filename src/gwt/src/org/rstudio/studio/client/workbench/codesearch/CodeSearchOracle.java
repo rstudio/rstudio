@@ -106,16 +106,27 @@ public class CodeSearchOracle extends SuggestOracle
              StringUtil.isSubsequence(name, query, true);
    }
 
-   // A file query may end in :<line>:<col> (see navigationTarget), so the
-   // server matches files against the query up to its first ':'. Other
-   // results, such as the cross-reference exm:fizz, match the whole query.
+   // A file query may end in :<line>:<col> (see navigationTarget), which the
+   // server drops before matching files. Other results, such as the
+   // cross-reference exm:fizz, match the whole query.
    private static String queryFor(CodeSearchSuggestion suggestion, String query)
    {
-      int colonIndex = query.indexOf(":");
-      if (!suggestion.isFileTarget() || colonIndex == -1)
+      if (!suggestion.isFileTarget())
          return query;
 
-      return StringUtil.substring(query, 0, colonIndex);
+      // as fileQueryLength in SessionCodeSearch.cpp: up to two ':'-led runs
+      // of digits, possibly empty while the user is still typing them
+      int end = query.length();
+      for (int i = 0; i < 2; i++)
+      {
+         int pos = end;
+         while (pos > 0 && Character.isDigit(query.charAt(pos - 1)))
+            pos--;
+         if (pos == 0 || query.charAt(pos - 1) != ':')
+            break;
+         end = pos - 1;
+      }
+      return StringUtil.substring(query, 0, end);
    }
    
    // NOTE: When modifying this function, you should ensure that the associated

@@ -118,9 +118,11 @@ void addAllProjectSymbols(std::set<std::string>* pSymbols);
 // bookdown or Quarto cross-reference type, e.g. 10 (MATH) for "thm".
 int sourceItemTypeForXRef(const std::string& xrefType);
 
-// How well a search term matches a file name (lower is better). Like file
-// matching, it ignores everything from the term's first ':', since a file
-// query may end in a position such as :10:4.
+// The length of a file query without a trailing position, such as the
+// ":10:4" in "foo.R:10:4". Files are matched and scored on that part alone.
+std::size_t fileQueryLength(const std::string& term);
+
+// How well a search term matches a file name (lower is better).
 int scoreFileMatch(const std::string& filename, const std::string& term);
 
 // How Go to File/Function lists a bookdown or Quarto cross-reference: the

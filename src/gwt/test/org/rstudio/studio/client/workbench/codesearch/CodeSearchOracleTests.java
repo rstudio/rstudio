@@ -42,6 +42,18 @@ public class CodeSearchOracleTests extends GWTTestCase
       assertFalse(matches(file("addOne.R"), "subOne.R:10"));
    }
 
+   public void testFileIgnoresPositionStillBeingTyped()
+   {
+      assertTrue(matches(file("addOne.R"), "addOne.R:"));
+      assertTrue(matches(file("addOne.R"), "addOne.R:10:"));
+   }
+
+   // A file doesn't match a cross-reference being typed, as on the server.
+   public void testFileMatchesTextAfterNonPositionColon()
+   {
+      assertFalse(matches(file("figures.R"), "fig:sc"));
+   }
+
    public void testFunctionMatchesWholeQuery()
    {
       assertTrue(matches(function("addOne"), "addOne"));
@@ -59,6 +71,13 @@ public class CodeSearchOracleTests extends GWTTestCase
       assertEquals(0, CodeSearchOracle.scoreMatch(xref("exm", "fizz"), "exm:fizz"));
       assertTrue(CodeSearchOracle.scoreMatch(xref("exm", "fizz"), "exm:fizz") <
                  CodeSearchOracle.scoreMatch(xref("exm", "buzz"), "exm:fizz"));
+   }
+
+   // Before, the file scored on "fig" alone and ranked above fig:scatter.
+   public void testXRefBeingTypedOutranksFile()
+   {
+      assertTrue(CodeSearchOracle.scoreMatch(xref("fig", "scatter"), "fig:sc") <
+                 CodeSearchOracle.scoreMatch(file("figures.R"), "fig:sc"));
    }
 
    public void testFileScoresWithoutLineAndColumn()

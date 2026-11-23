@@ -22,6 +22,7 @@
 #include <gtest/gtest.h>
 #endif
 
+#include <cctype>
 #include <iostream>
 #include <vector>
 #include <set>
@@ -755,11 +756,8 @@ public:
             else
             {
                // We allow the user to submit queries of the form e.g.
-               // <query>:<row><column>; make sure we only take items
-               // on the query up to ':'
-               std::string::size_type queryEnd = term.find(":");
-               if (queryEnd == std::string::npos)
-                  queryEnd = term.length();
+               // <query>:<row>:<column>; match only the <query> part
+               std::string::size_type queryEnd = fileQueryLength(term);
 
                matches = string_utils::isSubsequence(name,
                                                      term,
@@ -1395,10 +1393,8 @@ void searchSourceDatabaseFiles(const std::string& term,
       }
       else
       {
-         // Strip everything following a ':'
-         std::string::size_type queryEnd = term.find(":");
-         if (queryEnd == std::string::npos)
-            queryEnd = term.length();
+         // Strip a trailing :<row>:<column>
+         std::string::size_type queryEnd = fileQueryLength(term);
 
          matches = string_utils::isSubsequence(filename,
                                                term,
@@ -2852,9 +2848,26 @@ bool xrefMatches(const XRefResult& result, const std::string& term)
            string_utils::isSubsequence(result.extraInfo, term, true));
 }
 
+std::size_t fileQueryLength(const std::string& term)
+{
+   // strip up to two ':'-led runs of digits; a run may be empty, since the
+   // user may not have typed the number yet (e.g. "foo.R:" or "foo.R:10:")
+   std::size_t end = term.length();
+   for (int i = 0; i < 2; ++i)
+   {
+      std::size_t pos = end;
+      while (pos > 0 && std::isdigit(static_cast<unsigned char>(term[pos - 1])))
+         --pos;
+      if (pos == 0 || term[pos - 1] != ':')
+         break;
+      end = pos - 1;
+   }
+   return end;
+}
+
 int scoreFileMatch(const std::string& filename, const std::string& term)
 {
-   return scoreMatch(filename, term.substr(0, term.find(':')), true);
+   return scoreMatch(filename, term.substr(0, fileQueryLength(term)), true);
 }
 
 int scoreXRefMatch(const std::string& text,

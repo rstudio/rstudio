@@ -155,3 +155,28 @@ TEST(CodeSearchFile, ScoreUsesWholeTermWithoutColon)
 {
    EXPECT_LT(scoreFileMatch("addOne.R", "addOne"), scoreFileMatch("addOne.R", "subOne"));
 }
+
+TEST(CodeSearchFile, QueryLengthDropsTrailingPosition)
+{
+   EXPECT_EQ(5u, fileQueryLength("foo.R:10:4"));
+   EXPECT_EQ(5u, fileQueryLength("foo.R:10"));
+   EXPECT_EQ(5u, fileQueryLength("foo.R:10:"));
+   EXPECT_EQ(5u, fileQueryLength("foo.R:"));
+   EXPECT_EQ(5u, fileQueryLength("foo.R"));
+}
+
+// e.g. a cross-reference being typed, which no file should match
+TEST(CodeSearchFile, QueryLengthKeepsNonPositionColon)
+{
+   EXPECT_EQ(6u, fileQueryLength("fig:sc"));
+   EXPECT_EQ(4u, fileQueryLength("foo1"));
+   EXPECT_EQ(2u, fileQueryLength("10"));
+   EXPECT_EQ(0u, fileQueryLength(""));
+}
+
+// Before, the file scored on "fig" alone and ranked above fig:scatter.
+TEST(CodeSearchFile, XRefBeingTypedOutranksFile)
+{
+   EXPECT_LT(scoreXRefMatch("fig:scatter", "", "fig:sc"),
+             scoreFileMatch("figures.R", "fig:sc"));
+}
