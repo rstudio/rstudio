@@ -94,6 +94,23 @@ std::string localURL(const std::string& address, const std::string& port)
    return http::URL::formatAddress("http", address, port) + "/";
 }
 
+// The port that stands for this session in R's help: the one R's help server
+// is given when we take help over from it, and the one its port becomes in
+// help urls. A session listening on a local stream has no port of its own, so
+// with www-port 0 it has none to give, and R takes a port of 0 to mean its
+// help server isn't running, and starts it when help is next asked for. Any
+// other port keeps it from that; use the one www-port defaults to.
+const char * const kDefaultHelpPort = "8787";
+
+std::string sessionHelpPort()
+{
+   std::string port = module_context::sessionPort();
+   if (safe_convert::stringTo<int>(port, 0) <= 0)
+      return kDefaultHelpPort;
+
+   return port;
+}
+
 std::string replaceRPort(const std::string& url,
                          const std::string& rPort,
                          const std::string& scope)
@@ -104,12 +121,12 @@ std::string replaceRPort(const std::string& url,
    if (scope.empty())
    {
       std::vector<std::string> splat = core::algorithm::split(url, "?");
-      boost::algorithm::replace_last(splat[0], rPort, session::options().wwwPort());
+      boost::algorithm::replace_last(splat[0], rPort, sessionHelpPort());
       return core::algorithm::join(splat, "?");
    }
    else
    {
-      return boost::algorithm::replace_last_copy(url, rPort, session::options().wwwPort());
+      return boost::algorithm::replace_last_copy(url, rPort, sessionHelpPort());
    }
 }
 
@@ -1258,7 +1275,7 @@ Error initialize()
 
    // init help
    bool isDesktop = options().programMode() == kSessionProgramModeDesktop;
-   int port = safe_convert::stringTo<int>(session::options().wwwPort(), 0);
+   int port = safe_convert::stringTo<int>(sessionHelpPort(), 0);
    error = r::exec::RFunction(".rs.initHelp", port, isDesktop).call(
                                                             &s_handleCustom);
    if (error)

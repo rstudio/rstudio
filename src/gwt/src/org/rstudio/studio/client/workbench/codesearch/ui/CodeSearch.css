@@ -1,5 +1,6 @@
 
 @external search;
+@external rstudio-themes-dark-menus;
 
 .codeSearchWidget .search {
    width: 145px;
@@ -42,7 +43,7 @@
 .smallItemContext {
    position: relative;
    top: 3px;
-   color: #888;
+   color: #666;
    font-size: smaller;
 }
 
@@ -78,6 +79,11 @@
    top: 3px;
    color: #666;
    font-size: smaller;
+}
+
+.rstudio-themes-dark-menus .smallItemContext,
+.rstudio-themes-dark-menus .itemContext {
+   color: #d0d0d0;
 }
 
 .codeSearchDialogMainWidget {

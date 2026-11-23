@@ -57,12 +57,6 @@ public class BuildCommands
          commands.cleanAll().remove();
       }
       
-      
-      // dead/deprecated command that we couldn't remove b/c this gwt build failure happended when we tried:
-      //  [exec] /bin/sh: 1: /home/jjallaire/rstudio/src/gwt/tools/i18n-helpers/VENV/bin/python: not found
-      commands.serveQuartoSite().remove();
-      
-      
       if (type == SessionInfo.BUILD_TOOLS_QUARTO)
       {
          String projType = constants_.projectTypeText();

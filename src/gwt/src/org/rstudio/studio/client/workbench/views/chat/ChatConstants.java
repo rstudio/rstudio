@@ -74,6 +74,8 @@ public interface ChatConstants extends com.google.gwt.i18n.client.Messages {
     String chatCopiedError();
     String chatCopyFailed();
     String chatReadlineWaiting();
+    String chatSessionSuspendedNotice();
+    String chatRestartingRNotice();
 
     // Check for updates command (modal result dialogs)
     String chatCheckingForUpdates();

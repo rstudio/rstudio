@@ -211,6 +211,7 @@ set(SESSION_SOURCE_FILES
    modules/SessionBreakpoints.cpp
    modules/SessionChat.cpp
    modules/chat/ChatBackendStdout.cpp
+   modules/chat/ChatExecutionDeadline.cpp
    modules/chat/ChatConstants.cpp
    modules/chat/ChatTypes.cpp
    modules/chat/ChatLogging.cpp

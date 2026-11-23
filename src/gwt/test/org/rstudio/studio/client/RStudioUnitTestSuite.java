@@ -51,6 +51,9 @@ import org.rstudio.studio.client.application.ApplicationUtilsTests;
 import org.rstudio.studio.client.application.ui.WarningBarListTests;
 import org.rstudio.studio.client.application.ui.ApplicationWindowTests;
 import org.rstudio.studio.client.workbench.WorkbenchWarningTests;
+import org.rstudio.studio.client.workbench.codesearch.CodeSearchItemKindTests;
+import org.rstudio.studio.client.workbench.codesearch.CodeSearchOracleTests;
+import org.rstudio.studio.client.workbench.codesearch.CodeSearchSuggestionTests;
 import org.rstudio.studio.client.application.QuitGateTests;
 import org.rstudio.studio.client.application.model.UpdateCheckResultTests;
 import org.rstudio.studio.client.application.model.SessionScopeTests;
@@ -86,6 +89,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.VimrcLoader
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionPopupPanelTests;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositionerTests;
 import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParserTests;
+import org.rstudio.studio.client.workbench.views.vcs.common.diff.UnifiedParserTest;
 import org.rstudio.studio.client.workbench.views.vcs.common.model.VcsStateTests;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalLocalEchoTests;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalSessionSocketTests;
@@ -162,6 +166,9 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(FileIconRendererTests.class);
       suite.addTestSuite(ChunkContextUiTests.class);
       suite.addTestSuite(SafeHtmlUtilTests.class);
+      suite.addTestSuite(CodeSearchItemKindTests.class);
+      suite.addTestSuite(CodeSearchOracleTests.class);
+      suite.addTestSuite(CodeSearchSuggestionTests.class);
       suite.addTestSuite(CommandShortcutReferenceTests.class);
       suite.addTestSuite(LintItemTests.class);
       suite.addTestSuite(PositAiInstallManagerTests.class);
@@ -181,6 +188,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(PrefsTests.class);
       suite.addTestSuite(VimrcLoaderTests.class);
       suite.addTestSuite(VcsStateTests.class);
+      suite.addTestSuite(UnifiedParserTest.class);
       suite.addTestSuite(AppCommandMenuImageTests.class);
       suite.addTestSuite(ImageButtonColumnTests.class);
       suite.addTestSuite(TriStateCheckboxCellTests.class);

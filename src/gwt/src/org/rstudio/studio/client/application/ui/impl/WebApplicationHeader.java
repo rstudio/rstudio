@@ -110,7 +110,6 @@ public class WebApplicationHeader extends Composite
       commands.toggleGpuDriverBugWorkarounds().remove();
       commands.showA11yDiagnostics().remove();
       commands.reloadUi().remove();
-      commands.openDeveloperConsole().remove();
 
       // Use the outer panel to just aggregate the menu bar/account area,
       // with the logo. The logo can't be inside the HorizontalPanel because

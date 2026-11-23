@@ -258,7 +258,7 @@ fi
 if [ -n "${JENKINS_URL}" ]; then
 
    echo "Build environment:"
-   printenv | sort
+   "${PKG_DIR}/../../docker/jenkins/print-environment.sh"
    echo
 
    echo "Java version:"

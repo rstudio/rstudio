@@ -154,14 +154,6 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Create a new Plumber API") // $NON-NLS-1$
     String newRPlumberDocDesc();
     
-    // rcppHelp
-    @DefaultStringValue("Help on using Rcpp") // $NON-NLS-1$
-    String rcppHelpDesc();
-    
-    // printCppCompletions
-    @DefaultStringValue("Print C++ Completions") // $NON-NLS-1$
-    String printCppCompletionsDesc();
-    
     // newSweaveDoc
     @DefaultStringValue("R _Sweave") // $NON-NLS-1$
     String newSweaveDocMenuLabel();
@@ -185,12 +177,6 @@ public interface CmdConstants extends Constants {
     String newQuartoPresMenuLabel();
     @DefaultStringValue("Create a new Quarto presentation") // $NON-NLS-1$
     String newQuartoPresDesc();
-    
-    // serveQuartoSite
-    @DefaultStringValue("_Preview Site") // $NON-NLS-1$
-    String serveQuartoSiteMenuLabel();
-    @DefaultStringValue("Run development server for Quarto site") // $NON-NLS-1$
-    String serveQuartoSiteDesc();
     
     // newRShinyApp
     @DefaultStringValue("Shiny _Web App...") // $NON-NLS-1$
@@ -657,12 +643,6 @@ public interface CmdConstants extends Constants {
     String activateEnvironmentLabel();
     @DefaultStringValue("Show _Environment") // $NON-NLS-1$
     String activateEnvironmentMenuLabel();
-    
-    // activateData
-    @DefaultStringValue("Show Data Pane") // $NON-NLS-1$
-    String activateDataLabel();
-    @DefaultStringValue("Show _Data") // $NON-NLS-1$
-    String activateDataMenuLabel();
     
     // activateHistory
     @DefaultStringValue("Show History Pane") // $NON-NLS-1$
@@ -1808,18 +1788,6 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Enable Prosemirror DevTools") // $NON-NLS-1$
     String enableProsemirrorDevToolsDesc();
     
-    // usingRMarkdownHelp
-    @DefaultStringValue("_Using R Markdown") // $NON-NLS-1$
-    String usingRMarkdownHelpMenuLabel();
-    @DefaultStringValue("Guide to using R Markdown") // $NON-NLS-1$
-    String usingRMarkdownHelpDesc();
-    
-    // authoringRPresentationsHelp
-    @DefaultStringValue("_Authoring R Presentations") // $NON-NLS-1$
-    String authoringRPresentationsHelpMenuLabel();
-    @DefaultStringValue("Guide to using R Markdown") // $NON-NLS-1$
-    String authoringRPresentationsHelpDesc();
-    
     // openRStudioIDECheatSheet
     @DefaultStringValue("_RStudio IDE Cheat Sheet") // $NON-NLS-1$
     String openRStudioIDECheatSheetMenuLabel();
@@ -1921,16 +1889,6 @@ public interface CmdConstants extends Constants {
     String previewHTMLMenuLabel();
     @DefaultStringValue("Show a preview of the current document as HTML") // $NON-NLS-1$
     String previewHTMLDesc();
-    
-    // publishHTML
-    @DefaultStringValue("Publish to RPubs...") // $NON-NLS-1$
-    String publishHTMLLabel();
-    @DefaultStringValue("Publish") // $NON-NLS-1$
-    String publishHTMLButtonLabel();
-    @DefaultStringValue("P_ublish to RPubs...") // $NON-NLS-1$
-    String publishHTMLMenuLabel();
-    @DefaultStringValue("Publish the current document") // $NON-NLS-1$
-    String publishHTMLDesc();
     
     // compilePDF
     @DefaultStringValue("Compile to PDF...") // $NON-NLS-1$
@@ -2066,29 +2024,11 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Create a blank text file in current directory") // $NON-NLS-1$
     String touchTextDocDesc();
     
-    // touchCDoc
-    @DefaultStringValue("_C File") // $NON-NLS-1$
-    String touchCDocMenuLabel();
-    @DefaultStringValue("Create a blank C file in current directory") // $NON-NLS-1$
-    String touchCDocDesc();
-    
     // touchCppDoc
     @DefaultStringValue("_C++ File") // $NON-NLS-1$
     String touchCppDocMenuLabel();
     @DefaultStringValue("Create a blank C++ file in current directory") // $NON-NLS-1$
     String touchCppDocDesc();
-    
-    // touchHeaderDoc
-    @DefaultStringValue("_Header File") // $NON-NLS-1$
-    String touchHeaderDocMenuLabel();
-    @DefaultStringValue("Create a blank header file in current directory") // $NON-NLS-1$
-    String touchHeaderDocDesc();
-    
-    // touchMarkdownDoc
-    @DefaultStringValue("_Markdown File") // $NON-NLS-1$
-    String touchMarkdownDocMenuLabel();
-    @DefaultStringValue("Create a blank Markdown document in current directory") // $NON-NLS-1$
-    String touchMarkdownDocDesc();
     
     // touchPythonDoc
     @DefaultStringValue("_Python Script") // $NON-NLS-1$
@@ -2096,35 +2036,11 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Create a blank Python script in current directory") // $NON-NLS-1$
     String touchPythonDocDesc();
     
-    // touchShellDoc
-    @DefaultStringValue("_Shell Script") // $NON-NLS-1$
-    String touchShellDocMenuLabel();
-    @DefaultStringValue("Create a blank shell script in current directory") // $NON-NLS-1$
-    String touchShellDocDesc();
-    
     // touchStanDoc
     @DefaultStringValue("_Stan File") // $NON-NLS-1$
     String touchStanDocMenuLabel();
     @DefaultStringValue("Create a blank Stan program in current directory") // $NON-NLS-1$
     String touchStanDocDesc();
-    
-    // touchHtmlDoc
-    @DefaultStringValue("_HTML File") // $NON-NLS-1$
-    String touchHtmlDocMenuLabel();
-    @DefaultStringValue("Create a blank HTML file in current directory") // $NON-NLS-1$
-    String touchHtmlDocDesc();
-    
-    // touchJavaScriptDoc
-    @DefaultStringValue("_JavaScript File") // $NON-NLS-1$
-    String touchJavaScriptDocMenuLabel();
-    @DefaultStringValue("Create a blank JavaScript file in current directory") // $NON-NLS-1$
-    String touchJavaScriptDocDesc();
-    
-    // touchCssDoc
-    @DefaultStringValue("_CSS File") // $NON-NLS-1$
-    String touchCssDocMenuLabel();
-    @DefaultStringValue("Create a blank CSS file in current directory") // $NON-NLS-1$
-    String touchCssDocDesc();
     
     // touchD3Doc
     @DefaultStringValue("_D3 Script") // $NON-NLS-1$
@@ -2496,14 +2412,6 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Forcibly terminate R session") // $NON-NLS-1$
     String terminateRDesc();
     
-    // showPdfExternal
-    @DefaultStringValue("Show PDF in External Viewer") // $NON-NLS-1$
-    String showPdfExternalLabel();
-    @DefaultStringValue("Show PDF in External Viewer") // $NON-NLS-1$
-    String showPdfExternalMenuLabel();
-    @DefaultStringValue("Show in an external PDF viewer window") // $NON-NLS-1$
-    String showPdfExternalDesc();
-    
     // openHtmlExternal
     @DefaultStringValue("Open Page with Web Browser") // $NON-NLS-1$
     String openHtmlExternalLabel();
@@ -2828,12 +2736,6 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("From _Web URL...") // $NON-NLS-1$
     String importDatasetFromURLMenuLabel();
     
-    // importDatasetFromCsv
-    @DefaultStringValue("From CSV") // $NON-NLS-1$
-    String importDatasetFromCsvLabel();
-    @DefaultStringValue("From _CSV") // $NON-NLS-1$
-    String importDatasetFromCsvMenuLabel();
-    
     // importDatasetFromCsvUsingReadr
     @DefaultStringValue("From Text (readr)...") // $NON-NLS-1$
     String importDatasetFromCsvUsingReadrLabel();
@@ -2869,14 +2771,6 @@ public interface CmdConstants extends Constants {
     String importDatasetFromXLSLabel();
     @DefaultStringValue("From _Excel...") // $NON-NLS-1$
     String importDatasetFromXLSMenuLabel();
-    
-    // refreshWorkspace
-    @DefaultStringValue("") // $NON-NLS-1$
-    String refreshWorkspaceButtonLabel();
-    @DefaultStringValue("Refresh") // $NON-NLS-1$
-    String refreshWorkspaceMenuLabel();
-    @DefaultStringValue("Refresh Workspace") // $NON-NLS-1$
-    String refreshWorkspaceDesc();
     
     // installPackage
     @DefaultStringValue("Install Packages...") // $NON-NLS-1$
@@ -2971,12 +2865,6 @@ public interface CmdConstants extends Constants {
     String renvRestoreMenuLabel();
     @DefaultStringValue("Restore your project library from renv.lock") // $NON-NLS-1$
     String renvRestoreDesc();
-    
-    // versionControlOptions
-    @DefaultStringValue("_Options...") // $NON-NLS-1$
-    String versionControlOptionsMenuLabel();
-    @DefaultStringValue("Configure version control options") // $NON-NLS-1$
-    String versionControlOptionsDesc();
     
     // versionControlHelp
     @DefaultStringValue("_Using Version Control") // $NON-NLS-1$
@@ -3316,12 +3204,6 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Go forward") // $NON-NLS-1$
     String tutorialForwardDesc();
     
-    // tutorialZoom
-    @DefaultStringValue("Zoom") // $NON-NLS-1$
-    String tutorialZoomButtonLabel();
-    @DefaultStringValue("View a larger version in a new window") // $NON-NLS-1$
-    String tutorialZoomDesc();
-    
     // tutorialRefresh
     @DefaultStringValue("Refresh tutorial") // $NON-NLS-1$
     String tutorialRefreshDesc();
@@ -3434,10 +3316,6 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("_Write Diagnostics Report") // $NON-NLS-1$
     String diagnosticsReportMenuLabel();
     
-    // openDeveloperConsole
-    @DefaultStringValue("_Open Developer Console") // $NON-NLS-1$
-    String openDeveloperConsoleMenuLabel();
-    
     // reloadUi
     @DefaultStringValue("Reload _UI") // $NON-NLS-1$
     String reloadUiMenuLabel();
@@ -3519,10 +3397,6 @@ public interface CmdConstants extends Constants {
     // rstudioSupport
     @DefaultStringValue("Posit _Support") // $NON-NLS-1$
     String rstudioSupportMenuLabel();
-    
-    // rstudioLicense
-    @DefaultStringValue("RStudio _License") // $NON-NLS-1$
-    String rstudioLicenseMenuLabel();
     
     // buildAll
     @DefaultStringValue("Install Package") // $NON-NLS-1$
@@ -4076,32 +3950,6 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Refresh data") // $NON-NLS-1$
     String refreshConnectionDesc();
     
-    // sparkLog
-    @DefaultStringValue("View Spark Log") // $NON-NLS-1$
-    String sparkLogLabel();
-    @DefaultStringValue("Log") // $NON-NLS-1$
-    String sparkLogButtonLabel();
-    @DefaultStringValue("Spark Log") // $NON-NLS-1$
-    String sparkLogMenuLabel();
-    @DefaultStringValue("View the log for the Spark connection") // $NON-NLS-1$
-    String sparkLogDesc();
-    
-    // sparkUI
-    @DefaultStringValue("SparkUI") // $NON-NLS-1$
-    String sparkUIButtonLabel();
-    @DefaultStringValue("SparkUI") // $NON-NLS-1$
-    String sparkUIMenuLabel();
-    @DefaultStringValue("View the browser UI for the Spark connection") // $NON-NLS-1$
-    String sparkUIDesc();
-    
-    // sparkHelp
-    @DefaultStringValue("") // $NON-NLS-1$
-    String sparkHelpButtonLabel();
-    @DefaultStringValue("Using Spark with RStudio") // $NON-NLS-1$
-    String sparkHelpMenuLabel();
-    @DefaultStringValue("Help on using Spark with RStudio") // $NON-NLS-1$
-    String sparkHelpDesc();
-    
     // startJob
     @DefaultStringValue("Start Background Job") // $NON-NLS-1$
     String startJobButtonLabel();
@@ -4235,6 +4083,10 @@ public interface CmdConstants extends Constants {
     // focusConsoleOutputEnd
     @DefaultStringValue("_Focus Console Output") // $NON-NLS-1$
     String focusConsoleOutputEndMenuLabel();
+    
+    // focusLastConsoleError
+    @DefaultStringValue("Focus Last Console _Error") // $NON-NLS-1$
+    String focusLastConsoleErrorMenuLabel();
     
     // focusNextPane
     @DefaultStringValue("_Focus Next Pane") // $NON-NLS-1$

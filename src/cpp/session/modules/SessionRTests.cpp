@@ -32,6 +32,11 @@
 
 #include <yaml-cpp/yaml.h>
 
+#ifndef _WIN32
+#include <unistd.h>
+#endif
+
+#include <core/FileSerializer.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/system/Environment.hpp>
 
@@ -42,6 +47,7 @@
 #include <r/RInterface.hpp>
 #include <r/RRuntime.hpp>
 #include <r/RUtil.hpp>
+#include <r/session/RConsoleHistory.hpp>
 #include <r/session/RSession.hpp>
 
 #include "../SessionRpc.hpp"
@@ -184,6 +190,75 @@ TEST(SessionRTest, SysGetenvSeesCoreSetenv) {
          .call(&value);
    EXPECT_FALSE(error);
    EXPECT_EQ("", value);
+}
+
+TEST(SessionRTest, FailedHistoryLoadKeepsHistory) {
+   // a history of its own, so the session's history (and its listeners) stay
+   // out of it
+   r::session::ConsoleHistory history;
+   history.setCapacity(16);
+   history.add("first()", false);
+   history.add("second()", false);
+
+   const std::vector<std::string> seeded {"first()", "second()"};
+   ASSERT_EQ(seeded, std::vector<std::string>(history.begin(), history.end()));
+
+   // a file that doesn't exist, e.g. loadhistory() with a mistyped path
+   FilePath missingPath;
+   ASSERT_FALSE(FilePath::tempFilePath(missingPath));
+   EXPECT_TRUE(history.loadFromFile(missingPath, true));
+   EXPECT_EQ(seeded, std::vector<std::string>(history.begin(), history.end()));
+
+#ifndef _WIN32
+   // a file that exists but can't be read; root can read it anyway, so the
+   // check only runs when the read really fails
+   FilePath unreadablePath;
+   ASSERT_FALSE(FilePath::tempFilePath(unreadablePath));
+   ASSERT_FALSE(core::writeStringToFile(unreadablePath, "third()\n"));
+   BOOST_SCOPE_EXIT(&unreadablePath)
+   {
+      unreadablePath.remove();
+   }
+   BOOST_SCOPE_EXIT_END
+
+   ASSERT_FALSE(unreadablePath.changeFileMode("000"));
+   if (::access(unreadablePath.getAbsolutePath().c_str(), R_OK) != 0)
+   {
+      EXPECT_TRUE(history.loadFromFile(unreadablePath, true));
+      EXPECT_EQ(seeded, std::vector<std::string>(history.begin(), history.end()));
+   }
+#endif
+
+   // a directory, e.g. loadhistory("~"); libc++ reads one as an empty file
+   FilePath directoryPath;
+   ASSERT_FALSE(FilePath::tempFilePath(directoryPath));
+   ASSERT_FALSE(directoryPath.ensureDirectory());
+   BOOST_SCOPE_EXIT(&directoryPath)
+   {
+      directoryPath.remove();
+   }
+   BOOST_SCOPE_EXIT_END
+
+   EXPECT_TRUE(history.loadFromFile(directoryPath, true));
+   EXPECT_EQ(seeded, std::vector<std::string>(history.begin(), history.end()));
+
+   // a load that succeeds replaces the history with the file's commands
+   FilePath loadedPath;
+   ASSERT_FALSE(FilePath::tempFilePath(loadedPath));
+   ASSERT_FALSE(core::writeStringToFile(loadedPath, "third()\nfourth()\n"));
+   BOOST_SCOPE_EXIT(&loadedPath)
+   {
+      loadedPath.remove();
+   }
+   BOOST_SCOPE_EXIT_END
+
+   EXPECT_FALSE(history.loadFromFile(loadedPath, true));
+   EXPECT_EQ((std::vector<std::string> {"third()", "fourth()"}),
+             std::vector<std::string>(history.begin(), history.end()));
+
+   // without verifyFile, a missing file means there is no prior history
+   EXPECT_FALSE(history.loadFromFile(missingPath, false));
+   EXPECT_EQ(0, history.size());
 }
 
 TEST(SessionRTest, RActiveBindingDetection) {

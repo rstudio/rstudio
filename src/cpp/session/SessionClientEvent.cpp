@@ -228,6 +228,7 @@ const int kProjectRVersionMismatch = 211;
 const int kRInstallCompleted = 212;
 const int kRenvRestorePrompt = 213;
 const int kQuitAborted = 214;
+const int kAssistantNesMissingChanged = 215;
 
 }
 
@@ -640,6 +641,8 @@ std::string ClientEvent::typeName() const
          return "renv_restore_prompt";
       case client_events::kQuitAborted:
          return "quit_aborted";
+      case client_events::kAssistantNesMissingChanged:
+         return "assistant_nes_missing_changed";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " +
                              safe_convert::numberToString(type_));

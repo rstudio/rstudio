@@ -26,6 +26,7 @@
 #include "chat/ChatSlots.hpp"
 #include "chat/ChatStaticFiles.hpp"
 #include "chat/ChatBackendStdout.hpp"
+#include "chat/ChatExecutionDeadline.hpp"
 #include "chat/ChatUpdateThrottle.hpp"
 
 #ifndef _WIN32
@@ -270,6 +271,7 @@ namespace chat_installation = rstudio::session::modules::chat::installation;
 namespace chat_selector = rstudio::session::modules::chat::selector;
 namespace chat_slots = rstudio::session::modules::chat::slots;
 namespace chat_staticfiles = rstudio::session::modules::chat::staticfiles;
+namespace chat_execution = rstudio::session::modules::chat::execution;
 
 // Constants used throughout
 using chat_constants::kProtocolVersion;
@@ -363,6 +365,76 @@ boost::mutex& s_executionTrackingMutex = make_leaked<boost::mutex>();
 std::string& s_currentTrackingId = make_leaked<std::string>();  // Empty string when not executing
 std::set<std::string>& s_canceledTrackingIds = make_leaked<std::set<std::string>>();  // TrackingIds that have been canceled
 
+// The current execution's time limit, from its timeout option
+chat_execution::ExecutionDeadline& s_currentDeadline =
+   make_leaked<chat_execution::ExecutionDeadline>();
+
+std::string timedOutMessage(int timeoutMs)
+{
+   return fmt::format("Execution timed out after {} ms", timeoutMs);
+}
+
+bool currentDeadlinePassed()
+{
+   boost::mutex::scoped_lock lock(s_executionTrackingMutex);
+   return s_currentDeadline.passed();
+}
+
+// Interrupts R once the current execution's deadline passes, and again on
+// each later poll while the agent's code runs (see AgentCodeScope), in case
+// it caught the last interrupt. Runs during background processing, which R's
+// event polling reaches while agent code evaluates, so the interrupt lands
+// where a runtime/cancelExecution one would.
+void checkExecutionDeadline()
+{
+   boost::mutex::scoped_lock lock(s_executionTrackingMutex);
+
+   // Not gated on s_currentTrackingId: an execution may have an empty one
+   bool firstInterrupt = !s_currentDeadline.interrupted();
+   if (!s_currentDeadline.takeInterrupt(std::chrono::steady_clock::now()))
+      return;
+
+   r::exec::setInterruptsPending(true);
+   if (firstInterrupt)
+      DLOG("Execution deadline passed for trackingId: {}", s_currentTrackingId);
+}
+
+// Stops enforcing the current execution's deadline; returns whether it
+// passed, and whether it interrupted R in pInterrupted
+bool disarmExecutionDeadline(bool* pInterrupted)
+{
+   boost::mutex::scoped_lock lock(s_executionTrackingMutex);
+   *pInterrupted = s_currentDeadline.interrupted();
+   return s_currentDeadline.disarm();
+}
+
+// Lets the current execution's deadline interrupt R while the agent's code
+// runs: its expression, or the print method for its result. RStudio's own R
+// calls between them (conditionMessage(), the warning formatter, the
+// expression boundary hook) run outside it, and an interrupt the deadline
+// raised that R hasn't consumed is dropped on exit so it can't land there.
+class AgentCodeScope
+{
+public:
+   AgentCodeScope()
+   {
+      boost::mutex::scoped_lock lock(s_executionTrackingMutex);
+      s_currentDeadline.setAgentCodeRunning(true);
+   }
+
+   ~AgentCodeScope()
+   {
+      boost::mutex::scoped_lock lock(s_executionTrackingMutex);
+      s_currentDeadline.setAgentCodeRunning(false);
+      if (s_currentDeadline.interrupted())
+         r::exec::setInterruptsPending(false);
+   }
+
+   // non-copyable
+   AgentCodeScope(const AgentCodeScope&) = delete;
+   AgentCodeScope& operator=(const AgentCodeScope&) = delete;
+};
+
 // ============================================================================
 // Streaming Output Notification Queue with Lifecycle Management
 // ============================================================================
@@ -422,8 +494,12 @@ static boost::mutex& s_pendingExecutionMutex = make_leaked<boost::mutex>();
 static std::queue<PendingExecutionRequest>& s_pendingExecutionQueue = make_leaked<std::queue<PendingExecutionRequest>>();
 static bool s_executionScheduled = false;
 
+// When queued chat executions release the console's busy state
+static chat_execution::BusyHandoff s_busyHandoff;
+
 // Forward declaration
 void processPendingExecution();
+void continuePendingExecutions(bool ran);
 
 // ============================================================================
 // Code Execution Context (for console output capture)
@@ -1342,7 +1418,26 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
                      bool capturePlot,
                      bool silentExecution,
                      const std::string& expressionBoundaryHook,
-                     int timeout);
+                     int timeout,
+                     std::chrono::steady_clock::time_point queuedTime);
+
+// Answers a runtime/executeCode request that never ran, in the shape of an
+// execution result
+void sendNotRunResult(core::system::ProcessOperations& ops,
+                      const json::Value& requestId,
+                      const std::string& error,
+                      bool canceled,
+                      bool timedOut)
+{
+   json::Object result;
+   result["output"] = "";
+   result["error"] = error;
+   result["canceled"] = canceled;
+   result["timedOut"] = timedOut;
+   result["plots"] = json::Array();
+   result["executionTime"] = 0;
+   sendJsonRpcResponse(ops, requestId, result);
+}
 
 // Process pending execution requests from the queue
 void processPendingExecution()
@@ -1360,41 +1455,53 @@ void processPendingExecution()
       s_pendingExecutionQueue.pop();
    }
 
-   // Check for timeout - if request waited too long in queue, return error
+   // A request never runs if it was canceled while it waited, if its own
+   // timeout ran out (the backend has already given up on it), or if it waited
+   // past the queue cap. It is answered here, before the console is marked
+   // busy, and its cancellation (if any) retired.
    auto now = std::chrono::steady_clock::now();
    auto waitTimeMs = std::chrono::duration_cast<std::chrono::milliseconds>(
       now - request.queuedTime).count();
-
-   if (waitTimeMs > kMaxQueueWaitMs)
+   bool canceled = false;
    {
-      WLOG("Execution request timed out after {}ms in queue for trackingId: {}",
-           waitTimeMs, request.trackingId);
+      boost::mutex::scoped_lock lock(s_executionTrackingMutex);
+      canceled = s_canceledTrackingIds.erase(request.trackingId) > 0;
+   }
+   bool deadlinePassed =
+      chat_execution::expiredInQueue(request.queuedTime, request.timeout, now);
 
-      // Send timeout error response if backend is still alive
+   if (canceled || deadlinePassed || waitTimeMs > kMaxQueueWaitMs)
+   {
+      if (!canceled)
+      {
+         WLOG("Execution request timed out after {}ms in queue for trackingId: {}",
+              waitTimeMs, request.trackingId);
+      }
+
+      // Send the response if backend is still alive
       boost::shared_ptr<core::system::ProcessOperations> pOps = request.weakOps.lock();
-      if (pOps)
+      if (pOps && canceled)
+      {
+         sendNotRunResult(*pOps, request.requestId, kExecutionCanceledError, true, false);
+      }
+      else if (pOps && deadlinePassed)
+      {
+         std::string message = timedOutMessage(request.timeout) + " while waiting to run";
+         sendNotRunResult(*pOps, request.requestId, message, false, true);
+      }
+      else if (pOps)
       {
          sendJsonRpcError(*pOps, request.requestId, kJsonRpcServerError,
             "Execution timed out. The R console was busy for too long.");
       }
 
-      // Schedule next request if queued
-      {
-         boost::mutex::scoped_lock lock(s_pendingExecutionMutex);
-         if (!s_pendingExecutionQueue.empty() && !s_executionScheduled)
-         {
-            s_executionScheduled = true;
-            module_context::scheduleDelayedWork(
-               boost::posix_time::milliseconds(1),
-               processPendingExecution,
-               true);  // idleOnly=true - wait for R to be idle
-         }
-      }
+      continuePendingExecutions(false);
       return;
    }
 
    // Signal that R is executing chat code
    console_input::setExecuting(true);
+   s_busyHandoff.started();
    ClientEvent busyEvent(client_events::kBusy, true);
    module_context::enqueClientEvent(busyEvent);
 
@@ -1402,12 +1509,22 @@ void processPendingExecution()
    executeCodeImpl(request.weakOps.lock(), request.requestId, request.code,
                    request.trackingId, request.captureOutput, request.capturePlot,
                    request.silentExecution, request.expressionBoundaryHook,
-                   request.timeout);
+                   request.timeout, request.queuedTime);
 
-   // Schedule next request if queued, or clear busy state
+   continuePendingExecutions(true);
+}
+
+// After a request runs or expires: schedule the next queued request, or, once
+// the queue is empty, release the console's busy state if it is chat
+// execution's to release (see BusyHandoff)
+void continuePendingExecutions(bool ran)
+{
+   boost::mutex::scoped_lock lock(s_pendingExecutionMutex);
+   bool queueEmpty = s_pendingExecutionQueue.empty();
+   bool releaseBusy = s_busyHandoff.finished(ran, queueEmpty);
+   if (!queueEmpty)
    {
-      boost::mutex::scoped_lock lock(s_pendingExecutionMutex);
-      if (!s_pendingExecutionQueue.empty() && !s_executionScheduled)
+      if (!s_executionScheduled)
       {
          s_executionScheduled = true;
          module_context::scheduleDelayedWork(
@@ -1415,22 +1532,22 @@ void processPendingExecution()
             processPendingExecution,
             true);  // idleOnly=true - wait for R to be idle
       }
-      else if (s_pendingExecutionQueue.empty())
-      {
-         lock.unlock();
-         console_input::setExecuting(false);
-         console_input::updateSessionExecuting();
-         ClientEvent busyEvent(client_events::kBusy, false);
-         module_context::enqueClientEvent(busyEvent);
+   }
+   else if (releaseBusy)
+   {
+      lock.unlock();
+      console_input::setExecuting(false);
+      console_input::updateSessionExecuting();
+      ClientEvent busyEvent(client_events::kBusy, false);
+      module_context::enqueClientEvent(busyEvent);
 
-         // Restore the top-level prompt flag before reissuing. Code executed
-         // by the chat backend may have called readline(), which sets
-         // atTopLevelPrompt to false (hist == 0 in RReadConsole). Without
-         // this reset, the reissued prompt carries busy=true and the chat
-         // pane's "waiting for input" notification is never dismissed.
-         r::session::setAtTopLevelPrompt(true);
-         console_input::reissueLastConsolePrompt();
-      }
+      // Restore the top-level prompt flag before reissuing. Code executed
+      // by the chat backend may have called readline(), which sets
+      // atTopLevelPrompt to false (hist == 0 in RReadConsole). Without
+      // this reset, the reissued prompt carries busy=true and the chat
+      // pane's "waiting for input" notification is never dismissed.
+      r::session::setAtTopLevelPrompt(true);
+      console_input::reissueLastConsolePrompt();
    }
 }
 
@@ -1464,12 +1581,10 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
    bool captureOutput = true, capturePlot = false;
    std::string executionMode = "interactive";
    std::string expressionBoundaryHook;
-   int timeout = 30000;
    json::readObject(options, "captureOutput", captureOutput);
    json::readObject(options, "capturePlot", capturePlot);
    json::readObject(options, "executionMode", executionMode);
    json::readObject(options, "expressionBoundaryHook", expressionBoundaryHook);
-   json::readObject(options, "timeout", timeout);
 
    if (executionMode != "interactive" && executionMode != "silent")
    {
@@ -1479,6 +1594,14 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
    }
 
    bool silentExecution = executionMode == "silent";
+
+   // Milliseconds the whole request may take, queue wait included. Absent or
+   // non-positive means no limit: none was ever enforced, so a peer that
+   // omits it may expect long-running code to finish. Read as a number:
+   // getInt() would reject a fraction and assert on a value past int's range.
+   double timeoutValue = 0;
+   json::readObject(options, "timeout", timeoutValue);
+   int timeout = chat_execution::requestTimeout(timeoutValue, captureOutput, silentExecution);
 
    // Check if R console is busy and log for debugging
    bool rIsBusy = console_input::executing() || r::session::isBusy();
@@ -1536,7 +1659,8 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
                      bool capturePlot,
                      bool silentExecution,
                      const std::string& expressionBoundaryHook,
-                     int timeout)
+                     int timeout,
+                     std::chrono::steady_clock::time_point queuedTime)
 {
    if (!pOps)
    {
@@ -1548,35 +1672,21 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
 
    DLOG("Executing code for trackingId: {}", trackingId);
 
-   // Track if execution was canceled (for response field)
+   // Track if execution was canceled or stopped by its timeout (for response fields)
    bool wasCanceled = false;
+   bool timedOut = false;
 
-   // Check if this request was already canceled (pre-cancellation of queued request)
-   // and register tracking ID for cancellation support
+   // A request can start inside another one's nested console read (e.g. its
+   // readline()); that one's deadline is set aside and restored at the end
+   chat_execution::ExecutionDeadline enclosingDeadline;
+
+   // Register tracking ID for cancellation support. A request canceled while
+   // it was queued never gets here: processPendingExecution() answers it.
    {
       boost::mutex::scoped_lock lock(s_executionTrackingMutex);
-
-      // Check if already canceled
-      if (s_canceledTrackingIds.count(trackingId) > 0)
-      {
-         wasCanceled = true;
-         s_canceledTrackingIds.erase(trackingId);
-
-         // Return a response indicating cancellation
-         json::Object result;
-         result["output"] = "";
-         result["error"] = kExecutionCanceledError;
-         result["canceled"] = true;
-         result["plots"] = json::Array();
-         result["executionTime"] = 0;
-
-         sendJsonRpcResponse(ops, requestId, result);
-         // Note: No need to unregister here as we never registered (this check is before registration)
-         return;
-      }
-
-      // Register as current execution
       s_currentTrackingId = trackingId;
+      enclosingDeadline = s_currentDeadline;
+      s_currentDeadline.arm(queuedTime, timeout);
    }
 
    // Register this execution as active to enable notification filtering
@@ -1697,6 +1807,15 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
                             kExecutionCanceledError, ERROR_LOCATION);
                break;
             }
+
+            // Stop if the deadline has passed, whether or not background
+            // processing has noticed yet; it doesn't interrupt outside the
+            // agent's code (e.g. during the boundary hook)
+            if (s_currentDeadline.expired(std::chrono::steady_clock::now()))
+            {
+               error = Error(boost::system::errc::timed_out, timedOutMessage(timeout), ERROR_LOCATION);
+               break;
+            }
          }
 
          SEXP exprSEXP = VECTOR_ELT(parsedSEXP, i);
@@ -1715,9 +1834,13 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
          // before passing it to the function, which breaks visibility detection
          // (all results become visible).
          // https://github.com/rstudio/rstudio/issues/17044
-         Error callError = r::exec::RFunction(".rs.chat.safeEval")
-            .addQuotedParam(exprSEXP)
-            .call(&evalResultSEXP, &protect);
+         Error callError;
+         {
+            AgentCodeScope agentCode;
+            callError = r::exec::RFunction(".rs.chat.safeEval")
+               .addQuotedParam(exprSEXP)
+               .call(&evalResultSEXP, &protect);
+         }
 
          // This should only fail if there's a problem calling the wrapper itself
          if (callError)
@@ -1755,6 +1878,9 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
             {
                errorMsg = CHAR(STRING_ELT(messageSEXP, 0));
             }
+
+            if (Rf_inherits(evalResultSEXP, "interrupt") && currentDeadlinePassed())
+               errorMsg = timedOutMessage(timeout);
 
             SEXP conditionsSEXP = Rf_getAttrib(
                evalResultSEXP,
@@ -1814,11 +1940,22 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
          // Print visible results immediately (mimics REPL)
          if (exprVisible && !silentExecution)
          {
-            Error printError = r::exec::RFunction("print")
-               .addParam(exprResult)
-               .call();
+            Error printError;
+            {
+               AgentCodeScope agentCode;
+               printError = r::exec::RFunction("print")
+                  .addParam(exprResult)
+                  .call();
+            }
 
-            if (printError)
+            if (printError && currentDeadlinePassed())
+            {
+               // The deadline interrupted the result's print method, which
+               // is the agent's code too. Setting error ends the loop once
+               // this expression's warnings and boundary hook are done.
+               error = Error(boost::system::errc::timed_out, timedOutMessage(timeout), ERROR_LOCATION);
+            }
+            else if (printError)
             {
                // Print errors should be visible to users, not just logged
                std::string printErrorMsg = "Error printing result: " + printError.getMessage();
@@ -1838,6 +1975,45 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
 
          callExpressionBoundaryHook(activeExpressionBoundaryHook, exprSEXP, exprResult,
                                     true, exprVisible, R_NilValue, conditionsSEXP);
+      }
+   }
+
+   // The deadline bounds the agent's code, not the reporting below. Once it
+   // has raised an interrupt, drop whatever interrupt is still pending, which
+   // would otherwise land on whatever R runs next, such as the user's next
+   // command. AgentCodeScope has dropped any the deadline raised, so this is
+   // an Escape or a cancel that came after the code stopped, which has
+   // nothing left to stop.
+   bool deadlineInterrupted = false;
+   if (disarmExecutionDeadline(&deadlineInterrupted))
+   {
+      if (deadlineInterrupted)
+         r::exec::setInterruptsPending(false);
+
+      // timedOut tells the peer the code didn't finish, so code that did
+      // finish before the deadline stopped anything isn't reported as timed
+      // out (e.g. when the last expression caught the interrupt and went on
+      // to finish). An error the agent's code turned the interrupt
+      // into keeps its message. An error without a message is the interrupt
+      // landing outside safeEval's handlers (e.g. right as a system() call
+      // returns).
+      if (error)
+      {
+         timedOut = true;
+
+         // A cancel takes precedence over the deadline (see the response's
+         // timedOut), so the error names the cancel, as it does for a
+         // request canceled in the queue
+         bool canceled = false;
+         {
+            boost::mutex::scoped_lock lock(s_executionTrackingMutex);
+            canceled = s_canceledTrackingIds.count(trackingId) > 0;
+         }
+
+         if (canceled)
+            error = Error(boost::system::errc::operation_canceled, kExecutionCanceledError, ERROR_LOCATION);
+         else if (error.getMessage().empty())
+            error = Error(boost::system::errc::timed_out, timedOutMessage(timeout), ERROR_LOCATION);
       }
    }
 
@@ -1943,7 +2119,9 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    // (e.g., plot(1); plot(2)), only the last one is captured. This is a known
    // limitation compared to the previous evaluate-based approach which used new_device.
    json::Array plotsArray;
-   if (capturePlot)
+
+   // Replaying a plot takes time the request no longer has
+   if (capturePlot && !timedOut)
    {
       // Use R helper for plot capture, passing the recorded plot from before
       // execution so it can detect if a NEW plot was created (vs. stale plot)
@@ -2022,6 +2200,7 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    {
       boost::mutex::scoped_lock lock(s_executionTrackingMutex);
       s_currentTrackingId.clear();
+      s_currentDeadline = enclosingDeadline;
       // Also clean up from canceled set in case cancel arrived during execution
       s_canceledTrackingIds.erase(trackingId);
    }
@@ -2037,6 +2216,10 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    result["output"] = execContext.getOutput();
    result["error"] = execContext.getError();
    result["canceled"] = wasCanceled;
+
+   // A cancel takes precedence over the deadline, as for a request canceled
+   // in the queue, so a peer can treat the two flags as exclusive
+   result["timedOut"] = timedOut && !wasCanceled;
    result["plots"] = plotsArray;
    result["executionTime"] = executionTime;
 
@@ -3671,6 +3854,8 @@ void onProjectOptionsUpdated()
 
 void onBackgroundProcessing(bool isIdle)
 {
+   checkExecutionDeadline();
+
    std::vector<PendingNotification> toProcess;
 
    // Phase 1: Extract notifications to process (hold lock briefly)
@@ -5111,11 +5296,11 @@ Error startChatBackend(bool resumeConversation)
    // Not needed in server mode where embedded origin lockdown is disabled.
    if (options().programMode() == kSessionProgramModeDesktop)
    {
-      std::string wwwPort = options().wwwPort();
-      if (!wwwPort.empty())
+      std::string sessionPort = module_context::sessionPort();
+      if (!sessionPort.empty())
       {
          args.push_back("--allowed-origin");
-         args.push_back("http://127.0.0.1:" + wwwPort);
+         args.push_back("http://127.0.0.1:" + sessionPort);
       }
    }
 

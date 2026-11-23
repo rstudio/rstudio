@@ -1024,14 +1024,15 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    invisible(.Call("rs_activatePane", "history", PACKAGE = "(embedding)"))
 })
 
+# expand '~' here rather than in C++; see rs_loadHistory() in RSession.cpp
 .rs.addFunction("savehistory", function(file = ".Rhistory")
 {
-   invisible(.Call("rs_saveHistory", file, PACKAGE = "(embedding)"))
+   invisible(.Call("rs_saveHistory", path.expand(file), PACKAGE = "(embedding)"))
 })
 
 .rs.addFunction("loadhistory", function(file = ".Rhistory")
 {
-   invisible(.Call("rs_loadHistory", file, PACKAGE = "(embedding)"))
+   invisible(.Call("rs_loadHistory", path.expand(file), PACKAGE = "(embedding)"))
 })
 
 .rs.addFunction("timestamp", function(stamp = date(),
@@ -1077,9 +1078,12 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 })
 
 .rs.addFunction("isTraced", function(fun) {
-   # use %in% rather than ==, as the class attribute of a traced S7 method
-   # is a hybrid of the S7 method class and 'functionWithTrace' (#18531)
-   isS4(fun) && "functionWithTrace" %in% class(fun)
+   # trace() gives every traced object a class extending 'traceable', which
+   # is 'S7_methodWithTrace' rather than 'functionWithTrace' for S7 methods
+   # with S7 1.0.0 (#19736). Before S7 1.0.0, the class attribute of a traced
+   # S7 method is a hybrid of the S7 method class and 'functionWithTrace'
+   # that methods::is() doesn't recognize, so check for that too (#18531).
+   isS4(fun) && ("functionWithTrace" %in% class(fun) || methods::is(fun, "traceable"))
 })
 
 # when a function is traced, some data about the function (such as its original
