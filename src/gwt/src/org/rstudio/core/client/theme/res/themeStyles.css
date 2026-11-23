@@ -1707,6 +1707,13 @@ body.windows .toolbar {
    padding-top: 1px;
 }
 
+/* Absolutely positioned, the toolbar ignores the padding above and would
+   start under the wrapper's -1px top margin, out of view. Windows already
+   moves every toolbar down by this margin. */
+.tallerToolbarWrapper .toolbar {
+   margin-top: 1px;
+}
+
 .toolbarButtonRightImage {
    display: none;
 }
