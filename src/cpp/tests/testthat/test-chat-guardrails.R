@@ -576,6 +576,12 @@ test_that("a working directory chosen by the user replaces the remembered one", 
    expect_true(file.exists(file.path(dirs$outside, "file.txt")))
    expect_error(.rs.chat.withGuardrails(setwd(dirs$user)), "Action: setwd()", fixed = TRUE)
 
+   # the new directory is the one agent code can now return to
+   .rs.chat.withGuardrails(setwd(tempdir()))
+   .rs.chat.withGuardrails(setwd(dirs$outside))
+   expect_equal(workingDirectory(), dirs$outside)
+   expect_error(.rs.chat.withGuardrails(setwd(dirs$user)), "Action: setwd()", fixed = TRUE)
+
 })
 
 test_that("package code can change the working directory", {
@@ -604,6 +610,25 @@ test_that("package code can change the working directory", {
    })
 
    path <- .rs.chat.withGuardrails(inDirectory(dirs$outside, getwd))
+   expect_equal(.rs.chat.normalizePath(path), dirs$outside)
+   expect_equal(workingDirectory(), dirs$user)
+
+})
+
+test_that("RStudio's own R code can change the working directory", {
+
+   dirs <- localWorkingDirectories()
+
+   # e.g. .rs.api.initializeProject() looks for a project file this way
+   inDirectory <- function(dir)
+   {
+      old <- setwd(dir)
+      on.exit(setwd(old), add = TRUE)
+      getwd()
+   }
+   environment(inDirectory) <- .rs.toolsEnv()
+
+   path <- .rs.chat.withGuardrails(inDirectory(dirs$outside))
    expect_equal(.rs.chat.normalizePath(path), dirs$outside)
    expect_equal(workingDirectory(), dirs$user)
 

@@ -622,23 +622,37 @@ delayedAssign(
    FALSE
 })
 
-#' Check whether a function was defined by a (non-base) package.
+#' Check whether a function was defined by a (non-base) package, or by
+#' RStudio itself.
 #'
-#' Unlike `chat.hasTrustedCallerImpl()`, this also recognizes functions a
-#' package defines within its own functions, whose environment is a call
-#' frame rather than the namespace itself. A function defined by agent
-#' code leads back to the global environment instead.
+#' Unlike `chat.hasTrustedCallerImpl()`, this also recognizes functions
+#' defined within other functions, whose environment is a call frame, by
+#' following the enclosing environments. A function defined by agent code
+#' leads back to the global environment instead.
 #'
 #' @param fn A function.
-#' @return `TRUE` if `fn` was defined within a non-base package namespace.
-.rs.addFunction("chat.isPackageFunction", function(fn)
+#' @return `TRUE` if `fn` was defined by a non-base package or by RStudio.
+.rs.addFunction("chat.isTrustedFunction", function(fn)
 {
+   # primitives have no environment
    envir <- if (is.function(fn)) environment(fn)
-   if (is.null(envir))
-      return(FALSE)
 
-   envir <- topenv(envir)
-   isNamespace(envir) && !getNamespaceName(envir) %in% .rs.chat.basePackages
+   toolsEnv <- .rs.toolsEnv()
+   while (is.environment(envir))
+   {
+      if (identical(envir, globalenv()) || identical(envir, emptyenv()))
+         return(FALSE)
+
+      if (identical(envir, toolsEnv))
+         return(TRUE)
+
+      if (isNamespace(envir))
+         return(!getNamespaceName(envir) %in% .rs.chat.basePackages)
+
+      envir <- parent.env(envir)
+   }
+
+   FALSE
 })
 
 #' Validate a change of working directory.
@@ -651,7 +665,8 @@ delayedAssign(
 #' a root as soon as agent code moves elsewhere.
 #'
 #' A change is not checked when the function calling `setwd()` belongs to
-#' a package, or is one of `chat.workingDirectoryCallers`. Only that caller
+#' a package or to RStudio, or is one of `chat.workingDirectoryCallers`
+#' -- many of these change directory temporarily. Only that caller
 #' counts, not the rest of the call stack: a `setwd()` call within a
 #' sourced script, or within a function the agent passes to a package, is
 #' as much agent code as one outside it.
@@ -664,7 +679,7 @@ delayedAssign(
    # hasTrustedCallerImpl contributes the chat.safeFunctions allowlist
    exempt <-
       .rs.chat.isWorkingDirectoryCaller(caller) ||
-      .rs.chat.isPackageFunction(caller) ||
+      .rs.chat.isTrustedFunction(caller) ||
       .rs.chat.hasTrustedCallerImpl(list(caller))
 
    if (exempt)
@@ -753,10 +768,8 @@ delayedAssign(
          doExpand <- getRversion() < "4.0.0" || expand
 
          # unlink() coerces its argument, so unlink(NULL) is a no-op
-         paths <- as.character(x)
-         if (doExpand)
-            paths <- Sys.glob(paths)
-
+         x <- as.character(x)
+         paths <- if (doExpand) Sys.glob(x) else x
          .rs.chat.validateFileEdit("unlink", paths)
       },
 
