@@ -95,6 +95,7 @@ test.describe.serial('Console pane buttons with a long working directory', () =>
   test.afterAll(async ({ rstudioPage: page }) => {
     await clearPref(page, 'show_terminal_tab');
     await clearPref(page, 'jobs_tab_visibility');
+    await clearPref(page, 'show_launcher_jobs_tab');
     await reloadAndWait(page);
     await executeInConsoleChecked(page, 'setwd(.pw_old_wd)');
     // Go to Working Directory left the Files pane in the directory removed below.
@@ -132,8 +133,11 @@ test.describe.serial('Console pane buttons with a long working directory', () =>
   }) => {
     await setPref(page, 'show_terminal_tab', false);
     await setPref(page, 'jobs_tab_visibility', 'closed');
+    // Workbench Jobs, in RStudio Pro, would otherwise keep the Console tabbed.
+    await setPref(page, 'show_launcher_jobs_tab', false);
     await reloadAndWait(page);
-    await expect(page.locator('#rstudio_workbench_tab_terminal')).toBeHidden();
+    // With no other tabs, the Console's own tab is gone too.
+    await expect(page.locator('#rstudio_workbench_tab_console')).toBeHidden();
 
     const pane = page.locator(CONSOLE_PANE);
     const label = pathLabel(page);
