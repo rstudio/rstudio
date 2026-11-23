@@ -36,6 +36,7 @@
 #include <r/RJson.hpp>
 #include <r/RJsonRpc.hpp>
 #include <r/RRoutines.hpp>
+#include <r/RRuntime.hpp>
 
 using namespace rstudio::core;
 using namespace boost::placeholders;
@@ -212,10 +213,16 @@ struct RpcHandlerInvocation
 
    // R's error message from before the handler ran, which is cleared while it
    // runs. an interrupt writes no message, and clears R's pending flag and
-   // RStudio's wasInterrupted (the newline R prints) before it unwinds, so an
-   // empty message is how the backstop tells one from an error; comparing
-   // with this one instead would take a repeat of the same error for one
+   // RStudio's wasInterrupted (the newline R prints) before it unwinds, so
+   // before R 4.0 an empty message is how the backstop tells one from an
+   // error; comparing with this one instead would take a repeat of the same
+   // error for one
    std::string previousErrorMessage;
+
+   // set as R signals an error that nothing the handler ran caught (from
+   // R 4.0). the message alone can't tell such an error from an interrupt
+   // that follows one the handler caught, which leaves its message behind
+   bool errorSignaled;
 };
 
 // puts back R's error message from before the handler ran, unless the handler
@@ -241,6 +248,21 @@ SEXP invokeRpcHandlerImpl(void* data)
    return R_NilValue;
 }
 
+SEXP noteRpcHandlerError(SEXP /* conditionSEXP */, void* data)
+{
+   static_cast<RpcHandlerInvocation*>(data)->errorSignaled = true;
+   return R_NilValue;
+}
+
+SEXP invokeRpcHandlerNotingErrors(void* data)
+{
+   return r::runtime::withCallingErrorHandler(
+            invokeRpcHandlerImpl,
+            data,
+            noteRpcHandlerError,
+            data);
+}
+
 // runs as an R error (or interrupt) unwinds through the handler, after which
 // R continues unwinding; this runs after R has left the handler's context, so
 // it can send the response
@@ -253,7 +275,9 @@ void answerInterruptedRpc(void* data, Rboolean jump)
    RpcDelivery* pDelivery = pInvocation->pDelivery;
 
    std::string errorMessage = r::exec::getErrorMessage();
-   bool interrupted = errorMessage.empty();
+   bool interrupted = r::runtime::hasCallingErrorHandler() ?
+            !pInvocation->errorSignaled :
+            errorMessage.empty();
    restorePreviousErrorMessage(*pInvocation);
 
    // the unwinding carries on past invokeRpcHandler(), so held after-response
@@ -343,13 +367,13 @@ void invokeRpcHandler(const json::JsonRpcAsyncFunction& handler,
    // reaches it. like any context, it restores R's handler stack when it
    // ends, so after-response work (which can register calling handlers) is
    // held until it has (see RpcDelivery)
-   RpcHandlerInvocation invocation = { &handler, &request, &continuation, pDelivery.get(), nullptr, r::exec::getErrorMessage() };
+   RpcHandlerInvocation invocation = { &handler, &request, &continuation, pDelivery.get(), nullptr, r::exec::getErrorMessage(), false };
    pDelivery->deferAfterResponse = true;
    r::sexp::Protect protect;
    SEXP tokenSEXP;
    protect.add(tokenSEXP = R_MakeUnwindCont());
    r::exec::setErrorMessage(std::string());
-   R_UnwindProtect(invokeRpcHandlerImpl, &invocation, answerInterruptedRpc, &invocation, tokenSEXP);
+   R_UnwindProtect(invokeRpcHandlerNotingErrors, &invocation, answerInterruptedRpc, &invocation, tokenSEXP);
    restorePreviousErrorMessage(invocation);
    pDelivery->deferAfterResponse = false;
 

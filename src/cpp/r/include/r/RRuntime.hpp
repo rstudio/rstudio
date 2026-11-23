@@ -65,6 +65,16 @@ bool lookupsForcePromises();
 // check, finalizers)
 SEXP forcedPromiseValue(SEXP promiseSEXP);
 
+// whether withCallingErrorHandler() establishes a handler (R >= 4.0)
+bool hasCallingErrorHandler();
+
+// R_withCallingErrorHandler (R >= 4.0): calls body with a calling handler
+// established for R errors, which R calls as one is signaled that nothing
+// inside body caught, before the error unwinds. falls back to calling body
+// alone.
+SEXP withCallingErrorHandler(SEXP (*body)(void*), void* bodyData,
+                             SEXP (*handler)(SEXP, void*), void* handlerData);
+
 // R_GetBindingType (R >= 4.6), falls back to manual struct inspection.
 // Returns the R_BindingType_t enum value as an int.
 int getBindingType(SEXP symSEXP, SEXP envSEXP);

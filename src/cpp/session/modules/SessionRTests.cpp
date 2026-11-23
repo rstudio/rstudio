@@ -40,6 +40,7 @@
 #include <r/RSexp.hpp>
 #include <r/RErrorCategory.hpp>
 #include <r/RInterface.hpp>
+#include <r/RRuntime.hpp>
 #include <r/RUtil.hpp>
 #include <r/session/RSession.hpp>
 
@@ -1171,13 +1172,17 @@ TEST(SessionRTest, InvokeRpcHandlerAnswersARequestAnRErrorInterrupted) {
    ASSERT_TRUE(r::exec::executeString("stop('a stale error')"));
 
    // the tests run inside R's initialization, which suspends interrupts
-   Rboolean interruptsWereSuspended = R_interrupts_suspended;
-   R_interrupts_suspended = static_cast<Rboolean>(false);
-   bool interruptUnwound = invoke(interrupted);
-   R_interrupts_suspended = interruptsWereSuspended;
-   r::exec::setInterruptsPending(false);
+   auto invokeInterruptibly = [&](const json::JsonRpcAsyncFunction& handler)
+   {
+      Rboolean interruptsWereSuspended = R_interrupts_suspended;
+      R_interrupts_suspended = static_cast<Rboolean>(false);
+      bool unwound = invoke(handler);
+      R_interrupts_suspended = interruptsWereSuspended;
+      r::exec::setInterruptsPending(false);
+      return unwound;
+   };
 
-   EXPECT_TRUE(interruptUnwound);
+   EXPECT_TRUE(invokeInterruptibly(interrupted));
    EXPECT_EQ(1, responses);
    EXPECT_TRUE(responseError == r::errc::CodeExecutionError) << responseError.asString();
    std::string interruptedMessage = responseError.getProperty("errormsg");
@@ -1186,6 +1191,27 @@ TEST(SessionRTest, InvokeRpcHandlerAnswersARequestAnRErrorInterrupted) {
 
    // R's last message is still the one from before the request
    EXPECT_NE(std::string::npos, lastErrorMessage().find("a stale error")) << lastErrorMessage();
+
+   // an error the handler caught leaves its message as R's last; an interrupt
+   // that follows isn't taken for that error where R reports the errors it
+   // signals (before R 4.0 it doesn't, and the message is all there is)
+   json::JsonRpcAsyncFunction interruptedAfterCaughtError =
+      [](const json::JsonRpcRequest&, const json::JsonRpcFunctionContinuation&)
+      {
+         r::exec::executeString("stop('a caught error')");
+         r::exec::setInterruptsPending(true);
+         Rf_onintr();
+      };
+
+   if (r::runtime::hasCallingErrorHandler())
+   {
+      reset();
+      EXPECT_TRUE(invokeInterruptibly(interruptedAfterCaughtError));
+      EXPECT_EQ(1, responses);
+      interruptedMessage = responseError.getProperty("errormsg");
+      EXPECT_EQ(std::string::npos, interruptedMessage.find("a caught error")) << interruptedMessage;
+      EXPECT_NE(std::string::npos, interruptedMessage.find("interrupted")) << interruptedMessage;
+   }
 #endif
 
    // one that responded before the error isn't answered again
