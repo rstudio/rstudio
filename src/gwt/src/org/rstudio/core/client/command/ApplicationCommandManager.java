@@ -114,10 +114,13 @@ public class ApplicationCommandManager
       events_.addHandler(ExecuteAppCommandEvent.TYPE, evt ->
       {
          AppCommand command = commands_.getCommandById(evt.getData().command());
-         if (command == null && !evt.getData().quiet())
+         if (command == null)
          {
-            RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage("Invalid Command",
-                  "The command '" + evt.getData().command() + "' does not exist.");
+            if (!evt.getData().quiet())
+            {
+               RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage("Invalid Command",
+                     "The command '" + evt.getData().command() + "' does not exist.");
+            }
             return;
          }
          if (Satellite.isCurrentWindowSatellite() &&
