@@ -532,6 +532,13 @@ test_that("agent code cannot move the working directory outside the allowed root
    expect_error(.rs.chat.withGuardrails(setwd("..")), "Action: setwd()", fixed = TRUE)
    expect_equal(workingDirectory(), dirs$user)
 
+   # likewise when evaluated the way the assistant's code is: a quoted
+   # expression in the global environment, with the error returned
+   result <- .rs.chat.safeEval(bquote(setwd(.(dirs$outside))))
+   expect_s3_class(result, "error")
+   expect_match(conditionMessage(result), "Action: setwd()", fixed = TRUE)
+   expect_equal(workingDirectory(), dirs$user)
+
    # so a relative path cannot reach outside them either
    expect_error(.rs.chat.withGuardrails({
       setwd(dirs$outside)
@@ -619,17 +626,13 @@ test_that("RStudio's own R code can change the working directory", {
 
    dirs <- localWorkingDirectories()
 
-   # e.g. .rs.api.initializeProject() looks for a project file this way
-   inDirectory <- function(dir)
-   {
-      old <- setwd(dir)
-      on.exit(setwd(old), add = TRUE)
-      getwd()
-   }
-   environment(inDirectory) <- .rs.toolsEnv()
+   # .rs.api.initializeProject() changes into the directory it is given
+   # to look for a project file, from a function defined within it
+   projectFile <- file.path(dirs$outside, "outside.Rproj")
+   writeLines("Version: 1.0", projectFile)
 
-   path <- .rs.chat.withGuardrails(inDirectory(dirs$outside))
-   expect_equal(.rs.chat.normalizePath(path), dirs$outside)
+   path <- .rs.chat.withGuardrails(.rs.api.initializeProject(dirs$outside))
+   expect_equal(.rs.chat.normalizePath(path), .rs.chat.normalizePath(projectFile))
    expect_equal(workingDirectory(), dirs$user)
 
 })

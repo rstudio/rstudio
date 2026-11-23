@@ -751,6 +751,10 @@ delayedAssign(
 
       unlink = function()
       {
+         # unlink() coerces its argument, so unlink(NULL) is a no-op.
+         # Coerced once, so the checks below see what is deleted.
+         x <- as.character(x)
+
          # Block recursive deletes in the user's home directory
          if ("*" %in% x)
          {
@@ -766,9 +770,6 @@ delayedAssign(
          # The 'expand' formal was added in R 4.0.0; on older versions,
          # unlink always performed glob expansion.
          doExpand <- getRversion() < "4.0.0" || expand
-
-         # unlink() coerces its argument, so unlink(NULL) is a no-op
-         x <- as.character(x)
          paths <- if (doExpand) Sys.glob(x) else x
          .rs.chat.validateFileEdit("unlink", paths)
       },
