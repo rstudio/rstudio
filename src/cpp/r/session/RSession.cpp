@@ -536,6 +536,7 @@ bool isSuspendable(const std::string& currentPrompt)
 namespace {
 
 volatile bool s_atTopLevelPrompt = false;
+bool s_inputHandlersRunning = false;
 bool s_browserActive = false;
 r::sexp::PreservedSEXP s_browserEnv;
 
@@ -549,6 +550,16 @@ void setAtTopLevelPrompt(bool atPrompt)
 bool atTopLevelPrompt()
 {
    return s_atTopLevelPrompt;
+}
+
+void setInputHandlersRunning(bool running)
+{
+   s_inputHandlersRunning = running;
+}
+
+bool inputHandlersRunning()
+{
+   return s_inputHandlersRunning;
 }
 
 void setBrowserActive(bool active)

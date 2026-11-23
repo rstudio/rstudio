@@ -166,6 +166,7 @@ void setIdleEvents(const IdleEventState& state)
 {
    s_idleEvents = state;
    s_idleEventsSince = state.active ? steadyNowNs() : 0;
+   r::session::setInputHandlersRunning(state.active);
 }
 
 // how long an input handler runs before the client is told R is busy: the
