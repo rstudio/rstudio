@@ -78,6 +78,18 @@ public class CodeSearchSuggestionTests extends GWTTestCase
       assertEquals("", img.getAttribute("alt"));
    }
 
+   public void testNamedXRefShowsItsName()
+   {
+      SourceItem item = JsonUtils.safeEval(
+            "{\"type\": 10, \"name\": \"thm:pyth\", \"extra_info\": \"Pythagoras\", " +
+            "\"context\": \"~/book\", \"metadata\": {\"type\": \"xref\", \"xref\": " +
+            "{\"file\": \"01-intro.Rmd\", \"type\": \"thm\", \"id\": \"pyth\"}}}");
+      DivElement row = Document.get().createDivElement();
+      row.setInnerHTML(new CodeSearchSuggestion(item, null).getDisplayString());
+      assertTrue(row.getInnerText().contains("thm:pyth"));
+      assertTrue(row.getInnerText().contains("Pythagoras"));
+   }
+
    private static SourceItem xrefItem(int type, String xrefType, String id)
    {
       return JsonUtils.safeEval(
