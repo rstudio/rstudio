@@ -16,6 +16,10 @@
 # NOTE: The guardrails implemented here are intended to prevent accidental
 # misuse and unintentionally destructive AI-generated code. They should
 # not be relied upon to defend against deliberately malicious code.
+#
+# Only the R functions hooked in chat.injectBindings are checked. Files
+# written by other means (e.g. a subprocess started with system(), or
+# package code that writes from compiled code) are out of scope.
 
 # Base package names, excluded from "trusted caller" detection
 # because the agent could call them directly to access files.
@@ -53,8 +57,19 @@ delayedAssign(
 # Cached state for guardrail checks: the sampled umask, the memoized
 # allowed roots, and the normalized home directory. See the individual
 # accessors (chat.umaskMasksWorldRead, chat.allowedRoots,
-# chat.homeDirectory) for the caching rationale.
+# chat.homeDirectory) for the caching rationale. Also holds the working
+# directories tracked by chat.recordUserWorkingDirectory.
 .rs.setVar("chat.guardrailState", new.env(parent = emptyenv()))
+
+# Base functions that may change the working directory when they call
+# setwd() themselves (see chat.validateWorkingDirectory), as each changes
+# into a directory on its caller's behalf and restores the previous one
+# on exit: source() and sys.source() for 'chdir = TRUE', and the srcfile
+# helpers, which read a parsed file from the directory it was parsed in.
+.rs.setVar("chat.workingDirectoryCallers", list(
+   base  = c("source", "sys.source", "open.srcfile"),
+   utils = c(".normalizePath")
+))
 
 
 # PCRE patterns matched against normalized paths to deny reads.
@@ -503,10 +518,11 @@ delayedAssign(
 #' (e.g. `~/.ssh`) are always denied.
 #'
 #' @param path A character vector of file paths.
+#' @param roots The roots within which edits are allowed.
 #' @return A character vector the same length as `path`, where
 #'   empty strings indicate allowed edits and non-empty strings
 #'   give the reason the edit was denied.
-.rs.addFunction("chat.isFileEditAllowed", function(path)
+.rs.addFunction("chat.isFileEditAllowed", function(path, roots = .rs.chat.allowedRoots())
 {
    # normalize path for comparison
    path <- .rs.chat.normalizePath(path)
@@ -518,7 +534,7 @@ delayedAssign(
    )
 
    # allow edits within the allowed roots
-   reasons[.rs.chat.isPathWithinAllowedRoots(path)] <- ""
+   reasons[.rs.chat.isPathWithinAllowedRoots(path, roots)] <- ""
 
    # deny edits matching sensitive path patterns (both read and edit
    # deny lists apply, since edits should be at least as restrictive)
@@ -532,9 +548,9 @@ delayedAssign(
    reasons
 })
 
-.rs.addFunction("chat.validateFileEdit", function(action, path)
+.rs.addFunction("chat.validateFileEdit", function(action, path, roots = .rs.chat.allowedRoots())
 {
-   reasons <- .rs.chat.isFileEditAllowed(path)
+   reasons <- .rs.chat.isFileEditAllowed(path, roots)
    denied <- nzchar(reasons)
    if (!any(denied))
       return(TRUE)
@@ -557,6 +573,74 @@ delayedAssign(
       action, path[denied], reasons[denied])
    msg <- paste(c("One or more agent file operations were blocked.", details), collapse = "\n\n")
    stop(msg, call. = FALSE)
+})
+
+#' Record the working directory the user chose.
+#'
+#' Called as the guardrails are activated. The working directory counts
+#' as the user's choice unless it is where the previous guarded evaluation
+#' left it: then agent code moved there, and the directory recorded
+#' earlier stands.
+.rs.addFunction("chat.recordUserWorkingDirectory", function()
+{
+   state <- .rs.chat.guardrailState
+
+   workDir <- getwd()
+   if (!identical(workDir, state$agentWorkingDirectory))
+      state$userWorkingDirectory <- workDir
+})
+
+#' Check whether a function may change the working directory freely.
+#'
+#' @param fn The function calling `setwd()`.
+#' @return `TRUE` if `fn` is one of `chat.workingDirectoryCallers`.
+.rs.addFunction("chat.isWorkingDirectoryCaller", function(fn)
+{
+   # resolved on each call rather than captured up front: source() and
+   # sys.source() are hooked themselves, so the function on the stack
+   # while the guardrails are active is the hooked one
+   callers <- .rs.chat.workingDirectoryCallers
+   for (package in names(callers))
+   {
+      envir <- asNamespace(package)
+      for (name in callers[[package]])
+      {
+         if (identical(fn, get0(name, envir = envir, inherits = FALSE)))
+            return(TRUE)
+      }
+   }
+
+   FALSE
+})
+
+#' Validate a change of working directory.
+#'
+#' The working directory is one of the allowed roots (see
+#' `chat.allowedRoots()`), so agent code free to change it could edit
+#' files anywhere. Agent code may therefore only move within the allowed
+#' roots, or back into the directory the user chose -- the working
+#' directory can be the only root containing that one, and it stops being
+#' a root as soon as agent code moves elsewhere.
+#'
+#' Changes made by package code, or by one of `chat.workingDirectoryCallers`,
+#' are not checked. The latter must be the caller of `setwd()` itself: a
+#' `setwd()` call within a sourced script is as much agent code as one
+#' outside it.
+#'
+#' @param action The name of the function changing the working directory.
+#' @param dir The new working directory.
+#' @param caller The function that called `action`.
+.rs.addFunction("chat.validateWorkingDirectory", function(action, dir, caller)
+{
+   if (.rs.chat.isWorkingDirectoryCaller(caller) || .rs.chat.hasTrustedCaller())
+      return(TRUE)
+
+   roots <- .rs.chat.allowedRoots()
+   userDir <- .rs.chat.guardrailState$userWorkingDirectory
+   if (!is.null(userDir))
+      roots <- c(roots, .rs.chat.normalizePath(userDir))
+
+   .rs.chat.validateFileEdit(action, dir, roots)
 })
 
 #' Validate a connection open based on the open mode.
@@ -601,6 +685,9 @@ delayedAssign(
    # cannot be influenced by the code the guardrails police
    .rs.chat.umaskMasksWorldRead()
 
+   # likewise, note where the user is before agent code can move
+   .rs.chat.recordUserWorkingDirectory()
+
    baseHooks <- list(
 
       unlink = function()
@@ -620,7 +707,12 @@ delayedAssign(
          # The 'expand' formal was added in R 4.0.0; on older versions,
          # unlink always performed glob expansion.
          doExpand <- getRversion() < "4.0.0" || expand
-         paths <- if (doExpand) Sys.glob(x) else x
+
+         # unlink() coerces its argument, so unlink(NULL) is a no-op
+         paths <- as.character(x)
+         if (doExpand)
+            paths <- Sys.glob(paths)
+
          .rs.chat.validateFileEdit("unlink", paths)
       },
 
@@ -792,6 +884,11 @@ delayedAssign(
       {
          if (is.character(file) && nzchar(file))
             .rs.chat.validateFileEdit("sink", file)
+      },
+
+      setwd = function()
+      {
+         .rs.chat.validateWorkingDirectory("setwd", dir, sys.function(sys.parent()))
       }
 
    )
@@ -872,6 +969,11 @@ delayedAssign(
    # and chat.bindingsInjected TRUE, so the next injectBindings() would skip
    # them. One that arrives meanwhile is delivered once the restore is done.
    suspendInterrupts({
+      # where the evaluation left the working directory; see
+      # chat.recordUserWorkingDirectory
+      if (.rs.chat.bindingsInjected)
+         .rs.chat.guardrailState$agentWorkingDirectory <- getwd()
+
       packages <- ls(envir = .rs.chat.hookedBindings, all.names = TRUE)
       allRestored <- TRUE
 
