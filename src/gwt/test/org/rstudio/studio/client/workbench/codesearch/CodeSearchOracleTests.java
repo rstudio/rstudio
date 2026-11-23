@@ -119,12 +119,14 @@ public class CodeSearchOracleTests extends GWTTestCase
                          xref("thm", "very-long-label-pq", "Pythagoras"), "pq"));
    }
 
-   // The server reads '*' literally in cross-references, so a fresh search
-   // for "Pyth*" doesn't list the theorem; narrowing to it mustn't either.
-   public void testWildcardDoesNotMatchName()
+   // The server reads a '*' literally in cross-references, in both the
+   // label and the name, so narrowing must too.
+   public void testXRefMatchesStarLiterally()
    {
       CodeSearchSuggestion theorem = xref("thm", "pyth", "Pythagoras");
       assertFalse(matches(theorem, "Pyth*"));
+      assertFalse(matches(theorem, "thm:p*"));
+      assertTrue(matches(xref("thm", "astar", "Weighted A* optimality"), "Weighted A*"));
       assertEquals(CodeSearchOracle.scoreMatch(xref("thm", "pyth"), "Pyth*"),
                    CodeSearchOracle.scoreMatch(theorem, "Pyth*"));
    }

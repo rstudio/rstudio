@@ -83,8 +83,12 @@ public class CodeSearchOracle extends SuggestOracle
                                String query,
                                Pattern pattern)
    {
-      if (matchesName(suggestion, query))
-         return true;
+      // the server reads a '*' in the query literally for cross-references
+      if (suggestion.isXRef())
+      {
+         return StringUtil.isSubsequence(suggestion.getMatchedString(), query, true) ||
+                matchesName(suggestion, query);
+      }
 
       String text = suggestion.getMatchedString().toLowerCase();
       if (pattern != null)
@@ -96,14 +100,10 @@ public class CodeSearchOracle extends SuggestOracle
       return StringUtil.isSubsequence(text, queryFor(suggestion, query), true);
    }
 
-   // The server finds a cross-reference by its name only for a query without
-   // a '*', since it reads a '*' in the query literally there.
    private static boolean matchesName(CodeSearchSuggestion suggestion, String query)
    {
       String name = suggestion.getNameMatchedString();
-      return !name.isEmpty() &&
-             query.indexOf('*') == -1 &&
-             StringUtil.isSubsequence(name, query, true);
+      return !name.isEmpty() && StringUtil.isSubsequence(name, query, true);
    }
 
    // A file query may end in :<line>:<col> (see navigationTarget), which the

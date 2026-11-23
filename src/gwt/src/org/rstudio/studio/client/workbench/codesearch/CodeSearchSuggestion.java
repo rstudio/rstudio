@@ -38,6 +38,7 @@ class CodeSearchSuggestion implements Suggestion
    {
       isFileTarget_ = true;
       navigationTarget_ = new CodeNavigationTarget(fileItem.getPath());
+      isXRef_ = false;
       matchedString_ = fileItem.getFilename();
       nameMatchedString_ = "";
             
@@ -113,6 +114,7 @@ class CodeSearchSuggestion implements Suggestion
    {
       isFileTarget_ = false;
       navigationTarget_ = sourceItem.toCodeNavigationTarget();
+      isXRef_ = sourceItem.hasXRef();
       matchedString_ = sourceItem.getName();
 
       // the server sends a cross-reference's name (e.g. a theorem's) as its
@@ -224,6 +226,11 @@ class CodeSearchSuggestion implements Suggestion
    {
       return isFileTarget_;
    }
+
+   public boolean isXRef()
+   {
+      return isXRef_;
+   }
    
    private String createDisplayString(ImageResource image,
                                       String altText,
@@ -260,6 +267,7 @@ class CodeSearchSuggestion implements Suggestion
    }
    
    private final boolean isFileTarget_;
+   private final boolean isXRef_;
    private final CodeNavigationTarget navigationTarget_;
    private final String matchedString_;
    private final String nameMatchedString_;
