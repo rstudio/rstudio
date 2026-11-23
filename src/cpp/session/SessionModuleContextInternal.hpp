@@ -51,6 +51,14 @@ void onBackgroundProcessing(bool isIdle);
 // source diagnostics
 core::FilePath sourceDiagnostics();
 
+// record the port the session's tcp listener bound (see sessionPort)
+void setSessionPort(const std::string& port);
+
+// The name of this session's restart context among those in its scope, for a
+// restarted session to find what the one before it saved. Not the same thing
+// as sessionPort() in every mode. Call once the listener has bound.
+std::string restartContextId();
+
 } // namespace module_context
 } // namespace session
 } // namespace rstudio

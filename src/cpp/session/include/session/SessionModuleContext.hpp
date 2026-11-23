@@ -208,6 +208,11 @@ core::shell_utils::ShellCommand rCmd(const core::FilePath& rBinDir);
 // get the R local help port
 std::string rLocalHelpPort();
 
+// The port to reach the session on: once a tcp listener is bound, the port
+// it bound (which the OS picks when www-port is 0); otherwise, as for a
+// session listening on a local stream, the configured www-port.
+std::string sessionPort();
+
 // get current libpaths
 std::vector<core::FilePath> getLibPaths();
 

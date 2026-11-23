@@ -32,6 +32,13 @@ parseRd <- function(file) {
     tools::parse_Rd(file, macros = macros)
 }
 
+test_that("R's help server has a port, whatever the session's www-port", {
+    # rstudio-tests starts this session with www-port 0. R takes a port of 0
+    # to mean its help server isn't running: a server session that gives it
+    # that has R start one of its own the next time help is asked for
+    expect_gt(as.integer(.rs.httpdPort()), 0L)
+})
+
 test_that(".rs.getHelp() handles empty and NULL package", {
     help_rnorm1 <- .rs.getHelp("rnorm")
     help_rnorm2 <- .rs.getHelp("rnorm", package = "")
