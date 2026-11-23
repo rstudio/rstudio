@@ -192,6 +192,9 @@ public:
       if (!REQUIRE_MAIN_THREAD())
          return *this;
 
+      if (!acceptParam(name, false))
+         return *this;
+
       preserver_.add(paramSEXP);
       params_.push_back(Param(name, paramSEXP));
       return *this;
@@ -204,33 +207,30 @@ public:
       if (!REQUIRE_MAIN_THREAD())
          return *this;
 
-      r::sexp::Protect protect;
-      SEXP paramSEXP = sexp::create(param, &protect);
-      preserver_.add(paramSEXP);
-      params_.push_back(Param(name, paramSEXP));
-      return *this;
-   }
-   
-   template <typename T>
-   RFunction& addUtf8Param(const T& param)
-   {
-      return addUtf8Param(std::string(), param);
-   }
-   
-   template <typename T>
-   RFunction& addUtf8Param(const std::string& name, const T& param)
-   {
-      // no-op off the main thread; the R runtime is not thread-safe
-      if (!REQUIRE_MAIN_THREAD())
+      // once a parameter is refused, the call won't run, so later ones
+      // aren't created
+      if (!paramProblem_.empty())
          return *this;
 
+      // R's error on an embedded nul would be raised by create(), outside
+      // the protected call, and longjmp past the caller
       r::sexp::Protect protect;
-      SEXP paramSEXP = sexp::createUtf8(param, &protect);
+      SEXP paramSEXP = R_NilValue;
+      bool paramContainsNul = false;
+      {
+         sexp::NulCheckScope nulCheck;
+         paramSEXP = sexp::create(param, &protect);
+         paramContainsNul = nulCheck.foundNul();
+      }
+
+      if (!acceptParam(name, paramContainsNul))
+         return *this;
+
       preserver_.add(paramSEXP);
       params_.push_back(Param(name, paramSEXP));
       return *this;
    }
-   
+
    core::Error call(SEXP evalNS = R_GlobalEnv, bool safely = true);
    core::Error callUnsafe();
 
@@ -258,20 +258,6 @@ public:
       return sexp::extract(resultSEXP, pValue);
    }
 
-   template <typename T>
-   core::Error callUtf8(T* pValue)
-   {
-      // call the function
-      sexp::Protect rProtect;
-      SEXP resultSEXP;
-      core::Error error = call(R_GlobalEnv, &resultSEXP, &rProtect);
-      if (error)
-         return error;
-
-      // convert result to c++ accessible type
-      return sexp::extract(resultSEXP, pValue, true);
-   }
-   
 private:
    void commonInit(const std::string& functionName);
 
@@ -281,6 +267,13 @@ private:
    // cleanly -- even if invoked from the main thread later -- rather than
    // executing with missing state. the R runtime is not thread-safe.
    bool requireMainThread(const char* method, const core::ErrorLocation& location);
+
+   // returns true when the parameter can be added. a parameter R would raise
+   // an error on while the call is built (a name or value holding a string
+   // with an embedded nul, or a name longer than R allows) is refused
+   // instead, recording why for call() to report; so is any parameter after
+   // one was refused
+   bool acceptParam(const std::string& name, bool valueContainsNul);
 
    void initParams()
    {
@@ -305,6 +298,10 @@ private:
    // because it is written from the offending thread and read from the main
    // thread; the store also orders the poisoning write to functionSEXP_
    std::atomic<bool> offMainThreadUse_ { false };
+
+   // why acceptParam() refused the first parameter it refused, for call() to
+   // report; a string, as a default-constructed Error allocates
+   std::string paramProblem_;
 
    // function name (optional)
    std::string functionName_;
@@ -355,6 +352,11 @@ core::Error system(const std::string& command, std::string* pOutput);
 void error(const std::string& message);
 void errorCall(SEXP call, const std::string& message);
 std::string getErrorMessage();
+
+// sets the message geterrmessage() returns, in R's native encoding (as
+// getErrorMessage() returns it); unlike seterrmessage(), it runs no R code,
+// so it can't be interrupted
+void setErrorMessage(const std::string& message);
 
 bool interruptsPending();
 void setInterruptsPending(bool pending);

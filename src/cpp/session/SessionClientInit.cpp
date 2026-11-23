@@ -706,6 +706,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    
    // assistant running?
    sessionInfo["assistant_runtime_status"] = modules::assistant::assistantRuntimeStatus();
+   sessionInfo["assistant_nes_missing"] = modules::assistant::isPositAssistantNesMissing();
 
    if (projects::projectContext().hasProject())
    {

@@ -240,6 +240,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String ROOT_DOCUMENT = "root_document";
    public static final String SHOW_USER_HOME_PAGE = "show_user_home_page";
    public static final String REUSE_SESSIONS_FOR_PROJECT_LINKS = "reuse_sessions_for_project_links";
+   public static final String R_VERSION_QUICK_PICK = "r_version_quick_pick";
    public static final String VCS_ENABLED = "vcs_enabled";
    public static final String VCS_AUTOREFRESH = "vcs_autorefresh";
    public static final String GIT_EXE_PATH = "git_exe_path";
@@ -3114,6 +3115,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether the R version selector groups R installations by version and offers a type-down search, instead of a single flat menu. Applies to RStudio Pro and RStudio Workbench sessions that show the R version selector; ignored elsewhere.
+    */
+   public PrefValue<Boolean> rVersionQuickPick()
+   {
+      return bool(
+         "r_version_quick_pick",
+         _constants.rVersionQuickPickTitle(), 
+         _constants.rVersionQuickPickDescription(), 
+         false);
+   }
+
+   /**
     * Whether to enable RStudio's version control system interface.
     */
    public PrefValue<Boolean> vcsEnabled()
@@ -5154,6 +5167,8 @@ public class UserPrefsAccessor extends Prefs
          showUserHomePage().setValue(layer, source.getString("show_user_home_page"));
       if (source.hasKey("reuse_sessions_for_project_links"))
          reuseSessionsForProjectLinks().setValue(layer, source.getBool("reuse_sessions_for_project_links"));
+      if (source.hasKey("r_version_quick_pick"))
+         rVersionQuickPick().setValue(layer, source.getBool("r_version_quick_pick"));
       if (source.hasKey("vcs_enabled"))
          vcsEnabled().setValue(layer, source.getBool("vcs_enabled"));
       if (source.hasKey("vcs_autorefresh"))
@@ -5584,6 +5599,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(rootDocument());
       prefs.add(showUserHomePage());
       prefs.add(reuseSessionsForProjectLinks());
+      prefs.add(rVersionQuickPick());
       prefs.add(vcsEnabled());
       prefs.add(vcsAutorefresh());
       prefs.add(gitExePath());

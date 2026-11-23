@@ -824,6 +824,15 @@ public class SessionInfo extends JavaScriptObject
       return this.assistant_runtime_status || 0;
    }-*/;
 
+   // Whether the Posit Assistant installation lacks NES.
+   public final native boolean getAssistantNesMissing() /*-{
+      return this.assistant_nes_missing === true;
+   }-*/;
+
+   public final native void setAssistantNesMissing(boolean nesMissing) /*-{
+      this.assistant_nes_missing = nesMissing;
+   }-*/;
+
    public final native RProjectAssistantOptions getAssistantProjectOptions() /*-{
       return this.assistant_project_options;
    }-*/;

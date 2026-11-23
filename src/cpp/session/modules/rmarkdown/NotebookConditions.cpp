@@ -39,7 +39,7 @@ SEXP rs_signalNotebookCondition(SEXP typeSEXP,
                                 SEXP messageSEXP)
 {
    // extract message (make sure we got one)
-   std::string message = r::sexp::asUtf8String(messageSEXP);
+   std::string message = r::sexp::asString(messageSEXP);
    if (message.empty())
       return Rf_ScalarLogical(FALSE);
 

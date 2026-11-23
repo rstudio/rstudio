@@ -43,24 +43,9 @@ public class ConsoleClearButton extends Composite
             icon, 
             clearCommand);
       panel.addStyleName(ThemeStyles.INSTANCE.consoleClearButton());
-      width_ = icon.getWidth() + 6;
-      height_ = icon.getHeight();
       panel.setWidget(button);
 
       initWidget(panel);
       setVisible(true);
    }
-
-   public int getWidth()
-   {
-      return width_;
-   }
-
-   public int getHeight()
-   {
-      return height_;
-   }
-   
-   private final int width_;
-   private final int height_;
 }

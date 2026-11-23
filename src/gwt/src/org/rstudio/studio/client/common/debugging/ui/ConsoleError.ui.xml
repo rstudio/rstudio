@@ -27,9 +27,15 @@
    }
    
    .errorCommandText {
+      /* Buttons, so the keyboard can reach and activate them; drawn as plain text */
+      background: none;
+      border: none;
+      margin: 0;
+      padding: 0;
+      color: inherit;
       font-family: proportionalFont;
       font-size: 80%;
-      opacity: 0.50;
+      opacity: 0.60;
       cursor: pointer;
       /* The container's 80% line-height lets text hit areas spill into the next row;
          an inline-block with its own line-height keeps each link's hit area to its row. */
@@ -40,8 +46,17 @@
       position: relative;
    }
    
-   .errorCommandText:hover {
+   .errorCommandText:hover,
+   .errorCommandText:focus {
       opacity: 1;
+   }
+
+   /* :focus, not :focus-visible: the browser doesn't count focus from a command
+      chosen with the mouse as :focus-visible. Matches the app-wide outline in
+      focus-visible.css. */
+   .errorCommandText:focus {
+      outline: #8AA9DB solid 2px;
+      outline-offset: -1px;
    }
    
    .errorCommandImage {
@@ -83,9 +98,8 @@
                   width="9"
                   height="9"
                   styleName="{style.errorCommandImage} show_traceback_image"/>
-           <g:Anchor styleName="{style.errorCommandText} show_traceback_text" ui:field="showTracebackText">
-              Show Traceback
-           </g:Anchor>
+           <g:Button styleName="{style.errorCommandText} show_traceback_text"
+                     ui:field="showTracebackText"/>
         </g:HTMLPanel>
         <g:HTMLPanel>
            <rw:DecorativeImage resource="{rerun}"
@@ -93,9 +107,7 @@
                     width="9"
                     height="9"
                     styleName="{style.errorCommandImage} rerun_image"/>
-           <g:Anchor styleName="{style.errorCommandText} rerun_text" ui:field="rerunText">
-              Rerun with Debug
-           </g:Anchor>
+           <g:Button styleName="{style.errorCommandText} rerun_text" ui:field="rerunText"/>
         </g:HTMLPanel>
      </g:HTMLPanel>
      <g:HTML ui:field="errorMessage" styleName="{style.errorMessage}"></g:HTML>

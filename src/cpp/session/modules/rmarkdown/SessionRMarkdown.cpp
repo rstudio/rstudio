@@ -361,9 +361,9 @@ std::string assignOutputUrl(const std::string& outputFile)
    {
       std::string renderedPath;
       Error error = r::exec::RFunction(".rs.bookdown.renderedOutputPath")
-            .addUtf8Param(websiteDir)
-            .addUtf8Param(outputPath)
-            .callUtf8(&renderedPath);
+            .addParam(websiteDir)
+            .addParam(outputPath)
+            .call(&renderedPath);
       if (error)
          LOG_ERROR(error);
       

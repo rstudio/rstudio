@@ -45,6 +45,7 @@
 #include <core/http/SocketUtils.hpp>
 #include <core/http/SocketProxy.hpp>
 #include <core/http/Request.hpp>
+#include <core/http/RequestParser.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/LocalStreamAsyncClient.hpp>
 #include <core/http/Util.hpp>
@@ -1242,6 +1243,11 @@ bool proxyUploadRequest(
 
    if (!proxy)
    {
+      // the browser went away before any of the body reached us, so there is
+      // nothing to forward
+      if (http::RequestParser::isAbandonedForm(ptrConnection->request(), formData.size(), complete))
+         return true;
+
       // no proxy yet - we need to proxy this request and create
       // a form proxy to write form data to
       auto onClientCreated = [=](const boost::shared_ptr<http::IAsyncClient>& proxyClient)
@@ -1286,7 +1292,7 @@ bool proxyUploadRequest(
    }
    else
    {
-      return proxy->queueData(formData);
+      return proxy->queueData(formData, complete);
    }
 }
 

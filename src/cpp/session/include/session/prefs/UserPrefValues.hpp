@@ -336,6 +336,7 @@ namespace prefs {
 #define kShowUserHomePageNever "never"
 #define kShowUserHomePageSessions "sessions"
 #define kReuseSessionsForProjectLinks "reuse_sessions_for_project_links"
+#define kRVersionQuickPick "r_version_quick_pick"
 #define kVcsEnabled "vcs_enabled"
 #define kVcsAutorefresh "vcs_autorefresh"
 #define kGitExePath "git_exe_path"
@@ -1699,6 +1700,12 @@ public:
     */
    bool reuseSessionsForProjectLinks();
    core::Error setReuseSessionsForProjectLinks(bool val);
+
+   /**
+    * Whether the R version selector groups R installations by version and offers a type-down search, instead of a single flat menu. Applies to RStudio Pro and RStudio Workbench sessions that show the R version selector; ignored elsewhere.
+    */
+   bool rVersionQuickPick();
+   core::Error setRVersionQuickPick(bool val);
 
    /**
     * Whether to enable RStudio's version control system interface.

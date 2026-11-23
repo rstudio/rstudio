@@ -854,6 +854,11 @@ jobs:
       - name: Install e2e test dependencies
         id: e2e_deps
         uses: ./.github/actions/os-e2e-deps
+        # A stalled apt-get update inside pak's system-requirements install hung
+        # one shard until the 120-minute job timeout. A slow but still-progressing
+        # apt mirror can stretch this step well past its usual few minutes, so the
+        # limit leaves room for that while still ending a hang before the job does.
+        timeout-minutes: 60
         with:
           r-libs-user: ${{ env.R_LIBS_USER }}
           save-cache: ${{ !inputs.skip_e2e_deps_cache_save }}

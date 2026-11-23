@@ -281,6 +281,12 @@ bool imageIsDirty();
 void setAtTopLevelPrompt(bool atPrompt);
 bool atTopLevelPrompt();
 
+// whether R's input handlers (a later callback, say) are running from the
+// session's idle loop -- set around that dispatch, during which
+// atTopLevelPrompt() stays true
+void setInputHandlersRunning(bool running);
+bool inputHandlersRunning();
+
 // browser context state -- set from RReadConsole based on the prompt
 void setBrowserActive(bool active);
 bool browserContextActive();

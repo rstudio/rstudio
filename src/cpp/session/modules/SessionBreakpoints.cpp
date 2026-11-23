@@ -227,9 +227,9 @@ Error getFunctionState(const json::JsonRpcRequest& request,
 
    bool inSync = false;
    error = r::exec::RFunction(".rs.isFunctionInSync")
-         .addUtf8Param(functionName)
-         .addUtf8Param(fileName)
-         .addUtf8Param(packageName)
+         .addParam(functionName)
+         .addParam(fileName)
+         .addParam(packageName)
          .call(&inSync);
    if (error)
       LOG_ERROR(error);
@@ -251,9 +251,9 @@ bool setBreakpoint(const std::string& functionName,
                    const json::Array& steps)
 {
    Error error = r::exec::RFunction(".rs.setBreakpoint")
-         .addUtf8Param(functionName)
-         .addUtf8Param(fileName)
-         .addUtf8Param(packageName)
+         .addParam(functionName)
+         .addParam(fileName)
+         .addParam(packageName)
          .addParam(steps)
          .call();
 
@@ -435,7 +435,7 @@ SEXP rs_debugSourceFile(SEXP filename, SEXP encoding, SEXP local)
 {
    // Get the file that was sourced
    std::string path;
-   Error error = r::sexp::extract(filename, &path, true);
+   Error error = r::sexp::extract(filename, &path);
    if (error)
    {
       LOG_ERROR(error);

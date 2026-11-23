@@ -16,7 +16,6 @@ package org.rstudio.studio.client.application.ui.impl;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StartupTiming;
 import org.rstudio.core.client.StringUtil;
@@ -37,7 +36,6 @@ import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.DesktopHooks;
-import org.rstudio.studio.client.application.DesktopInfo;
 import org.rstudio.studio.client.application.IgnoredUpdates;
 import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.events.DesktopMouseNavigateEvent;
@@ -79,7 +77,6 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -128,17 +125,10 @@ public class DesktopApplicationHeader implements ApplicationHeader,
       commands.diagnosticsReport().setVisible(true);
       commands.showFolder().setVisible(true);
       
-      if (BrowseCap.isElectron())
-      {
-         // we use a preview listener because we need to ensure the event
-         // is handled before anything else in the IDE surface might try
-         // to handle the mouse event
-         addBackForwardMouseDownHandlers();
-      }
-      else
-      {
-         commands.showA11yDiagnostics().remove();
-      }
+      // we use a preview listener because we need to ensure the event
+      // is handled before anything else in the IDE surface might try
+      // to handle the mouse event
+      addBackForwardMouseDownHandlers();
       
       events.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
       {
@@ -294,21 +284,13 @@ public class DesktopApplicationHeader implements ApplicationHeader,
 
    @Handler
    void onUndoDummy() {
-      if (BrowseCap.isElectron()) {
-         undoAce();
-      } else {
-         Desktop.getFrame().undo();
-      }
+      undoAce();
    }
 
    @Handler
    void onRedoDummy()
    {
-      if (BrowseCap.isElectron()) {
-         redoAce();
-      } else {
-         Desktop.getFrame().redo();
-      }
+      redoAce();
    }
 
    @Handler
@@ -361,25 +343,6 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          }
       }.schedule(1000);
 
-   }
-
-   @Handler
-   void onOpenDeveloperConsole()
-   {
-      int port = DesktopInfo.getChromiumDevtoolsPort();
-      if (port == 0)
-      {
-         globalDisplay_.showErrorMessage(
-               constants_.errorOpeningDevToolsCaption(),
-               constants_.cannotActivateDevtoolsMessage());
-      }
-      else
-      {
-         globalDisplay_.openMinimalWindow(
-               ("http://127.0.0.1:" + DesktopInfo.getChromiumDevtoolsPort()),
-               Window.getClientWidth() - 20,
-               Window.getClientHeight() - 20);
-      }
    }
 
    @Handler

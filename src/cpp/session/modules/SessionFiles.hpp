@@ -16,6 +16,10 @@
 #ifndef SESSION_SESSION_FILES_HPP
 #define SESSION_SESSION_FILES_HPP
 
+#include <string>
+
+#include <core/http/UriHandler.hpp>
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -29,6 +33,12 @@ namespace modules {
 namespace files {
    
 bool isMonitoringDirectory(const core::FilePath& directory);
+
+// the /upload handler, for driving it chunk by chunk from tests
+bool handleFileUploadRequestForTesting(const core::http::Request& request,
+                                       const std::string& formData,
+                                       bool complete,
+                                       const core::http::UriHandlerFunctionContinuation& cont);
 
 core::Error initialize();
                        

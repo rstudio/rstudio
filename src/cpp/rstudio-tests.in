@@ -28,6 +28,8 @@ Run RStudio unit tests. Available flags:
 --scope          Run only tests with the given scope (core, rserver, rsession, r).
 --filter         Run a subset of R tests, matching the requested filter.
 --only-database  Restrict the rserver scope to the database-backed fixture tests.
+--www-port       Port for the rsession and r scopes' session to listen on in
+                 desktop builds (default: 0, a free port the OS picks).
 EOF
 
 section () {
@@ -426,6 +428,20 @@ while [ $# -gt 0 ]; do
 
    ;;
 
+   "--www-port")
+
+      # rsession reports a bad port only when it fails to bind it, which server
+      # mode never does
+      if ! [[ "$2" =~ ^(0|[1-9][0-9]{0,4})$ ]] || [ "$2" -gt 65535 ]; then
+         echo "Usage: ./rstudio-tests --www-port <port>, a port number in 0-65535"
+         exit 1
+      fi
+
+      WWW_PORT="$2"
+      shift 2
+
+   ;;
+
    "--help")
       echo "${USAGE}"
       exit 0
@@ -532,12 +548,16 @@ if has-scope "rserver"; then
 
 fi
 
-# Setup for rsession tests
+# Setup for rsession tests. Desktop mode listens on TCP www-port, so take one
+# the OS picks (0): a dev server or another test run may hold any fixed port.
+# Server mode listens on a socket in RS_SESSION_TMP_DIR instead, and has no
+# use for the port.
 if [ -e "@CMAKE_CURRENT_BINARY_DIR@/conf/rsession-dev.conf" ]; then
    SESSION_CONF_FILE="@CMAKE_CURRENT_BINARY_DIR@/conf/rsession-dev.conf"
 else
    SESSION_CONF_FILE="@CMAKE_CURRENT_BINARY_DIR@/conf/rdesktop-dev.conf"
 fi
+SESSION_WWW_PORT="${WWW_PORT:-0}"
 
 if has-scope "rsession"; then
 
@@ -546,7 +566,8 @@ if has-scope "rsession"; then
    runWatchdogProcess 5m false                                    \
       "@CMAKE_CURRENT_BINARY_DIR@/session/${RSTUDIO_SESSION_BIN}" \
       --run-tests                                                 \
-      --config-file="${SESSION_CONF_FILE}"
+      --config-file="${SESSION_CONF_FILE}"                        \
+      --www-port="${SESSION_WWW_PORT}"
 
 fi
 
@@ -572,11 +593,16 @@ if has-scope "r"; then
       export TESTTHAT_FILTER
    fi
 
+   # remove any stale failures log, so a run that writes none can't pass on
+   # an earlier run's result
+   rm -f "@CMAKE_CURRENT_BINARY_DIR@/testthat-failures.log"
+
    # the full suite can run past 5 minutes on slower machines without hanging
    runWatchdogProcess 15m false                                                  \
       "@CMAKE_CURRENT_BINARY_DIR@/session/${RSTUDIO_SESSION_BIN}"                \
       --run-script "\"source('${TESTTHAT_TESTS_DIR}/run-tests.R'); runTests()\"" \
-      --config-file="${SESSION_CONF_FILE}"
+      --config-file="${SESSION_CONF_FILE}"                                       \
+      --www-port="${SESSION_WWW_PORT}"
 
    checkRUnitTestFailure
 

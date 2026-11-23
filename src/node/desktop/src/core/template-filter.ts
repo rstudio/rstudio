@@ -21,6 +21,9 @@ import { htmlEscape, jsLiteralEscape } from './string-utils';
 // literal escaping will be used instead of HTML escaping (i.e. the value
 // will be prepared for inserting into a JavaScript string literal).
 
+/** What resolveTemplateVar() gives for a variable that is unset or empty. */
+export const kMissingTemplateValue = 'MISSING VALUE';
+
 export function resolveTemplateVar(varName: string, vars: Map<string, string>): string {
   if (!varName) {
     return 'NO PROPERTY PROVIDED';
@@ -48,5 +51,5 @@ export function resolveTemplateVar(varName: string, vars: Map<string, string>): 
       }
     }
   }
-  return 'MISSING VALUE';
+  return kMissingTemplateValue;
 }

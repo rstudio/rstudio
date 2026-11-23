@@ -27,6 +27,7 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
+import org.rstudio.core.client.layout.DualWindowLayoutPanel;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.Desktop;
@@ -37,6 +38,7 @@ import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.debugging.ErrorManager;
 import org.rstudio.studio.client.common.debugging.events.UnhandledErrorEvent;
+import org.rstudio.studio.client.common.debugging.ui.ConsoleError;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.shell.ShellDisplay;
 import org.rstudio.studio.client.rmarkdown.events.ChunkExecStateChangedEvent;
@@ -90,6 +92,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Past
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.event.dom.client.KeyCodeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -132,6 +135,10 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       void onSelected();
 
       void onConsoleFind();
+
+      ConsoleError getLastError();
+      void markLatestErrorWithoutActions();
+      boolean latestErrorHasNoActions();
    }
 
    @Inject
@@ -332,6 +339,72 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       view_.getConsoleOutputWriter().focusEnd();
    }
 
+   @Handler
+   void onFocusLastConsoleError()
+   {
+      ConsoleError error = view_.getLastError();
+      if (error == null)
+      {
+         announceNoErrorToFocus();
+         return;
+      }
+
+      // Already showing: focus it directly, so focus doesn't pass through the
+      // input (which would scroll the output and start a screen reader on it)
+      if (canFocusNow(error))
+      {
+         error.focus();
+         return;
+      }
+
+      // Activating shows a hidden Console and focuses its input. Showing it can
+      // animate: a column stays inert until its animation ends, and a pane's
+      // animation can end by focusing the input. Wait out both.
+      commands_.activateConsole().execute();
+      Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
+      {
+         @Override
+         public boolean execute()
+         {
+            ConsoleError current = view_.getLastError();
+            if (current == null)
+            {
+               announceNoErrorToFocus();
+               return false;
+            }
+            if (canFocusNow(current))
+            {
+               current.focus();
+               return false;
+            }
+            if (++attempts_ < FOCUS_ERROR_MAX_ATTEMPTS)
+               return true;
+
+            announceFocusFailure(constants_.consoleErrorNotFocusedMessage());
+            return false;
+         }
+
+         private int attempts_ = 0;
+      }, FOCUS_ERROR_RETRY_MS);
+   }
+
+   private static boolean canFocusNow(ConsoleError error)
+   {
+      return error.canFocus() && !DualWindowLayoutPanel.isAnimating();
+   }
+
+   private void announceNoErrorToFocus()
+   {
+      announceFocusFailure(view_.latestErrorHasNoActions()
+            ? constants_.consoleErrorHasNoActionsMessage()
+            : constants_.noConsoleErrorToFocusMessage());
+   }
+
+   private void announceFocusFailure(String message)
+   {
+      ariaLive_.announce(AriaLiveService.ON_DEMAND, message, Timing.IMMEDIATE, Severity.STATUS);
+   }
+
    public void addKeyDownPreviewHandler(KeyDownPreviewHandler handler)
    {
       keyDownPreviewHandlers_.add(handler);
@@ -392,6 +465,10 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                event.getError(),
                prefs_.autoExpandErrorTracebacks().getValue(),
                getHistoryEntry(0));
+      }
+      else
+      {
+         view_.markLatestErrorWithoutActions();
       }
    }
 
@@ -1001,6 +1078,10 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    private final ShellInputAnimator inputAnimator_;
 
    private String initialInput_;
+
+   // Long enough for the Console to finish an animated restore
+   private static final int FOCUS_ERROR_RETRY_MS = 50;
+   private static final int FOCUS_ERROR_MAX_ATTEMPTS = 40;
 
    private static final String GROUP_CONSOLE = "console";
    private static final String STATE_INPUT = "input";

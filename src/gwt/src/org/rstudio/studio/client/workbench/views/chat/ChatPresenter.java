@@ -23,6 +23,7 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -47,6 +48,7 @@ import org.rstudio.studio.client.workbench.views.chat.events.ChatCheckForUpdates
 import org.rstudio.studio.client.workbench.views.chat.events.ChatPaneActiveEvent;
 import org.rstudio.studio.client.workbench.views.chat.events.ChatReturnToMainEvent;
 import org.rstudio.studio.client.workbench.views.chat.events.ChatSatelliteActionEvent;
+import org.rstudio.studio.client.workbench.views.chat.events.ChatSuspendedNoticeEvent;
 import org.rstudio.studio.client.workbench.views.chat.model.ChatSatelliteParams;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
@@ -116,7 +118,7 @@ public class ChatPresenter extends BasePresenter
       void hideUpdateNotification();
       void hideErrorNotification();
       void showCrashedMessage(int exitCode);
-      void showSuspendedMessage();
+      void showSuspendedMessage(String notice);
       void showIncompatibleVersion();
       void showUnsupportedVersionUpgradeRequired(String currentVersion, String newVersion);
       void showUnsupportedVersionNoUpdate(String currentVersion);
@@ -124,6 +126,9 @@ public class ChatPresenter extends BasePresenter
       void showManifestUnavailable(String errorMessage);
       void showInstallationManagedNotInstalled();
       void showConnectionLostNotification(String message);
+      // The backend the page in the frame connects to is about to stop; its
+      // reconnect failures are expected until the page is replaced
+      void expectFrameDisconnect();
       void hideConnectionLostNotification();
       void showReadlineNotification();
       void hideReadlineNotification();
@@ -317,23 +322,33 @@ public class ChatPresenter extends BasePresenter
             {
                backendPollGeneration_++; // invalidate existing poll callbacks
                display_.hideReadlineNotification();
+
+               // Keep the bounds in case the window is closed while suspended,
+               // without dirtying client state: pushing it would resume the session
                if (poppedOut_)
+                  captureSavedGeometry();
+
+               // Only dim the chat UI if Posit Assistant was actually loaded and
+               // running. If chat was never initialized (e.g., sidebar hidden at
+               // startup) or another provider is selected, nothing will reconnect.
+               if (cachedUrl_ != null && paiUtil_.isChatProviderPosit())
                {
-                  // Save geometry; satellite stays open and shows its own
-                  // suspend overlay via SessionSerializationEvent forwarding
-                  updateSavedGeometry();
-               }
-               // Only dim the chat UI if it was actually loaded and running.
-               // If chat was never initialized (e.g., sidebar hidden at startup),
-               // there's nothing meaningful to dim.
-               if (cachedUrl_ != null)
-               {
-                  display_.showSuspendedMessage();
+                  String notice = restartingR_
+                     ? constants_.chatRestartingRNotice()
+                     : constants_.chatSessionSuspendedNotice();
+                  display_.showSuspendedMessage(notice);
+                  if (poppedOut_)
+                     showSuspendedNoticeInSatellite(notice);
                }
             }
             else if (action == SessionSerializationAction.RESUME_SESSION)
             {
                backendPollGeneration_++; // new lifecycle generation
+
+               // Persist the geometry now; suspend only captures it, since
+               // pushing dirty client state to a suspended session resumes it.
+               if (poppedOut_)
+                  updateSavedGeometry();
 
                // Any pre-suspend initialization is stale — the server process
                // restarted, so all in-flight RPCs are dead. Reset the guard.
@@ -366,6 +381,16 @@ public class ChatPresenter extends BasePresenter
                pollForBackendUrl();
             }
          }
+      });
+
+      // Restart R stops the backend whether or not SUSPEND_SESSION reaches
+      // the client (Desktop doesn't wait to deliver it). If the restart fails,
+      // the expectation lasts until the page is next replaced.
+      events_.addHandler(RestartStatusEvent.TYPE, (RestartStatusEvent event) ->
+      {
+         restartingR_ = event.getStatus() == RestartStatusEvent.RESTART_INITIATED;
+         if (restartingR_)
+            display_.expectFrameDisconnect();
       });
 
       // Listen for satellite closed events
@@ -1000,30 +1025,45 @@ public class ChatPresenter extends BasePresenter
       }
    }
 
-   private void updateSavedGeometry()
+   private void showSuspendedNoticeInSatellite(String notice)
    {
       WindowEx window = satelliteManager_.getSatelliteWindowObject(
          ChatSatellite.NAME);
       if (window != null)
-      {
-         // In desktop mode, use outer dimensions because Electron's
-         // setSize() sets the outer window size including title bar.
-         // In web mode, use inner dimensions because window.open()
-         // width/height set the content area size.
-         int width = Desktop.hasDesktopFrame()
-            ? window.getOuterWidth()
-            : window.getInnerWidth();
-         int height = Desktop.hasDesktopFrame()
-            ? window.getOuterHeight()
-            : window.getInnerHeight();
-         savedGeometry_ = SatelliteWindowGeometry.create(
-            0,
-            window.getScreenX(),
-            window.getScreenY(),
-            width,
-            height);
+         events_.fireEventToSatellite(new ChatSuspendedNoticeEvent(notice), window);
+   }
+
+   private void updateSavedGeometry()
+   {
+      if (captureSavedGeometry())
          stateDirty_ = true;
-      }
+   }
+
+   /** Copies the open satellite's bounds into savedGeometry_; false if it's closed. */
+   private boolean captureSavedGeometry()
+   {
+      WindowEx window = satelliteManager_.getSatelliteWindowObject(
+         ChatSatellite.NAME);
+      if (window == null)
+         return false;
+
+      // In desktop mode, use outer dimensions because Electron's
+      // setSize() sets the outer window size including title bar.
+      // In web mode, use inner dimensions because window.open()
+      // width/height set the content area size.
+      int width = Desktop.hasDesktopFrame()
+         ? window.getOuterWidth()
+         : window.getInnerWidth();
+      int height = Desktop.hasDesktopFrame()
+         ? window.getOuterHeight()
+         : window.getInnerHeight();
+      savedGeometry_ = SatelliteWindowGeometry.create(
+         0,
+         window.getScreenX(),
+         window.getScreenY(),
+         width,
+         height);
+      return true;
    }
 
    private void returnChatToMain()
@@ -1644,6 +1684,9 @@ public class ChatPresenter extends BasePresenter
    private SatelliteWindowGeometry savedGeometry_ = null;
    private String cachedUrl_ = null;
    private String cachedAuthToken_ = null;
+
+   // Session > Restart R is between RESTART_INITIATED and RESTART_COMPLETED
+   private boolean restartingR_ = false;
 
    private static final ChatConstants constants_ = com.google.gwt.core.client.GWT.create(ChatConstants.class);
 }

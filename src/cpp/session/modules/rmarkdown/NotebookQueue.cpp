@@ -488,10 +488,22 @@ private:
 
       boost::shared_ptr<NotebookQueueUnit> unit = docQueue->firstUnit();
 
-      // extract the default chunk options, then augment with the unit's 
+      // extract the default chunk options, then augment with the unit's
       // chunk-specific options
       json::Object chunkOptions;
       Error optionsError = unit->parseOptions(&chunkOptions);
+
+      // R can't take code containing a nul character, so the options of a
+      // chunk with one can't be read, and the chunk would run with the
+      // document's default engine whatever its own is. run an error in R
+      // instead, whatever the default engine
+      if (optionsError && r::sexp::containsNul(unit->code()))
+      {
+         unit->replaceCode("base::stop('This chunk contains a nul character, which R does not support.', call. = FALSE)\n");
+         chunkOptions["engine"] = "r";
+         optionsError = Success();
+      }
+
       ChunkOptions options(docQueue->defaultChunkOptions(), chunkOptions);
 
       // establish execution context for the unit

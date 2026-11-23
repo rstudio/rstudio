@@ -501,6 +501,40 @@ TEST_F(PackageProjectInfoTests, RefreshesNamespaceEventsWithDotPackagePath)
    EXPECT_TRUE(r_util::RSourceIndex::getImportFromDirectives().empty());
 }
 
+TEST_F(PackageProjectInfoTests, IgnoresInvalidPackageNamesInMetadata)
+{
+   // Malformed names in NAMESPACE or DESCRIPTION are not recorded as packages.
+   const std::string malformed = "utils', 'stats";
+
+   writeDescription("Package: rootpkg\nVersion: 0.1.0\n");
+   ProjectContext context;
+   openProject(&context, "Package", ".", true);
+   modules::diagnostics::monitorProjectNamespace(context);
+
+   FilePath namespaceFile = projectDir_.completeChildPath("NAMESPACE");
+   ASSERT_FALSE(writeStringToFile(
+         namespaceFile,
+         "import(\"" + malformed + "\")\nimport(splines)\n"
+         "importFrom(\"" + malformed + "\", head)\nimportFrom(stats, median)\n"));
+   notifyFileChanged(&context, namespaceFile, core::system::FileChangeEvent::FileAdded);
+   EXPECT_EQ(std::set<std::string>{"splines"}, r_util::RSourceIndex::getImportedPackages());
+   ASSERT_EQ(1u, r_util::RSourceIndex::getImportFromDirectives().size());
+   EXPECT_EQ(1u, r_util::RSourceIndex::getImportFromDirectives().at("stats").count("median"));
+
+   FilePath description = projectDir_.completeChildPath("DESCRIPTION");
+   writeDescription("Package: " + malformed + "\nVersion: 0.1.0\n");
+   notifyFileChanged(&context, description, core::system::FileChangeEvent::FileModified);
+   ASSERT_EQ(malformed, context.packageInfo().name());
+
+   // Reloading the configuration re-reads both files, as session startup does.
+   context.setConfig(context.config());
+   EXPECT_EQ(std::set<std::string>{"splines"}, r_util::RSourceIndex::getImportedPackages());
+
+   EXPECT_EQ(0u, r_util::RSourceIndex::getAllInferredPackages().count(malformed));
+   for (const std::string& pkg : r_util::RSourceIndex::getAllUnindexedPackages())
+      EXPECT_EQ(std::string::npos, pkg.find('\'')) << pkg;
+}
+
 TEST_F(PackageProjectInfoTests, LoadsImportsAndMetadataWithoutCodeIndexing)
 {
    writeDescription("Package: before\nVersion: 0.1.0\n");

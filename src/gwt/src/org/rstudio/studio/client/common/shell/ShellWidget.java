@@ -503,6 +503,13 @@ public class ShellWidget extends Composite implements ShellDisplay,
       if (expand)
          errorWidget.setTracebackVisible(true);
 
+      String shortcut = RStudioGinjector.INSTANCE.getCommands()
+            .focusLastConsoleError().getShortcutPrettyHtml();
+      if (!StringUtil.isNullOrEmpty(shortcut))
+         errorWidget.setFocusShortcutHint(DomUtils.htmlToText(shortcut));
+      lastError_ = errorWidget;
+      latestErrorHasNoActions_ = false;
+
       insertErrorWidgetElement(
             errorEls,
             errorWidget.getElement());
@@ -550,6 +557,48 @@ public class ShellWidget extends Composite implements ShellDisplay,
    {
       events_.fireEvent(new RunCommandWithDebugEvent(command));
    }
+
+   /**
+    * Records that the newest error was written without an error box (e.g. while
+    * the debugger is active), so older boxes no longer hold the latest error.
+    */
+   public void markLatestErrorWithoutActions()
+   {
+      lastError_ = null;
+      latestErrorHasNoActions_ = true;
+   }
+
+   public boolean latestErrorHasNoActions()
+   {
+      return latestErrorHasNoActions_;
+   }
+
+   /**
+    * @return The most recent error box whose buttons are still in the output,
+    *    or null if there is none (none written yet, or cleared or trimmed away
+    *    since).
+    */
+   public ConsoleError getLastError()
+   {
+      if (lastError_ != null && !lastError_.hasButtonsIn(output_.getElement()))
+         lastError_ = null;
+      return lastError_;
+   }
+
+   // A button in the output, such as an error box's, as opposed to output text
+   private boolean isOutputButton(EventTarget target)
+   {
+      if (!Element.is(target))
+         return false;
+      Element el = Element.as(target);
+      return el.getTagName().equalsIgnoreCase("button") &&
+             output_.getElement().isOrHasChild(el);
+   }
+
+   // Enter or Space on a button produce a click with no click count
+   private static native boolean isKeyboardClick(NativeEvent event) /*-{
+      return event.detail === 0;
+   }-*/;
 
    @Override
    public void consoleWriteOutput(final String output, boolean agent)
@@ -848,6 +897,10 @@ public class ShellWidget extends Composite implements ShellDisplay,
                return;
          }
 
+         // A keyboard user who activates a button in the output stays on it
+         if (isOutputButton(target) && isKeyboardClick(event.getNativeEvent()))
+            return;
+
          if (prefs_ != null && prefs_.consoleDoubleClickSelect().getValue())
          {
             // Some clicks can result in selection (e.g. double clicks). We don't
@@ -871,6 +924,24 @@ public class ShellWidget extends Composite implements ShellDisplay,
       {
          if (event.getSource() == input_)
             return;
+
+         // On a button in the output, the keys that operate it or move focus
+         // keep their usual meaning, and Escape returns to the input. Other
+         // keys still go to the input, so typing there isn't interrupted.
+         if (isOutputButton(event.getNativeEvent().getEventTarget()))
+         {
+            switch (event.getNativeKeyCode())
+            {
+               case KeyCodes.KEY_ENTER:
+               case KeyCodes.KEY_SPACE:
+               case KeyCodes.KEY_TAB:
+                  return;
+               case KeyCodes.KEY_ESCAPE:
+                  event.preventDefault();
+                  input_.setFocus(true);
+                  return;
+            }
+         }
 
          // Filter out some keystrokes you might reasonably expect to keep
          // focus inside the output pane
@@ -979,6 +1050,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
    @Override
    public void clearOutput()
    {
+      lastError_ = null;
+      latestErrorHasNoActions_ = false;
       output_.clearConsoleOutput();
       clearLiveRegion();
       cleared_ = true;
@@ -1295,6 +1368,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
    // The errors that have occurred since the last console prompt.
    private final ConsoleErrorTracker errors_ = new ConsoleErrorTracker();
+   private ConsoleError lastError_;
+   private boolean latestErrorHasNoActions_;
    private boolean clearErrors_ = false;
 
    // Injected

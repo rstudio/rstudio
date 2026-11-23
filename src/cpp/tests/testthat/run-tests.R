@@ -41,18 +41,31 @@ runTests <- function(testDir = NULL, outputDir = NULL, filter = NULL) {
    outputDir <- outputDir %||% Sys.getenv("TESTTHAT_OUTPUT_DIR", unset = NA)
    filter    <- filter    %||% Sys.getenv("TESTTHAT_FILTER",     unset = "")
    
-   # run tests
-   results <- testthat::test_dir(
-      path            = testDir,
-      filter          = filter,
-      stop_on_failure = FALSE,
-      stop_on_warning = FALSE
+   # run tests; test_dir() itself errors when a file fails to parse or the
+   # filter matches no file, so count that as a failure rather than leaving
+   # no log behind for rstudio-tests to read
+   results <- tryCatch(
+      testthat::test_dir(
+         path            = testDir,
+         filter          = filter,
+         stop_on_failure = FALSE,
+         stop_on_warning = FALSE
+      ),
+      error = function(cnd) {
+         writeLines(paste("Error running tests:", conditionMessage(cnd)))
+         NULL
+      }
    )
-   
-   # compute number of failures
-   df <- as.data.frame(results)
-   failures <- sum(df$failed)
-   
+
+   # count failing tests; a test that errors records it under 'error', not
+   # 'failed', so count both (as testthat's own pass/fail check does)
+   failures <- 1L
+   if (!is.null(results))
+   {
+      df <- as.data.frame(results)
+      failures <- sum(df$failed > 0 | df$error)
+   }
+
    # write to file
    cat(failures, file = file.path(outputDir, "testthat-failures.log"))
    

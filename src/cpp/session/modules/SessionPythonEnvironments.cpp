@@ -59,7 +59,7 @@ void onInitComplete()
       return;
    
    Error error = r::exec::RFunction(".rs.python.initialize")
-         .addUtf8Param(projects::projectContext().directory())
+         .addParam(projects::projectContext().directory())
          .call();
    
    if (error)

@@ -37,4 +37,13 @@ public class RVersionInstall
    // false for a macOS framework version that would run the framework's
    // default version of R instead of itself (see r-framework.ts)
    public boolean orthogonal;
+
+   // as listed for choosing R: whether this is the R in use, and whether it
+   // would not run natively (an x86_64 R on an Apple silicon Mac)
+   public boolean current;
+   public boolean emulated;
+
+   // as described for an R the user browsed to: whether this build of
+   // RStudio supports it
+   public boolean supported;
 }

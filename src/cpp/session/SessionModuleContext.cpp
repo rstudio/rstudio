@@ -1640,6 +1640,43 @@ shell_utils::ShellCommand rCmd(const core::FilePath& rBinDir)
 #endif
 }
 
+namespace {
+
+// set by startHttpConnectionListener, which also publishes it to child
+// processes (as RSTUDIO_SESSION_PORT or RSTUDIO_STANDALONE_PORT)
+std::string s_sessionPort;
+
+} // anonymous namespace
+
+void setSessionPort(const std::string& port)
+{
+   s_sessionPort = port;
+}
+
+std::string sessionPort()
+{
+   if (!s_sessionPort.empty())
+      return s_sessionPort;
+
+   return options().wwwPort();
+}
+
+std::string restartContextId()
+{
+   // a desktop session shares its scope with others on the same project, so
+   // it takes the port it bound: sessions started with www-port 0 then each
+   // get a context of their own, rather than sharing (and restoring) one
+   // named for port 0. a restart that keeps the client's page has to relaunch
+   // on the port that page is connected to, so the restarted session is
+   // given this port and finds the context
+   if (options().programMode() == kSessionProgramModeDesktop)
+      return sessionPort();
+
+   // a server session has a scope of its own, and may be relaunched with
+   // www-port 0 and bind another port, so it keeps the configured one
+   return options().wwwPort();
+}
+
 // get the R local help port
 std::string rLocalHelpPort()
 {
@@ -2055,7 +2092,7 @@ SEXP rs_htmlEscape(SEXP textSEXP, SEXP attributeSEXP)
 
 SEXP rs_resolveAliasedPath(SEXP pathSEXP)
 {
-   std::string path = r::sexp::asUtf8String(pathSEXP);
+   std::string path = r::sexp::asString(pathSEXP);
    FilePath resolved = module_context::resolveAliasedPath(path);
    r::sexp::Protect protect;
    return r::sexp::create(resolved.getAbsolutePath(), &protect);
@@ -2468,7 +2505,7 @@ SEXP rs_isRScriptInPackageBuildTarget(SEXP filePathSEXP)
 {
    r::sexp::Protect protect;
    FilePath filePath = module_context::resolveAliasedPath(
-      r::sexp::asUtf8String(filePathSEXP));
+      r::sexp::asString(filePathSEXP));
    return r::sexp::create(isRScriptInPackageBuildTarget(filePath), &protect);
 }
 

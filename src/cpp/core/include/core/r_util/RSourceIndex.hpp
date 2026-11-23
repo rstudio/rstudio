@@ -40,6 +40,10 @@ namespace rstudio {
 namespace core {
 namespace r_util {
 
+// R's package name grammar: ASCII letters, digits and '.', at least two
+// characters, starting with a letter and not ending with '.'.
+bool isValidRPackageName(const std::string& pkgName);
+
 class RS4MethodParam
 {
 public:
@@ -379,22 +383,36 @@ public:
       return result;
    }
 
+   // Package names come from project files (R sources, NAMESPACE,
+   // DESCRIPTION) and are used to build the R command that fetches package
+   // information, so only valid R package names are recorded.
+
    void addInferredPackage(const std::string& packageName)
    {
+      if (!isValidRPackageName(packageName))
+         return;
+
       inferredPkgNames_.push_back(packageName);
       allInferredPkgNames().insert(packageName);
    }
    
    static void addGloballyInferredPackage(const std::string& pkgName)
    {
-      allInferredPkgNames().insert(pkgName);
+      if (isValidRPackageName(pkgName))
+         allInferredPkgNames().insert(pkgName);
    }
    
    static void setImportedPackages(const std::set<std::string>& pkgNames)
    {
-      importedPackages().clear();
-      importedPackages().insert(pkgNames.begin(), pkgNames.end());
-      allInferredPkgNames().insert(pkgNames.begin(), pkgNames.end());
+      std::set<std::string> validNames;
+      for (const std::string& pkg : pkgNames)
+      {
+         if (isValidRPackageName(pkg))
+            validNames.insert(pkg);
+      }
+
+      allInferredPkgNames().insert(validNames.begin(), validNames.end());
+      importedPackages() = std::move(validNames);
    }
    
    static const std::set<std::string>& getImportedPackages()
@@ -406,11 +424,17 @@ public:
    
    static void setImportFromDirectives(const ImportFromMap& map)
    {
-      importFromDirectives() = map;
-      for (const std::string& pkg : map | boost::adaptors::map_keys)
+      ImportFromMap validDirectives;
+      for (const auto& entry : map)
       {
-         allInferredPkgNames().insert(pkg);
+         if (!isValidRPackageName(entry.first))
+            continue;
+
+         validDirectives.insert(entry);
+         allInferredPkgNames().insert(entry.first);
       }
+
+      importFromDirectives() = std::move(validDirectives);
    }
    
    static ImportFromMap& getImportFromDirectives()

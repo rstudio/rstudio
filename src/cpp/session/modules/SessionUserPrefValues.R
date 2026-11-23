@@ -1847,6 +1847,17 @@
    clear = function() { .rs.clearUserPref("reuse_sessions_for_project_links") }
 )
 
+# Use searchable R version selector
+#
+# Whether the R version selector groups R installations by version and offers a
+# type-down search, instead of a single flat menu. Applies to RStudio Pro and
+# RStudio Workbench sessions that show the R version selector; ignored elsewhere.
+.rs.uiPrefs$rVersionQuickPick <- list(
+   get = function() { .rs.getUserPref("r_version_quick_pick") },
+   set = function(value) { .rs.setUserPref("r_version_quick_pick", value) },
+   clear = function() { .rs.clearUserPref("r_version_quick_pick") }
+)
+
 # Enable version control if available
 #
 # Whether to enable RStudio's version control system interface.

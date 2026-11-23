@@ -868,38 +868,43 @@ delayedAssign(
 
 .rs.addFunction("chat.restoreBindings", function()
 {
-   packages <- ls(envir = .rs.chat.hookedBindings, all.names = TRUE)
-   allRestored <- TRUE
-   
-   for (package in packages)
-   {
-      originals <- .rs.chat.hookedBindings[[package]]
-      bindings <- ls(envir = originals, all.names = TRUE)
-      
-      for (binding in bindings)
+   # An interrupt partway through would leave the remaining bindings hooked
+   # and chat.bindingsInjected TRUE, so the next injectBindings() would skip
+   # them. One that arrives meanwhile is delivered once the restore is done.
+   suspendInterrupts({
+      packages <- ls(envir = .rs.chat.hookedBindings, all.names = TRUE)
+      allRestored <- TRUE
+
+      for (package in packages)
       {
-         status <- .rs.tryCatch(.rs.replaceBinding(binding, package, originals[[binding]]))
-         if (inherits(status, "error"))
+         originals <- .rs.chat.hookedBindings[[package]]
+         bindings <- ls(envir = originals, all.names = TRUE)
+
+         for (binding in bindings)
          {
-            warning(sprintf(
-               "failed to restore binding '%s' in '%s': %s",
-               binding, package, conditionMessage(status)
-            ))
-            allRestored <- FALSE
+            status <- .rs.tryCatch(.rs.replaceBinding(binding, package, originals[[binding]]))
+            if (inherits(status, "error"))
+            {
+               warning(sprintf(
+                  "failed to restore binding '%s' in '%s': %s",
+                  binding, package, conditionMessage(status)
+               ))
+               allRestored <- FALSE
+            }
+            else
+            {
+               rm(list = binding, envir = originals)
+            }
          }
-         else
-         {
-            rm(list = binding, envir = originals)
-         }
+
+         # only remove the package entry if all bindings were restored
+         if (length(ls(envir = originals, all.names = TRUE)) == 0L)
+            rm(list = package, envir = .rs.chat.hookedBindings)
       }
-      
-      # only remove the package entry if all bindings were restored
-      if (length(ls(envir = originals, all.names = TRUE)) == 0L)
-         rm(list = package, envir = .rs.chat.hookedBindings)
-   }
-   
-   if (allRestored)
-      .rs.setVar("chat.bindingsInjected", FALSE)
+
+      if (allRestored)
+         .rs.setVar("chat.bindingsInjected", FALSE)
+   })
 })
 
 

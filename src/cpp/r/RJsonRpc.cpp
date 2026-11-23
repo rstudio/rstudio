@@ -90,34 +90,12 @@ Error callRHandler(const std::string& functionName,
    // add params
    const core::json::Array& params = request.params;
    for (size_t i = 0; i < params.getSize(); i++)
-   {
-      const core::json::Value& param = params[i];
-      if (param.isString())
-      {
-         rFunction.addUtf8Param(param.getString());
-      }
-      else
-      {
-         rFunction.addParam(param);
-      }
-   }
-   
+      rFunction.addParam(params[i]);
+
    // add kwparams
    const core::json::Object& kwparams = request.kwparams;
    for (const core::json::Object::Member& member : kwparams)
-   {
-      const std::string& name = member.getName();
-      const core::json::Value& value = member.getValue();
-
-      if (value.isString())
-      {
-         rFunction.addUtf8Param(name, value.getString());
-      }
-      else
-      {
-         rFunction.addParam(name, value);
-      }
-   }
+      rFunction.addParam(member.getName(), member.getValue());
    
    // call the function
    return rFunction.call(pResult, pProtect);

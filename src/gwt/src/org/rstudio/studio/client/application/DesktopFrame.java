@@ -170,9 +170,17 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void desktopRenderingEngine(CommandWithArg<String> callback);
    void setDesktopRenderingEngine(String engine);
 
-   // R version selection currently Win32 only
-   void getRVersion(CommandWithArg<String> callback);
-   void chooseRVersion(CommandWithArg<String> callback);
+   // the R in use, the R chosen in RStudio (when it decides which R is used)
+   // and the default R, under "current", "chosen" and "default", each with
+   // its executable ("path") and R version ("version"), both "" when there
+   // is no such R
+   void getRChoice(CommandWithArg<JsObject> callback);
+
+   // make the given R the one RStudio uses from its next launch on: the
+   // default R, followed from then on, when useDefault is set, and otherwise
+   // that installation; the callback receives an error message when that R
+   // can't be used, and "" otherwise
+   void setDefaultRVersion(String rExecutablePath, boolean useDefault, CommandWithArg<String> callback);
 
    void getDisplayDpi(CommandWithArg<String> callback);
 
@@ -189,10 +197,11 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void setPendingQuit(int pendingQuit, String rExecutablePath, CommandWithArg<String> callback);
    void setPendingProject(String projectFilePath);
 
-   // the R executable the next session (a pending restart) should use; the
+   // the R executable the next session (a pending restart) should use, and
+   // whether it was chosen as the default R (see setDefaultRVersion); the
    // callback receives an error message when that R can't be used, and ""
    // once it is ready for the restart a quit then names in setPendingQuit()
-   void setPendingRVersion(String rExecutablePath, CommandWithArg<String> callback);
+   void setPendingRVersion(String rExecutablePath, boolean useDefault, CommandWithArg<String> callback);
 
    // make the macOS framework version of R with the given home run as itself
    // rather than as the framework's default version; the callback receives an

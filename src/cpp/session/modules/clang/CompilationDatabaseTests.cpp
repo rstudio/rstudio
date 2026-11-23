@@ -62,6 +62,18 @@ protected:
    FilePath src_;
 };
 
+// The entries filterCompileFlags() rejects, as they're reported
+std::vector<std::string> rejectedFlags(const std::vector<std::string>& flags)
+{
+   std::vector<RejectedCompileFlag> rejected;
+   filterCompileFlags(flags, &rejected);
+
+   std::vector<std::string> result;
+   for (const RejectedCompileFlag& entry : rejected)
+      result.push_back(entry.flag);
+   return result;
+}
+
 TEST_F(CompileFlagsTest, FindsFileInSourceDirectory)
 {
    FilePath file = flagsFile(src_);
@@ -177,12 +189,159 @@ TEST_F(CompileFlagsTest, LeavesAbsolutePathsAndOtherFlagsAlone)
    EXPECT_EQ(resolveCompileFlagPaths(flags, pkg_), flags);
 }
 
-TEST_F(CompileFlagsTest, KeepsIncludePchSeparateAndDanglingOptions)
+TEST_F(CompileFlagsTest, LeavesUnsupportedAndDanglingOptionsAlone)
 {
-   std::string pch = pkg_.completePath("x.pch").getAbsolutePath();
-   std::vector<std::string> flags = {"-include-pch", "x.pch", "-I"};
-   std::vector<std::string> expected = {"-include-pch", pch, "-I"};
-   EXPECT_EQ(resolveCompileFlagPaths(flags, pkg_), expected);
+   // '-include-pch' is not '-include' with a '-pch' path, and an option
+   // whose next argument looks like an option doesn't take it as its path
+   std::vector<std::string> flags = {"-include-pch", "x.pch", "-I", "-DFOO", "-isystem"};
+   EXPECT_EQ(resolveCompileFlagPaths(flags, pkg_), flags);
+}
+
+TEST_F(CompileFlagsTest, AllowsFlagsThatShapeTheParse)
+{
+   std::vector<std::string> flags = {
+      "-DFOO", "-D", "BAR=1", "-UNDEBUG", "-Iinc", "-I", "inc", "-isystem-afterinc",
+      "-iquote", "inc", "--include-directory=inc", "--sysroot", "sys", "-include", "pre.h",
+      "-fmodule-map-file=x.modulemap", "--gcc-toolchain=gcc",
+      "-std=c++20", "-stdlib=libc++", "-xc++", "-x", "c++-header",
+      "--target=x86_64-pc-linux-gnu", "-target", "aarch64-linux-gnu", "-arch", "arm64",
+      "-march=haswell", "-mavx2", "-mno-sse4.2", "-msse4", "-mno-sse4", "-m64",
+      "-W", "-Wall", "-Wno-unused-parameter", "-Werror=format", "-Wframe-larger-than=4096", "-w",
+      "-pedantic", "-ferror-limit=50", "-fopenmp", "-fopenmp=libomp", "-fno-exceptions",
+      "-fsanitize=address,undefined", "-fno-sanitize=alignment",
+      "-fPIC", "-fvisibility=hidden", "-O2", "-g", "-pthread",
+
+      // code generation flags let through so a build's flags can be pasted in
+      "-fno-omit-frame-pointer", "-ffunction-sections", "-fdata-sections", "-ffp-contract=fast",
+      "-mstackrealign", "-ffile-prefix-map=/build=.",
+   };
+
+   std::vector<RejectedCompileFlag> rejected;
+   EXPECT_EQ(filterCompileFlags(flags, &rejected), flags);
+   EXPECT_TRUE(rejected.empty());
+}
+
+TEST_F(CompileFlagsTest, RejectsNegatedFeaturesThatArentListed)
+{
+   // '-fno-' and '-mno-' only allow the names their positive forms do
+   std::vector<std::string> flags = {"-fno-foo", "-mno-foo", "-ffoo", "-mfoo"};
+   EXPECT_EQ(rejectedFlags(flags), flags);
+}
+
+TEST_F(CompileFlagsTest, RejectsFpmath)
+{
+   // an x86 build's '-mfpmath=sse' would stop libclang parsing on arm64
+   EXPECT_EQ(rejectedFlags({"-mfpmath=sse"}), std::vector<std::string>{"-mfpmath=sse"});
+}
+
+TEST_F(CompileFlagsTest, RejectsFlagsThatReachBeyondTheParse)
+{
+   // plugins and arguments passed on to clang's internals, LLVM, or other
+   // tools; files to read further flags from, or to write; and an
+   // option's value goes with it into the report
+   std::vector<std::string> flags = {
+      "-Xclang", "-load", "-Xclang", "plugin.so", "-fplugin=plugin.so", "-fpass-plugin=plugin.so",
+      "-mllvm", "-debug", "-mllvm=-debug", "@more-flags.txt", "--config=x.cfg",
+      "-Wp,-MD,deps.d", "-Wl,-rpath,lib", "-o", "out.o", "-MD", "-MF", "deps.d",
+      "-MJ", "db.json", "-module-dependency-dir", "deps", "-fmodules-cache-path=cache",
+      "-ftime-trace", "-include-pch", "x.pch", "-iframeworkwithsysroot", "fw",
+      "-x", "ast", "-xast", "-fmodule-map-file", "x.modulemap", "--gcc-toolchain", "gcc",
+      "other.cpp",
+   };
+   std::vector<std::string> expected = {
+      "-Xclang", "-load", "-Xclang plugin.so", "-fplugin=plugin.so", "-fpass-plugin=plugin.so",
+      "-mllvm", "-debug", "-mllvm=-debug", "@more-flags.txt", "--config=x.cfg",
+      "-Wp,-MD,deps.d", "-Wl,-rpath,lib", "-o out.o", "-MD", "-MF deps.d",
+      "-MJ db.json", "-module-dependency-dir deps", "-fmodules-cache-path=cache",
+      "-ftime-trace", "-include-pch x.pch", "-iframeworkwithsysroot fw",
+      "-x ast", "-xast", "-fmodule-map-file x.modulemap", "--gcc-toolchain gcc",
+      "other.cpp",
+   };
+
+   EXPECT_TRUE(filterCompileFlags(flags).empty());
+   EXPECT_EQ(rejectedFlags(flags), expected);
+}
+
+TEST_F(CompileFlagsTest, ReportsLinkOptionsWithTheirValues)
+{
+   std::vector<std::string> flags = {
+      "-framework", "Accelerate", "-weak_framework", "Metal", "-undefined", "dynamic_lookup",
+      "-install_name", "libfoo.dylib", "-rpath", "lib", "-arch_only", "arm64", "-l", "m",
+      "--config", "x.cfg",
+   };
+   std::vector<std::string> expected = {
+      "-framework Accelerate", "-weak_framework Metal", "-undefined dynamic_lookup",
+      "-install_name libfoo.dylib", "-rpath lib", "-arch_only arm64", "-l m", "--config x.cfg",
+   };
+   EXPECT_EQ(rejectedFlags(flags), expected);
+}
+
+TEST_F(CompileFlagsTest, ReportsValueOnlyWithAnOptionThatTakesOne)
+{
+   // neither takes the argument after it, which is reported on its own
+   std::vector<std::string> flags = {"-ftime-trace", "other.cpp", "-fplugin=x.so", "src/extra.c"};
+   EXPECT_EQ(rejectedFlags(flags), flags);
+
+   std::vector<RejectedCompileFlag> rejected;
+   filterCompileFlags(flags, &rejected);
+   ASSERT_EQ(rejected.size(), 4u);
+   EXPECT_EQ(rejected[0].reason, "only flags that affect how files are parsed are supported");
+   EXPECT_EQ(rejected[1].reason, "it is neither a flag nor the value of a supported option");
+}
+
+TEST_F(CompileFlagsTest, SaysWhyASupportedOptionWasRejected)
+{
+   std::vector<std::string> flags = {
+      "-I", "-DFOO", "-x", "ast", "-std", "c++17", "-std=", "--gcc-toolchain", "gcc",
+      "--sysroot=", "-I-", "-D",
+   };
+
+   std::vector<RejectedCompileFlag> rejected;
+   EXPECT_EQ(filterCompileFlags(flags, &rejected), std::vector<std::string>{"-DFOO"});
+
+   std::vector<std::pair<std::string, std::string>> actual;
+   for (const RejectedCompileFlag& entry : rejected)
+      actual.emplace_back(entry.flag, entry.reason);
+
+   std::vector<std::pair<std::string, std::string>> expected = {
+      {"-I", "'-I' needs a value; one on the next line can't begin with '-' or '@'"},
+      {"-x ast", "'-x' doesn't support the value 'ast'"},
+      {"-std c++17", "'-std' needs a value after an '=', as in '-std=<value>'"},
+      {"-std=", "'-std' needs a value after an '=', as in '-std=<value>'"},
+      {"--gcc-toolchain gcc", "'--gcc-toolchain' needs a value after an '=', as in '--gcc-toolchain=<value>'"},
+      {"--sysroot=", "'--sysroot' needs a value after an '=', as in '--sysroot=<value>'"},
+      {"-I-", "clang doesn't support '-I-'; use '-iquote' instead"},
+      {"-D", "'-D' needs a value"},
+   };
+   EXPECT_EQ(actual, expected);
+}
+
+TEST_F(CompileFlagsTest, DoesNotResolveIDashAsAPath)
+{
+   std::vector<std::string> flags = {"-I-"};
+   EXPECT_EQ(resolveCompileFlagPaths(flags, pkg_), flags);
+}
+
+TEST_F(CompileFlagsTest, KeepsAllowedFlagsAroundRejectedOnes)
+{
+   std::vector<std::string> flags = {"-DFOO", "-o", "out.o", "-Wall"};
+   std::vector<std::string> expected = {"-DFOO", "-Wall"};
+   EXPECT_EQ(filterCompileFlags(flags), expected);
+   EXPECT_EQ(rejectedFlags(flags), std::vector<std::string>{"-o out.o"});
+}
+
+TEST_F(CompileFlagsTest, ValueInNextArgumentMustNotLookLikeAnOption)
+{
+   // clang would take '-fplugin=...' as the path, but we don't, so that
+   // nothing we pass on is an option we haven't checked
+   std::vector<std::string> flags = {"-I", "-fplugin=plugin.so"};
+   EXPECT_TRUE(filterCompileFlags(flags).empty());
+   EXPECT_EQ(rejectedFlags(flags), flags);
+
+   // nor a response file, nor nothing at all
+   flags = {"-include", "@more-flags.txt", "-D"};
+   EXPECT_TRUE(filterCompileFlags(flags).empty());
+   EXPECT_EQ(rejectedFlags(flags), flags);
 }
 
 TEST_F(CompileFlagsTest, LeavesSysrootRelativePathsAlone)
@@ -217,6 +376,24 @@ TEST_F(CompileFlagsTest, RemovesUserFlagsPchOnceItsFlagsFileIsGone)
    EXPECT_FALSE(platform.completeChildPath(variant + ".cpp").exists());
    EXPECT_TRUE(platform.completeChildPath("Rcpp-std=gnu++17.pch").exists());
    EXPECT_TRUE(platform.completeChildPath("Rcpp-std=gnu++17.cpp").exists());
+}
+
+TEST_F(CompileFlagsTest, RemovesUserFlagsPchOnceNoFlagIsAllowed)
+{
+   FilePath file = flagsFile(src_, "-DFOO\n");
+   std::vector<std::string> flags = compileFlagsForSource(src_.completeChildPath("a.cpp"));
+   ASSERT_EQ(flags, std::vector<std::string>{"-DFOO"});
+
+   FilePath platform = root_.completeChildPath("pch");
+   platform.ensureDirectory();
+   std::string variant = "Rcpp-std=gnu++17-flags-" + hash::crc32HexHash(algorithm::join(flags, "\n"));
+   FilePath pch = platform.completeChildPath(variant + ".pch");
+   writeStringToFile(pch, "");
+
+   // a file left with only flags we drop supplies no flags
+   writeStringToFile(file, "-o\nout.o\n");
+   removeOrphanedUserFlagsPchs(platform, "Rcpp");
+   EXPECT_FALSE(pch.exists());
 }
 
 TEST_F(CompileFlagsTest, SystemIncludeArgsAreSearchedInReportedOrder)

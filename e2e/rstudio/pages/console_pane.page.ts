@@ -16,6 +16,7 @@ export class ConsolePane extends PageObject {
   public consoleOutput: Locator;
   public interruptRBtn: Locator;
   public tracebackBtn: Locator;
+  public rerunBtn: Locator;
   public stackTrace: Locator;
   public findBar: Locator;
   public findInput: Locator;
@@ -31,6 +32,7 @@ export class ConsolePane extends PageObject {
     this.consoleOutput = page.locator('#rstudio_workbench_panel_console');
     this.interruptRBtn = page.locator("[id^='rstudio_tb_interruptr']");
     this.tracebackBtn = page.locator("[class*='show_traceback_text']");
+    this.rerunBtn = page.locator("[class*='rerun_text']");
     this.stackTrace = page.locator("[class*='stack_trace']");
 
     // Find in Console: #rstudio_find_replace_bar is the inner panel;

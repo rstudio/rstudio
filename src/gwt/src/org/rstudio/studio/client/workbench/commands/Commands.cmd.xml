@@ -416,6 +416,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <cmd refid="restartR"/>
          <cmd refid="restartRClearOutput"/>
          <cmd refid="restartRRunAllChunks"/>
+         <cmd refid="switchRVersion"/>
          <separator/>
          <menu label="Set _Working Directory">
             <cmd refid="setWorkingDirToProjectDir"/>
@@ -437,8 +438,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <cmd refid="devtoolsLoadAll"/>
          <cmd refid="buildAll"/>
          <cmd refid="cleanAll"/>
-         <separator/>
-         <cmd refid="serveQuartoSite"/>
          <separator/>
          <cmd refid="testPackage"/>
          <separator/>
@@ -585,6 +584,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
                <cmd refid="activateSource"/>
                <cmd refid="activateConsole"/>
                <cmd refid="focusConsoleOutputEnd"/>
+               <cmd refid="focusLastConsoleError"/>
                <cmd refid="focusNextPane"/>
                <cmd refid="focusPreviousPane"/>
                <cmd refid="activateTerminal"/>
@@ -626,7 +626,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <cmd refid="showA11yDiagnostics"/>
             <cmd refid="updateCredentials"/>
             <cmd refid="diagnosticsReport"/>
-            <cmd refid="openDeveloperConsole"/>
             <cmd refid="reloadUi"/>
             <separator/>
             <cmd refid="editUserPrefs"/>
@@ -1053,6 +1052,8 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <shortcut refid="focusConsoleOutputEnd" value="Ctrl+Alt+2" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="focusConsoleOutputEnd" value="Alt+Shift+2" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="focusConsoleOutputEnd" value="Ctrl+`"/>
+         <shortcut refid="focusLastConsoleError" value="Ctrl+Alt+7" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="focusLastConsoleError" value="Alt+Shift+7" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="focusNextPane" value="F6"/>
          <shortcut refid="focusPreviousPane" value="Shift+F6"/>
          <shortcut refid="toggleTabKeyMovesFocus" value="Ctrl+Alt+[" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
@@ -1212,14 +1213,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         desc="Create a new Plumber API"
         rebindable="false"/>
 
-    <cmd id="rcppHelp"
-        desc="Help on using Rcpp"
-        rebindable="false"/>
-
-   <cmd id="printCppCompletions"
-        desc="Print C++ Completions"
-        rebindable="false"/>
-
    <cmd id="newSweaveDoc"
         menuLabel="R _Sweave"
         desc="Create a new R Sweave document"
@@ -1238,11 +1231,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
    <cmd id="newQuartoPres"
         menuLabel="_Quarto Presentation..."
         desc="Create a new Quarto presentation"
-        rebindable="false"/>
-        
-   <cmd id="serveQuartoSite"
-        menuLabel="_Preview Site"
-        desc="Run development server for Quarto site"
         rebindable="false"/>
 
    <cmd id="newRShinyApp"
@@ -1573,11 +1561,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
    <cmd id="activateEnvironment"
         label="Show Environment Pane"
         menuLabel="Show _Environment"
-        windowMode="main"/>
-
-   <cmd id="activateData"
-        label="Show Data Pane"
-        menuLabel="Show _Data"
         windowMode="main"/>
 
    <cmd id="activateHistory"
@@ -2486,16 +2469,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         menuLabel="_Prosemirror DevTools"
         desc="Enable Prosemirror DevTools" />
 
-   <cmd id="usingRMarkdownHelp"
-        menuLabel="_Using R Markdown"
-        desc="Guide to using R Markdown"
-        context="help"/>
-
-    <cmd id="authoringRPresentationsHelp"
-        menuLabel="_Authoring R Presentations"
-        desc="Guide to using R Markdown"
-        context="help"/>
-
     <cmd id="openRStudioIDECheatSheet"
          menuLabel="_RStudio IDE Cheat Sheet"
          desc="RStudio IDE cheat sheet"
@@ -2576,12 +2549,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         menuLabel="Previe_w"
         desc="Show a preview of the current document as HTML"
         context="markdown"/>
-
-   <cmd id="publishHTML"
-        label="Publish to RPubs..."
-        buttonLabel="Publish"
-        menuLabel="P_ublish to RPubs..."
-        desc="Publish the current document"/>
 
    <cmd id="compilePDF"
         label="Compile to PDF..."
@@ -2675,24 +2642,9 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         desc="Create a blank text file in current directory"
         rebindable="false"/>
 
-   <cmd id="touchCDoc"
-        menuLabel="_C File"
-        desc="Create a blank C file in current directory"
-        rebindable="false"/>
-
    <cmd id="touchCppDoc"
         menuLabel="_C++ File"
         desc="Create a blank C++ file in current directory"
-        rebindable="false"/>
-
-   <cmd id="touchHeaderDoc"
-        menuLabel="_Header File"
-        desc="Create a blank header file in current directory"
-        rebindable="false"/>
-
-   <cmd id="touchMarkdownDoc"
-        menuLabel="_Markdown File"
-        desc="Create a blank Markdown document in current directory"
         rebindable="false"/>
 
    <cmd id="touchPythonDoc"
@@ -2700,29 +2652,9 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         desc="Create a blank Python script in current directory"
         rebindable="false"/>
 
-   <cmd id="touchShellDoc"
-        menuLabel="_Shell Script"
-        desc="Create a blank shell script in current directory"
-        rebindable="false"/>
-
    <cmd id="touchStanDoc"
         menuLabel="_Stan File"
         desc="Create a blank Stan program in current directory"
-        rebindable="false"/>
-
-   <cmd id="touchHtmlDoc"
-        menuLabel="_HTML File"
-        desc="Create a blank HTML file in current directory"
-        rebindable="false"/>
-
-   <cmd id="touchJavaScriptDoc"
-        menuLabel="_JavaScript File"
-        desc="Create a blank JavaScript file in current directory"
-        rebindable="false"/>
-
-   <cmd id="touchCssDoc"
-        menuLabel="_CSS File"
-        desc="Create a blank CSS file in current directory"
         rebindable="false"/>
 
    <cmd id="touchD3Doc"
@@ -3025,18 +2957,20 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         menuLabel="Restart R and Run _All Chunks"
         desc="Restart R session and run all chunks" />
 
+   <!-- shown on the desktop only, where the session can switch R -->
+   <cmd id="switchRVersion"
+        label="Switch R Version"
+        menuLabel="Switch R _Version..."
+        desc="Restart the R session with another installed version of R"
+        windowMode="main"
+        visible="false"/>
+
    <cmd id="terminateR"
         label="Terminate R Session"
         menuLabel="_Terminate R..."
         desc="Forcibly terminate R session"
         context="r"
         windowMode="main"/>
-
-   <!-- PDF Viewer -->
-   <cmd id="showPdfExternal"
-        label="Show PDF in External Viewer"
-        menuLabel="Show PDF in External Viewer"
-        desc="Show in an external PDF viewer window"/>
 
    <!-- HTML Preview -->
    <cmd id="openHtmlExternal"
@@ -3311,12 +3245,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         context="import"
         windowMode="main"/>
 
-   <cmd id="importDatasetFromCsv"
-        label="From CSV"
-        menuLabel="From _CSV"
-        context="import"
-        windowMode="main"/>
-
    <cmd id="importDatasetFromCsvUsingReadr"
         label="From Text (readr)..."
         menuLabel="From Text (_readr)..."
@@ -3352,11 +3280,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         menuLabel="From _Excel..."
         context="import"
         windowMode="main"/>
-
-   <cmd id="refreshWorkspace"
-        buttonLabel=""
-        menuLabel="Refresh"
-        desc="Refresh Workspace"/>
 
    <cmd id="installPackage"
         label="Install Packages..."
@@ -3436,12 +3359,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         desc="Restore your project library from renv.lock"
         rebindable="false"
         context="renv"/>
-
-   <cmd id="versionControlOptions"
-        menuLabel="_Options..."
-        desc="Configure version control options"
-        context="vcs"
-        windowMode="main"/>
 
    <cmd id="versionControlHelp"
         menuLabel="_Using Version Control"
@@ -3715,12 +3632,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         rebindable="false"
         context="tutorial"/>
 
-   <cmd id="tutorialZoom"
-        buttonLabel="Zoom"
-        desc="View a larger version in a new window"
-        rebindable="false"
-        context="tutorial"/>
-
    <cmd id="tutorialRefresh"
         desc="Refresh tutorial"
         rebindable="false"
@@ -3836,12 +3747,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         windowMode="main"
         visible="false"/>
 
-   <cmd id="openDeveloperConsole"
-        menuLabel="_Open Developer Console"
-        rebindable="false"
-        context="diagnostics"
-        windowMode="main"/>
-
    <cmd id="reloadUi"
         menuLabel="Reload _UI"
         context="diagnostics"
@@ -3924,12 +3829,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         menuLabel="Posit _Support"
         rebindable="false"
         windowMode="main"/>
-
-    <cmd id="rstudioLicense"
-        menuLabel="RStudio _License"
-        visible="false"
-        windowMode="main"
-        rebindable="false"/>
 
    <cmd id="buildAll"
         label="Install Package"
@@ -4381,25 +4280,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          desc="Refresh data"
          windowMode="main"/>
 
-    <cmd id="sparkLog"
-         label="View Spark Log"
-         menuLabel="Spark Log"
-         buttonLabel="Log"
-         desc="View the log for the Spark connection"
-         windowMode="main"/>
-
-    <cmd id="sparkUI"
-         menuLabel="SparkUI"
-         buttonLabel = "SparkUI"
-         desc="View the browser UI for the Spark connection"
-         windowMode="main"/>
-
-    <cmd id="sparkHelp"
-         menuLabel="Using Spark with RStudio"
-         buttonLabel=""
-         desc="Help on using Spark with RStudio"
-         windowMode="main"/>
-
     <cmd id="startJob"
          menuLabel="_Start Background Job..."
          buttonLabel="Start Background Job"
@@ -4533,6 +4413,10 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
 
    <cmd id="focusConsoleOutputEnd"
         menuLabel="_Focus Console Output"
+        windowMode="main"/>
+
+   <cmd id="focusLastConsoleError"
+        menuLabel="Focus Last Console _Error"
         windowMode="main"/>
 
    <cmd id="focusNextPane"

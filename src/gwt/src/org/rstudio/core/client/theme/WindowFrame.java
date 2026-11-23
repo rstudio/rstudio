@@ -14,8 +14,6 @@
  */
 package org.rstudio.core.client.theme;
 
-import java.util.HashMap;
-
 import org.rstudio.core.client.ClassIds;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.events.EnsureHeightEvent;
@@ -36,12 +34,9 @@ import org.rstudio.studio.client.application.events.EventBus;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Float;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
@@ -102,47 +97,30 @@ public class WindowFrame extends Composite
       frame_.addStyleName(styles.windowFrameObject());
 
       if (showMinimizeButton)
-      {
-         frame_.add(minimizeButton_);
-         frame_.setWidgetTopHeight(minimizeButton_,
-               TOP_SHADOW_WIDTH + 4, Style.Unit.PX,
-               14, Style.Unit.PX);
-         frame_.setWidgetRightWidth(minimizeButton_,
-               RIGHT_SHADOW_WIDTH + 25, Style.Unit.PX,
-               14, Style.Unit.PX);
-      }
+         addFrameButton(minimizeButton_, 1);
 
       // When a close button is shown, shift maximize left to make room
-      int maximizeRightOffset = showCloseButton
-            ? RIGHT_SHADOW_WIDTH + 25
-            : RIGHT_SHADOW_WIDTH + 7;
-
       if (showMaximizeButton)
-      {
-         frame_.add(maximizeButton_);
-         frame_.setWidgetTopHeight(maximizeButton_,
-                                   TOP_SHADOW_WIDTH + 4, Style.Unit.PX,
-                                   14, Style.Unit.PX);
-         frame_.setWidgetRightWidth(maximizeButton_,
-                                    maximizeRightOffset, Style.Unit.PX,
-                                    14, Style.Unit.PX);
-      }
+         addFrameButton(maximizeButton_, showCloseButton ? 1 : 0);
 
       if (showCloseButton)
-      {
-         frame_.add(closeButton_);
-         frame_.setWidgetTopHeight(closeButton_,
-                                   TOP_SHADOW_WIDTH + 4, Style.Unit.PX,
-                                   14, Style.Unit.PX);
-         frame_.setWidgetRightWidth(closeButton_,
-                                    RIGHT_SHADOW_WIDTH + 7, Style.Unit.PX,
-                                    14, Style.Unit.PX);
-      }
-
-      buttonsArea_ = new FlowPanel();
-      frame_.add(buttonsArea_);
+         addFrameButton(closeButton_, 0);
 
       initWidget(frame_);
+   }
+
+   /**
+    * Places a title bar button in a slot counted from the right edge.
+    */
+   private void addFrameButton(WindowFrameButton button, int slot)
+   {
+      frame_.add(button);
+      frame_.setWidgetTopHeight(button,
+                                FRAME_BUTTON_TOP, Style.Unit.PX,
+                                FRAME_BUTTON_SIZE, Style.Unit.PX);
+      frame_.setWidgetRightWidth(button,
+                                 FRAME_BUTTON_RIGHT + slot * FRAME_BUTTON_SIZE, Style.Unit.PX,
+                                 FRAME_BUTTON_SIZE, Style.Unit.PX);
    }
 
    public String getName()
@@ -314,7 +292,7 @@ public class WindowFrame extends Composite
          frame_.setWidgetLeftRight(
                header_,
                LEFT_SHADOW_WIDTH, Style.Unit.PX,
-               RIGHT_SHADOW_WIDTH + 39, Style.Unit.PX);
+               FRAME_BUTTONS_EXTENT, Style.Unit.PX);
          frame_.setWidgetTopHeight(
                header_,
                TOP_SHADOW_WIDTH, Style.Unit.PX,
@@ -375,31 +353,6 @@ public class WindowFrame extends Composite
          frame_.setWidgetTopBottom(fill_,
                TOP_SHADOW_WIDTH, Style.Unit.PX,
                BOTTOM_SHADOW_WIDTH, Style.Unit.PX);
-      }
-   }
-
-   public void setContextButton(Widget button, int width, int height, int position)
-   {
-      if (contextButtons_.containsKey(position) && contextButtons_.get(position) != null)
-      {
-         contextButtons_.get(position).removeFromParent();
-         contextButtons_.put(position, null);
-      }
-
-      if (button != null)
-      {
-         contextButtons_.put(position, button);
-         button.getElement().getStyle().setFloat(Float.RIGHT);
-
-         buttonsArea_.add(button);
-         frame_.setWidgetRightWidth(buttonsArea_, 48, Unit.PX, width * contextButtons_.size(), Unit.PX);
-         frame_.setWidgetTopHeight(buttonsArea_, 3, Unit.PX, height, Unit.PX);
-         // Without z-index, the header widget will obscure the context button
-         // if the former is set after the latter.
-         frame_.getWidgetContainerElement(buttonsArea_).getStyle().setZIndex(10);
-
-         button.getElement().setAttribute("display", "inline-block");
-         button.getElement().setAttribute("float", "right");
       }
    }
 
@@ -516,11 +469,9 @@ public class WindowFrame extends Composite
    private Widget main_;
    private Widget header_;
    private Widget fill_;
-   private final HashMap<Integer, Widget> contextButtons_ = new HashMap<>();
    private HandlerRegistration ensureVisibleRegistration_;
    private HandlerRegistration ensureHeightRegistration_;
    private Widget previousHeader_;
-   private final FlowPanel buttonsArea_;
    private WindowState logicalState_ = WindowState.NORMAL;
    private Command maximizeAction_;
 
@@ -530,6 +481,13 @@ public class WindowFrame extends Composite
                             BOTTOM_SHADOW_WIDTH = 5,
                             TITLEBAR_REGION_BOTTOM = 26,
                             CONTENT_REGION_TOP = 26;
+
+   // Title bar buttons are 24px squares, the WCAG 2.5.8 minimum target size,
+   // laid out right to left in slots; CSS centers each 14px icon in its square.
+   private static final int FRAME_BUTTON_SIZE = 24,
+                            FRAME_BUTTON_TOP = 2,
+                            FRAME_BUTTON_RIGHT = RIGHT_SHADOW_WIDTH + 2,
+                            FRAME_BUTTONS_EXTENT = FRAME_BUTTON_RIGHT + 2 * FRAME_BUTTON_SIZE;
    // Injected ----
    private EventBus events_;
    String name_;

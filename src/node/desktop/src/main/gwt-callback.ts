@@ -28,12 +28,18 @@ import {
   dialog,
   FileFilter,
 } from 'electron';
-import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
+import {
+  IpcMainEvent,
+  IpcMainInvokeEvent,
+  MessageBoxOptions,
+  OpenDialogOptions,
+  SaveDialogOptions,
+} from 'electron/main';
 import EventEmitter from 'events';
 import { existsSync, statSync, writeFileSync } from 'fs';
 import { platform } from 'os';
 import i18next from 'i18next';
-import path, { dirname } from 'path';
+import path from 'path';
 import { fileURLToPath } from 'url';
 import { FilePath, tempFilename } from '../core/file-path';
 import { normalizeSeparatorsNative } from '../ui/utils';
@@ -42,19 +48,20 @@ import { isCentOS } from '../core/system';
 import { resolveTemplateVar } from '../core/template-filter';
 import desktop from '../native/desktop.node';
 import { setDefaultApplicationForRFiles } from './default-file-handler';
-import { ChooseRModalWindow } from '../ui/widgets/choose-r';
 import { appState } from './app-state';
 import { clipboardWritesSettled, queueClipboardWrite, readClipboardText, readClipboardType } from './clipboard-queue';
 import {
+  defaultR,
   detectREnvironmentAsync,
-  findDefault32Bit,
-  findDefault64Bit,
-  findRInstallationsWin32,
-  frameworkVersionHome,
+  kRQueryTimeoutMs,
+  rExecutableProblem,
+  rSharedLibraryProblem,
+  storeChosenR,
 } from './detect-r';
+import { rChoiceApplies, savedRChoice } from './r-choice';
 import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
-import { AuthorizationCancelledError, frameworkVersion, isOrthogonal, makeOrthogonal } from './r-framework';
+import { AuthorizationCancelledError, frameworkVersion, makeOrthogonal } from './r-framework';
 import { openMinimalWindow } from './minimal-window';
 import { electronUpdaterHost, Updater } from './updater';
 import { kProjectNone } from '../core/r-user-data';
@@ -66,6 +73,7 @@ import {
 import {
   parseFilter,
   isAutomated,
+  isOnScreen,
   openExternalPath,
   openExternalUrl,
   openFileUrlWithWindowsShell,
@@ -91,6 +99,12 @@ export function preparedRExecutablePath(rExecutablePath: string): string {
   return process.platform === 'win32' ? fixWindowsRExecutablePath(rExecutablePath) : rExecutablePath;
 }
 
+/** The R a pending restart switches to, and whether it was chosen as the default R. */
+export interface PendingRVersion {
+  path: string;
+  useDefault: boolean;
+}
+
 export enum PendingQuit {
   PendingQuitNone,
   PendingQuitAndExit,
@@ -98,23 +112,63 @@ export enum PendingQuit {
   PendingQuitRestartAndReload,
 }
 
-function formatSelectedVersionForUi(rBinDir: string) {
-  // binDir will have format <R_HOME>/bin/<arch>,
-  // so we need two dirname()s to get the home path
-  const rHome = dirname(dirname(rBinDir));
-
-  // return formatted string as appropriate
-  if (rBinDir.endsWith('x64')) {
-    return `[64-bit] ${rHome}`;
-  } else if (rBinDir.endsWith('i386')) {
-    return `[32-bit] ${rHome}`;
-  } else {
-    return rHome;
-  }
-}
-
 /** How long setPendingRVersion() lets the chosen R take to describe itself. */
 const kPendingRVersionTimeoutMs = 30000;
+
+/**
+ * Why the R executable at this path can't host a session, as a message for
+ * the user, or '' when it can: it is missing, would run the default R instead
+ * of itself, or does not answer (within kPendingRVersionTimeoutMs) when run.
+ */
+async function checkRExecutable(rPath: string): Promise<string> {
+  // the client escapes the message for display itself
+  const interpolation = { escapeValue: false };
+
+  try {
+    const problem = rExecutableProblem(rPath);
+    if (problem) {
+      return problem;
+    }
+
+    const [environment, error] = await detectREnvironmentAsync(rPath, kPendingRVersionTimeoutMs);
+    if (error) {
+      logger().logError(error);
+      return (
+        i18next.t('gwtCallbackTs.rExecutableFailed', { path: rPath, error: error.message, interpolation }) || rPath
+      );
+    }
+
+    const libraryProblem = rSharedLibraryProblem(rPath, environment);
+    if (libraryProblem) {
+      return libraryProblem;
+    }
+  } catch (error: unknown) {
+    logger().logError(error);
+    return safeError(error).message || rPath;
+  }
+
+  return '';
+}
+
+/** An R executable, and the version of R it runs ('' when unknown). */
+export interface RDescription {
+  path: string;
+  version: string;
+}
+
+/**
+ * The given R executable with its version (from querying it, normally
+ * remembered from before, and bounded in case it hangs); both are '' for an
+ * empty path.
+ */
+async function describeR(rPath: string): Promise<RDescription> {
+  if (!rPath) {
+    return { path: '', version: '' };
+  }
+
+  const [environment, error] = await detectREnvironmentAsync(rPath, kRQueryTimeoutMs);
+  return { path: rPath, version: error ? '' : environment.version };
+}
 
 /** The files a GTK file manager (Nautilus, Nemo, Caja, Thunar) copied or cut. */
 const kGnomeCopiedFilesFormat = 'electron application/osclipboard;format="x-special/gnome-copied-files"';
@@ -130,11 +184,18 @@ export class GwtCallback extends EventEmitter {
   initialized = false;
   pendingQuit: number = PendingQuit.PendingQuitNone;
 
-  // the R executable to launch the next session with (set alongside a
-  // pending restart when the user switches R versions)
-  pendingRVersion = '';
-  /** the R executables setPendingRVersion() found usable, which a quit may then name */
-  preparedRVersions = new Set<string>();
+  // the R to launch the next session with (set alongside a pending restart
+  // when the user switches R versions)
+  pendingRVersion: PendingRVersion | null = null;
+  /**
+   * the R executables setPendingRVersion() found usable, which a quit may
+   * then name, each with whether it was chosen as the default R
+   */
+  preparedRVersions = new Map<string, boolean>();
+
+  // counts setDefaultRVersion() requests, so that one checked after a later
+  // request was made doesn't overwrite the later choice
+  private defaultRVersionRequests = 0;
 
   private hasFontConfig = false;
   private owners = new Set<GwtWindow>();
@@ -287,9 +348,7 @@ export class GwtCallback extends EventEmitter {
           openDialogOptions.filters = parseFilter(filter);
         }
 
-        const focusedWindow = this.dialogParentWindow(
-          focusOwner ? this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window : null,
-        );
+        const focusedWindow = this.dialogParentForRequest('desktop_get_open_file_name', event, focusOwner);
         if (focusedWindow) {
           return appState().modalTracker.trackElectronModalAsync(async () =>
             dialog.showOpenDialog(focusedWindow, openDialogOptions),
@@ -341,9 +400,7 @@ export class GwtCallback extends EventEmitter {
           filters.unshift({ name: extension, extensions: [extension] });
         }
         saveDialogOptions['filters'] = filters;
-        const focusedWindow = this.dialogParentWindow(
-          focusOwner ? this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window : null,
-        );
+        const focusedWindow = this.dialogParentForRequest('desktop_get_save_file_name', event, focusOwner);
         if (focusedWindow) {
           return appState().modalTracker.trackElectronModalAsync(async () =>
             dialog.showSaveDialog(focusedWindow, saveDialogOptions),
@@ -364,9 +421,7 @@ export class GwtCallback extends EventEmitter {
           properties: ['openDirectory', 'createDirectory', 'promptToCreate'],
         };
 
-        const focusedWindow = this.dialogParentWindow(
-          focusOwner ? this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window : null,
-        );
+        const focusedWindow = this.dialogParentForRequest('desktop_get_existing_directory', event, focusOwner);
 
         if (focusedWindow) {
           return appState().modalTracker.trackElectronModalAsync(async () =>
@@ -574,59 +629,14 @@ export class GwtCallback extends EventEmitter {
       return '';
     });
 
-    ipcMain.handle('desktop_get_r_version', () => {
-      const options = ElectronDesktopOptions();
+    ipcMain.handle('desktop_get_r_choice', async () => this.getRChoice());
 
-      if (options.useDefault32BitR()) {
-        const rHomeDir = findDefault32Bit();
-        if (rHomeDir) {
-          return `[32-bit] ${rHomeDir} [Default]`;
-        }
-      }
-
-      if (options.useDefault64BitR()) {
-        const rHomeDir = findDefault64Bit();
-        if (rHomeDir) {
-          return `[64-bit] ${rHomeDir} [Default]`;
-        }
-      }
-
-      const rBinDir = options.rBinDir();
-      return formatSelectedVersionForUi(rBinDir);
+    ipcMain.handle('desktop_set_default_r_version', async (event, rExecutablePath: string, useDefault: boolean) => {
+      return this.setDefaultRVersion(rExecutablePath, useDefault === true);
     });
 
-    ipcMain.handle('desktop_choose_r_version', async () => {
-      // discover available R installations
-      const rInstalls = findRInstallationsWin32();
-      if (rInstalls.length === 0) {
-        logger().logInfo('No R installations found via registry or common R install locations.');
-      }
-
-      // ask the user what version of R they'd like to use
-      const chooseRDialog = new ChooseRModalWindow(rInstalls, mainWindow.window);
-
-      const [data, error] = await chooseRDialog.showModal();
-      if (error) {
-        logger().logError(error);
-        return '';
-      }
-
-      // if the dialog was cancelled, the path may be null
-      if (data == null || data.binaryPath == null) {
-        return '';
-      }
-
-      // save options from dialog result
-      const options = ElectronDesktopOptions();
-      const path = data.binaryPath as string;
-      options.setUseDefault32BitR(data.useDefault32BitR || false);
-      options.setUseDefault64BitR(data.useDefault64BitR || false);
-      options.setRExecutablePath(path);
-
-      // return a formatted string for the client
-      const rBinDir = dirname(path);
-      logger().logDebug(`Using R: ${rBinDir}`);
-      return formatSelectedVersionForUi(rBinDir);
+    ipcMain.handle('desktop_restart_with_previous_r', async () => {
+      return (await this.mainWindow.sessionLauncher?.restartWithPreviousR()) ?? '';
     });
 
     ipcMain.on(
@@ -788,7 +798,7 @@ export class GwtCallback extends EventEmitter {
           };
         }
 
-        const focusedWindow = this.dialogParentWindow();
+        const focusedWindow = this.dialogParentForRequest('desktop_show_message_box', event);
         if (focusedWindow) {
           return appState().modalTracker.trackElectronModalAsync(async () =>
             dialog.showMessageBox(focusedWindow, openDialogOptions),
@@ -876,8 +886,8 @@ export class GwtCallback extends EventEmitter {
       return this.setPendingQuit(pendingQuit, rExecutablePath);
     });
 
-    ipcMain.handle('desktop_set_pending_r_version', async (event, rExecutablePath: string) => {
-      return this.setPendingRVersion(rExecutablePath);
+    ipcMain.handle('desktop_set_pending_r_version', async (event, rExecutablePath: string, useDefault: boolean) => {
+      return this.setPendingRVersion(rExecutablePath, useDefault === true);
     });
 
     ipcMain.handle('desktop_make_r_orthogonal', async (event, rHome: string) => {
@@ -1023,16 +1033,16 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_get_desktop_synctex_viewer', () => {
-      GwtCallback.unimpl('desktop_get_desktop_synctex_viewer');
+      this.unimpl('desktop_get_desktop_synctex_viewer');
       return '';
     });
 
     ipcMain.on('desktop_external_synctex_preview', (_event, _pdfPath, _page) => {
-      GwtCallback.unimpl('desktop_external_synctex_preview');
+      this.unimpl('desktop_external_synctex_preview');
     });
 
     ipcMain.on('desktop_external_synctex_view', (_event, _pdfFile, _srcFile, _line, _column) => {
-      GwtCallback.unimpl('desktop_external_synctex_view');
+      this.unimpl('desktop_external_synctex_view');
     });
 
     ipcMain.handle('desktop_supports_fullscreen_mode', () => {
@@ -1152,7 +1162,7 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_get_session_server', () => {
-      GwtCallback.unimpl('desktop_get_session_server');
+      this.unimpl('desktop_get_session_server');
       return {};
     });
 
@@ -1161,57 +1171,57 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_reconnect_to_session_server', (_event, _sessionServerJson) => {
-      GwtCallback.unimpl('desktop_reconnect_to_session_server');
+      this.unimpl('desktop_reconnect_to_session_server');
     });
 
     ipcMain.handle('desktop_set_launcher_server', (_event, _sessionServerJson) => {
-      GwtCallback.unimpl('desktop_set_launcher_server');
+      this.unimpl('desktop_set_launcher_server');
       return false;
     });
 
     ipcMain.on('desktop_connect_to_launcher_server', () => {
-      GwtCallback.unimpl('desktop_connect_to_launcher_server');
+      this.unimpl('desktop_connect_to_launcher_server');
     });
 
     ipcMain.handle('desktop_get_launcher_server', () => {
-      GwtCallback.unimpl('desktop_get_launcher_server');
+      this.unimpl('desktop_get_launcher_server');
       return {};
     });
 
     ipcMain.on('desktop_start_launcher_job_status_stream', (_event, _jobId) => {
-      GwtCallback.unimpl('desktop_start_launcher_job_status_stream');
+      this.unimpl('desktop_start_launcher_job_status_stream');
     });
 
     ipcMain.on('desktop_stop_launcher_job_status_stream', (_event, _jobId) => {
-      GwtCallback.unimpl('desktop_stop_launcher_job_status_stream');
+      this.unimpl('desktop_stop_launcher_job_status_stream');
     });
 
     ipcMain.on('desktop_start_launcher_job_output_stream', (_event, _jobId) => {
-      GwtCallback.unimpl('desktop_start_launcher_job_output_stream');
+      this.unimpl('desktop_start_launcher_job_output_stream');
     });
 
     ipcMain.on('desktop_stop_launcher_job_output_stream', (_event, _jobId) => {
-      GwtCallback.unimpl('desktop_stop_launcher_job_output_stream');
+      this.unimpl('desktop_stop_launcher_job_output_stream');
     });
 
     ipcMain.on('desktop_control_launcher_job', (_event, _jobId, _operation) => {
-      GwtCallback.unimpl('desktop_control_launcher_job');
+      this.unimpl('desktop_control_launcher_job');
     });
 
     ipcMain.on('desktop_submit_launcher_job', (_event, _job) => {
-      GwtCallback.unimpl('desktop_submit_launcher_job');
+      this.unimpl('desktop_submit_launcher_job');
     });
 
     ipcMain.on('desktop_get_job_container_user', () => {
-      GwtCallback.unimpl('desktop_get_job_container_user');
+      this.unimpl('desktop_get_job_container_user');
     });
 
     ipcMain.on('desktop_validate_jobs_config', () => {
-      GwtCallback.unimpl('desktop_validate_jobs_config');
+      this.unimpl('desktop_validate_jobs_config');
     });
 
     ipcMain.handle('desktop_get_proxy_port_number', () => {
-      GwtCallback.unimpl('desktop_get_proxy_port_number');
+      this.unimpl('desktop_get_proxy_port_number');
       return -1;
     });
 
@@ -1289,12 +1299,12 @@ export class GwtCallback extends EventEmitter {
     }
   }
 
-  static unimpl(ipcName: string): void {
+  unimpl(ipcName: string): void {
     if (app.isPackaged) {
       return;
     }
 
-    const focusedWindow = BrowserWindow.getFocusedWindow();
+    const focusedWindow = this.dialogParentWindow();
 
     const dialogOptions = {
       title: i18next.t('gwtCallbackTs.unimplemented'),
@@ -1329,7 +1339,7 @@ export class GwtCallback extends EventEmitter {
     }
 
     this.pendingQuit = pendingQuit;
-    this.pendingRVersion = rPath;
+    this.pendingRVersion = rPath ? { path: rPath, useDefault: this.preparedRVersions.get(rPath) === true } : null;
 
     // a quit that was abandoned (e.g. the session refused it) leaves no R
     // switch or update install behind for some later, unrelated quit
@@ -1344,44 +1354,67 @@ export class GwtCallback extends EventEmitter {
    * checking that it runs as itself. Resolves to an error message when it
    * doesn't, and '' otherwise; '' tells the client the R is ready, so a
    * failure always says something. The R is used only by a quit that names
-   * it (see setPendingQuit).
+   * it (see setPendingQuit). `useDefault` says it was chosen as the default
+   * R, which RStudio then follows (see storeChosenR).
    */
-  async setPendingRVersion(rExecutablePath: string): Promise<string> {
+  async setPendingRVersion(rExecutablePath: string, useDefault = false): Promise<string> {
     const rPath = preparedRExecutablePath(rExecutablePath);
 
-    // the client escapes the message for display itself
-    const interpolation = { escapeValue: false };
-
-    try {
-      if (!existsSync(rPath)) {
-        return i18next.t('gwtCallbackTs.rExecutableMissing', { path: rPath, interpolation }) || rPath;
-      }
-
-      // a framework version that isn't orthogonal would run the default R
-      const home = frameworkVersionHome(rPath);
-      const version = home === null ? null : frameworkVersion(home);
-      if (version !== null && !isOrthogonal(version)) {
-        return i18next.t('gwtCallbackTs.rExecutableNotOrthogonal', { path: rPath, interpolation }) || rPath;
-      }
-
-      // queried in the background: R can take seconds to start. Bounded,
-      // because the client holds the quit for this answer (see
-      // ApplicationQuit.claimQuit) and an R that hangs must not hold it
-      // forever; a late answer prepares an R that no quit will name
-      const [, error] = await detectREnvironmentAsync(rPath, kPendingRVersionTimeoutMs);
-      if (error) {
-        logger().logError(error);
-        return (
-          i18next.t('gwtCallbackTs.rExecutableFailed', { path: rPath, error: error.message, interpolation }) || rPath
-        );
-      }
-    } catch (error: unknown) {
-      logger().logError(error);
-      return safeError(error).message || rPath;
+    // queried in the background: R can take seconds to start. Bounded,
+    // because the client holds the quit for this answer (see
+    // ApplicationQuit.claimQuit) and an R that hangs must not hold it
+    // forever; a late answer prepares an R that no quit will name
+    const problem = await checkRExecutable(rPath);
+    if (problem) {
+      return problem;
     }
 
-    this.preparedRVersions.add(rPath);
+    this.preparedRVersions.set(rPath, useDefault);
     return '';
+  }
+
+  /**
+   * Make the given R the one RStudio uses from its next launch on, after
+   * checking that it runs as itself: the default R, followed from then on,
+   * when `useDefault` is set, and otherwise that installation (see
+   * storeChosenR). Resolves to an error message when the R can't be used,
+   * and '' otherwise.
+   */
+  async setDefaultRVersion(rExecutablePath: string, useDefault = false): Promise<string> {
+    const rPath = preparedRExecutablePath(rExecutablePath);
+    const request = ++this.defaultRVersionRequests;
+
+    // checking takes a while; a later request decides what is kept, and its
+    // client ignores the answers to earlier ones
+    const problem = await checkRExecutable(rPath);
+    if (request !== this.defaultRVersionRequests) {
+      return '';
+    }
+    if (problem) {
+      return problem;
+    }
+
+    // kept before looking for the default R (see storeRChoice), which a
+    // later request then can't be overwritten by
+    await storeChosenR(rPath, useDefault);
+    return '';
+  }
+
+  /**
+   * The R in use, the R chosen in RStudio (when it decides which R RStudio
+   * uses), and the default R, each as its executable and R version; an
+   * entry is empty when there is no such R.
+   */
+  async getRChoice(): Promise<Record<string, RDescription>> {
+    const choice = savedRChoice();
+    const chosen = choice !== null && rChoiceApplies(choice) ? choice.path : '';
+
+    const [current, chosenR, defaultRPath] = await Promise.all([
+      describeR(this.mainWindow.sessionLauncher?.rPath ?? ''),
+      describeR(chosen),
+      defaultR(),
+    ]);
+    return { current, chosen: chosenR, default: await describeR(defaultRPath) };
   }
 
   /**
@@ -1415,9 +1448,9 @@ export class GwtCallback extends EventEmitter {
     }
   }
 
-  collectPendingRVersion(): string {
+  collectPendingRVersion(): PendingRVersion | null {
     const pending = this.pendingRVersion;
-    this.pendingRVersion = '';
+    this.pendingRVersion = null;
     return pending;
   }
 
@@ -1475,29 +1508,45 @@ export class GwtCallback extends EventEmitter {
   }
 
   /**
-   * Parent window for a native dialog. Without one, macOS runs the dialog
-   * detached and activates the app; in automation mode the app is never
-   * focused, so fall back to the main window and get a sheet instead.
+   * Parent window for a native dialog that an IPC request asked for: the
+   * sender's own window when `focusOwner` is set, else as for
+   * dialogParentWindow(), with the sender's window as the requester.
    */
-  dialogParentWindow(preferred?: BrowserWindow | null): BrowserWindow | undefined {
+  dialogParentForRequest(channel: string, event: IpcMainInvokeEvent, focusOwner = false): BrowserWindow | undefined {
+    const preferred = focusOwner ? this.getSender(channel, event.processId, event.frameId).window : null;
+    return this.dialogParentWindow(preferred, BrowserWindow.fromWebContents(event.sender));
+  }
+
+  /**
+   * Parent window for a native dialog: `preferred`, else the focused window,
+   * else `requester` (the window that asked for the dialog) or the main
+   * window, whichever is on screen. macOS runs a parentless dialog app-modal
+   * without activating the app, so it can open unseen behind the active app
+   * or on another display while every RStudio window beeps at a click
+   * (#19728). A sheet blocks only its own window (and the app menu, which
+   * the modal tracker disables while any native dialog is open).
+   */
+  dialogParentWindow(preferred?: BrowserWindow | null, requester?: BrowserWindow | null): BrowserWindow | undefined {
     const window = preferred ?? BrowserWindow.getFocusedWindow();
     if (window) {
       return window;
     }
 
-    if (!isAutomated()) {
-      return undefined;
+    const candidates = [requester, this.mainWindow.window].filter(
+      (candidate): candidate is BrowserWindow => !!candidate && !candidate.isDestroyed(),
+    );
+    const onScreen = candidates.find((candidate) => isOnScreen(candidate));
+    if (onScreen) {
+      return onScreen;
     }
 
-    // AppKit holds a sheet on a minimized or hidden window until the window
-    // comes back, and the test run would hang on a dialog it can never reach;
-    // a parentless dialog that activates the app is the lesser evil there.
-    const main = this.mainWindow.window;
-    if (!main.isDestroyed() && main.isVisible() && !main.isMinimized()) {
-      return main;
-    }
-
-    return undefined;
+    // With every window off screen, only macOS needs a parent, since its
+    // parentless dialog blocks every window; AppKit holds the sheet until the
+    // user brings its window back. An automation run would hang on a dialog
+    // it can never reach, so it stays parentless there. Elsewhere a parentless
+    // dialog blocks no window, while an owned one may stay hidden with its
+    // minimized owner (Windows).
+    return process.platform === 'darwin' && !isAutomated() ? candidates[0] : undefined;
   }
 
   /**

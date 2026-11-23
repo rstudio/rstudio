@@ -26,14 +26,17 @@ import { appState, AppState, getEventBus } from './app-state';
 import { ApplicationLaunch } from './application-launch';
 import { ArgsManager } from './args-manager';
 import {
+  chosenRForStartup,
   prepareEnvironment,
   promptUserForR,
   rChooserLikely,
   rDetectionReady,
   scanForR,
   showRNotFoundError,
+  UnusableRChoice,
 } from './detect-r';
 import { GwtCallback } from './gwt-callback';
+import { forgetSupersededRChoice } from './r-choice';
 import { prepareInstanceSessionData, removeExitedInstanceSessionData } from './instance-session-data';
 import { PendingWindow } from './pending-window';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
@@ -513,6 +516,13 @@ export class Application implements AppState {
     await languageReady;
     startupCheckpoint('r-query-ready');
 
+    // here rather than before the early query (which passes over such a
+    // choice itself), as a launch that only hands its files to another
+    // instance never gets this far
+    if (forgetSupersededRChoice()) {
+      logger().logInfo('RSTUDIO_WHICH_R has changed since an R was chosen in RStudio; following it from now on');
+    }
+
     // on Windows, ask the user what version of R they'd like to use
     let rPath;
     if (process.platform === 'win32') {
@@ -550,8 +560,17 @@ export class Application implements AppState {
       rPath = path;
     }
 
-    // if we don't have an R path at this point, try scanning for R
+    // on macOS and Linux, an R chosen in RStudio comes first (Windows
+    // startup looked at its own above)
     startupCheckpoint('r-detect-begin');
+    let unusableRChoice: UnusableRChoice | undefined;
+    if (!rPath) {
+      const chosen = chosenRForStartup();
+      rPath = chosen.path;
+      unusableRChoice = chosen.unusable;
+    }
+
+    // if we don't have an R path at this point, try scanning for R
     if (!rPath) {
       logger().logDebug('No rPath found, scanning for R');
       const [scannedPath, error] = scanForR();
@@ -589,6 +608,10 @@ export class Application implements AppState {
       this.appLaunch,
       windowAllClosedHandler,
     );
+    this.sessionLauncher.setStartupR(rPath);
+    if (unusableRChoice) {
+      this.sessionLauncher.reportUnusableRChoice(unusableRChoice);
+    }
     this.sessionLauncher.launchFirstSession(installPath, !app.isPackaged);
 
     this.setDockMenu();

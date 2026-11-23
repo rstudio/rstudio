@@ -193,21 +193,47 @@ SEXP rs_createUUID()
    return r::sexp::create(core::system::generateUuid(false), &rProtect);
 }
    
+// .rs.loadhistory() and .rs.savehistory() expand '~' with path.expand().
+// R_ExpandFileName() can't be used here: on Windows it prepends the home
+// directory in the native encoding, and FilePath reads the result as UTF-8.
+//
+// failures are R errors, as from the Rloadhistory / Rsavehistory callbacks
+// that implement these functions on POSIX
 SEXP rs_loadHistory(SEXP sFile)
 {
-   std::string file = R_ExpandFileName(r::sexp::asString(sFile).c_str());
-   Error error = consoleHistory().loadFromFile(FilePath(file), true);
-   if (error)
-      LOG_ERROR(error);
-   else
+   try
+   {
+      FilePath file(r::sexp::asString(sFile));
+      Error error = consoleHistory().loadFromFile(file, true);
+      if (error)
+         throw r::exec::RErrorException(error.getMessage());
+
       rCallbacks().consoleHistoryReset();
+   }
+   catch(r::exec::RErrorException& e)
+   {
+      r::exec::error(e.message());
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
    return R_NilValue;
 }
 
 SEXP rs_saveHistory(SEXP sFile)
 {
-   std::string file = R_ExpandFileName(r::sexp::asString(sFile).c_str());
-   consoleHistory().saveToFile(FilePath(file), false /* atomic */);
+   try
+   {
+      FilePath file(r::sexp::asString(sFile));
+      Error error = consoleHistory().saveToHistoryFile(file);
+      if (error)
+         throw r::exec::RErrorException(error.getMessage());
+   }
+   catch(r::exec::RErrorException& e)
+   {
+      r::exec::error(e.message());
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
    return R_NilValue;
 }
 
@@ -510,6 +536,7 @@ bool isSuspendable(const std::string& currentPrompt)
 namespace {
 
 volatile bool s_atTopLevelPrompt = false;
+bool s_inputHandlersRunning = false;
 bool s_browserActive = false;
 r::sexp::PreservedSEXP s_browserEnv;
 
@@ -523,6 +550,16 @@ void setAtTopLevelPrompt(bool atPrompt)
 bool atTopLevelPrompt()
 {
    return s_atTopLevelPrompt;
+}
+
+void setInputHandlersRunning(bool running)
+{
+   s_inputHandlersRunning = running;
+}
+
+bool inputHandlersRunning()
+{
+   return s_inputHandlersRunning;
 }
 
 void setBrowserActive(bool active)

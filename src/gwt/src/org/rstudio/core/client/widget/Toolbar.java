@@ -19,6 +19,7 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -245,6 +246,33 @@ public class Toolbar extends ResizeComposite implements HasResizeHandlers
       initWidget(toolbarWrapper_);
 
       setStyleName(styles_.rstheme_toolbarWrapper());
+
+      keyboardNavigation_ = new ToolbarKeyboardNavigation(toolbarWrapper_.getElement());
+   }
+
+   @Override
+   protected void onLoad()
+   {
+      super.onLoad();
+      keyboardNavigation_.attach();
+   }
+
+   @Override
+   protected void onUnload()
+   {
+      keyboardNavigation_.detach();
+      super.onUnload();
+   }
+
+   /**
+    * Focus the toolbar's first Tab stop: a text field if the toolbar starts
+    * with one, else the item focused last in its first group of items.
+    *
+    * @return Whether focus moved there; false if the toolbar is hidden or empty
+    */
+   public boolean focusFirstTabStop()
+   {
+      return keyboardNavigation_.focusFirstTabStop();
    }
 
    protected void manageSeparators()
@@ -273,6 +301,7 @@ public class Toolbar extends ResizeComposite implements HasResizeHandlers
    
    public <TWidget extends Widget> TWidget addLeftWidget(TWidget widget)
    {
+      ToolbarKeyboardNavigation.markWidget(widget.getElement());
       leftToolbarPanel_.add(widget);
       invalidateSeparators();
       return widget;
@@ -291,6 +320,7 @@ public class Toolbar extends ResizeComposite implements HasResizeHandlers
    public <TWidget extends Widget> TWidget insertWidget(TWidget widget, TWidget beforeWidget)
    {
       int beforeIndex = leftToolbarPanel_.getWidgetIndex(beforeWidget);
+      ToolbarKeyboardNavigation.markWidget(widget.getElement());
       leftToolbarPanel_.insert(widget, beforeIndex);
       invalidateSeparators();
       return widget;
@@ -319,6 +349,31 @@ public class Toolbar extends ResizeComposite implements HasResizeHandlers
    {
       leftToolbarPanel_.setCellWidth(w, "");
       leftToolbarPanel_.setWidth("");
+   }
+
+   /**
+    * Lets a left widget take the toolbar's spare width, and give up width when
+    * the toolbar is too narrow so the right widgets stay in view. The widget
+    * must clip its own content, e.g. with an ellipsis.
+    *
+    * @param w The widget, already added with addLeftWidget
+    */
+   public void setLeftWidgetShrinkable(Widget w)
+   {
+      setLeftWidgetWidth(w, "100%");
+      horizontalPanel_.setCellWidth(leftToolbarPanel_, "100%");
+
+      // A table cell otherwise grows to fit its content, widening the toolbar
+      // past its container; a zero maximum leaves it only the width to spare.
+      w.getElement().getParentElement().getStyle().setProperty("maxWidth", "0");
+      Style leftCell = leftToolbarPanel_.getElement().getParentElement().getStyle();
+      leftCell.setProperty("maxWidth", "0");
+
+      // Once the widget is fully shrunk, clip the left widgets that still don't
+      // fit rather than draw them over the right ones. Only the right edge
+      // clips; elsewhere 2px is left for focus outlines, which extend past
+      // their controls. (WebKit ignores overflow-clip-margin.)
+      leftCell.setProperty("clipPath", "inset(-2px 0 -2px -2px)");
    }
    
    public interface MenuSource
@@ -364,6 +419,7 @@ public class Toolbar extends ResizeComposite implements HasResizeHandlers
    
    public <TWidget extends Widget> TWidget addRightWidget(TWidget widget)
    {
+      ToolbarKeyboardNavigation.markWidget(widget.getElement());
       rightToolbarPanel_.add(widget);
       invalidateSeparators();
       return widget;
@@ -478,6 +534,7 @@ public class Toolbar extends ResizeComposite implements HasResizeHandlers
    private HorizontalPanel leftToolbarPanel_;
    private HorizontalPanel rightToolbarPanel_;
    private SimpleLayoutPanel toolbarWrapper_;
+   private final ToolbarKeyboardNavigation keyboardNavigation_;
    private final HandlerManager handlers_ = new HandlerManager(this);
    protected final ThemeStyles styles_ = ThemeResources.INSTANCE.themeStyles();
    private boolean separatorsInvalidated_ = false;

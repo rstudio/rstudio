@@ -172,6 +172,8 @@ public class ElementIds
    public final static String TEXT_SOURCE_BUTTON = "text_source";
    public final static String TEXT_SOURCE_BUTTON_DROPDOWN = "text_source_dropdown";
    public final static String EMPTY_DOC_BUTTON = "empty_doc";
+   public final static String CHOOSE_R_VERSION_LIST = "choose_r_version_list";
+   public final static String CHOOSE_R_VERSION_BROWSE = "choose_r_version_browse";
 
    public final static String EDIT_EDITING_PREFS = "edit_editing_prefs";
    public final static String EDIT_DISPLAY_PREFS = "edit_display_prefs";

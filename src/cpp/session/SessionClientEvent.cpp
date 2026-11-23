@@ -228,7 +228,8 @@ const int kProjectRVersionMismatch = 211;
 const int kRInstallCompleted = 212;
 const int kRenvRestorePrompt = 213;
 const int kQuitAborted = 214;
-const int kJuliaEvent = 215;
+const int kAssistantNesMissingChanged = 215;
+const int kJuliaEvent = 216;
 
 }
 
@@ -641,6 +642,8 @@ std::string ClientEvent::typeName() const
          return "renv_restore_prompt";
       case client_events::kQuitAborted:
          return "quit_aborted";
+      case client_events::kAssistantNesMissingChanged:
+         return "assistant_nes_missing_changed";
       case client_events::kJuliaEvent:
          return "julia_event";
       default:

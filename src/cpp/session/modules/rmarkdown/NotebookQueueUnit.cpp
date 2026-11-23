@@ -130,6 +130,12 @@ Error NotebookQueueUnit::fromJson(
    if (error)
       LOG_ERROR(error);
 
+   // the client never sends a document or chunk ID, or a document type, with a
+   // nul character; an ID would be read up to the nul, below and wherever the
+   // unit runs, and so name another document's or chunk's files
+   if (r::sexp::containsNul(unit.docId_) || r::sexp::containsNul(unit.chunkId_))
+      return Error(json::errc::ParamInvalid, ERROR_LOCATION);
+
    // extract document type separately -- we've seen it missing
    // in some scenarios
    std::string docType;
@@ -149,7 +155,10 @@ Error NotebookQueueUnit::fromJson(
          docType = pDoc->type();
       }
    }
-   
+
+   if (r::sexp::containsNul(docType))
+      return Error(json::errc::ParamInvalid, ERROR_LOCATION);
+
    // assume an R Markdown document type if we couldn't infer one
    unit.docType_ = docType.empty() ? kSourceDocumentTypeRMarkdown : docType;
    
@@ -182,9 +191,9 @@ Error NotebookQueueUnit::parseOptions(json::Object* pOptions)
    r::sexp::Protect protect;
    SEXP sexpOptions = R_NilValue;
    Error error = r::exec::RFunction(".rs.evaluateChunkOptions")
-         .addUtf8Param(docId_)
-         .addUtf8Param(docType_)
-         .addUtf8Param(code_)
+         .addParam(docId_)
+         .addParam(docType_)
+         .addParam(code_)
          .call(&sexpOptions, &protect);
 
    if (error)
@@ -271,8 +280,8 @@ Error NotebookQueueUnit::replaceCodeFromFileOption(const json::Object& options,
 Error NotebookQueueUnit::innerCode(std::string* pCode)
 {
    return r::exec::RFunction(".rs.extractChunkInnerCode")
-       .addUtf8Param(code_)
-       .callUtf8(pCode);
+       .addParam(code_)
+       .call(pCode);
 }
 
 bool NotebookQueueUnit::hasPendingRanges()

@@ -22,6 +22,7 @@
 #include <gtest/gtest.h>
 #endif
 
+#include <cctype>
 #include <iostream>
 #include <vector>
 #include <set>
@@ -755,11 +756,8 @@ public:
             else
             {
                // We allow the user to submit queries of the form e.g.
-               // <query>:<row><column>; make sure we only take items
-               // on the query up to ':'
-               std::string::size_type queryEnd = term.find(":");
-               if (queryEnd == std::string::npos)
-                  queryEnd = term.length();
+               // <query>:<row>:<column>; match only the <query> part
+               std::string::size_type queryEnd = fileQueryLength(term);
 
                matches = string_utils::isSubsequence(name,
                                                      term,
@@ -1395,10 +1393,8 @@ void searchSourceDatabaseFiles(const std::string& term,
       }
       else
       {
-         // Strip everything following a ':'
-         std::string::size_type queryEnd = term.find(":");
-         if (queryEnd == std::string::npos)
-            queryEnd = term.length();
+         // Strip a trailing :<row>:<column>
+         std::string::size_type queryEnd = fileQueryLength(term);
 
          matches = string_utils::isSubsequence(filename,
                                                term,
@@ -1636,6 +1632,14 @@ public:
    bool hidden() const { return hidden_; }
    const json::Object& metadata() const { return metadata_; }
 
+   bool isXRef() const
+   {
+      json::Object::Iterator it = metadata_.find("type");
+      return it != metadata_.end() &&
+             (*it).getValue().isString() &&
+             (*it).getValue().getString() == "xref";
+   }
+
 private:
    Type type_;
    std::string name_;
@@ -1740,6 +1744,26 @@ SourceItem fromCppDefinition(const clang::CppDefinition& cppDefinition)
       cppDefinition.hidden);
 }
 
+SourceItem::Type xrefSourceType(const std::string& type)
+{
+   if (type == "fig")
+      return SourceItem::Figure;
+
+   if (type == "tab" || type == "tbl" || type == "lst")
+      return SourceItem::Table;
+
+   if (type == "h1" || type == "h2" || type == "h3" ||
+       type == "h4" || type == "h5" || type == "h6" || type == "sec")
+      return SourceItem::Section;
+
+   if (type == "thm" || type == "lem" || type == "cor" ||
+       type == "prp" || type == "cnj" || type == "def" ||
+       type == "exm" || type == "exr" || type == "eq")
+      return SourceItem::Math;
+
+   return SourceItem::None;
+}
+
 void fillFromCrossrefs(const std::string& term,
                        std::vector<SourceItem>* pSourceItems)
 {
@@ -1801,60 +1825,14 @@ void fillFromCrossrefs(const std::string& term,
       if (xref.getObject().hasMember("title"))
          title = xref.getObject()["title"].getString();
       
-      // figure out appropriate source item type
-      SourceItem::Type sourceType = SourceItem::None;
-      if (type == "fig")
-      {
-         sourceType = SourceItem::Figure;
-      }
-      else if (type == "tab" || type == "tbl" || type == "lst")
-      {
-         sourceType = SourceItem::Table;
-      }
-      else if (type == "h1" || type == "h2" || type == "h3" ||
-               type == "h4" || type == "h5" || type == "h6" || type == "sec")
-      {
-         sourceType = SourceItem::Section;
-      }
-      else if (type == "thm" || type == "lem" || type == "cor" ||
-               type == "prp" || type == "cnj" || type == "def" ||
-               type == "exr" || type == "eq")
-      {
-         sourceType = SourceItem::Math;
-      }
-      
-      // form appropriate text for display
-      std::string displayText;
-      
-      if (isQuarto)
-      {
-         displayText = type + "-" + id;
-      }
-      else
-      {
-         switch (sourceType)
-         {
-         case SourceItem::Figure:
-         case SourceItem::Table:
-         case SourceItem::Math:
-            displayText = type + ":" + id;
-            break;
-
-         default:
-            displayText = title;
-            break;
-         }
-      }
-
-      
-      // check to see if this is a subsequence match of the
-      // user-provided search term
-      if (!string_utils::isSubsequence(displayText, term, true))
-         continue;
-
-      // add the suffix (if any)
+      // a key used more than once is listed once per use, e.g. thm:pyth-2
+      std::string suffix;
       if (xref.getObject().hasMember("suffix"))
-         displayText += xref.getObject()["suffix"].getString();
+         suffix = xref.getObject()["suffix"].getString();
+
+      XRefResult result = xrefResult(type, id, title, suffix, isQuarto);
+      if (!xrefMatches(result, term))
+         continue;
       
       // bundle xref into source item
       json::Object meta;
@@ -1863,7 +1841,7 @@ void fillFromCrossrefs(const std::string& term,
       
       // we found a match: construct source item and add to list
       SourceItem item(
-               sourceType, displayText, "", "",
+               xrefSourceType(type), result.text, "", result.extraInfo,
                module_context::createAliasedPath(
                   basePath.completeChildPath(file)),
                -1, -1, 
@@ -1950,7 +1928,7 @@ Error searchCode(const json::JsonRpcRequest& request,
    for (std::size_t i = 0; i < paths.size(); ++i)
    {
       fileScores.push_back(std::make_pair(gsl::narrow_cast<int>(i),
-                                          scoreMatch(names[i], term, true)));
+                                          scoreFileMatch(names[i], term)));
    }
 
    // sort by score (lower is better)
@@ -1965,7 +1943,9 @@ Error searchCode(const json::JsonRpcRequest& request,
       if (item.hidden())
          continue;
       
-      int score = scoreMatch(item.name(), term, false);
+      int score = item.isXRef()
+            ? scoreXRefMatch(item.name(), item.extraInfo(), term)
+            : scoreMatch(item.name(), term, false);
       srcItemScores.push_back(std::make_pair(gsl::narrow_cast<int>(i), score));
    }
    std::sort(srcItemScores.begin(), srcItemScores.end(), ScorePairComparator());
@@ -2820,6 +2800,87 @@ SEXP rs_viewFunction(SEXP functionSEXP, SEXP nameSEXP, SEXP namespaceSEXP)
 }
 
 } // anonymous namespace
+
+int sourceItemTypeForXRef(const std::string& xrefType)
+{
+   return xrefSourceType(xrefType);
+}
+
+XRefResult xrefResult(const std::string& type,
+                      const std::string& id,
+                      const std::string& title,
+                      const std::string& suffix,
+                      bool isQuarto)
+{
+   XRefResult result;
+   if (isQuarto)
+   {
+      result.text = type + "-" + id;
+   }
+   else
+   {
+      switch (xrefSourceType(type))
+      {
+      case SourceItem::Figure:
+      case SourceItem::Table:
+         result.text = type + ":" + id;
+         break;
+
+      case SourceItem::Math:
+         result.text = type + ":" + id;
+         result.extraInfo = title;
+         break;
+
+      default:
+         result.text = title;
+         break;
+      }
+   }
+
+   result.text += suffix;
+   return result;
+}
+
+bool xrefMatches(const XRefResult& result, const std::string& term)
+{
+   return string_utils::isSubsequence(result.text, term, true) ||
+          (!result.extraInfo.empty() &&
+           string_utils::isSubsequence(result.extraInfo, term, true));
+}
+
+std::size_t fileQueryLength(const std::string& term)
+{
+   // strip up to two ':'-led runs of digits; a run may be empty, since the
+   // user may not have typed the number yet (e.g. "foo.R:" or "foo.R:10:")
+   std::size_t end = term.length();
+   for (int i = 0; i < 2; ++i)
+   {
+      std::size_t pos = end;
+      while (pos > 0 && std::isdigit(static_cast<unsigned char>(term[pos - 1])))
+         --pos;
+      if (pos == 0 || term[pos - 1] != ':')
+         break;
+      end = pos - 1;
+   }
+   return end;
+}
+
+int scoreFileMatch(const std::string& filename, const std::string& term)
+{
+   return scoreMatch(filename, term.substr(0, fileQueryLength(term)), true);
+}
+
+int scoreXRefMatch(const std::string& text,
+                   const std::string& extraInfo,
+                   const std::string& term)
+{
+   // a name the term doesn't match could still score well, since unmatched
+   // characters cost little for a short term
+   int score = scoreMatch(text, term, false);
+   if (!extraInfo.empty() && string_utils::isSubsequence(extraInfo, term, true))
+      score = std::min(score, scoreMatch(extraInfo, term, false));
+   return score;
+}
    
 Error initialize()
 {

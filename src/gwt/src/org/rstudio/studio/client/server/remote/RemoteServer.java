@@ -119,6 +119,7 @@ import org.rstudio.studio.client.projects.model.SharingConfigResult;
 import org.rstudio.studio.client.projects.model.SharingResult;
 import org.rstudio.studio.client.quarto.model.QuartoCapabilities;
 import org.rstudio.studio.client.quarto.model.QuartoNewProjectOptions;
+import org.rstudio.studio.client.renv.model.RVersionInstall;
 import org.rstudio.studio.client.rmarkdown.model.NotebookCreateResult;
 import org.rstudio.studio.client.rmarkdown.model.NotebookDocQueue;
 import org.rstudio.studio.client.rmarkdown.model.NotebookQueueUnit;
@@ -257,6 +258,8 @@ import com.google.gwt.user.client.Random;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
+
+import jsinterop.base.JsArrayLike;
 
 @Singleton
 public class RemoteServer implements Server
@@ -1206,24 +1209,6 @@ public class RemoteServer implements Server
                  ServerRequestCallback<JsArray<CppDiagnostic>> requestCallback)
    {
       sendRequest(RPC_SCOPE, GET_CPP_DIAGNOSTICS, docPath, requestCallback);
-   }
-
-   public void printCppCompletions(String docId,
-                                   String docPath,
-                                   String docContents,
-                                   boolean docDirty,
-                                   int line,
-                                   int column,
-                                   ServerRequestCallback<VoidResponse> requestCallback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(docId));
-      params.set(1, new JSONString(docPath));
-      params.set(2, new JSONString(docContents));
-      params.set(3,  JSONBoolean.getInstance(docDirty));
-      params.set(4, new JSONNumber(line));
-      params.set(5, new JSONNumber(column));
-      sendRequest(RPC_SCOPE, "print_cpp_completions", params, requestCallback);
    }
 
    public void isFunction(
@@ -6341,6 +6326,18 @@ public class RemoteServer implements Server
    public void rigGetInstallDir(ServerRequestCallback<String> requestCallback)
    {
       sendRequest(RPC_SCOPE, "rig_get_install_dir", requestCallback);
+   }
+
+   @Override
+   public void rigListRInstallations(ServerRequestCallback<JsArrayLike<RVersionInstall>> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "rig_list_r_installations", requestCallback);
+   }
+
+   @Override
+   public void rigDescribeRInstallation(String binary, ServerRequestCallback<RVersionInstall> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "rig_describe_r_installation", binary, requestCallback);
    }
 
    @Override

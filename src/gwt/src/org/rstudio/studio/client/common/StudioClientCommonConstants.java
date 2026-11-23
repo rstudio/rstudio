@@ -21,6 +21,8 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     String clearAllBreakpointsCaption();
     String hideTracebackText();
     String showTracebackText();
+    String rerunWithDebugText();
+    String focusLastConsoleErrorHint(String shortcut);
     String convertingThemeProgressCaption();
     String withDataImportMongoProgressCaption();
     String testthatMessage();

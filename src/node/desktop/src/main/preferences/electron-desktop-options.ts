@@ -56,7 +56,15 @@ const kRendererUseGpuDriverBugWorkarounds = 'renderer.useGpuDriverBugWorkarounds
 
 const kUseDefault32BitR = 'platform.windows.useDefault32BitR';
 const kUseDefault64BitR = 'platform.windows.useDefault64BitR';
-const kRExecutablePath = 'platform.windows.rExecutablePath';
+
+// the options section of the platform RStudio runs on
+const kPlatformSections: Partial<Record<NodeJS.Platform, string>> = {
+  win32: 'platform.windows',
+  darwin: 'platform.macos',
+};
+const kPlatformSection = kPlatformSections[process.platform] ?? 'platform.linux';
+const kRExecutablePath = `${kPlatformSection}.rExecutablePath`;
+const kRStudioWhichRWhenChosen = `${kPlatformSection}.rstudioWhichRWhenChosen`;
 
 const kMacOSDefaultFileHandlerPrompted = 'platform.macos.defaultFileHandlerPrompted';
 const kPreferR64 = 'platform.windows.preferR64';
@@ -400,19 +408,23 @@ export class DesktopOptionsImpl implements DesktopOptions {
     this.safeSet(kUseDefault64BitR, useDefault);
   }
 
-  // Windows-only option
+  /**
+   * The R executable chosen in RStudio, or '' for the default R. On Windows
+   * the default installations take precedence when useDefault32BitR() or
+   * useDefault64BitR() asks for one.
+   */
   public setRExecutablePath(rExecutablePath: string): void {
     if (process.platform !== 'win32') {
+      this.safeSet(kRExecutablePath, rExecutablePath);
       return;
     }
 
     this.safeSet(kRExecutablePath, normalizeSeparatorsNative(rExecutablePath));
   }
 
-  // Windows-only option
   public rExecutablePath(): string {
     if (process.platform !== 'win32') {
-      return '';
+      return this.config.get(kRExecutablePath, '');
     }
 
     const rExecutablePath: string = this.config.get(
@@ -432,6 +444,18 @@ export class DesktopOptionsImpl implements DesktopOptions {
     }
 
     return fixedPath;
+  }
+
+  /**
+   * The value RSTUDIO_WHICH_R had when the R in rExecutablePath() was
+   * chosen ('' when unset); see rChoiceApplies().
+   */
+  public setRStudioWhichRWhenChosen(rstudioWhichR: string): void {
+    this.safeSet(kRStudioWhichRWhenChosen, rstudioWhichR);
+  }
+
+  public rstudioWhichRWhenChosen(): string {
+    return this.config.get(kRStudioWhichRWhenChosen, '');
   }
 
   // Windows-only option

@@ -1348,6 +1348,12 @@
             "default": false,
             "description": "Whether to reuse sessions when opening projects in RStudio Workbench."
         },
+        "r_version_quick_pick": {
+            "type": "boolean",
+            "default": false,
+            "title": "Use searchable R version selector",
+            "description": "Whether the R version selector groups R installations by version and offers a type-down search, instead of a single flat menu. Applies to RStudio Pro and RStudio Workbench sessions that show the R version selector; ignored elsewhere."
+        },
         "vcs_enabled": {
             "type": "boolean",
             "default": true,

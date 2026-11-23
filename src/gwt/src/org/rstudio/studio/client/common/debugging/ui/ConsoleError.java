@@ -16,12 +16,10 @@
 package org.rstudio.studio.client.common.debugging.ui;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Node;
-import com.google.gwt.dom.client.NodeList;
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 
 import org.rstudio.core.client.VirtualConsole;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.common.debugging.model.ErrorFrame;
@@ -36,7 +34,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
-import com.google.gwt.user.client.ui.Anchor;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
@@ -58,8 +56,6 @@ public class ConsoleError extends Composite
       void runCommandWithDebug(String command);
    }
 
-   // Because we are adding interactive elements to the VirtualScroller the GWT bindings are lost.
-   // We need to programmatically find the elements and manipulate them through regular JS functions.
    public ConsoleError(UnhandledError error,
                        String errorClass, 
                        String command,
@@ -103,6 +99,8 @@ public class ConsoleError extends Composite
       if (errorClass != null)
          errorMessage.addStyleName(errorClass);
 
+      // The Console inserts only this widget's element, never attaching the widget,
+      // so the links' own GWT click handlers would not fire; listen on the root instead.
       EventListener onConsoleErrorClick = event ->
       {
          if (DOM.eventGetType(event) == Event.ONCLICK)
@@ -124,6 +122,9 @@ public class ConsoleError extends Composite
          }
       };
 
+      // Sets the localized label, so it doesn't change language on first toggle
+      setTracebackVisible(false);
+      rerunText.setText(constants_.rerunWithDebugText());
       rerunText.setVisible(command_ != null);
       rerunImage.setVisible(command_ != null);
 
@@ -147,34 +148,55 @@ public class ConsoleError extends Composite
    public void setTracebackVisible(boolean visible)
    {
       showingTraceback_ = visible;
-
-      NodeList<Node> children = this.getElement().getChildNodes();
-      for (int i = 0; i < children.getLength(); i++)
-      {
-         Node n = children.getItem(i);
-         if (n.getNodeType() != Node.ELEMENT_NODE)
-            continue;
-
-         Element child = Element.as(children.getItem(i));
-         if (child.hasClassName("show_traceback_text")) {
-            if (showingTraceback_)
-               child.setInnerText(constants_.hideTracebackText());
-            else
-               child.setInnerText(constants_.showTracebackText());
-         }
-         else if (child.hasClassName("stack_trace"))
-         {
-            if (showingTraceback_)
-               child.getStyle().setDisplay(Style.Display.BLOCK);
-            else
-               child.getStyle().setDisplay(Style.Display.NONE);
-         }
-      }
+      showTracebackText.setText(showingTraceback_
+            ? constants_.hideTracebackText()
+            : constants_.showTracebackText());
+      showTracebackText.getElement().setAttribute("aria-expanded",
+            showingTraceback_ ? "true" : "false");
+      framePanel.setVisible(showingTraceback_);
    }
 
-   @UiField Anchor showTracebackText;
+   public void focus()
+   {
+      showTracebackText.setFocus(true);
+   }
+
+   /**
+    * @return Whether focus() would land now. A pane being restored stays inert
+    *    until its animation ends.
+    */
+   public boolean canFocus()
+   {
+      Element button = showTracebackText.getElement();
+      return button.getOffsetHeight() > 0 && !A11y.isInert(button);
+   }
+
+   /**
+    * @return Whether this error's buttons are still inside the container.
+    *    Trimming old output can remove them while leaving part of the error.
+    */
+   public boolean hasButtonsIn(Element container)
+   {
+      return container.isOrHasChild(showTracebackText.getElement());
+   }
+
+   /**
+    * Shows, as a tooltip on the error's buttons, the shortcut that brings focus
+    * back to the most recent error. Browsers also expose the tooltip to screen
+    * readers as the buttons' description.
+    *
+    * @param shortcut The shortcut as displayed text, e.g. "Ctrl+Alt+X".
+    */
+   public void setFocusShortcutHint(String shortcut)
+   {
+      String hint = constants_.focusLastConsoleErrorHint(shortcut);
+      showTracebackText.setTitle(hint);
+      rerunText.setTitle(hint);
+   }
+
+   @UiField Button showTracebackText;
    @UiField Image showTracebackImage;
-   @UiField Anchor rerunText;
+   @UiField Button rerunText;
    @UiField Image rerunImage;
    @UiField HTMLPanel framePanel;
    @UiField HTML errorMessage;

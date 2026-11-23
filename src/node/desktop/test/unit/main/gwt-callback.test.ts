@@ -21,16 +21,19 @@ import {
   BrowserWindow,
   clipboard,
   ClipboardItem,
+  dialog,
   ipcMain,
   IpcMainInvokeEvent,
   nativeImage,
   webContents,
 } from 'electron';
-import { existsSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'fs';
 import os from 'os';
 import path from 'path';
 import { pathToFileURL } from 'url';
 import { createSinonStubInstance, StubbedClass } from '../unit-utils';
+import i18next from 'i18next';
+import { initI18n } from '../../../src/main/i18n-manager';
 
 import { FilePath } from '../../../src/core/file-path';
 import { clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
@@ -38,8 +41,39 @@ import { Application } from '../../../src/main/application';
 
 import { GwtCallback, PendingQuit } from '../../../src/main/gwt-callback';
 import * as DetectR from '../../../src/main/detect-r';
+import * as RChoice from '../../../src/main/r-choice';
 import { MainWindow } from '../../../src/main/main-window';
 import desktop from '../../../src/native/desktop.node';
+
+// the stand-in R files below, removed once the suite is done
+const kFixtureRoot = mkdtempSync(path.join(os.tmpdir(), 'gwt-callback-test-'));
+
+// A stand-in R executable that exists on disk (querying it is stubbed). On
+// Windows the path must name bin\<arch>\Rterm.exe, or it is rewritten to one
+// (see fixWindowsRExecutablePath) that doesn't exist.
+function standInRExecutable(): string {
+  if (process.platform !== 'win32') {
+    return process.execPath;
+  }
+
+  const dir = mkdtempSync(path.join(kFixtureRoot, 'stand-in-r-'));
+  const executable = path.join(dir, 'bin', 'x64', 'Rterm.exe');
+  mkdirSync(path.dirname(executable), { recursive: true });
+  writeFileSync(executable, '');
+  return executable;
+}
+
+// What querying a stand-in R reports (the query itself is stubbed): an R
+// home holding the shared library a session loads on macOS and Linux.
+function runningREnvironment(): never {
+  const home = mkdtempSync(path.join(kFixtureRoot, 'stand-in-r-home-'));
+  mkdirSync(path.join(home, 'lib'));
+  writeFileSync(path.join(home, 'lib', 'libR.dylib'), '');
+  writeFileSync(path.join(home, 'lib', 'libR.so'), '');
+  return { version: '4.4.1', envVars: { R_HOME: home } } as never;
+}
+
+const kRunningR = runningREnvironment();
 
 function fakeBrowserWindow(state?: { visible?: boolean; minimized?: boolean; destroyed?: boolean }) {
   return {
@@ -62,7 +96,17 @@ describe('DesktopCallback', () => {
   type InvokeHandler = (event: IpcMainInvokeEvent, ...args: unknown[]) => unknown;
   const invokeHandlers = new Map<string, InvokeHandler>();
 
-  before(() => {
+  before(async () => {
+    // some messages asserted on come from the translations
+    initI18n();
+    await new Promise<void>((resolve) => {
+      if (i18next.isInitialized) {
+        resolve();
+      } else {
+        i18next.on('initialized', () => resolve());
+      }
+    });
+
     mainWindow = createSinonStubInstance(MainWindow);
     const handle = sinon.spy(ipcMain, 'handle');
     callback = new GwtCallback(mainWindow);
@@ -82,13 +126,17 @@ describe('DesktopCallback', () => {
     sinon.restore();
   });
 
+  after(() => {
+    rmSync(kFixtureRoot, { recursive: true, force: true });
+  });
+
   it('can be constructed', () => {
     assert.isNotEmpty(callback);
   });
 
   describe('setPendingRVersion', () => {
     // a stand-in R that exists on disk; querying it is stubbed
-    const rPath = process.execPath;
+    const rPath = standInRExecutable();
 
     afterEach(() => {
       callback.collectPendingRVersion();
@@ -96,26 +144,39 @@ describe('DesktopCallback', () => {
     });
 
     it('hands over an R that runs, once the quit names it, and only once', async () => {
-      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{} as never, null]);
+      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([kRunningR, null]);
 
       assert.equal(await callback.setPendingRVersion(rPath), '');
       // prepared is not pending: a quit that does not name it leaves it alone
       assert.equal(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload), '');
-      assert.equal(callback.collectPendingRVersion(), '');
+      assert.isNull(callback.collectPendingRVersion());
 
       assert.equal(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload, rPath), '');
-      assert.equal(callback.collectPendingRVersion(), rPath);
-      assert.equal(callback.collectPendingRVersion(), '');
+      assert.deepEqual(callback.collectPendingRVersion(), { path: rPath, useDefault: false });
+      assert.isNull(callback.collectPendingRVersion());
+    });
+
+    it('hands over whether the R was chosen as the default R', async () => {
+      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([kRunningR, null]);
+
+      assert.equal(await invoke('desktop_set_pending_r_version', rPath, true), '');
+      assert.equal(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload, rPath), '');
+      assert.deepEqual(callback.collectPendingRVersion(), { path: rPath, useDefault: true });
+
+      // as the latest preparation of that R says
+      assert.equal(await invoke('desktop_set_pending_r_version', rPath, false), '');
+      assert.equal(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload, rPath), '');
+      assert.deepEqual(callback.collectPendingRVersion(), { path: rPath, useDefault: false });
     });
 
     it('refuses a quit naming an R that was not prepared', () => {
       assert.isNotEmpty(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload, '/no/such/R'));
       assert.equal(callback.collectPendingQuitRequest(), PendingQuit.PendingQuitNone);
-      assert.equal(callback.collectPendingRVersion(), '');
+      assert.isNull(callback.collectPendingRVersion());
     });
 
     it('has nothing pending by default', () => {
-      assert.equal(callback.collectPendingRVersion(), '');
+      assert.isNull(callback.collectPendingRVersion());
     });
 
     it('refuses an R that is missing or fails to run', async () => {
@@ -124,24 +185,133 @@ describe('DesktopCallback', () => {
       assert.isNotEmpty(await callback.setPendingRVersion(rPath));
       assert.isNotEmpty(await callback.setPendingRVersion('/no/such/R'));
       assert.isTrue(detect.calledOnce);
-      assert.equal(callback.collectPendingRVersion(), '');
+      assert.isNull(callback.collectPendingRVersion());
     });
 
     it('answers with an error rather than failing', async () => {
       sinon.stub(DetectR, 'detectREnvironmentAsync').rejects(new Error('boom'));
 
       assert.include(await callback.setPendingRVersion(rPath), 'boom');
-      assert.equal(callback.collectPendingRVersion(), '');
+      assert.isNull(callback.collectPendingRVersion());
+    });
+
+    it('refuses an R without the shared library a session needs on macOS and Linux', async function () {
+      if (process.platform === 'win32') {
+        this.skip();
+      }
+
+      const home = mkdtempSync(path.join(os.tmpdir(), 'stand-in-r-home-'));
+      const environment = { version: '4.4.1', envVars: { R_HOME: home } };
+      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([environment as never, null]);
+
+      const library = process.platform === 'darwin' ? 'libR.dylib' : 'libR.so';
+      assert.include(await callback.setPendingRVersion(rPath), library);
+      rmSync(home, { recursive: true, force: true });
     });
 
     it('forgets the R when the quit it was meant for is abandoned', async () => {
-      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{} as never, null]);
+      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([kRunningR, null]);
 
       assert.equal(await callback.setPendingRVersion(rPath), '');
       assert.equal(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload, rPath), '');
 
       callback.setPendingQuit(PendingQuit.PendingQuitNone);
-      assert.equal(callback.collectPendingRVersion(), '');
+      assert.isNull(callback.collectPendingRVersion());
+    });
+
+    it('finds the R a quit names by the path it was prepared with, on x64 windows', async function () {
+      // the desktop app is built for x64 only, and runs emulated on ARM64 Windows
+      if (process.platform !== 'win32' || process.arch !== 'x64') {
+        this.skip();
+      }
+      const detect = sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([kRunningR, null]);
+
+      // the client names bin\R.exe; the R prepared and launched is bin\x64\Rterm.exe
+      const binDir = path.join(mkdtempSync(path.join(kFixtureRoot, 'stand-in-r-')), 'bin');
+      const x64Dir = path.join(binDir, 'x64');
+      mkdirSync(x64Dir, { recursive: true });
+      const chosen = path.join(binDir, 'R.exe');
+      const rterm = path.join(x64Dir, 'Rterm.exe');
+      writeFileSync(chosen, '');
+      writeFileSync(rterm, '');
+
+      assert.equal(await callback.setPendingRVersion(chosen), '');
+      assert.isTrue(detect.calledOnceWith(rterm));
+      assert.equal(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload, chosen), '');
+      assert.deepEqual(callback.collectPendingRVersion(), { path: rterm, useDefault: false });
+    });
+  });
+
+  describe('setDefaultRVersion', () => {
+    // a stand-in R that exists on disk; querying it is stubbed
+    const rPath = standInRExecutable();
+
+    it('stores an R that runs as the one RStudio uses', async () => {
+      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([kRunningR, null]);
+      const store = sinon.stub(DetectR, 'storeChosenR').resolves();
+
+      assert.equal(await callback.setDefaultRVersion(rPath), '');
+      assert.isTrue(store.calledOnceWithExactly(rPath, false));
+    });
+
+    it('stores the default R, chosen as such, to be followed', async () => {
+      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([kRunningR, null]);
+      const store = sinon.stub(DetectR, 'storeChosenR').resolves();
+
+      assert.equal(await invoke('desktop_set_default_r_version', rPath, true), '');
+      assert.isTrue(store.calledOnceWithExactly(rPath, true));
+    });
+
+    it('stores nothing for an R that is missing or fails to run', async () => {
+      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([null as never, new Error('boom')]);
+      const store = sinon.stub(DetectR, 'storeChosenR').resolves();
+
+      assert.include(await callback.setDefaultRVersion(rPath), 'boom');
+      assert.isNotEmpty(await callback.setDefaultRVersion('/no/such/R'));
+      assert.isFalse(store.called);
+    });
+
+    it('lets a later request decide what is stored', async () => {
+      // the first R takes longer to check than the second
+      let answerFirst: ((value: unknown) => void) | undefined;
+      const detect = sinon.stub(DetectR, 'detectREnvironmentAsync');
+      detect.onFirstCall().returns(new Promise((resolve) => (answerFirst = resolve)) as never);
+      detect.onSecondCall().resolves([kRunningR, null]);
+      const store = sinon.stub(DetectR, 'storeChosenR').resolves();
+
+      const first = callback.setDefaultRVersion(rPath);
+      const second = callback.setDefaultRVersion(rPath);
+      assert.equal(await second, '');
+      answerFirst!([kRunningR, null]);
+      assert.equal(await first, '');
+
+      assert.isTrue(store.calledOnce);
+    });
+
+    it('is registered for the client', async () => {
+      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([kRunningR, null]);
+      sinon.stub(DetectR, 'storeChosenR').resolves();
+
+      assert.equal(await invoke('desktop_set_default_r_version', rPath, false), '');
+    });
+  });
+
+  describe('getRChoice', () => {
+    it('describes the chosen R only while it decides which R RStudio uses', async () => {
+      sinon.stub(DetectR, 'defaultR').resolves('');
+      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{ version: '4.4.1' } as never, null]);
+      const saved = sinon.stub(RChoice, 'savedRChoice').returns({ path: '/opt/R/4.4.1/bin/R', rstudioWhichR: '' });
+      const applies = sinon.stub(RChoice, 'rChoiceApplies').returns(true);
+
+      const choice = (await invoke('desktop_get_r_choice')) as Record<string, { path: string; version: string }>;
+      assert.deepEqual(choice.chosen, { path: '/opt/R/4.4.1/bin/R', version: '4.4.1' });
+      assert.deepEqual(choice.default, { path: '', version: '' });
+
+      applies.returns(false);
+      assert.deepEqual((await callback.getRChoice()).chosen, { path: '', version: '' });
+
+      saved.returns(null);
+      assert.deepEqual((await callback.getRChoice()).chosen, { path: '', version: '' });
     });
   });
 
@@ -185,20 +355,83 @@ describe('DesktopCallback', () => {
   });
 
   describe('dialogParentWindow', () => {
-    // a parentless native dialog activates the app on macOS, so automation
-    // runs must always get a parent even though the app is never focused
+    // on macOS a parentless native dialog is app-modal: every RStudio window
+    // beeps at a click while the alert may sit unseen behind another app
+    // (#19728), so a dialog gets a parent even when RStudio is not focused
     it('prefers the requested window, then the focused window', () => {
       const preferred = fakeBrowserWindow() as unknown as BrowserWindow;
       const focused = fakeBrowserWindow() as unknown as BrowserWindow;
+      const requester = fakeBrowserWindow() as unknown as BrowserWindow;
       sinon.stub(BrowserWindow, 'getFocusedWindow').returns(focused);
 
-      assert.strictEqual(callback.dialogParentWindow(preferred), preferred);
-      assert.strictEqual(callback.dialogParentWindow(), focused);
+      assert.strictEqual(callback.dialogParentWindow(preferred, requester), preferred);
+      assert.strictEqual(callback.dialogParentWindow(null, requester), focused);
     });
 
-    it('leaves the dialog parentless when nothing is focused', () => {
+    it('falls back to the window that asked, then the main window, when nothing is focused', () => {
+      const main = fakeBrowserWindow() as unknown as BrowserWindow;
+      const requester = fakeBrowserWindow() as unknown as BrowserWindow;
+      mainWindow.window = main;
       sinon.stub(BrowserWindow, 'getFocusedWindow').returns(null);
+
+      assert.strictEqual(callback.dialogParentWindow(null, requester), requester);
+      assert.strictEqual(callback.dialogParentWindow(null, null), main);
+      assert.strictEqual(
+        callback.dialogParentWindow(null, fakeBrowserWindow({ destroyed: true }) as unknown as BrowserWindow),
+        main,
+      );
+    });
+
+    it('prefers a window on screen to an off-screen window that asked', () => {
+      const main = fakeBrowserWindow() as unknown as BrowserWindow;
+      mainWindow.window = main;
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(null);
+
+      for (const state of [{ minimized: true }, { visible: false }]) {
+        const requester = fakeBrowserWindow(state) as unknown as BrowserWindow;
+        assert.strictEqual(callback.dialogParentWindow(null, requester), main, JSON.stringify(state));
+      }
+    });
+
+    // the sheet shows once the user brings the window back, while a parentless
+    // dialog would block every window from wherever it opened
+    it('parents on a minimized or hidden window on macOS outside automation mode', () => {
+      sinon.stub(process, 'platform').value('darwin');
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(null);
+
+      for (const state of [{ minimized: true }, { visible: false }]) {
+        const main = fakeBrowserWindow(state) as unknown as BrowserWindow;
+        mainWindow.window = main;
+        assert.strictEqual(callback.dialogParentWindow(), main, JSON.stringify(state));
+
+        // with every window off screen, the one that asked keeps the dialog
+        const requester = fakeBrowserWindow(state) as unknown as BrowserWindow;
+        assert.strictEqual(callback.dialogParentWindow(null, requester), requester, JSON.stringify(state));
+      }
+
+      mainWindow.window = fakeBrowserWindow({ destroyed: true }) as unknown as BrowserWindow;
       assert.isUndefined(callback.dialogParentWindow());
+    });
+
+    // a parentless dialog blocks no window there, while Windows may keep an
+    // owned dialog hidden with its minimized owner
+    it('stays parentless off macOS when every window is off screen', () => {
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(null);
+      const platform = sinon.stub(process, 'platform');
+
+      for (const name of ['win32', 'linux']) {
+        platform.value(name);
+        for (const state of [{ minimized: true }, { visible: false }]) {
+          mainWindow.window = fakeBrowserWindow(state) as unknown as BrowserWindow;
+          const requester = fakeBrowserWindow(state) as unknown as BrowserWindow;
+          assert.isUndefined(callback.dialogParentWindow(null, requester), `${name} ${JSON.stringify(state)}`);
+        }
+
+        // while a window on screen is still used
+        const main = fakeBrowserWindow() as unknown as BrowserWindow;
+        mainWindow.window = main;
+        assert.strictEqual(callback.dialogParentWindow(), main, name);
+      }
     });
 
     it('falls back to the main window in automation mode', () => {
@@ -224,10 +457,190 @@ describe('DesktopCallback', () => {
         for (const state of [{ minimized: true }, { visible: false }, { destroyed: true }]) {
           mainWindow.window = fakeBrowserWindow(state) as unknown as BrowserWindow;
           assert.isUndefined(callback.dialogParentWindow(), JSON.stringify(state));
+
+          // nor does an off-screen window that asked get it
+          const requester = fakeBrowserWindow({ minimized: true }) as unknown as BrowserWindow;
+          assert.isUndefined(callback.dialogParentWindow(null, requester), JSON.stringify(state));
         }
+
+        // nor is an off-screen window that asked used, while the main window is there
+        const main = fakeBrowserWindow() as unknown as BrowserWindow;
+        mainWindow.window = main;
+        const offScreen = fakeBrowserWindow({ minimized: true }) as unknown as BrowserWindow;
+        assert.strictEqual(callback.dialogParentWindow(null, offScreen), main);
+
+        // while a window that asked and is on screen is used with the main window off screen
+        mainWindow.window = fakeBrowserWindow({ minimized: true }) as unknown as BrowserWindow;
+        const onScreen = fakeBrowserWindow() as unknown as BrowserWindow;
+        assert.strictEqual(callback.dialogParentWindow(null, onScreen), onScreen);
       } finally {
         app.commandLine.removeSwitch('automation-agent');
       }
+    });
+  });
+
+  describe('desktop_show_message_box', () => {
+    // The window a message box asked for by `sender` is shown on, or
+    // undefined when it is shown parentless.
+    async function messageBoxParent(sender: object): Promise<unknown> {
+      const showMessageBox = sinon.stub(dialog, 'showMessageBox').resolves({ response: 1, checkboxChecked: false });
+
+      setApplication(new Application());
+      try {
+        const handler = invokeHandlers.get('desktop_show_message_box');
+        assert.isDefined(handler);
+        const event = { sender } as unknown as IpcMainInvokeEvent;
+        const result = await handler!(
+          event,
+          1,
+          'Update Available',
+          'A newer build is available.',
+          'Install|Later',
+          0,
+          1,
+        );
+        assert.deepEqual(result, { response: 1, checkboxChecked: false });
+      } finally {
+        clearApplicationSingleton();
+      }
+
+      assert.isTrue(showMessageBox.calledOnce);
+      const args = showMessageBox.firstCall.args as unknown[];
+      return args.length === 2 ? args[0] : undefined;
+    }
+
+    // e.g. the Update Available prompt at startup, which finishes while the
+    // user is in another app (#19728)
+    it('attaches to the window that asked when RStudio is not focused', async () => {
+      const requester = fakeBrowserWindow() as unknown as BrowserWindow;
+      const sender = {};
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(null);
+      sinon.stub(BrowserWindow, 'fromWebContents').callsFake((contents) => (contents === sender ? requester : null));
+
+      assert.strictEqual(await messageBoxParent(sender), requester);
+    });
+
+    it('attaches to the focused window over the window that asked', async () => {
+      const focused = fakeBrowserWindow() as unknown as BrowserWindow;
+      const requester = fakeBrowserWindow() as unknown as BrowserWindow;
+      const sender = {};
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(focused);
+      sinon.stub(BrowserWindow, 'fromWebContents').callsFake((contents) => (contents === sender ? requester : null));
+
+      assert.strictEqual(await messageBoxParent(sender), focused);
+    });
+
+    it('attaches to the main window when the sender has no window', async () => {
+      const main = fakeBrowserWindow() as unknown as BrowserWindow;
+      mainWindow.window = main;
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(null);
+      sinon.stub(BrowserWindow, 'fromWebContents').returns(null);
+
+      assert.strictEqual(await messageBoxParent({}), main);
+    });
+
+    it('is parentless off macOS when every window is off screen', async () => {
+      sinon.stub(process, 'platform').value('win32');
+      mainWindow.window = fakeBrowserWindow({ minimized: true }) as unknown as BrowserWindow;
+      const requester = fakeBrowserWindow({ minimized: true }) as unknown as BrowserWindow;
+      const sender = {};
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(null);
+      sinon.stub(BrowserWindow, 'fromWebContents').callsFake((contents) => (contents === sender ? requester : null));
+
+      assert.isUndefined(await messageBoxParent(sender));
+    });
+  });
+
+  describe('unimplemented callbacks', () => {
+    it('show their message on the main window when RStudio is not focused', async () => {
+      const main = fakeBrowserWindow() as unknown as BrowserWindow;
+      mainWindow.window = main;
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(null);
+      const showMessageBox = sinon.stub(dialog, 'showMessageBox').resolves({ response: 0, checkboxChecked: false });
+
+      setApplication(new Application());
+      try {
+        callback.unimpl('desktop_get_proxy_port_number');
+
+        // let the modal tracker settle before the application goes away
+        await new Promise((resolve) => setImmediate(resolve));
+      } finally {
+        clearApplicationSingleton();
+      }
+
+      assert.isTrue(showMessageBox.calledOnce);
+      assert.strictEqual(showMessageBox.firstCall.args[0] as unknown, main);
+    });
+  });
+
+  describe('file dialogs', () => {
+    const dir = os.tmpdir();
+
+    // each handler's arguments up to focusOwner, which it takes last
+    const cases: { channel: string; args: unknown[]; show: 'showOpenDialog' | 'showSaveDialog' }[] = [
+      { channel: 'desktop_get_open_file_name', args: ['Open', 'Open', dir, '', false], show: 'showOpenDialog' },
+      { channel: 'desktop_get_save_file_name', args: ['Save', 'Save', dir, '', false], show: 'showSaveDialog' },
+      { channel: 'desktop_get_existing_directory', args: ['Choose', 'Choose', dir], show: 'showOpenDialog' },
+    ];
+
+    async function assertFileDialogsShownOn(
+      expected: BrowserWindow,
+      sender: object,
+      focusOwner: boolean,
+    ): Promise<void> {
+      const shows = {
+        showOpenDialog: sinon.stub(dialog, 'showOpenDialog').resolves({ canceled: true, filePaths: [] }),
+        showSaveDialog: sinon.stub(dialog, 'showSaveDialog').resolves({ canceled: true, filePath: '' }),
+      };
+
+      setApplication(new Application());
+      try {
+        for (const { channel, args, show } of cases) {
+          shows[show].resetHistory();
+          const handler = invokeHandlers.get(channel);
+          assert.isDefined(handler, channel);
+          await handler!({ sender } as unknown as IpcMainInvokeEvent, ...args, focusOwner);
+
+          assert.isTrue(shows[show].calledOnce, channel);
+          assert.strictEqual(shows[show].firstCall.args[0] as unknown, expected, channel);
+        }
+      } finally {
+        clearApplicationSingleton();
+      }
+    }
+
+    it('attach to the window that asked when RStudio is not focused', async () => {
+      const requester = fakeBrowserWindow() as unknown as BrowserWindow;
+      mainWindow.window = fakeBrowserWindow() as unknown as BrowserWindow;
+      const sender = {};
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(null);
+      sinon.stub(BrowserWindow, 'fromWebContents').callsFake((contents) => (contents === sender ? requester : null));
+
+      await assertFileDialogsShownOn(requester, sender, false);
+    });
+
+    it('attach to the focused window over the window that asked', async () => {
+      const focused = fakeBrowserWindow() as unknown as BrowserWindow;
+      const requester = fakeBrowserWindow() as unknown as BrowserWindow;
+      const sender = {};
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(focused);
+      sinon.stub(BrowserWindow, 'fromWebContents').callsFake((contents) => (contents === sender ? requester : null));
+
+      await assertFileDialogsShownOn(focused, sender, false);
+    });
+
+    it('attach to the sending window with focusOwner, over the focused window', async () => {
+      const owner = fakeBrowserWindow() as unknown as BrowserWindow;
+      const sender = {};
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(fakeBrowserWindow() as unknown as BrowserWindow);
+      sinon.stub(BrowserWindow, 'fromWebContents').returns(null);
+      const getSender = sinon.stub(callback, 'getSender').returns({ window: owner } as never);
+
+      await assertFileDialogsShownOn(owner, sender, true);
+      assert.deepEqual(
+        getSender.getCalls().map((call) => call.args[0]),
+        cases.map(({ channel }) => channel),
+      );
     });
   });
 
