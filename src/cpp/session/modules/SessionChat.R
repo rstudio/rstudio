@@ -622,6 +622,25 @@ delayedAssign(
    FALSE
 })
 
+#' Check whether a function was defined by a (non-base) package.
+#'
+#' Unlike `chat.hasTrustedCallerImpl()`, this also recognizes functions a
+#' package defines within its own functions, whose environment is a call
+#' frame rather than the namespace itself. A function defined by agent
+#' code leads back to the global environment instead.
+#'
+#' @param fn A function.
+#' @return `TRUE` if `fn` was defined within a non-base package namespace.
+.rs.addFunction("chat.isPackageFunction", function(fn)
+{
+   envir <- if (is.function(fn)) environment(fn)
+   if (is.null(envir))
+      return(FALSE)
+
+   envir <- topenv(envir)
+   isNamespace(envir) && !getNamespaceName(envir) %in% .rs.chat.basePackages
+})
+
 #' Validate a change of working directory.
 #'
 #' The working directory is one of the allowed roots (see
@@ -642,7 +661,13 @@ delayedAssign(
 #' @param caller The function that called `action`.
 .rs.addFunction("chat.validateWorkingDirectory", function(action, dir, caller)
 {
-   if (.rs.chat.isWorkingDirectoryCaller(caller) || .rs.chat.hasTrustedCallerImpl(list(caller)))
+   # hasTrustedCallerImpl contributes the chat.safeFunctions allowlist
+   exempt <-
+      .rs.chat.isWorkingDirectoryCaller(caller) ||
+      .rs.chat.isPackageFunction(caller) ||
+      .rs.chat.hasTrustedCallerImpl(list(caller))
+
+   if (exempt)
       return(TRUE)
 
    roots <- .rs.chat.allowedRoots()

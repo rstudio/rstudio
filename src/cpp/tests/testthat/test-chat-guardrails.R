@@ -593,6 +593,20 @@ test_that("package code can change the working directory", {
    expect_equal(.rs.chat.normalizePath(path), dirs$outside)
    expect_equal(workingDirectory(), dirs$user)
 
+   # as can a helper the package defines within one of its functions,
+   # whose environment is a call frame rather than the namespace
+   inDirectory <- asPackageFunction(function(dir, callback)
+   {
+      change <- function(dir) setwd(dir)
+      old <- change(dir)
+      on.exit(change(old), add = TRUE)
+      callback()
+   })
+
+   path <- .rs.chat.withGuardrails(inDirectory(dirs$outside, getwd))
+   expect_equal(.rs.chat.normalizePath(path), dirs$outside)
+   expect_equal(workingDirectory(), dirs$user)
+
 })
 
 test_that("setwd() within a function passed to package code is still checked", {
