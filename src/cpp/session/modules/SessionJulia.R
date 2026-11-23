@@ -104,10 +104,20 @@
    isTRUE(.rs.julia.state$active)
 })
 
-#' Is Julia Integration Enabled?
+#' Is Julia Integration Allowed?
 #'
 #' Administrators turn Julia integration off with 'julia-enabled=0' in
 #' rsession.conf; the Console's Julia then won't start.
+.rs.addFunction("julia.isAllowed", function()
+{
+   .Call("rs_juliaAllowed", PACKAGE = "(embedding)")
+})
+
+#' Is the Julia Console Enabled?
+#'
+#' The Julia console is experimental, and off until the user turns on the
+#' 'julia_console_enabled' preference. It stays off where the administrator
+#' doesn't allow Julia; see .rs.julia.isAllowed.
 .rs.addFunction("julia.isEnabled", function()
 {
    .Call("rs_juliaEnabled", PACKAGE = "(embedding)")
@@ -408,10 +418,19 @@
 #' console's helpers (RStudio.jl) into it if they aren't loaded yet.
 .rs.addFunction("julia.start", function()
 {
-   if (!.rs.julia.isEnabled())
+   if (!.rs.julia.isAllowed())
    {
       stop(
          "Julia integration has been disabled by the administrator.",
+         call. = FALSE
+      )
+   }
+
+   if (!.rs.julia.isEnabled())
+   {
+      stop(
+         "The Julia console is experimental, and is turned off.\n",
+         "Turn it on with \"Enable the Julia console\" in the Command Palette.",
          call. = FALSE
       )
    }
@@ -421,6 +440,18 @@
       stop(
          "The 'JuliaConnectoR' package is required for the Julia console.\n",
          "Install it with install.packages(\"JuliaConnectoR\").",
+         call. = FALSE
+      )
+   }
+
+   # the console speaks JuliaConnectoR's protocol itself, with the package's
+   # internals; say so up front if this version has moved them
+   missing <- .rs.julia.missingConnectoRInternals(asNamespace("JuliaConnectoR"))
+   if (length(missing))
+   {
+      stop(
+         sprintf("The Julia console doesn't support JuliaConnectoR %s ", utils::packageVersion("JuliaConnectoR")),
+         sprintf("(it has no %s).", paste(sQuote(missing, FALSE), collapse = ", ")),
          call. = FALSE
       )
    }
@@ -614,6 +645,40 @@
    NULL
 })
 
+#' Which JuliaConnectoR Internals the Console Needs Are Missing?
+#'
+#' @param jc JuliaConnectoR's namespace.
+#'
+#' @return The names of the internals the console uses that `jc` lacks, or
+#'   has as something else than the console expects.
+.rs.addFunction("julia.missingConnectoRInternals", function(jc)
+{
+   functions <- c(
+      "juliaConnection", "getJuliaExecutablePath", "getJuliaEnv",
+      "readElement", "readString", "readCall", "answerCallback"
+   )
+
+   # calls are written with writeCallMessage() where there is one; see
+   # .rs.julia.callImpl
+   if (!is.function(jc[["writeCallMessage"]]))
+      functions <- c(functions, "writeString", "writeList")
+
+   indicators <- c(
+      "CALL_INDICATOR", "RESULT_INDICATOR", "FAIL_INDICATOR",
+      "STDOUT_INDICATOR", "STDERR_INDICATOR"
+   )
+
+   isFunction <- vapply(functions, function(name) is.function(jc[[name]]), logical(1L))
+   isIndicator <- vapply(indicators, function(name) is.raw(jc[[name]]), logical(1L))
+   missing <- c(functions[!isFunction], indicators[!isIndicator])
+
+   # the connection, the communicator and the callbacks are kept here
+   if (!is.environment(jc[["pkgLocal"]]))
+      missing <- c(missing, "pkgLocal")
+
+   missing
+})
+
 #' Have JuliaConnectoR Start the Console's Julia Server
 #'
 #' While the console starts Julia, JuliaConnectoR's juliaConnection() is
@@ -625,17 +690,6 @@
 #'   console has started Julia.
 .rs.addFunction("julia.useConsoleServer", function()
 {
-   jc <- asNamespace("JuliaConnectoR")
-   required <- c("juliaConnection", "getJuliaExecutablePath", "getJuliaEnv")
-   found <- vapply(mget(required, envir = jc, ifnotfound = list(NULL)), is.function, logical(1L))
-   if (!all(found))
-   {
-      stop(
-         sprintf("The Julia console doesn't support JuliaConnectoR %s.", utils::packageVersion("JuliaConnectoR")),
-         call. = FALSE
-      )
-   }
-
    .rs.replaceBinding("juliaConnection", "JuliaConnectoR", .rs.julia.connectoRConnection)
 })
 

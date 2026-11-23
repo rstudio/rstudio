@@ -36,6 +36,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #define R_NO_REMAP
 #include <Rinternals.h>
@@ -111,6 +112,11 @@ SEXP rs_juliaKill(SEXP pidSEXP)
    return R_NilValue;
 }
 
+SEXP rs_juliaAllowed()
+{
+   return Rf_ScalarLogical(isAllowed());
+}
+
 SEXP rs_juliaEnabled()
 {
    return Rf_ScalarLogical(isEnabled());
@@ -159,9 +165,14 @@ bool isSuspendable()
    return s_juliaPid == 0 || !isProcessRunning(s_juliaPid);
 }
 
-bool isEnabled()
+bool isAllowed()
 {
    return session::options().juliaEnabled();
+}
+
+bool isEnabled()
+{
+   return isAllowed() && prefs::userPrefs().juliaConsoleEnabled();
 }
 
 bool isReplActive()
@@ -181,6 +192,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_juliaReadConsole, 1);
    RS_REGISTER_CALL_METHOD(rs_juliaInterrupt, 1);
    RS_REGISTER_CALL_METHOD(rs_juliaKill, 1);
+   RS_REGISTER_CALL_METHOD(rs_juliaAllowed, 0);
    RS_REGISTER_CALL_METHOD(rs_juliaEnabled, 0);
    RS_REGISTER_CALL_METHOD(rs_juliaSetProcess, 1);
    RS_REGISTER_CALL_METHOD(rs_juliaIsSuspendable, 0);

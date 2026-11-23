@@ -18,6 +18,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
@@ -27,6 +28,8 @@ import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
@@ -66,9 +69,11 @@ public class ConsoleLanguageTracker
                                  Binder binder,
                                  EventBus events,
                                  DependencyManager depman,
-                                 ConsoleServerOperations server)
+                                 ConsoleServerOperations server,
+                                 UserPrefs prefs)
    {
       session_ = session;
+      prefs_ = prefs;
       commands_ = commands;
       events_ = events;
       depman_ = depman;
@@ -244,7 +249,23 @@ public class ConsoleLanguageTracker
    public void onSessionInit(SessionInitEvent event)
    {
       setLanguage(session_.getSessionInfo().getConsoleLanguage());
-      commands_.consoleActivateJulia().setVisible(session_.getSessionInfo().getJuliaEnabled());
+
+      // (bind() also runs the handler now)
+      prefs_.juliaConsoleEnabled().bind((Boolean enabled) ->
+      {
+         commands_.consoleActivateJulia().setVisible(isJuliaEnabled());
+      });
+   }
+
+   // Does the Console run Julia? The Julia console is experimental: the user
+   // turns it on (julia_console_enabled), where the administrator allows
+   // Julia (julia-enabled). Otherwise Julia is treated as it was before the
+   // Console could run it.
+   public static boolean isJuliaEnabled()
+   {
+      SessionInfo info = RStudioGinjector.INSTANCE.getSession().getSessionInfo();
+      UserPrefs prefs = RStudioGinjector.INSTANCE.getUserPrefs();
+      return info != null && info.getJuliaAllowed() && prefs.juliaConsoleEnabled().getValue();
    }
 
    @Override
@@ -317,6 +338,7 @@ public class ConsoleLanguageTracker
 
    // Injected ----
    private final Session session_;
+   private final UserPrefs prefs_;
    private final Commands commands_;
    private final EventBus events_;
    private final DependencyManager depman_;

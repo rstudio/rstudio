@@ -52,15 +52,38 @@ test_that("bytes that aren't UTF-8 aren't held back", {
    expect_identical(.rs.julia.completeUtf8Length(bytes), length(bytes))
 })
 
+# Turn the Julia console on (the 'julia_console_enabled' preference) for the
+# rest of the calling test.
+localJuliaConsole <- function(envir = parent.frame())
+{
+   original <- .rs.api.readRStudioPreference("julia_console_enabled")
+   withr::defer(.rs.api.writeRStudioPreference("julia_console_enabled", original), envir = envir)
+   .rs.api.writeRStudioPreference("julia_console_enabled", TRUE)
+}
+
+test_that("Julia won't start until the user turns the Julia console on", {
+   # the Julia console is experimental: off by default
+   expect_false(.rs.julia.isEnabled())
+   expect_error(.rs.julia.start(), "is turned off")
+   expect_error(.rs.julia.repl(quiet = TRUE), "is turned off")
+   expect_false(.rs.julia.replIsActive())
+
+   localJuliaConsole()
+   expect_true(.rs.julia.isEnabled())
+})
+
 test_that("Julia won't start when an administrator turns it off", {
    # julia-enabled defaults to on
-   expect_true(.rs.julia.isEnabled())
+   expect_true(.rs.julia.isAllowed())
+
+   # the administrator's choice comes before the user's
+   localJuliaConsole()
 
    # testthat can't mock bindings in the locked tools:rstudio environment
    rsEnv <- as.environment("tools:rstudio")
-   original <- get(".rs.julia.isEnabled", envir = rsEnv)
-   on.exit(assign(".rs.julia.isEnabled", original, envir = rsEnv), add = TRUE)
-   assign(".rs.julia.isEnabled", function() FALSE, envir = rsEnv)
+   original <- get(".rs.julia.isAllowed", envir = rsEnv)
+   on.exit(assign(".rs.julia.isAllowed", original, envir = rsEnv), add = TRUE)
+   assign(".rs.julia.isAllowed", function() FALSE, envir = rsEnv)
 
    expect_error(.rs.julia.start(), "disabled by the administrator")
    expect_error(.rs.julia.repl(quiet = TRUE), "disabled by the administrator")
@@ -87,6 +110,28 @@ test_that("a session with a running Julia isn't suspended", {
    expect_true(juliaIsSuspendable())
 })
 
+test_that("a JuliaConnectoR without the internals the console uses is told apart", {
+   expect_setequal(
+      .rs.julia.missingConnectoRInternals(new.env()),
+      c(
+         "juliaConnection", "getJuliaExecutablePath", "getJuliaEnv",
+         "readElement", "readString", "readCall", "answerCallback",
+         "writeString", "writeList",
+         "CALL_INDICATOR", "RESULT_INDICATOR", "FAIL_INDICATOR",
+         "STDOUT_INDICATOR", "STDERR_INDICATOR",
+         "pkgLocal"
+      )
+   )
+
+   # with writeCallMessage(), the console doesn't write a call's parts itself
+   newer <- list2env(list(writeCallMessage = function(name, args) NULL))
+   missing <- .rs.julia.missingConnectoRInternals(newer)
+   expect_false(any(c("writeString", "writeList", "writeCallMessage") %in% missing))
+
+   skip_if_not_installed("JuliaConnectoR")
+   expect_identical(.rs.julia.missingConnectoRInternals(asNamespace("JuliaConnectoR")), character())
+})
+
 test_that("the help handler only answers completion help", {
    expect_identical(.rs.julia.helpHandler("url", "println", "Main"), "")
    expect_null(.rs.julia.helpHandler("parameter", NULL, "Main"))
@@ -95,10 +140,11 @@ test_that("the help handler only answers completion help", {
    expect_null(.rs.julia.helpHandler("completion", "length", ""))
 })
 
-# Skip a test that needs a live Julia the console supports. The tests stop
+# Skip a test that needs a live Julia the console supports, and turn the
+# Julia console on for the rest of a test that isn't skipped. The tests stop
 # Julia when they're done; don't take a running session with them, whether
 # the console's or one started through JuliaConnectoR directly.
-skipUnlessJulia <- function()
+skipUnlessJulia <- function(envir = parent.frame())
 {
    skip_if_not_installed("JuliaConnectoR")
    skip_if(is.null(.rs.julia.executable()), "Julia isn't installed")
@@ -115,6 +161,8 @@ skipUnlessJulia <- function()
 
    skip_if(!is.null(.rs.julia.state$pid), "a Julia session is already running")
    skip_if(!is.null(asNamespace("JuliaConnectoR")$pkgLocal$con), "a Julia session is already running")
+
+   localJuliaConsole(envir)
 }
 
 test_that("completions and their help come from Julia", {

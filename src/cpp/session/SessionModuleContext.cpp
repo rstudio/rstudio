@@ -3662,8 +3662,8 @@ std::string getActiveLanguage()
 
 Error adaptToLanguage(const std::string& language)
 {
-   // an administrator turned Julia off (julia-enabled): there is no Julia
-   // console to switch to
+   // with the Julia console off (see modules::julia::isEnabled), there is no
+   // Julia console to switch to
    if (language == "Julia" && !modules::julia::isEnabled())
       return Success();
 

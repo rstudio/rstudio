@@ -30,6 +30,10 @@ namespace modules {
 namespace julia {
 
 // has the administrator left Julia integration on (julia-enabled)?
+bool isAllowed();
+
+// is Julia allowed, and has the user turned the Julia console on
+// (julia_console_enabled)?
 bool isEnabled();
 
 // is the console's Julia REPL (SessionJulia.R) reading input?

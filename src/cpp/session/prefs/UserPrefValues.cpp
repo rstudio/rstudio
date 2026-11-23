@@ -4079,6 +4079,19 @@ core::Error UserPrefValues::setConsoleHighlightConditions(std::string val)
    return writePref("console_highlight_conditions", val);
 }
 
+/**
+ * Whether the Console can run Julia, through the JuliaConnectoR package. When set, Julia scripts and Julia chunks run in the Console's Julia.
+ */
+bool UserPrefValues::juliaConsoleEnabled()
+{
+   return readPref<bool>("julia_console_enabled");
+}
+
+core::Error UserPrefValues::setJuliaConsoleEnabled(bool val)
+{
+   return writePref("julia_console_enabled", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -4394,6 +4407,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kReformatOnSave,
       kProjectUserDataDirectory,
       kConsoleHighlightConditions,
+      kJuliaConsoleEnabled,
    });
 }
 

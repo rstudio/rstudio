@@ -70,8 +70,8 @@ enum ChunkExecState
    ChunkExecCancelled = 2
 };
 
-// Does the console's Julia run chunks with the julia engine? Not when an
-// administrator turned Julia off (julia-enabled): those chunks then run
+// Does the console's Julia run chunks with the julia engine? Not with the
+// Julia console off (see modules::julia::isEnabled): those chunks then run
 // through knitr's julia engine, like any other engine without a console
 bool isJuliaConsoleEngine(const std::string& engine)
 {

@@ -519,6 +519,7 @@ namespace prefs {
 #define kConsoleHighlightConditionsErrorsWarnings "errors_warnings"
 #define kConsoleHighlightConditionsErrors "errors"
 #define kConsoleHighlightConditionsNone "none"
+#define kJuliaConsoleEnabled "julia_console_enabled"
 
 class UserPrefValues: public Preferences
 {
@@ -2396,6 +2397,12 @@ public:
     */
    std::string consoleHighlightConditions();
    core::Error setConsoleHighlightConditions(std::string val);
+
+   /**
+    * Whether the Console can run Julia, through the JuliaConnectoR package. When set, Julia scripts and Julia chunks run in the Console's Julia.
+    */
+   bool juliaConsoleEnabled();
+   core::Error setJuliaConsoleEnabled(bool val);
 
 };
 

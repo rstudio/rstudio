@@ -356,6 +356,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String REFORMAT_ON_SAVE = "reformat_on_save";
    public static final String PROJECT_USER_DATA_DIRECTORY = "project_user_data_directory";
    public static final String CONSOLE_HIGHLIGHT_CONDITIONS = "console_highlight_conditions";
+   public static final String JULIA_CONSOLE_ENABLED = "julia_console_enabled";
 
    /**
     * Whether to run .Rprofile again after resuming a suspended R session.
@@ -4773,6 +4774,18 @@ public class UserPrefsAccessor extends Prefs
    public final static String CONSOLE_HIGHLIGHT_CONDITIONS_ERRORS = "errors";
    public final static String CONSOLE_HIGHLIGHT_CONDITIONS_NONE = "none";
 
+   /**
+    * Whether the Console can run Julia, through the JuliaConnectoR package. When set, Julia scripts and Julia chunks run in the Console's Julia.
+    */
+   public PrefValue<Boolean> juliaConsoleEnabled()
+   {
+      return bool(
+         "julia_console_enabled",
+         _constants.juliaConsoleEnabledTitle(), 
+         _constants.juliaConsoleEnabledDescription(), 
+         false);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -5399,6 +5412,8 @@ public class UserPrefsAccessor extends Prefs
          projectUserDataDirectory().setValue(layer, source.getString("project_user_data_directory"));
       if (source.hasKey("console_highlight_conditions"))
          consoleHighlightConditions().setValue(layer, source.getString("console_highlight_conditions"));
+      if (source.hasKey("julia_console_enabled"))
+         juliaConsoleEnabled().setValue(layer, source.getBool("julia_console_enabled"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -5715,6 +5730,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(reformatOnSave());
       prefs.add(projectUserDataDirectory());
       prefs.add(consoleHighlightConditions());
+      prefs.add(juliaConsoleEnabled());
       return prefs;
    }
    

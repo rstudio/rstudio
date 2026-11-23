@@ -39,6 +39,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleHistoryAddedEvent;
+import org.rstudio.studio.client.workbench.views.console.shell.ConsoleLanguageTracker;
 import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkRowExecState;
@@ -585,10 +586,9 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       boolean requiresPython = false;
       boolean requiresJulia = false;
 
-      // with Julia turned off by the administrator, Julia chunks run through
-      // knitr's julia engine (NotebookQueue.cpp), which needs no JuliaConnectoR
-      boolean juliaEnabled =
-            RStudioGinjector.INSTANCE.getSession().getSessionInfo().getJuliaEnabled();
+      // with the Julia console off, Julia chunks run through knitr's julia
+      // engine (NotebookQueue.cpp), which needs no JuliaConnectoR
+      boolean juliaEnabled = ConsoleLanguageTracker.isJuliaEnabled();
 
       for (NotebookQueueUnit unit : JsUtil.asIterable(queue_.getUnits()))
       {

@@ -7510,10 +7510,10 @@ public class TextEditingTarget implements
          if (chunkLanguage == null || !isExecutableChunk(scope))
             continue;
 
-         // with Julia turned off by the administrator, the console has no
-         // Julia: skip its chunks, as those of other engines it can't run
+         // with the Julia console off, the console has no Julia: skip its
+         // chunks, as those of other engines it can't run
          if (StringUtil.equals(chunkLanguage, ConsoleLanguageTracker.LANGUAGE_JULIA) &&
-             !session_.getSessionInfo().getJuliaEnabled())
+             !ConsoleLanguageTracker.isJuliaEnabled())
          {
             continue;
          }

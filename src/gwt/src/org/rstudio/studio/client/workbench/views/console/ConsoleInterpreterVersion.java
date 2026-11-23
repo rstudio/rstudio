@@ -135,7 +135,7 @@ public class ConsoleInterpreterVersion
                });
             }));
 
-            if (session_.getSessionInfo().getJuliaEnabled())
+            if (ConsoleLanguageTracker.isJuliaEnabled())
             {
                menu.addItem(new MenuItem("Julia", () -> {
                   tracker_.adaptToLanguage(ConsoleLanguageTracker.LANGUAGE_JULIA, () -> {

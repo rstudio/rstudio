@@ -318,7 +318,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    
    // get current console language
    sessionInfo["console_language"] = module_context::getActiveLanguage();
-   sessionInfo["julia_enabled"] = modules::julia::isEnabled();
+   sessionInfo["julia_allowed"] = modules::julia::isAllowed();
 
    // the save action a quit or project close would take right now
    sessionInfo["save_action"] = modules::dirty::saveAction();

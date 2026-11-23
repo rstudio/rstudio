@@ -17,10 +17,9 @@ package org.rstudio.studio.client.common.filetypes;
 import java.util.HashSet;
 
 import org.rstudio.core.client.command.AppCommand;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.views.console.shell.ConsoleLanguageTracker;
 
 import com.google.gwt.resources.client.ImageResource;
 
@@ -112,8 +111,7 @@ public class JuliaFileType extends TextFileType
 
    private static boolean isJuliaEnabled()
    {
-      SessionInfo info = RStudioGinjector.INSTANCE.getSession().getSessionInfo();
-      return info != null && info.getJuliaEnabled();
+      return ConsoleLanguageTracker.isJuliaEnabled();
    }
 
    // A Julia file is included without echo, and can't run as an R job, so
