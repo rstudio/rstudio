@@ -82,6 +82,12 @@ protected:
       return socket_;
    }
 
+   // which user the process at the other end of the connection runs as
+   virtual Error connectedPeerIdentity(core::system::user::UserIdentity* pIdentity)
+   {
+      return core::system::user::socketPeerIdentity(socket().native_handle(), pIdentity);
+   }
+
 private:
 
    virtual void connectAndWriteRequest()
@@ -165,7 +171,7 @@ private:
          return true;
 
       core::system::user::UserIdentity peer;
-      Error error = core::system::user::socketPeerIdentity(socket().native_handle(), &peer);
+      Error error = connectedPeerIdentity(&peer);
       if (error)
       {
          *pError = systemError(boost::system::errc::permission_denied, error, ERROR_LOCATION);

@@ -846,23 +846,14 @@ bool shouldBufferLocalStreamResponse(const http::Response& response)
 
 Error userIdForUsername(const std::string& username, UidType* pUID)
 {
-   static core::thread::ThreadsafeMap<std::string, UidType> cache;
+   // not cached here: getUserFromUsername() has a cache, which expires and is
+   // dropped when the user signs out, so a uid is looked up again after that
+   core::system::User user;
+   Error error = system::getUserFromUsername(username, user);
+   if (error)
+      return error;
 
-   if (cache.contains(username))
-   {
-      *pUID = cache.get(username);
-   }
-   else
-   {
-      core::system::User user;
-      Error error = system::getUserFromUsername(username, user);
-      if (error)
-         return error;
-
-      *pUID = user.getUserId();
-      cache.set(username, *pUID);
-   }
-
+   *pUID = user.getUserId();
    return Success();
 }
 
