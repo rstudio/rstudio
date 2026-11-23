@@ -184,6 +184,7 @@ body.windows .breadcrumb table.path span {
 .filePane .breadcrumb table.path .rstudio-HyperlinkLabel,
 .filePane .breadcrumb table.path span {
    box-sizing: border-box;
+   min-width: 24px;
    height: 24px;
 }
 
