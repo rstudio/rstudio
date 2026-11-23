@@ -86,7 +86,6 @@ import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.SessionOpener;
-import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.prefs.model.LocaleCookie;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
@@ -1194,12 +1193,6 @@ public class Application implements ApplicationEventHandlers
          commands_.uploadFile().remove();
       }
 
-      // disable external publishing if requested
-      if (!SessionUtils.showExternalPublishUi(session_, userState_.get()))
-      {
-         commands_.publishHTML().remove();
-      }
-
       // remove knit params if they aren't supported
       if (!sessionInfo.getKnitParamsAvailable())
          commands_.knitWithParameters().remove();
@@ -1235,7 +1228,6 @@ public class Application implements ApplicationEventHandlers
       }
       else
       {
-         commands_.importDatasetFromCsv().remove();
          commands_.importDatasetFromCsvUsingBase().remove();
          commands_.importDatasetFromCsvUsingReadr().remove();
          commands_.importDatasetFromSAV().remove();

@@ -28,8 +28,8 @@ Run RStudio unit tests. Available flags:
 --scope          Run only tests with the given scope (core, rserver, rsession, r).
 --filter         Run a subset of R tests, matching the requested filter.
 --only-database  Restrict the rserver scope to the database-backed fixture tests.
---www-port       Port for the rsession and r scopes' session to listen on
-                 (default: a free port, chosen for each scope).
+--www-port       Port for the rsession and r scopes' session to listen on in
+                 desktop builds (default: 0, a free port the OS picks).
 EOF
 
 section () {
@@ -39,28 +39,6 @@ section () {
 error () {
     echo -e "\033[1;91mERROR: $1\033[0m";
     exit 1
-}
-
-# Prints a port that nothing answers on at 127.0.0.1. Desktop builds run the
-# session scopes in desktop mode, which listens there on TCP www-port (8787
-# unless set), and a dev server or another test run may already hold that.
-# Server mode (rsession-dev.conf) listens on a socket in RS_SESSION_TMP_DIR
-# instead.
-findFreePort() {
-   local PORT
-   for _ in {1..20}; do
-      # below the ephemeral ranges (Linux 32768+, macOS 49152+), whose ports
-      # outgoing connections take
-      PORT=$((20000 + RANDOM % 12768))
-
-      # a refused connection means nothing listens there
-      if ! (exec 3<> "/dev/tcp/127.0.0.1/${PORT}") 2> /dev/null; then
-         echo "${PORT}"
-         return 0
-      fi
-   done
-
-   return 1
 }
 
 setupSessionTestEnvironment() {
@@ -83,12 +61,6 @@ setupSessionTestEnvironment() {
       error "Unable to create temporary session stream directory"
    export RS_SESSION_TMP_DIR
    SESSION_TMP_DIRS+=("${RS_SESSION_TMP_DIR}")
-
-   SESSION_WWW_PORT="${WWW_PORT}"
-   if [ -z "${SESSION_WWW_PORT}" ]; then
-      SESSION_WWW_PORT=$(findFreePort) ||
-         error "Unable to find a free port for the session tests"
-   fi
 }
 
 # session stream directories created by setupSessionTestEnvironment
@@ -459,10 +431,9 @@ while [ $# -gt 0 ]; do
    "--www-port")
 
       # rsession reports a bad port only when it fails to bind it, which server
-      # mode never does; 0 binds, but breaks requests back into a desktop-mode
-      # session, which go to the configured port
-      if ! [[ "$2" =~ ^[1-9][0-9]{0,4}$ ]] || [ "$2" -gt 65535 ]; then
-         echo "Usage: ./rstudio-tests --www-port <port>, a port number in 1-65535"
+      # mode never does
+      if ! [[ "$2" =~ ^(0|[1-9][0-9]{0,4})$ ]] || [ "$2" -gt 65535 ]; then
+         echo "Usage: ./rstudio-tests --www-port <port>, a port number in 0-65535"
          exit 1
       fi
 
@@ -577,12 +548,16 @@ if has-scope "rserver"; then
 
 fi
 
-# Setup for rsession tests
+# Setup for rsession tests. Desktop mode listens on TCP www-port, so take one
+# the OS picks (0): a dev server or another test run may hold any fixed port.
+# Server mode listens on a socket in RS_SESSION_TMP_DIR instead, and has no
+# use for the port.
 if [ -e "@CMAKE_CURRENT_BINARY_DIR@/conf/rsession-dev.conf" ]; then
    SESSION_CONF_FILE="@CMAKE_CURRENT_BINARY_DIR@/conf/rsession-dev.conf"
 else
    SESSION_CONF_FILE="@CMAKE_CURRENT_BINARY_DIR@/conf/rdesktop-dev.conf"
 fi
+SESSION_WWW_PORT="${WWW_PORT:-0}"
 
 if has-scope "rsession"; then
 

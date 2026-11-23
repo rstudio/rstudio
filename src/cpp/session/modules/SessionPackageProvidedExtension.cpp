@@ -269,13 +269,21 @@ void invokeHook(boost::shared_ptr<source_database::SourceDocument> pDoc,
    SEXP hookSEXP = r::options::getOption(hookName);
    if (hookSEXP == R_NilValue)
       return;
-   
+
+   // R can't hold a document with a nul character, and would raise an error
+   // creating it, in the middle of the request that opened or saved the
+   // document; the hook isn't run for one
    r::sexp::Protect protect;
    r::sexp::ListBuilder builder(&protect);
-   builder.add("id", pDoc->id());
-   builder.add("path", pDoc->path());
-   builder.add("contents", pDoc->contents());
-   
+   {
+      r::sexp::NulCheckScope nulCheck;
+      builder.add("id", pDoc->id());
+      builder.add("path", pDoc->path());
+      builder.add("contents", pDoc->contents());
+      if (nulCheck.foundNul())
+         return;
+   }
+
    Error error = r::exec::RFunction(".rs.ppe.invokeHook")
          .addParam("hook", hookSEXP)
          .addParam("data", builder)

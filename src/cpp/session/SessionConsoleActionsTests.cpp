@@ -16,6 +16,10 @@
 #include <r/session/RConsoleActions.hpp>
 
 #include <algorithm>
+#include <cstddef>
+#include <limits>
+#include <memory>
+#include <new>
 #include <random>
 #include <string>
 #include <vector>
@@ -33,6 +37,11 @@
 #include <core/FileSerializer.hpp>
 #include <core/StringUtils.hpp>
 #include <core/text/AnsiCodeParser.hpp>
+
+#include <session/SessionClientEvent.hpp>
+
+#include "SessionClientEventQueue.hpp"
+#include "modules/SessionConsole.hpp"
 
 using namespace rstudio::core;
 
@@ -52,7 +61,123 @@ std::string consoleData(json::Object& actionsJson)
    return data;
 }
 
+// the largest allocation, in actions, that LimitedAllocator provides
+std::size_t s_allocationLimit = std::numeric_limits<std::size_t>::max();
+
+// refuses allocations over s_allocationLimit, as the OS refuses a block
+// larger than it can commit
+template <typename T>
+struct LimitedAllocator
+{
+   typedef T value_type;
+
+   LimitedAllocator() = default;
+
+   template <typename U>
+   LimitedAllocator(const LimitedAllocator<U>&) {}
+
+   T* allocate(std::size_t n)
+   {
+      if (n > s_allocationLimit)
+         throw std::bad_alloc();
+      return std::allocator<T>().allocate(n);
+   }
+
+   void deallocate(T* p, std::size_t n)
+   {
+      std::allocator<T>().deallocate(p, n);
+   }
+};
+
+template <typename T, typename U>
+bool operator==(const LimitedAllocator<T>&, const LimitedAllocator<U>&)
+{
+   return true;
+}
+
+template <typename T, typename U>
+bool operator!=(const LimitedAllocator<T>&, const LimitedAllocator<U>&)
+{
+   return false;
+}
+
+ConsoleAction outputLine(int i)
+{
+   return ConsoleAction{ kConsoleActionOutput, "line " + std::to_string(i) + "\n" };
+}
+
 } // anonymous namespace
+
+TEST(ConsoleActionsGrowthTest, FailedGrowthKeepsTheNewestActions)
+{
+   typedef boost::circular_buffer_space_optimized<
+      ConsoleAction, LimitedAllocator<ConsoleAction>> Actions;
+
+   // as ConsoleActions holds them: a limit far beyond what can be allocated
+   const std::size_t allocationLimit = 100;
+   s_allocationLimit = allocationLimit;
+   Actions actions(std::numeric_limits<int>::max());
+
+   // add actions until the storage can't grow any further
+   int added = 0;
+   while (pushConsoleAction(actions, outputLine(added++)))
+      ASSERT_LT(added, 1000) << "the storage grew past the allocation limit";
+
+   // the capacity is now what was allocated, and the action that didn't fit
+   // replaced the oldest one
+   std::size_t size = actions.size();
+   ASSERT_GT(size, 1u);
+   EXPECT_LE(size, allocationLimit);
+   EXPECT_EQ(size, static_cast<std::size_t>(actions.capacity()));
+   EXPECT_EQ(outputLine(added - 1).data, actions.back().data);
+   EXPECT_EQ(outputLine(added - static_cast<int>(size)).data, actions.front().data);
+
+   // the storage is not asked to grow again: before, each of these pushes
+   // would have requested the same block and failed with it
+   for (int i = 0; i < 250; i++)
+      ASSERT_TRUE(pushConsoleAction(actions, outputLine(added++)));
+
+   // in order, ending at the newest
+   ASSERT_EQ(size, actions.size());
+   int expected = added - static_cast<int>(size);
+   for (const ConsoleAction& action : actions)
+      EXPECT_EQ(outputLine(expected++).data, action.data);
+
+   // setting the capacity again, as a change to the pref does, lets the
+   // storage grow once the memory is there
+   s_allocationLimit = std::numeric_limits<std::size_t>::max();
+   actions.rset_capacity(std::numeric_limits<int>::max());
+   EXPECT_TRUE(pushConsoleAction(actions, outputLine(added++)));
+   EXPECT_EQ(size + 1, actions.size());
+   EXPECT_EQ(outputLine(added - 1).data, actions.back().data);
+   EXPECT_EQ(outputLine(added - static_cast<int>(size) - 1).data, actions.front().data);
+}
+
+TEST(ConsoleActionsGrowthTest, FailedGrowthAfterClearKeepsTheCapacity)
+{
+   typedef boost::circular_buffer_space_optimized<
+      ConsoleAction, LimitedAllocator<ConsoleAction>> Actions;
+
+   const std::size_t hugeCapacity = std::numeric_limits<int>::max();
+   s_allocationLimit = std::numeric_limits<std::size_t>::max();
+   Actions actions(hugeCapacity);
+   for (int i = 0; i < 10; i++)
+      ASSERT_TRUE(pushConsoleAction(actions, outputLine(i)));
+
+   // as ConsoleActions::reset() does, freeing the storage; the first push
+   // after it then has to allocate
+   actions.clear();
+   s_allocationLimit = 0;
+   EXPECT_THROW(pushConsoleAction(actions, outputLine(10)), std::bad_alloc);
+   EXPECT_TRUE(actions.empty());
+   EXPECT_EQ(hugeCapacity, static_cast<std::size_t>(actions.capacity()));
+
+   // so a later push tries the allocation again
+   s_allocationLimit = std::numeric_limits<std::size_t>::max();
+   EXPECT_TRUE(pushConsoleAction(actions, outputLine(11)));
+   ASSERT_EQ(1u, actions.size());
+   EXPECT_EQ(outputLine(11).data, actions.front().data);
+}
 
 // NOTE: these tests drive the process-wide consoleActions() singleton, so
 // state is reset around each test to keep them order-independent
@@ -62,15 +187,18 @@ protected:
    void SetUp() override
    {
       consoleActions().reset();
+      originalCapacity_ = consoleActions().capacity();
       ASSERT_FALSE(FilePath::tempFilePath(tempFile_));
    }
 
    void TearDown() override
    {
       consoleActions().reset();
+      consoleActions().setCapacity(originalCapacity_);
       tempFile_.removeIfExists();
    }
 
+   int originalCapacity_ = 0;
    FilePath tempFile_;
 };
 
@@ -108,6 +236,67 @@ TEST_F(ConsoleActionsTest, ReducingCapacityKeepsNewestActions)
    EXPECT_EQ("line 10\nline 11\nline 12\nline 13\nline 14\n"
              "line 15\nline 16\nline 17\nline 18\nline 19\nline 20\n",
              consoleData(actionsJson));
+}
+
+TEST_F(ConsoleActionsTest, HugeCapacityIsNotAllocatedUpFront)
+{
+   ConsoleActions& actions = consoleActions();
+
+   // a scrollback limit meant as "unlimited" (the pref has no maximum).
+   // reserving all of it up front, tens of GB, fails where the OS won't
+   // provide that much: Windows commits it, and Linux refuses more than
+   // RAM + swap unless set to always overcommit. setCapacity() logs the
+   // failure and keeps the old capacity. macOS reserves it lazily, so there
+   // this passes either way (#19738)
+   int hugeCapacity = std::numeric_limits<int>::max();
+   actions.setCapacity(hugeCapacity);
+   EXPECT_EQ(hugeCapacity, actions.capacity());
+
+   // the storage grows as actions arrive, moving them as it does
+   for (int i = 0; i < 1000; i++)
+      actions.add(kConsoleActionOutput, "line " + std::to_string(i) + "\n");
+
+   json::Object actionsJson;
+   actions.asJson(&actionsJson);
+   json::Array dataArray = actionsJson["data"].getArray();
+   ASSERT_EQ(1000u, dataArray.getSize());
+   EXPECT_EQ("line 0\n", dataArray[0].getString());
+   EXPECT_EQ("line 999\n", dataArray[999].getString());
+}
+
+TEST_F(ConsoleActionsTest, HugeCapacityKeepsQueuedConsoleOutput)
+{
+   // drop output still queued from session startup
+   rstudio::session::ClientEventQueue& queue = rstudio::session::clientEventQueue();
+   queue.clear();
+
+   // the client event queue trims each batch of console output to the
+   // scrollback limit, so at INT_MAX it should keep all of it
+   consoleActions().setCapacity(std::numeric_limits<int>::max());
+   ASSERT_EQ(std::numeric_limits<int>::max(), consoleActions().capacity());
+
+   const std::string output = "line 0\nline 1\nline 2\n";
+   queue.add(rstudio::session::ClientEvent(
+      rstudio::session::client_events::kConsoleWriteOutput,
+      output));
+   queue.flush();
+   std::vector<rstudio::session::ClientEvent> events;
+   queue.remove(&events);
+
+   std::string sent;
+   for (const rstudio::session::ClientEvent& event : events)
+   {
+      if (event.type() == rstudio::session::client_events::kConsoleWriteOutput)
+      {
+         json::Object payload = event.data().getObject();
+         sent.append(payload[kConsoleText].getString());
+      }
+   }
+   EXPECT_EQ(output, sent);
+
+   json::Object actionsJson;
+   consoleActions().asJson(&actionsJson);
+   EXPECT_EQ(output, consoleData(actionsJson));
 }
 
 TEST_F(ConsoleActionsTest, ChunkingDoesNotSplitUtf8Sequences)

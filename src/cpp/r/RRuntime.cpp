@@ -93,6 +93,8 @@ SEXP (*R_findVarLocInFrame)(SEXP, SEXP) = nullptr;
 SEXP (*Rf_findVarInFrame)(SEXP, SEXP) = nullptr;
 SEXP (*Rf_findVar)(SEXP, SEXP) = nullptr;
 
+SEXP (*R_withCallingErrorHandler)(SEXP (*)(void*), void*, SEXP (*)(SEXP, void*), void*) = nullptr;
+
 SA_TYPE (*R_GetSaveAction)(void) = nullptr;
 SA_TYPE (*R_SetSaveAction)(SA_TYPE) = nullptr;
 
@@ -188,6 +190,8 @@ Error initialize()
    RS_IMPORT_FUNCTION_OPTIONAL(R_ParentEnv);
 
    RS_IMPORT_FUNCTION_OPTIONAL(R_findVarLocInFrame);
+
+   RS_IMPORT_FUNCTION_OPTIONAL(R_withCallingErrorHandler);
 
    RS_IMPORT_FUNCTION_OPTIONAL(R_GetSaveAction);
    RS_IMPORT_FUNCTION_OPTIONAL(R_SetSaveAction);
@@ -420,6 +424,36 @@ SEXP findVarInFrame(SEXP envSEXP, SEXP nameSEXP)
 SEXP findVar(SEXP nameSEXP, SEXP envSEXP)
 {
    return unboundToNull(s_findVar(nameSEXP, envSEXP));
+}
+
+bool lookupsForcePromises()
+{
+   return R_getVarEx != nullptr;
+}
+
+SEXP forcedPromiseValue(SEXP promiseSEXP)
+{
+   // a runtime that doesn't export PRVALUE reads as unforced, and the caller
+   // forces the promise as it otherwise would
+   if (PRVALUE == nullptr)
+      return nullptr;
+
+   SEXP valueSEXP = PRVALUE(promiseSEXP);
+   return valueSEXP == *s_pUnboundValue ? nullptr : valueSEXP;
+}
+
+bool hasCallingErrorHandler()
+{
+   return R_withCallingErrorHandler != nullptr;
+}
+
+SEXP withCallingErrorHandler(SEXP (*body)(void*), void* bodyData,
+                             SEXP (*handler)(SEXP, void*), void* handlerData)
+{
+   if (R_withCallingErrorHandler == nullptr)
+      return body(bodyData);
+
+   return R_withCallingErrorHandler(body, bodyData, handler, handlerData);
 }
 
 int getBindingType(SEXP symSEXP, SEXP envSEXP)
