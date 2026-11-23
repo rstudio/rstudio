@@ -31,21 +31,27 @@ public class CodeSearchOracleTests extends GWTTestCase
    // Narrowing the results for "exm" as the user goes on to type ":fizz".
    public void testXRefMatchesTextAfterColon()
    {
-      assertTrue(CodeSearchOracle.matchesQuery(xref("exm", "fizz"), "exm:fizz"));
-      assertFalse(CodeSearchOracle.matchesQuery(xref("exm", "buzz"), "exm:fizz"));
+      assertTrue(matches(xref("exm", "fizz"), "exm:fizz"));
+      assertFalse(matches(xref("exm", "buzz"), "exm:fizz"));
    }
 
    public void testFileIgnoresLineAndColumn()
    {
-      assertTrue(CodeSearchOracle.matchesQuery(file("addOne.R"), "addOne.R:10"));
-      assertTrue(CodeSearchOracle.matchesQuery(file("addOne.R"), "addOne.R:10:4"));
-      assertFalse(CodeSearchOracle.matchesQuery(file("addOne.R"), "subOne.R:10"));
+      assertTrue(matches(file("addOne.R"), "addOne.R:10"));
+      assertTrue(matches(file("addOne.R"), "addOne.R:10:4"));
+      assertFalse(matches(file("addOne.R"), "subOne.R:10"));
    }
 
    public void testFunctionMatchesWholeQuery()
    {
-      assertTrue(CodeSearchOracle.matchesQuery(function("addOne"), "addOne"));
-      assertFalse(CodeSearchOracle.matchesQuery(function("addOne"), "addOne:10"));
+      assertTrue(matches(function("addOne"), "addOne"));
+      assertFalse(matches(function("addOne"), "addOne:10"));
+   }
+
+   public void testWildcardMatchesText()
+   {
+      assertTrue(matches(function("addOne"), "add*ne"));
+      assertFalse(matches(function("addOne"), "add*x"));
    }
 
    public void testXRefScoresAgainstTextAfterColon()
@@ -64,9 +70,9 @@ public class CodeSearchOracleTests extends GWTTestCase
    public void testNamedXRefMatchesLabelOrName()
    {
       CodeSearchSuggestion theorem = xref("thm", "pyth", "Pythagoras");
-      assertTrue(CodeSearchOracle.matchesQuery(theorem, "thm:pyth"));
-      assertTrue(CodeSearchOracle.matchesQuery(theorem, "Pythag"));
-      assertFalse(CodeSearchOracle.matchesQuery(theorem, "Euclid"));
+      assertTrue(matches(theorem, "thm:pyth"));
+      assertTrue(matches(theorem, "Pythag"));
+      assertFalse(matches(theorem, "Euclid"));
    }
 
    // R functions send their signature as extra info; the query doesn't match it.
@@ -75,7 +81,7 @@ public class CodeSearchOracleTests extends GWTTestCase
       SourceItem item = JsonUtils.safeEval(
             "{\"type\": 1, \"name\": \"addOne\", \"extra_info\": \"(x)\", " +
             "\"context\": \"~/addOne.R\"}");
-      assertFalse(CodeSearchOracle.matchesQuery(new CodeSearchSuggestion(item, null), "x"));
+      assertFalse(matches(new CodeSearchSuggestion(item, null), "x"));
    }
 
    public void testNamedXRefRanksByName()
@@ -99,9 +105,15 @@ public class CodeSearchOracleTests extends GWTTestCase
    public void testWildcardDoesNotMatchName()
    {
       CodeSearchSuggestion theorem = xref("thm", "pyth", "Pythagoras");
-      assertFalse(CodeSearchOracle.matchesQuery(theorem, "Pyth*"));
+      assertFalse(matches(theorem, "Pyth*"));
       assertEquals(CodeSearchOracle.scoreMatch(xref("thm", "pyth"), "Pyth*"),
                    CodeSearchOracle.scoreMatch(theorem, "Pyth*"));
+   }
+
+   private static boolean matches(CodeSearchSuggestion suggestion, String query)
+   {
+      return CodeSearchOracle.matchesQuery(
+            suggestion, query, CodeSearchOracle.wildcardPattern(query));
    }
 
    private static CodeSearchSuggestion xref(String xrefType, String id)

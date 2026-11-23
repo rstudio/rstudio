@@ -70,18 +70,26 @@ public class CodeSearchOracle extends SuggestOracle
       return score;
    }
 
+   // The pattern for a query containing '*', or null for any other query.
+   static Pattern wildcardPattern(String query)
+   {
+      String queryLower = query.toLowerCase();
+      return queryLower.indexOf('*') == -1 ? null : patternForTerm(queryLower);
+   }
+
    // Whether a cached result also matches a longer query, by its text or,
-   // like a named theorem, by its name.
-   static boolean matchesQuery(CodeSearchSuggestion suggestion, String query)
+   // like a named theorem, by its name. `pattern` is wildcardPattern(query).
+   static boolean matchesQuery(CodeSearchSuggestion suggestion,
+                               String query,
+                               Pattern pattern)
    {
       if (matchesName(suggestion, query))
          return true;
 
       String text = suggestion.getMatchedString().toLowerCase();
-      String queryLower = query.toLowerCase();
-      if (queryLower.indexOf('*') != -1)
+      if (pattern != null)
       {
-         Match match = patternForTerm(queryLower).match(text, 0);
+         Match match = pattern.match(text, 0);
          return match != null && match.getIndex() == 0;
       }
 
@@ -211,11 +219,12 @@ public class CodeSearchOracle extends SuggestOracle
              request.getQuery().startsWith(res.getQuery()))
          {
             String query = request.getQuery();
+            Pattern pattern = wildcardPattern(query);
             ArrayList<CodeSearchSuggestion> suggestions = new ArrayList<>();
             for (int s=0; s<res.getSuggestions().size(); s++)
             {
                CodeSearchSuggestion sugg = res.getSuggestions().get(s);
-               if (matchesQuery(sugg, query))
+               if (matchesQuery(sugg, query, pattern))
                   suggestions.add(sugg);
             }
             
