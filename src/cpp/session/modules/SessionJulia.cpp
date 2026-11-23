@@ -21,6 +21,7 @@
 #ifdef _WIN32
 # include <windows.h>
 #else
+# include <errno.h>
 # include <signal.h>
 # include <sys/types.h>
 #endif
@@ -115,7 +116,48 @@ SEXP rs_juliaEnabled()
    return Rf_ScalarLogical(isEnabled());
 }
 
+// The console's Julia process, as SessionJulia.R reports it; 0 when there is
+// none. Kept here so that isSuspendable() needn't call into R.
+int s_juliaPid = 0;
+
+SEXP rs_juliaSetProcess(SEXP pidSEXP)
+{
+   int pid = Rf_isNull(pidSEXP) ? 0 : Rf_asInteger(pidSEXP);
+   s_juliaPid = (pid == NA_INTEGER || pid < 0) ? 0 : pid;
+   return R_NilValue;
+}
+
+bool isProcessRunning(int pid)
+{
+#ifdef _WIN32
+   HANDLE hProcess = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, static_cast<DWORD>(pid));
+   if (hProcess == nullptr)
+      return false;
+
+   DWORD exitCode = 0;
+   bool running = ::GetExitCodeProcess(hProcess, &exitCode) && exitCode == STILL_ACTIVE;
+   ::CloseHandle(hProcess);
+   return running;
+#else
+   // EPERM: there is such a process, though it isn't ours to signal
+   return ::kill(static_cast<pid_t>(pid), 0) == 0 || errno == EPERM;
+#endif
+}
+
+SEXP rs_juliaIsSuspendable()
+{
+   return Rf_ScalarLogical(isSuspendable());
+}
+
 } // anonymous namespace
+
+bool isSuspendable()
+{
+   // Julia's state can't be saved and restored as R's is, and Julia ends
+   // with R, so suspending would silently discard it. A Julia that has
+   // since gone (it was killed, say) has nothing left to lose.
+   return s_juliaPid == 0 || !isProcessRunning(s_juliaPid);
+}
 
 bool isEnabled()
 {
@@ -140,6 +182,8 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_juliaInterrupt, 1);
    RS_REGISTER_CALL_METHOD(rs_juliaKill, 1);
    RS_REGISTER_CALL_METHOD(rs_juliaEnabled, 0);
+   RS_REGISTER_CALL_METHOD(rs_juliaSetProcess, 1);
+   RS_REGISTER_CALL_METHOD(rs_juliaIsSuspendable, 0);
 
    ExecBlock initBlock;
    initBlock.addFunctions()

@@ -494,6 +494,9 @@
    state$partial    <- list()
    state$debugging  <- NULL
 
+   # a running Julia keeps the session from being suspended
+   .Call("rs_juliaSetProcess", state$pid, PACKAGE = "(embedding)")
+
    .rs.julia.debug("loaded the console's helpers into Julia %s (pid %d)", state$version, state$pid)
 
    invisible(TRUE)
@@ -1121,6 +1124,7 @@
    state <- .rs.julia.state
    pid <- state$pid
    state$pid <- NULL
+   .Call("rs_juliaSetProcess", NULL, PACKAGE = "(embedding)")
    state$partial <- list()
    .rs.julia.debug("stopping Julia (pid %s)", if (is.null(pid)) "unknown" else pid)
 

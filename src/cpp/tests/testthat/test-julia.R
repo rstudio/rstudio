@@ -67,6 +67,26 @@ test_that("Julia won't start when an administrator turns it off", {
    expect_false(.rs.julia.replIsActive())
 })
 
+juliaIsSuspendable <- function()
+{
+   .Call("rs_juliaIsSuspendable", PACKAGE = "(embedding)")
+}
+
+test_that("a session with a running Julia isn't suspended", {
+   on.exit(.Call("rs_juliaSetProcess", .rs.julia.state$pid, PACKAGE = "(embedding)"), add = TRUE)
+
+   # this R process stands in for a running Julia
+   .Call("rs_juliaSetProcess", Sys.getpid(), PACKAGE = "(embedding)")
+   expect_false(juliaIsSuspendable())
+
+   .Call("rs_juliaSetProcess", NULL, PACKAGE = "(embedding)")
+   expect_true(juliaIsSuspendable())
+
+   # a Julia that has since gone: no process has an ID this large
+   .Call("rs_juliaSetProcess", .Machine$integer.max, PACKAGE = "(embedding)")
+   expect_true(juliaIsSuspendable())
+})
+
 test_that("the help handler only answers completion help", {
    expect_identical(.rs.julia.helpHandler("url", "println", "Main"), "")
    expect_null(.rs.julia.helpHandler("parameter", NULL, "Main"))
@@ -330,9 +350,11 @@ test_that("only the console starts Julia with serve.jl", {
    .rs.julia.start()
    expect_match(JuliaConnectoR::juliaEval("PROGRAM_FILE"), "serve[.]jl$")
    expect_identical(jc$juliaConnection, original)
+   expect_false(juliaIsSuspendable())
 
    # JuliaConnectoR used directly, outside the console, is left alone
    .rs.julia.stop()
+   expect_true(juliaIsSuspendable())
    expect_match(JuliaConnectoR::juliaEval("PROGRAM_FILE"), "main[.]jl$")
 })
 

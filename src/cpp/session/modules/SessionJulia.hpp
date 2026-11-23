@@ -35,6 +35,9 @@ bool isEnabled();
 // is the console's Julia REPL (SessionJulia.R) reading input?
 bool isReplActive();
 
+// can the session be suspended without losing a running Julia's state?
+bool isSuspendable();
+
 core::Error initialize();
 
 } // end namespace julia
