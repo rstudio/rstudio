@@ -94,11 +94,14 @@ public class CodeSearchOracleTests extends GWTTestCase
                          xref("thm", "very-long-label-pq", "Pythagoras"), "pq"));
    }
 
-   // A cached result kept for its name under a wildcard ranks by that name.
-   public void testWildcardNameMatchRanksByName()
+   // The server reads '*' literally in cross-references, so a fresh search
+   // for "Pyth*" doesn't list the theorem; narrowing to it mustn't either.
+   public void testWildcardDoesNotMatchName()
    {
-      assertTrue(CodeSearchOracle.scoreMatch(xref("thm", "pyth", "Pythagoras"), "Pyth*") <
-                 CodeSearchOracle.scoreMatch(xref("thm", "pyth"), "Pyth*"));
+      CodeSearchSuggestion theorem = xref("thm", "pyth", "Pythagoras");
+      assertFalse(CodeSearchOracle.matchesQuery(theorem, "Pyth*"));
+      assertEquals(CodeSearchOracle.scoreMatch(xref("thm", "pyth"), "Pyth*"),
+                   CodeSearchOracle.scoreMatch(theorem, "Pyth*"));
    }
 
    private static CodeSearchSuggestion xref(String xrefType, String id)

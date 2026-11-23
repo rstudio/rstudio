@@ -61,9 +61,11 @@ public class CodeSearchOracle extends SuggestOracle
                              localQuery,
                              suggestion.isFileTarget());
 
-      String name = suggestion.getNameMatchedString();
-      if (!name.isEmpty() && matchesText(name, suggestion, query))
-         score = Math.min(score, scoreMatch(name, localQuery, false));
+      if (matchesName(suggestion, query))
+      {
+         score = Math.min(score,
+               scoreMatch(suggestion.getNameMatchedString(), localQuery, false));
+      }
 
       return score;
    }
@@ -72,24 +74,28 @@ public class CodeSearchOracle extends SuggestOracle
    // like a named theorem, by its name.
    static boolean matchesQuery(CodeSearchSuggestion suggestion, String query)
    {
-      String name = suggestion.getNameMatchedString();
-      return matchesText(suggestion.getMatchedString(), suggestion, query) ||
-             (!name.isEmpty() && matchesText(name, suggestion, query));
-   }
+      if (matchesName(suggestion, query))
+         return true;
 
-   private static boolean matchesText(String text,
-                                      CodeSearchSuggestion suggestion,
-                                      String query)
-   {
-      String textLower = text.toLowerCase();
+      String text = suggestion.getMatchedString().toLowerCase();
       String queryLower = query.toLowerCase();
       if (queryLower.indexOf('*') != -1)
       {
-         Match match = patternForTerm(queryLower).match(textLower, 0);
+         Match match = patternForTerm(queryLower).match(text, 0);
          return match != null && match.getIndex() == 0;
       }
 
-      return StringUtil.isSubsequence(textLower, queryFor(suggestion, query), true);
+      return StringUtil.isSubsequence(text, queryFor(suggestion, query), true);
+   }
+
+   // The server finds a cross-reference by its name only for a query without
+   // a '*', since it reads a '*' in the query literally there.
+   private static boolean matchesName(CodeSearchSuggestion suggestion, String query)
+   {
+      String name = suggestion.getNameMatchedString();
+      return !name.isEmpty() &&
+             query.indexOf('*') == -1 &&
+             StringUtil.isSubsequence(name, query, true);
    }
 
    // A file query may end in :<line>:<col> (see navigationTarget), so the
