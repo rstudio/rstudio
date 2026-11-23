@@ -644,21 +644,23 @@ delayedAssign(
    envir <- if (is.function(fn)) environment(fn)
 
    toolsEnv <- .rs.toolsEnv()
-   while (is.environment(envir))
-   {
-      if (identical(envir, globalenv()) || identical(envir, emptyenv()))
-         return(FALSE)
+   searchEnvs <- lapply(seq_along(search()), as.environment)
 
+   while (is.environment(envir) && !identical(envir, emptyenv()))
+   {
       if (identical(envir, toolsEnv))
          return(TRUE)
 
       if (isNamespace(envir))
          return(!getNamespaceName(envir) %in% .rs.chat.basePackages)
 
-      # any other environment on the search path (e.g. one the user
-      # attached) has tools:rstudio among its enclosures too
-      if (!is.null(attr(envir, "name")))
-         return(FALSE)
+      # the global environment, and any other on the search path (e.g.
+      # one the user attached), has tools:rstudio among its enclosures
+      for (searchEnv in searchEnvs)
+      {
+         if (identical(envir, searchEnv))
+            return(FALSE)
+      }
 
       envir <- parent.env(envir)
    }

@@ -675,6 +675,12 @@ test_that("isTrustedFunction tells package and RStudio code from agent code", {
    environment(fn) <- as.environment("chat-guardrails-attached")
    expect_false(.rs.chat.isTrustedFunction(fn))
 
+   # a name alone doesn't put an environment on the search path
+   envir <- new.env(parent = asNamespace("testthat"))
+   attr(envir, "name") <- "private"
+   environment(fn) <- envir
+   expect_true(.rs.chat.isTrustedFunction(fn))
+
 })
 
 test_that("setwd() within a function passed to package code is still checked", {
@@ -703,6 +709,7 @@ test_that("agent code can return to a filesystem root the user chose", {
    root <- workingDirectory()
 
    .rs.chat.withGuardrails(setwd(tempdir()))
+   expect_error(.rs.chat.withGuardrails(setwd(dirs$outside)), "Action: setwd()", fixed = TRUE)
    .rs.chat.withGuardrails(setwd(root))
    expect_equal(workingDirectory(), root)
 
