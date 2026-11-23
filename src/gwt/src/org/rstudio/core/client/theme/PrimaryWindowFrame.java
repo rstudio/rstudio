@@ -21,6 +21,7 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.DoubleClickState;
@@ -65,10 +66,11 @@ public class PrimaryWindowFrame extends WindowFrame
       {
          public void onClick(ClickEvent event)
          {
-            // The buttons act on their own; focusing the pane here would take
+            // Header buttons act on their own; focusing the pane here would take
             // focus from whatever they open, and a double click would maximize.
             Element target = Element.as(event.getNativeEvent().getEventTarget());
-            if (buttons_.getElement().isOrHasChild(target))
+            if (DomUtils.findParentElement(target, true,
+                  el -> "BUTTON".equals(el.getTagName())) != null)
                return;
 
             focus();
