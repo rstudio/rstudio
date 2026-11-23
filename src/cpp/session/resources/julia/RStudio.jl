@@ -616,9 +616,10 @@ function documentation(name::AbstractString, source::AbstractString)
    text = replace(text, r"\[([^\]]*)\]\(@ref[^)]*\)" => s"\1")
 
    # a leading code block that isn't a signature, such as an example, stays;
-   # one of several signatures stays too, with the others
+   # one of several signatures stays too, with the others. (Julia 1.10 shows
+   # a docstring's indented code without the language that later ones name.)
    signature = ""
-   m = match(r"^```julia\n((?:[^\n]*\n)*?)```\n*", text)
+   m = match(r"^```(?:julia)?\n((?:[^\n]*\n)*?)```\n*", text)
    if m !== nothing
       lines = split(chomp(m.captures[1]), '\n')
       if is_signature(lines[1], name)
