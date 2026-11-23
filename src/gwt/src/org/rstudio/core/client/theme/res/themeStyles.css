@@ -1822,12 +1822,42 @@ body.windows .toolbar {
 }
 
 .globalToolbar {
-   height: 27px;
+   height: 24px;
    z-index: 1;
 }
 
+/* Main toolbar buttons are 24px targets (WCAG 2.5.8), filling the 24px row.
+   Icon buttons drop their 4px gap to keep their 24px pitch. A split
+   button's arrow gets a 24px box of its own, with the arrow at its left,
+   beside its button's icon, and level with the other dropdown arrows. */
 .globalToolbar .toolbarButton {
-   margin-top: -1px;
+   height: 24px;
+   min-width: 24px;
+   margin-top: 0;
+}
+
+.globalToolbar .toolbarButton > table {
+   margin: 0 auto;
+}
+
+.globalToolbar .toolbarButton.noLabel {
+   margin-right: 0;
+}
+
+.globalToolbar .toolbarButton.noLabel.toolbarButtonMenu {
+   margin-right: 4px;
+}
+
+.globalToolbar .toolbarButton.noLabel.toolbarButtonMenuOnly {
+   top: 0;
+   width: 24px;
+   margin-right: 0;
+}
+
+.globalToolbar .toolbarButtonMenuOnly > table {
+   position: relative;
+   top: -3px;
+   margin: 0 0 0 3px;
 }
 
 .globalToolbar .toolbarButtonMenu .toolbarButtonLabel {
@@ -1876,46 +1906,13 @@ body.windows .toolbar {
  }
 
 .webGlobalToolbar {
-   margin-top: -1.5px;
    background: none;
 }
 
+/* The web header shows its toolbar's top row, so it doesn't need the 1px
+   that Windows otherwise moves every toolbar down. */
 body.windows table.webGlobalToolbar {
-   margin-top: -1.5px;
-}
-
-/* Main toolbar buttons are 24px targets (WCAG 2.5.8), centered in the 24px
-   row. Icon buttons drop their 4px gap to keep their 24px pitch. A split
-   button's arrow gets a 24px box of its own, with the arrow at its left,
-   beside its button's icon, and level with the other dropdown arrows. */
-.webGlobalToolbar .toolbarButton {
-   height: 24px;
-   min-width: 24px;
    margin-top: 0;
-}
-
-.webGlobalToolbar .toolbarButton > table {
-   margin: 0 auto;
-}
-
-.webGlobalToolbar .toolbarButton.noLabel {
-   margin-right: 0;
-}
-
-.webGlobalToolbar .toolbarButton.noLabel.toolbarButtonMenu {
-   margin-right: 4px;
-}
-
-.webGlobalToolbar .toolbarButton.noLabel.toolbarButtonMenuOnly {
-   top: 0;
-   width: 24px;
-   margin-right: 0;
-}
-
-.webGlobalToolbar .toolbarButtonMenuOnly > table {
-   position: relative;
-   top: -3px;
-   margin: 0 0 0 3px;
 }
 
 .webGlobalToolbarWrapper {
@@ -1953,8 +1950,15 @@ body.windows table.webGlobalToolbar {
    }
  }
 
+/* The wrapper's -1px top margin puts its first pixel row above the window,
+   so 25px shows 24px of toolbar; the toolbar starts below that row, as
+   Windows already moves every toolbar down. */
 .desktopGlobalToolbarWrapper {
-   height: 24px;
+   height: 25px;
+}
+
+.desktopGlobalToolbarWrapper .globalToolbar {
+   margin-top: 1px;
 }
 
 .windowFrameToolbarButton {
