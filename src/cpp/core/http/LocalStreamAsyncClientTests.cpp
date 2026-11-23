@@ -26,6 +26,7 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/local/stream_protocol.hpp>
 #include <boost/asio/read_until.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <boost/asio/streambuf.hpp>
 #include <boost/asio/write.hpp>
 #include <boost/function.hpp>
@@ -54,24 +55,33 @@ public:
    LocalStreamServer(const FilePath& streamPath, bool respond)
       : acceptor_(ioc_, stream_protocol::endpoint(streamPath.getAbsolutePath())),
         socket_(ioc_),
+        deadline_(ioc_),
         respond_(respond)
    {
    }
 
    ~LocalStreamServer()
    {
-      // a client that never connected, or never finished its request, leaves
-      // the server waiting on it; give up, so that the test fails on its
-      // assertions rather than hanging here
+      // a test that is over has no more use for a server still waiting on
+      // its client
       ioc_.stop();
 
       if (finished_.valid())
          finished_.wait();
+
+      if (timedOut_)
+         ADD_FAILURE() << "the server gave up waiting on its client";
    }
 
    void start()
    {
       acceptor_.async_accept(socket_, [this](const boost::system::error_code& ec) { onAccept(ec); });
+
+      // a client that never connects, or that stalls partway through its
+      // request, would otherwise wait on the server, and the test on both
+      deadline_.expires_after(std::chrono::seconds(10));
+      deadline_.async_wait([this](const boost::system::error_code& ec) { onDeadline(ec); });
+
       finished_ = std::async(std::launch::async, [this]() { ioc_.run(); });
    }
 
@@ -93,16 +103,8 @@ public:
 private:
    void waitUntilFinished()
    {
-      if (!finished_.valid())
-         return;
-
-      // every step of the server is asynchronous, so stopping it always works
-      if (finished_.wait_for(std::chrono::seconds(10)) != std::future_status::ready)
-      {
-         ADD_FAILURE() << "the server was still waiting on its client";
-         ioc_.stop();
+      if (finished_.valid())
          finished_.wait();
-      }
    }
 
    void onAccept(const boost::system::error_code& ec)
@@ -115,14 +117,14 @@ private:
          socket_,
          request_,
          "\r\n\r\n",
-         [this](const boost::system::error_code&, std::size_t) { onRequest(); });
+         [this](const boost::system::error_code& ec, std::size_t) { onRequest(ec); });
    }
 
-   void onRequest()
+   void onRequest(const boost::system::error_code& ec)
    {
       requestBytes_ = request_.size();
 
-      if (!respond_)
+      if (ec || !respond_)
       {
          hangUp();
          return;
@@ -134,9 +136,22 @@ private:
          [this](const boost::system::error_code&, std::size_t) { hangUp(); });
    }
 
+   void onDeadline(const boost::system::error_code& ec)
+   {
+      // cancelled: the server finished with its client in time
+      if (ec)
+         return;
+
+      timedOut_ = true;
+      hangUp();
+   }
+
+   // ends whatever the server is waiting on, which lets its thread finish
    void hangUp()
    {
       boost::system::error_code ec;
+      deadline_.cancel();
+      acceptor_.close(ec);
       socket_.shutdown(stream_protocol::socket::shutdown_both, ec);
       socket_.close(ec);
    }
@@ -144,6 +159,7 @@ private:
    boost::asio::io_context ioc_;
    stream_protocol::acceptor acceptor_;
    stream_protocol::socket socket_;
+   boost::asio::steady_timer deadline_;
    boost::asio::streambuf request_;
    const std::string response_ =
       "HTTP/1.1 200 OK\r\n"
@@ -153,6 +169,7 @@ private:
       "ok";
    bool respond_;
    bool accepted_ = false;
+   bool timedOut_ = false;
    std::size_t requestBytes_ = 0;
    std::future<void> finished_;
 };
@@ -381,7 +398,7 @@ TEST_F(LocalStreamAsyncClientTest, RequestIsNotSentWhenPathOwnerMatchesButPeerDo
 TEST_F(LocalStreamAsyncClientTest, RequestIsNotSentWhenPeerCannotBeIdentified)
 {
    // not knowing which user the peer runs as is no reason to trust it, nor
-   // to wait for it
+   // to wait for it, even on a path that belongs to the expected user
    LocalStreamServer server(streamPath_, true);
    server.start();
 
@@ -395,7 +412,7 @@ TEST_F(LocalStreamAsyncClientTest, RequestIsNotSentWhenPeerCannotBeIdentified)
       });
 
    boost::asio::io_context ioc;
-   boost::shared_ptr<StubbedPeerClient> pClient(new StubbedPeerClient(ioc, streamPath_));
+   boost::shared_ptr<StubbedPeerClient> pClient(new StubbedPeerClient(ioc, streamPath_, false, ::geteuid()));
    pClient->setExpectedPeerUid(::geteuid());
    pClient->setConnectionRetryProfile(retryProfile);
    pClient->peerIdentity = [](core::system::user::UserIdentity*) -> Error {
