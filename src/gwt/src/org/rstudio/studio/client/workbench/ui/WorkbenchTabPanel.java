@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.HandlerRegistrations;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureHeightEvent;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasEnsureHeightHandlers;
@@ -34,6 +35,7 @@ import org.rstudio.core.client.widget.model.ProvidesBusy;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
@@ -151,6 +153,8 @@ class WorkbenchTabPanel
          if (getSelectedIndex() >= 0)
          {
             int unselectedTab = getSelectedIndex();
+            if (unselectedTab < tabPanel_.getWidgetCount())
+               blurFocusWithin(tabPanel_.getWidget(unselectedTab).getElement());
             if (unselectedTab < tabs_.size())
             {
                WorkbenchTab lastTab = tabs_.get(unselectedTab);
@@ -196,6 +200,10 @@ class WorkbenchTabPanel
       if (areTabsIdentical(tabs))
          return;
 
+      // Re-adding a tab hides it until it is selected again, so focus inside
+      // it is moved out first and restored if its tab ends up visible.
+      Element focused = blurFocusWithin(tabPanel_.getElement());
+
       clearing_ = true;
       tabEventRegistrations_.detach();
       tabPanel_.clear();
@@ -206,6 +214,22 @@ class WorkbenchTabPanel
          add(tab);
 
       updateEmptyStateVisibility();
+
+      if (focused != null)
+         focused.focus();
+   }
+
+   // Hiding a tab sets aria-hidden on it, which Chromium blocks (and warns
+   // about) while a descendant has focus (#19788). Returns the element that
+   // was blurred, or null if focus was elsewhere.
+   private static Element blurFocusWithin(Element container)
+   {
+      Element focused = DomUtils.getActiveElement();
+      if (focused == null || !container.isOrHasChild(focused))
+         return null;
+
+      focused.blur();
+      return focused;
    }
 
    private boolean areTabsIdentical(ArrayList<WorkbenchTab> tabs)
