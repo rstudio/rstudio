@@ -15,10 +15,7 @@
 
 package org.rstudio.studio.client.palette;
 
-import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -26,13 +23,14 @@ import com.google.inject.Singleton;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.ShortcutManager;
-import org.rstudio.core.client.widget.ModalPopupPanel;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.palette.events.PaletteItemExecutedEvent;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteMruEntry;
 import org.rstudio.studio.client.palette.ui.CommandPalette;
+import org.rstudio.studio.client.palette.ui.PalettePopupPanel;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -62,6 +60,7 @@ public class CommandPaletteLauncher implements CommandPalette.Host
                                  Provider<UserPrefs> pPrefs,
                                  Provider<WorkbenchListManager> pWorkbenchLists,
                                  Provider<Session> pSession,
+                                 Provider<WorkbenchContext> pWorkbenchContext,
                                  EventBus events,
                                  GlobalDisplay display,
                                  Binder binder)
@@ -72,6 +71,7 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       pSource_ = pSource;
       pPrefs_ = pPrefs;
       pSession_ = pSession;
+      pWorkbenchContext_ = pWorkbenchContext;
       display_ = display;
       pWorkbenchLists_ = pWorkbenchLists;
       state_ = State.Hidden;
@@ -137,7 +137,9 @@ public class CommandPaletteLauncher implements CommandPalette.Host
          providers.add(provider);
       }
       providers.add(new RAddinPaletteSource(addins_.getRAddins(), ShortcutManager.INSTANCE));
-      providers.add(new UserPrefPaletteSource(pPrefs_.get(), pSession_.get().getSessionInfo()));
+      providers.add(new UserPrefPaletteSource(pPrefs_.get(),
+            pSession_.get().getSessionInfo(),
+            pWorkbenchContext_.get().getRVersionsInfo()));
 
       // Populate the MRU on first show if enabled
       if (mru_ == null && pPrefs_.get().commandPaletteMru().getValue())
@@ -163,28 +165,9 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       palette_ = new CommandPalette(providers,
          pPrefs_.get().commandPaletteMru().getValue() ? mru_ : null, this);
 
-      panel_ = new ModalPopupPanel(
-            true,  // Auto hide
-            true,  // Modal
-            false, // Glass (main window overlay)
-            true   // Close on Esc
-      );
-      
-      // Required for accessibility (see #6962)
-      panel_.getElement().setTabIndex(-1);
-      
-      // Copy classes from the root RStudio container onto this panel. This is
-      // necessary so that we can properly inherit theme colors.
-      Element root = Document.get().getElementById("rstudio_container");
-      if (root != null)
-      {
-         panel_.addStyleName(root.getClassName());
-      }
-      
-      // Assign the appropriate ARIA role to this panel
-      Element ele = panel_.getElement();
-      Roles.getDialogRole().set(ele);
-      Roles.getDialogRole().setAriaLabelProperty(ele, constants_.searchCmdsAriaLabelProperty());
+      panel_ = new PalettePopupPanel(
+            constants_.searchCmdsAriaLabelProperty(),
+            true /*closeOnEscape*/);
 
       // Find the center of the screen
       panel_.add(palette_);
@@ -193,8 +176,6 @@ public class CommandPaletteLauncher implements CommandPalette.Host
          panel_.setPopupPosition(Window.getClientWidth() / 2 - 300, 50);
       });
       
-      // Set z-index above panel splitters (otherwise they overlap the popup)
-      panel_.getElement().getStyle().setZIndex(250);
       palette_.focus();
 
       state_ = State.Showing;
@@ -223,7 +204,7 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       state_ = State.Hidden;
    }
    
-   private ModalPopupPanel panel_;
+   private PalettePopupPanel panel_;
    private CommandPalette palette_;
    private State state_;
    private ArrayList<CommandPaletteMruEntry> mru_;
@@ -235,6 +216,7 @@ public class CommandPaletteLauncher implements CommandPalette.Host
    private final Provider<UserPrefs> pPrefs_;
    private final Provider<WorkbenchListManager> pWorkbenchLists_;
    private final Provider<Session> pSession_;
+   private final Provider<WorkbenchContext> pWorkbenchContext_;
 
    private static final PaletteConstants constants_ = GWT.create(PaletteConstants.class);
 }

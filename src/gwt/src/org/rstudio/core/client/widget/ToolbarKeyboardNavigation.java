@@ -155,7 +155,7 @@ class ToolbarKeyboardNavigation
          // once detach() disconnects, and no caller moves a widget out then.
          for (int i = 0; i < record.removedNodes.length; i++)
          {
-            Node node = record.removedNodes.item(i);
+            Node node = nodeAt(record.removedNodes, i);
             if (node.nodeType != Node.ELEMENT_NODE)
                continue;
             itemsMayHaveChanged = true;
@@ -175,10 +175,18 @@ class ToolbarKeyboardNavigation
    {
       for (int i = 0; i < nodes.length; i++)
       {
-         if (nodes.item(i).nodeType == Node.ELEMENT_NODE)
+         if (nodeAt(nodes, i).nodeType == Node.ELEMENT_NODE)
             return true;
       }
       return false;
+   }
+
+   // Chrome can wrap a node first seen in this observer's callback in the
+   // GWT iframe's realm, not the main window's, so the checked cast to Node
+   // that item() gets would throw where cast checks are on, as in devmode.
+   private static Node nodeAt(elemental2.dom.NodeList<Node> nodes, int i)
+   {
+      return Js.uncheckedCast(nodes.item(i));
    }
 
    private void release(Element removed)

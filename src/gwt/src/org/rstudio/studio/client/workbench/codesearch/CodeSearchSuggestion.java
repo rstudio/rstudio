@@ -17,8 +17,6 @@ package org.rstudio.studio.client.workbench.codesearch;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.XRef;
-import org.rstudio.core.client.container.SafeMap;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -40,26 +38,20 @@ class CodeSearchSuggestion implements Suggestion
    {
       isFileTarget_ = true;
       navigationTarget_ = new CodeNavigationTarget(fileItem.getPath());
+      isXRef_ = false;
       matchedString_ = fileItem.getFilename();
+      nameMatchedString_ = "";
             
       // compute display string
       ImageResource image = 
          fileTypeRegistry_.getIconForFilename(fileItem.getFilename()).getImageResource();
    
+      // decorative: the file name's extension already conveys its type
       displayString_ = createDisplayString(
-            image, RES.styles().fileImage(),
+            image, "", RES.styles().fileImage(),
             fileItem.getFilename(), RES.styles().fileItem(),
             null, null,
             null, null);
-   }
-   
-   private ImageResource iconForXRef(XRef xref)
-   {
-      String type = xref.getType();
-      if (XREF_ICON_MAP.containsKey(type))
-         return new ImageResource2x(XREF_ICON_MAP.get(type));
-      
-      return null;
    }
    
    private ImageResource iconForSourceItem(SourceItem sourceItem)
@@ -67,8 +59,7 @@ class CodeSearchSuggestion implements Suggestion
       // check for bookdown xref
       if (sourceItem.hasXRef())
       {
-         XRef xref = sourceItem.getXRef();
-         ImageResource icon = iconForXRef(xref);
+         ImageResource icon = CodeSearchItemKind.xrefIcon(sourceItem.getXRef().getType());
          if (icon != null)
             return icon;
       }
@@ -123,10 +114,20 @@ class CodeSearchSuggestion implements Suggestion
    {
       isFileTarget_ = false;
       navigationTarget_ = sourceItem.toCodeNavigationTarget();
+      isXRef_ = sourceItem.hasXRef();
       matchedString_ = sourceItem.getName();
+
+      // the server sends a cross-reference's name (e.g. a theorem's) as its
+      // extra info, and finds the cross-reference by that name too
+      nameMatchedString_ = sourceItem.hasXRef()
+            ? StringUtil.notNull(sourceItem.getExtraInfo())
+            : "";
       
       // get icon
       ImageResource image = iconForSourceItem(sourceItem);
+      String altText = CodeSearchItemKind.label(
+            sourceItem.getType(),
+            sourceItem.hasXRef() ? sourceItem.getXRef().getType() : null);
       
       // adjust context for parent context
       String context = sourceItem.getContext();
@@ -156,7 +157,7 @@ class CodeSearchSuggestion implements Suggestion
       if (sourceItem.hasXRef())
       {
          displayString_ = createDisplayString(
-               image, RES.styles().xrefImage(),
+               image, altText, RES.styles().xrefImage(),
                name, RES.styles().xrefItem(),
                sourceItem.getExtraInfo(), RES.styles().itemContext(),
                context, RES.styles().itemContext());
@@ -164,7 +165,7 @@ class CodeSearchSuggestion implements Suggestion
       else if (image.getHeight() < 16)
       {
          displayString_ = createDisplayString(
-               image, RES.styles().smallCodeImage(),
+               image, altText, RES.styles().smallCodeImage(),
                name, RES.styles().smallCodeItem(),
                sourceItem.getExtraInfo(), RES.styles().itemContext(),
                context, RES.styles().smallItemContext());
@@ -172,7 +173,7 @@ class CodeSearchSuggestion implements Suggestion
       else
       {
          displayString_ = createDisplayString(
-               image, RES.styles().codeImage(),
+               image, altText, RES.styles().codeImage(),
                name, RES.styles().codeItem(),
                sourceItem.getExtraInfo(), RES.styles().itemContext(),
                context, RES.styles().itemContext());
@@ -182,6 +183,12 @@ class CodeSearchSuggestion implements Suggestion
    public String getMatchedString()
    {
       return matchedString_;
+   }
+
+   // a second string the query can match, or "" if there is none
+   public String getNameMatchedString()
+   {
+      return nameMatchedString_;
    }
 
    @Override
@@ -196,8 +203,9 @@ class CodeSearchSuggestion implements Suggestion
       FileIcon icon = fileTypeRegistry_.getIconForFilename(fileName);
       ImageResource image = icon.getImageResource();
       
+      // decorative: the file name's extension already conveys its type
       displayString_ = createDisplayString(
-            image, RES.styles().fileImage(),
+            image, "", RES.styles().fileImage(),
             displayString, RES.styles().fileItem(),
             null, null,
             null, null);
@@ -218,8 +226,14 @@ class CodeSearchSuggestion implements Suggestion
    {
       return isFileTarget_;
    }
+
+   public boolean isXRef()
+   {
+      return isXRef_;
+   }
    
    private String createDisplayString(ImageResource image,
+                                      String altText,
                                       String imageStyle,
                                       String name,
                                       String nameStyle,
@@ -233,6 +247,7 @@ class CodeSearchSuggestion implements Suggestion
       sb.append(SafeHtmlUtil.createOpenTag("div", "class", imageStyle));
       sb.append(SafeHtmlUtil.createOpenTag("img",
             "src", image.getSafeUri().asString(),
+            "alt", altText,
             "width", Integer.toString(image.getWidth()),
             "height", Integer.toString(image.getHeight())));
       sb.appendHtmlConstant("</img>");
@@ -251,45 +266,13 @@ class CodeSearchSuggestion implements Suggestion
       return sb.toSafeHtml().asString();
    }
    
-   private static final SafeMap<String, ImageResource> createXRefIconMap()
-   {
-      SafeMap<String, ImageResource> map = new SafeMap<>();
-      
-      // section headers
-      map.put("h1", CodeIcons.INSTANCE.sectionH12x());
-      map.put("h2", CodeIcons.INSTANCE.sectionH22x());
-      map.put("h3", CodeIcons.INSTANCE.sectionH32x());
-      map.put("h4", CodeIcons.INSTANCE.sectionH42x());
-      map.put("h5", CodeIcons.INSTANCE.sectionH52x());
-      map.put("h6", CodeIcons.INSTANCE.sectionH62x());
-      
-      // figures
-      map.put("fig", CodeIcons.INSTANCE.figure2x());
-      
-      // tables
-      map.put("tab", CodeIcons.INSTANCE.table2x());
-      map.put("tbl", CodeIcons.INSTANCE.table2x());
-      
-      // math-related sections (e.g. theorems)
-      map.put("thm", CodeIcons.INSTANCE.function2x());
-      map.put("lem", CodeIcons.INSTANCE.function2x());
-      map.put("cor", CodeIcons.INSTANCE.function2x());
-      map.put("prp", CodeIcons.INSTANCE.function2x());
-      map.put("cnj", CodeIcons.INSTANCE.function2x());
-      map.put("def", CodeIcons.INSTANCE.function2x());
-      map.put("exr", CodeIcons.INSTANCE.function2x());
-      map.put("eq",  CodeIcons.INSTANCE.function2x());
-      
-      return map;
-      
-   }
-   
    private final boolean isFileTarget_;
+   private final boolean isXRef_;
    private final CodeNavigationTarget navigationTarget_;
    private final String matchedString_;
+   private final String nameMatchedString_;
    private String displayString_;
    private static final FileTypeRegistry fileTypeRegistry_ =
                               RStudioGinjector.INSTANCE.getFileTypeRegistry();
    private static final CodeSearchResources RES = CodeSearchResources.INSTANCE;
-   private static final SafeMap<String, ImageResource> XREF_ICON_MAP = createXRefIconMap();
 }

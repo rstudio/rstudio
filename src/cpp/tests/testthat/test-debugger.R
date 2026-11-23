@@ -120,6 +120,36 @@ test_that("breakpoints in S7 methods for S7 generics preserve the method class",
 
 })
 
+test_that("traced functions are recognized whatever their trace class", {
+
+   # S7 1.0.0 traces an S7 method into an 'S7_methodWithTrace', not a
+   # 'functionWithTrace' (#19736). A traced S4 generic has the same shape, and
+   # exercises that case with any version of S7 installed.
+   envir <- new.env()
+   suppressMessages(methods::setGeneric(
+      "rsTracedGeneric",
+      function(x) standardGeneric("rsTracedGeneric"),
+      where = envir
+   ))
+   on.exit(methods::removeGeneric("rsTracedGeneric", where = envir), add = TRUE)
+
+   original <- envir$rsTracedGeneric
+   expect_false(.rs.isTraced(original))
+
+   suppressMessages(trace(
+      "rsTracedGeneric",
+      where = envir,
+      tracer = quote(NULL),
+      print = FALSE
+   ))
+
+   traced <- envir$rsTracedGeneric
+   expect_false("functionWithTrace" %in% class(traced))
+   expect_true(.rs.isTraced(traced))
+   expect_identical(body(.rs.untraced(traced)), body(original))
+
+})
+
 test_that("the browser environment can be read before it is first set", {
 
    # The environment is held in a file-scope PreservedSEXP, built before R

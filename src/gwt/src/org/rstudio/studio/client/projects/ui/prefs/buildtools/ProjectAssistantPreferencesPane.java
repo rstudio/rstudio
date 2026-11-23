@@ -82,10 +82,13 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
 
       RestartRequirement requirement = new RestartRequirement();
 
-      // Check if assistant changed
+      // Check if assistant changed. Compare the assistant that ran, so saving
+      // (None) over a Posit AI setting that already ran as (None) needs no
+      // restart.
       String originalAssistant = options_.getAssistantOptions().assistant;
       if (originalAssistant == null)
          originalAssistant = "default";
+      originalAssistant = assistant_.effectiveAssistantType(originalAssistant);
       if (!originalAssistant.equals(assistantOptions.assistant))
          requirement.setSessionRestartRequired(true);
 
@@ -118,8 +121,10 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       paiUtil_ = paiUtil;
 
       // Create assistant selector - conditionally include each provider based
-      // on whether it is available in this build and enabled by the administrator.
+      // on whether it is available in this build and enabled by the
+      // administrator, and for Posit AI, offered by its installation.
       boolean paiEnabled = paiUtil_.isPositAssistantEnabled();
+      boolean paiAssistantOffered = paiEnabled && assistant_.isPositAssistantOffered();
       boolean copilotEnabled = session_.getSessionInfo().getCopilotEnabled();
       List<String> assistantLabelList = new ArrayList<>();
       List<String> assistantValueList = new ArrayList<>();
@@ -127,7 +132,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       assistantValueList.add(ASSISTANT_DEFAULT);
       assistantLabelList.add(constants_.none());
       assistantValueList.add(UserPrefsAccessor.ASSISTANT_NONE);
-      if (paiEnabled)
+      if (paiAssistantOffered)
       {
          assistantLabelList.add(prefsConstants_.assistantEnum_posit());
          assistantValueList.add(UserPrefsAccessor.ASSISTANT_POSIT);
@@ -400,7 +405,8 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       VerticalPanel panel = new VerticalPanel();
 
       // Show what global assistant is currently active
-      String globalAssistant = prefs_.assistant().getGlobalValue();
+      String globalAssistant =
+         assistant_.effectiveAssistantType(prefs_.assistant().getGlobalValue());
       String globalAssistantName;
       if (globalAssistant.equals(UserPrefsAccessor.ASSISTANT_COPILOT))
          globalAssistantName = prefsConstants_.assistantEnum_copilot();
@@ -624,7 +630,12 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       if (projectAssistant == null || projectAssistant.isEmpty())
          selAssistant_.setValue(ASSISTANT_DEFAULT);
       else
-         setPreservingValue(selAssistant_, projectAssistant, assistantLabel(projectAssistant));
+      {
+         // A Posit AI setting that isn't offered shows as the (None) it runs
+         // as, and is saved as (None) only if the user clicks OK.
+         String shownAssistant = assistant_.effectiveAssistantType(projectAssistant);
+         setPreservingValue(selAssistant_, shownAssistant, assistantLabel(shownAssistant));
+      }
 
       // Load chat provider selection from project options
       String projectChatProvider = options.getAssistantOptions().chat_provider;

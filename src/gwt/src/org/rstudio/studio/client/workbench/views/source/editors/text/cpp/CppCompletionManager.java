@@ -23,6 +23,7 @@ import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.workbench.assistant.Assistant;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
@@ -83,11 +84,13 @@ public class CppCompletionManager implements CompletionManager
    @Inject
    void initialize(CppServerOperations server,
                    FileTypeRegistry fileTypeRegistry,
-                   UserPrefs uiPrefs)
+                   UserPrefs uiPrefs,
+                   Assistant assistant)
    {
       server_ = server;
       fileTypeRegistry_ = fileTypeRegistry;
       userPrefs_ = uiPrefs;
+      assistant_ = assistant;
       suggestionTimer_ = new SuggestionTimer(this, userPrefs_);
    }
 
@@ -319,7 +322,7 @@ public class CppCompletionManager implements CompletionManager
 
       // see if we even have a completion position
       boolean alwaysComplete =
-            UserPrefs.ASSISTANT_NONE.equals(userPrefs_.assistant().getValue()) &&
+            !assistant_.isEnabled() &&
             userPrefs_.codeCompletion().getValue() == UserPrefs.CODE_COMPLETION_ALWAYS;
       
       int autoChars = userPrefs_.codeCompletionCharacters().getValue();
@@ -460,6 +463,7 @@ public class CppCompletionManager implements CompletionManager
 
    private CppServerOperations server_;
    private UserPrefs userPrefs_;
+   private Assistant assistant_;
    private FileTypeRegistry fileTypeRegistry_;
    private final DocDisplay docDisplay_;
    private final CppCompletionContext completionContext_;

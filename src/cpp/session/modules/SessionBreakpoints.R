@@ -705,14 +705,23 @@
       return(FALSE)
    }
 
-   # trace() cannot trace S7 methods for S7 generics directly, as the methods
-   # package cannot derive a trace class from the S7 method's class attribute.
-   # Strip the class before tracing, and restore it afterwards -- onto the
-   # traced wrapper itself while breakpoints are active, so that the generic
-   # remains printable and S7 tooling keeps working. Note that we manipulate
-   # S4 slots via attributes below, as S4 slot assignment validates against
-   # the class attribute, which we intentionally leave in a hybrid state
-   # while breakpoints are active. (#18531)
+   # S7 1.0.0 traces S7 methods itself (RConsortium/S7#695), and the hybrid
+   # class the workaround below leaves on a traced method makes S7's C and R
+   # code disagree on whether it is an S7 object, so printing the generic
+   # hangs (#19736). That release made S7_method a concrete S4 class; before
+   # it, the class was virtual or not defined at all.
+   if (!methods::isVirtualClass("S7_method", where = asNamespace("S7")))
+      return(.rs.setFunctionBreakpoints(methodName, methodEnvir, steps))
+
+   # Before S7 1.0.0, trace() cannot trace S7 methods for S7 generics directly,
+   # as the methods package cannot derive a trace class from the S7 method's
+   # class attribute. Strip the class before tracing, and restore it
+   # afterwards -- onto the traced wrapper itself while breakpoints are
+   # active, so that the generic remains printable and S7 tooling keeps
+   # working. Note that we manipulate S4 slots via attributes below, as S4
+   # slot assignment validates against the class attribute, which we
+   # intentionally leave in a hybrid state while breakpoints are active.
+   # (#18531)
    method <- methodEnvir[[methodName]]
    original <- method
    s7MethodClass <- NULL

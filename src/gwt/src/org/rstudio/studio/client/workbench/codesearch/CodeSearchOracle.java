@@ -50,9 +50,83 @@ public class CodeSearchOracle extends SuggestOracle
       workbenchContext_ = workbenchContext;
    }
    
-   private static int scoreMatch(CodeSearchSuggestion suggestion, String query)
+   // A result with a name, such as a named theorem, ranks by whichever of
+   // its text and its name the query matches better. A name the query
+   // doesn't match is skipped: unmatched characters cost little for a short
+   // query, so it could still score well.
+   static int scoreMatch(CodeSearchSuggestion suggestion, String query)
    {
-      return scoreMatch(suggestion.getMatchedString(), query, suggestion.isFileTarget());
+      String localQuery = queryFor(suggestion, query);
+      int score = scoreMatch(suggestion.getMatchedString(),
+                             localQuery,
+                             suggestion.isFileTarget());
+
+      if (matchesName(suggestion, query))
+      {
+         score = Math.min(score,
+               scoreMatch(suggestion.getNameMatchedString(), localQuery, false));
+      }
+
+      return score;
+   }
+
+   // The pattern for a query containing '*', or null for any other query.
+   static Pattern wildcardPattern(String query)
+   {
+      String queryLower = query.toLowerCase();
+      return queryLower.indexOf('*') == -1 ? null : patternForTerm(queryLower);
+   }
+
+   // Whether a cached result also matches a longer query, by its text or,
+   // like a named theorem, by its name. `pattern` is wildcardPattern(query).
+   static boolean matchesQuery(CodeSearchSuggestion suggestion,
+                               String query,
+                               Pattern pattern)
+   {
+      // the server reads a '*' in the query literally for cross-references
+      if (suggestion.isXRef())
+      {
+         return StringUtil.isSubsequence(suggestion.getMatchedString(), query, true) ||
+                matchesName(suggestion, query);
+      }
+
+      String text = suggestion.getMatchedString().toLowerCase();
+      if (pattern != null)
+      {
+         Match match = pattern.match(text, 0);
+         return match != null && match.getIndex() == 0;
+      }
+
+      return StringUtil.isSubsequence(text, queryFor(suggestion, query), true);
+   }
+
+   private static boolean matchesName(CodeSearchSuggestion suggestion, String query)
+   {
+      String name = suggestion.getNameMatchedString();
+      return !name.isEmpty() && StringUtil.isSubsequence(name, query, true);
+   }
+
+   // A file query may end in :<line>:<col> (see navigationTarget), which the
+   // server drops before matching files. Other results, such as the
+   // cross-reference exm:fizz, match the whole query.
+   private static String queryFor(CodeSearchSuggestion suggestion, String query)
+   {
+      if (!suggestion.isFileTarget())
+         return query;
+
+      // as fileQueryLength in SessionCodeSearch.cpp: up to two ':'-led runs
+      // of digits, possibly empty while the user is still typing them
+      int end = query.length();
+      for (int i = 0; i < 2; i++)
+      {
+         int pos = end;
+         while (pos > 0 && Character.isDigit(query.charAt(pos - 1)))
+            pos--;
+         if (pos == 0 || query.charAt(pos - 1) != ':')
+            break;
+         end = pos - 1;
+      }
+      return StringUtil.substring(query, 0, end);
    }
    
    // NOTE: When modifying this function, you should ensure that the associated
@@ -155,34 +229,14 @@ public class CodeSearchOracle extends SuggestOracle
          if (!res.getMoreAvailable() && 
              request.getQuery().startsWith(res.getQuery()))
          {
-            Pattern pattern = null;
             String query = request.getQuery();
-            String queryLower = query.toLowerCase();
-            
-            if (queryLower.indexOf('*') != -1)
-               pattern = patternForTerm(queryLower);
-            
+            Pattern pattern = wildcardPattern(query);
             ArrayList<CodeSearchSuggestion> suggestions = new ArrayList<>();
             for (int s=0; s<res.getSuggestions().size(); s++)
             {
                CodeSearchSuggestion sugg = res.getSuggestions().get(s);
-               
-               String name = sugg.getMatchedString().toLowerCase();
-               if (pattern != null)
-               {
-                  Match match = pattern.match(name, 0);
-                  if (match != null && match.getIndex() == 0)
-                     suggestions.add(sugg);
-               }
-               else
-               {
-                  int colonIndex = query.indexOf(":");
-                  if (colonIndex == -1)
-                     colonIndex = query.length();
-                  
-                  if (StringUtil.isSubsequence(name, StringUtil.substring(query, 0, colonIndex), true))
-                     suggestions.add(sugg);
-               }
+               if (matchesQuery(sugg, query, pattern))
+                  suggestions.add(sugg);
             }
             
             // process and cache suggestions. note that this adds an item to
@@ -263,7 +317,7 @@ public class CodeSearchOracle extends SuggestOracle
       return true;
    }
    
-   private Pattern patternForTerm(String term)
+   private static Pattern patternForTerm(String term)
    {
       // split the term on *
       StringBuilder regex = new StringBuilder();
@@ -370,11 +424,6 @@ public class CodeSearchOracle extends SuggestOracle
    {
       // sort the suggestions -- we want suggestions for which
       // the query matches the start to come first
-      int colonIndex = query.indexOf(":");
-      final String localQuery = colonIndex > 0 ?
-            StringUtil.substring(query, 0, colonIndex) :
-            query;
-      
       java.util.Collections.sort(suggestions,
             new Comparator<CodeSearchSuggestion>() {
 
@@ -382,8 +431,8 @@ public class CodeSearchOracle extends SuggestOracle
          public int compare(CodeSearchSuggestion lhs,
                             CodeSearchSuggestion rhs)
          {
-            int lhsScore = scoreMatch(lhs, localQuery);
-            int rhsScore = scoreMatch(rhs, localQuery);
+            int lhsScore = scoreMatch(lhs, query);
+            int rhsScore = scoreMatch(rhs, query);
 
             if (lhsScore == rhsScore)
             {

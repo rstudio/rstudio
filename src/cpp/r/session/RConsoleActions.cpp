@@ -18,6 +18,7 @@
 #include <gsl/gsl-lite.hpp>
 
 #include <boost/algorithm/string/split.hpp>
+#include <boost/scope_exit.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
@@ -60,7 +61,7 @@ int ConsoleActions::capacity() const
 {
    LOCK_MUTEX(mutex_)
    {
-      return gsl::narrow_cast<int>(actions_.capacity());
+      return capacity_;
    }
    END_LOCK_MUTEX
 
@@ -74,6 +75,7 @@ void ConsoleActions::setCapacity(int capacity)
    {
       // Keep the newest actions when reducing the scrollback limit.
       actions_.rset_capacity(capacity);
+      capacity_ = capacity;
    }
    END_LOCK_MUTEX
 }
@@ -91,15 +93,38 @@ void ConsoleActions::pushAction(int type, std::string data)
    ConsoleAction action;
    action.type = type;
    action.data = std::move(data);
-   actions_.push_back(std::move(action));
+   pushAction(std::move(action));
+}
+
+void ConsoleActions::pushAction(ConsoleAction action)
+{
+   // NOTE: helper method assumes mutex is already locked
+
+   // the limit stays lowered until setCapacity() is next called, so this
+   // is logged once for each limit that couldn't be reached
+   if (!pushConsoleAction(actions_, std::move(action)))
+   {
+      ELOGF("Couldn't allocate memory for more than {} console actions; "
+            "discarding the oldest as new ones are added",
+            actions_.size());
+   }
 }
 
 void ConsoleActions::flush()
 {
    // NOTE: helper method assumes mutex is already locked
 
-   // iterate over buffer data in chunks, split via newlines
+   // remove the data pushed as actions, retaining any held-back suffix for
+   // the next add(); also when a push throws (e.g. std::bad_alloc as the
+   // actions grow), so that the next flush doesn't push that data again
    std::size_t lhs = 0;
+   BOOST_SCOPE_EXIT(this_, &lhs)
+   {
+      this_->buffer_.data.erase(0, lhs);
+   }
+   BOOST_SCOPE_EXIT_END
+
+   // iterate over buffer data in chunks, split via newlines
    std::size_t rhs = buffer_.data.find('\n');
    while (rhs != std::string::npos)
    {
@@ -110,8 +135,9 @@ void ConsoleActions::flush()
          std::string data = buffer_.data.substr(lhs, kChunkSize);
          data.resize(data.size() - string_utils::utf8IncompleteSuffixLength(data));
 
-         lhs += data.size();
+         std::size_t size = data.size();
          pushAction(buffer_.type, std::move(data));
+         lhs += size;
       }
 
       // consume any remaining data on this line
@@ -133,13 +159,11 @@ void ConsoleActions::flush()
       std::string data = buffer_.data.substr(lhs);
       data.resize(data.size() - string_utils::utf8IncompleteSuffixLength(data));
 
-      lhs += data.size();
-      if (!data.empty())
+      std::size_t size = data.size();
+      if (size != 0)
          pushAction(buffer_.type, std::move(data));
+      lhs += size;
    }
-
-   // remove consumed data, retaining any held-back suffix for the next add()
-   buffer_.data.erase(0, lhs);
 }
 
 void ConsoleActions::add(int type, const std::string& data)
@@ -216,8 +240,11 @@ void ConsoleActions::asJson(json::Object* pActions)
 {
    LOCK_MUTEX(mutex_)
    {
-      // clear inbound
+      // clear inbound; callers index the arrays without checking for them,
+      // so provide them even if an allocation below fails
       pActions->clear();
+      pActions->operator[](kActionType) = json::Array();
+      pActions->operator[](kActionData) = json::Array();
 
       // flush any pending console output
       flush();
@@ -306,7 +333,7 @@ Error ConsoleActions::loadFromFile(const FilePath& filePath)
          ConsoleAction action;
          action.type = typeArray[i].getInt();
          action.data = dataArray[i].getString();
-         actions_.push_back(std::move(action));
+         pushAction(std::move(action));
       }
 
       if (skipped != 0)
