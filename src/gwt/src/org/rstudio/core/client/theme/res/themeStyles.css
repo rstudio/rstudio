@@ -1117,16 +1117,6 @@ table.header > tbody > tr > td {
 
 }
 
-.consoleHeaderLayout .subtitle {
-	position: relative;
-	top: -4px;
-}
-
-.consoleHeaderLayout .toolbarDotSeparator {
-	position: relative;
-	top: -4px;
-}
-
 .consoleMinimizeLayout {
 
 }
@@ -1189,6 +1179,31 @@ table.header > tbody > tr > td {
    margin-right: 0px;
    margin-bottom: 2px;
    border-bottom: solid 1px #d6dadc;
+   display: flex;
+   align-items: center;
+   /* Once the path can shrink no further, the row overflows at its left end,
+      which is clipped, rather than pushing the buttons under Minimize */
+   justify-content: flex-end;
+   /* clears the Minimize and Maximize buttons placed below, plus a gap */
+   padding-right: 56px;
+}
+
+.windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader > * {
+   flex: none;
+}
+
+/* A long working directory gives way to the buttons after it */
+.windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader > .subtitle {
+   flex: 0 1 auto;
+   min-width: 0;
+   overflow: hidden;
+   text-overflow: ellipsis;
+}
+
+.windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeaderButtons {
+   display: flex;
+   align-items: center;
+   margin-left: auto;
 }
 
 .windowFrameObject.consoleOnlyWindowFrame div.consoleWidgetLayout {
@@ -3137,6 +3152,14 @@ body.windows .search {
 
 .findBuildButton {
 
+}
+
+/* A long title, such as the working directory, shortens so the buttons after
+   it stay in view */
+.subtitle.terminalTitle {
+   display: block;
+   overflow: hidden;
+   text-overflow: ellipsis;
 }
 
 .terminalClearButton {

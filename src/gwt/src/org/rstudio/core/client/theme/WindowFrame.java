@@ -14,8 +14,6 @@
  */
 package org.rstudio.core.client.theme;
 
-import java.util.HashMap;
-
 import org.rstudio.core.client.ClassIds;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.events.EnsureHeightEvent;
@@ -36,12 +34,9 @@ import org.rstudio.studio.client.application.events.EventBus;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Float;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
@@ -110,9 +105,6 @@ public class WindowFrame extends Composite
 
       if (showCloseButton)
          addFrameButton(closeButton_, 0);
-
-      buttonsArea_ = new FlowPanel();
-      frame_.add(buttonsArea_);
 
       initWidget(frame_);
    }
@@ -364,32 +356,6 @@ public class WindowFrame extends Composite
       }
    }
 
-   public void setContextButton(Widget button, int width, int height, int position)
-   {
-      if (contextButtons_.containsKey(position) && contextButtons_.get(position) != null)
-      {
-         contextButtons_.get(position).removeFromParent();
-         contextButtons_.put(position, null);
-      }
-
-      if (button != null)
-      {
-         contextButtons_.put(position, button);
-         button.getElement().getStyle().setFloat(Float.RIGHT);
-
-         buttonsArea_.add(button);
-         frame_.setWidgetRightWidth(buttonsArea_, FRAME_BUTTONS_EXTENT + 6, Unit.PX,
-                                    width * contextButtons_.size(), Unit.PX);
-         frame_.setWidgetTopHeight(buttonsArea_, 3, Unit.PX, height, Unit.PX);
-         // Without z-index, the header widget will obscure the context button
-         // if the former is set after the latter.
-         frame_.getWidgetContainerElement(buttonsArea_).getStyle().setZIndex(10);
-
-         button.getElement().setAttribute("display", "inline-block");
-         button.getElement().setAttribute("float", "right");
-      }
-   }
-
    public void onResize()
    {
       if (frame_ != null)
@@ -503,11 +469,9 @@ public class WindowFrame extends Composite
    private Widget main_;
    private Widget header_;
    private Widget fill_;
-   private final HashMap<Integer, Widget> contextButtons_ = new HashMap<>();
    private HandlerRegistration ensureVisibleRegistration_;
    private HandlerRegistration ensureHeightRegistration_;
    private Widget previousHeader_;
-   private final FlowPanel buttonsArea_;
    private WindowState logicalState_ = WindowState.NORMAL;
    private Command maximizeAction_;
 

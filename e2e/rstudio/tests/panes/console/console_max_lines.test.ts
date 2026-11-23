@@ -8,14 +8,15 @@
 import type { Page } from 'playwright';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
-import { CONSOLE_OUTPUT } from '@pages/console_pane.page';
+import { CONSOLE_OUTPUT, CONSOLE_SCROLLBACK } from '@pages/console_pane.page';
 import { TIMEOUTS } from '@utils/constants';
 import { clearPref, setPref } from '@utils/commands';
 
 const PRINTED_LINES = 200;
 
+// Counts the scrollback only, so the toolbar's layout doesn't change the count.
 async function consoleLineCount(page: Page): Promise<number> {
-  const text = await page.locator(CONSOLE_OUTPUT).innerText();
+  const text = await page.locator(CONSOLE_SCROLLBACK).innerText();
   return text.split('\n').filter((line) => line.length > 0).length;
 }
 

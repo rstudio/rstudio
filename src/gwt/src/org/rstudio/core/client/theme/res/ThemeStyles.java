@@ -31,6 +31,7 @@ public interface ThemeStyles extends CssResource
    String windowframe();
 
    String primaryWindowFrameHeader();
+   String primaryWindowFrameHeaderButtons();
    String title();
    String subtitle();
 
@@ -205,6 +206,7 @@ public interface ThemeStyles extends CssResource
    String findBuildButton();
    String consoleClearButton();
    String terminalClearButton();
+   String terminalTitle();
    String refreshToolbarButton();
 
    String tabIcon();
