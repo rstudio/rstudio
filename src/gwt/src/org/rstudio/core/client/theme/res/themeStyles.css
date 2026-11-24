@@ -1827,9 +1827,7 @@ body.windows .toolbar {
 }
 
 /* Main toolbar buttons are 24px targets (WCAG 2.5.8), filling the 24px row.
-   Icon buttons drop their 4px gap to keep their 24px pitch. A split
-   button's arrow gets a 24px box of its own, with the arrow at its left,
-   beside its button's icon, and level with the other dropdown arrows. */
+   Icon buttons drop their 4px gap to keep their 24px pitch. */
 .globalToolbar .toolbarButton {
    height: 24px;
    min-width: 24px;
@@ -1848,16 +1846,12 @@ body.windows .toolbar {
    margin-right: 4px;
 }
 
-.globalToolbar .toolbarButton.noLabel.toolbarButtonMenuOnly {
-   top: 0;
-   width: 24px;
-   margin-right: 0;
-}
-
-.globalToolbar .toolbarButtonMenuOnly > table {
-   position: relative;
-   top: -3px;
-   margin: 0 0 0 3px;
+/* A split button's narrow arrow keeps its earlier size; its design and
+   target size are to be addressed separately. */
+.globalToolbar .toolbarButton.toolbarButtonMenuOnly {
+   height: 21px;
+   min-width: 0;
+   margin-top: -1px;
 }
 
 .globalToolbar .toolbarButtonMenu .toolbarButtonLabel {
