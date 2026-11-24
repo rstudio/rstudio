@@ -757,6 +757,27 @@ jobs:
           fi
           echo "Test user library has $(printf '%s\n' "$INSTALLED" | wc -l) packages; all required packages present"
 
+      # As with the R library above: the test user can't write to the Julia
+      # depot os-e2e-deps prepared in this job's workspace, and Julia writes
+      # to its depot as it runs. Give the user a copy as their own default
+      # depot, and point the Julia console specs at that copy. Without this
+      # the specs still run (utils/julia.ts leaves a depot the session can't
+      # write to alone), but install Tables.jl at test time. Skipped where the
+      # runner has no Julia, and os-e2e-deps so exported no depot.
+      - name: Provision test user Julia depot
+        if: env.PW_RSTUDIO_JULIA_DEPOT_PATH != ''
+        run: |
+          DEPOT="${PW_RSTUDIO_JULIA_DEPOT_PATH%:}"
+          USER_DEPOT="/home/$PW_RSTUDIO_SERVER_USER/.julia"
+
+          echo "Cloning $DEPOT into $USER_DEPOT"
+          sudo mkdir -p "$USER_DEPOT"
+          sudo cp -a "$DEPOT/." "$USER_DEPOT/"
+          sudo chown -R "$PW_RSTUDIO_SERVER_USER:$PW_RSTUDIO_SERVER_USER" "$USER_DEPOT"
+
+          # The trailing separator keeps Julia's bundled depots on the path.
+          echo "PW_RSTUDIO_JULIA_DEPOT_PATH=$USER_DEPOT:" >> "$GITHUB_ENV"
+
       # Skipped for accessibility runs. The token comes from the e2e-playwright
       # environment however the job was started, so this skip -- not an absent
       # secret -- is what keeps a11y runs from fetching unused credentials.
