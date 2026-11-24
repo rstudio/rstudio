@@ -1158,8 +1158,8 @@ public class AssistantPreferencesPane extends PreferencesPane
       // to run from that preference, not from copilot_enabled -- so this write
       // lands before OK/Cancel, and anything undoing the switch has to undo it
       // too (#18356). Under a project override the selector moves only to show
-      // the project's assistant, which this session already runs, so leave the
-      // global preferences alone (#19742).
+      // the project's assistant, not a global choice, so leave the global
+      // preferences alone (#19742).
       if (projectAssistantOverride_ == null && prefs_.copilotEnabled().getValue())
       {
          prefs_.copilotEnabled().setGlobalValue(false);
