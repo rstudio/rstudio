@@ -13,7 +13,7 @@ Before opening a new issue, please search [existing accessibility issues](https:
 
 When opening an issue, include "accessibility" in the title or description so maintainers can label it, and if possible include:
 
-- RStudio version and edition (Desktop or Server/Workbench)
+- RStudio version and edition (Desktop or Server)
 - Operating system, and browser if applicable
 - Assistive technology and version (e.g., NVDA 2025.1, VoiceOver, JAWS)
 - Steps to reproduce, and expected vs. actual behavior
