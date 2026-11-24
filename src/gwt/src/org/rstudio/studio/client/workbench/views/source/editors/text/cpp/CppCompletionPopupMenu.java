@@ -5,6 +5,7 @@ import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -227,11 +228,15 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
    private void addToolTipHandler()
    {
       toolTip_ = new CppCompletionToolTip();
+      DomUtils.ensureHasId(toolTip_.getElement());
 
       addSelectionHandler(new SelectionHandler<MenuItem>()
       {
          public void onSelection(SelectionEvent<MenuItem> event)
          {
+            // the tooltip describes only the item it's set for
+            describeItem(null);
+
             // bail if we are updating the menu
             if (updatingMenu_)
                return;
@@ -281,6 +286,7 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
 
             // set the tooltip text
             toolTip_.setText(completion.getText().get(0));
+            describeItem(selectedItem);
 
             // position it in the next event loop
             Scheduler.get().scheduleDeferred(new ScheduledCommand() {
@@ -354,6 +360,18 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
       });
    }
 
+   // Points the item's aria-describedby at the tooltip, so screen readers
+   // read the tooltip with the item; null unlinks the item last described.
+   private void describeItem(MenuItem item)
+   {
+      if (describedItem_ != null)
+         describedItem_.getElement().removeAttribute("aria-describedby");
+      describedItem_ = item;
+      if (item != null)
+         item.getElement().setAttribute(
+               "aria-describedby", toolTip_.getElement().getId());
+   }
+
    @Override
    protected int getMaxHeight()
    {
@@ -385,6 +403,7 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
    private boolean updatingMenu_ = false;
    private CppCompletionToolTip toolTip_;
    private MenuItem activeItem_;
+   private MenuItem describedItem_;
    private boolean announceable_ = false;
    // The message last announced, until a list replaces it.
    private String announcedText_;

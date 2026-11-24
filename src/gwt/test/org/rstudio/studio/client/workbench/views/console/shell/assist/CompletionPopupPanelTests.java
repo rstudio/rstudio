@@ -23,6 +23,10 @@ import org.rstudio.studio.client.application.events.AriaLiveStatusEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NodeList;
+
 import com.google.gwt.junit.client.GWTTestCase;
 
 public class CompletionPopupPanelTests extends GWTTestCase
@@ -269,6 +273,57 @@ public class CompletionPopupPanelTests extends GWTTestCase
       assertTrue(panel_.getPopupTop() > line.getBottom());
       assertEquals("library", panel_.getItems()[0].name);
       assertEquals("library", panel_.getSelectedValue().name);
+   }
+
+   // Returns the list items that have a description.
+   private List<Element> describedItems()
+   {
+      List<Element> described = new ArrayList<>();
+      NodeList<Element> rows = panel_.getElement().getElementsByTagName("tr");
+      for (int i = 0; i < rows.getLength(); i++)
+      {
+         if (rows.getItem(i).hasAttribute("aria-describedby"))
+            described.add(rows.getItem(i));
+      }
+      return described;
+   }
+
+   public void testShownHelpDescribesSelectedItem()
+   {
+      show(new Rectangle(10, 0, 8, 13));
+      panel_.displaySnippetHelp("library(${1:package})");
+
+      List<Element> described = describedItems();
+      assertEquals(1, described.size());
+      assertEquals("true", described.get(0).getAttribute("aria-selected"));
+      Element help = Document.get().getElementById(
+            described.get(0).getAttribute("aria-describedby"));
+      assertTrue(help.getInnerText().contains("library(${1:package})"));
+   }
+
+   public void testMovingSelectionUnlinksHelp()
+   {
+      // The help shown is for the item it was shown with; help for the
+      // newly selected item arrives later.
+      show(new Rectangle(10, 0, 8, 13));
+      panel_.displaySnippetHelp("library(${1:package})");
+      panel_.selectNext();
+      assertTrue(describedItems().isEmpty());
+   }
+
+   public void testHiddenHelpDoesNotDescribe()
+   {
+      show(new Rectangle(10, 0, 8, 13));
+      panel_.displaySnippetHelp("");
+      assertTrue(describedItems().isEmpty());
+
+      panel_.displaySnippetHelp("library(${1:package})");
+      panel_.clearHelp(false);
+      assertTrue(describedItems().isEmpty());
+
+      panel_.displaySnippetHelp("library(${1:package})");
+      panel_.setHelpVisible(false);
+      assertTrue(describedItems().isEmpty());
    }
 
    private CompletionPopupPanel panel_;

@@ -130,7 +130,7 @@ public class HelpInfoPopupPanel extends PopupPanel
       String viewUrl = help.getViewUrl();
       if (viewUrl != null)
       {
-         RStudioFrame frame = new RStudioFrame("title", viewUrl);
+         RStudioFrame frame = new RStudioFrame(constants_.dataPreviewTitle(), viewUrl);
          frame.setWidth("100%");
          frame.getIFrame().setFrameBorder(0);
          vpanel_.add(frame);

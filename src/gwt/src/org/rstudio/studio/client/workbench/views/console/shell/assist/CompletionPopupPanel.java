@@ -376,6 +376,16 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    public void setHelpVisible(boolean visible)
    {
       help_.setVisible(visible);
+      describeSelection(visible);
+   }
+
+   // Help arrives after the selection, usually from the server, so it's
+   // read when the screen reader reads the selection's description, e.g.
+   // when help was cached, not as it arrives.
+   private void describeSelection(boolean helpShown)
+   {
+      if (list_ != null)
+         list_.describeSelectedItem(helpShown ? help_.getElement().getId() : null);
    }
 
    private boolean completionListIsOnScreen()
@@ -455,6 +465,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
 
       help_.setPopupPosition(destinationLeft, destinationTop);
       help_.setVisible(setVisible);
+      describeSelection(setVisible);
    }
 
    @Override
@@ -502,6 +513,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    public void clearHelp(boolean downloadOperationPending)
    {
       help_.clearHelp(downloadOperationPending);
+      describeSelection(false);
    }
 
    public HandlerRegistration addSelectionHandler(
