@@ -804,6 +804,9 @@ Error systemError(
 
 #endif // _WIN32
 
+// Nested in error, not directly in rstudio::core: most sources import rstudio::core with a using-directive, which
+// would make an unqualified detail:: in a file with a detail namespace of its own ambiguous.
+namespace error {
 namespace detail {
 
 template <typename T>
@@ -833,6 +836,7 @@ using EnableIfNotErrnoType = typename std::enable_if<
    int>::type;
 
 } // namespace detail
+} // namespace error
 
 /**
  * @brief Functions which create an error from a registered Boost error code enum, in the enum's own category.
@@ -845,19 +849,19 @@ using EnableIfNotErrnoType = typename std::enable_if<
  *
  * @return An error in the enum's category.
  */
-template <typename E, detail::EnableIfErrorCodeEnum<E> = 0>
+template <typename E, error::detail::EnableIfErrorCodeEnum<E> = 0>
 Error systemError(E in_code, const ErrorLocation& in_location)
 {
    return Error(boost::system::error_code(in_code), in_location);
 }
 
-template <typename E, detail::EnableIfErrorCodeEnum<E> = 0>
+template <typename E, error::detail::EnableIfErrorCodeEnum<E> = 0>
 Error systemError(E in_code, const Error& in_cause, const ErrorLocation& in_location)
 {
    return Error(boost::system::error_code(in_code), in_cause, in_location);
 }
 
-template <typename E, detail::EnableIfErrorCodeEnum<E> = 0>
+template <typename E, error::detail::EnableIfErrorCodeEnum<E> = 0>
 Error systemError(E in_code, const std::string& in_description, const ErrorLocation& in_location)
 {
    Error error = systemError(in_code, in_location);
@@ -865,7 +869,7 @@ Error systemError(E in_code, const std::string& in_description, const ErrorLocat
    return error;
 }
 
-template <typename E, detail::EnableIfErrorCodeEnum<E> = 0>
+template <typename E, error::detail::EnableIfErrorCodeEnum<E> = 0>
 Error systemError(
    E in_code,
    const std::string& in_description,
@@ -880,16 +884,16 @@ Error systemError(
 // Any other integer or enum would otherwise convert to the native code type, reading an errno value as a Win32 code
 // or the reverse. Pass an errc value, genericError() for errno from the C runtime, LAST_SYSTEM_ERROR() for
 // GetLastError(), or a std::error_code built with its category.
-template <typename T, detail::EnableIfUncategorizedCode<T> = 0>
+template <typename T, error::detail::EnableIfUncategorizedCode<T> = 0>
 Error systemError(T in_code, const ErrorLocation& in_location) = delete;
 
-template <typename T, detail::EnableIfUncategorizedCode<T> = 0>
+template <typename T, error::detail::EnableIfUncategorizedCode<T> = 0>
 Error systemError(T in_code, const Error& in_cause, const ErrorLocation& in_location) = delete;
 
-template <typename T, detail::EnableIfUncategorizedCode<T> = 0>
+template <typename T, error::detail::EnableIfUncategorizedCode<T> = 0>
 Error systemError(T in_code, const std::string& in_description, const ErrorLocation& in_location) = delete;
 
-template <typename T, detail::EnableIfUncategorizedCode<T> = 0>
+template <typename T, error::detail::EnableIfUncategorizedCode<T> = 0>
 Error systemError(
    T in_code,
    const std::string& in_description,
@@ -912,10 +916,10 @@ Error genericError(int in_code, const ErrorLocation& in_location);
 Error genericError(int in_code, const std::string& in_description, const ErrorLocation& in_location);
 
 // errno is an int; a DWORD from GetLastError() or an errc value belongs to systemError()
-template <typename T, detail::EnableIfNotErrnoType<T> = 0>
+template <typename T, error::detail::EnableIfNotErrnoType<T> = 0>
 Error genericError(T in_code, const ErrorLocation& in_location) = delete;
 
-template <typename T, detail::EnableIfNotErrnoType<T> = 0>
+template <typename T, error::detail::EnableIfNotErrnoType<T> = 0>
 Error genericError(T in_code, const std::string& in_description, const ErrorLocation& in_location) = delete;
 
 #ifndef _WIN32
