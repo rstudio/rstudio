@@ -78,10 +78,14 @@ public final class CompletionListAria
 
    /**
     * Announces a message a popup shows in place of, or beside, its list,
-    * such as "No matches", which no list item can carry.
+    * such as "No matches", which no list item can carry. An empty message
+    * announces nothing, rather than clearing what is waiting to be announced.
     */
    public static void announce(AriaLiveService ariaLive, String message)
    {
+      if (StringUtil.isNullOrEmpty(message))
+         return;
+
       ariaLive.announce(AriaLiveService.COMPLETION_MESSAGE,
                         message,
                         Timing.IMMEDIATE,

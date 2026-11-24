@@ -137,13 +137,6 @@ public class CompletionPopupPanel extends ThemedPopupPanel
              getAbsoluteTop() + getOffsetHeight() < 0;
    }
 
-   public void showProgress(String progress, PositionCallback callback)
-   {
-      setText(progress);
-      show(callback);
-      announce(progress);
-   }
-
    public void showErrorMessage(String error, PositionCallback callback)
    {
       setText(error);
@@ -218,8 +211,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    // already shows; announce a message only when it changes.
    private void announce(String message)
    {
-      if (StringUtil.isNullOrEmpty(message) ||
-          StringUtil.equals(message, announced_))
+      if (StringUtil.equals(message, announced_))
          return;
 
       announced_ = message;
