@@ -3,3 +3,15 @@
    font-weight: bold;
    margin-right: 0.5em;
 }
+
+/* A 24px square, the WCAG 2.5.8 minimum target. The negative bottom
+   margin keeps the toolbar row at its 21.5px height, and the bottom padding
+   puts the label level with the environment menu's, since a button centers
+   its content. */
+button.languageButton
+{
+   height: 24px;
+   min-width: 24px;
+   margin-bottom: -2.5px;
+   padding-bottom: 6.5px;
+}

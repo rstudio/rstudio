@@ -13,6 +13,7 @@
 
 ### Fixed
 - ([#19742](https://github.com/rstudio/rstudio/issues/19742)): Fixed an issue where, with a project open that sets its own code assistant (Tools > Project Options > Assistant), opening Tools > Global Options, or clicking OK in it, could replace the global code assistant with the project's, so other projects lost it (e.g. GitHub Copilot was turned off for them).
+- Improved consistency of request validation for streamed file uploads.
 - ([#19745](https://github.com/rstudio/rstudio/issues/19745)): Fixed an issue on Windows where some error messages described an unrelated Windows error, e.g. an input/output error reported as "Access is denied".
 - ([#19755](https://github.com/rstudio/rstudio/issues/19755)): Fixed an issue where the error reported when converting text between encodings failed could describe an unrelated error instead of the failed conversion.
 - ([#19772](https://github.com/rstudio/rstudio/issues/19772)): Fixed an issue where Posit Assistant, reading the Console's contents, saw a long line of output containing non-ASCII characters as several lines, and could see part of an escape sequence in such a line (e.g. the target of a hyperlink) as text.
@@ -140,6 +141,7 @@
 - ([#19764](https://github.com/rstudio/rstudio/issues/19764)): [Accessibility] Fixed an issue where some text was too low in contrast to read easily: the selected tab in Global Options, Project Options, and other tabbed dialogs; the file names shown beside functions in Go to File/Function results; the date and time rows when showing a History command in context; and, with the default Textmate theme, the "0% NA" footer in the data viewer's column summary.
 - ([#19746](https://github.com/rstudio/rstudio/issues/19746)): [Accessibility] Fixed an issue where the "Show Traceback" and "Rerun with Debug" text on a Console error didn't have enough contrast against the error's background in several light editor themes, including the default Textmate. With Textmate, contrast is now 5.4:1, up from 3.8:1.
 - ([#19782](https://github.com/rstudio/rstudio/issues/19782)): [Accessibility] Fixed an issue where the Minimize, Maximize, Restore, and Close buttons on panes were too small to click easily. Each button is now a 24x24 pixel target, up from 14x14 on an open pane, 16x17 or 20x17 on the minimized Source and Console panes, and 16x24 or 20x24 on other minimized panes.
+- ([#19786](https://github.com/rstudio/rstudio/issues/19786)): [Accessibility] Fixed an issue where some toolbar controls were too small or too close to their neighbors to click easily.
 
 ### Deprecated / Removed
 - ([#19608](https://github.com/rstudio/rstudio/issues/19608)): Removed the startup splash screen from RStudio Desktop, along with its "Show splash screen when RStudio is starting" preference, the Show Splash Screen command, the `RS_NO_SPLASH` environment variable, and the `--startup-delay` command-line switch. With faster startup ([#12235](https://github.com/rstudio/rstudio/issues/12235)), it is no longer needed.

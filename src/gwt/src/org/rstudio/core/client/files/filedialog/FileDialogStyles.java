@@ -26,6 +26,7 @@ public interface FileDialogStyles extends CssResource
    String filename();
 
    String breadcrumbFrame();
+   String filePane();
    String breadcrumb();
    String path();
    String home();
