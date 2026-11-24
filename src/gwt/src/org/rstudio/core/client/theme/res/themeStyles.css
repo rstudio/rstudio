@@ -1827,23 +1827,32 @@ body.windows .toolbar {
 }
 
 /* Main toolbar buttons are 24px targets (WCAG 2.5.8), filling the 24px row.
-   Icon buttons drop their 4px gap to keep their 24px pitch. */
+   Every button's content sits 2px in from its edges, as a 20px icon does in
+   a 24px button, and the separators' margins then even out the gaps beside
+   them. Buttons drop their margins, keeping icon buttons 24px apart. */
 .globalToolbar .toolbarButton {
+   box-sizing: border-box;
    height: 24px;
    min-width: 24px;
    margin-top: 0;
+   margin-right: 0;
+   padding: 0 2px;
 }
 
 .globalToolbar .toolbarButton > table {
    margin: 0 auto;
 }
 
-.globalToolbar .toolbarButton.noLabel {
-   margin-right: 0;
+/* Keeps the right-hand group's last button where its 8px margin put it */
+.globalToolbar td:last-child > .toolbarButton {
+   margin-right: 6px;
 }
 
-.globalToolbar .toolbarButton.noLabel.toolbarButtonMenu {
-   margin-right: 4px;
+/* A latching button's frame is its edge, so it keeps its own padding and
+   takes the margin the others get from their padding. */
+.globalToolbar .toolbarButton.toolbarButtonLatchable {
+   padding: 0 6px 0 4px;
+   margin-right: 2px;
 }
 
 /* A split button's narrow arrow keeps its earlier size; its design and
@@ -1852,6 +1861,24 @@ body.windows .toolbar {
    height: 21px;
    min-width: 0;
    margin-top: -1px;
+   margin-right: 2px;
+   padding: 0;
+}
+
+/* The separator image is a line with a 1px highlight to its right, mirrored
+   in dark themes. These margins leave 4px between the line and the content
+   of the buttons on either side. */
+.globalToolbar .toolbarSeparator {
+   margin: 0 1px 0 2px;
+}
+
+.rstudio-themes-dark .globalToolbar .toolbarSeparator {
+   margin: 0 2px 0 1px;
+}
+
+.globalToolbar .search,
+.globalToolbar .restrictedModeIcon {
+   margin: 0 2px;
 }
 
 .globalToolbar .toolbarButtonMenu .toolbarButtonLabel {
