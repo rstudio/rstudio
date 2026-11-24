@@ -35,7 +35,9 @@ test.describe.serial('Global Assistant pane project override', () => {
     const rproj = `${projectDir}/AssistantOverride.Rproj`;
     await executeInConsoleChecked(
       page,
-      `{ dir.create("${projectDir}"); writeLines("Version: 1.0", "${rproj}"); ` +
+      `{ dir.create("${projectDir}"); ` +
+        // rs_writeProjectFile persists any ProjectId the scratch path is keyed by.
+        `stopifnot(.Call("rs_writeProjectFile", "${rproj}", PACKAGE = "(embedding)")); ` +
         `scratch <- .Call("rs_computeScratchPaths", "${rproj}", PACKAGE = "(embedding)")$scratch_path; ` +
         `dir.create(scratch, recursive = TRUE, showWarnings = FALSE); ` +
         `writeLines("assistant=none", file.path(scratch, "assistant_options")) }`,
