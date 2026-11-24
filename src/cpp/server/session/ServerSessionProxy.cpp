@@ -36,7 +36,6 @@
 #include <shared_core/SafeConvert.hpp>
 #include <core/BoostErrors.hpp>
 #include <core/Log.hpp>
-#include <core/Thread.hpp>
 #include <core/WaitUtils.hpp>
 #include <core/RegexUtils.hpp>
 
@@ -857,6 +856,17 @@ Error userIdForUsername(const std::string& username, UidType* pUID)
    return Success();
 }
 
+boost::shared_ptr<http::LocalStreamAsyncClient> createLocalStreamClient(
+      boost::asio::io_context& ioContext,
+      const FilePath& streamPath,
+      UidType uid)
+{
+   // Check both the path's owner and the user the connected peer runs as.
+   auto pClient = boost::make_shared<http::LocalStreamAsyncClient>(ioContext, streamPath, false, uid);
+   pClient->setExpectedPeerUid(uid);
+   return pClient;
+}
+
 void proxyRequest(
       int requestType,
       const r_util::SessionContext& context,
@@ -909,12 +919,8 @@ void proxyRequest(
 
    // create client, which only connects to a stream that the user created,
    // and only sends the request to a peer that is running as the user
-   boost::shared_ptr<http::LocalStreamAsyncClient> pStreamClient(new http::LocalStreamAsyncClient(
-      ptrConnection->ioContext(),
-      streamPath,
-      false,
-      uid));
-   pStreamClient->setExpectedPeerUid(uid);
+   boost::shared_ptr<http::LocalStreamAsyncClient> pStreamClient =
+      createLocalStreamClient(ptrConnection->ioContext(), streamPath, uid);
    boost::shared_ptr<http::IAsyncClient> pClient = pStreamClient;
 
    // setup retry context
@@ -1027,6 +1033,14 @@ bool shouldRefreshCredentials(const http::Request& request)
 Error userIdForUsernameForTest(const std::string& username, UidType* pUID)
 {
    return userIdForUsername(username, pUID);
+}
+
+boost::shared_ptr<http::LocalStreamAsyncClient> createLocalStreamClientForTest(
+      boost::asio::io_context& ioContext,
+      const FilePath& streamPath,
+      UidType uid)
+{
+   return createLocalStreamClient(ioContext, streamPath, uid);
 }
 
 void prepareLocalhostResponseForTest(
@@ -1525,16 +1539,11 @@ void proxyLocalhostRequest(
    // destination port is actually owned by them before proxying (rstudio-pro#11470),
    // unless the admin has disabled this via www-proxy-localhost-verify-port-owner.
    //
-   // Unlike the local-stream uid validation above (which validates a target that is
-   // already scoped to context.username by construction -- the stream path is derived
-   // from the caller's own session context, so a resolution failure there can only
-   // affect the caller's own access), the target port here is attacker-controlled:
-   // it comes from decoding a client-supplied token and may name *any* user's port.
-   // The uid check is therefore the sole access-control boundary on this path, and we
-   // must fail closed on *any* resolution error, including "user not found"
-   // (permission_denied) -- a leftover-cache/NSS-lookup failure or a not-yet-provisioned
-   // account must not silently disable ownership enforcement for a request whose
-   // destination the caller fully controls.
+   // Both this path and the local-stream /s/ path fail closed on any uid-resolution
+   // error, including "user not found" (ENOENT). Here the target port is
+   // attacker-controlled: it comes from decoding a client-supplied token and may
+   // name any user's port. The uid check is the sole access-control boundary on
+   // this path, so a failed lookup must not silently disable ownership enforcement.
    if (server::options().wwwProxyLocalhostVerifyPortOwner())
    {
       UidType uid;

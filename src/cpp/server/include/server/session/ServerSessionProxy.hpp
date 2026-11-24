@@ -26,6 +26,7 @@
 #include "ServerSessionManager.hpp"
 
 #ifdef RSTUDIO_UNIT_TESTS_ENABLED
+#include <core/http/LocalStreamAsyncClient.hpp>
 #include <core/system/System.hpp>
 #endif
 
@@ -135,6 +136,12 @@ bool applyProxyFilter(
 // Exposes the uid-resolution decision inputs used to enforce localhost-proxy
 // destination-port ownership (rstudio-pro#11470).
 core::Error userIdForUsernameForTest(const std::string& username, UidType* pUID);
+
+// Uses the same client construction as proxyRequest(), including both uid checks.
+boost::shared_ptr<core::http::LocalStreamAsyncClient> createLocalStreamClientForTest(
+      boost::asio::io_context& ioContext,
+      const core::FilePath& streamPath,
+      UidType uid);
 
 // Exercises the complete rewrite path used for buffered localhost responses.
 void prepareLocalhostResponseForTest(

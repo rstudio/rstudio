@@ -75,6 +75,11 @@ public:
       expectedPeerUid_ = uid;
    }
 
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+   boost::optional<UidType> pathOwnerUidForTest() const { return validateUid_; }
+   boost::optional<UidType> expectedPeerUidForTest() const { return expectedPeerUid_; }
+#endif
+
 protected:
 
    virtual boost::asio::local::stream_protocol::socket& socket()
@@ -174,6 +179,8 @@ private:
       Error error = connectedPeerIdentity(&peer);
       if (error)
       {
+         WLOGF("Not sending request to {}: unable to determine its peer's identity: {}", localStreamPath_.getAbsolutePath(), error.asString());
+
          *pError = systemError(boost::system::errc::permission_denied, error, ERROR_LOCATION);
          return false;
       }
