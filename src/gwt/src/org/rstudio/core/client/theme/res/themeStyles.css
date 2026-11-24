@@ -1840,7 +1840,8 @@ body.windows .toolbar {
    margin: 0 auto;
 }
 
-/* Keeps the right-hand group's last button where its 8px margin put it */
+/* Keeps the last button of each group where its 8px margin put it; this
+   shows only at the right-hand group's end, by the toolbar's edge. */
 .globalToolbar td:last-child > .toolbarButton {
    margin-right: 6px;
 }
@@ -1866,11 +1867,13 @@ body.windows .toolbar {
    in dark themes. These margins leave 4px between the line and the content
    of the buttons on either side. */
 .globalToolbar .toolbarSeparator {
-   margin: 0 1px 0 2px;
+   margin-left: 2px;
+   margin-right: 1px;
 }
 
 .rstudio-themes-dark .globalToolbar .toolbarSeparator {
-   margin: 0 2px 0 1px;
+   margin-left: 1px;
+   margin-right: 2px;
 }
 
 .globalToolbar .search,

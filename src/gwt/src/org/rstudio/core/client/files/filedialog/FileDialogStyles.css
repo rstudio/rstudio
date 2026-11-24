@@ -86,10 +86,11 @@
    color: black;
 }
 
-/* The Files pane's select-all checkbox sits over the file list's checkbox
-   column, with its center 12.5px from the toolbar's top edge and from the
-   breadcrumb: WCAG 2.5.8 spacing for a 13px target. Block layout and these
-   margins override the platform checkbox margins and font-based alignment. */
+/* The Files pane's select-all checkbox lines up with the file list's
+   checkboxes, with its center 12.5px from the pane toolbar's buttons above
+   and from the breadcrumb: WCAG 2.5.8 spacing for a 13px target. Block layout
+   and these margins override the platform checkbox margins and font-based
+   alignment. */
 .gwt-CheckBox.gwt-CheckBox-FilesSelectAll {
    margin: 0;
 }
