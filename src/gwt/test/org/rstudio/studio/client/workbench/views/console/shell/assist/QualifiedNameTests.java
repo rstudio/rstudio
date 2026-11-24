@@ -109,6 +109,17 @@ public class QualifiedNameTests extends GWTTestCase
             inLanguage("mpg", RCompletionType.DATASET, "SQL"))));
    }
 
+   public void testCompletionsFromAPackagesProviderHaveNoKind()
+   {
+      // Completed with $ from R, a Python object's members keep the types
+      // reticulate chose: a submodule such as os$path is an ENVIRONMENT.
+      QualifiedName path = new QualifiedName("path", "path", "os", false,
+            RCompletionType.ENVIRONMENT, false, false, "",
+            "reticulate:::help_handler", "R",
+            RCompletionManager.AutocompletionContext.TYPE_UNKNOWN);
+      assertNull(hiddenKind(render(path)));
+   }
+
    public void testCompletionsBuiltWithoutLanguageHaveKind()
    {
       // YAML completions are built in the client, with no language.

@@ -18,6 +18,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.shell.ConsoleLanguageTracker;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 
 import com.google.gwt.core.client.GWT;
 
@@ -28,14 +29,18 @@ class RCompletionKind
 {
    // Returns "" for types whose kind isn't known (e.g. UNKNOWN, or CONTEXT,
    // which covers unrelated things such as Shiny IDs and Stan identifiers),
-   // and for Python and SQL completions, which reuse R's types with other
-   // meanings (a SQL table is a DATAFRAME, a Python module an ENVIRONMENT),
-   // so they get no label rather than a wrong one.
-   static String label(int type, String language)
+   // so they get no label rather than a wrong one. Python and SQL completions,
+   // and those from a package's own provider (which sets a help handler, e.g.
+   // reticulate for os$path), reuse R's types with other meanings: a SQL
+   // table is a DATAFRAME, a Python module an ENVIRONMENT.
+   static String label(QualifiedName item)
    {
-      if (StringUtil.equals(language, ConsoleLanguageTracker.LANGUAGE_PYTHON) ||
-          StringUtil.equals(language, LANGUAGE_SQL))
+      if (StringUtil.equals(item.language, ConsoleLanguageTracker.LANGUAGE_PYTHON) ||
+          StringUtil.equals(item.language, LANGUAGE_SQL) ||
+          item.helpHandler != null)
          return "";
+
+      int type = item.type;
 
       if (RCompletionType.isFunctionType(type))
          return constants_.functionKind();
