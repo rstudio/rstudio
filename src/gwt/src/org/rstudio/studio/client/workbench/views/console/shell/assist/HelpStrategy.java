@@ -370,12 +370,14 @@ public class HelpStrategy
    }
 
    // Identifies an item's help topic. QualifiedName.equals ignores the
-   // source, but e.g. filter {dplyr} and filter {stats} have different help.
-   static String helpKey(QualifiedName item)
+   // source, but e.g. filter {dplyr} and filter {stats} have different help,
+   // and custom help handlers resolve topics per language.
+   private static String helpKey(QualifiedName item)
    {
       return item.type + "\u0000" + item.name + "\u0000" +
              StringUtil.notNull(item.source) + "\u0000" +
-             StringUtil.notNull(item.helpHandler);
+             StringUtil.notNull(item.helpHandler) + "\u0000" +
+             StringUtil.notNull(item.language);
    }
 
    // The selection can move on while help loads; help that arrives for an
