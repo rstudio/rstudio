@@ -21,9 +21,6 @@ test.describe.serial('Global Assistant pane project override', () => {
   const sandbox = useSuiteSandbox();
 
   test.beforeAll(async ({ rstudioPage: page }) => {
-    await setPref(page, 'assistant', 'copilot');
-    await setPref(page, 'copilot_enabled', true);
-
     const projectDir = await createAndOpenProject(page, sandbox.dir, 'AssistantOverride');
 
     // Seed the project's assistant directly in its scratch-path options file.
@@ -58,6 +55,12 @@ test.describe.serial('Global Assistant pane project override', () => {
   test('OK keeps the global assistant while a project overrides it', async ({
     rstudioPage: page,
   }) => {
+    // Set here, not in beforeAll: the per-test fixture runs after beforeAll and
+    // resets a non-"none" assistant for suites not tagged @ai or @chat.
+    await setPref(page, 'assistant', 'copilot');
+    await setPref(page, 'copilot_enabled', true);
+    expect(await getPref(page, 'assistant')).toBe('copilot');
+
     await openGlobalOptions(page);
     await page.locator(ASSISTANT_TAB).click();
     await expect(page.locator(ASSISTANT_PANEL)).toBeVisible();
