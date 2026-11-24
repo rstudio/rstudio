@@ -35,6 +35,7 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
     String consoleOutputLabel();
     String noMatchesLabel();
     String notAllItemsShownText();
+    String notAllItemsShownAnnouncement();
     String f1prompt();
     String errorRetrievingHelp();
     String noMatchingCommandsText();

@@ -18,6 +18,9 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Element;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.studio.client.application.AriaLiveService;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 
 /**
  * ARIA roles and states for completion popups whose items are announced
@@ -57,6 +60,18 @@ public final class CompletionListAria
          item.setAttribute(ACTIVE_STATE, "true");
       else
          item.removeAttribute(ACTIVE_STATE);
+   }
+
+   /**
+    * Announces a message a popup shows in place of, or beside, its list,
+    * such as "No matches", which no list item can carry.
+    */
+   public static void announce(AriaLiveService ariaLive, String message)
+   {
+      ariaLive.announce(AriaLiveService.COMPLETION_MESSAGE,
+                        message,
+                        Timing.IMMEDIATE,
+                        Severity.STATUS);
    }
 
    // Ace's own completion popup uses menu roles in Safari, for VoiceOver;

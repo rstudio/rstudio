@@ -31,6 +31,8 @@ import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
@@ -62,8 +64,14 @@ public class CompletionPopupPanel extends ThemedPopupPanel
 {
    public CompletionPopupPanel(InputEditorDisplay input)
    {
+      this(input, RStudioGinjector.INSTANCE.getAriaLiveService());
+   }
+
+   CompletionPopupPanel(InputEditorDisplay input, AriaLiveService ariaLive)
+   {
       super();
       input_ = input;
+      ariaLive_ = ariaLive;
       autoConstrain_ = false;
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
 
@@ -117,6 +125,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       // An offscreen list stays attached; stop announcing its selection.
       if (list_ != null)
          list_.setInput(null);
+      announced_ = null;
       placedBelow_ = null;
       setPopupPosition(-10000, -10000);
       help_.setPopupPosition(-10000, -10000);
@@ -132,12 +141,14 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    {
       setText(progress);
       show(callback);
+      announce(progress);
    }
 
    public void showErrorMessage(String error, PositionCallback callback)
    {
       setText(error);
       show(callback);
+      announce(error);
    }
 
    @Override
@@ -196,6 +207,23 @@ public class CompletionPopupPanel extends ThemedPopupPanel
 
       if (bottomUp)
          selectLast();
+
+      if (truncated)
+         announce(constants_.notAllItemsShownAnnouncement());
+      else
+         announced_ = null;
+   }
+
+   // The popup is refreshed as the user types, often with the message it
+   // already shows; announce a message only when it changes.
+   private void announce(String message)
+   {
+      if (StringUtil.isNullOrEmpty(message) ||
+          StringUtil.equals(message, announced_))
+         return;
+
+      announced_ = message;
+      CompletionListAria.announce(ariaLive_, message);
    }
 
    private void setCompletionList(QualifiedName[] values,
@@ -293,6 +321,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    {
       unregisterIgnoredKeys();
       unregisterNativeHandler();
+      announced_ = null;
       super.hide();
    }
 
@@ -576,6 +605,9 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    }
 
    private final InputEditorDisplay input_;
+   private final AriaLiveService ariaLive_;
+   // The message last announced while showing, or null.
+   private String announced_;
    private CompletionList<QualifiedName> list_;
    private HelpInfoPopupPanel help_;
    private final ConsoleResources.ConsoleStyles styles_;

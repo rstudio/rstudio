@@ -3,9 +3,11 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.SafeHtmlUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionListAria;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
@@ -47,9 +49,17 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
 
    public void setText(String text)
    {
+      // The popup is refreshed as the user types, often with the message it
+      // already shows; announce a message only when it changes.
+      String announced = announcedText_;
       JsArray<CppCompletion> completions = JsArray.createArray().cast();
       completions.push(CppCompletion.create(text));
       setCompletions(completions, null);
+
+      if (!StringUtil.equals(text, announced))
+         CompletionListAria.announce(
+               RStudioGinjector.INSTANCE.getAriaLiveService(), text);
+      announcedText_ = text;
    }
 
    public void setCompletions(JsArray<CppCompletion> completions,
@@ -59,6 +69,7 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
       completions_ = completions;
       onSelected_ = onSelected;
       announceable_ = false;
+      announcedText_ = null;
 
       // clear existing items
       updatingMenu_ = true;
@@ -372,6 +383,8 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
    private CppCompletionToolTip toolTip_;
    private MenuItem activeItem_;
    private boolean announceable_ = false;
+   // The message last announced, until a list replaces it.
+   private String announcedText_;
 
    private static CppCompletionResources RES = CppCompletionResources.INSTANCE;
    private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);

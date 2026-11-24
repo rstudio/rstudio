@@ -14,7 +14,13 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.studio.client.application.AriaLiveService;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 
 import com.google.gwt.junit.client.GWTTestCase;
@@ -28,10 +34,37 @@ public class CompletionPopupPanelTests extends GWTTestCase
    }
 
    @Override
+   protected void gwtSetUp()
+   {
+      announced_ = new ArrayList<>();
+      events_ = new EventBus(null, null);
+      events_.addHandler(AriaLiveStatusEvent.TYPE,
+                         event -> announced_.add(event.getMessage()));
+   }
+
+   @Override
    protected void gwtTearDown()
    {
       if (panel_ != null)
          panel_.hide();
+   }
+
+   private CompletionPopupPanel newPanel()
+   {
+      AriaLiveService ariaLive = new AriaLiveService(events_, null)
+      {
+         @Override
+         public boolean isDisabled(String id)
+         {
+            return false;
+         }
+      };
+      return new CompletionPopupPanel(null, ariaLive);
+   }
+
+   private static Rectangle viewport()
+   {
+      return new Rectangle(0, 0, 800, 3000);
    }
 
    private static QualifiedName[] completions()
@@ -48,12 +81,11 @@ public class CompletionPopupPanelTests extends GWTTestCase
    {
       // Prefers the top, as when an AI assistant is enabled, within an
       // editor whose text area starts at the top of the page.
-      Rectangle viewport = new Rectangle(0, 0, 800, 3000);
       if (panel_ == null)
-         panel_ = new CompletionPopupPanel(null);
+         panel_ = newPanel();
       panel_.showCompletionValues(
             completions(),
-            new PopupPositioner(line, panel_, false, viewport),
+            new PopupPositioner(line, panel_, false, viewport()),
             false);
    }
 
@@ -85,7 +117,7 @@ public class CompletionPopupPanelTests extends GWTTestCase
    {
       RecordingPositioner(Rectangle line, CompletionPopupDisplay popup)
       {
-         super(line, popup, false, new Rectangle(0, 0, 800, 3000));
+         super(line, popup, false, viewport());
       }
 
       @Override
@@ -110,7 +142,7 @@ public class CompletionPopupPanelTests extends GWTTestCase
       // Opened with no room above, the popup goes below; refreshed while
       // showing, it asks to stay there.
       Rectangle line = new Rectangle(10, 0, 8, 13);
-      panel_ = new CompletionPopupPanel(null);
+      panel_ = newPanel();
       assertNull(showRecording(line).kept);
       assertEquals(Boolean.TRUE, showRecording(line).kept);
    }
@@ -118,7 +150,7 @@ public class CompletionPopupPanelTests extends GWTTestCase
    public void testReopenedPopupChoosesSideAfresh()
    {
       Rectangle line = new Rectangle(10, 0, 8, 13);
-      panel_ = new CompletionPopupPanel(null);
+      panel_ = newPanel();
       showRecording(line);
       panel_.hide();
       assertNull(showRecording(line).kept);
@@ -133,14 +165,99 @@ public class CompletionPopupPanelTests extends GWTTestCase
       // A list shown above the line is dismissed, then "No matches" opens
       // below it; the list that replaces the message keeps the message's
       // side, not the dismissed list's.
-      panel_ = new CompletionPopupPanel(null);
+      panel_ = newPanel();
       showRecording(new Rectangle(10, 2000, 8, 13));
       panel_.hide();
       Rectangle line = new Rectangle(10, 0, 8, 13);
-      panel_.showErrorMessage(
-            "(No matches)",
-            new PopupPositioner(line, panel_, false, new Rectangle(0, 0, 800, 3000)));
+      showMessage("(No matches)");
       assertEquals(Boolean.TRUE, showRecording(line).kept);
+   }
+
+   private void showMessage(String message)
+   {
+      Rectangle line = new Rectangle(10, 0, 8, 13);
+      panel_.showErrorMessage(
+            message,
+            new PopupPositioner(line, panel_, false, viewport()));
+   }
+
+   private void showList(boolean truncated)
+   {
+      Rectangle line = new Rectangle(10, 0, 8, 13);
+      panel_.showCompletionValues(
+            completions(),
+            new PopupPositioner(line, panel_, false, viewport()),
+            truncated);
+   }
+
+   public void testMessageIsAnnounced()
+   {
+      panel_ = newPanel();
+      showMessage("(No matches)");
+      assertEquals(1, announced_.size());
+      assertEquals("(No matches)", announced_.get(0));
+   }
+
+   public void testRefreshedMessageIsAnnouncedOnce()
+   {
+      // Refreshed as the user types, the popup shows the same message
+      // again; it's announced only when it changes.
+      panel_ = newPanel();
+      showMessage("(No matches)");
+      showMessage("(No matches)");
+      assertEquals(1, announced_.size());
+
+      showMessage("Error: timed out");
+      assertEquals(2, announced_.size());
+      assertEquals("Error: timed out", announced_.get(1));
+   }
+
+   public void testMessageIsAnnouncedAgainAfterHide()
+   {
+      panel_ = newPanel();
+      showMessage("(No matches)");
+      panel_.hide();
+      showMessage("(No matches)");
+      assertEquals(2, announced_.size());
+
+      panel_.placeOffscreen();
+      showMessage("(No matches)");
+      assertEquals(3, announced_.size());
+   }
+
+   public void testEmptyMessageIsNotAnnounced()
+   {
+      panel_ = newPanel();
+      showMessage("");
+      assertTrue(announced_.isEmpty());
+   }
+
+   public void testTruncatedListIsAnnouncedOnce()
+   {
+      panel_ = newPanel();
+      showList(false);
+      assertTrue(announced_.isEmpty());
+
+      showList(true);
+      showList(true);
+      assertEquals(1, announced_.size());
+      assertEquals("Not all items shown", announced_.get(0));
+
+      // Once the list is complete again, a later truncation is news.
+      showList(false);
+      showList(true);
+      assertEquals(2, announced_.size());
+   }
+
+   public void testMessageAfterListIsAnnounced()
+   {
+      // A message that replaces a list is announced even if it was the
+      // message the popup showed before the list.
+      panel_ = newPanel();
+      showMessage("(No matches)");
+      showList(false);
+      showMessage("(No matches)");
+      assertEquals(2, announced_.size());
    }
 
    public void testRefreshSwitchesSideWhenItNoLongerFits()
@@ -155,4 +272,6 @@ public class CompletionPopupPanelTests extends GWTTestCase
    }
 
    private CompletionPopupPanel panel_;
+   private EventBus events_;
+   private List<String> announced_;
 }
