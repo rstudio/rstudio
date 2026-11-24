@@ -82,13 +82,16 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
          final CppCompletion completion = completions.get(i);
 
          SafeHtmlBuilder sb = new SafeHtmlBuilder();
-         // The item's text names it; an unlabeled icon would only add noise.
+         // The item's text names it, and its kind follows the name as hidden
+         // text, so the icon is decorative.
          SafeHtmlUtil.appendPresentationImage(sb,
                                               RES.styles().itemImage(),
                                               completion.getIcon());
          SafeHtmlUtil.appendSpan(sb,
                                  RES.styles().itemName(),
                                  completion.getTypedText());
+         CompletionListAria.appendKind(
+               sb, CppCompletionKind.label(completion.getType()));
 
 
          MenuItem menuItem = new MenuItem(sb.toSafeHtml(),

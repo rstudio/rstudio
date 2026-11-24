@@ -16,7 +16,10 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.SafeHtmlUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
@@ -60,6 +63,17 @@ public final class CompletionListAria
          item.setAttribute(ACTIVE_STATE, "true");
       else
          item.removeAttribute(ACTIVE_STATE);
+   }
+
+   /**
+    * Appends an item's kind, which its icon shows, as text only screen
+    * readers see. Appended after the item's name, it reads e.g. as
+    * "cat, function". An empty kind appends nothing.
+    */
+   public static void appendKind(SafeHtmlBuilder sb, String kind)
+   {
+      if (!StringUtil.isNullOrEmpty(kind))
+         sb.append(SafeHtmlUtil.visuallyHiddenText(", " + kind));
    }
 
    /**

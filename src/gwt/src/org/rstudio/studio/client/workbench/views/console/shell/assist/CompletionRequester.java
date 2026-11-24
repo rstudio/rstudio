@@ -891,7 +891,8 @@ public class CompletionRequester
             if (RCompletionType.isFileType(type))
                style = RES.styles().fileIcon();
 
-            // The item's text names it; an unlabeled icon would only add noise.
+            // The item's text names it, and its kind follows the name as
+            // hidden text (see addDisplayName), so the icon is decorative.
             SafeHtmlUtil.appendPresentationImage(
                   sb,
                   style,
@@ -925,6 +926,7 @@ public class CompletionRequester
                   sb,
                   RES.styles().completion(),
                   display);
+            CompletionListAria.appendKind(sb, RCompletionKind.label(type));
          }
          else
          {
@@ -946,6 +948,7 @@ public class CompletionRequester
                   sb,
                   RES.styles().completion(),
                   endName);
+            CompletionListAria.appendKind(sb, RCompletionKind.label(type));
 
             SafeHtmlUtil.appendSpan(
                   sb,
@@ -967,6 +970,7 @@ public class CompletionRequester
                : display;
          
          SafeHtmlUtil.appendSpan(sb, style, displayName);
+         CompletionListAria.appendKind(sb, RCompletionKind.label(type));
          
          // Display the source for functions and snippets (unless there
          // is a custom helpHandler provided, indicating that the "source"
