@@ -385,7 +385,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    private void describeSelection(boolean helpShown)
    {
       if (list_ != null)
-         list_.describeSelectedItem(helpShown ? help_.getElement().getId() : null);
+         list_.describeSelectedItem(helpShown ? help_.getDescriptionId() : null);
    }
 
    private boolean completionListIsOnScreen()

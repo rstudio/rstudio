@@ -21,6 +21,7 @@ import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
@@ -56,6 +57,10 @@ public class HelpInfoPopupPanel extends PopupPanel
       outer.add(f1prompt_);
 
       setWidget(outer);
+      // Every help popup gets the same element id, so give the content a
+      // unique one for the list item that it describes to point at.
+      DomUtils.ensureHasId(outer.getElement());
+      descriptionId_ = outer.getElement().getId();
       setVisible(false);
       setStylePrimaryName(RES.styles().helpPopup());
       ElementIds.assignElementId(this, ElementIds.POPUP_COMPLETIONS_HELP);
@@ -254,7 +259,16 @@ public class HelpInfoPopupPanel extends PopupPanel
       scrollPanel_.setHeight(height + "px");
    }
    
+   /**
+    * The id of the element holding the help, for aria-describedby.
+    */
+   public String getDescriptionId()
+   {
+      return descriptionId_;
+   }
+
    private final ScrollPanel scrollPanel_ = new ScrollPanel();
+   private final String descriptionId_;
    private final VerticalPanel vpanel_ = new VerticalPanel();
    private final Timer timer_;
    private final ConsoleResources.ConsoleStyles consoleStyles_;

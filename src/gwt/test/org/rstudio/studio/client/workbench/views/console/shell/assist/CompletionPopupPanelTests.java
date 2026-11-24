@@ -323,6 +323,40 @@ public class CompletionPopupPanelTests extends GWTTestCase
       assertTrue(describedItems().isEmpty());
    }
 
+   public void testEachPopupLinksItsOwnHelp()
+   {
+      // An editor creates a completion popup per language up front, each
+      // with its own help, so each item must point at its own popup's help.
+      panel_ = newPanel();
+      CompletionPopupPanel other = newPanel();
+      try
+      {
+         show(new Rectangle(10, 0, 8, 13));
+         panel_.displaySnippetHelp("library(${1:package})");
+         String first = describedItems().get(0).getAttribute("aria-describedby");
+
+         other.showCompletionValues(
+               completions(),
+               new PopupPositioner(new Rectangle(10, 0, 8, 13), other, false, viewport()),
+               false);
+         other.displaySnippetHelp("print(${1:x})");
+         Element row = null;
+         NodeList<Element> rows = other.getElement().getElementsByTagName("tr");
+         for (int i = 0; i < rows.getLength(); i++)
+            if (rows.getItem(i).hasAttribute("aria-describedby"))
+               row = rows.getItem(i);
+
+         String second = row.getAttribute("aria-describedby");
+         assertFalse(first.equals(second));
+         assertTrue(Document.get().getElementById(second).getInnerText()
+               .contains("print(${1:x})"));
+      }
+      finally
+      {
+         other.hide();
+      }
+   }
+
    public void testHiddenHelpDoesNotDescribe()
    {
       show(new Rectangle(10, 0, 8, 13));
