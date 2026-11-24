@@ -106,7 +106,8 @@
       token = token,
       results = results,
       packages = "schema",
-      type = .rs.acCompletionTypes$ENVIRONMENT
+      type = .rs.acCompletionTypes$ENVIRONMENT,
+      language = "SQL"
    )
 })
 
@@ -131,7 +132,8 @@
          token = token,
          results = results,
          packages = "table",
-         type = .rs.acCompletionTypes$DATAFRAME
+         type = .rs.acCompletionTypes$DATAFRAME,
+         language = "SQL"
       )
       
       return(completions)
@@ -160,7 +162,8 @@
       token = token,
       results = results,
       packages = "table",
-      type = .rs.acCompletionTypes$DATAFRAME
+      type = .rs.acCompletionTypes$DATAFRAME,
+      language = "SQL"
    )
 })
 
@@ -200,7 +203,8 @@
          token = token,
          results = .rs.selectFuzzyMatches(fields, token),
          packages = table,
-         type = .rs.acCompletionTypes$DATASET
+         type = .rs.acCompletionTypes$DATASET,
+         language = "SQL"
       )
       
    }))

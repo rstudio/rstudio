@@ -14,8 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
+import org.rstudio.studio.client.workbench.views.console.shell.ConsoleLanguageTracker;
 
 import com.google.gwt.core.client.GWT;
 
@@ -26,9 +28,15 @@ class RCompletionKind
 {
    // Returns "" for types whose kind isn't known (e.g. UNKNOWN, or CONTEXT,
    // which covers unrelated things such as Shiny IDs and Stan identifiers),
+   // and for Python and SQL completions, which reuse R's types with other
+   // meanings (a SQL table is a DATAFRAME, a Python module an ENVIRONMENT),
    // so they get no label rather than a wrong one.
-   static String label(int type)
+   static String label(int type, String language)
    {
+      if (StringUtil.equals(language, ConsoleLanguageTracker.LANGUAGE_PYTHON) ||
+          StringUtil.equals(language, LANGUAGE_SQL))
+         return "";
+
       if (RCompletionType.isFunctionType(type))
          return constants_.functionKind();
 
@@ -70,5 +78,6 @@ class RCompletionKind
       }
    }
 
+   private static final String LANGUAGE_SQL = "SQL";
    private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
 }

@@ -91,6 +91,32 @@ public class QualifiedNameTests extends GWTTestCase
             new QualifiedName("plotOutput", "", false, RCompletionType.CONTEXT))));
    }
 
+   private static QualifiedName inLanguage(String name, int type, String language)
+   {
+      return new QualifiedName(name, name, "", false, type, false, false, "",
+            null, language, RCompletionManager.AutocompletionContext.TYPE_UNKNOWN);
+   }
+
+   public void testPythonAndSqlHaveNoKind()
+   {
+      // They reuse R's types with other meanings: a Python module is an
+      // ENVIRONMENT, and a SQL table a DATAFRAME and its fields DATASETs.
+      assertNull(hiddenKind(render(
+            inLanguage("path", RCompletionType.ENVIRONMENT, "Python"))));
+      assertNull(hiddenKind(render(
+            inLanguage("mtcars", RCompletionType.DATAFRAME, "SQL"))));
+      assertNull(hiddenKind(render(
+            inLanguage("mpg", RCompletionType.DATASET, "SQL"))));
+   }
+
+   public void testCompletionsBuiltWithoutLanguageHaveKind()
+   {
+      // YAML completions are built in the client, with no language.
+      assertKindFollowsName(
+            render(inLanguage("title", RCompletionType.YAML_KEY, null)),
+            "title", "YAML key");
+   }
+
    public void testFileInFolderReadsFileNameThenKind()
    {
       // The file name is shown before the folder it's in.

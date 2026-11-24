@@ -926,7 +926,7 @@ public class CompletionRequester
                   sb,
                   RES.styles().completion(),
                   display);
-            CompletionListAria.appendKind(sb, RCompletionKind.label(type));
+            CompletionListAria.appendKind(sb, RCompletionKind.label(type, language));
          }
          else
          {
@@ -948,7 +948,7 @@ public class CompletionRequester
                   sb,
                   RES.styles().completion(),
                   endName);
-            CompletionListAria.appendKind(sb, RCompletionKind.label(type));
+            CompletionListAria.appendKind(sb, RCompletionKind.label(type, language));
 
             SafeHtmlUtil.appendSpan(
                   sb,
@@ -970,7 +970,7 @@ public class CompletionRequester
                : display;
          
          SafeHtmlUtil.appendSpan(sb, style, displayName);
-         CompletionListAria.appendKind(sb, RCompletionKind.label(type));
+         CompletionListAria.appendKind(sb, RCompletionKind.label(type, language));
          
          // Display the source for functions and snippets (unless there
          // is a custom helpHandler provided, indicating that the "source"
