@@ -379,7 +379,9 @@ private:
          core::http::UriAsyncUploadHandlerFunction func =
                boost::apply_visitor(UploadVisitor(), uriHandler.get());
 
-         if (func)
+         // Run the request checks before installing a streaming handler. The
+         // body is still empty here, matching how proxied uploads are signed.
+         if (func && authenticate(ptrHttpConnection))
             ptrConnection->setUploadHandler(func);
       }
    }
