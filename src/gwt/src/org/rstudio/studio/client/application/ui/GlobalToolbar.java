@@ -405,7 +405,7 @@ public class GlobalToolbar extends Toolbar
    @Override
    public int getHeight()
    {
-      return 27;
+      return 24;
    }
 
    public void focusGoToFunction()
