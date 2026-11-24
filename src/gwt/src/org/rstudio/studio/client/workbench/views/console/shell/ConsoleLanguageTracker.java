@@ -257,10 +257,10 @@ public class ConsoleLanguageTracker
       });
    }
 
-   // Does the Console run Julia? The Julia console is experimental: the user
-   // turns it on (julia_console_enabled), where the administrator allows
-   // Julia (julia-enabled). Otherwise Julia is treated as it was before the
-   // Console could run it.
+   // Does the Console run Julia? Not where the user turned the Julia console
+   // off (julia_console_enabled; it is experimental), nor where the
+   // administrator doesn't allow Julia (julia-enabled). Julia is then treated
+   // as it was before the Console could run it.
    public static boolean isJuliaEnabled()
    {
       SessionInfo info = RStudioGinjector.INSTANCE.getSession().getSessionInfo();

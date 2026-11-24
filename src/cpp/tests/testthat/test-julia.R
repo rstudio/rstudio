@@ -52,24 +52,24 @@ test_that("bytes that aren't UTF-8 aren't held back", {
    expect_identical(.rs.julia.completeUtf8Length(bytes), length(bytes))
 })
 
-# Turn the Julia console on (the 'julia_console_enabled' preference) for the
-# rest of the calling test.
-localJuliaConsole <- function(envir = parent.frame())
+# Turn the Julia console on or off (the 'julia_console_enabled' preference)
+# for the rest of the calling test.
+localJuliaConsole <- function(enabled = TRUE, envir = parent.frame())
 {
    original <- .rs.api.readRStudioPreference("julia_console_enabled")
    withr::defer(.rs.api.writeRStudioPreference("julia_console_enabled", original), envir = envir)
-   .rs.api.writeRStudioPreference("julia_console_enabled", TRUE)
+   .rs.api.writeRStudioPreference("julia_console_enabled", enabled)
 }
 
-test_that("Julia won't start until the user turns the Julia console on", {
-   # the Julia console is experimental: off by default
+test_that("Julia won't start once the user turns the Julia console off", {
+   # on by default
+   expect_true(.rs.julia.isEnabled())
+
+   localJuliaConsole(FALSE)
    expect_false(.rs.julia.isEnabled())
    expect_error(.rs.julia.start(), "is turned off")
    expect_error(.rs.julia.repl(quiet = TRUE), "is turned off")
    expect_false(.rs.julia.replIsActive())
-
-   localJuliaConsole()
-   expect_true(.rs.julia.isEnabled())
 })
 
 test_that("Julia won't start when an administrator turns it off", {
@@ -77,7 +77,7 @@ test_that("Julia won't start when an administrator turns it off", {
    expect_true(.rs.julia.isAllowed())
 
    # the administrator's choice comes before the user's
-   localJuliaConsole()
+   localJuliaConsole(TRUE)
 
    # testthat can't mock bindings in the locked tools:rstudio environment
    rsEnv <- as.environment("tools:rstudio")
@@ -162,7 +162,7 @@ skipUnlessJulia <- function(envir = parent.frame())
    skip_if(!is.null(.rs.julia.state$pid), "a Julia session is already running")
    skip_if(!is.null(asNamespace("JuliaConnectoR")$pkgLocal$con), "a Julia session is already running")
 
-   localJuliaConsole(envir)
+   localJuliaConsole(TRUE, envir)
 }
 
 test_that("completions and their help come from Julia", {

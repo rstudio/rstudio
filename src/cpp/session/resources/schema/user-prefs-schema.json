@@ -2130,7 +2130,7 @@
         },
         "julia_console_enabled": {
             "type": "boolean",
-            "default": false,
+            "default": true,
             "title": "Enable the Julia console (experimental)",
             "description": "Whether the Console can run Julia, through the JuliaConnectoR package. When set, Julia scripts and Julia chunks run in the Console's Julia."
         }

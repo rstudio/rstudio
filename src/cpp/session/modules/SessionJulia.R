@@ -115,9 +115,9 @@
 
 #' Is the Julia Console Enabled?
 #'
-#' The Julia console is experimental, and off until the user turns on the
-#' 'julia_console_enabled' preference. It stays off where the administrator
-#' doesn't allow Julia; see .rs.julia.isAllowed.
+#' The Julia console is experimental: users turn it off with the
+#' 'julia_console_enabled' preference. It is off, too, where the
+#' administrator doesn't allow Julia; see .rs.julia.isAllowed.
 .rs.addFunction("julia.isEnabled", function()
 {
    .Call("rs_juliaEnabled", PACKAGE = "(embedding)")
@@ -429,7 +429,7 @@
    if (!.rs.julia.isEnabled())
    {
       stop(
-         "The Julia console is experimental, and is turned off.\n",
+         "The Julia console is turned off.\n",
          "Turn it on with \"Enable the Julia console\" in the Command Palette.",
          call. = FALSE
       )

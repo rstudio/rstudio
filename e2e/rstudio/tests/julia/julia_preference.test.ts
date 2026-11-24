@@ -9,11 +9,10 @@ import { heredoc } from '@utils/heredoc';
 import { R_PROMPT } from '@utils/julia';
 import { useSuiteSandbox } from '@utils/sandbox';
 
-// The Julia console is experimental: off until the user turns on the
-// julia_console_enabled preference. With it off, Julia is treated as it was
-// before the Console could run it. None of this starts Julia, so it runs
-// where Julia isn't installed; tests/julia/julia_console.test.ts covers the
-// console once it's on.
+// The Julia console is experimental, and the julia_console_enabled preference
+// turns it off. Julia is then treated as it was before the Console could run
+// it. None of this starts Julia, so it runs where Julia isn't installed;
+// tests/julia/julia_console.test.ts covers the console itself.
 
 const FENCE = '```';
 
@@ -29,7 +28,7 @@ const RMD = heredoc`
 
 const RUN_COMMANDS = ['executeCode', 'executeAllCode', 'sourceActiveDocument', 'executeToCurrentLine'];
 
-const TURNED_OFF = 'The Julia console is experimental, and is turned off.';
+const TURNED_OFF = 'The Julia console is turned off.';
 
 async function commandState(page: Page, id: string) {
   return page.evaluate((cmdId) => {
@@ -58,14 +57,30 @@ test.describe.serial('Julia console preference', () => {
     await clearPref(page, 'julia_console_enabled');
   });
 
+  // each test says where it wants the preference; none leaves it off
+  test.afterEach(async ({ rstudioPage: page }) => {
+    await clearPref(page, 'julia_console_enabled');
+  });
+
   test.afterAll(async ({ rstudioPage: page }) => {
     await clearPref(page, 'julia_console_enabled');
     await clearPref(page, 'rmd_chunk_output_inline');
     await closeAndDeleteSandboxFiles(page, sandbox.dir, ['off.jl', 'on.jl', 'probe.Rmd']);
   });
 
-  test('the console offers no Julia by default', async ({ rstudioPage: page }) => {
-    expect((await commandState(page, 'consoleActivateJulia')).visible).toBe(false);
+  test('the console offers Julia by default', async ({ rstudioPage: page }) => {
+    expect((await commandState(page, 'consoleActivateJulia')).visible).toBe(true);
+    expect(await languageMenuHasJulia(page)).toBe(true);
+
+    await writeAndOpenFile(page, sandbox.dir, 'on.jl', 'y = 2\n');
+    for (const id of RUN_COMMANDS)
+      expect((await commandState(page, id)).enabled, id).toBe(true);
+  });
+
+  test('turned off, the console offers no Julia', async ({ rstudioPage: page }) => {
+    await setPref(page, 'julia_console_enabled', false);
+
+    await expect.poll(async () => (await commandState(page, 'consoleActivateJulia')).visible).toBe(false);
     expect(await languageMenuHasJulia(page)).toBe(false);
 
     await clearConsole(page);
@@ -74,7 +89,8 @@ test.describe.serial('Julia console preference', () => {
     expect(await getConsolePromptText(page)).toBe(R_PROMPT);
   });
 
-  test('a Julia script can only be edited by default', async ({ rstudioPage: page }) => {
+  test('turned off, a Julia script can only be edited', async ({ rstudioPage: page }) => {
+    await setPref(page, 'julia_console_enabled', false);
     await writeAndOpenFile(page, sandbox.dir, 'off.jl', 'x = 1\n');
 
     for (const id of RUN_COMMANDS)
@@ -82,8 +98,9 @@ test.describe.serial('Julia console preference', () => {
     expect((await commandState(page, 'commentUncomment')).enabled).toBe(true);
   });
 
-  test('an inline julia chunk runs through knitr by default', async ({ rstudioPage: page }) => {
+  test('turned off, an inline julia chunk runs through knitr', async ({ rstudioPage: page }) => {
     test.setTimeout(240_000);
+    await setPref(page, 'julia_console_enabled', false);
     await writeAndOpenFile(page, sandbox.dir, 'probe.Rmd', RMD);
     await sourceActions.navigateToChunkByLabel('jlone');
     await executeCommand(page, 'executeCurrentChunk');
@@ -95,7 +112,8 @@ test.describe.serial('Julia console preference', () => {
     expect(await getConsolePromptText(page)).toBe(R_PROMPT);
   });
 
-  test('a julia chunk line sent to the console is refused by default', async ({ rstudioPage: page }) => {
+  test('turned off, a julia chunk line sent to the console is refused', async ({ rstudioPage: page }) => {
+    await setPref(page, 'julia_console_enabled', false);
     await setPref(page, 'rmd_chunk_output_inline', false);
     await writeAndOpenFile(page, sandbox.dir, 'probe.Rmd', RMD);
     await page.evaluate(() => window.rstudio!.documents.activeEditor()!.gotoLine(6, 0, false));
@@ -109,20 +127,13 @@ test.describe.serial('Julia console preference', () => {
     await clearPref(page, 'rmd_chunk_output_inline');
   });
 
-  test('turning the preference on offers Julia, and off again takes it away', async ({ rstudioPage: page }) => {
-    await setPref(page, 'julia_console_enabled', true);
-
-    await expect.poll(async () => (await commandState(page, 'consoleActivateJulia')).visible).toBe(true);
-    expect(await languageMenuHasJulia(page)).toBe(true);
-
-    // a Julia script opened now can be run
-    await writeAndOpenFile(page, sandbox.dir, 'on.jl', 'y = 2\n');
-    for (const id of RUN_COMMANDS)
-      expect((await commandState(page, id)).enabled, id).toBe(true);
-
-    await clearPref(page, 'julia_console_enabled');
-
+  test('the console follows the preference as it changes', async ({ rstudioPage: page }) => {
+    await setPref(page, 'julia_console_enabled', false);
     await expect.poll(async () => (await commandState(page, 'consoleActivateJulia')).visible).toBe(false);
     expect(await languageMenuHasJulia(page)).toBe(false);
+
+    await setPref(page, 'julia_console_enabled', true);
+    await expect.poll(async () => (await commandState(page, 'consoleActivateJulia')).visible).toBe(true);
+    expect(await languageMenuHasJulia(page)).toBe(true);
   });
 });

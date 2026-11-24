@@ -4783,7 +4783,7 @@ public class UserPrefsAccessor extends Prefs
          "julia_console_enabled",
          _constants.juliaConsoleEnabledTitle(), 
          _constants.juliaConsoleEnabledDescription(), 
-         false);
+         true);
    }
 
    public void syncPrefs(String layer, JsObject source)
