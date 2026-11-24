@@ -445,6 +445,12 @@ TEST(SharedCoreTest, NotFoundHelpersMatchFileAndPathErrors)
    EXPECT_TRUE(isNotFoundError(fileError));
    EXPECT_TRUE(isNotFoundError(pathError));
 
+   // a portable errc error is generic on every platform, including Windows
+   Error portableError = systemError(boost::system::errc::no_such_file_or_directory, ERROR_LOCATION);
+   EXPECT_TRUE(isFileNotFoundError(portableError));
+   EXPECT_TRUE(isPathNotFoundError(portableError));
+   EXPECT_TRUE(isNotFoundError(portableError));
+
    Error otherError = fileExistsError(ERROR_LOCATION);
    EXPECT_FALSE(isFileNotFoundError(otherError));
    EXPECT_FALSE(isPathNotFoundError(otherError));

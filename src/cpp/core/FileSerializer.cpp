@@ -51,22 +51,12 @@ namespace core {
 
 namespace {
 
-bool isFileLockedError(const Error& error)
+// Annotate the Error for a failed file operation with the path. The caller
+// builds the Error right after the failing call, before any cleanup (close,
+// etc.) can change errno or GetLastError(). Taking an int code here instead
+// would lose the code's type, which is what gives a Win32 code its category.
+Error fileError(Error error, const FilePath& filePath)
 {
-   // exclusive file access is only present on Windows
-#ifndef _WIN32
-   return false;
-#else
-   return (error && error.getCode() == ERROR_SHARING_VIOLATION);
-#endif
-}
-
-// Build an Error describing a failed file operation, annotated with the path.
-// The code is captured by the caller immediately after the failing syscall so
-// that it is not clobbered by any intervening cleanup (close, etc.).
-Error fileError(int code, const FilePath& filePath, const ErrorLocation& location)
-{
-   Error error = systemError(code, location);
    error.addProperty("path", filePath.getAbsolutePath());
    return error;
 }
@@ -198,7 +188,7 @@ Error writeAll(int fd, const std::string& contents, const FilePath& filePath)
          if (errno == EINTR)
             continue;
 
-         return fileError(errno, filePath, ERROR_LOCATION);
+         return fileError(systemError(errno, ERROR_LOCATION), filePath);
       }
 
       data += written;
@@ -238,7 +228,7 @@ Error syncFile(int fd, const FilePath& filePath)
 #endif
 
    if (rc == -1)
-      return fileError(errno, filePath, ERROR_LOCATION);
+      return fileError(systemError(errno, ERROR_LOCATION), filePath);
 
    return Success();
 }
@@ -249,7 +239,7 @@ Error syncFile(int fd, const FilePath& filePath)
 Error closeFile(int fd, const FilePath& filePath)
 {
    if (::close(fd) == -1 && errno != EINTR)
-      return fileError(errno, filePath, ERROR_LOCATION);
+      return fileError(systemError(errno, ERROR_LOCATION), filePath);
 
    return Success();
 }
@@ -270,7 +260,7 @@ Error writeContentsToFile(const FilePath& filePath,
    while (fd == -1 && errno == EINTR);
 
    if (fd == -1)
-      return fileError(errno, filePath, ERROR_LOCATION);
+      return fileError(systemError(errno, ERROR_LOCATION), filePath);
 
    // when durability is requested, flush to physical storage; this is the point
    // at which a full disk or an exceeded quota is reliably reported
@@ -315,7 +305,7 @@ Error writeContentsToFileWithRetry(const FilePath& filePath,
       Error error = writeContentsToFile(filePath, contents, truncate, durable);
 
       // success and all non-sharing-violation errors are returned immediately
-      if (!isFileLockedError(error))
+      if (!isFileInUseError(error))
          return error;
 
       error.addOrUpdateProperty("open-attempts", ++numTries);
@@ -381,7 +371,7 @@ Error writeAllForAtomicWrite(int fd, const std::string& contents, const FilePath
 {
 #ifdef RSTUDIO_UNIT_TESTS_ENABLED
    if (s_atomicWriteWriteErrno != 0)
-      return fileError(s_atomicWriteWriteErrno, filePath, ERROR_LOCATION);
+      return fileError(systemError(s_atomicWriteWriteErrno, ERROR_LOCATION), filePath);
 #endif
 
    return writeAll(fd, contents, filePath);
@@ -402,12 +392,24 @@ int renameForAtomicWrite(const char* from, const char* to)
 
 #endif
 
+// True when error's code is a native one: a Win32 code on Windows, or an errno
+// value on POSIX, where an Error is generic for errno whichever category
+// reported it.
+bool hasNativeCode(const Error& error)
+{
+#ifdef _WIN32
+   return error.getName() == boost::system::system_category().name();
+#else
+   return error.getName() == boost::system::generic_category().name();
+#endif
+}
+
 // True when a file couldn't be created because of where it would go: the
 // directory forbids it, or (EROFS) is on a read-only filesystem, as with a
 // writable file mounted into a read-only container image.
 bool isPermissionError(const Error& error)
 {
-   if (!error || error.getName() != boost::system::system_category().name())
+   if (!error || !hasNativeCode(error))
       return false;
 
 #ifdef _WIN32
@@ -426,7 +428,7 @@ bool isMountPointError(const Error& error)
 #ifdef _WIN32
    return false;
 #else
-   if (!error || error.getName() != boost::system::system_category().name())
+   if (!error || !hasNativeCode(error))
       return false;
 
    return error.getCode() == EBUSY || error.getCode() == EXDEV;
@@ -491,7 +493,7 @@ Error writeInPlace(const FilePath& targetPath,
       int code = errno;
       struct stat st;
       if (::stat(targetPath.getAbsolutePath().c_str(), &st) == -1 || (st.st_mode & 077) != 0)
-         return fileError(code, targetPath, ERROR_LOCATION);
+         return fileError(systemError(code, ERROR_LOCATION), targetPath);
 
       DLOGF("Couldn't chmod '{}' (errno {}); writing it in place since it's already private to uid {}", targetPath.getAbsolutePath(), code, st.st_uid);
    }
@@ -507,12 +509,9 @@ Error writeInPlace(const FilePath& targetPath,
 // The error for a failed step of an atomic write. It names the file being
 // written, which is what the caller and the user know about; the temporary
 // file is recorded separately.
-Error atomicWriteError(int code,
-                       const FilePath& targetPath,
-                       const FilePath& tempPath,
-                       const ErrorLocation& location)
+Error atomicWriteError(const Error& cause, const FilePath& targetPath, const FilePath& tempPath)
 {
-   Error error = fileError(code, targetPath, location);
+   Error error = fileError(cause, targetPath);
    error.addProperty("temp-path", tempPath.getAbsolutePath());
    return error;
 }
@@ -551,7 +550,7 @@ Error createTempFile(const FilePath& targetPath,
       nullptr);
 
    if (pTemp->handle == INVALID_HANDLE_VALUE)
-      return atomicWriteError(::GetLastError(), targetPath, pTemp->path, ERROR_LOCATION);
+      return atomicWriteError(LAST_SYSTEM_ERROR(), targetPath, pTemp->path);
 
    return Success();
 }
@@ -565,7 +564,7 @@ Error writeTempFile(TempFile* pTemp,
 {
    Error error = writeAll(pTemp->handle, contents, targetPath);
    if (!error && options.durable && !::FlushFileBuffers(pTemp->handle))
-      error = atomicWriteError(::GetLastError(), targetPath, pTemp->path, ERROR_LOCATION);
+      error = atomicWriteError(LAST_SYSTEM_ERROR(), targetPath, pTemp->path);
 
    if (error)
    {
@@ -577,7 +576,7 @@ Error writeTempFile(TempFile* pTemp,
 
    if (!::CloseHandle(pTemp->handle))
    {
-      error = atomicWriteError(::GetLastError(), targetPath, pTemp->path, ERROR_LOCATION);
+      error = atomicWriteError(LAST_SYSTEM_ERROR(), targetPath, pTemp->path);
       pTemp->path.removeIfExists();
       return error;
    }
@@ -722,7 +721,7 @@ Error replaceFile(const FilePath& tempPath,
                    (code == ERROR_ACCESS_DENIED && isAccessDeniedTransient(targetPath));
 
       if (!inUse || microsec_clock::universal_time() >= deadline)
-         return atomicWriteError(static_cast<int>(code), targetPath, tempPath, ERROR_LOCATION);
+         return atomicWriteError(systemError(code, ERROR_LOCATION), targetPath, tempPath);
 
       boost::this_thread::sleep(milliseconds(50));
    }
@@ -770,7 +769,7 @@ Error createTempFile(const FilePath& targetPath,
    while (pTemp->fd == -1 && errno == EINTR);
 
    if (pTemp->fd == -1)
-      return atomicWriteError(errno, targetPath, pTemp->path, ERROR_LOCATION);
+      return atomicWriteError(systemError(errno, ERROR_LOCATION), targetPath, pTemp->path);
 
    return Success();
 }
@@ -869,7 +868,7 @@ Error replaceFile(const FilePath& tempPath,
                   const AtomicWriteOptions& options)
 {
    if (renameForAtomicWrite(tempPath.getAbsolutePath().c_str(), targetPath.getAbsolutePath().c_str()) == -1)
-      return atomicWriteError(errno, targetPath, tempPath, ERROR_LOCATION);
+      return atomicWriteError(systemError(errno, ERROR_LOCATION), targetPath, tempPath);
 
    // the file's contents were flushed before the rename; flush the directory
    // as well, so that the rename itself survives a crash
@@ -1021,14 +1020,26 @@ Error writeStringToFile(const FilePath& filePath,
    return error;
 }
 
+bool isFileInUseError(const Error& error)
+{
+   // exclusive file access is only present on Windows
+#ifndef _WIN32
+   return false;
+#else
+   // a Win32 code: as an errno value, the same number is EPIPE
+   return error &&
+          error.getName() == boost::system::system_category().name() &&
+          error.getCode() == ERROR_SHARING_VIOLATION;
+#endif
+}
+
 bool isDiskSpaceError(const Error& error)
 {
    if (!error)
       return false;
 
-   // ENOSPC / EDQUOT (and the Windows equivalents) are reported in the system
-   // category: errno on POSIX, the Win32 error code on Windows
-   if (error.getName() != boost::system::system_category().name())
+   // ENOSPC / EDQUOT on POSIX, and the Windows equivalents
+   if (!hasNativeCode(error))
       return false;
 
    int code = error.getCode();

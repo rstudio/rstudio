@@ -166,7 +166,7 @@ private:
                if (endpoint_iterator == boost::asio::ip::tcp::resolver::results_type::iterator())
                {
                   handleErrorCode(boost::system::error_code(boost::system::errc::io_error,
-                                                            boost::system::system_category()),
+                                                            boost::system::generic_category()),
                                   ERROR_LOCATION);
                   return;
                }

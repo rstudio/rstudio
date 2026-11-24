@@ -435,6 +435,9 @@ public:
    bool hasAfterResponse() const;
    void runAfterResponse();
 
+   // the function to run after the response, for a caller that runs it later
+   const boost::function<void()>& afterResponse() const { return afterResponse_; }
+
    bool suppressDetectChanges() { return suppressDetectChanges_; }
    void setSuppressDetectChanges(bool suppress)
    {

@@ -253,6 +253,19 @@ void setEnvVar(const std::string& name, const std::string& value)
    if (name == "RSTUDIO_SESSION_PID" && !core::system::getenv(name).empty())
       return;
 
+   // nor where requests back into the session go: its port, which the OS
+   // picks anew on each start when www-port is 0, or its stream. the session
+   // publishes these before R restores its state (once its listener binds),
+   // or clears them for a desktop session listening on a local stream, which
+   // a saved value would misdirect. nor the local stream a desktop session
+   // listens on, given at launch, if at all: a saved one would point requests
+   // elsewhere, and have a desktop session started from this one listen there
+   if (name == "RSTUDIO_SESSION_PORT" ||
+       name == "RSTUDIO_STANDALONE_PORT" ||
+       name == "RSTUDIO_SESSION_STREAM" ||
+       name == "RS_LOCAL_PEER")
+      return;
+
    // don't restore socket path environment variables (should be set by main session initialization)
    if (name == "RS_SERVER_RPC_SOCKET_PATH" && !core::system::getenv(name).empty())
       return;
@@ -270,9 +283,6 @@ void setEnvVar(const std::string& name, const std::string& value)
       return;
 
    // don't restore misc launcher environment that is set when the session is launched
-   if (name == "RSTUDIO_STANDALONE_PORT" && !core::system::getenv(name).empty())
-      return;
-
    if (name == "RSTUDIO_SESSION_RSA_PRIVATE_KEY" && !core::system::getenv(name).empty())
       return;
 

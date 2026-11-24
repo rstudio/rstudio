@@ -70,7 +70,7 @@ public:
          {
             boost::system::error_code ec;
             closeAcceptor(ec);
-            if (ec && (ec.value() != boost::system::errc::bad_file_descriptor))
+            if (ec && ec != boost::system::errc::bad_file_descriptor)
                LOG_ERROR(Error(ec, ERROR_LOCATION));
          }
       }

@@ -1069,6 +1069,14 @@ table.header > tbody > tr > td {
    display: none;
 }
 
+/* WindowFrame sizes these buttons to 24px targets around their 14px icons */
+.windowframe .minimize,
+.windowframe .maximize,
+.windowframe .close {
+   background-position: center;
+   background-repeat: no-repeat;
+}
+
 .windowframe .close {
    background-image: CLOSEPANE;
    z-index: 50;
@@ -1107,16 +1115,6 @@ table.header > tbody > tr > td {
 
 .consoleHeaderLayout {
 
-}
-
-.consoleHeaderLayout .subtitle {
-	position: relative;
-	top: -4px;
-}
-
-.consoleHeaderLayout .toolbarDotSeparator {
-	position: relative;
-	top: -4px;
 }
 
 .consoleMinimizeLayout {
@@ -1181,6 +1179,31 @@ table.header > tbody > tr > td {
    margin-right: 0px;
    margin-bottom: 2px;
    border-bottom: solid 1px #d6dadc;
+   display: flex;
+   align-items: center;
+   /* Once the path can shrink no further, the row overflows at its left end,
+      which is clipped, rather than pushing the buttons under Minimize */
+   justify-content: flex-end;
+   /* clears the Minimize and Maximize buttons placed below, plus a gap */
+   padding-right: 56px;
+}
+
+.windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader > * {
+   flex: none;
+}
+
+/* A long working directory gives way to the buttons after it */
+.windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader > .subtitle {
+   flex: 0 1 auto;
+   min-width: 0;
+   overflow: hidden;
+   text-overflow: ellipsis;
+}
+
+.windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeaderButtons {
+   display: flex;
+   align-items: center;
+   margin-left: auto;
 }
 
 .windowFrameObject.consoleOnlyWindowFrame div.consoleWidgetLayout {
@@ -1191,13 +1214,14 @@ table.header > tbody > tr > td {
    bottom: 0px !important;
 }
 
+/* WindowFrame's button slots, less the shadow insets this frame drops */
 .windowFrameObject.consoleOnlyWindowFrame .consoleMinimizeLayout {
-   top: 5px !important;
-   right: 25px !important;
+   top: 0px !important;
+   right: 26px !important;
 }
 .windowFrameObject.consoleOnlyWindowFrame .consoleMaximizeLayout {
-   top: 5px !important;
-   right: 7px !important;
+   top: 0px !important;
+   right: 2px !important;
 }
 
 .macintosh #rstudio_console_input {
@@ -1679,8 +1703,15 @@ body.windows .toolbar {
 
 .tallerToolbarWrapper {
    border-bottom: solid 1px #d6dadc;
-   height: 23px !important;
+   height: 24px !important;
    padding-top: 1px;
+}
+
+/* Absolutely positioned, the toolbar ignores the padding above and would
+   start under the wrapper's -1px top margin, out of view. Windows already
+   moves every toolbar down by this margin. */
+.tallerToolbarWrapper .toolbar {
+   margin-top: 1px;
 }
 
 .toolbarButtonRightImage {
@@ -1770,15 +1801,12 @@ body.windows .toolbar {
 .assistantToggleButton.toolbarButtonLatchable {
    border: 1px solid transparent;
    border-radius: 4px;
-   height: 20px;
 }
 
-.assistantToggleButton .toolbarButtonLeftImage {
-   margin-top: 0;
-}
-
+/* The usual toolbar label offset, in place of the latching buttons' 0, puts
+   the label level with those of the buttons beside it. */
 .assistantToggleButton .toolbarButtonLabel {
-   margin-top: 2px;
+   margin-top: 4px;
 }
 
 .assistantToggleButton.toolbarButtonLatched {
@@ -1791,12 +1819,74 @@ body.windows .toolbar {
 }
 
 .globalToolbar {
-   height: 27px;
+   height: 24px;
    z-index: 1;
 }
 
+/* Main toolbar buttons are 24px targets (WCAG 2.5.8), filling the 24px row.
+   Every button's content sits 2px in from its edges, as a 20px icon does in
+   a 24px button, and the separators' margins then even out the gaps beside
+   them. Buttons drop their margins, keeping icon buttons 24px apart. */
 .globalToolbar .toolbarButton {
+   box-sizing: border-box;
+   height: 24px;
+   min-width: 24px;
+   margin-top: 0;
+   margin-right: 0;
+   padding: 0 2px;
+}
+
+.globalToolbar .toolbarButton > table {
+   margin: 0 auto;
+}
+
+/* Keeps the last button of each group where its 8px margin put it; this
+   shows only at the right-hand group's end, by the toolbar's edge. */
+.globalToolbar td:last-child > .toolbarButton {
+   margin-right: 6px;
+}
+
+/* A latching button's frame is its edge, so it keeps its own padding and
+   takes the margin the others get from their padding. */
+.globalToolbar .toolbarButton.toolbarButtonLatchable {
+   padding: 0 6px 0 4px;
+   margin-right: 2px;
+}
+
+/* A split button's narrow arrow keeps its earlier size; its design and
+   target size are to be addressed separately. */
+.globalToolbar .toolbarButton.toolbarButtonMenuOnly {
+   height: 21px;
+   min-width: 0;
    margin-top: -1px;
+   margin-right: 2px;
+   padding: 0;
+}
+
+/* The separator image is a line with a 1px highlight to its right, mirrored
+   in dark themes. These margins leave 4px between the line and the content
+   of the buttons on either side. */
+.globalToolbar .toolbarSeparator {
+   margin-left: 2px;
+   margin-right: 1px;
+}
+
+.rstudio-themes-dark .globalToolbar .toolbarSeparator {
+   margin-left: 1px;
+   margin-right: 2px;
+}
+
+.globalToolbar .search {
+   margin: 0 2px;
+}
+
+/* A 24px target (WCAG 2.5.8) with the 14px lock centered in it */
+.globalToolbar .restrictedModeIcon {
+   box-sizing: border-box;
+   justify-content: center;
+   width: 24px;
+   height: 24px;
+   margin: 0;
 }
 
 .globalToolbar .toolbarButtonMenu .toolbarButtonLabel {
@@ -1845,12 +1935,13 @@ body.windows .toolbar {
  }
 
 .webGlobalToolbar {
-   margin-top: -3px;
    background: none;
 }
 
+/* The web header shows its toolbar's top row, so it doesn't need the 1px
+   that Windows otherwise moves every toolbar down. */
 body.windows table.webGlobalToolbar {
-   margin-top: -3px;
+   margin-top: 0;
 }
 
 .webGlobalToolbarWrapper {
@@ -1861,9 +1952,11 @@ body.windows table.webGlobalToolbar {
 
 }
 
+/* 24px tall, reaching 2px further up into the gap below the menu bar */
 .rstheme_toolbarWrapper.webGlobalToolbarWrapper {
    border-bottom: 0;
-   height: 22px;
+   height: 24px;
+   margin-top: -3px;
 }
 
  @if user.agent gecko1_8 { .webGlobalToolbar {
@@ -1886,8 +1979,15 @@ body.windows table.webGlobalToolbar {
    }
  }
 
+/* The wrapper's -1px top margin puts its first pixel row above the window,
+   so 25px shows 24px of toolbar; the toolbar starts below that row, as
+   Windows already moves every toolbar down. */
 .desktopGlobalToolbarWrapper {
-   height: 24px;
+   height: 25px;
+}
+
+.desktopGlobalToolbarWrapper .globalToolbar {
+   margin-top: 1px;
 }
 
 .windowFrameToolbarButton {
@@ -2426,10 +2526,10 @@ input[type="checkbox"]:checked:before {
 }
 
 .dialogTabPanel .gwt-TabLayoutPanelTab-selected {
-   background: #9c9c9c -moz-linear-gradient(top, rgba(0,0,0,0.1) 0%, rgba(255,255,255,0) 20%, rgba(0,0,0,0.01) 85%, rgba(0,0,0,0.1) 100%);
-   background: #9c9c9c -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(0,0,0,0.1)), color-stop(20%,rgba(255,255,255,0)), color-stop(85%,rgba(0,0,0,0.01)), color-stop(100%,rgba(0,0,0,0.1)));
-   background: #9c9c9c -webkit-linear-gradient(top, rgba(0,0,0,0.1) 0%,rgba(255,255,255,0) 20%,rgba(0,0,0,0.01) 85%,rgba(0,0,0,0.1) 100%);
-   background: #9c9c9c linear-gradient(to bottom, rgba(0,0,0,0.1) 0%,rgba(255,255,255,0) 20%,rgba(0,0,0,0.01) 85%,rgba(0,0,0,0.1) 100%);
+   background: #707070 -moz-linear-gradient(top, rgba(0,0,0,0.1) 0%, rgba(255,255,255,0) 20%, rgba(0,0,0,0.01) 85%, rgba(0,0,0,0.1) 100%);
+   background: #707070 -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(0,0,0,0.1)), color-stop(20%,rgba(255,255,255,0)), color-stop(85%,rgba(0,0,0,0.01)), color-stop(100%,rgba(0,0,0,0.1)));
+   background: #707070 -webkit-linear-gradient(top, rgba(0,0,0,0.1) 0%,rgba(255,255,255,0) 20%,rgba(0,0,0,0.01) 85%,rgba(0,0,0,0.1) 100%);
+   background: #707070 linear-gradient(to bottom, rgba(0,0,0,0.1) 0%,rgba(255,255,255,0) 20%,rgba(0,0,0,0.01) 85%,rgba(0,0,0,0.1) 100%);
    color: #ffffff;
 }
 
@@ -2978,26 +3078,26 @@ input[type="checkbox"]:checked:before {
    padding-top: 1px;
 }
 
-.rstheme_minimizedWindowObject .minimize {
-   padding-top: 3px;
+/* 24px squares meet the WCAG 2.5.8 minimum target size */
+.rstheme_minimizedWindowObject .minimize,
+.rstheme_minimizedWindowObject .maximize {
+   width: 24px;
+   height: 24px;
+   /* offsets the 3px .rstheme_center padding so the strip doesn't clip them */
+   margin-top: -2px;
+}
+
+.moduleTabPanel.rstheme_minimizedWindowObject .minimize,
+.moduleTabPanel.rstheme_minimizedWindowObject .maximize {
    margin-top: 1px;
-   width: 16px;
+}
+
+.rstheme_minimizedWindowObject .minimize {
    margin-right: 0px;
 }
 
-.moduleTabPanel.rstheme_minimizedWindowObject .minimize {
-   padding-top: 10px;
-}
-
 .rstheme_minimizedWindowObject .maximize {
-   padding-top: 3px;
-   margin-top: 1px;
-   width: 20px;
-   margin-right: 6px;
-}
-
-.moduleTabPanel.rstheme_minimizedWindowObject .maximize {
-   padding-top: 10px;
+   margin-right: 4px;
 }
 
 .rstheme_minimizedWindowObject .primaryWindowFrameHeader {
@@ -3128,6 +3228,14 @@ body.windows .search {
 
 .findBuildButton {
 
+}
+
+/* A long title, such as the working directory, shortens so the buttons after
+   it stay in view */
+.subtitle.terminalTitle {
+   display: block;
+   overflow: hidden;
+   text-overflow: ellipsis;
 }
 
 .terminalClearButton {

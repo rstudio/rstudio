@@ -322,8 +322,8 @@ Error createSessionDirFromPersistent()
 
 bool isLockingUnsupported(const Error& error)
 {
-   return error == systemError(boost::system::errc::operation_not_supported, ErrorLocation()) ||
-          error == systemError(boost::system::errc::function_not_supported, ErrorLocation());
+   return error.matches(boost::system::errc::operation_not_supported) ||
+          error.matches(boost::system::errc::function_not_supported);
 }
 
 Error sessionDirInUseError(const FilePath& sessionDir)

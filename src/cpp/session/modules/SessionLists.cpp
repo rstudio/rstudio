@@ -21,7 +21,6 @@
 #include <sstream>
 
 #include <boost/utility.hpp>
-#include <boost/circular_buffer.hpp>
 #include <boost/bind/bind.hpp>
 
 #include <core/Exec.hpp>

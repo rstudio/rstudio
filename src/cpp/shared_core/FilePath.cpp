@@ -791,7 +791,7 @@ Error FilePath::completeChildPath(const std::string& in_filePath, FilePath& out_
                "absolute path not permitted",
                boost::system::error_code(
                   boost::system::errc::no_such_file_or_directory,
-                  boost::system::system_category()));
+                  boost::system::generic_category()));
          }
 
          out_childPath = completePath(in_filePath);
@@ -802,7 +802,7 @@ Error FilePath::completeChildPath(const std::string& in_filePath, FilePath& out_
                "child path must be inside parent path",
                boost::system::error_code(
                   boost::system::errc::no_such_file_or_directory,
-                  boost::system::system_category()));
+                  boost::system::generic_category()));
          }
       }
    }
@@ -1581,7 +1581,7 @@ Error FilePath::isWriteable(bool &out_writeable) const
          {
             // Expected on the folder shape that got us here (see below); log at debug so
             // the litter is discoverable without making a warning out of a known cost.
-            Error error = systemError(::GetLastError(), ERROR_LOCATION);
+            Error error = LAST_SYSTEM_ERROR();
             error.addProperty("path", getAbsolutePath());
             log::logErrorAsDebug(error);
          }
@@ -2098,11 +2098,14 @@ Error pathNotFoundError(const std::string& in_path, const ErrorLocation& in_loca
 bool isNotFoundError(const Error& in_error)
 {
 #ifdef _WIN32
-   return in_error == boost::system::windows_error::file_not_found ||
-          in_error == boost::system::windows_error::path_not_found;
-#else
-   return in_error == systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation());
+   // only these two native codes: matches() would also accept codes such as
+   // ERROR_INVALID_NAME and ERROR_BAD_NETPATH
+   if (in_error.getName() == boost::system::system_category().name())
+      return in_error == boost::system::windows_error::file_not_found ||
+             in_error == boost::system::windows_error::path_not_found;
 #endif
+
+   return in_error.matches(boost::system::errc::no_such_file_or_directory);
 }
 
 } // namespace core

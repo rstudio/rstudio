@@ -1,7 +1,7 @@
-@external gwt-CheckBox-FilesSelectAll;
+@external gwt-CheckBox, gwt-CheckBox-FilesSelectAll;
 @external gwt-DialogBox;
 @external gwt-MenuItem-selected;
-@external breadcrumb, breadcrumb-filepane;
+@external breadcrumb;
 @external rstudio-themes-dark, rstudio-theme-aware-dialog;
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 @external editor_dark, ace_editor_theme;
@@ -86,14 +86,18 @@
    color: black;
 }
 
-.gwt-CheckBox-FilesSelectAll {
-   margin-left: 2px;
-   margin-top: 2px;
+/* The Files pane's select-all checkbox lines up with the file list's
+   checkboxes, with its center 12.5px from the pane toolbar's buttons above
+   and from the breadcrumb: WCAG 2.5.8 spacing for a 13px target. Block layout
+   and these margins override the platform checkbox margins and font-based
+   alignment. */
+.gwt-CheckBox.gwt-CheckBox-FilesSelectAll {
+   margin: 0;
 }
 
-body.windows .gwt-CheckBox-FilesSelectAll {
-   margin-left: 4px;
-   margin-top: 3px;
+.gwt-CheckBox.gwt-CheckBox-FilesSelectAll input[type="checkbox"] {
+   display: block;
+   margin: 6px 0 0 11px;
 }
 
 .gwt-DialogBox .breadcrumbFrame {
@@ -117,13 +121,6 @@ body.windows .gwt-CheckBox-FilesSelectAll {
    font-size: 11px;
 }
 .breadcrumb, .breadcrumb table, .breadcrumb td {
-   height: 20px;
-}
-.breadcrumb-filepane {
-   background-color: transparent;
-   border: none;
-}
-.breadcrumb-filepane, .breadcrumb-filepane table, .breadcrumb-filepane td {
    height: 20px;
 }
 .breadcrumb table.path .rstudio-HyperlinkLabel,
@@ -174,6 +171,22 @@ body.windows .breadcrumb table.path span {
 
 .breadcrumb table.path .last {
    padding-right: 8px;
+}
+
+/* In the Files pane, the breadcrumb and its links fill the toolbar's 24px
+   of visible height, so each link is a WCAG 2.5.8 24px target. */
+.breadcrumbFrame.filePane,
+.filePane .breadcrumb,
+.filePane .breadcrumb table,
+.filePane .breadcrumb td {
+   height: 24px;
+}
+
+.filePane .breadcrumb table.path .rstudio-HyperlinkLabel,
+.filePane .breadcrumb table.path span {
+   box-sizing: border-box;
+   min-width: 24px;
+   height: 24px;
 }
 
 .breadcrumb .fade {

@@ -28,7 +28,7 @@ public class SecondaryToolbar extends Toolbar
       if (!appearAsPrimary)
          addStyleName(styles_.rstheme_secondaryToolbar());
 
-      // size the wrapper to fill the 24px layout slot reserved by getHeight()
+      // size the wrapper to fill the layout slot reserved by getHeight()
       getWrapper().addStyleName(styles_.tallerToolbarWrapper());
    }
    
@@ -38,9 +38,12 @@ public class SecondaryToolbar extends Toolbar
       super.manageSeparators();
    }
 
+   // The wrapper's -1px top margin tucks its first pixel row under the pane
+   // above, so this slot shows 24px of toolbar, room for a 24px target
+   // (WCAG 2.5.8), over a 1px bottom border.
    @Override
    public int getHeight()
    {
-      return 24;
+      return 25;
    }
 }

@@ -139,11 +139,7 @@ void standardStreamCaptureThread(
 
 Error ioError(const std::string& description, const ErrorLocation& location)
 {
-   boost::system::error_code ec(boost::system::errc::io_error,
-                                boost::system::system_category());
-   Error error(ec, location);
-   error.addProperty("description", description);
-   return error;
+   return systemError(boost::system::errc::io_error, description, location);
 }
 
 Error redirectToPipe(DWORD stdHandle,
@@ -180,13 +176,13 @@ Error redirectToPipe(DWORD stdHandle,
       // stdout/stderr will go somewhere.
       FILE* newStdHandle = ::_fdopen(stdFd, "w");
       if (newStdHandle == nullptr)
-         return systemError(errno, ERROR_LOCATION);
+         return genericError(errno, ERROR_LOCATION);
       *fpStdFile = *newStdHandle;
       stdDupFd = stdFd;
    }
 
    if (::_dup2(fd, stdDupFd))
-      return systemError(errno, ERROR_LOCATION);
+      return genericError(errno, ERROR_LOCATION);
 
    // turn off buffering
    if (::setvbuf(fpStdFile, nullptr, _IONBF, 0) != 0)

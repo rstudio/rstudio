@@ -20,4 +20,5 @@ import com.google.gwt.resources.client.CssResource;
 public interface EnvironmentPaneStyle extends CssResource
 {
    String environmentNameLabel();
+   String languageButton();
 }

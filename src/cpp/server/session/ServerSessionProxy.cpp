@@ -910,7 +910,7 @@ void proxyRequest(
       // have no session to connect to either
       Error permissionError(boost::system::error_code(
                                boost::system::errc::permission_denied,
-                               boost::system::system_category()),
+                               boost::system::generic_category()),
                             error,
                             ERROR_LOCATION);
       errorHandler(permissionError);

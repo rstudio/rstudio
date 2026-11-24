@@ -72,7 +72,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -238,8 +237,8 @@ public class EnvironmentPane extends WorkbenchPane
             languageMenu_);
       ElementIds.assignElementId(languageButton_, ElementIds.MB_ENV_LANGUAGE);
 
-      // nudge language selector up to baseline align with environment selector
-      languageButton_.getElement().getStyle().setMarginTop(-4, Unit.PX);
+      languageButton_.addStyleName(
+            EnvironmentPaneResources.INSTANCE.environmentPaneStyle().languageButton());
 
       toolbar.addLeftWidget(languageButton_);
       toolbar.addLeftSeparator();

@@ -180,7 +180,7 @@ json::Object errorToJson(const Error& in_error)
    error["message"] = in_error.getMessage();
 
    if (!in_error.getName().empty())
-      error["type"] = in_error.getName();
+      error["type"] = in_error.getDisplayName();
 
    const ErrorProperties& props = in_error.getProperties();
    if (!props.empty())

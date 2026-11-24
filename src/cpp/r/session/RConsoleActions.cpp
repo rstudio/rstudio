@@ -15,9 +15,12 @@
 
 #include <r/session/RConsoleActions.hpp>
 
+#include <algorithm>
+
 #include <gsl/gsl-lite.hpp>
 
 #include <boost/algorithm/string/split.hpp>
+#include <boost/scope_exit.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
@@ -60,7 +63,7 @@ int ConsoleActions::capacity() const
 {
    LOCK_MUTEX(mutex_)
    {
-      return gsl::narrow_cast<int>(actions_.capacity());
+      return capacity_;
    }
    END_LOCK_MUTEX
 
@@ -74,6 +77,7 @@ void ConsoleActions::setCapacity(int capacity)
    {
       // Keep the newest actions when reducing the scrollback limit.
       actions_.rset_capacity(capacity);
+      capacity_ = capacity;
    }
    END_LOCK_MUTEX
 }
@@ -91,15 +95,38 @@ void ConsoleActions::pushAction(int type, std::string data)
    ConsoleAction action;
    action.type = type;
    action.data = std::move(data);
-   actions_.push_back(std::move(action));
+   pushAction(std::move(action));
+}
+
+void ConsoleActions::pushAction(ConsoleAction action)
+{
+   // NOTE: helper method assumes mutex is already locked
+
+   // the limit stays lowered until setCapacity() is next called, so this
+   // is logged once for each limit that couldn't be reached
+   if (!pushConsoleAction(actions_, std::move(action)))
+   {
+      ELOGF("Couldn't allocate memory for more than {} console actions; "
+            "discarding the oldest as new ones are added",
+            actions_.size());
+   }
 }
 
 void ConsoleActions::flush()
 {
    // NOTE: helper method assumes mutex is already locked
 
-   // iterate over buffer data in chunks, split via newlines
+   // remove the data pushed as actions, retaining any held-back suffix for
+   // the next add(); also when a push throws (e.g. std::bad_alloc as the
+   // actions grow), so that the next flush doesn't push that data again
    std::size_t lhs = 0;
+   BOOST_SCOPE_EXIT(this_, &lhs)
+   {
+      this_->buffer_.data.erase(0, lhs);
+   }
+   BOOST_SCOPE_EXIT_END
+
+   // iterate over buffer data in chunks, split via newlines
    std::size_t rhs = buffer_.data.find('\n');
    while (rhs != std::string::npos)
    {
@@ -110,8 +137,9 @@ void ConsoleActions::flush()
          std::string data = buffer_.data.substr(lhs, kChunkSize);
          data.resize(data.size() - string_utils::utf8IncompleteSuffixLength(data));
 
-         lhs += data.size();
+         std::size_t size = data.size();
          pushAction(buffer_.type, std::move(data));
+         lhs += size;
       }
 
       // consume any remaining data on this line
@@ -133,13 +161,11 @@ void ConsoleActions::flush()
       std::string data = buffer_.data.substr(lhs);
       data.resize(data.size() - string_utils::utf8IncompleteSuffixLength(data));
 
-      lhs += data.size();
-      if (!data.empty())
+      std::size_t size = data.size();
+      if (size != 0)
          pushAction(buffer_.type, std::move(data));
+      lhs += size;
    }
-
-   // remove consumed data, retaining any held-back suffix for the next add()
-   buffer_.data.erase(0, lhs);
 }
 
 void ConsoleActions::add(int type, const std::string& data)
@@ -216,8 +242,11 @@ void ConsoleActions::asJson(json::Object* pActions)
 {
    LOCK_MUTEX(mutex_)
    {
-      // clear inbound
+      // clear inbound; callers index the arrays without checking for them,
+      // so provide them even if an allocation below fails
       pActions->clear();
+      pActions->operator[](kActionType) = json::Array();
+      pActions->operator[](kActionData) = json::Array();
 
       // flush any pending console output
       flush();
@@ -306,7 +335,7 @@ Error ConsoleActions::loadFromFile(const FilePath& filePath)
          ConsoleAction action;
          action.type = typeArray[i].getInt();
          action.data = dataArray[i].getString();
-         actions_.push_back(std::move(action));
+         pushAction(std::move(action));
       }
 
       if (skipped != 0)
@@ -352,93 +381,276 @@ Error ConsoleActions::saveToFile(const core::FilePath& filePath)
    return writeStringToFileAtomic(filePath, contents);
 }
 
+namespace {
+
+// The console's lines are read from its actions as if their data had been
+// joined into one string. The helpers below locate and read lines within
+// that string without building it, so that reading a page of lines costs
+// about as much as the lines skipped to reach it (which are scanned, but not
+// copied) and the lines in it, and not as much as the whole scrollback. They
+// are templates only so as not to depend on the type of the actions buffer.
+
+// The start of a line: an offset into the data of the action at an index.
+// Lines needn't start at the start of an action, nor end in the action that
+// they start in.
+struct LineStart
+{
+   std::size_t index;
+   std::size_t offset;
+
+   bool operator==(const LineStart& other) const
+   {
+      return index == other.index && offset == other.offset;
+   }
+};
+
+// A line, stripped of escape sequences, and where it starts.
+struct Line
+{
+   LineStart start;
+   std::string text;
+};
+
+// Whether the action at an index is a chunk of a long line, which continues
+// in the action after it. flush() splits long lines into chunks of kChunkSize
+// bytes, or of up to 3 bytes fewer where that would have cut a UTF-8 sequence
+// in two; the action after such a chunk then starts with that sequence. The
+// rest of the line is always the next action, and of the same type: an action
+// that a different type follows (say, input of exactly kChunkSize bytes, and
+// then its output) ends its line.
+template <typename Actions>
+bool isChunk(const Actions& actions, std::size_t index)
+{
+   const ConsoleAction& action = actions[index];
+
+   std::size_t size = action.data.size();
+   if (size > kChunkSize || size + 3 < kChunkSize || index + 1 == actions.size())
+      return false;
+
+   const ConsoleAction& next = actions[index + 1];
+   if (next.type != action.type)
+      return false;
+
+   if (size == kChunkSize)
+      return true;
+
+   // a shorter chunk, if the bytes that would have filled it are the start,
+   // and no more, of a UTF-8 sequence
+   std::size_t missing = kChunkSize - size;
+   return string_utils::utf8IncompleteSuffixLength(next.data.substr(0, missing)) == missing;
+}
+
+// Whether a line ends after the action at an index, though its data doesn't
+// end with a newline. That's so for input, and for output whose line is still
+// to be completed, but not for prompts (the input follows on the same line),
+// nor for chunks of a long line. Ending the line after a chunk would break it
+// apart, and could cut an escape sequence in half, hiding it from the ANSI
+// stripping.
+template <typename Actions>
+bool endsLine(const Actions& actions, std::size_t index)
+{
+   const ConsoleAction& action = actions[index];
+   return action.type != kConsoleActionPrompt &&
+          !action.data.empty() &&
+          action.data.back() != '\n' &&
+          !isChunk(actions, index);
+}
+
+// Read the line starting at *pStart into *pLine (which may be null, to skip
+// the line), without its newline, and advance *pStart to the line after it.
+// Returns false for the last line: the one that no newline follows.
+template <typename Actions>
+bool readLine(const Actions& actions, LineStart* pStart, std::string* pLine)
+{
+   std::size_t index = pStart->index;
+   std::size_t offset = pStart->offset;
+
+   for (std::size_t n = actions.size(); index < n; index++, offset = 0)
+   {
+      const ConsoleAction& action = actions[index];
+
+      std::size_t newline = action.data.find('\n', offset);
+      if (newline != std::string::npos)
+      {
+         if (pLine)
+            pLine->append(action.data, offset, newline - offset);
+
+         *pStart = {index, newline + 1};
+         return true;
+      }
+
+      if (pLine)
+         pLine->append(action.data, offset, std::string::npos);
+
+      if (endsLine(actions, index))
+      {
+         *pStart = {index + 1, 0};
+         return true;
+      }
+   }
+
+   *pStart = {index, 0};
+   return false;
+}
+
+// Find the page of up to 'take' lines that ends 'skip' lines above the last
+// line, by walking backwards from the end of the actions. Sets *pStart to the
+// start of the page's first line, and returns the number of lines in the page:
+// fewer than 'take' if the page runs off the top, and zero or less if all of
+// it lies above the top. Also sets *pLastLine to the last line, which has to
+// be read to find the page, so that it needn't be read again: flush() stores
+// an unfinished line as one action however long it grows (as a progress bar's
+// can), and this is all under the console actions mutex.
+template <typename Actions>
+long long findPageFromBottom(const Actions& actions,
+                             long long skip,
+                             long long take,
+                             LineStart* pStart,
+                             Line* pLastLine)
+{
+   // the number of line starts seen so far, and the number to see before the
+   // one at the top of the page is reached
+   long long found = 0;
+   long long wanted = 0;
+
+   // whether the last line is empty, and so isn't counted as a line
+   bool lastLineEmpty = false;
+
+   // called with each line start, from the last line's upwards; returns true
+   // once the top of the page is reached
+   auto visit = [&](std::size_t index, std::size_t offset) {
+      *pStart = {index, offset};
+
+      if (found == 0)
+      {
+         pLastLine->start = *pStart;
+         LineStart start = *pStart;
+         readLine(actions, &start, &pLastLine->text);
+         text::stripAnsiCodes(&pLastLine->text);
+         lastLineEmpty = pLastLine->text.empty();
+         wanted = skip + take + (lastLineEmpty ? 1 : 0);
+      }
+
+      return ++found == wanted;
+   };
+
+   // a line starts after each newline, including the ones implied at the
+   // ends of actions ...
+   bool done = false;
+   for (std::size_t index = actions.size(); index > 0 && !done; index--)
+   {
+      const ConsoleAction& action = actions[index - 1];
+
+      if (endsLine(actions, index - 1))
+         done = visit(index, 0);
+
+      std::size_t newline = action.data.size();
+      while (!done && newline > 0)
+      {
+         newline = action.data.rfind('\n', newline - 1);
+         if (newline == std::string::npos)
+            break;
+
+         done = visit(index - 1, newline + 1);
+      }
+   }
+
+   // ... and at the very start
+   if (!done)
+      visit(0, 0);
+
+   return found - (lastLineEmpty ? 1 : 0) - skip;
+}
+
+// The lines that getConsoleLines() returns.
+template <typename Actions>
+std::vector<std::string> readConsoleLines(const Actions& actions,
+                                          int limit,
+                                          int offset,
+                                          bool fromBottom,
+                                          int maxChars)
+{
+   std::vector<std::string> result;
+
+   // the page, as a number of lines to skip (from the bottom or the top) and
+   // then a number of lines to take. a negative offset skips nothing, and
+   // shortens the page instead
+   long long skip = std::max(offset, 0);
+   long long take = static_cast<long long>(limit) + std::min(offset, 0);
+   if (take <= 0)
+      return result;
+
+   // find the first line of the page
+   LineStart start = {0, 0};
+   Line lastLine = {};
+   if (fromBottom)
+   {
+      take = std::min(take, findPageFromBottom(actions, skip, take, &start, &lastLine));
+   }
+   else
+   {
+      for (long long i = 0; i < skip; i++)
+      {
+         if (!readLine(actions, &start, nullptr))
+            return result;
+      }
+   }
+
+   // read the page's lines, for as long as they fit within maxChars
+   long long totalChars = 0;
+   for (long long i = 0; i < take; i++)
+   {
+      std::string line;
+      bool isLastLine;
+      if (fromBottom && start == lastLine.start)
+      {
+         line = std::move(lastLine.text);
+         isLastLine = true;
+      }
+      else
+      {
+         // escape sequences (colors, cursor positioning, etc.) are stripped a
+         // line at a time, as none can contain a newline
+         isLastLine = !readLine(actions, &start, &line);
+         text::stripAnsiCodes(&line);
+      }
+
+      // an empty last line is what follows the final newline; not a line
+      if (isLastLine && line.empty())
+         break;
+
+      long long lineChars = static_cast<long long>(line.size());
+      if (totalChars + lineChars > maxChars)
+         break;
+
+      result.push_back(std::move(line));
+      totalChars += lineChars;
+
+      if (isLastLine)
+         break;
+   }
+
+   return result;
+}
+
+} // anonymous namespace
+
 std::vector<std::string> ConsoleActions::getConsoleLines(int limit,
                                                          int offset,
                                                          bool fromBottom,
                                                          int maxChars)
 {
-   std::vector<std::string> result;
-
    LOCK_MUTEX(mutex_)
    {
       // Flush pending output to ensure we have all data
       flush();
 
-      // Concatenate all action data into a single string
-      // Only add newlines after input/output/error actions that don't have them
-      // (prompts should NOT get newlines since input follows on the same line)
-      std::string allContent;
-      for (const auto& action : actions_)
-      {
-         allContent.append(action.data);
-
-         // Add newline after input/output/error if missing (but not prompts).
-         // Actions of exactly kChunkSize bytes are also excluded: flush()
-         // splits long lines into kChunkSize chunks, so such an action
-         // continues in the next one -- a synthetic newline here would break
-         // the line apart and could cut an escape sequence in half, defeating
-         // the ANSI stripping below
-         if (action.type != kConsoleActionPrompt &&
-             !action.data.empty() &&
-             action.data.back() != '\n' &&
-             action.data.size() != kChunkSize)
-         {
-            allContent.push_back('\n');
-         }
-      }
-
-      // Strip ANSI escape sequences (colors, cursor positioning, etc.)
-      text::stripAnsiCodes(&allContent);
-
-      // Split by newlines to get individual lines
-      std::vector<std::string> allLines;
-      boost::algorithm::split(allLines, allContent, boost::algorithm::is_any_of("\n"));
-
-      // Remove trailing empty line if present (from trailing newline)
-      if (!allLines.empty() && allLines.back().empty())
-      {
-         allLines.pop_back();
-      }
-
-      // Calculate start and end indices based on direction
-      int totalLines = gsl::narrow_cast<int>(allLines.size());
-      int startIdx, endIdx;
-
-      if (fromBottom)
-      {
-         // Start from bottom (most recent)
-         // offset=0 means start at the last line
-         endIdx = totalLines - offset;
-         startIdx = std::max(0, endIdx - limit);
-      }
-      else
-      {
-         // Start from top (oldest)
-         startIdx = offset;
-         endIdx = std::min(totalLines, startIdx + limit);
-      }
-
-      // Collect lines within bounds, respecting maxChars
-      int totalChars = 0;
-      for (int i = startIdx; i < endIdx && i < totalLines; ++i)
-      {
-         if (i < 0)
-            continue;
-
-         const std::string& line = allLines[i];
-         int lineChars = gsl::narrow_cast<int>(line.size());
-
-         // Check if adding this line would exceed maxChars
-         if (totalChars + lineChars > maxChars)
-            break;
-
-         result.push_back(line);
-         totalChars += lineChars;
-      }
+      return readConsoleLines(actions_, limit, offset, fromBottom, maxChars);
    }
    END_LOCK_MUTEX
 
-   return result;
+   // keep compiler happy
+   return std::vector<std::string>();
 }
 
 bool ConsoleActions::containsOutput(const std::string& text)
