@@ -883,6 +883,12 @@ constexpr int kJsonRpcMethodNotFound = -32601;
 constexpr int kJsonRpcInvalidParams  = -32602;
 constexpr int kJsonRpcInternalError  = -32603;
 
+// The error for a file that another program holds open (Windows only; see
+// core::isFileInUseError). It is reported apart from "Permission denied",
+// which it would otherwise match, since the remedy is to close the file in
+// the other program rather than to change its permissions.
+constexpr const char* kFileInUseMessage = "File is in use by another program: ";
+
 void sendJsonRpcError(core::system::ProcessOperations& ops,
                       const json::Value& id,
                       int code,
@@ -2609,7 +2615,11 @@ void handleReadFileContent(core::system::ProcessOperations& ops,
          {
             sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "File not found: " + path);
          }
-         else if (error.getCode() == boost::system::errc::permission_denied)
+         else if (core::isFileInUseError(error))
+         {
+            sendJsonRpcError(ops, requestId, kJsonRpcInternalError, kFileInUseMessage + path);
+         }
+         else if (error.matches(boost::system::errc::permission_denied))
          {
             sendJsonRpcError(ops, requestId, kJsonRpcInternalError, "Permission denied: " + path);
          }
@@ -2807,7 +2817,12 @@ void handleWriteFileContent(core::system::ProcessOperations& ops,
 
       if (error)
       {
-         if (error.getCode() == boost::system::errc::permission_denied)
+         if (core::isFileInUseError(error))
+         {
+            sendJsonRpcError(ops, requestId, kJsonRpcInternalError,
+                             kFileInUseMessage + path);
+         }
+         else if (error.matches(boost::system::errc::permission_denied))
          {
             sendJsonRpcError(ops, requestId, kJsonRpcInternalError, "Permission denied: " + path);
          }
@@ -3095,8 +3110,12 @@ void handleEditFileContent(core::system::ProcessOperations& ops,
             sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
                              "File not found: " + path);
          }
-         else if (error.getCode() ==
-                  boost::system::errc::permission_denied)
+         else if (core::isFileInUseError(error))
+         {
+            sendJsonRpcError(ops, requestId, kJsonRpcInternalError,
+                             kFileInUseMessage + path);
+         }
+         else if (error.matches(boost::system::errc::permission_denied))
          {
             sendJsonRpcError(ops, requestId, kJsonRpcInternalError,
                              "Permission denied: " + path);
@@ -3146,8 +3165,12 @@ void handleEditFileContent(core::system::ProcessOperations& ops,
 
       if (error)
       {
-         if (error.getCode() ==
-             boost::system::errc::permission_denied)
+         if (core::isFileInUseError(error))
+         {
+            sendJsonRpcError(ops, requestId, kJsonRpcInternalError,
+                             kFileInUseMessage + path);
+         }
+         else if (error.matches(boost::system::errc::permission_denied))
          {
             sendJsonRpcError(ops, requestId, kJsonRpcInternalError,
                              "Permission denied: " + path);
@@ -4793,7 +4816,7 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
       // Protocol version not in manifest: only block if there's no installed
       // version to fall back on. Other errors leave the installed version
       // running (updateAvailable stays false).
-      if (error.getCode() == boost::system::errc::protocol_not_supported &&
+      if (error.matches(boost::system::errc::protocol_not_supported) &&
           installedVersion == "0.0.0")
       {
          noCompatibleVersion = true;

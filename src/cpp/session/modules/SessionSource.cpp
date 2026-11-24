@@ -486,7 +486,8 @@ Error friendlySaveError(const Error& error)
    if (isDiskSpaceError(error))
    {
       return Error(
-         boost::system::error_code(error.getCode(), boost::system::system_category()),
+         error.getName(),
+         error.getCode(),
          "There is not enough free space to save this file -- the disk may be "
          "full, or a disk quota may have been exceeded. Free up some disk space "
          "(or increase your disk quota) and try saving the file again.",

@@ -55,6 +55,13 @@ void releaseSessionStream()
 
 Error initializeHttpConnectionListener()
 {
+   // startHttpConnectionListenerWithTimeout() calls this again when the last
+   // listener couldn't bind because the address was in use. That listener
+   // never started, so nothing else refers to it; free it, which also closes
+   // the socket it opened before the bind failed
+   delete s_pHttpConnectionListener;
+   s_pHttpConnectionListener = nullptr;
+
    session::Options& options = session::options();
 
    if (log::isLogLevel(log::LogLevel::DEBUG))

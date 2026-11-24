@@ -179,8 +179,7 @@ private:
 
    virtual bool recentConnectionError(const Error& connectionError)
    {
-      bool permDeniedError = connectionError.getCode() == boost::system::errc::permission_denied;
-      if (!permDeniedError)
+      if (!connectionError.matches(boost::system::errc::permission_denied))
          return false;
       if (retriedPermDenied_) // Already been here once so it is probably a real perm denied error
       {

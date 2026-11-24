@@ -278,7 +278,7 @@ core::Error iconvstrImpl(const std::string& value,
 
    void* handle = ::Riconv_open(to.c_str(), from.c_str());
    if (handle == (void*)(-1))
-      return systemError(R_ERRNO, ERROR_LOCATION);
+      return genericError(R_ERRNO, ERROR_LOCATION);
 
    const char* pIn = value.data();
    size_t inBytes = value.size();
@@ -291,25 +291,30 @@ core::Error iconvstrImpl(const std::string& value,
       size_t outBytes = sizeof(buffer);
 
       size_t result = ::Riconv(handle, &pIn, &inBytes, &pOut, &outBytes);
+
+      // read errno before output.insert() or Riconv_close() can overwrite it
+      int errorCode = R_ERRNO;
+
       if (buffer != pOut)
          output.insert(output.end(), buffer, pOut);
 
       if (result == (size_t)(-1))
       {
-         if ((R_ERRNO == EILSEQ || R_ERRNO == EINVAL) && allowSubstitution)
+         if ((errorCode == EILSEQ || errorCode == EINVAL) && allowSubstitution)
          {
             output.push_back('?');
             pIn++;
             inBytes--;
          }
-         else if (R_ERRNO == E2BIG && pInOrig != pIn)
+         else if (errorCode == E2BIG && pInOrig != pIn)
          {
             continue;
          }
          else
          {
             ::Riconv_close(handle);
-            Error error = systemError(R_ERRNO, ERROR_LOCATION);
+
+            Error error = genericError(errorCode, ERROR_LOCATION);
             error.addProperty("str", value);
             error.addProperty("len", gsl::narrow_cast<int>(value.length()));
             error.addProperty("from", from);

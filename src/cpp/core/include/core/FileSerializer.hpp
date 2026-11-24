@@ -421,6 +421,13 @@ Error readStringVectorFromFile(const core::FilePath& filePath,
 // recovery-oriented message for the user.
 bool isDiskSpaceError(const core::Error& error);
 
+// Returns true if the given error indicates that a file couldn't be opened
+// because another program has it open: a Windows sharing violation. Always
+// false on POSIX, which has no exclusive file access. Error::matches() counts
+// this error as permission_denied, so test for it first where the two need to
+// be told apart.
+bool isFileInUseError(const core::Error& error);
+
 // lineEnding is the type of line ending you want the resulting string to have
 Error readStringFromFile(const core::FilePath& filePath,
                          std::string* pStr,
