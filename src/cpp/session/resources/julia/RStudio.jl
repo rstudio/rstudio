@@ -750,13 +750,23 @@ function run_input(code::String, mode::String, errio::IO)
       end
       return 0
    catch err
-      stack = Base.ExceptionStack(NamedTuple[
-         (exception = entry.exception, backtrace = scrub_backtrace(entry.backtrace))
-         for entry in Base.current_exceptions()
-      ])
-      Base.invokelatest(Base.display_error, errio, stack)
+      # An interrupt that arrives while the error is reported (a second press,
+      # say) would cut the report short, and leave nothing to show for the
+      # first: it waits until the report is out, and is counted with the rest
+      Base.sigatomic_begin()
+      late = 0
+      try
+         stack = Base.ExceptionStack(NamedTuple[
+            (exception = entry.exception, backtrace = scrub_backtrace(entry.backtrace))
+            for entry in Base.current_exceptions()
+         ])
+         Base.invokelatest(Base.display_error, errio, stack)
+      finally
+         late = take_deferred_interrupt()
+      end
+
       err isa InterruptException && debug("the evaluation was interrupted")
-      return err isa InterruptException ? 1 : 0
+      return (err isa InterruptException ? 1 : 0) + late
    end
 end
 

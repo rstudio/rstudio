@@ -262,6 +262,31 @@ test_that("display() shows text in the console, as values are", {
    expect_identical(output, c('"rstudio"', "42"))
 })
 
+test_that("an interrupt that arrives while an error is reported doesn't cut the report short", {
+   # the error's own report sends the signal, which Windows doesn't have
+   skip_on_os("windows")
+   skipUnlessJulia()
+
+   on.exit(.rs.julia.stop(), add = TRUE)
+   .rs.julia.start()
+
+   # the sleep gives Julia time to notice the signal within the report
+   JuliaConnectoR::juliaEval('
+      struct RStudioTestError <: Exception end
+      function Base.showerror(io::IO, ::RStudioTestError)
+         ccall(:kill, Cint, (Cint, Cint), getpid(), 2)
+         sleep(0.5)
+         print(io, "rstudio test error, reported in full")
+      end
+   ')
+
+   output <- capture.output(.rs.julia.evaluate("throw(RStudioTestError())"), type = "message")
+   expect_match(paste(output, collapse = "\n"), "rstudio test error, reported in full", fixed = TRUE)
+
+   # and Julia carries on
+   expect_identical(capture.output(.rs.julia.evaluate("40 + 2")), "42")
+})
+
 # Write a PNG of `colors`, a matrix of R colors, one pixel each: drawn at its
 # own size, and uninterpolated, it keeps them.
 writeTestPng <- function(colors, path)
