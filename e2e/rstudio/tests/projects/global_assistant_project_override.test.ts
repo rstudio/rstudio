@@ -1,6 +1,13 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { clearPref, dismissAllModals, getPref, numModalsShowing, setPref } from '@utils/commands';
-import { createAndOpenProject, closeProjectIfOpen } from '@utils/project';
+import {
+  clearPref,
+  dismissAllModals,
+  getPref,
+  numModalsShowing,
+  openProject,
+  setPref,
+} from '@utils/commands';
+import { closeProjectIfOpen } from '@utils/project';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { executeInConsoleChecked } from '@pages/console_pane.page';
 import {
@@ -21,17 +28,19 @@ test.describe.serial('Global Assistant pane project override', () => {
   const sandbox = useSuiteSandbox();
 
   test.beforeAll(async ({ rstudioPage: page }) => {
-    const projectDir = await createAndOpenProject(page, sandbox.dir, 'AssistantOverride');
-
-    // Seed the project's assistant directly in its scratch-path options file.
-    // Setting it through Project Options would raise a restart prompt, and the
-    // global pane rereads this file each time it opens.
+    // Seed the project's assistant in its scratch-path options file before
+    // opening it, so the session reads it at startup just as the pane does.
+    // Setting it through Project Options would raise a restart prompt.
+    const projectDir = `${sandbox.dir.replace(/\\/g, '/')}/AssistantOverride`;
     const rproj = `${projectDir}/AssistantOverride.Rproj`;
     await executeInConsoleChecked(
       page,
-      `writeLines("assistant=none", file.path(.Call("rs_computeScratchPaths", ` +
-        `"${rproj}", PACKAGE = "(embedding)")$scratch_path, "assistant_options"))`,
+      `{ dir.create("${projectDir}"); writeLines("Version: 1.0", "${rproj}"); ` +
+        `scratch <- .Call("rs_computeScratchPaths", "${rproj}", PACKAGE = "(embedding)")$scratch_path; ` +
+        `dir.create(scratch, recursive = TRUE, showWarnings = FALSE); ` +
+        `writeLines("assistant=none", file.path(scratch, "assistant_options")) }`,
     );
+    await openProject(page, rproj);
   });
 
   test.afterAll(async ({ rstudioPage: page }) => {
