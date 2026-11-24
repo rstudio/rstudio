@@ -90,9 +90,19 @@ public class AssistantPreferencesPane extends PreferencesPane
    @Override
    public RestartRequirement onApply(UserPrefs prefs)
    {
-      // Update preferences
-      String selectedAssistant = selAssistant_.getValue();
-      prefs.assistant().setGlobalValue(selectedAssistant);
+      // While a project overrides the code assistant, the locked selector shows
+      // the project's value, not the global one; saving it would replace the
+      // global preference that other projects use (#19742).
+      if (projectAssistantOverride_ == null)
+      {
+         String selectedAssistant = selAssistant_.getValue();
+         prefs.assistant().setGlobalValue(selectedAssistant);
+
+         // Also sync (deprecated) Copilot setting for now
+         prefs.copilotEnabled().setGlobalValue(
+               selectedAssistant.equals(UserPrefsAccessor.ASSISTANT_COPILOT));
+      }
+
       prefs.chatProvider().setGlobalValue(selChatProvider_.getValue());
       prefs.assistantTabKeyBehavior().setGlobalValue(selAssistantTabKeyBehavior_.getValue());
       prefs.assistantCompletionsTrigger().setGlobalValue(selAssistantCompletionsTrigger_.getValue());
@@ -103,8 +113,6 @@ public class AssistantPreferencesPane extends PreferencesPane
       prefs.editSuggestionDiffGranularity().setGlobalValue(selEditSuggestionDiffGranularity_.getValue());
 
       // Also sync (deprecated) Copilot settings for now
-      prefs.copilotEnabled().setGlobalValue(
-            selectedAssistant.equals(UserPrefsAccessor.ASSISTANT_COPILOT));
       prefs.copilotTabKeyBehavior().setGlobalValue(selAssistantTabKeyBehavior_.getValue());
       prefs.copilotCompletionsTrigger().setGlobalValue(selAssistantCompletionsTrigger_.getValue());
 
@@ -1149,8 +1157,10 @@ public class AssistantPreferencesPane extends PreferencesPane
       // takes the assistant preference with it -- the backend picks the agent
       // to run from that preference, not from copilot_enabled -- so this write
       // lands before OK/Cancel, and anything undoing the switch has to undo it
-      // too (#18356).
-      if (prefs_.copilotEnabled().getValue())
+      // too (#18356). Under a project override the selector moves only to show
+      // the project's assistant, which this session already runs, so leave the
+      // global preferences alone (#19742).
+      if (projectAssistantOverride_ == null && prefs_.copilotEnabled().getValue())
       {
          prefs_.copilotEnabled().setGlobalValue(false);
          prefs_.assistant().setGlobalValue(newAssistant);
