@@ -1876,9 +1876,17 @@ body.windows .toolbar {
    margin-right: 2px;
 }
 
-.globalToolbar .search,
-.globalToolbar .restrictedModeIcon {
+.globalToolbar .search {
    margin: 0 2px;
+}
+
+/* A 24px target (WCAG 2.5.8) with the 14px lock centered in it */
+.globalToolbar .restrictedModeIcon {
+   box-sizing: border-box;
+   justify-content: center;
+   width: 24px;
+   height: 24px;
+   margin: 0;
 }
 
 .globalToolbar .toolbarButtonMenu .toolbarButtonLabel {
