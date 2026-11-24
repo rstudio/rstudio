@@ -401,7 +401,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          return;
 
       help_.displayHelp(help);
-      resolveHelpPosition(help.hasInfo());
+      showHelpForSelection(help.hasInfo());
    }
 
    @Override
@@ -411,7 +411,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          return;
 
       help_.displayParameterHelp(map, parameterName);
-      resolveHelpPosition(map.get(parameterName) != null);
+      showHelpForSelection(map.get(parameterName) != null);
    }
 
    @Override
@@ -421,7 +421,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          return;
 
       help_.displayPackageHelp(help);
-      resolveHelpPosition(help.hasInfo());
+      showHelpForSelection(help.hasInfo());
 
    }
 
@@ -465,7 +465,15 @@ public class CompletionPopupPanel extends ThemedPopupPanel
 
       help_.setPopupPosition(destinationLeft, destinationTop);
       help_.setVisible(setVisible);
-      describeSelection(setVisible);
+   }
+
+   // Shows help just displayed for the selected item, and links it to that
+   // item. Help repositioned for a refreshed list may be for another item,
+   // so show() only repositions it.
+   private void showHelpForSelection(boolean visible)
+   {
+      resolveHelpPosition(visible);
+      describeSelection(visible);
    }
 
    @Override
@@ -475,7 +483,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          return;
 
       help_.displaySnippetHelp(contents);
-      resolveHelpPosition(!StringUtil.isNullOrEmpty(contents));
+      showHelpForSelection(!StringUtil.isNullOrEmpty(contents));
    }
 
    @Override
@@ -485,7 +493,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          return;
       
       help_.displayRoxygenHelp(title, description, hasVignette);
-      resolveHelpPosition(true);
+      showHelpForSelection(true);
    }
    
    @Override
@@ -507,7 +515,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       description = "<p style='padding-left: 3px;'>" + description + "</p>";
       
       help_.displayParameterHelp(value, description, false);
-      resolveHelpPosition(!StringUtil.isNullOrEmpty(description));
+      showHelpForSelection(!StringUtil.isNullOrEmpty(description));
    }
 
    public void clearHelp(boolean downloadOperationPending)

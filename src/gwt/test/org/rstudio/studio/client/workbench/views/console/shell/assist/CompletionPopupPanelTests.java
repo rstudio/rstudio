@@ -311,6 +311,18 @@ public class CompletionPopupPanelTests extends GWTTestCase
       assertTrue(describedItems().isEmpty());
    }
 
+   public void testRefreshedListDoesNotInheritHelp()
+   {
+      // A list refreshed as the user types keeps showing the help it had
+      // until help for its new selection arrives; that help isn't the
+      // new selection's.
+      Rectangle line = new Rectangle(10, 0, 8, 13);
+      show(line);
+      panel_.displaySnippetHelp("library(${1:package})");
+      show(line);
+      assertTrue(describedItems().isEmpty());
+   }
+
    public void testHiddenHelpDoesNotDescribe()
    {
       show(new Rectangle(10, 0, 8, 13));

@@ -125,6 +125,9 @@ public class HelpStrategy
 
             public void onResponseReceived(HelpInfo.Custom result)
             {
+               if (!isSelected(selectedItem, display))
+                  return;
+
                if (result != null)
                {
                   HelpInfo.ParsedInfo help = result.toParsedInfo();
@@ -157,6 +160,9 @@ public class HelpStrategy
    
             public void onResponseReceived(HelpInfo result)
             {
+               if (!isSelected(selectedItem, display))
+                  return;
+
                if (result != null)
                {
                   HelpInfo.ParsedInfo help = result.parse(selectedItem.name);
@@ -202,6 +208,9 @@ public class HelpStrategy
 
             public void onResponseReceived(HelpInfo.Custom response)
             {
+               if (!isSelected(selectedItem, display))
+                  return;
+
                if (response != null)
                {
                   HelpInfo.ParsedInfo info = response.toParsedInfo();
@@ -231,6 +240,9 @@ public class HelpStrategy
             @Override
             public void onResponseReceived(HelpInfo response)
             {
+               if (!isSelected(selectedItem, display))
+                  return;
+
                if (response != null)
                {
                   ParsedInfo info = response.parse(selectedItem.source);
@@ -311,6 +323,9 @@ public class HelpStrategy
          @Override
          public void onResponseReceived(HelpInfo response)
          {
+            if (!isSelected(selectedItem, display))
+               return;
+
             if (response != null)
             {
                ParsedInfo info = response.parse(packageName);
@@ -340,6 +355,14 @@ public class HelpStrategy
       }
    }
    
+   // The selection can move on while help loads; help that arrives for an
+   // item no longer selected would be shown beside, and read with, another.
+   private static boolean isSelected(QualifiedName item,
+                                     CompletionPopupDisplay display)
+   {
+      return item.equals(display.getSelectedValue());
+   }
+
    HashMap<QualifiedName, ParsedInfo> cache_;
    private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
 
