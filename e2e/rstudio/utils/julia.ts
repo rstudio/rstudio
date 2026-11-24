@@ -27,7 +27,8 @@ import { rStringLiteral } from './r';
  *   JULIA_DEPOT_PATH  a depot of the tests' own, kept between runs beside
  *                     the R library (see fixtures/r-libs-setup.ts), so only
  *                     the first run installs Tables.jl, and the developer's
- *                     own depot is left alone
+ *                     own depot is left alone; where the session can't write
+ *                     there (it runs as another user), Julia's default
  *
  * PW_RSTUDIO_JULIA_BINDIR and PW_RSTUDIO_JULIA_DEPOT_PATH replace either
  * (paths as the rsession host sees them). Where the session runs on another
@@ -67,13 +68,29 @@ function findJuliaBinDir(): string | null {
   return null;
 }
 
-// The tests' own Julia depot, as a JULIA_DEPOT_PATH: the trailing separator
-// keeps Julia's bundled depots on the path.
-function testDepotPath(): string {
+// The tests' own Julia depot, kept between runs.
+function testDepot(): string {
   const base = process.platform === 'win32'
     ? process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local')
     : path.join(os.homedir(), '.cache');
-  return path.join(base, 'rstudio-playwright', 'julia-depot') + path.delimiter;
+  return path.join(base, 'rstudio-playwright', 'julia-depot');
+}
+
+// R code that points the session at the Julia in `bindir`, where the session
+// has that directory, and at the tests' depot, where the session can write
+// to it (a server's sessions can belong to another user, who then keeps the
+// depot in their own home). The trailing separator keeps Julia's bundled
+// depots on the path.
+function useHostJulia(bindir: string, depot: string): string {
+  return 'local({ ' + [
+    `bindir <- ${rStringLiteral(bindir)}`,
+    `depot <- ${rStringLiteral(depot)}`,
+    'if (!dir.exists(bindir)) return(invisible())',
+    'Sys.setenv(JULIA_BINDIR = bindir)',
+    'dir.create(depot, recursive = TRUE, showWarnings = FALSE)',
+    'if (file.access(depot, 2L) == 0L) Sys.setenv(JULIA_DEPOT_PATH = paste0(depot, .Platform$path.sep))',
+    'invisible()',
+  ].join('; ') + ' })';
 }
 
 // Evaluates to "ok", or to why the session has no Julia the console supports.
@@ -119,15 +136,19 @@ export async function leaveJulia(page: Page): Promise<void> {
  * Julia. Returns why the session has no Julia to test with, or null.
  */
 async function setUpJulia(page: Page): Promise<string | null> {
-  const depotPath = process.env[JULIA_DEPOT_PATH_ENV] || testDepotPath();
-  const given = process.env[JULIA_BINDIR_ENV];
-  const bindir = given || findJuliaBinDir();
-  if (bindir) {
-    // a directory found here is only the session's to use where it exists
-    // there too; one that was given is taken at its word
-    const setenv = `Sys.setenv(JULIA_BINDIR = ${rStringLiteral(bindir)}, JULIA_DEPOT_PATH = ${rStringLiteral(depotPath)})`;
-    await executeInConsole(page, given ? setenv : `if (dir.exists(${rStringLiteral(bindir)})) ${setenv}`);
-  }
+  // what was found here is the session's to use only where it has it too;
+  // what was given is taken at its word
+  const bindir = process.env[JULIA_BINDIR_ENV] || findJuliaBinDir();
+  if (bindir)
+    await executeInConsole(page, useHostJulia(bindir, testDepot()));
+
+  const given: string[] = [];
+  if (process.env[JULIA_BINDIR_ENV])
+    given.push(`JULIA_BINDIR = ${rStringLiteral(process.env[JULIA_BINDIR_ENV]!)}`);
+  if (process.env[JULIA_DEPOT_PATH_ENV])
+    given.push(`JULIA_DEPOT_PATH = ${rStringLiteral(process.env[JULIA_DEPOT_PATH_ENV]!)}`);
+  if (given.length > 0)
+    await executeInConsole(page, `Sys.setenv(${given.join(', ')})`);
 
   await setPref(page, 'julia_console_enabled', true);
 
