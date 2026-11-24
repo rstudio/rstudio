@@ -24,6 +24,7 @@ import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.files.FileSystemContext.Callbacks;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.files.PosixFileSystemContext;
+import org.rstudio.core.client.files.filedialog.FileDialogResources;
 import org.rstudio.core.client.files.filedialog.PathBreadcrumbWidget;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CheckBoxHiddenLabel;
@@ -118,11 +119,13 @@ public class FilePathToolbar extends Composite
       cloudFolderEnabled_ = cloudFolderEnabled;
 
       LayoutPanel layout = new LayoutPanel();
-      layout.setSize("100%", "21px");
+      layout.setWidth("100%");
 
       initWidget(layout);
       addStyleName(ThemeStyles.INSTANCE.rstheme_toolbarWrapper());
       addStyleName(ThemeStyles.INSTANCE.rstheme_secondaryToolbar());
+      // size the toolbar to fill the layout slot reserved by getHeight()
+      addStyleName(ThemeStyles.INSTANCE.tallerToolbarWrapper());
 
       navigationObserver_ = navigationObserver;
 
@@ -141,7 +144,9 @@ public class FilePathToolbar extends Composite
 
       layout.add(selectAllCheckBox);
       layout.setWidgetTopBottom(selectAllCheckBox, 0, Unit.PX, 0, Unit.PX);
-      layout.setWidgetLeftWidth(selectAllCheckBox, 0, Unit.PX, 20, Unit.PX);
+      layout.setWidgetLeftWidth(selectAllCheckBox,
+                                0, Unit.PX,
+                                FilesList.CHECK_COLUMN_WIDTH_PIXELS, Unit.PX);
 
       // breadcrumb widget
       fileSystemContext_ = new FileSystemContextImpl();
@@ -163,7 +168,7 @@ public class FilePathToolbar extends Composite
          }
       });
       pathBreadcrumbWidget_ = new PathBreadcrumbWidget(fileSystemContext_);
-      pathBreadcrumbWidget_.addStyleDependentName("filepane");
+      pathBreadcrumbWidget_.addStyleName(FileDialogResources.INSTANCE.styles().filePane());
       pathBreadcrumbWidget_.addSelectionCommitHandler((SelectionCommitEvent<FileSystemItem> e) ->
       {
          fileSystemContext_.cd(e.getSelectedItem().getPath());
@@ -171,7 +176,9 @@ public class FilePathToolbar extends Composite
 
       layout.add(pathBreadcrumbWidget_);
       layout.setWidgetTopBottom(pathBreadcrumbWidget_, 0, Unit.PX, 0, Unit.PX);
-      layout.setWidgetLeftRight(pathBreadcrumbWidget_, 21, Unit.PX, 0, Unit.PX);
+      layout.setWidgetLeftRight(pathBreadcrumbWidget_,
+                                FilesList.CHECK_COLUMN_WIDTH_PIXELS, Unit.PX,
+                                0, Unit.PX);
    }
 
    public void setPath(String path, String lastBrowseable)
@@ -181,9 +188,11 @@ public class FilePathToolbar extends Composite
             lastBrowseable);
    }
 
+   // Matches SecondaryToolbar: 24px of toolbar shows, room for 24px
+   // breadcrumb links (WCAG 2.5.8), over a 1px bottom border.
    public int getHeight()
    {
-      return 21;
+      return 25;
    }
 
    public void onResize()
