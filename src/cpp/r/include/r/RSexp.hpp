@@ -61,9 +61,16 @@ SEXP findNamespace(const std::string& name);
 SEXP asNamespace(const std::string& name);
 SEXP getParentEnv(SEXP envSEXP);
 
-// promises
+// promises; an R error forcing the promise is caught, and yields R_NilValue
 SEXP forcePromise(SEXP objectSEXP);
-   
+
+// R raises an error making a symbol from a name that's empty or longer than
+// this in the native encoding (MAXIDSIZE, which R doesn't export), and cuts
+// one off at a nul; isSymbolName() checks the bytes Rf_install() would get.
+// the lookups below that take a (UTF-8) name treat such a name as unbound
+constexpr std::size_t kMaxSymbolNameBytes = 10000;
+bool isSymbolName(const std::string& name);
+
 // binding classification
 enum class BindingType
 {
@@ -90,10 +97,13 @@ void listEnvironment(SEXP env,
                      bool includeLastDotValue,
                      std::vector<std::string>* pNames);
  
-// find a variable in a single environment frame (no inheritance)
+// find a variable in a single environment frame (no inheritance). reading a
+// binding can run R code -- an active binding's function, or (R >= 4.6) the
+// promise R forces -- and an R error from that is caught: the variable then
+// reads as unbound (nullptr)
 SEXP findVarInFrame(SEXP envSEXP, SEXP nameSEXP);
 
-// find variables in environments and namespaces
+// find variables in environments and namespaces, likewise
 SEXP findVar(SEXP nameSEXP, SEXP envSEXP);
 SEXP findVar(const std::string& name, SEXP envSEXP);
 SEXP findVar(const std::string& name, const std::string& ns = std::string());
@@ -172,7 +182,11 @@ core::Error extract(SEXP valueSEXP, std::map<std::string, std::set<std::string>>
 core::Error extract(SEXP valueSEXP, core::json::Value* pJson);
 core::Error extract(SEXP valueSEXP, core::FilePath* pFilePath);
 
-// create SEXP from c++ type; strings are marked as UTF-8
+// create SEXP from c++ type; strings are marked as UTF-8. R strings can't
+// hold a nul: the std::string overload (which the FilePath, json and yaml
+// overloads use for their values) raises an R error on an embedded one, and
+// names and the other overloads cut the string off there, except under a
+// NulCheckScope (below)
 SEXP create(SEXP valueSEXP, Protect* pProtect);
 SEXP create(const core::json::Value& value, Protect* pProtect);
 SEXP create(const YAML::Node& node, Protect* pProtect);
@@ -200,6 +214,32 @@ SEXP create(const ListBuilder& builder, Protect* pProtect);
 SEXP create(const std::map<std::string, std::string>& value, Protect* pProtect);
 SEXP create(const std::map<std::string, SEXP> &value,
             Protect *pProtect);
+
+// while a NulCheckScope is the innermost one active, create() makes NA for a
+// string (a value or a name) with an embedded nul, rather than raise R's
+// error or cut the string off, and the scope records it; code that must
+// refuse such a value without a longjmp (RFunction) creates it in one. hold
+// one only around create() calls: R code run meanwhile (through .Call, say)
+// would get NA for such strings too
+class NulCheckScope : boost::noncopyable
+{
+public:
+   NulCheckScope();
+   ~NulCheckScope();
+
+   // whether create() was handed a string with a nul while this scope was
+   // the innermost one
+   bool foundNul() const;
+
+private:
+   bool enclosingFoundNul_;
+};
+
+// ends any NulCheckScope an R error longjmped past, skipping its destructor;
+// called at R's top-level prompt, where none can still be active
+void endStrayNulCheckScopes();
+
+bool containsNul(const std::string& value);
 
 // Create a raw vector (binary data)
 SEXP createRawVector(const std::string& data, Protect* pProtect);

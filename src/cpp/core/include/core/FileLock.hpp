@@ -144,7 +144,7 @@ public:
 #endif
    static bool isNoLockAvailable(const Error& error)
    {
-      return error == systemError(boost::system::errc::no_lock_available, ErrorLocation());
+      return error.matches(boost::system::errc::no_lock_available);
    }
    
 protected:

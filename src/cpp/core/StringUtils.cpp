@@ -945,10 +945,16 @@ bool parseVersion(const std::string& str, uint64_t* pVersion)
 
 bool trimLeadingLines(int maxLines, std::string* pLines)
 {
+   if (maxLines < 0)
+      return false;
+
+   // a blank line is a single byte, so more than maxLines lines can take as
+   // few as maxLines + 1 bytes
+   std::size_t limit = static_cast<std::size_t>(maxLines);
    bool didTrim = false;
-   if (pLines->length() > static_cast<unsigned int>(maxLines * 2))
+   if (pLines->length() > limit)
    {
-      int lineCount = 0;
+      std::size_t lineCount = 0;
       std::string::const_iterator begin = pLines->begin();
       std::string::iterator pos = pLines->end();
 
@@ -958,10 +964,14 @@ bool trimLeadingLines(int maxLines, std::string* pLines)
 
          if (*pos == '\n')
          {
-            if (++lineCount > maxLines)
+            if (++lineCount > limit)
             {
-               pLines->erase(pLines->begin(), pos);
-               didTrim = true;
+               // a cutoff at the start leaves nothing to remove
+               if (pos != begin)
+               {
+                  pLines->erase(pLines->begin(), pos);
+                  didTrim = true;
+               }
                break;
             }
          }

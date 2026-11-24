@@ -314,6 +314,9 @@ int RReadConsole(const char *pmt,
          setAtTopLevelPrompt(false);
       }
 
+      if (atTopLevelPrompt())
+         r::sexp::endStrayNulCheckScopes();
+
       // When entering a browse prompt, inject a call to capture the
       // current environment. This is evaluated by R's browser REPL
       // in the browser's rho, so parent.frame() correctly returns
