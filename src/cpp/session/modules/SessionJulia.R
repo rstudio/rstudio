@@ -1,0 +1,1229 @@
+#
+# SessionJulia.R
+#
+# Copyright (C) 2026 by Posit Software, PBC
+#
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+# A Julia REPL in the console, in the manner of reticulate's Python REPL.
+#
+# JuliaConnectoR runs Julia in a separate process and talks to it over a
+# socket. The REPL drives that connection itself rather than going through
+# juliaEval(), for two reasons: juliaEval() stops Julia altogether when R is
+# interrupted, where the REPL interrupts just the evaluation; and it strips
+# ANSI escapes from Julia's output, which the console renders.
+
+# synchronize with JuliaEvent.java
+.rs.setVar("juliaEvents", list(
+   REPL_INITIALIZED = "repl_initialized",
+   REPL_BUSY        = "repl_busy",
+   REPL_TEARDOWN    = "repl_teardown"
+))
+
+.rs.setVar("julia.state", list2env(parent = emptyenv(), list(
+
+   # is the REPL reading input?
+   active     = FALSE,
+
+   # lines of input read so far that don't yet make up complete Julia input
+   buffer     = character(),
+
+   # is a call to Julia in progress?
+   calling    = FALSE,
+
+   # is Julia evaluating REPL input, so that SIGINT may be sent to it?
+   evaluating = FALSE,
+
+   # SIGINTs sent during the current evaluation
+   sigints    = 0L,
+
+   # interrupts received while waiting on the current call
+   interrupts = 0L,
+
+   # when the last of those was acted on, in seconds (see .rs.julia.interrupt)
+   lastInterrupt = -Inf,
+
+   # the Julia process, as of when the console's helpers were loaded into it
+   pid        = NULL,
+   version    = NULL,
+   executable = NULL,
+
+   # the incomplete end of a UTF-8 character, by output stream
+   partial    = list(),
+
+   # whether Julia was last told to trace its side (see .rs.julia.debug)
+   debugging  = NULL
+
+)))
+
+# the console input that starts the REPL; synchronize with
+# isJuliaReplEnter() in SessionConsoleInput.cpp
+.rs.setVar("julia.replCommand", ".rs.julia.repl()")
+
+# oldest Julia the console's helpers (RStudio.jl) are known to work with
+.rs.setVar("julia.minimumVersion", "1.10")
+
+.rs.addFunction("julia.debuggingEnabled", function()
+{
+   isTRUE(getOption("rstudio.julia.debuggingEnabled"))
+})
+
+#' Write a Debugging Message
+#'
+#' With `options(rstudio.julia.debuggingEnabled = TRUE)`, the REPL's
+#' exchanges with Julia -- interrupts above all -- are traced in the console,
+#' Julia's side of them included (see `debug` in RStudio.jl).
+#'
+#' @param fmt,... A format string and its arguments, as for sprintf().
+.rs.addFunction("julia.debug", function(fmt, ...)
+{
+   if (!.rs.julia.debuggingEnabled())
+      return(invisible(NULL))
+
+   message <- if (length(list(...))) sprintf(fmt, ...) else fmt
+   stamp <- format(Sys.time(), "%H:%M:%OS3")
+   cat(sprintf("[julia-debug R %s] %s\n", stamp, message), file = stderr())
+})
+
+.rs.addFunction("julia.enqueueClientEvent", function(type, data = list())
+{
+   data <- list(type = .rs.scalar(type), data = data)
+   .rs.enqueClientEvent("julia_event", data)
+})
+
+.rs.addFunction("julia.replIsActive", function()
+{
+   isTRUE(.rs.julia.state$active)
+})
+
+#' Is Julia Integration Allowed?
+#'
+#' Administrators turn Julia integration off with 'julia-enabled=0' in
+#' rsession.conf; the Console's Julia then won't start.
+.rs.addFunction("julia.isAllowed", function()
+{
+   .Call("rs_juliaAllowed", PACKAGE = "(embedding)")
+})
+
+#' Is the Julia Console Enabled?
+#'
+#' The Julia console is experimental: users turn it off with the
+#' 'julia_console_enabled' preference. It is off, too, where the
+#' administrator doesn't allow Julia; see .rs.julia.isAllowed.
+.rs.addFunction("julia.isEnabled", function()
+{
+   .Call("rs_juliaEnabled", PACKAGE = "(embedding)")
+})
+
+#' Start a Julia REPL in the Console
+#'
+#' Julia input is read, evaluated and printed until 'exit' or 'quit' returns
+#' the console to R. Julia runs in a process of its own, started through
+#' JuliaConnectoR on first use and kept for the rest of the R session, so
+#' Julia's state survives leaving and re-entering the REPL.
+#'
+#' As in the Julia REPL, input starting with '?' looks up help, ']' runs a
+#' Pkg command, and ';' a shell command.
+#'
+#' @param quiet Whether to skip the banner printed on entry.
+.rs.addFunction("julia.repl", function(quiet = getOption("rstudio.julia.repl.quiet", FALSE))
+{
+   state <- .rs.julia.state
+   if (state$active)
+      return(invisible(NULL))
+
+   .rs.julia.start()
+
+   state$active <- TRUE
+   state$buffer <- character()
+   on.exit(.rs.julia.replTeardown(), add = TRUE)
+
+   .rs.julia.enqueueClientEvent(
+      .rs.juliaEvents$REPL_INITIALIZED,
+      .rs.julia.describe()
+   )
+
+   if (!quiet)
+   {
+      fmt <- c(
+         "Julia %s (%s)",
+         "JuliaConnectoR %s REPL -- Julia in a process of its own, connected to R.",
+         "Enter 'exit' or 'quit' to exit the REPL and return to R."
+      )
+
+      msg <- sprintf(
+         paste(fmt, collapse = "\n"),
+         state$version,
+         state$executable,
+         utils::packageVersion("JuliaConnectoR")
+      )
+
+      message(msg)
+   }
+
+   repeat
+   {
+      status <- tryCatch(
+         .rs.julia.replIteration(),
+         interrupt = function(cnd) {
+            # as in the Julia REPL, an interrupt at the prompt drops the
+            # input buffered so far
+            .rs.julia.state$buffer <- character()
+            "interrupted"
+         }
+      )
+
+      if (identical(status, "quit"))
+         break
+   }
+
+   invisible(NULL)
+})
+
+.rs.addFunction("julia.replTeardown", function()
+{
+   state <- .rs.julia.state
+   state$active <- FALSE
+   state$buffer <- character()
+
+   .rs.julia.enqueueClientEvent(.rs.juliaEvents$REPL_TEARDOWN)
+})
+
+#' Read and Evaluate One Line of REPL Input
+#'
+#' Lines are buffered until they make up complete Julia input, as the Julia
+#' REPL judges it, and the whole input is then evaluated.
+#'
+#' @return "quit" when the REPL should end; otherwise an empty string.
+.rs.addFunction("julia.replIteration", function()
+{
+   state <- .rs.julia.state
+   continuing <- length(state$buffer) > 0
+
+   # the Julia REPL's continuation lines are indented under 'julia> '
+   prompt <- if (continuing) "       " else "julia> "
+   contents <- .rs.julia.readConsole(prompt)
+   trimmed <- .rs.trimWhitespace(contents)
+
+   if (!continuing)
+   {
+      # mirrors isReplExit() in SessionConsoleInput.cpp; Julia has no
+      # 'quit', and its 'exit()' would end the Julia process itself
+      if (trimmed %in% c("exit", "quit", "exit()", "quit()"))
+         return("quit")
+
+      if (!nzchar(trimmed))
+         return("")
+
+      mode <- .rs.julia.inputMode(trimmed)
+      if (mode != "julia")
+      {
+         .rs.julia.evaluate(.rs.trimWhitespace(substring(trimmed, 2L)), mode)
+         return("")
+      }
+   }
+
+   code <- paste(c(state$buffer, contents), collapse = "\n")
+   if (!isTRUE(.rs.julia.call("RStudio.iscomplete", code)))
+   {
+      state$buffer <- c(state$buffer, contents)
+      return("")
+   }
+
+   state$buffer <- character()
+   .rs.julia.evaluate(code, "julia")
+   ""
+})
+
+#' Read a Line of Julia Input
+#'
+#' Unlike readline(), this keeps the line's leading and trailing whitespace,
+#' which can be part of a Julia string, and adds the line to the console's
+#' history, as R's own REPL does.
+#'
+#' @param prompt The prompt to show.
+#'
+#' @return The line, without its newline.
+.rs.addFunction("julia.readConsole", function(prompt)
+{
+   contents <- .Call("rs_juliaReadConsole", prompt, PACKAGE = "(embedding)")
+   if (is.null(contents))
+      return("")
+
+   contents
+})
+
+#' Julia REPL Mode of an Input Line
+#'
+#' @param line A line of input, with surrounding whitespace removed.
+#'
+#' @return "help", "pkg" or "shell" for a line starting with the character
+#'   that enters that mode in the Julia REPL; otherwise "julia".
+.rs.addFunction("julia.inputMode", function(line)
+{
+   switch(
+      substring(line, 1L, 1L),
+      "?" = "help",
+      "]" = "pkg",
+      ";" = "shell",
+      "julia"
+   )
+})
+
+#' Evaluate REPL Input in Julia
+#'
+#' Julia prints the value or error itself, as its REPL would, and output
+#' reaches the console as it is produced.
+#'
+#' @param code The input, as a single string.
+#' @param mode The REPL mode to evaluate it in; see `.rs.julia.inputMode()`.
+.rs.addFunction("julia.evaluate", function(code, mode = "julia")
+{
+   .rs.julia.enqueueClientEvent(
+      .rs.juliaEvents$REPL_BUSY,
+      list(busy = .rs.scalar(TRUE))
+   )
+
+   on.exit(
+      .rs.julia.enqueueClientEvent(
+         .rs.juliaEvents$REPL_BUSY,
+         list(busy = .rs.scalar(FALSE))
+      ),
+      add = TRUE
+   )
+
+   width <- as.integer(getOption("width", 80L))
+   color <- !identical(.rs.readUiPref("ansi_console_mode"), "off")
+
+   state <- .rs.julia.state
+   debugging <- .rs.julia.debuggingEnabled()
+   if (!identical(debugging, state$debugging))
+   {
+      .rs.julia.call("RStudio.set_debugging", debugging)
+      state$debugging <- debugging
+   }
+
+   # Julia reports the end of the evaluation before it replies (see
+   # .rs.julia.onEvaluationDone)
+   .rs.julia.debug("evaluating (%s): %s", mode, encodeString(substring(code, 1L, 60L)))
+   state$evaluating <- TRUE
+   state$sigints <- 0L
+   on.exit(state$evaluating <- FALSE, add = TRUE)
+
+   cwd <- .rs.julia.call("RStudio.evaluate", code, mode, width, color, getwd())
+
+   # Julia changed directory (e.g. with cd()); follow it, as R would with an
+   # embedded interpreter sharing its process
+   if (is.character(cwd) && nzchar(cwd) && dir.exists(cwd))
+      setwd(cwd)
+
+   invisible(NULL)
+})
+
+#' Complete Julia REPL Input
+#'
+#' Offers what the Julia REPL would on Tab, for console input in the REPL.
+#'
+#' @param line The console input up to the cursor.
+.rs.addFunction("julia.getCompletions", function(line)
+{
+   # Julia can only be asked while it is idle at the prompt
+   result <- tryCatch(
+      .rs.julia.call("RStudio.completions", line),
+      error = function(e) NULL
+   )
+
+   if (!is.character(result) || length(result) == 0L)
+      return(.rs.emptyCompletions(language = "Julia"))
+
+   # the token, then the completions' names, kinds and modules
+   n <- (length(result) - 1L) %/% 3L
+   token <- result[[1L]]
+   names <- result[seq_len(n) + 1L]
+   kinds <- result[seq_len(n) + 1L + n]
+   sources <- result[seq_len(n) + 1L + 2L * n]
+
+   # modules are typed as reticulate types Python's: for a PACKAGE, the client
+   # looks up R package help without asking the help handler
+   types <- .rs.acCompletionTypes
+   type <- rep(types$UNKNOWN, length(kinds))
+   type[kinds == "function"] <- types$FUNCTION
+   type[kinds == "module"]   <- types$ENVIRONMENT
+   type[kinds == "keyword"]  <- types$KEYWORD
+   type[kinds == "path"]     <- types$FILE
+
+   .rs.makeCompletions(
+      token       = token,
+      results     = names,
+      packages    = sources,
+      type        = type,
+      quote       = FALSE,
+      helpHandler = ".rs.julia.helpHandler",
+      language    = "Julia"
+   )
+})
+
+#' Julia Help for Completions
+#'
+#' The help handler for the Julia console's completions, called as reticulate's
+#' is (see the custom help RPCs in SessionHelp.R, and get_args).
+#'
+#' @param type The help wanted: "completion", "parameter" or "url".
+#' @param topic The completion's name.
+#' @param source The module to look up its documentation in, as
+#'   RStudio.completions gives it; empty when it has none.
+.rs.addFunction("julia.helpHandler", function(type, topic, source, ...)
+{
+   # Julia's documentation is only shown in the completion popup; there is
+   # no page for F1 to open
+   if (identical(type, "url"))
+      return("")
+
+   if (!identical(type, "completion") || !nzchar(source))
+      return(NULL)
+
+   # Julia can only be asked while it is idle at the prompt
+   result <- tryCatch(
+      .rs.julia.call("RStudio.documentation", topic, source),
+      error = function(e) NULL
+   )
+
+   if (!is.character(result) || length(result) != 2L || !any(nzchar(result)))
+      return(NULL)
+
+   # the popup heads the help with the signature, or else the title; a
+   # docstring has no title of its own
+   signature <- result[[1L]]
+   title <- if (nzchar(signature)) "" else topic
+
+   list(
+      title       = title,
+      signature   = signature,
+      description = result[[2L]],
+      has_help    = FALSE
+   )
+})
+
+#' Start Julia for the Console
+#'
+#' Starts Julia through JuliaConnectoR if it isn't running yet, and loads the
+#' console's helpers (RStudio.jl) into it if they aren't loaded yet.
+.rs.addFunction("julia.start", function()
+{
+   if (!.rs.julia.isAllowed())
+   {
+      stop(
+         "Julia integration has been disabled by the administrator.",
+         call. = FALSE
+      )
+   }
+
+   if (!.rs.julia.isEnabled())
+   {
+      stop(
+         "The Julia console is turned off.\n",
+         "Turn it on with \"Enable the Julia console\" in the Command Palette.",
+         call. = FALSE
+      )
+   }
+
+   if (!requireNamespace("JuliaConnectoR", quietly = TRUE))
+   {
+      stop(
+         "The 'JuliaConnectoR' package is required for the Julia console.\n",
+         "Install it with install.packages(\"JuliaConnectoR\").",
+         call. = FALSE
+      )
+   }
+
+   # the console speaks JuliaConnectoR's protocol itself, with the package's
+   # internals; say so up front if this version has moved them
+   missing <- .rs.julia.missingConnectoRInternals(asNamespace("JuliaConnectoR"))
+   if (length(missing))
+   {
+      stop(
+         sprintf("The Julia console doesn't support JuliaConnectoR %s ", utils::packageVersion("JuliaConnectoR")),
+         sprintf("(it has no %s).", paste(sQuote(missing, FALSE), collapse = ", ")),
+         call. = FALSE
+      )
+   }
+
+   # Julia starts with the console's own server, unless the user chose a
+   # server to share (see ?JULIACONNECTOR_SERVER); see .rs.julia.useConsoleServer
+   if (!nzchar(Sys.getenv("JULIACONNECTOR_SERVER")))
+   {
+      original <- .rs.julia.useConsoleServer()
+      on.exit(.rs.replaceBinding("juliaConnection", "JuliaConnectoR", original), add = TRUE)
+   }
+
+   # a Julia that has since gone away (say, it was killed) leaves
+   # JuliaConnectoR holding a dead connection
+   connected <- !is.null(asNamespace("JuliaConnectoR")$pkgLocal$con)
+
+   # the first start shows nothing for a long while; say why
+   if (!connected && .rs.julia.isFirstStart())
+   {
+      message(
+         "Julia hasn't been started with JuliaConnectoR before. It will now install and ",
+         "precompile the Julia packages it needs (Tables.jl), which can take a few minutes."
+      )
+   }
+
+   loaded <- tryCatch(
+      .rs.julia.isLoaded(),
+      error = function(e) {
+         if (!connected)
+            stop(e)
+
+         # the connection is broken; Julia has likely gone with it
+         .rs.julia.stop(kill = FALSE)
+         .rs.julia.isLoaded()
+      }
+   )
+
+   if (isTRUE(loaded) && !is.null(.rs.julia.state$pid))
+      return(invisible(TRUE))
+
+   version <- JuliaConnectoR::juliaEval("string(VERSION)")
+   if (numeric_version(sub("[-+].*", "", version)) < .rs.julia.minimumVersion)
+   {
+      stop(
+         sprintf("The Julia console requires Julia %s or newer; ", .rs.julia.minimumVersion),
+         sprintf("JuliaConnectoR started Julia %s.", version),
+         call. = FALSE
+      )
+   }
+
+   path <- file.path(
+      .Call("rs_rResourcesPath", PACKAGE = "(embedding)"),
+      "julia",
+      "RStudio.jl"
+   )
+
+   JuliaConnectoR::juliaLet("Base.include(Main, path); nothing", path = path)
+
+   info <- .rs.julia.call(
+      "RStudio.init",
+      .rs.julia.onEvaluationDone,
+      asNamespace("JuliaConnectoR")$pkgLocal$communicator,
+      Sys.getpid(),
+      .rs.julia.showPlot
+   )
+
+   state <- .rs.julia.state
+   state$version    <- info[[1L]]
+   state$pid        <- as.integer(info[[2L]])
+   state$executable <- info[[3L]]
+   state$partial    <- list()
+   state$debugging  <- NULL
+
+   # a running Julia keeps the session from being suspended
+   .Call("rs_juliaSetProcess", state$pid, PACKAGE = "(embedding)")
+
+   .rs.julia.debug("loaded the console's helpers into Julia %s (pid %d)", state$version, state$pid)
+
+   invisible(TRUE)
+})
+
+#' Are the Console's Helpers Loaded into Julia?
+#'
+#' Starts Julia through JuliaConnectoR if it isn't running yet. Julia is
+#' looked for as JuliaConnectoR looks for it (JULIA_BINDIR, then the PATH),
+#' then where it's commonly installed: RStudio's PATH often lacks those
+#' places, as with Homebrew's on macOS when RStudio is started from Finder.
+.rs.addFunction("julia.isLoaded", function()
+{
+   bindir <- .rs.julia.findBinDir()
+   if (!is.null(bindir))
+   {
+      path <- Sys.getenv("PATH")
+      on.exit(Sys.setenv(PATH = path), add = TRUE)
+      Sys.setenv(PATH = paste(bindir, path, sep = .Platform$path.sep))
+   }
+
+   JuliaConnectoR::juliaEval("isdefined(Main, :RStudio)")
+})
+
+#' Will Julia's Start Be a First One?
+#'
+#' JuliaConnectoR needs Tables.jl, and installs it the first time it starts
+#' Julia with a depot that lacks it; Julia then precompiles it, as it does
+#' again for each new Julia version. That takes a minute or more, during which
+#' nothing is shown. Precompiled Tables.jl in the depot means it's done.
+#'
+#' @return TRUE when Tables.jl hasn't been precompiled for the Julia that
+#'   would be started; FALSE otherwise, or when that can't be told.
+.rs.addFunction("julia.isFirstStart", function()
+{
+   julia <- .rs.julia.executable()
+   if (is.null(julia))
+      return(FALSE)
+
+   version <- tryCatch(
+      suppressWarnings(system2(julia, "--version", stdout = TRUE, stderr = FALSE)),
+      error = function(e) character()
+   )
+
+   # e.g. 'julia version 1.13.4'
+   matches <- regmatches(version, regexpr("[0-9]+\\.[0-9]+", version))
+   if (length(matches) == 0L)
+      return(FALSE)
+
+   compiled <- file.path(.rs.julia.depotPath(), "compiled", paste0("v", matches[[1L]]), "Tables")
+   !dir.exists(compiled)
+})
+
+#' The Julia Depot Packages Are Installed In
+#'
+#' The first entry of JULIA_DEPOT_PATH, or Julia's default.
+.rs.addFunction("julia.depotPath", function()
+{
+   entries <- strsplit(Sys.getenv("JULIA_DEPOT_PATH"), .Platform$path.sep, fixed = TRUE)[[1L]]
+   entries <- entries[nzchar(entries)]
+   if (length(entries))
+      return(entries[[1L]])
+
+   home <- if (identical(.Platform$OS.type, "windows")) Sys.getenv("USERPROFILE") else path.expand("~")
+   file.path(home, ".julia")
+})
+
+#' The Julia Executable to Start
+#'
+#' @return The path to the Julia that JuliaConnectoR will start (see
+#'   .rs.julia.isLoaded), or NULL when there is none.
+.rs.addFunction("julia.executable", function()
+{
+   exe <- if (identical(.Platform$OS.type, "windows")) "julia.exe" else "julia"
+
+   bindir <- Sys.getenv("JULIA_BINDIR")
+   if (nzchar(bindir))
+      return(file.path(bindir, exe))
+
+   path <- Sys.which("julia")
+   if (nzchar(path))
+      return(unname(path))
+
+   bindir <- .rs.julia.findBinDir()
+   if (is.null(bindir))
+      return(NULL)
+
+   file.path(bindir, exe)
+})
+
+#' Find Julia Where JuliaConnectoR Wouldn't
+#'
+#' @return The directory of a Julia executable that JuliaConnectoR wouldn't
+#'   find on its own, or NULL when it would (or there is none).
+.rs.addFunction("julia.findBinDir", function()
+{
+   if (nzchar(Sys.getenv("JULIA_BINDIR")) || nzchar(Sys.which("julia")))
+      return(NULL)
+
+   exe <- if (identical(.Platform$OS.type, "windows")) "julia.exe" else "julia"
+   candidates <- c(
+      file.path(path.expand("~"), ".juliaup", "bin", exe),
+      file.path(Sys.getenv("LOCALAPPDATA"), "Programs", "Julia", "bin", exe),
+      file.path("/opt/homebrew/bin", exe),
+      file.path("/usr/local/bin", exe),
+      rev(sort(Sys.glob("/Applications/Julia-*.app/Contents/Resources/julia/bin/julia")))
+   )
+
+   for (candidate in candidates)
+   {
+      if (file.exists(candidate))
+         return(dirname(candidate))
+   }
+
+   NULL
+})
+
+#' Which JuliaConnectoR Internals the Console Needs Are Missing?
+#'
+#' @param jc JuliaConnectoR's namespace.
+#'
+#' @return The names of the internals the console uses that `jc` lacks, or
+#'   has as something else than the console expects.
+.rs.addFunction("julia.missingConnectoRInternals", function(jc)
+{
+   functions <- c(
+      "juliaConnection", "getJuliaExecutablePath", "getJuliaEnv",
+      "readElement", "readString", "readCall", "answerCallback"
+   )
+
+   # calls are written with writeCallMessage() where there is one; see
+   # .rs.julia.callImpl
+   if (!is.function(jc[["writeCallMessage"]]))
+      functions <- c(functions, "writeString", "writeList")
+
+   indicators <- c(
+      "CALL_INDICATOR", "RESULT_INDICATOR", "FAIL_INDICATOR",
+      "STDOUT_INDICATOR", "STDERR_INDICATOR"
+   )
+
+   isFunction <- vapply(functions, function(name) is.function(jc[[name]]), logical(1L))
+   isIndicator <- vapply(indicators, function(name) is.raw(jc[[name]]), logical(1L))
+   missing <- c(functions[!isFunction], indicators[!isIndicator])
+
+   # the connection, the communicator and the callbacks are kept here
+   if (!is.environment(jc[["pkgLocal"]]))
+      missing <- c(missing, "pkgLocal")
+
+   missing
+})
+
+#' Have JuliaConnectoR Start the Console's Julia Server
+#'
+#' While the console starts Julia, JuliaConnectoR's juliaConnection() is
+#' replaced by one that starts Julia with RStudio's serve.jl in place of
+#' JuliaConnectoR's main.jl. Julia started through JuliaConnectoR directly,
+#' outside the console, is left alone.
+#'
+#' @return JuliaConnectoR's own juliaConnection(), to restore once the
+#'   console has started Julia.
+.rs.addFunction("julia.useConsoleServer", function()
+{
+   .rs.replaceBinding("juliaConnection", "JuliaConnectoR", .rs.julia.connectoRConnection)
+})
+
+#' Connect to the Console's New Julia Server
+#'
+#' Stands in for JuliaConnectoR's juliaConnection() while the console starts
+#' Julia; see .rs.julia.useConsoleServer.
+#'
+#' @return As juliaConnection(): a list of the server's `port` and the
+#'   connection to it (`con`).
+.rs.addFunction("julia.connectoRConnection", function()
+{
+   token <- paste0(.rs.createUUID(), .rs.createUUID())
+   port <- .rs.julia.runServer(token)
+
+   args <- list(
+      host     = "127.0.0.1",
+      port     = port,
+      blocking = TRUE,
+      server   = FALSE,
+      open     = "r+b",
+      timeout  = 2
+   )
+
+   # as JuliaConnectoR's own connection does, where R supports it
+   if (getRversion() >= "4.3.0")
+      args$options <- "no-delay"
+
+   con <- do.call(socketConnection, args)
+   writeBin(charToRaw(token), con)
+
+   list(port = port, con = con)
+})
+
+#' Start the Console's Julia Server
+#'
+#' Starts Julia as JuliaConnectoR's runJuliaServer() does for a single
+#' client, but with RStudio's serve.jl in place of JuliaConnectoR's main.jl.
+#'
+#' @param token The token a client must send before anything else.
+#'
+#' @return The port the server listens on.
+.rs.addFunction("julia.runServer", function(token)
+{
+   jc <- asNamespace("JuliaConnectoR")
+
+   options <- Sys.getenv("JULIACONNECTOR_JULIAOPTS")
+   if (nzchar(options))
+      message("Starting Julia ... (with opts: ", options, ")")
+   else
+      message("Starting Julia ...")
+
+   script <- file.path(
+      .Call("rs_rResourcesPath", PACKAGE = "(embedding)"),
+      "julia",
+      "serve.jl"
+   )
+
+   connectorDir <- system.file("Julia", package = "JuliaConnectoR", mustWork = TRUE)
+   portFile <- tempfile("juliaPort")
+   outputFile <- tempfile("juliaStartup")
+   on.exit(unlink(c(portFile, outputFile)), add = TRUE)
+
+   # serve.jl takes it out of Julia's environment once it has read it
+   Sys.setenv(RSTUDIO_JULIA_TOKEN = token)
+   on.exit(Sys.unsetenv("RSTUDIO_JULIA_TOKEN"), add = TRUE)
+
+   # Julia 1.12's default of one default and one interactive thread (the main
+   # one), plus an interactive thread for the output forwarders (see
+   # RStudio.start_forwarder), where tasks user code spawns don't hold them up
+   if (!nzchar(Sys.getenv("JULIA_NUM_THREADS")))
+   {
+      Sys.setenv(JULIA_NUM_THREADS = "1,2")
+      on.exit(Sys.unsetenv("JULIA_NUM_THREADS"), add = TRUE)
+   }
+
+   args <- c(shQuote(script), shQuote(connectorDir), "11980", shQuote(portFile))
+   if (nzchar(options))
+      args <- c(options, "--", args)
+
+   system2(
+      command = jc$getJuliaExecutablePath(),
+      args    = args,
+      wait    = FALSE,
+      stdout  = outputFile,
+      stderr  = outputFile,
+      env     = jc$getJuliaEnv()
+   )
+
+   # as runJuliaServer(): Julia can be quiet for a while as it precompiles,
+   # though not for too long, and its start is given up on eventually
+   silenceLimit <- as.numeric(Sys.getenv("JULIACONNECTOR_SILENCE_TIMEOUT", 60))
+   timeLimit <- as.numeric(Sys.getenv("JULIACONNECTOR_MAX_TIMEOUT", 300))
+   started <- Sys.time()
+   lastOutput <- started
+   outputSize <- 0
+
+   while (!file.exists(portFile))
+   {
+      Sys.sleep(0.2)
+
+      now <- Sys.time()
+      size <- file.size(outputFile)
+      if (!is.na(size) && size > outputSize)
+      {
+         outputSize <- size
+         lastOutput <- now
+      }
+
+      silent <- difftime(now, lastOutput, units = "secs") >= silenceLimit
+      late <- difftime(now, started, units = "secs") >= timeLimit
+      if (silent || late)
+      {
+         reason <- if (silent)
+            sprintf("Julia was silent for %s seconds as it started.", silenceLimit)
+         else
+            sprintf("Julia didn't start within %s seconds.", timeLimit)
+
+         # on Windows, a Julia still running holds the file open
+         output <- tryCatch(
+            suppressWarnings(readLines(outputFile, warn = FALSE, encoding = "UTF-8")),
+            error = function(e) character()
+         )
+
+         if (length(output))
+            reason <- paste(c(reason, "Julia's output:", output), collapse = "\n")
+
+         stop(reason, call. = FALSE)
+      }
+   }
+
+   as.integer(readLines(portFile, n = 1L, warn = FALSE))
+})
+
+.rs.addFunction("julia.describe", function()
+{
+   state <- .rs.julia.state
+   list(
+      version    = .rs.scalar(state$version),
+      executable = .rs.scalar(state$executable)
+   )
+})
+
+#' Call a Julia Function over JuliaConnectoR's Connection
+#'
+#' This stands in for JuliaConnectoR's juliaCall(), so that an interrupt
+#' reaches Julia as SIGINT rather than ending the Julia process, and so that
+#' Julia's output keeps its ANSI escapes.
+#'
+#' An interrupt must not cut a message short, which would leave the
+#' connection unusable, and suspendInterrupts() can't prevent that here: R
+#' raises a pending interrupt whenever a socket read waits for data. So an
+#' interrupt while the call is in progress is passed on to Julia, and the
+#' read resumed (see .rs.julia.onInterrupt).
+#'
+#' The function is looked up when it is called, through invokelatest():
+#' JuliaConnectoR resolves names in the world it started in, before the
+#' console's helpers were loaded, which Julia 1.12 and newer warn about.
+#'
+#' @param name The name of the Julia function.
+#' @param ... Arguments to the function, translated by JuliaConnectoR.
+#'
+#' @return The function's result, translated by JuliaConnectoR.
+.rs.addFunction("julia.call", function(name, ...)
+{
+   jc <- asNamespace("JuliaConnectoR")
+   con <- jc$pkgLocal$con
+   if (is.null(con))
+      stop("Julia is not running.", call. = FALSE)
+
+   # R code run while a read waits (e.g. an RPC handler) mustn't start a
+   # call of its own in the middle of this one's messages
+   state <- .rs.julia.state
+   if (isTRUE(state$calling))
+      stop("Julia is busy.", call. = FALSE)
+
+   # a call cut short (by an interrupt that can't be resumed, say) leaves its
+   # messages half read or written, and Julia can't be talked to any more
+   completed <- FALSE
+   state$calling <- TRUE
+   state$interrupts <- 0L
+   on.exit({
+      state$calling <- FALSE
+      if (!completed)
+      {
+         .rs.julia.debug("call to %s cut short; stopping Julia", name)
+         .rs.julia.stop()
+      }
+   }, add = TRUE)
+
+   reply <- withCallingHandlers(
+      .rs.julia.callImpl(con, name, list(...)),
+      interrupt = .rs.julia.onInterrupt
+   )
+
+   completed <- TRUE
+   if (identical(reply$type, "fail"))
+   {
+      .rs.julia.debug("call to %s failed", name)
+      stop(reply$value, call. = FALSE)
+   }
+
+   reply$value
+})
+
+#' Exchange a Call's Messages with Julia
+#'
+#' @return Julia's reply: a list with `type` "result" or "fail", and `value`.
+.rs.addFunction("julia.callImpl", function(con, name, args)
+{
+   jc <- asNamespace("JuliaConnectoR")
+   args <- c(list(JuliaConnectoR::juliaExpr(name)), args)
+
+   # JuliaConnectoR versions with writeCallMessage() assemble each message
+   # before sending it, so their writeString() and writeList() only buffer
+   if (is.function(jc[["writeCallMessage"]]))
+   {
+      jc$writeCallMessage("Base.invokelatest", args)
+   }
+   else
+   {
+      writeBin(jc$CALL_INDICATOR, con)
+      jc$writeString("Base.invokelatest")
+      jc$writeList(args)
+   }
+
+   repeat
+   {
+      if (!socketSelect(list(con), timeout = 0.1))
+         next
+
+      reply <- .rs.julia.readMessage(con)
+      if (reply$type %in% c("result", "fail"))
+         return(reply)
+   }
+})
+
+#' Handle an Interrupt During a Julia Call
+#'
+#' A calling handler: the interrupt is passed on to Julia, and the call
+#' resumed where it was interrupted.
+#'
+#' @param cnd The interrupt condition.
+.rs.addFunction("julia.onInterrupt", function(cnd)
+{
+   .rs.julia.interrupt()
+
+   # by name: R's own 'resume' restart has no names to match on otherwise
+   if (!is.null(findRestart("resume")))
+      invokeRestart("resume")
+})
+
+#' Read One Message from Julia
+#'
+#' Output is written to the console as it arrives, and callbacks into R are
+#' answered as JuliaConnectoR would.
+#'
+#' @param con JuliaConnectoR's connection, with data waiting to be read.
+#'
+#' @return A list with the message's `type` ("result", "fail", "output" or
+#'   "callback") and, for a result or failure, its `value`.
+.rs.addFunction("julia.readMessage", function(con)
+{
+   jc <- asNamespace("JuliaConnectoR")
+
+   # data was waiting, so nothing to read means Julia closed the connection
+   type <- readBin(con, "raw", 1L)
+   if (length(type) == 0L)
+      .rs.julia.onConnectionLost()
+
+   if (type == jc$STDOUT_INDICATOR || type == jc$STDERR_INDICATOR)
+   {
+      stream <- if (type == jc$STDOUT_INDICATOR) "stdout" else "stderr"
+      size <- readBin(.rs.julia.readBytes(con, 4L), "integer", size = 4L)
+      .rs.julia.writeOutput(.rs.julia.readBytes(con, size), stream)
+      return(list(type = "output"))
+   }
+   else if (type == jc$RESULT_INDICATOR)
+   {
+      return(list(type = "result", value = jc$readElement()))
+   }
+   else if (type == jc$FAIL_INDICATOR)
+   {
+      return(list(type = "fail", value = jc$readString()))
+   }
+   else if (type == jc$CALL_INDICATOR)
+   {
+      call <- jc$readCall()
+      callback <- get(call$name, envir = jc$pkgLocal$callbacks)
+      jc$answerCallback(callback, call$args)
+      return(list(type = "callback"))
+   }
+
+   .rs.julia.onConnectionLost(sprintf("unexpected message type 0x%s", format(type)))
+})
+
+#' Read Bytes from Julia's Connection
+#'
+#' The connection's reads time out and come back short while Julia is quiet,
+#' so a short read is retried until the bytes arrive -- unless the connection
+#' turned out to be closed.
+#'
+#' @param con JuliaConnectoR's connection.
+#' @param n The number of bytes to read.
+.rs.addFunction("julia.readBytes", function(con, n)
+{
+   bytes <- readBin(con, "raw", n)
+   while (length(bytes) < n)
+   {
+      if (!socketSelect(list(con), timeout = 1))
+         next
+
+      more <- readBin(con, "raw", n - length(bytes))
+      if (length(more) == 0L)
+         .rs.julia.onConnectionLost()
+
+      bytes <- c(bytes, more)
+   }
+
+   bytes
+})
+
+#' Write Julia Output to the Console
+#'
+#' Julia sends output in chunks as it is produced, which can split a UTF-8
+#' character; the incomplete end of a chunk is held back for the next one.
+#'
+#' @param bytes The output, as a raw vector.
+#' @param stream The stream it was written to: "stdout" or "stderr".
+.rs.addFunction("julia.writeOutput", function(bytes, stream)
+{
+   state <- .rs.julia.state
+   bytes <- c(state$partial[[stream]], bytes)
+
+   complete <- .rs.julia.completeUtf8Length(bytes)
+   state$partial[[stream]] <- bytes[seq_len(length(bytes) - complete) + complete]
+
+   bytes <- bytes[seq_len(complete)]
+   bytes <- bytes[bytes != as.raw(0L)]
+   if (length(bytes) == 0L)
+      return(invisible(NULL))
+
+   text <- rawToChar(bytes)
+   Encoding(text) <- "UTF-8"
+
+   file <- if (identical(stream, "stderr")) stderr() else stdout()
+   cat(text, file = file)
+})
+
+#' Length of the Complete UTF-8 Prefix of a Byte Sequence
+#'
+#' @param bytes A raw vector holding UTF-8 text, possibly cut off part-way
+#'   through its last character.
+#'
+#' @return The number of bytes up to the end of the last complete character.
+.rs.addFunction("julia.completeUtf8Length", function(bytes)
+{
+   n <- length(bytes)
+
+   # a character takes at most 4 bytes, so its lead byte is among the last 4
+   for (i in rev(seq_len(n))[seq_len(min(n, 4L))])
+   {
+      byte <- as.integer(bytes[i])
+
+      # a continuation byte; the character starts earlier
+      if (byte >= 0x80 && byte < 0xC0)
+         next
+
+      # a single-byte character, or the lead byte of a longer one
+      size <- if (byte >= 0xF0) 4L else if (byte >= 0xE0) 3L else if (byte >= 0xC0) 2L else 1L
+      return(if (n - i + 1L >= size) n else i - 1L)
+   }
+
+   n
+})
+
+#' Interrupt Julia
+#'
+#' Called when R is interrupted during a Julia call. During an evaluation,
+#' Julia is sent SIGINT, which interrupts it; other calls return promptly, and
+#' are left to finish. Code that never reaches a point where Julia can be
+#' interrupted keeps running, so a third interrupt stops Julia altogether.
+#'
+#' Windows has no SIGINT for another process. Julia shares R's console there,
+#' though, and RStudio's interrupt sends CTRL_BREAK to the whole console, so
+#' Julia is interrupted already; it ignores the event outside an evaluation
+#' (see RStudio.install_console_handler).
+.rs.addFunction("julia.interrupt", function()
+{
+   state <- .rs.julia.state
+   .rs.julia.debug("interrupted (evaluating: %s)", state$evaluating)
+
+   # one interrupt request reaches R twice, a moment apart: RStudio sets R's
+   # interrupt flag and signals the session's process group too. Acting on
+   # both would send Julia a second SIGINT, which can land after the
+   # evaluation, and count a second strike towards stopping Julia
+   now <- proc.time()[["elapsed"]]
+   if (now - state$lastInterrupt < 0.25)
+   {
+      .rs.julia.debug("interrupted again within 250ms; taken as the same request")
+      return(invisible(NULL))
+   }
+   state$lastInterrupt <- now
+
+   state$interrupts <- state$interrupts + 1L
+   if (state$interrupts >= 3L)
+   {
+      .rs.julia.stop()
+      stop("Julia did not respond to the interrupt, and was stopped.", call. = FALSE)
+   }
+
+   if (state$evaluating && !is.null(state$pid) && !identical(.Platform$OS.type, "windows"))
+   {
+      state$sigints <- state$sigints + 1L
+      .rs.julia.debug("sending SIGINT %d to Julia (pid %d)", state$sigints, state$pid)
+
+      # to Julia's process group, so the commands it runs get it too
+      .Call("rs_juliaInterrupt", state$pid, PACKAGE = "(embedding)")
+   }
+
+   invisible(NULL)
+})
+
+#' Note the End of an Evaluation
+#'
+#' Julia calls this once an evaluation is over, with interrupts deferred, and
+#' consumes any SIGINT that hasn't landed yet before it replies: one landing
+#' after that would break JuliaConnectoR's connection.
+#'
+#' @return The number of SIGINTs sent during the evaluation.
+.rs.addFunction("julia.onEvaluationDone", function()
+{
+   state <- .rs.julia.state
+   state$evaluating <- FALSE
+   .rs.julia.debug("evaluation done; %d SIGINT(s) sent", state$sigints)
+   state$sigints
+})
+
+#' Show a Julia Image
+#'
+#' Julia calls this to show a value that renders as an image (see
+#' ConsoleDisplay in RStudio.jl), on the current graphics device: the Plots
+#' pane, or a notebook chunk's output. Julia decodes the image itself, so
+#' that no package is needed to read it here.
+#'
+#' @param path A file holding the image's pixels, as a nativeRaster holds
+#'   them: packed RGBA integers, row by row from the top.
+#' @param width The image's width, in pixels.
+#' @param height The image's height, in pixels.
+#' @param background The color to fill the space around the image with, where
+#'   its shape doesn't match the device's; "" leaves the device's background
+#'   (see plot_background in RStudio.jl).
+.rs.addFunction("julia.showPlot", function(path, width, height, background = "")
+{
+   width <- as.integer(width)
+   height <- as.integer(height)
+   pixels <- readBin(path, "integer", n = width * height, size = 4L)
+
+   image <- structure(
+      pixels,
+      dim      = c(height, width),
+      class    = "nativeRaster",
+      channels = 4L
+   )
+
+   grid::grid.newpage()
+   if (nzchar(background))
+      grid::grid.rect(gp = grid::gpar(fill = background, col = NA))
+
+   # as large as the device allows, keeping its aspect ratio
+   grid::grid.raster(image, interpolate = TRUE)
+
+   invisible(NULL)
+})
+
+#' Stop Julia
+#'
+#' Ends the Julia process; the next use of Julia starts a new one.
+#'
+#' @param kill Whether to kill the process too, as a busy Julia won't notice
+#'   its connection closing; with its process group, on Unix, so the commands
+#'   it runs end too. Only for a Julia known to be running: once it has gone,
+#'   its process ID may belong to another process.
+.rs.addFunction("julia.stop", function(kill = TRUE)
+{
+   state <- .rs.julia.state
+   pid <- state$pid
+   state$pid <- NULL
+   .Call("rs_juliaSetProcess", NULL, PACKAGE = "(embedding)")
+   state$partial <- list()
+   .rs.julia.debug("stopping Julia (pid %s)", if (is.null(pid)) "unknown" else pid)
+
+   if (requireNamespace("JuliaConnectoR", quietly = TRUE))
+      tryCatch(JuliaConnectoR::stopJulia(), error = function(e) NULL)
+
+   # a call can be cut short by Julia having gone, too
+   if (kill && !is.null(pid) && .rs.julia.isJuliaProcess(pid))
+      .Call("rs_juliaKill", pid, PACKAGE = "(embedding)")
+
+   invisible(NULL)
+})
+
+#' Is a Process Julia?
+#'
+#' @param pid A process ID.
+#'
+#' @return Whether the process with that ID runs Julia; FALSE when there is
+#'   none, or that can't be told.
+.rs.addFunction("julia.isJuliaProcess", function(pid)
+{
+   if (identical(.Platform$OS.type, "windows"))
+   {
+      filter <- sprintf("PID eq %d", as.integer(pid))
+      command <- tryCatch(
+         system2("tasklist", c("/FI", shQuote(filter), "/NH", "/FO", "CSV"), stdout = TRUE, stderr = FALSE),
+         error = function(e) character()
+      )
+   }
+   else
+   {
+      command <- tryCatch(
+         suppressWarnings(system2("ps", c("-o", "comm=", "-p", as.integer(pid)), stdout = TRUE, stderr = FALSE)),
+         error = function(e) character()
+      )
+   }
+
+   # the executable's name, not its path, which could mention Julia anyway
+   # ('ps' gives a path; 'tasklist' a quoted name, as CSV)
+   any(grepl("^\"?julia", basename(command), ignore.case = TRUE))
+})
+
+.rs.addFunction("julia.onConnectionLost", function(reason = "Julia closed the connection")
+{
+   .rs.julia.debug("connection lost: %s", reason)
+   .rs.julia.stop(kill = FALSE)
+   stop(sprintf("The Julia session ended (%s).", reason), call. = FALSE)
+})

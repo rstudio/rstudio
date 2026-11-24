@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <!-- Deliberately not the Julia logo: its designs are licensed CC BY-NC-SA 4.0,
+       and commercial use needs the licensor's permission
+       (https://github.com/JuliaLang/julia-logo-graphics/blob/master/LICENSE.md). -->
+  <rect x="1" y="1" width="30" height="30" rx="7" fill="#5F6B7A"/>
+  <g fill="none" stroke="#FFFFFF" stroke-width="3.6" stroke-linecap="round">
+    <path d="M13.9 13 V22.6 Q13.9 26.4 9.9 26.4"/>
+    <path d="M21.9 6.6 V25.4"/>
+  </g>
+  <circle cx="13.9" cy="8.2" r="2.2" fill="#FFFFFF"/>
+</svg>

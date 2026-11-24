@@ -230,6 +230,7 @@ extern const int kRInstallCompleted;
 extern const int kRenvRestorePrompt;
 extern const int kQuitAborted;
 extern const int kAssistantNesMissingChanged;
+extern const int kJuliaEvent;
 
 }
    

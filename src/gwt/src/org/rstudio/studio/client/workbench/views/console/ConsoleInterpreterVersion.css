@@ -9,6 +9,7 @@
 @url R_LOGO rLogo;
 @url R_LOGO_DARK rLogoDark;
 @url PYTHON_LOGO pythonLogo;
+@url JULIA_LOGO juliaLogo;
 
 .container {
    display: inline-block;
@@ -87,6 +88,13 @@
 
 .rstudio-themes-dark .iconPython {
    filter: brightness(1.25);
+}
+
+.iconJulia {
+   width: 16px;
+   height: 16px;
+   padding: 2px;
+   background-image: JULIA_LOGO;
 }
 
 

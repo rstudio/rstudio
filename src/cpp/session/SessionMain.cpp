@@ -231,6 +231,7 @@
 #include "modules/zotero/SessionZotero.hpp"
 #include "modules/SessionLibPathsIndexer.hpp"
 #include "modules/SessionObjectExplorer.hpp"
+#include "modules/SessionJulia.hpp"
 #include "modules/SessionReticulate.hpp"
 #include "modules/SessionPythonEnvironments.hpp"
 #include "modules/SessionRVersions.hpp"
@@ -774,6 +775,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::libpaths::initialize)
       (modules::explorer::initialize)
       (modules::ask_secret::initialize)
+      (modules::julia::initialize)
       (modules::reticulate::initialize)
       (modules::python_environments::initialize)
       (modules::tests::initialize)

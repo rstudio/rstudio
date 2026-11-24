@@ -211,6 +211,12 @@ public class SessionInfo extends JavaScriptObject
       return this.console_language;
    }-*/;
 
+   // whether the administrator left Julia integration on (julia-enabled);
+   // see ConsoleLanguageTracker.isJuliaEnabled()
+   public final native boolean getJuliaAllowed() /*-{
+      return !!this.julia_allowed;
+   }-*/;
+
    public final native ClientInitState getClientState() /*-{
       return this.client_state;
    }-*/;

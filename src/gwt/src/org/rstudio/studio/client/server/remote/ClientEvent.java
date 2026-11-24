@@ -220,6 +220,7 @@ class ClientEvent extends JavaScriptObject
    public static final String RenvRestorePrompt = "renv_restore_prompt";
    public static final String QuitAborted = "quit_aborted";
    public static final String AssistantNesMissingChanged = "assistant_nes_missing_changed";
+   public static final String JuliaEvent = "julia_event";
 
    protected ClientEvent()
    {

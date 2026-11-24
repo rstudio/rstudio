@@ -4496,7 +4496,11 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
    <cmd id="consoleActivatePython"
         label="Console: Activate Python"
         menuLabel="Python" />
-        
+
+   <cmd id="consoleActivateJulia"
+        label="Console: Activate Julia"
+        menuLabel="Julia" />
+
    <cmd id="copyRStudioVersion"
         label="Copy RStudio Version" />
 

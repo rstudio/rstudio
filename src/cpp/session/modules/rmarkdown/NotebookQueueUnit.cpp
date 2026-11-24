@@ -356,10 +356,11 @@ std::string NotebookQueueUnit::popExecRange(ExecRange* pRange,
    int start = range.start;
    int stop = range.stop;
 
-   // for python chunks, use the entire range, even when it's multi-line
+   // for python and julia chunks, use the entire range, even when it's
+   // multi-line (their REPLs gather the lines of an expression themselves);
    // otherwise, use the first line of the range if it's multi-line
    size_t idx = code_.find('\n', start + 1);
-   if (engine == "python")
+   if (engine == "python" || engine == "julia")
    {
       code_ = code_ + "\n"; // add a newline to terminate the multiline chunk
       stop = stop + 1;

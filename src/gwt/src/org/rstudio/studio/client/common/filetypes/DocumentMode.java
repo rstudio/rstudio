@@ -209,6 +209,61 @@ public class DocumentMode
              isPositionInPythonMode(docDisplay, docDisplay.getSelectionEnd());
    }
 
+   // Whether the selected text, as run, is Python (see getSelectedTextEnd)
+   public static boolean isSelectedCodeInPythonMode(DocDisplay docDisplay)
+   {
+      return isPositionInPythonMode(docDisplay, docDisplay.getSelectionStart()) &&
+             isPositionInPythonMode(docDisplay, getSelectedTextEnd(docDisplay));
+   }
+
+   // The end of the selected text. A selection of whole lines (as Shift+Down
+   // makes) ends at the start of the row after them, which may be a chunk's
+   // closing fence, and so not in the chunk's language. (Only for running
+   // code: commenting, say, still judges the selection by where it ends.)
+   private static Position getSelectedTextEnd(DocDisplay docDisplay)
+   {
+      Position start = docDisplay.getSelectionStart();
+      Position end = docDisplay.getSelectionEnd();
+      if (end.getColumn() > 0 || end.getRow() <= start.getRow())
+         return end;
+
+      int row = end.getRow() - 1;
+      return Position.create(row, docDisplay.getLine(row).length());
+   }
+
+   // Julia Mode
+   public static boolean isPositionInJuliaMode(DocDisplay docDisplay,
+                                                Position position)
+   {
+      if (docDisplay.getFileType().isJulia())
+         return true;
+
+      return isPositionInMode(
+            docDisplay,
+            position,
+            FileType.JULIA_LANG_MODE);
+   }
+
+   public static boolean isCursorInJuliaMode(DocDisplay docDisplay)
+   {
+      return isPositionInJuliaMode(
+            docDisplay,
+            docDisplay.getCursorPosition());
+   }
+
+   public static boolean isSelectionInJuliaMode(DocDisplay docDisplay)
+   {
+      return isPositionInJuliaMode(docDisplay, docDisplay.getSelectionStart()) &&
+             isPositionInJuliaMode(docDisplay, docDisplay.getSelectionEnd());
+   }
+
+   // Whether the selected text, as run, is Julia (see getSelectedTextEnd)
+   public static boolean isSelectedCodeInJuliaMode(DocDisplay docDisplay)
+   {
+      return isPositionInJuliaMode(docDisplay, docDisplay.getSelectionStart()) &&
+             isPositionInJuliaMode(docDisplay, getSelectedTextEnd(docDisplay));
+   }
+
    public static boolean isPositionInSqlMode(DocDisplay docDisplay,
                                              Position position)
    {

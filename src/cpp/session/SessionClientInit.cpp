@@ -33,6 +33,7 @@
 #include "modules/SessionFind.hpp"
 #include "modules/SessionGraphics.hpp"
 #include "modules/SessionHTMLPreview.hpp"
+#include "modules/SessionJulia.hpp"
 #include "modules/SessionLists.hpp"
 #include "modules/clang/SessionClang.hpp"
 #include "modules/SessionMarkers.hpp"
@@ -316,7 +317,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["reticulate_python"] = reticulate_python;
    
    // get current console language
-   sessionInfo["console_language"] = modules::reticulate::isReplActive() ? "Python" : "R";
+   sessionInfo["console_language"] = module_context::getActiveLanguage();
+   sessionInfo["julia_allowed"] = modules::julia::isAllowed();
 
    // the save action a quit or project close would take right now
    sessionInfo["save_action"] = modules::dirty::saveAction();

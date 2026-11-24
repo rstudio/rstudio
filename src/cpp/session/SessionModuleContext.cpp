@@ -101,6 +101,7 @@
 
 #include "modules/SessionBreakpoints.hpp"
 #include "modules/SessionFiles.hpp"
+#include "modules/SessionJulia.hpp"
 #include "modules/SessionReticulate.hpp"
 #include "modules/SessionVCS.hpp"
 
@@ -309,6 +310,8 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kTutorialLaunch;
       else if (name == "reticulate_event")
          type = session::client_events::kReticulateEvent;
+      else if (name == "julia_event")
+         type = session::client_events::kJuliaEvent;
       else if (name == "environment_assigned")
          type = session::client_events::kEnvironmentAssigned;
       else if (name == "environment_refresh")
@@ -2623,12 +2626,15 @@ void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
    module_context::enqueClientEvent(clientEvent);
 }
 
-Error enqueueConsoleInput(const std::string& consoleInput)
+namespace {
+
+// `flags` are RConsoleInput's, e.g. kConsoleInputNoEcho
+Error enqueueConsoleInputWithFlags(const std::string& consoleInput, int flags)
 {
    using namespace r::session;
 
    // construct our JSON RPC
-   json::Array jsonParams = RConsoleInput(consoleInput).toJsonArray();
+   json::Array jsonParams = RConsoleInput(consoleInput, "", flags).toJsonArray();
 
    json::Object jsonRpc;
    jsonRpc["method"] = "console_input";
@@ -2643,6 +2649,13 @@ Error enqueueConsoleInput(const std::string& consoleInput)
    consoleInputService().enqueue(oss.str());
 
    return Success();
+}
+
+} // anonymous namespace
+
+Error enqueueConsoleInput(const std::string& consoleInput)
+{
+   return enqueueConsoleInputWithFlags(consoleInput, 0);
 }
 
 // NOTE: we used to call explicitly back into r::session to write output
@@ -3637,6 +3650,10 @@ std::string getActiveLanguage()
    {
       return "Python";
    }
+   else if (modules::julia::isReplActive())
+   {
+      return "Julia";
+   }
    else
    {
       return "R";
@@ -3645,6 +3662,11 @@ std::string getActiveLanguage()
 
 Error adaptToLanguage(const std::string& language)
 {
+   // with the Julia console off (see modules::julia::isEnabled), there is no
+   // Julia console to switch to
+   if (language == "Julia" && !modules::julia::isEnabled())
+      return Success();
+
    // Work out the language the console will be in once everything already
    // queued has run, not the one it is in now: input queued behind a batch
    // that switches languages part-way (e.g. "Run All Chunks Above" over
@@ -3688,21 +3710,22 @@ Error adaptToLanguage(const std::string& language)
    if (language == activeLanguage)
       return Success();
 
-   Error error;
-   if (language == "Python")
-   {
-      // r -> python: activate the reticulate REPL
-      error = module_context::enqueueConsoleInput("reticulate::repl_python()");
-   }
-   else if (language == "R")
-   {
-      // python -> r: deactivate the reticulate REPL
-      error = module_context::enqueueConsoleInput("quit");
-   }
-   else
-   {
+   // start or leave the reticulate / Julia REPL, as necessary
+   std::string input = console_input::languageSwitchInput(activeLanguage, language);
+   if (input.empty())
       return Success();
-   }
+
+   // the REPLs aren't nested, so the switch leaves one by way of R and then
+   // enters the other. RStudio's own way into and out of the Julia console
+   // isn't echoed: the prompt shows where the console is. reticulate's is
+   std::string leave = console_input::languageSwitchInput(activeLanguage, "R");
+   std::string enter = console_input::languageSwitchInput("R", language);
+
+   Error error;
+   if (!leave.empty())
+      error = enqueueConsoleInputWithFlags(leave, activeLanguage == "Julia" ? kConsoleInputNoEcho : 0);
+   if (!error && !enter.empty())
+      error = enqueueConsoleInputWithFlags(enter, language == "Julia" ? kConsoleInputNoEcho : 0);
 
    if (error)
    {

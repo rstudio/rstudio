@@ -89,6 +89,7 @@ public class HelpInfoPopupPanel extends PopupPanel
       vpanel_.clear();
 
       int type = help.getType();
+      boolean titleShown = false;
       if (type != RCompletionType.DATAFRAME)
       {
          Label lblSig;
@@ -98,6 +99,7 @@ public class HelpInfoPopupPanel extends PopupPanel
             lblSig = new Label(help.getTitle());
             lblSig.setStylePrimaryName(consoleStyles_.packageName());
             vpanel_.add(lblSig);
+            titleShown = true;
          }
          else if (!StringUtil.equals(signature, "-"))
          {
@@ -107,8 +109,9 @@ public class HelpInfoPopupPanel extends PopupPanel
          }
       }
       
+      // without a signature, the title already heads the help
       String title = help.getTitle();
-      if (!StringUtil.isNullOrEmpty(title))
+      if (!titleShown && !StringUtil.isNullOrEmpty(title))
       {
          Label lblTitle = new Label(title);
          lblTitle.setStylePrimaryName(RES.styles().helpTitleText());

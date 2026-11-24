@@ -4180,6 +4180,12 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Python") // $NON-NLS-1$
     String consoleActivatePythonMenuLabel();
     
+    // consoleActivateJulia
+    @DefaultStringValue("Console: Activate Julia") // $NON-NLS-1$
+    String consoleActivateJuliaLabel();
+    @DefaultStringValue("Julia") // $NON-NLS-1$
+    String consoleActivateJuliaMenuLabel();
+    
     // copyRStudioVersion
     @DefaultStringValue("Copy RStudio Version") // $NON-NLS-1$
     String copyRStudioVersionLabel();

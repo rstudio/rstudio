@@ -247,6 +247,7 @@ set(SESSION_SOURCE_FILES
    modules/SessionHistory.cpp
    modules/SessionHistoryArchive.cpp
    modules/SessionHTMLPreview.cpp
+   modules/SessionJulia.cpp
    modules/SessionLibGit2.cpp
    modules/SessionLibPathsIndexer.cpp
    modules/SessionLimits.cpp
@@ -785,6 +786,9 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
    # panmirror scripts
    install(DIRECTORY "resources/panmirror-scripts"
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+   # Julia console support
+   install(DIRECTORY "resources/julia"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
    # citation

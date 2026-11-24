@@ -2633,6 +2633,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    @DefaultStringValue("(None)")
    String consoleHighlightConditionsEnum_none();
 
+   /**
+    * Whether the Console can run Julia, through the JuliaConnectoR package. When set, Julia scripts and Julia chunks run in the Console's Julia.
+    */
+   @DefaultStringValue("Enable the Julia console (experimental)")
+   String juliaConsoleEnabledTitle();
+   @DefaultStringValue("Whether the Console can run Julia, through the JuliaConnectoR package. When set, Julia scripts and Julia chunks run in the Console's Julia.")
+   String juliaConsoleEnabledDescription();
+
 
 
 }

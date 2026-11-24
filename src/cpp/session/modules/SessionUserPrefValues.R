@@ -2943,3 +2943,13 @@
    set = function(value) { .rs.setUserPref("console_highlight_conditions", value) },
    clear = function() { .rs.clearUserPref("console_highlight_conditions") }
 )
+
+# Enable the Julia console (experimental)
+#
+# Whether the Console can run Julia, through the JuliaConnectoR package. When
+# set, Julia scripts and Julia chunks run in the Console's Julia.
+.rs.uiPrefs$juliaConsoleEnabled <- list(
+   get = function() { .rs.getUserPref("julia_console_enabled") },
+   set = function(value) { .rs.setUserPref("julia_console_enabled", value) },
+   clear = function() { .rs.clearUserPref("julia_console_enabled") }
+)

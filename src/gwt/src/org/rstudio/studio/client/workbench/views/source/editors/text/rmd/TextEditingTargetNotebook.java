@@ -430,15 +430,19 @@ public class TextEditingTargetNotebook
       // ensure we're executing in R context by default
       String language = ConsoleLanguageTracker.LANGUAGE_R;
       
-      // if we're executing a Python chunk, we'll need to activate
-      // the Python REPL first
+      // if we're executing a Python or Julia chunk, we'll need to activate
+      // its REPL first
       String header = docDisplay_.getLine(chunk.getPreamble().getRow());
       Map<String, String> chunkOptions = RChunkHeaderParser.parse(header);
       if (chunkOptions.containsKey("engine"))
       {
          String engine = chunkOptions.get("engine");
+         // (with the Julia console off, a Julia chunk runs through knitr's
+         // julia engine, from R)
          if (engine.contains("python"))
             language = ConsoleLanguageTracker.LANGUAGE_PYTHON;
+         else if (engine.contains("julia") && ConsoleLanguageTracker.isJuliaEnabled())
+            language = ConsoleLanguageTracker.LANGUAGE_JULIA;
       }
       
       languageTracker_.adaptToLanguage(

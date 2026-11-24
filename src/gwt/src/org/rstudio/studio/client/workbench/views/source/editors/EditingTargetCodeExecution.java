@@ -27,6 +27,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleExecutePendingInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.console.shell.ConsoleLanguageTracker;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobRunSelectionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.LauncherJobRunSelectionEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -126,9 +127,11 @@ public class EditingTargetCodeExecution
          else
          {
             // if no selection, follow UI pref to see what to execute
-            // (Python code is always submitted line-by-line for now as
-            // we need special code to understand Python code structure still)
-            if (DocumentMode.isCursorInPythonMode(docDisplay_))
+            // (Python and Julia code is always submitted line-by-line for now
+            // as we need special code to understand their code structure; the
+            // REPL waits for the rest of an incomplete statement)
+            if (DocumentMode.isCursorInPythonMode(docDisplay_) ||
+                DocumentMode.isCursorInJuliaMode(docDisplay_))
             {
                selectionRange = Range.fromPoints(
                      Position.create(row, 0),
@@ -279,20 +282,22 @@ public class EditingTargetCodeExecution
    {
       String code = codeExtractor_.extractCode(docDisplay_, range);
       String language = "R";
-     
-      setLastExecuted(range.getStart(), range.getEnd());
-      
+
       // trim intelligently (don't trim blank lines for Python
       // since those lines could signal the end of a block)
-      if (!DocumentMode.isSelectionInPythonMode(docDisplay_))
-      {
-         code = StringUtil.trimBlankLines(code);
-      }
-      else
+      if (DocumentMode.isSelectedCodeInPythonMode(docDisplay_))
       {
          language = "Python";
       }
-      
+      else
+      {
+         code = StringUtil.trimBlankLines(code);
+         if (DocumentMode.isSelectedCodeInJuliaMode(docDisplay_))
+            language = ConsoleLanguageTracker.LANGUAGE_JULIA;
+      }
+
+      setLastExecuted(range.getStart(), range.getEnd(), language);
+
       // strip roxygen off the beginning of lines
       if (isRoxygenExampleRange(range))
       {
@@ -444,7 +449,7 @@ public class EditingTargetCodeExecution
 
             if (scope == null)
             {
-               events_.fireEvent(new SendToConsoleEvent(code, true));
+               events_.fireEvent(new SendToConsoleEvent(code, lastExecutedLanguage_, true));
             }
             else
             {
@@ -457,8 +462,15 @@ public class EditingTargetCodeExecution
    
    public void setLastExecuted(Position start, Position end)
    {
+      setLastExecuted(start, end, "R");
+   }
+
+   // 'language' is the one the code ran in, for Re-Run Previous to use again
+   public void setLastExecuted(Position start, Position end, String language)
+   {
       detachLastExecuted();
       lastExecutedCode_ = docDisplay_.createAnchoredSelection(start, end);
+      lastExecutedLanguage_ = language;
    }
 
    public void detachLastExecuted()
@@ -583,6 +595,7 @@ public class EditingTargetCodeExecution
    
    private boolean appendLinesAtEnd_;
    private AnchoredSelection lastExecutedCode_;
+   private String lastExecutedLanguage_ = "R";
    
    // Injected ----
    private EventBus events_;

@@ -40,6 +40,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleActivateEvent;
+import org.rstudio.studio.client.workbench.views.console.shell.ConsoleLanguageTracker;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobUpdate;
@@ -437,6 +438,34 @@ public class DependencyManager implements InstallShinyEvent.Handler,
                   if (succeeded)
                      command.execute();
                }
+            });
+   }
+
+   // Every way into the Console's Julia comes through here, so this is
+   // where Julia code is refused with the Julia console off
+   public void withJuliaConnectoR(final String progressCaption,
+                                  final String userPrompt,
+                                  final Command command)
+   {
+      if (!ConsoleLanguageTracker.isJuliaEnabled())
+      {
+         boolean allowed = session_.getSessionInfo().getJuliaAllowed();
+         globalDisplay_.showErrorMessage(
+               constants_.juliaDisabledCaption(),
+               allowed ? constants_.juliaTurnedOffMessage() : constants_.juliaDisabledMessage());
+         return;
+      }
+
+      withDependencies(
+            progressCaption,
+            userPrompt,
+            getFeatureDescription("julia"),
+            getFeatureDependencies("julia"),
+            true,
+            (Boolean succeeded) ->
+            {
+               if (succeeded)
+                  command.execute();
             });
    }
 

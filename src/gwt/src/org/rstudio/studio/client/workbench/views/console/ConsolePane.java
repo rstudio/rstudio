@@ -395,6 +395,10 @@ public class ConsolePane extends WorkbenchPane
       {
          consoleInterruptButton_.setTitle(constants_.interruptPythonTitle());
       }
+      else if (language == Language.JULIA)
+      {
+         consoleInterruptButton_.setTitle(constants_.interruptJuliaTitle());
+      }
    }
 
    private void syncSecondaryToolbar()

@@ -25,6 +25,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.events.SessionSuspendBlockedEvent;
+import org.rstudio.studio.client.events.JuliaEvent;
 import org.rstudio.studio.client.events.ReticulateEvent;
 import org.rstudio.studio.client.renv.events.RenvConsoleNoticeEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -38,6 +39,7 @@ import org.rstudio.studio.client.workbench.views.console.ConsolePane.ConsoleMode
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleActivateEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.console.shell.ConsoleLanguageTracker;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobProgressEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.LocalJobProgress;
@@ -52,7 +54,7 @@ import com.google.inject.Provider;
 
 public class Console
 {
-   enum Language { R, PYTHON };
+   enum Language { R, PYTHON, JULIA };
    
    interface Binder extends CommandBinder<Commands, Console> {}
 
@@ -94,6 +96,10 @@ public class Console
          {
             view_.adaptToLanguage(Language.PYTHON);
          }
+         else if (StringUtil.equals(info.getConsoleLanguage(), ConsoleLanguageTracker.LANGUAGE_JULIA))
+         {
+            view_.adaptToLanguage(Language.JULIA);
+         }
       });
 
       events.addHandler(SendToConsoleEvent.TYPE, event ->
@@ -132,18 +138,25 @@ public class Console
          else if (StringUtil.equals(type, ReticulateEvent.TYPE_REPL_BUSY))
          {
             JsObject data = event.getPayload().cast();
-            
-            boolean busy = data.getBoolean("busy");
-            if (busy)
-            {
-               interruptFadeInHelper_.beginShow();
-            }
-            else
-            {
-               interruptFadeInHelper_.hide();
-            }
-            
-            commands.interruptR().setEnabled(busy, true);
+            onReplBusy(data.getBoolean("busy"), commands);
+         }
+      });
+
+      events.addHandler(JuliaEvent.TYPE, event ->
+      {
+         String type = event.getType();
+         if (StringUtil.equals(type, JuliaEvent.TYPE_REPL_INITIALIZED))
+         {
+            view.adaptToLanguage(Language.JULIA);
+         }
+         else if (StringUtil.equals(type, JuliaEvent.TYPE_REPL_TEARDOWN))
+         {
+            view.adaptToLanguage(Language.R);
+         }
+         else if (StringUtil.equals(type, JuliaEvent.TYPE_REPL_BUSY))
+         {
+            JsObject data = event.getPayload().cast();
+            onReplBusy(data.getBoolean("busy"), commands);
          }
       });
 
@@ -212,6 +225,18 @@ public class Console
       events.addHandler(SessionSuspendBlockedEvent.TYPE, event -> {
          view.onSuspendedBlockedEvent(event);
       });
+   }
+
+   // R isn't busy at the top level while a REPL (reticulate's or Julia's) is
+   // active, so the REPL says when it's evaluating input
+   private void onReplBusy(boolean busy, Commands commands)
+   {
+      if (busy)
+         interruptFadeInHelper_.beginShow();
+      else
+         interruptFadeInHelper_.hide();
+
+      commands.interruptR().setEnabled(busy, true);
    }
 
    @Handler

@@ -1,7 +1,8 @@
 name: "E2E test dependencies"
 description: >
   Install and cache the dependencies shared by every RStudio e2e Playwright
-  workflow: R packages (via pak), npm modules, and Playwright browsers. All
+  workflow: R packages (via pak), npm modules, Playwright browsers, and, where
+  the runner has Julia, the Julia depot the Julia console specs use. All
   steps run in bash, which is available on the Linux, macOS, and Windows
   hosted runners alike, so a single implementation covers every platform.
 
@@ -59,8 +60,8 @@ inputs:
     default: "true"
   save-cache:
     description: >
-      When "true" (the default), save the R library, pak download, and
-      Playwright browser caches on main after a cache miss. Pass "false" for
+      When "true" (the default), save the R library, pak download, Julia
+      depot, and Playwright browser caches on main after a cache miss. Pass "false" for
       engines that run too rarely for those entries to outlive the repo's LRU
       cache eviction: the saved entries are never read again, and writing
       them evicts the caches PR builds do read.
@@ -577,6 +578,89 @@ runs:
       with:
         path: ${{ inputs.r-libs-user }}
         key: ${{ steps.rlib-cache.outputs.cache-primary-key }}
+
+    # The Julia console specs (tests/julia) start Julia on runners whose image
+    # comes with one, and JuliaConnectoR needs the Tables.jl package there.
+    # Left to itself it installs Tables.jl at test time, from Julia's package
+    # server, into an empty depot on every shard. Install it here instead,
+    # into a depot cached like the R library above, and point the specs at
+    # that depot (PW_RSTUDIO_JULIA_DEPOT_PATH, read by utils/julia.ts). A
+    # runner without Julia skips all of this, and the specs that need Julia
+    # skip themselves there.
+    - name: Resolve Julia version
+      id: julia
+      shell: bash
+      run: |
+        if ! command -v julia > /dev/null 2>&1; then
+          echo "No Julia on this runner; the Julia console specs that need one will skip."
+          exit 0
+        fi
+        VERSION=$(julia --startup-file=no -e 'print(VERSION)')
+        if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+          echo "::warning::Could not read Julia's version (got '$VERSION'); not preparing a Julia depot."
+          exit 0
+        fi
+        echo "Julia $VERSION"
+        echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+        echo "series=${VERSION%.*}" >> "$GITHUB_OUTPUT"
+
+    # Restore-only, with its Save step below, as for the caches above. The
+    # key carries Julia's full version, as a depot's precompiled files are
+    # only good for the Julia that wrote them; a depot from the same series
+    # still saves the downloads, and the step below brings it up to date.
+    - name: Restore Julia depot
+      id: julia-cache
+      if: steps.julia.outputs.version != ''
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ github.workspace }}/.julia-depot
+        key: ${{ env.CACHE_OS }}-julia-depot-${{ steps.julia.outputs.version }}
+        restore-keys: |
+          ${{ env.CACHE_OS }}-julia-depot-${{ steps.julia.outputs.series }}.
+
+    - name: Prepare Julia depot
+      id: julia-depot
+      if: steps.julia.outputs.version != ''
+      shell: bash
+      env:
+        DEPOT: ${{ github.workspace }}/.julia-depot
+        CACHE_HIT: ${{ steps.julia-cache.outputs.cache-hit }}
+      run: |
+        SEP=":"
+        if [ "$RUNNER_OS" = "Windows" ]; then
+          SEP=";"
+        fi
+        # The trailing separator keeps Julia's bundled depots on the path.
+        export JULIA_DEPOT_PATH="$DEPOT$SEP"
+
+        if [ "$CACHE_HIT" != "true" ]; then
+          # What JuliaConnectoR itself runs the first time it starts Julia.
+          for i in 1 2 3; do
+            julia --startup-file=no -e 'import Pkg; Pkg.add("Tables"); import Tables' && break
+            if [ "$i" -eq 3 ]; then
+              # Julia's package server is not ours to keep up: without the
+              # depot, have the specs skip (and say why) rather than fail
+              # every e2e run until the server is back.
+              echo "::warning::Could not install Tables.jl into the Julia depot; the Julia console specs that need Julia will skip."
+              echo "PW_RSTUDIO_JULIA_UNAVAILABLE=Tables.jl could not be installed into the CI Julia depot" >> "$GITHUB_ENV"
+              exit 0
+            fi
+            echo "Installing Tables.jl failed (attempt $i), retrying in 10s..."
+            sleep 10
+          done
+        fi
+
+        echo "PW_RSTUDIO_JULIA_DEPOT_PATH=$JULIA_DEPOT_PATH" >> "$GITHUB_ENV"
+        echo "prepared=true" >> "$GITHUB_OUTPUT"
+
+    - name: Save Julia depot
+      if: inputs.save-cache == 'true' && github.ref == 'refs/heads/main' && steps.julia-depot.outputs.prepared == 'true' && steps.julia-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      env:
+        ZSTD_CLEVEL: 9
+      with:
+        path: ${{ github.workspace }}/.julia-depot
+        key: ${{ steps.julia-cache.outputs.cache-primary-key }}
 
     - name: Install npm dependencies
       shell: bash

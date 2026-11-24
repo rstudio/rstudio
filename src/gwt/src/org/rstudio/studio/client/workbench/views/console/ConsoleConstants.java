@@ -22,6 +22,7 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
     String consoleTabSecondLabel();
     String interruptRTitle();
     String interruptPythonTitle();
+    String interruptJuliaTitle();
     String consoleTabDebugLabel();
     String consoleTabProfilerLabel();
     String consoleJobProgress();
@@ -32,6 +33,7 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
     String focusConsoleWarningMessage(String title);
     String errorString(String userMessage);
     String executingPythonCodeProgressCaption();
+    String executingJuliaCodeProgressCaption();
     String consoleOutputLabel();
     String noMatchesLabel();
     String notAllItemsShownText();

@@ -27,6 +27,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
+import org.rstudio.studio.client.events.JuliaEvent;
 import org.rstudio.studio.client.events.ReticulateEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -59,7 +60,8 @@ import com.google.inject.Inject;
 
 public class ConsoleInterpreterVersion
    extends Composite
-   implements ReticulateEvent.Handler
+   implements ReticulateEvent.Handler,
+              JuliaEvent.Handler
 
 {
    @Inject
@@ -106,7 +108,12 @@ public class ConsoleInterpreterVersion
             RES.styles().iconPython(),
             ElementIds.CONSOLE_INTERPRETER_PYTHON_LOGO,
             isTabbedView);
-      
+
+      juliaLogo_ = createLogo(
+            RES.styles().iconJulia(),
+            ElementIds.CONSOLE_INTERPRETER_JULIA_LOGO,
+            isTabbedView);
+
       logoContainer_ = new FlowPanel(SpanElement.TAG);
       container_.addStyleName(RES.styles().container());
       container_.addDomHandler(new ClickHandler()
@@ -127,7 +134,16 @@ public class ConsoleInterpreterVersion
                   commands_.activateConsole().execute();
                });
             }));
-            
+
+            if (ConsoleLanguageTracker.isJuliaEnabled())
+            {
+               menu.addItem(new MenuItem("Julia", () -> {
+                  tracker_.adaptToLanguage(ConsoleLanguageTracker.LANGUAGE_JULIA, () -> {
+                     commands_.activateConsole().execute();
+                  });
+               }));
+            }
+
             logoContainer_.addStyleName(RES.styles().menuClicked());
             menu.addCloseHandler(new CloseHandler<PopupPanel>()
             {
@@ -148,10 +164,16 @@ public class ConsoleInterpreterVersion
       ElementIds.assignElementId(label_,
             ElementIds.CONSOLE_INTERPRETER_VERSION + (isTabbedView ? "_tabbed" : ""));
 
-      pythonActive_ = isPythonActive();
-      if (pythonActive_)
+      language_ = initialLanguage();
+      if (StringUtil.equals(language_, ConsoleLanguageTracker.LANGUAGE_PYTHON))
       {
          logoContainer_.add(pythonLogo_);
+      }
+      else if (StringUtil.equals(language_, ConsoleLanguageTracker.LANGUAGE_JULIA))
+      {
+         // the version arrives with the REPL's start, which has passed
+         logoContainer_.add(juliaLogo_);
+         label_.setText("Julia");
       }
       else
       {
@@ -174,6 +196,11 @@ public class ConsoleInterpreterVersion
       {
          reticulateHandler_ = events_.addHandler(ReticulateEvent.TYPE, this);
       }
+
+      if (juliaHandler_ == null)
+      {
+         juliaHandler_ = events_.addHandler(JuliaEvent.TYPE, this);
+      }
    }
 
    @Override
@@ -185,6 +212,12 @@ public class ConsoleInterpreterVersion
       {
          reticulateHandler_.removeHandler();
          reticulateHandler_ = null;
+      }
+
+      if (juliaHandler_ != null)
+      {
+         juliaHandler_.removeHandler();
+         juliaHandler_ = null;
       }
    }
 
@@ -222,7 +255,7 @@ public class ConsoleInterpreterVersion
    
    public void adaptToR()
    {
-      pythonActive_ = false;
+      language_ = ConsoleLanguageTracker.LANGUAGE_R;
       logoContainer_.remove(0);
       logoContainer_.insert(rLogo_, 0);
       setRVersionLabel();
@@ -231,16 +264,31 @@ public class ConsoleInterpreterVersion
 
    private void adaptToPython(PythonInterpreter info)
    {
-      pythonActive_ = true;
+      language_ = ConsoleLanguageTracker.LANGUAGE_PYTHON;
       logoContainer_.remove(0);
       logoContainer_.insert(pythonLogo_, 0);
       label_.setText(pythonVersionLabel(info));
    }
-   
-   private boolean isPythonActive()
+
+   private void adaptToJulia(JuliaEvent.ReplInfo info)
+   {
+      language_ = ConsoleLanguageTracker.LANGUAGE_JULIA;
+      logoContainer_.remove(0);
+      logoContainer_.insert(juliaLogo_, 0);
+      label_.setText("Julia " + StringUtil.notNull(info.getVersion()));
+   }
+
+   private String initialLanguage()
    {
       SessionInfo info = session_.getSessionInfo();
-      return info != null && info.getPythonReplActive();
+      if (info == null)
+         return ConsoleLanguageTracker.LANGUAGE_R;
+      else if (info.getPythonReplActive())
+         return ConsoleLanguageTracker.LANGUAGE_PYTHON;
+      else if (StringUtil.equals(info.getConsoleLanguage(), ConsoleLanguageTracker.LANGUAGE_JULIA))
+         return ConsoleLanguageTracker.LANGUAGE_JULIA;
+      else
+         return ConsoleLanguageTracker.LANGUAGE_R;
    }
    
    @Override
@@ -254,6 +302,22 @@ public class ConsoleInterpreterVersion
          adaptToPython(info);
       }
       else if (StringUtil.equals(type, ReticulateEvent.TYPE_REPL_TEARDOWN))
+      {
+         adaptToR();
+      }
+   }
+
+   @Override
+   public void onJulia(JuliaEvent event)
+   {
+      String type = event.getType();
+
+      if (StringUtil.equals(type, JuliaEvent.TYPE_REPL_INITIALIZED))
+      {
+         JuliaEvent.ReplInfo info = event.getPayload().cast();
+         adaptToJulia(info);
+      }
+      else if (StringUtil.equals(type, JuliaEvent.TYPE_REPL_TEARDOWN))
       {
          adaptToR();
       }
@@ -275,10 +339,10 @@ public class ConsoleInterpreterVersion
          {
             rVersion_ = versionSpec.getVersion();
 
-            // the REPL may have started again while this request was in
+            // a REPL may have started again while this request was in
             // flight (e.g. a batch of chunks moving Python -> R -> Python);
-            // the label then already names Python and must stay that way
-            if (!pythonActive_)
+            // the label then already names its language and must stay that way
+            if (StringUtil.equals(language_, ConsoleLanguageTracker.LANGUAGE_R))
                setRVersionLabel();
          }
 
@@ -318,10 +382,12 @@ public class ConsoleInterpreterVersion
    private final FlowPanel logoContainer_;
    private final Widget rLogo_;
    private final Widget pythonLogo_;
-   private boolean pythonActive_;
+   private final Widget juliaLogo_;
+   private String language_;
    private final Label label_;
    private String rVersion_;
    private HandlerRegistration reticulateHandler_;
+   private HandlerRegistration juliaHandler_;
 
    // Injected ----
    private Session session_;
@@ -345,6 +411,7 @@ public class ConsoleInterpreterVersion
       
       String iconR();
       String iconPython();
+      String iconJulia();
       
       String label();
       String labelTabbed();
@@ -368,6 +435,10 @@ public class ConsoleInterpreterVersion
       @Source("org/rstudio/studio/client/common/icons/python_logo.svg")
       @MimeType("image/svg+xml")
       DataResource pythonLogo();
+
+      @Source("org/rstudio/studio/client/common/icons/julia_logo.svg")
+      @MimeType("image/svg+xml")
+      DataResource juliaLogo();
    }
 
    private static Resources RES = GWT.create(Resources.class);

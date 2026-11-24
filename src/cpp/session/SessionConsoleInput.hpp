@@ -31,12 +31,16 @@ namespace console_input {
 
 void clearConsoleInputBuffer();
 
-// The language ("R" or "Python") the console will be in once 'input' (one
-// or more lines) has run, starting from 'language' now.
+// The language ("R", "Python" or "Julia") the console will be in once
+// 'input' (one or more lines) has run, starting from 'language' now.
 std::string languageAfterInput(const std::string& language, const std::string& input);
 
 // The same, over all pending console input.
 std::string languageAfterPendingInput(const std::string& language);
+
+// The console input that moves the console from language 'from' to 'to':
+// empty when they're the same, or when 'to' is no language the console has.
+std::string languageSwitchInput(const std::string& from, const std::string& to);
 
 // console input is queued for the read
 bool hasQueuedInput();

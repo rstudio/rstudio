@@ -59,6 +59,7 @@ protected:
                 boost::program_options::options_description* pUser,
                 boost::program_options::options_description* pCopilot,
                 boost::program_options::options_description* pPai,
+                boost::program_options::options_description* pJulia,
                 boost::program_options::options_description* pTrust,
                 boost::program_options::options_description* pMisc,
                 std::string* pSaveActionDefault,
@@ -512,6 +513,11 @@ protected:
       value<std::string>(&deprecatedPositAssistantPath_)->default_value(std::string()),
       "No longer used. Accepted so that configuration files which set it still parse; administrator-installed Posit Assistant versions are read from the posit-assistant directory beside the session binary.");
 
+   pJulia->add_options()
+      ("julia-enabled",
+      value<bool>(&juliaEnabled_)->default_value(true),
+      "Indicates whether or not Julia integration is enabled. When disabled, the Console can't switch to Julia, Julia scripts can't be run or sourced, and notebook Julia chunks run through knitr's Julia engine rather than the Console's Julia.");
+
    pTrust->add_options()
       ("project-trust-dialogs",
       value<int>(&projectTrustDialogs_)->default_value(-1),
@@ -669,6 +675,7 @@ public:
    core::FilePath positAssistantHelper() const { return core::FilePath(positAssistantHelper_); }
    bool positAssistantTestManifest() const { return positAssistantTestManifest_; }
    core::FilePath deprecatedPositAssistantPath() const { return core::FilePath(deprecatedPositAssistantPath_); }
+   bool juliaEnabled() const { return juliaEnabled_; }
    int projectTrustDialogs() const { return projectTrustDialogs_; }
    bool projectTrustRequired() const { return projectTrustRequired_; }
    std::string previewAllowedFunctions() const { return previewAllowedFunctions_; }
@@ -812,6 +819,7 @@ protected:
    std::string positAssistantHelper_;
    bool positAssistantTestManifest_;
    std::string deprecatedPositAssistantPath_;
+   bool juliaEnabled_;
    int projectTrustDialogs_;
    bool projectTrustRequired_;
    std::string previewAllowedFunctions_;

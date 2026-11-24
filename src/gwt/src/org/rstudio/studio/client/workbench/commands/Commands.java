@@ -270,6 +270,7 @@ public abstract class
    public abstract AppCommand activateConsolePanePane();
    public abstract AppCommand consoleActivateR();
    public abstract AppCommand consoleActivatePython();
+   public abstract AppCommand consoleActivateJulia();
 
    // Files
    public abstract AppCommand newFolder();

@@ -15,6 +15,7 @@
 # already ships a version matched to itself, and pak resolves any transitive need
 # without help.
 DBI
+JuliaConnectoR
 S7
 bslib
 data.table

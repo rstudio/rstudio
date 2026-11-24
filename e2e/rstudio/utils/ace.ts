@@ -21,6 +21,8 @@ export namespace Ace {
 
   export interface Selection {
     setRange(range: Range): void;
+    /** Extend the selection down one line, as Shift+Down does. */
+    selectDown(): void;
     rangeList: { ranges: Range[]; session?: unknown | null; detach(): void };
     // Multi-select bookkeeping (see Ace's multi_select.js). 'index' is set
     // only on the temporary Selection that forEachSelection installs while

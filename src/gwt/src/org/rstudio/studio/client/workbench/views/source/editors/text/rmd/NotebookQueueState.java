@@ -39,6 +39,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleHistoryAddedEvent;
+import org.rstudio.studio.client.workbench.views.console.shell.ConsoleLanguageTracker;
 import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkRowExecState;
@@ -583,7 +584,12 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
    private void withQueueDependencies(Command command)
    {
       boolean requiresPython = false;
-      
+      boolean requiresJulia = false;
+
+      // with the Julia console off, Julia chunks run through knitr's julia
+      // engine (NotebookQueue.cpp), which needs no JuliaConnectoR
+      boolean juliaEnabled = ConsoleLanguageTracker.isJuliaEnabled();
+
       for (NotebookQueueUnit unit : JsUtil.asIterable(queue_.getUnits()))
       {
          String code = unit.getCode();
@@ -599,23 +605,23 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
          if (!chunkOptions.containsKey("engine"))
             continue;
          
-         // the chunk header parser preserves quotes around options,
-         // and since the engine is technically supplied as a string,
-         // we detect the different quoted variants here.
          String engine = chunkOptions.get("engine");
-         for (String python : new String[] { "python", "'python'", "\"python\"" })
-         {
-            if (StringUtil.equals(engine, python))
-            {
-               requiresPython = true;
-               break;
-            }
-         }
+         requiresPython = requiresPython || isEngine(engine, "python");
+         requiresJulia = requiresJulia || (juliaEnabled && isEngine(engine, "julia"));
          
          // break early if we can
-         if (requiresPython)
+         if (requiresPython && requiresJulia)
             break;
          
+      }
+      
+      Command withJulia = command;
+      if (requiresJulia)
+      {
+         withJulia = () -> RStudioGinjector.INSTANCE.getDependencyManager().withJuliaConnectoR(
+               constants_.executingChunks(),
+               constants_.executingJuliaChunks(),
+               command);
       }
       
       if (requiresPython)
@@ -623,12 +629,22 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
          RStudioGinjector.INSTANCE.getDependencyManager().withReticulate(
                constants_.executingChunks(),
                constants_.executingPythonChunks(),
-               command);
+               withJulia);
       }
       else
       {
-         command.execute();
+         withJulia.execute();
       }
+   }
+   
+   // the chunk header parser preserves quotes around options,
+   // and since the engine is technically supplied as a string,
+   // we detect the different quoted variants here.
+   private static boolean isEngine(String engine, String name)
+   {
+      return StringUtil.equals(engine, name) ||
+             StringUtil.equals(engine, "'" + name + "'") ||
+             StringUtil.equals(engine, "\"" + name + "\"");
    }
    
    private void executeQueue()
