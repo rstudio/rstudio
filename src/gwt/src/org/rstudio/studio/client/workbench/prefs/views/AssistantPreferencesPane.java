@@ -94,14 +94,13 @@ public class AssistantPreferencesPane extends PreferencesPane
       // the project's value, not the global one; saving it would replace the
       // global preference that other projects use (#19742).
       if (projectAssistantOverride_ == null)
-      {
-         String selectedAssistant = selAssistant_.getValue();
-         prefs.assistant().setGlobalValue(selectedAssistant);
+         prefs.assistant().setGlobalValue(selAssistant_.getValue());
 
-         // Also sync (deprecated) Copilot setting for now
-         prefs.copilotEnabled().setGlobalValue(
-               selectedAssistant.equals(UserPrefsAccessor.ASSISTANT_COPILOT));
-      }
+      // Also sync the (deprecated) Copilot setting with the global value saved
+      // here, which initialize() may have reset even under an override.
+      // disableCopilot() relies on this mirror being accurate.
+      prefs.copilotEnabled().setGlobalValue(
+            prefs.assistant().getGlobalValue().equals(UserPrefsAccessor.ASSISTANT_COPILOT));
 
       prefs.chatProvider().setGlobalValue(selChatProvider_.getValue());
       prefs.assistantTabKeyBehavior().setGlobalValue(selAssistantTabKeyBehavior_.getValue());
