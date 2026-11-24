@@ -12,9 +12,10 @@ import { rStringLiteral } from './r';
  * Support for the Julia console specs (tests/julia/).
  *
  * The Julia console needs a Julia the session can find and the JuliaConnectoR
- * package. No CI image has Julia, so specs that start it call useJulia(),
- * which skips their tests where it is missing. JuliaConnectoR is installed
- * into the shared R library on demand, and only once Julia has been found.
+ * package. Not every machine has Julia (in CI, only some runner images come
+ * with one), so specs that start it call useJulia(), which skips their tests
+ * where it is missing. JuliaConnectoR is in required-packages.txt; where the
+ * library lacks it all the same, it is installed once Julia has been found.
  *
  * The session runs with a sandboxed home directory, where Julia would start
  * from nothing on every run: juliaup's launcher downloads a whole Julia into
