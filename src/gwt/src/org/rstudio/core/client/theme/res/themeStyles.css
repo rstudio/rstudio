@@ -1801,15 +1801,12 @@ body.windows .toolbar {
 .assistantToggleButton.toolbarButtonLatchable {
    border: 1px solid transparent;
    border-radius: 4px;
-   height: 20px;
 }
 
-.assistantToggleButton .toolbarButtonLeftImage {
-   margin-top: 0;
-}
-
+/* The usual toolbar label offset, in place of the latching buttons' 0, puts
+   the label level with those of the buttons beside it. */
 .assistantToggleButton .toolbarButtonLabel {
-   margin-top: 2px;
+   margin-top: 4px;
 }
 
 .assistantToggleButton.toolbarButtonLatched {
