@@ -46,6 +46,8 @@
 
 #include <gtest/gtest.h>
 
+#include "RequestParserTestUtils.hpp"
+
 namespace rstudio {
 namespace core {
 namespace http {
@@ -1099,6 +1101,61 @@ TEST(AsyncConnectionImpl, UploadHandlerVisitedWithAFullRequestGetsItsWholeBody)
    EXPECT_TRUE(complete);
    EXPECT_EQ("form data", received);
    pConnection->close();
+}
+
+TEST(AsyncConnectionImpl, OversizedBodyIsRefusedBeforeItIsRead)
+{
+   ScopedMaxBufferedBodySize limit(1024);
+
+   boost::asio::io_context ioc;
+
+   tcp::acceptor acceptor(ioc, tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), 0));
+   unsigned short port = acceptor.local_endpoint().port();
+
+   int handlerCalls = 0;
+   boost::shared_ptr<TcpAsyncConnection> pConnection =
+      boost::make_shared<TcpAsyncConnection>(
+         ioc,
+         boost::shared_ptr<boost::asio::ssl::context>(),
+         /*requestSequence=*/1,
+         [](boost::shared_ptr<TcpAsyncConnection>, http::Request*) -> bool { return true; },
+         [&](boost::shared_ptr<TcpAsyncConnection>, http::Request*) {
+            handlerCalls++;
+         },
+         TcpAsyncConnection::ClosedHandler());
+
+   boost::system::error_code ec;
+   pConnection->socket().connect(
+      tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), port), ec);
+   ASSERT_FALSE(ec);
+
+   tcp::socket peer(ioc);
+   acceptor.accept(peer, ec);
+   ASSERT_FALSE(ec);
+
+   // a body declared far larger than the limit, of which only a little is sent
+   std::string request =
+         "POST /rpc/client_init HTTP/1.1\r\n"
+         "Host: localhost\r\n"
+         "Content-Type: application/json\r\n"
+         "Content-Length: 104857600\r\n"
+         "\r\n" + std::string(64, 'x');
+   boost::asio::write(peer, boost::asio::buffer(request), ec);
+   ASSERT_FALSE(ec);
+
+   // a refused request is answered and closed at once; one that is not would
+   // wait for the rest of its body, so stop it before reading the reply
+   pConnection->startReading();
+   ioc.run_for(std::chrono::seconds(10));
+   pConnection->close();
+
+   std::vector<char> data(4096);
+   boost::system::error_code readEc;
+   std::size_t n = boost::asio::read(peer, boost::asio::buffer(data), readEc);
+   std::string received(data.data(), n);
+
+   EXPECT_EQ(0u, received.find("HTTP/1.1 413 Content Too Large")) << received;
+   EXPECT_EQ(0, handlerCalls);
 }
 
 } // namespace tests

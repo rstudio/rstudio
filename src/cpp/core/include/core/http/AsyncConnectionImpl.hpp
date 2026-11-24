@@ -681,10 +681,12 @@ private:
             }
             END_LOCK_MUTEX
 
-            // error - return bad request
+            // error - return bad request, or content too large
             if (status == RequestParser::error)
             {
-               response_.setStatusCode(http::status::BadRequest);
+               response_.setStatusCode(requestParser_.bodyTooLarge() ?
+                                          http::status::ContentTooLarge :
+                                          http::status::BadRequest);
                writeResponse();
             }
             
