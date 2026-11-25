@@ -5,11 +5,9 @@
 }
 
 /* Console output chunks are inline, so an outline on one traces each wrapped
-   line; outline the whole output region instead. Chunks are focused only by
-   Focus Console Output or the mouse, which ConsoleOutputWriter marks with
-   rstudio-pointer-focus, so :focus (unlike :focus-visible) also covers the
-   command chosen from a menu. A separate rule, so browsers without :has()
-   drop only this one and not the rule above. */
+   line; outline the whole output region instead. :focus also covers Focus
+   Console Output chosen from a menu. Kept separate from the rule above, so a
+   browser without :has() drops only this one. */
 .rstudio-console-output:not(.rstudio-pointer-focus):has(> [role="document"]:focus) {
     outline: #8AA9DB solid 2px !important;
     outline-offset: -1px !important;
