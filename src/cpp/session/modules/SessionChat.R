@@ -161,7 +161,7 @@ delayedAssign(
    # and the binding may still be hooked, in the namespace, on the search
    # path, or both: hook it from the saved original instead
    original <- .rs.chat.hookedBindings[[package]][[binding]]
-   if (is.null(original))
+   if (is.null(original) || !.rs.chat.isOriginalCurrent(original, package))
    {
       original <- envir[[binding]]
 
@@ -185,6 +185,21 @@ delayedAssign(
 
    # return old binding in case caller needs it
    invisible(original)
+})
+
+#' Check whether a saved original belongs to its package's loaded namespace.
+#'
+#' A namespace unloaded since the original was saved, or replaced by loading
+#' the package again, took its hooked bindings with it, and a namespace
+#' loaded since has bindings of its own that were never hooked. Either way,
+#' the original must not be written back or hooked again.
+#'
+#' @param original A function saved by `chat.addPreflightHook()`.
+#' @param package The name of the package it was saved from.
+.rs.addFunction("chat.isOriginalCurrent", function(original, package)
+{
+   isNamespaceLoaded(package) &&
+      identical(environment(original), asNamespace(package))
 })
 
 .rs.addFunction("chat.addPreflightHooks", function(package, hooks)
@@ -877,27 +892,29 @@ delayedAssign(
    # An interrupt partway through would leave the remaining bindings hooked
    # and chat.bindingsInjected TRUE, so the next injectBindings() would skip
    # them. One that arrives meanwhile is delivered once the restore is done.
-   failures <- character()
-
    suspendInterrupts({
+      failures <- character()
       packages <- ls(envir = .rs.chat.hookedBindings, all.names = TRUE)
 
       for (package in packages)
       {
-         # its hooked bindings went with the namespace, and replaceBinding()
-         # would try to load it again, which fails if it can't be loaded
-         if (!isNamespaceLoaded(package))
-         {
-            rm(list = package, envir = .rs.chat.hookedBindings)
-            next
-         }
-
          originals <- .rs.chat.hookedBindings[[package]]
          bindings <- ls(envir = originals, all.names = TRUE)
 
          for (binding in bindings)
          {
-            status <- .rs.tryCatch(.rs.replaceBinding(binding, package, originals[[binding]]))
+            original <- originals[[binding]]
+
+            # nothing to restore (see chat.isOriginalCurrent); for a namespace
+            # that was unloaded, replaceBinding() would also load it again,
+            # which fails if it can no longer be loaded
+            if (!.rs.chat.isOriginalCurrent(original, package))
+            {
+               rm(list = binding, envir = originals)
+               next
+            }
+
+            status <- .rs.tryCatch(.rs.replaceBinding(binding, package, original))
             if (inherits(status, "error"))
             {
                failures <- c(failures, sprintf(
@@ -922,9 +939,10 @@ delayedAssign(
       .rs.setVar("chat.bindingsInjected", FALSE)
    })
 
-   # reported only now, since options(warn = 2) turns each into an error
-   for (failure in failures)
-      warning(failure)
+   # reported only now, and in one warning, since options(warn = 2) turns a
+   # warning into an error
+   if (length(failures))
+      warning(paste(failures, collapse = "\n"))
 })
 
 
