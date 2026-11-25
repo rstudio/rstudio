@@ -467,24 +467,25 @@ test_that("restoreBindings restores the bindings with interrupts suspended", {
 
 })
 
-test_that("restoreBindings skips the bindings of a namespace that was unloaded", {
+test_that("restoreBindings doesn't load a namespace that was unloaded", {
 
    # e.g. code that ran unloadNamespace("fs") while fs was hooked; loading
    # fs again to restore its bindings fails if it can't be loaded (#19806)
-   package <- "rstudio.chat.unloaded"
-   expect_false(isNamespaceLoaded(package))
+   package <- "splines"
+   skip_if(isNamespaceLoaded(package), "splines is already loaded")
 
    .rs.chat.injectBindings()
    on.exit(.rs.chat.restoreBindings(), add = TRUE)
 
    hooked <- .rs.chat.hookedBindings
-   hooked[[package]] <- list2env(list(f = function() NULL), parent = emptyenv())
+   hooked[[package]] <- list2env(list(bs = function() NULL), parent = emptyenv())
    on.exit({
       if (exists(package, envir = hooked, inherits = FALSE))
          rm(list = package, envir = hooked)
    }, add = TRUE, after = FALSE)
 
    expect_no_warning(.rs.chat.restoreBindings())
+   expect_false(isNamespaceLoaded(package))
    expect_false(exists(package, envir = hooked, inherits = FALSE))
    expect_false(.rs.chat.bindingsInjected)
 
@@ -492,10 +493,11 @@ test_that("restoreBindings skips the bindings of a namespace that was unloaded",
 
 test_that("a binding that fails to restore doesn't turn off later checks", {
 
-   path <- file.path(path.expand("~"), "..", "nowhere", "file.txt")
-   original <- base::saveRDS
-
-   .rs.chat.injectBindings()
+   # outside the allowed locations, in a directory that doesn't exist, so
+   # nothing is written even if the check is skipped
+   path <- file.path(tempfile("chat-guardrails-", tmpdir = dirname(tempdir())), "file.txt")
+   original <- utils::write.table
+   attached <- as.environment("package:utils")
    on.exit(.rs.chat.restoreBindings(), add = TRUE)
 
    # tools:rstudio can't be mocked with local_mocked_bindings()
@@ -506,25 +508,57 @@ test_that("a binding that fails to restore doesn't turn off later checks", {
       add = TRUE,
       after = FALSE
    )
-   assign(".rs.replaceBinding", function(binding, package, override) {
-      if (identical(binding, "saveRDS"))
-         stop("simulated failure")
-      replaceBinding(binding, package, override)
-   }, envir = rsEnv)
 
+   # restores write.table() in the utils namespace, then fails before
+   # restoring it on the search path
+   failingReplaceBinding <- function(binding, package, override) {
+      if (!identical(binding, "write.table"))
+         return(replaceBinding(binding, package, override))
+      .rs.replaceBindingImpl(asNamespace(package), binding, override)
+      stop("simulated failure")
+   }
+
+   .rs.chat.injectBindings()
+   assign(".rs.replaceBinding", failingReplaceBinding, envir = rsEnv)
    expect_warning(
       .rs.chat.restoreBindings(),
-      "failed to restore binding 'saveRDS'"
+      "failed to restore binding 'write.table'"
    )
    assign(".rs.replaceBinding", replaceBinding, envir = rsEnv)
 
-   # the next activation checks again (#19806), and hooking saveRDS(),
-   # which is still hooked, doesn't replace the original saved for it
+   # the next activation hooks write.table() in the namespace too, from the
+   # original saved for it (each activation's own restore repairs the
+   # partial one, so this must come first). Unhooked, it would be refused
+   # anyway, by the file() it calls.
+   expect_error(
+      .rs.chat.withGuardrails(utils::write.table(1, path)),
+      "Action: write.table()",
+      fixed = TRUE
+   )
+
+   # and checks again (#19806)
    expect_error(
       .rs.chat.withGuardrails(writeLines("x", path)),
       "agent file operations were blocked"
    )
-   expect_identical(base::saveRDS, original)
+   expect_identical(utils::write.table, original)
+   expect_identical(get("write.table", envir = attached), original)
+
+   # likewise when options(warn = 2) makes the restore's warning an error
+   .rs.chat.injectBindings()
+   assign(".rs.replaceBinding", failingReplaceBinding, envir = rsEnv)
+   expect_error(
+      withr::with_options(list(warn = 2), .rs.chat.restoreBindings()),
+      "failed to restore binding 'write.table'"
+   )
+   assign(".rs.replaceBinding", replaceBinding, envir = rsEnv)
+
+   expect_error(
+      .rs.chat.withGuardrails(writeLines("x", path)),
+      "agent file operations were blocked"
+   )
+   expect_identical(utils::write.table, original)
+   expect_identical(get("write.table", envir = attached), original)
 
 })
 

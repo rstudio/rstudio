@@ -157,19 +157,19 @@ delayedAssign(
       return(invisible(NULL))
    }
 
-   # an original still saved here is one that restoreBindings() couldn't put
-   # back, so the binding is still hooked; saving it again would replace the
-   # original with the hooked version
-   if (!is.null(.rs.chat.hookedBindings[[package]][[binding]]))
-      return(invisible(NULL))
+   # an original still saved is one that restoreBindings() couldn't put back,
+   # and the binding may still be hooked, in the namespace, on the search
+   # path, or both: hook it from the saved original instead
+   original <- .rs.chat.hookedBindings[[package]][[binding]]
+   if (is.null(original))
+   {
+      original <- envir[[binding]]
 
-   # grab the original binding
-   original <- envir[[binding]]
-
-   # get or create the per-namespace storage for original bindings
-   if (!exists(package, envir = .rs.chat.hookedBindings, inherits = FALSE))
-      .rs.chat.hookedBindings[[package]] <- new.env(parent = emptyenv())
-   .rs.chat.hookedBindings[[package]][[binding]] <- original
+      # get or create the per-namespace storage for original bindings
+      if (!exists(package, envir = .rs.chat.hookedBindings, inherits = FALSE))
+         .rs.chat.hookedBindings[[package]] <- new.env(parent = emptyenv())
+      .rs.chat.hookedBindings[[package]][[binding]] <- original
+   }
 
    # set hook environment and formals to match original (replaceBinding
    # will also set the environment, but we need it here so the merged
@@ -877,6 +877,8 @@ delayedAssign(
    # An interrupt partway through would leave the remaining bindings hooked
    # and chat.bindingsInjected TRUE, so the next injectBindings() would skip
    # them. One that arrives meanwhile is delivered once the restore is done.
+   failures <- character()
+
    suspendInterrupts({
       packages <- ls(envir = .rs.chat.hookedBindings, all.names = TRUE)
 
@@ -898,7 +900,7 @@ delayedAssign(
             status <- .rs.tryCatch(.rs.replaceBinding(binding, package, originals[[binding]]))
             if (inherits(status, "error"))
             {
-               warning(sprintf(
+               failures <- c(failures, sprintf(
                   "failed to restore binding '%s' in '%s': %s",
                   binding, package, conditionMessage(status)
                ))
@@ -919,6 +921,10 @@ delayedAssign(
       # injectBindings() must hook again the bindings that were
       .rs.setVar("chat.bindingsInjected", FALSE)
    })
+
+   # reported only now, since options(warn = 2) turns each into an error
+   for (failure in failures)
+      warning(failure)
 })
 
 
