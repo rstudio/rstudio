@@ -368,6 +368,8 @@ protected:
       LinkBasedFileLock::setForceFallbackForTesting(false);
       LinkBasedFileLock::setForceClaimDirectoryAclFailureForTesting(0);
       LinkBasedFileLock::setForceClaimDirectoryForeignOwnerForTesting(false);
+      LinkBasedFileLock::setForceClaimDirectoryChmodFailureForTesting(0);
+      AdvisoryFileLock::setForceChmodFailureForTesting(0);
    }
 
    // The wall-clock start time of this test process, which the staleness
@@ -451,6 +453,8 @@ protected:
       LinkBasedFileLock::setForceFallbackForTesting(false);
       LinkBasedFileLock::setForceClaimDirectoryAclFailureForTesting(0);
       LinkBasedFileLock::setForceClaimDirectoryForeignOwnerForTesting(false);
+      LinkBasedFileLock::setForceClaimDirectoryChmodFailureForTesting(0);
+      AdvisoryFileLock::setForceChmodFailureForTesting(0);
       FileLock::cleanUp();
       FileLock::setTimeoutInterval(oldTimeout_);
       FileLock::setLiveOwnerGraceMultiplierForTesting(oldGraceMultiplier_);
@@ -971,6 +975,33 @@ TEST_F(FileLockingTest, AdvisoryNewLockIsSharedDespiteRestrictiveUmask)
    ASSERT_EQ(child, ::waitpid(child, &status, 0));
    ASSERT_TRUE(WIFEXITED(status));
    EXPECT_EQ(0, WEXITSTATUS(status));
+}
+
+// Some network and FUSE mounts refuse chmod outright. The new lock file then
+// keeps its umask-derived mode, and locking still works.
+TEST_F(FileLockingTest, AdvisoryAcquireToleratesChmodFailure)
+{
+   AdvisoryFileLock::setForceChmodFailureForTesting(EPERM);
+
+   mode_t previousMask = ::umask(0077);
+   AdvisoryFileLock first;
+   Error acquireError = first.acquire(lockFilePath_);
+   ::umask(previousMask);
+   ASSERT_FALSE(acquireError);
+
+   // the umask-derived mode shows the chmod was skipped
+   struct stat info;
+   ASSERT_EQ(0, ::stat(lockFilePath_.getAbsolutePath().c_str(), &info));
+   EXPECT_EQ(0600, info.st_mode & 0777);
+
+   AdvisoryFileLock second;
+   Error error = second.acquire(lockFilePath_);
+   ASSERT_TRUE(error);
+   EXPECT_TRUE(FileLock::isNoLockAvailable(error));
+
+   EXPECT_FALSE(first.release());
+   EXPECT_FALSE(second.acquire(lockFilePath_));
+   EXPECT_FALSE(second.release());
 }
 
 TEST_F(FileLockingTest, AdvisoryLockSurvivesSymlinkAliasOperations)
@@ -1667,6 +1698,37 @@ TEST_F(FileLockingTest, ClaimDirectoryUsesParentPermissionsDespiteUmask)
    EXPECT_FALSE(lock.release());
 }
 
+// Some network and FUSE mounts refuse chmod outright. The claim directory
+// then keeps whatever mode it was created with, and locking still works.
+TEST_F(FileLockingTest, ClaimCreationToleratesChmodFailure)
+{
+   // An ACL write also sets the mode bits; without one, only chmod could.
+   LinkBasedFileLock::setForceClaimDirectoryAclFailureForTesting(ENOTSUP);
+   LinkBasedFileLock::setForceClaimDirectoryChmodFailureForTesting(EPERM);
+
+   LinkBasedFileLock lock;
+   ASSERT_FALSE(lock.acquire(lockFilePath_));
+
+   // still private, as mkdir() created it
+   struct stat claimInfo;
+   ASSERT_EQ(
+      0,
+      ::stat(
+         claimPathFor(lockFilePath_).getParent().getAbsolutePath().c_str(),
+         &claimInfo));
+   EXPECT_TRUE(S_ISDIR(claimInfo.st_mode));
+   EXPECT_EQ(0700, claimInfo.st_mode & 0777);
+
+   LinkBasedFileLock contender;
+   Error error = contender.acquire(lockFilePath_);
+   ASSERT_TRUE(error);
+   EXPECT_TRUE(FileLock::isNoLockAvailable(error));
+
+   EXPECT_FALSE(lock.release());
+   EXPECT_FALSE(contender.acquire(lockFilePath_));
+   EXPECT_FALSE(contender.release());
+}
+
 TEST_F(FileLockingTest, ClaimDirectoryUsesParentGroupWithoutSetgid)
 {
    int groupCount = ::getgroups(0, nullptr);
@@ -1994,45 +2056,34 @@ TEST_F(FileLockingTest, ClaimCreationFallsBackToModeWhenAclWriteIsDenied)
 #endif
 }
 
-// On a directory this process owns, EPERM is not that ownership quirk (it
-// may be a security policy denying the write), so the ACL is not dropped.
-TEST_F(FileLockingTest, ClaimCreationFailsWhenOwnedAclWriteIsDenied)
+// Any other refusal, including EPERM on a directory this process owns, also
+// falls back to the parent's mode bits instead of failing the lock: claim
+// directories hold no application data.
+TEST_F(FileLockingTest, ClaimCreationFallsBackToModeOnAnyAclError)
 {
 #if defined(__APPLE__) || defined(__linux__)
    int aclError = ensureCopyableAcl(root_);
    if (aclError == ENOTSUP)
       GTEST_SKIP() << "filesystem has no ACL support";
    ASSERT_EQ(0, aclError) << "could not prepare parent ACL";
-   LinkBasedFileLock::setForceClaimDirectoryAclFailureForTesting(EPERM);
 
-   LinkBasedFileLock lock;
-   Error error = lock.acquire(lockFilePath_);
-   ASSERT_TRUE(error);
-   EXPECT_EQ(EPERM, error.getCode());
-   EXPECT_FALSE(claimPathFor(lockFilePath_).getParent().exists());
-#else
-   GTEST_SKIP() << "platform does not copy ACLs onto claim directories";
-#endif
-}
+   struct stat parentInfo;
+   ASSERT_EQ(0, ::stat(root_.getAbsolutePath().c_str(), &parentInfo));
+   FilePath claimDirectory = claimPathFor(lockFilePath_).getParent();
 
-TEST_F(FileLockingTest, ClaimCreationStillFailsOnUnexpectedAclError)
-{
-#if defined(__APPLE__) || defined(__linux__)
-   int aclError = ensureCopyableAcl(root_);
-   if (aclError == ENOTSUP)
-      GTEST_SKIP() << "filesystem has no ACL support";
-   ASSERT_EQ(0, aclError) << "could not prepare parent ACL";
-   LinkBasedFileLock::setForceClaimDirectoryForeignOwnerForTesting(true);
-
-   for (int errorNumber : {EACCES, EIO})
+   for (int errorNumber : {EPERM, EACCES, EIO})
    {
       LinkBasedFileLock::setForceClaimDirectoryAclFailureForTesting(errorNumber);
 
       LinkBasedFileLock lock;
-      Error error = lock.acquire(lockFilePath_);
-      ASSERT_TRUE(error);
-      EXPECT_EQ(errorNumber, error.getCode());
-      EXPECT_FALSE(claimPathFor(lockFilePath_).getParent().exists());
+      ASSERT_FALSE(lock.acquire(lockFilePath_)) << "errno " << errorNumber;
+      struct stat claimInfo;
+      ASSERT_EQ(0, ::stat(claimDirectory.getAbsolutePath().c_str(), &claimInfo));
+      EXPECT_EQ(parentInfo.st_mode & 0777, claimInfo.st_mode & 0777);
+      EXPECT_FALSE(lock.release());
+
+      // rebuild the claim directory on the next pass
+      ASSERT_FALSE(claimDirectory.removeIfExists());
    }
 #else
    GTEST_SKIP() << "platform does not copy ACLs onto claim directories";

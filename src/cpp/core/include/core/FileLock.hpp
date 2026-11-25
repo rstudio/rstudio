@@ -167,6 +167,9 @@ public:
 #ifdef RSTUDIO_UNIT_TESTS_ENABLED
    static void setBeforeOpenForTesting(
       const boost::function<void(const FilePath&)>& callback);
+   // 0 restores the real fchmod() on new lock files; any other value fails
+   // it with that errno
+   static void setForceChmodFailureForTesting(int errorNumber);
 #endif
    
    Error acquire(const FilePath& lockFilePath);
@@ -203,6 +206,9 @@ public:
    static void setForceClaimDirectoryAclFailureForTesting(int errorNumber);
    // treat new claim directories as owned by another user, as ntfs-3g reports them
    static void setForceClaimDirectoryForeignOwnerForTesting(bool foreignOwner);
+   // 0 restores the real fchmod() on new claim directories; any other value
+   // fails it with that errno
+   static void setForceClaimDirectoryChmodFailureForTesting(int errorNumber);
 #endif
 
    Error acquire(const FilePath& lockFilePath);

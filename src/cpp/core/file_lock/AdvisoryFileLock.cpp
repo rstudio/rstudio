@@ -13,6 +13,7 @@
  *
  */
 
+#include <atomic>
 #include <map>
 #include <memory>
 #include <sstream>
@@ -68,6 +69,7 @@ typedef boost::interprocess::file_lock BoostFileLock;
 
 #ifdef RSTUDIO_UNIT_TESTS_ENABLED
 boost::function<void(const FilePath&)> s_beforeAdvisoryOpen;
+int s_forceChmodError = 0;
 #endif
 
 // Per-path bookkeeping for this process. POSIX fcntl locks are process-scoped:
@@ -305,18 +307,40 @@ Error ensureAdvisoryLockFile(const FilePath& lockFilePath)
       return error;
    }
 
-   Error error;
-   if (::fchmod(descriptor, 0666) == -1)
+   // O_EXCL proves this is our new inode, so descriptor-based chmod cannot
+   // affect a substituted pathname. Some network and FUSE mounts refuse chmod
+   // outright; the file then keeps its umask-derived mode. That only matters
+   // to collaborators the mode excludes, so it is worth one log line per
+   // process, not a failure to lock. Either way, leave the name alone: never
+   // unlink a file that could now belong to a contender.
+   int status;
+   int errorNumber;
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+   if (s_forceChmodError != 0)
    {
-      error = systemCallError("fchmod", errno, ERROR_LOCATION);
+      status = -1;
+      errorNumber = s_forceChmodError;
+   }
+   else
+#endif
+   {
+      status = ::fchmod(descriptor, 0666);
+      errorNumber = status == -1 ? errno : 0;
+   }
+   ::close(descriptor);
+
+   static std::atomic<bool> s_reported(false);
+   if (status == -1 && !s_reported.exchange(true))
+   {
+      Error error = systemCallError("fchmod", errorNumber, ERROR_LOCATION);
       error.addProperty("lock-file", lockFilePath);
+      error.addProperty(
+         "description",
+         "Advisory lock files may not be shared with other users");
+      LOG_ERROR(error);
    }
 
-   // O_EXCL proves this is our new inode, so descriptor-based chmod cannot
-   // affect a substituted pathname. On error, leave the name alone for the
-   // same reason; never unlink a file that could now belong to a contender.
-   ::close(descriptor);
-   return error;
+   return Success();
 }
 
 std::string inodeKeyFor(const struct stat& info)
@@ -591,6 +615,11 @@ void AdvisoryFileLock::setBeforeOpenForTesting(
    const boost::function<void(const FilePath&)>& callback)
 {
    s_beforeAdvisoryOpen = callback;
+}
+
+void AdvisoryFileLock::setForceChmodFailureForTesting(int errorNumber)
+{
+   s_forceChmodError = errorNumber;
 }
 #endif
 

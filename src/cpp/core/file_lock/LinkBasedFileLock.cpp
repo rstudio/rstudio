@@ -111,6 +111,7 @@ bool s_forceClaimDirectoryChownFailure = false;
 bool s_forceFallback = false;
 int s_forceClaimDirectoryAclError = 0;
 bool s_forceClaimDirectoryForeignOwner = false;
+int s_forceClaimDirectoryChmodError = 0;
 #endif
 
 // Shared by the owner and registry snapshots. This mutex is never held by
@@ -1566,13 +1567,13 @@ bool isAclUnsupported(int errorNumber)
 #endif
 }
 
-// Whether a failed ACL write on a directory this process just created should
-// give way to plain mode bits. Filesystems that do not track POSIX ownership
-// (e.g. ntfs-3g mounted without uid= or permissions options) report the new
-// directory as owned by root, so the kernel refuses the ACL with EPERM even
-// though it accepts the mode bits (rstudio/rstudio#19118). Requiring that
-// foreign owner keeps other refusals, such as a security policy denying the
-// write, from silently dropping the parent's ACL.
+// Whether a failed ACL write on a directory this process just created is an
+// expected refusal, quietly giving way to plain mode bits. Filesystems that
+// do not track POSIX ownership (e.g. ntfs-3g mounted without uid= or
+// permissions options) report the new directory as owned by root, so the
+// kernel refuses the ACL with EPERM even though it accepts the mode bits
+// (rstudio/rstudio#19118). Other refusals, such as a security policy denying
+// the write, fall back to mode bits too, but are logged.
 bool isAclUnapplicable(int errorNumber, const struct stat& preparedInfo)
 {
    if (isAclUnsupported(errorNumber))
@@ -2096,10 +2097,67 @@ Error translateDarwinAcl(const FilePath& parent,
 
 #ifndef _WIN32
 
-Error applyClaimDirectoryPermissions(const FilePath& parent,
-                                     const struct stat& parentInfo,
-                                     struct stat preparedInfo,
-                                     int descriptor)
+// Returns the fchmod() status, or the failure a test asked to simulate.
+int setDescriptorMode(int descriptor, mode_t mode, int* pErrorNumber)
+{
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+   if (s_forceClaimDirectoryChmodError != 0)
+   {
+      *pErrorNumber = s_forceClaimDirectoryChmodError;
+      return -1;
+   }
+#endif
+   int status = ::fchmod(descriptor, mode);
+   *pErrorNumber = status == -1 ? errno : 0;
+   return status;
+}
+
+// Claim directories only coordinate contenders; they hold no application
+// data. A filesystem that refuses to copy the parent's policy onto one (some
+// network and FUSE mounts reject chmod or ACL writes outright) degrades the
+// copy rather than every lock in that directory: worth one log line per
+// process, not a failure.
+void reportClaimDirectoryPermissionFallback(Error error,
+                                            const FilePath& parent)
+{
+   static std::atomic<bool> s_reported(false);
+   if (s_reported.exchange(true))
+      return;
+
+   error.addProperty("path", parent);
+   error.addProperty(
+      "description",
+      "Lock claim directories may not match their parent's permissions");
+   LOG_ERROR(error);
+}
+
+// The parent's mode, translated for a directory owned by this process. Where
+// the owning group differs from the parent's, its members get only what
+// both the parent's group and "other" would have.
+mode_t claimDirectoryMode(const struct stat& parentInfo,
+                          mode_t ownerPermissions,
+                          bool groupAligned)
+{
+   mode_t groupPermissions = groupAligned
+      ? (parentInfo.st_mode >> 3) & 07
+      : ((parentInfo.st_mode >> 3) & 07) &
+           (parentInfo.st_mode & 07);
+   return (parentInfo.st_mode & S_ISGID) |
+          (ownerPermissions << 6) |
+          (groupPermissions << 3) |
+          (parentInfo.st_mode & 07);
+}
+
+// Gives a new claim directory the parent's access policy, as closely as the
+// filesystem allows. Every step is best-effort: one that fails gives way to
+// a simpler, possibly wider, approximation of the parent's policy, and if
+// even the mode cannot be set the directory keeps what the filesystem gave
+// it. A contender that then cannot use the directory retires the empty
+// namespace and rebuilds it (see acquireClaim()).
+void applyClaimDirectoryPermissions(const FilePath& parent,
+                                    const struct stat& parentInfo,
+                                    struct stat preparedInfo,
+                                    int descriptor)
 {
 #if defined(__APPLE__)
    acl_t parentAcl = ::acl_get_file(
@@ -2107,16 +2165,16 @@ Error applyClaimDirectoryPermissions(const FilePath& parent,
       ACL_TYPE_EXTENDED);
    if (!parentAcl && errno != ENOENT && !isAclUnsupported(errno))
    {
-      Error error = systemCallError("acl_get_file", errno, ERROR_LOCATION);
-      error.addProperty("path", parent);
-      return error;
+      reportClaimDirectoryPermissionFallback(
+         systemCallError("acl_get_file", errno, ERROR_LOCATION),
+         parent);
    }
 #endif
 
    bool groupAligned = preparedInfo.st_gid == parentInfo.st_gid;
-   bool chownDenied = false;
    if (!groupAligned)
    {
+      bool chownDenied = false;
 #ifdef RSTUDIO_UNIT_TESTS_ENABLED
       chownDenied = s_forceClaimDirectoryChownFailure;
 #endif
@@ -2129,20 +2187,13 @@ Error applyClaimDirectoryPermissions(const FilePath& parent,
          preparedInfo.st_gid = parentInfo.st_gid;
          groupAligned = true;
       }
-      else if (!chownDenied && isPermissionError(errno))
+      else if (!chownDenied && !isPermissionError(errno))
       {
-         chownDenied = true;
-      }
-      else if (!chownDenied)
-      {
-         int errorNumber = errno;
-#if defined(__APPLE__)
-         if (parentAcl)
-            ::acl_free(parentAcl);
-#endif
-         Error error = systemError(errorNumber, ERROR_LOCATION);
-         error.addProperty("path", parent);
-         return error;
+         // Denial is expected when this process is not in the parent's
+         // group; the group mapping below covers it either way.
+         reportClaimDirectoryPermissionFallback(
+            systemCallError("fchown", errno, ERROR_LOCATION),
+            parent);
       }
    }
 
@@ -2155,53 +2206,42 @@ Error applyClaimDirectoryPermissions(const FilePath& parent,
       descriptor,
       &aclApplied);
    if (error)
-      return error;
+      reportClaimDirectoryPermissionFallback(error, parent);
+
+   struct stat appliedInfo;
+   if (aclApplied && ::fstat(descriptor, &appliedInfo) == -1)
+   {
+      reportClaimDirectoryPermissionFallback(
+         systemCallError("fstat", errno, ERROR_LOCATION),
+         parent);
+      aclApplied = false;
+   }
 
    mode_t mode;
    if (aclApplied)
    {
-      struct stat appliedInfo;
-      if (::fstat(descriptor, &appliedInfo) == -1)
-      {
-         Error statError = systemCallError("fstat", errno, ERROR_LOCATION);
-         statError.addProperty("path", parent);
-         return statError;
-      }
       mode = (appliedInfo.st_mode & 0777) | (parentInfo.st_mode & S_ISGID);
    }
    else
    {
       mode_t ownerPermissions;
-      Error modeError = currentModePermissions(
-         parentInfo,
-         &ownerPermissions);
-      if (modeError)
-         return modeError;
+      error = currentModePermissions(parentInfo, &ownerPermissions);
+      if (error)
+      {
+         reportClaimDirectoryPermissionFallback(error, parent);
+         ownerPermissions = 07;
+      }
+      // mkdir() already proved write and search access.
       ownerPermissions |= 03;
-      mode_t groupPermissions = groupAligned
-         ? (parentInfo.st_mode >> 3) & 07
-         : ((parentInfo.st_mode >> 3) & 07) &
-              (parentInfo.st_mode & 07);
-      mode = (parentInfo.st_mode & S_ISGID) |
-             (ownerPermissions << 6) |
-             (groupPermissions << 3) |
-             (parentInfo.st_mode & 07);
-   }
-
-   if (::fchmod(descriptor, mode) == -1)
-   {
-      Error chmodError = systemCallError("fchmod", errno, ERROR_LOCATION);
-      chmodError.addProperty("path", parent);
-      return chmodError;
+      mode = claimDirectoryMode(parentInfo, ownerPermissions, groupAligned);
    }
 #elif defined(__APPLE__)
    mode_t ownerPermissions;
    Error error = effectiveDirectoryPermissions(parent, &ownerPermissions);
    if (error)
    {
-      if (parentAcl)
-         ::acl_free(parentAcl);
-      return error;
+      reportClaimDirectoryPermissionFallback(error, parent);
+      ownerPermissions = 07;
    }
    // mkdir() already proved write and search access. Preserve those rights
    // if the parent policy changes while its ACL and mode are translated.
@@ -2215,10 +2255,11 @@ Error applyClaimDirectoryPermissions(const FilePath& parent,
       &parentAcl);
    if (error)
    {
+      // A partly translated ACL may not be valid; fall back to the mode.
+      reportClaimDirectoryPermissionFallback(error, parent);
       if (parentAcl)
          ::acl_free(parentAcl);
-      error.addProperty("path", parent);
-      return error;
+      parentAcl = nullptr;
    }
 
    if (parentAcl)
@@ -2228,46 +2269,27 @@ Error applyClaimDirectoryPermissions(const FilePath& parent,
       ::acl_free(parentAcl);
       if (status == -1 && !isAclUnapplicable(errorNumber, preparedInfo))
       {
-         Error error = systemCallError(
-            "acl_set_fd",
-            errorNumber,
-            ERROR_LOCATION);
-         error.addProperty("path", parent);
-         return error;
+         reportClaimDirectoryPermissionFallback(
+            systemCallError("acl_set_fd", errorNumber, ERROR_LOCATION),
+            parent);
       }
    }
 
-   mode_t groupPermissions = groupAligned
-      ? (parentInfo.st_mode >> 3) & 07
-      : ((parentInfo.st_mode >> 3) & 07) &
-           (parentInfo.st_mode & 07);
-   mode_t mode = (parentInfo.st_mode & S_ISGID) |
-                 (ownerPermissions << 6) |
-                 (groupPermissions << 3) |
-                 (parentInfo.st_mode & 07);
-   if (::fchmod(descriptor, mode) == -1)
-   {
-      Error chmodError = systemCallError("fchmod", errno, ERROR_LOCATION);
-      chmodError.addProperty("path", parent);
-      return chmodError;
-   }
+   mode_t mode = claimDirectoryMode(parentInfo, ownerPermissions, groupAligned);
 #else
-   if (!groupAligned)
-   {
-      Error error = systemError(EPERM, ERROR_LOCATION);
-      error.addProperty("path", parent);
-      return error;
-   }
-   mode_t mode = parentInfo.st_mode & (S_ISGID | 0777);
-   if (::fchmod(descriptor, mode) == -1)
-   {
-      Error error = systemCallError("fchmod", errno, ERROR_LOCATION);
-      error.addProperty("path", parent);
-      return error;
-   }
+   mode_t mode = claimDirectoryMode(
+      parentInfo,
+      (parentInfo.st_mode >> 6) & 07,
+      groupAligned);
 #endif
 
-   return Success();
+   int errorNumber;
+   if (setDescriptorMode(descriptor, mode, &errorNumber) == -1)
+   {
+      reportClaimDirectoryPermissionFallback(
+         systemCallError("fchmod", errorNumber, ERROR_LOCATION),
+         parent);
+   }
 }
 
 #endif
@@ -2370,18 +2392,11 @@ Error ensureClaimDirectory(const FilePath& lockFilePath,
    // The prepared directory stays private until it has the parent's access
    // policy. Sticky is deliberately omitted: peers allowed to publish in the
    // parent must also be able to retire one another's stale claims here.
-   Error permissionError = applyClaimDirectoryPermissions(
+   applyClaimDirectoryPermissions(
       lockFilePath.getParent(),
       parentInfo,
       preparedInfo,
       descriptor);
-   if (permissionError)
-   {
-      ::close(descriptor);
-      ::rmdir(preparedDirectory.getAbsolutePathNative().c_str());
-      permissionError.addProperty("path", preparedDirectory);
-      return permissionError;
-   }
 
    int status = ::rename(
       preparedDirectory.getAbsolutePathNative().c_str(),
@@ -3145,6 +3160,12 @@ void LinkBasedFileLock::setForceClaimDirectoryForeignOwnerForTesting(
    bool foreignOwner)
 {
    s_forceClaimDirectoryForeignOwner = foreignOwner;
+}
+
+void LinkBasedFileLock::setForceClaimDirectoryChmodFailureForTesting(
+   int errorNumber)
+{
+   s_forceClaimDirectoryChmodError = errorNumber;
 }
 #endif
 
