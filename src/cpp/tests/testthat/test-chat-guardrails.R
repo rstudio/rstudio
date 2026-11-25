@@ -523,9 +523,10 @@ test_that("originals saved from a namespace that was replaced aren't hooked from
    # e.g. one loaded again since: its bindings were never hooked (#19806)
    path <- file.path(tempfile(), ".ssh", "file.txt")
    before <- utils::download.file
+   attached <- as.environment("package:utils")
    on.exit({
-      if (!identical(utils::download.file, before))
-         .rs.replaceBinding("download.file", "utils", before)
+      .rs.replaceBindingImpl(asNamespace("utils"), "download.file", before)
+      .rs.replaceBindingImpl(attached, "download.file", before)
    }, add = TRUE)
 
    stale <- function(...) NULL
@@ -542,13 +543,14 @@ test_that("originals saved from a namespace that was replaced aren't hooked from
       fixed = TRUE
    )
    expect_identical(utils::download.file, before)
-   expect_identical(get("download.file", envir = as.environment("package:utils")), before)
+   expect_identical(get("download.file", envir = attached), before)
 
 })
 
 test_that("an original defined outside its namespace is still restored", {
 
    # e.g. one mocked in the namespace before the guardrails were activated
+   path <- file.path(tempfile(), ".ssh", "file.txt")
    before <- utils::download.file
    attached <- as.environment("package:utils")
    on.exit({
@@ -560,7 +562,11 @@ test_that("an original defined outside its namespace is still restored", {
    .rs.replaceBindingImpl(asNamespace("utils"), "download.file", replacement)
    .rs.replaceBindingImpl(attached, "download.file", replacement)
 
-   .rs.chat.withGuardrails(NULL)
+   expect_error(
+      .rs.chat.withGuardrails(utils::download.file("http://127.0.0.1:9/", path)),
+      "Action: download.file()",
+      fixed = TRUE
+   )
    expect_identical(body(utils::download.file), body(replacement))
    expect_identical(body(get("download.file", envir = attached)), body(replacement))
 
@@ -578,6 +584,16 @@ test_that("a binding that fails to restore doesn't turn off later checks", {
       write.table = utils::write.table
    )
    on.exit(.rs.chat.restoreBindings(), add = TRUE)
+
+   # in case the restore above leaves any of them hooked
+   on.exit({
+      .rs.replaceBindingImpl(baseenv(), "writeChar", before$writeChar)
+      for (name in c("download.file", "write.table"))
+      {
+         .rs.replaceBindingImpl(asNamespace("utils"), name, before[[name]])
+         .rs.replaceBindingImpl(attached, name, before[[name]])
+      }
+   }, add = TRUE)
 
    # tools:rstudio can't be mocked with local_mocked_bindings()
    rsEnv <- as.environment("tools:rstudio")
@@ -609,21 +625,16 @@ test_that("a binding that fails to restore doesn't turn off later checks", {
    )
    assign(".rs.replaceBinding", replaceBinding, envir = rsEnv)
 
-   # the next activation hooks write.table() in the namespace too, from the
-   # original saved for it (each activation's own restore repairs the
-   # partial one, so this must come first). Unhooked, it would be refused
-   # anyway, by the file() it calls.
-   expect_error(
-      .rs.chat.withGuardrails(utils::write.table(1, path)),
-      "Action: write.table()",
-      fixed = TRUE
-   )
-
-   # and checks again (#19806)
-   expect_error(
-      .rs.chat.withGuardrails(writeLines("x", path)),
-      "agent file operations were blocked"
-   )
+   # the next activation checks again (#19806), and hooks write.table() in
+   # the namespace too, from the original saved for it. Its own restore
+   # repairs the partial one, so both are checked within it; unhooked,
+   # write.table() would be refused anyway, by the file() it calls.
+   errors <- .rs.chat.withGuardrails(list(
+      tryCatch(utils::write.table(1, path), error = conditionMessage),
+      tryCatch(writeLines("x", path), error = conditionMessage)
+   ))
+   expect_match(errors[[1L]], "Action: write.table()", fixed = TRUE)
+   expect_match(errors[[2L]], "Action: writeLines()", fixed = TRUE)
    expect_identical(utils::write.table, before$write.table)
    expect_identical(get("write.table", envir = attached), before$write.table)
 
