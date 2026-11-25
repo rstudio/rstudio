@@ -683,6 +683,7 @@ namespace Message {
    const char * const Forbidden = "Forbidden";
    const char * const NotFound = "Not Found";
    const char * const MethodNotAllowed = "Method Not Allowed";
+   const char * const ContentTooLarge = "Content Too Large";
    const char * const RangeNotSatisfiable = "Range Not Satisfyable";
    const char * const InternalServerError = "Internal Server Error";
    const char * const NotImplemented = "Not Implemented";
@@ -755,6 +756,10 @@ void Response::ensureStatusMessage() const
 
          case MethodNotAllowed:
             statusMessage_ = status::Message::MethodNotAllowed;
+            break;
+
+         case ContentTooLarge:
+            statusMessage_ = status::Message::ContentTooLarge;
             break;
 
          case RangeNotSatisfiable:

@@ -213,7 +213,19 @@ test_that("isFileEditAllowed permits edits in a not-yet-created user library", {
 
 # -- allowedRoots / umask ------------------------------------------------------
 
+# Record `dir` as the working directory the user chose, as activating the
+# guardrails does. Undone when `envir` exits.
+localUserWorkingDirectory <- function(dir = getwd(), envir = parent.frame())
+{
+   state <- .rs.chat.guardrailState
+   oldUserDir <- state$userWorkingDirectory
+   withr::defer(state$userWorkingDirectory <- oldUserDir, envir = envir)
+   state$userWorkingDirectory <- .rs.chat.normalizePath(dir)
+}
+
 test_that("isPathWithinAllowedRoots identifies allowed and disallowed paths", {
+
+   localUserWorkingDirectory()
 
    allowedPaths <- .rs.chat.normalizePath(c(
       file.path(tempdir(), "file.R"),
@@ -256,7 +268,7 @@ test_that("umaskMasksWorldRead samples the umask once", {
 
 })
 
-test_that("allowedRoots tracks working-directory changes", {
+test_that("allowedRoots follows the recorded working directory, not the current one", {
 
    dir <- tempfile("chat-guardrails-wd-", tmpdir = dirname(tempdir()))
    dir.create(dir)
@@ -265,12 +277,16 @@ test_that("allowedRoots tracks working-directory changes", {
       setwd(oldWd)
       unlink(dir, recursive = TRUE)
    }, add = TRUE)
+   localUserWorkingDirectory()
 
    path <- .rs.chat.normalizePath(file.path(dir, "file.R"))
    expect_false(any(.rs.chat.isPathWithinAllowedRoots(path)))
 
-   # the memoized roots refresh when the working directory changes
    setwd(dir)
+   expect_false(any(.rs.chat.isPathWithinAllowedRoots(path)))
+
+   # the memoized roots refresh when the recorded directory changes
+   localUserWorkingDirectory(dir)
    expect_true(all(.rs.chat.isPathWithinAllowedRoots(path)))
 
 })
@@ -359,6 +375,7 @@ test_that("home directory is not read-exempt even as the working directory", {
    # from the permission check
    home <- path.expand("~")
    setwd(home)
+   localUserWorkingDirectory()
 
    path <- tempfile("chat-guardrails-private-", tmpdir = home)
    writeLines("private", path)
@@ -464,6 +481,393 @@ test_that("restoreBindings restores the bindings with interrupts suspended", {
    expect_gt(length(suspended), 0L)
    expect_true(all(suspended))
    expect_false(.rs.chat.bindingsInjected)
+
+})
+
+test_that("unlink() accepts NULL under the guardrails", {
+
+   # e.g. rmarkdown::render() cleans up with unlink(NULL) when it fails early
+   expect_equal(.rs.chat.withGuardrails(unlink(NULL)), 0L)
+
+   # the 'expand' argument was added in R 4.0.0
+   if (getRversion() >= "4.0.0")
+      expect_equal(.rs.chat.withGuardrails(unlink(NULL, expand = FALSE)), 0L)
+
+})
+
+test_that("unlink() checks the paths its argument is coerced to", {
+
+   outside <- tempfile("chat-guardrails-unlink-", tmpdir = dirname(tempdir()))
+   allowed <- tempfile("chat-guardrails-unlink-")
+   file.create(c(outside, allowed))
+   on.exit(unlink(c(outside, allowed)), add = TRUE)
+
+   expect_error(.rs.chat.withGuardrails(unlink(factor(outside))), "Action: unlink()", fixed = TRUE)
+   expect_true(file.exists(outside))
+
+   .rs.chat.withGuardrails(unlink(factor(allowed)))
+   expect_false(file.exists(allowed))
+
+})
+
+# -- working directory ---------------------------------------------------------
+
+# Create a 'user' directory (with a 'sub' directory inside) and an 'outside'
+# directory beside it, none of them within the allowed roots, and make
+# 'user' the working directory. Undone when `envir` exits.
+localWorkingDirectories <- function(envir = parent.frame())
+{
+   state <- .rs.chat.guardrailState
+   oldWd <- getwd()
+   oldUserDir <- state$userWorkingDirectory
+   oldAgentDir <- state$agentWorkingDirectory
+
+   root <- tempfile("chat-guardrails-wd-", tmpdir = dirname(tempdir()))
+   dirs <- list(
+      user    = file.path(root, "user"),
+      sub     = file.path(root, "user", "sub"),
+      outside = file.path(root, "outside")
+   )
+   for (dir in dirs)
+      dir.create(dir, recursive = TRUE)
+
+   withr::defer({
+      setwd(oldWd)
+      state$userWorkingDirectory <- oldUserDir
+      state$agentWorkingDirectory <- oldAgentDir
+      unlink(root, recursive = TRUE)
+   }, envir = envir)
+
+   setwd(dirs$user)
+   state$agentWorkingDirectory <- NULL
+   lapply(dirs, .rs.chat.normalizePath)
+}
+
+workingDirectory <- function()
+{
+   .rs.chat.normalizePath(getwd())
+}
+
+# Make `fn` stand in for package code: what marks a function as belonging
+# to a package is its environment.
+asPackageFunction <- function(fn)
+{
+   environment(fn) <- asNamespace("testthat")
+   fn
+}
+
+test_that("agent code cannot move the working directory outside the allowed roots", {
+
+   dirs <- localWorkingDirectories()
+
+   expect_error(.rs.chat.withGuardrails(setwd(dirs$outside)), "Action: setwd()", fixed = TRUE)
+   expect_error(.rs.chat.withGuardrails(setwd("..")), "Action: setwd()", fixed = TRUE)
+   expect_equal(workingDirectory(), dirs$user)
+
+   # likewise when evaluated the way the assistant's code is: a quoted
+   # expression in the global environment, with the error returned
+   result <- .rs.chat.safeEval(bquote(setwd(.(dirs$outside))))
+   expect_s3_class(result, "error")
+   expect_match(conditionMessage(result), "Action: setwd()", fixed = TRUE)
+   expect_equal(workingDirectory(), dirs$user)
+
+   # so a relative path cannot reach outside them either
+   expect_error(.rs.chat.withGuardrails({
+      setwd(dirs$outside)
+      writeLines("x", "file.txt")
+   }))
+   expect_false(file.exists(file.path(dirs$outside, "file.txt")))
+
+})
+
+test_that("agent code can move within the allowed roots and back", {
+
+   dirs <- localWorkingDirectories()
+
+   .rs.chat.withGuardrails({
+      old <- setwd("sub")
+      setwd(old)
+   })
+   expect_equal(workingDirectory(), dirs$user)
+
+   # the user's directory stays reachable in later evaluations, although
+   # the working directory is the only root that contains it
+   .rs.chat.withGuardrails(setwd("sub"))
+   expect_equal(workingDirectory(), dirs$sub)
+   .rs.chat.withGuardrails(setwd(".."))
+   expect_equal(workingDirectory(), dirs$user)
+
+   .rs.chat.withGuardrails(setwd(tempdir()))
+   .rs.chat.withGuardrails(setwd(dirs$user))
+   expect_equal(workingDirectory(), dirs$user)
+
+   # as it does when the evaluation that moved away ended in an error
+   result <- .rs.chat.safeEval(quote({
+      setwd("sub")
+      stop("failed after moving")
+   }))
+   expect_s3_class(result, "error")
+   expect_equal(workingDirectory(), dirs$sub)
+   .rs.chat.withGuardrails(setwd(".."))
+   expect_equal(workingDirectory(), dirs$user)
+
+})
+
+test_that("a working directory chosen by the user replaces the remembered one", {
+
+   dirs <- localWorkingDirectories()
+   .rs.chat.withGuardrails(setwd(tempdir()))
+
+   # the user moves (e.g. from the Console), between agent evaluations
+   setwd(dirs$outside)
+
+   .rs.chat.withGuardrails(writeLines("x", "file.txt"))
+   expect_true(file.exists(file.path(dirs$outside, "file.txt")))
+   expect_error(.rs.chat.withGuardrails(setwd(dirs$user)), "Action: setwd()", fixed = TRUE)
+
+   # the new directory is the one agent code can now return to
+   .rs.chat.withGuardrails(setwd(tempdir()))
+   .rs.chat.withGuardrails(setwd(dirs$outside))
+   expect_equal(workingDirectory(), dirs$outside)
+   expect_error(.rs.chat.withGuardrails(setwd(dirs$user)), "Action: setwd()", fixed = TRUE)
+
+})
+
+test_that("package code can change the working directory", {
+
+   dirs <- localWorkingDirectories()
+
+   inDirectory <- asPackageFunction(function(dir, callback)
+   {
+      old <- setwd(dir)
+      on.exit(setwd(old), add = TRUE)
+      callback()
+   })
+
+   path <- .rs.chat.withGuardrails(inDirectory(dirs$outside, getwd))
+   expect_equal(.rs.chat.normalizePath(path), dirs$outside)
+   expect_equal(workingDirectory(), dirs$user)
+
+   # as can a helper the package defines within one of its functions,
+   # whose environment is a call frame rather than the namespace
+   inDirectory <- asPackageFunction(function(dir, callback)
+   {
+      change <- function(dir) setwd(dir)
+      old <- change(dir)
+      on.exit(change(old), add = TRUE)
+      callback()
+   })
+
+   path <- .rs.chat.withGuardrails(inDirectory(dirs$outside, getwd))
+   expect_equal(.rs.chat.normalizePath(path), dirs$outside)
+   expect_equal(workingDirectory(), dirs$user)
+
+})
+
+test_that("a directory change that isn't checked doesn't widen where files may be edited", {
+
+   dirs <- localWorkingDirectories()
+
+   expect_error(
+      .rs.chat.withGuardrails(withr::with_dir(dirs$outside, writeLines("x", "file.txt"))),
+      "Action: writeLines()",
+      fixed = TRUE
+   )
+   expect_false(file.exists(file.path(dirs$outside, "file.txt")))
+
+   script <- file.path(dirs$outside, "script.R")
+   writeLines('writeLines("x", "file.txt")', script)
+   expect_error(
+      .rs.chat.withGuardrails(source(script, local = new.env(), chdir = TRUE)),
+      "Action: writeLines()",
+      fixed = TRUE
+   )
+   expect_false(file.exists(file.path(dirs$outside, "file.txt")))
+   expect_equal(workingDirectory(), dirs$user)
+
+})
+
+test_that("RStudio's own R code can change the working directory", {
+
+   dirs <- localWorkingDirectories()
+
+   # .rs.api.initializeProject() changes into the directory it is given
+   # to look for a project file, from a function defined within it
+   projectFile <- file.path(dirs$outside, "analysis.Rproj")
+   writeLines("Version: 1.0", projectFile)
+
+   path <- .rs.chat.withGuardrails(.rs.api.initializeProject(dirs$outside))
+   expect_equal(.rs.chat.normalizePath(path), .rs.chat.normalizePath(projectFile))
+   expect_equal(workingDirectory(), dirs$user)
+
+   # the name it would give a project file of its own, had it found none
+   expect_false(file.exists(file.path(dirs$outside, "outside.Rproj")))
+
+})
+
+test_that("isTrustedFunction tells package and RStudio code from agent code", {
+
+   expect_true(.rs.chat.isTrustedFunction(testthat::test_that))
+   expect_true(.rs.chat.isTrustedFunction(.rs.chat.allowedRoots))
+
+   expect_false(.rs.chat.isTrustedFunction(base::source))
+   expect_false(.rs.chat.isTrustedFunction(base::`+`))
+   expect_false(.rs.chat.isTrustedFunction(NULL))
+
+   fn <- function() NULL
+   environment(fn) <- globalenv()
+   expect_false(.rs.chat.isTrustedFunction(fn))
+
+   # an environment the user attached sits above tools:rstudio on the
+   # search path, so it has RStudio's environment among its enclosures
+   attach(NULL, name = "chat-guardrails-attached")
+   on.exit(detach("chat-guardrails-attached"), add = TRUE)
+   environment(fn) <- as.environment("chat-guardrails-attached")
+   expect_false(.rs.chat.isTrustedFunction(fn))
+
+   # a name alone doesn't put an environment on the search path
+   envir <- new.env(parent = asNamespace("testthat"))
+   attr(envir, "name") <- "private"
+   environment(fn) <- envir
+   expect_true(.rs.chat.isTrustedFunction(fn))
+
+})
+
+test_that("setwd() within a function passed to package code is still checked", {
+
+   dirs <- localWorkingDirectories()
+
+   # package frames on the stack don't make the caller of setwd() package code
+   invoke <- asPackageFunction(function(callback) callback())
+
+   expect_error(
+      .rs.chat.withGuardrails(invoke(function() setwd(dirs$outside))),
+      "Action: setwd()",
+      fixed = TRUE
+   )
+   expect_equal(workingDirectory(), dirs$user)
+
+})
+
+test_that("agent code can return to a filesystem root the user chose", {
+
+   dirs <- localWorkingDirectories()
+
+   # a filesystem root is never taken to contain other paths, so it can
+   # only be matched exactly
+   setwd("/")
+   root <- workingDirectory()
+
+   .rs.chat.withGuardrails(setwd(tempdir()))
+   expect_error(.rs.chat.withGuardrails(setwd(dirs$outside)), "Action: setwd()", fixed = TRUE)
+   .rs.chat.withGuardrails(setwd(root))
+   expect_equal(workingDirectory(), root)
+
+})
+
+test_that("source(chdir = TRUE) can change the working directory", {
+
+   dirs <- localWorkingDirectories()
+   script <- file.path(dirs$outside, "script.R")
+   writeLines("path <- getwd()", script)
+
+   envir <- new.env()
+   .rs.chat.withGuardrails(source(script, local = envir, chdir = TRUE))
+   expect_equal(.rs.chat.normalizePath(envir$path), dirs$outside)
+   expect_equal(workingDirectory(), dirs$user)
+
+   envir <- new.env()
+   .rs.chat.withGuardrails(sys.source(script, envir = envir, chdir = TRUE))
+   expect_equal(.rs.chat.normalizePath(envir$path), dirs$outside)
+   expect_equal(workingDirectory(), dirs$user)
+
+   # a reference taken before the guardrails were active is not the
+   # hooked function, but calls the hooked setwd() all the same
+   original <- base::source
+   envir <- new.env()
+   .rs.chat.withGuardrails(original(script, local = envir, chdir = TRUE))
+   expect_equal(.rs.chat.normalizePath(envir$path), dirs$outside)
+   expect_equal(workingDirectory(), dirs$user)
+
+   compiled <- file.path(dirs$outside, "script.Rc")
+   compiler::cmpfile(script, compiled, verbose = FALSE)
+   envir <- new.env()
+   .rs.chat.withGuardrails(compiler::loadcmp(compiled, envir = envir, chdir = TRUE))
+   expect_equal(.rs.chat.normalizePath(envir$path), dirs$outside)
+   expect_equal(workingDirectory(), dirs$user)
+
+})
+
+test_that("tools::checkMD5sums() can change the working directory", {
+
+   dirs <- localWorkingDirectories()
+   script <- file.path(dirs$outside, "script.R")
+   writeLines("x <- 1", script)
+   writeLines(sprintf("%s *script.R", tools::md5sum(script)), file.path(dirs$outside, "MD5"))
+
+   expect_true(.rs.chat.withGuardrails(tools::checkMD5sums("script", dir = dirs$outside)))
+   expect_equal(workingDirectory(), dirs$user)
+
+})
+
+test_that("setwd() reports the arguments it rejects itself", {
+
+   dirs <- localWorkingDirectories()
+
+   for (dir in list("", NA_character_, NA, character()))
+   {
+      expected <- tryCatch(setwd(dir), error = conditionMessage)
+      expect_error(.rs.chat.withGuardrails(setwd(dir)), expected, fixed = TRUE)
+   }
+
+   # it moves to the first element of a longer vector, and that's what's checked
+   expect_error(.rs.chat.withGuardrails(setwd(c(dirs$outside, dirs$user))), "Action: setwd()", fixed = TRUE)
+   expect_equal(workingDirectory(), dirs$user)
+
+   .rs.chat.withGuardrails(setwd(c("sub", dirs$outside)))
+   expect_equal(workingDirectory(), dirs$sub)
+
+})
+
+test_that("setwd() within a sourced script is still checked", {
+
+   dirs <- localWorkingDirectories()
+   script <- file.path(dirs$user, "script.R")
+   writeLines(sprintf("setwd(%s)", deparse(dirs$outside)), script)
+
+   expect_error(.rs.chat.withGuardrails(source(script)), "Action: setwd()", fixed = TRUE)
+   expect_error(.rs.chat.withGuardrails(source(script, chdir = TRUE)), "Action: setwd()", fixed = TRUE)
+   expect_equal(workingDirectory(), dirs$user)
+
+})
+
+test_that("source references can be read from the directory they were parsed in", {
+
+   dirs <- localWorkingDirectories()
+   writeLines("x <- 1", file.path(dirs$outside, "script.R"))
+
+   # a srcfile records the working directory it was created in, and
+   # reading its lines changes into that directory
+   setwd(dirs$outside)
+   srcfile <- srcfile("script.R")
+   setwd(dirs$user)
+
+   expect_equal(.rs.chat.withGuardrails(getSrcLines(srcfile, 1L, 1L)), "x <- 1")
+   expect_equal(workingDirectory(), dirs$user)
+
+})
+
+test_that("isWorkingDirectoryCaller recognizes only the functions that restore the directory", {
+
+   expect_true(.rs.chat.isWorkingDirectoryCaller(base::source))
+   expect_true(.rs.chat.isWorkingDirectoryCaller(base::sys.source))
+   expect_true(.rs.chat.isWorkingDirectoryCaller(base:::open.srcfile))
+   expect_true(.rs.chat.isWorkingDirectoryCaller(compiler::loadcmp))
+   expect_true(.rs.chat.isWorkingDirectoryCaller(tools::checkMD5sums))
+
+   expect_false(.rs.chat.isWorkingDirectoryCaller(base::setwd))
+   expect_false(.rs.chat.isWorkingDirectoryCaller(base::eval))
+   expect_false(.rs.chat.isWorkingDirectoryCaller(NULL))
 
 })
 
