@@ -157,6 +157,12 @@ delayedAssign(
       return(invisible(NULL))
    }
 
+   # an original still saved here is one that restoreBindings() couldn't put
+   # back, so the binding is still hooked; saving it again would replace the
+   # original with the hooked version
+   if (!is.null(.rs.chat.hookedBindings[[package]][[binding]]))
+      return(invisible(NULL))
+
    # grab the original binding
    original <- envir[[binding]]
 
@@ -873,10 +879,17 @@ delayedAssign(
    # them. One that arrives meanwhile is delivered once the restore is done.
    suspendInterrupts({
       packages <- ls(envir = .rs.chat.hookedBindings, all.names = TRUE)
-      allRestored <- TRUE
 
       for (package in packages)
       {
+         # its hooked bindings went with the namespace, and replaceBinding()
+         # would try to load it again, which fails if it can't be loaded
+         if (!isNamespaceLoaded(package))
+         {
+            rm(list = package, envir = .rs.chat.hookedBindings)
+            next
+         }
+
          originals <- .rs.chat.hookedBindings[[package]]
          bindings <- ls(envir = originals, all.names = TRUE)
 
@@ -889,7 +902,6 @@ delayedAssign(
                   "failed to restore binding '%s' in '%s': %s",
                   binding, package, conditionMessage(status)
                ))
-               allRestored <- FALSE
             }
             else
             {
@@ -897,13 +909,15 @@ delayedAssign(
             }
          }
 
-         # only remove the package entry if all bindings were restored
+         # only remove the package entry if all bindings were restored; a
+         # later restore tries the rest again
          if (length(ls(envir = originals, all.names = TRUE)) == 0L)
             rm(list = package, envir = .rs.chat.hookedBindings)
       }
 
-      if (allRestored)
-         .rs.setVar("chat.bindingsInjected", FALSE)
+      # cleared even if a binding couldn't be restored: the next
+      # injectBindings() must hook again the bindings that were
+      .rs.setVar("chat.bindingsInjected", FALSE)
    })
 })
 

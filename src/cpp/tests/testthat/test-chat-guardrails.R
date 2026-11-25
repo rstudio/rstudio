@@ -467,6 +467,67 @@ test_that("restoreBindings restores the bindings with interrupts suspended", {
 
 })
 
+test_that("restoreBindings skips the bindings of a namespace that was unloaded", {
+
+   # e.g. code that ran unloadNamespace("fs") while fs was hooked; loading
+   # fs again to restore its bindings fails if it can't be loaded (#19806)
+   package <- "rstudio.chat.unloaded"
+   expect_false(isNamespaceLoaded(package))
+
+   .rs.chat.injectBindings()
+   on.exit(.rs.chat.restoreBindings(), add = TRUE)
+
+   hooked <- .rs.chat.hookedBindings
+   hooked[[package]] <- list2env(list(f = function() NULL), parent = emptyenv())
+   on.exit({
+      if (exists(package, envir = hooked, inherits = FALSE))
+         rm(list = package, envir = hooked)
+   }, add = TRUE, after = FALSE)
+
+   expect_no_warning(.rs.chat.restoreBindings())
+   expect_false(exists(package, envir = hooked, inherits = FALSE))
+   expect_false(.rs.chat.bindingsInjected)
+
+})
+
+test_that("a binding that fails to restore doesn't turn off later checks", {
+
+   path <- file.path(path.expand("~"), "..", "nowhere", "file.txt")
+   original <- base::saveRDS
+
+   .rs.chat.injectBindings()
+   on.exit(.rs.chat.restoreBindings(), add = TRUE)
+
+   # tools:rstudio can't be mocked with local_mocked_bindings()
+   rsEnv <- as.environment("tools:rstudio")
+   replaceBinding <- get(".rs.replaceBinding", envir = rsEnv)
+   on.exit(
+      assign(".rs.replaceBinding", replaceBinding, envir = rsEnv),
+      add = TRUE,
+      after = FALSE
+   )
+   assign(".rs.replaceBinding", function(binding, package, override) {
+      if (identical(binding, "saveRDS"))
+         stop("simulated failure")
+      replaceBinding(binding, package, override)
+   }, envir = rsEnv)
+
+   expect_warning(
+      .rs.chat.restoreBindings(),
+      "failed to restore binding 'saveRDS'"
+   )
+   assign(".rs.replaceBinding", replaceBinding, envir = rsEnv)
+
+   # the next activation checks again (#19806), and hooking saveRDS(),
+   # which is still hooked, doesn't replace the original saved for it
+   expect_error(
+      .rs.chat.withGuardrails(writeLines("x", path)),
+      "agent file operations were blocked"
+   )
+   expect_identical(base::saveRDS, original)
+
+})
+
 # -- hasTrustedCallerImpl ----------------------------------------------------
 
 test_that("hasTrustedCallerImpl returns TRUE for safe functions", {
