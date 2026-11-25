@@ -21,6 +21,8 @@
 
 #include <cstdlib>
 
+#include <boost/assert.hpp>
+
 #include <core/FileLock.hpp>
 #include <core/Log.hpp>
 #include <core/ProgramStatus.hpp>
@@ -41,6 +43,7 @@
 #include <core/http/AsyncUriHandler.hpp>
 #include <core/http/TcpIpAsyncServer.hpp>
 #include <core/http/ProxyUtils.hpp>
+#include <core/http/RequestParser.hpp>
 
 #include <core/gwt/GwtLogHandler.hpp>
 #include <core/gwt/GwtFileHandler.hpp>
@@ -248,6 +251,11 @@ Error httpServerInit()
    s_pHttpServer->setAbortOnResourceError(true);
    s_pHttpServer->setScheduledCommandInterval(
                                     boost::posix_time::milliseconds(500));
+
+   // caps the bodies read into memory; 0, the default, leaves them unlimited
+   int maxRequestSizeMb = options().wwwMaxRequestSizeMb();
+   BOOST_ASSERT(maxRequestSizeMb >= 0);
+   http::RequestParser::setMaxBufferedBodySize(static_cast<uintmax_t>(maxRequestSizeMb) * 1024 * 1024);
 
    // initialize
    return rstudio::server::httpServerInit(s_pHttpServer.get());

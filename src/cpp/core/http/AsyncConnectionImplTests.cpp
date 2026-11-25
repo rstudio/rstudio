@@ -46,6 +46,8 @@
 
 #include <gtest/gtest.h>
 
+#include "RequestParserTestUtils.hpp"
+
 namespace rstudio {
 namespace core {
 namespace http {
@@ -1099,6 +1101,78 @@ TEST(AsyncConnectionImpl, UploadHandlerVisitedWithAFullRequestGetsItsWholeBody)
    EXPECT_TRUE(complete);
    EXPECT_EQ("form data", received);
    pConnection->close();
+}
+
+TEST(AsyncConnectionImpl, OversizedBodyIsRefusedWhileItIsStillBeingSent)
+{
+   ScopedMaxBufferedBodySize limit(1024);
+
+   boost::asio::io_context ioc;
+
+   tcp::acceptor acceptor(ioc, tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), 0));
+   unsigned short port = acceptor.local_endpoint().port();
+
+   int handlerCalls = 0;
+   boost::shared_ptr<TcpAsyncConnection> pConnection =
+      boost::make_shared<TcpAsyncConnection>(
+         ioc,
+         boost::shared_ptr<boost::asio::ssl::context>(),
+         /*requestSequence=*/1,
+         [](boost::shared_ptr<TcpAsyncConnection>, http::Request*) -> bool { return true; },
+         [&](boost::shared_ptr<TcpAsyncConnection>, http::Request*) {
+            handlerCalls++;
+         },
+         TcpAsyncConnection::ClosedHandler());
+
+   boost::system::error_code ec;
+   pConnection->socket().connect(
+      tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), port), ec);
+   ASSERT_FALSE(ec);
+
+   tcp::socket peer(ioc);
+   acceptor.accept(peer, ec);
+   ASSERT_FALSE(ec);
+
+   // the body below outgrows the socket buffers, so the server must be
+   // reading while it is written
+   bool closedByServer = false;
+   pConnection->startReading();
+   std::thread server([&]() {
+      ioc.run_for(std::chrono::seconds(10));
+      closedByServer = pConnection->closed();
+
+      // a server that never answers would leave the reads below blocked
+      pConnection->close();
+   });
+
+   // a body declared far larger than the limit, sent the way a client that
+   // has not yet seen the response sends it: far more of it than the server
+   // reads before refusing it. Were the server to close on that unread input,
+   // the reset would fail this write and take the response with it.
+   std::string request =
+         "POST /rpc/client_init HTTP/1.1\r\n"
+         "Host: localhost\r\n"
+         "Content-Type: application/json\r\n"
+         "Content-Length: 104857600\r\n"
+         "\r\n" + std::string(4 * 1024 * 1024, 'x');
+   boost::system::error_code writeEc;
+   boost::asio::write(peer, boost::asio::buffer(request), writeEc);
+   EXPECT_FALSE(writeEc) << writeEc.message();
+
+   std::string received;
+   boost::system::error_code readEc;
+   boost::asio::read(peer, boost::asio::dynamic_buffer(received), readEc);
+   EXPECT_EQ(boost::asio::error::eof, readEc) << readEc.message();
+   EXPECT_EQ(0u, received.find("HTTP/1.1 413 Content Too Large")) << received;
+
+   // the server stops discarding input once we close, rather than holding
+   // the connection open until its linger timeout
+   auto closeTime = std::chrono::steady_clock::now();
+   peer.close();
+   server.join();
+   EXPECT_TRUE(closedByServer);
+   EXPECT_LT(std::chrono::steady_clock::now() - closeTime, std::chrono::seconds(2));
+   EXPECT_EQ(0, handlerCalls);
 }
 
 } // namespace tests

@@ -288,6 +288,9 @@ async function spawnSandboxedRserver(): Promise<SpawnedServer | null> {
     // conf-file values (as --auth-none above already relies on).
     `--rsession-path=${rsessionWrapper}`,
   ];
+  // only when set: a server build that predates the option rejects it
+  if (requestBodyLimitMb() > 0)
+    args.push(`--www-max-request-size-mb=${requestBodyLimitMb()}`);
 
   console.log(`[server] spawning ${path.basename(rserverBin)} on port ${port}`);
   console.log(`[server] data dir: ${dataDir}`);
@@ -361,6 +364,18 @@ export function externalServerUrl(): string | null {
     url.port = process.env.PW_RSTUDIO_SERVER_PORT;
   }
   return url.toString().replace(/\/$/, '');
+}
+
+/**
+ * The server's www-max-request-size-mb (PW_REQUEST_BODY_LIMIT_MB), 0 when
+ * unset, as in rserver's own default. The in-tree spawn passes it to rserver;
+ * an external server has to be configured to match.
+ */
+export function requestBodyLimitMb(): number {
+  const mb = Number(process.env.PW_REQUEST_BODY_LIMIT_MB || '0');
+  if (!Number.isSafeInteger(mb) || mb < 0 || !Number.isSafeInteger(mb * 1024 * 1024))
+    throw new Error('PW_REQUEST_BODY_LIMIT_MB must be a non-negative integer number of megabytes');
+  return mb;
 }
 
 /** How long each sign-in attempt waits for the IDE console. */

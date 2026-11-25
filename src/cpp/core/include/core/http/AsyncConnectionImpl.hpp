@@ -17,6 +17,7 @@
 #define CORE_HTTP_ASYNC_CONNECTION_IMPL_HPP
 
 #include <atomic>
+#include <chrono>
 
 #include <boost/array.hpp>
 #include <boost/optional.hpp>
@@ -31,6 +32,7 @@
 #include <boost/asio/placeholders.hpp>
 #include <boost/asio/post.hpp>
 #include <boost/asio/ssl.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <boost/asio/ip/tcp.hpp>
 
 #include <shared_core/Error.hpp>
@@ -139,6 +141,7 @@ public:
         closed_(false),
         requestSequence_(requestSequence),
         bytesTransferred_(0),
+        lingerTimer_(ioContext),
         strand_(ioContext)
         
    {
@@ -681,11 +684,19 @@ private:
             }
             END_LOCK_MUTEX
 
-            // error - return bad request
+            // error - return content too large, or bad request
             if (status == RequestParser::error)
             {
-               response_.setStatusCode(http::status::BadRequest);
-               writeResponse();
+               if (requestParser_.bodyTooLarge())
+               {
+                  response_.setStatusCode(http::status::ContentTooLarge);
+                  writeResponseAndLinger();
+               }
+               else
+               {
+                  response_.setStatusCode(http::status::BadRequest);
+                  writeResponse();
+               }
             }
             
             // incomplete -- keep reading
@@ -847,6 +858,94 @@ private:
       CATCH_UNEXPECTED_EXCEPTION
    }
    
+   // Answers a request whose body we refuse to read, without losing the answer
+   // to a client that is still sending that body. Closing a socket that holds
+   // unread input makes the kernel reset the connection, and the client's next
+   // write then fails, usually before it has read the response. So, as nginx's
+   // lingering close does, we stop sending once the response is out, and
+   // discard the client's input until it closes or kLingerTimeout passes.
+   void writeResponseAndLinger()
+   {
+      response_.setHeader("Connection", "close");
+      writeResponse(
+         false,
+         boost::bind(&AsyncConnectionImpl<SocketType>::linger,
+                     AsyncConnectionImpl<SocketType>::shared_from_this(),
+                     boost::asio::placeholders::error));
+   }
+
+   void linger(const boost::system::error_code& ec)
+   {
+      try
+      {
+         // either the write failed, and handleWrite() closed the connection,
+         // or another writer won the response and owns the connection
+         if (ec)
+            return;
+
+         boost::system::error_code shutdownEc;
+         socket_->shutdown(boost::asio::socket_base::shutdown_send, shutdownEc);
+         if (shutdownEc)
+         {
+            close();
+            return;
+         }
+
+         lingerTimer_.expires_after(kLingerTimeout);
+         lingerTimer_.async_wait(
+            boost::asio::bind_executor(
+               strand_,
+               boost::bind(&AsyncConnectionImpl<SocketType>::handleLingerTimeout,
+                           AsyncConnectionImpl<SocketType>::shared_from_this(),
+                           boost::asio::placeholders::error)));
+
+         discardInput();
+      }
+      CATCH_UNEXPECTED_EXCEPTION
+   }
+
+   // reads beneath any SSL stream: the input is thrown away, so there is
+   // nothing to decrypt
+   void discardInput()
+   {
+      socket_->async_read_some(
+         boost::asio::buffer(buffer_),
+         boost::asio::bind_executor(
+            strand_,
+            boost::bind(&AsyncConnectionImpl<SocketType>::handleDiscard,
+                        AsyncConnectionImpl<SocketType>::shared_from_this(),
+                        boost::asio::placeholders::error)));
+   }
+
+   void handleDiscard(const boost::system::error_code& ec)
+   {
+      try
+      {
+         if (!ec)
+         {
+            discardInput();
+            return;
+         }
+
+         // the client closed, or the linger timeout closed the socket
+         lingerTimer_.cancel();
+         close();
+      }
+      CATCH_UNEXPECTED_EXCEPTION
+   }
+
+   void handleLingerTimeout(const boost::system::error_code& ec)
+   {
+      try
+      {
+         if (ec == boost::asio::error::operation_aborted)
+            return;
+
+         close();
+      }
+      CATCH_UNEXPECTED_EXCEPTION
+   }
+
    void readSome()
    {
       socketOperations_->asyncReadSome(boost::asio::buffer(buffer_),
@@ -932,6 +1031,10 @@ private:
    size_t bytesTransferred_;
 
    boost::any connectionData_;
+
+   // long enough for a client to read the response and stop sending
+   static constexpr std::chrono::seconds kLingerTimeout{5};
+   boost::asio::steady_timer lingerTimer_;
 
 protected:
    boost::asio::io_context::strand strand_;

@@ -31,6 +31,8 @@
 
 #include <gtest/gtest.h>
 
+#include "RequestParserTestUtils.hpp"
+
 namespace rstudio {
 namespace core {
 namespace http {
@@ -745,6 +747,102 @@ TEST(HttpTest, FormParsingOuterBoundaryIsPrefixOfNested)
    EXPECT_FALSE(file.empty());
    EXPECT_EQ(file.name, "nested.dat");
    EXPECT_TRUE(file.contents == nested) << "nested multipart was split by the outer parser";
+}
+
+namespace {
+
+std::string postRequest(const std::string& contentType, std::size_t contentLength, std::size_t bodySent)
+{
+   return "POST /test HTTP/1.1\r\n"
+          "Host: example.com\r\n"
+          "Content-Type: " + contentType + "\r\n"
+          "Content-Length: " + std::to_string(contentLength) + "\r\n"
+          "\r\n" + std::string(bodySent, 'x');
+}
+
+RequestParser::status parseAfterHeaders(RequestParser& parser, Request& request, const std::string& requestStr)
+{
+   const char* begin = requestStr.c_str();
+   const char* end = begin + requestStr.size();
+   RequestParser::status status = parser.parse(request, begin, end);
+   if (status != RequestParser::headers_parsed)
+      return status;
+
+   return parser.parse(request, begin, end);
+}
+
+} // anonymous namespace
+
+TEST(HttpTest, BufferedBodiesAreUnlimitedByDefault)
+{
+   EXPECT_EQ(0u, RequestParser::maxBufferedBodySize());
+}
+
+TEST(HttpTest, BufferedBodyOverTheLimitIsRefusedBeforeItIsRead)
+{
+   ScopedMaxBufferedBodySize limit(1000);
+
+   // only the first bytes of a body declared too large have arrived
+   RequestParser parser;
+   Request request;
+   EXPECT_EQ(RequestParser::error, parseAfterHeaders(parser, request, postRequest("text/plain", 1001, 10)));
+   EXPECT_TRUE(parser.bodyTooLarge());
+   EXPECT_TRUE(request.body().empty());
+}
+
+TEST(HttpTest, BufferedBodyOverTheLimitIsRefusedBeforeAnyOfItArrives)
+{
+   // a client sending "Expect: 100-continue" holds its body back until it
+   // hears from us, so the refusal cannot wait for a body byte
+   ScopedMaxBufferedBodySize limit(1000);
+
+   RequestParser parser;
+   Request request;
+   EXPECT_EQ(RequestParser::error, parseAfterHeaders(parser, request, postRequest("text/plain", 1001, 0)));
+   EXPECT_TRUE(parser.bodyTooLarge());
+}
+
+TEST(HttpTest, BufferedBodyWithinTheLimitIsRead)
+{
+   ScopedMaxBufferedBodySize limit(1000);
+
+   RequestParser parser;
+   Request request;
+   EXPECT_EQ(RequestParser::complete, parseAfterHeaders(parser, request, postRequest("text/plain", 1000, 1000)));
+   EXPECT_FALSE(parser.bodyTooLarge());
+   EXPECT_EQ(1000u, request.body().size());
+}
+
+TEST(HttpTest, BodyNotStreamedToTheFormHandlerIsLimited)
+{
+   // an upload handler only streams multipart/form-data; any other body
+   // sent to it is buffered like a request with no form handler
+   ScopedMaxBufferedBodySize limit(1000);
+
+   int handlerCalls = 0;
+   RequestParser parser;
+   parser.setFormHandler([&](const std::string&, bool)
+   {
+      ++handlerCalls;
+      return true;
+   });
+
+   Request request;
+   EXPECT_EQ(RequestParser::error, parseAfterHeaders(parser, request, postRequest("text/plain", 5000, 10)));
+   EXPECT_TRUE(parser.bodyTooLarge());
+   EXPECT_EQ(0, handlerCalls);
+}
+
+TEST(HttpTest, StreamedFormIsNotLimited)
+{
+   FormTester form;
+   form.complexRequest(std::string(5000, 'x'), "application/octet-stream");
+   ScopedMaxBufferedBodySize limit(1000);
+
+   ASSERT_EQ(RequestParser::headers_parsed, form.parse());
+   ASSERT_EQ(RequestParser::form_complete, form.parse());
+   EXPECT_FALSE(form.validationError) << form.validationError;
+   EXPECT_FALSE(form.parser.bodyTooLarge());
 }
 
 } // namespace tests

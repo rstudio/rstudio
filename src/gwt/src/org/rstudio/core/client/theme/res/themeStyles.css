@@ -1905,9 +1905,18 @@ body.windows .toolbar {
 .restrictedModeIcon {
    display: inline-flex;
    align-items: center;
-   opacity: 0.7;
+   border: none;
+   background: transparent;
+   padding: 0;
+   color: inherit;
+   font: inherit;
    margin-right: 4px;
    cursor: pointer;
+}
+
+/* Dims the lock only, so the button's focus ring keeps full contrast */
+.restrictedModeIcon svg {
+   opacity: 0.7;
 }
 
 .emptyProjectMenu .toolbarButtonRightImage {

@@ -16,11 +16,29 @@
 
 #include <core/http/RequestParser.hpp>
 
+#include <atomic>
+
 #include <boost/lexical_cast.hpp>
 
 namespace rstudio {
 namespace core {
 namespace http {
+
+namespace {
+
+std::atomic<uintmax_t> s_maxBufferedBodySize(0);
+
+} // anonymous namespace
+
+void RequestParser::setMaxBufferedBodySize(uintmax_t maxSize)
+{
+   s_maxBufferedBodySize = maxSize;
+}
+
+uintmax_t RequestParser::maxBufferedBodySize()
+{
+   return s_maxBufferedBodySize;
+}
 
 RequestParser::RequestParser()
    :state_(method_start),
@@ -28,6 +46,7 @@ RequestParser::RequestParser()
      parsingContentLength_(false),
      parsingBody_(false),
      checkContentLength_(false),
+     bodyTooLarge_(false),
      isForm_(false),
      paused_(false),
      bufferPos_(boost::none),
@@ -44,6 +63,7 @@ void RequestParser::reset()
   parsingContentLength_ = false;
   parsingBody_ = false;
   checkContentLength_ = false;
+  bodyTooLarge_ = false;
   isForm_ = paused_ = false;
   bufferPos_ = boost::none;
   bufferLen_ = 0;
