@@ -34,8 +34,9 @@ import org.rstudio.studio.client.workbench.events.WorkbenchLoadedEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -66,16 +67,21 @@ public class TrustPresenter implements WorkbenchLoadedEvent.Handler,
       // Initially hidden; shown when the project is untrusted
       String lockSvg =
          "<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' " +
+         "aria-hidden='true' focusable='false' " +
          "viewBox='0 0 24 24' fill='none' stroke='currentColor' " +
          "stroke-linecap='round' stroke-linejoin='round'>" +
          "<path d='M7 9V7a5 5 0 0 1 10 0v2' stroke-width='2.5'/>" +
          "<rect x='4' y='9' width='16' height='14' rx='3' ry='3' " +
               "fill='currentColor' stroke='none'/>" +
          "</svg>";
-      restrictedModeIcon_ = new HTML(lockSvg);
-      restrictedModeIcon_.setTitle(appConstants_.restrictedModeTitle());
-      restrictedModeIcon_.addStyleName(
+      // A native button, so the toolbar's arrow-key navigation stops on it and
+      // Enter and Space activate it; the title adds why the project is restricted.
+      restrictedModeIcon_ = new Button(lockSvg);
+      restrictedModeIcon_.setStylePrimaryName(
             ThemeResources.INSTANCE.themeStyles().restrictedModeIcon());
+      restrictedModeIcon_.setTitle(appConstants_.restrictedModeTitle());
+      Roles.getButtonRole().setAriaLabelProperty(
+            restrictedModeIcon_.getElement(), appConstants_.restrictedModeButtonLabel());
       restrictedModeIcon_.setVisible(false);
       restrictedModeIcon_.addClickHandler(event ->
             commands_.showTrustRequestDialog().execute());
@@ -213,7 +219,7 @@ public class TrustPresenter implements WorkbenchLoadedEvent.Handler,
    private final Session session_;
    private final Server server_;
    private final GlobalDisplay globalDisplay_;
-   private final HTML restrictedModeIcon_;
+   private final Button restrictedModeIcon_;
    private TrustRequestDialog dialog_;
 
    // tracks last trust status to suppress re-showing dialog on restart
