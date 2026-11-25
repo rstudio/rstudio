@@ -46,8 +46,10 @@ delayedAssign(
 
 # Each hooked namespace gets its own environment within this container,
 # keyed by the namespace name. The per-namespace environment maps
-# binding names to their original values.
+# binding names to their original values. chat.hookedNamespaces maps the
+# same names to the namespace environment the originals were saved from.
 .rs.setVar("chat.hookedBindings", new.env(parent = emptyenv()))
+.rs.setVar("chat.hookedNamespaces", new.env(parent = emptyenv()))
 .rs.setVar("chat.bindingsInjected", FALSE)
 
 # Cached state for guardrail checks: the sampled umask, the memoized
@@ -157,17 +159,22 @@ delayedAssign(
       return(invisible(NULL))
    }
 
+   # create the per-namespace storage for original bindings, replacing any
+   # left from a namespace since replaced (see chat.isHookedNamespaceCurrent)
+   if (!exists(package, envir = .rs.chat.hookedBindings, inherits = FALSE) ||
+       !.rs.chat.isHookedNamespaceCurrent(package))
+   {
+      .rs.chat.hookedBindings[[package]] <- new.env(parent = emptyenv())
+      .rs.chat.hookedNamespaces[[package]] <- envir
+   }
+
    # an original still saved is one that restoreBindings() couldn't put back,
    # and the binding may still be hooked, in the namespace, on the search
    # path, or both: hook it from the saved original instead
    original <- .rs.chat.hookedBindings[[package]][[binding]]
-   if (is.null(original) || !.rs.chat.isOriginalCurrent(original, package))
+   if (is.null(original))
    {
       original <- envir[[binding]]
-
-      # get or create the per-namespace storage for original bindings
-      if (!exists(package, envir = .rs.chat.hookedBindings, inherits = FALSE))
-         .rs.chat.hookedBindings[[package]] <- new.env(parent = emptyenv())
       .rs.chat.hookedBindings[[package]][[binding]] <- original
    }
 
@@ -187,19 +194,19 @@ delayedAssign(
    invisible(original)
 })
 
-#' Check whether a saved original belongs to its package's loaded namespace.
+#' Check whether the originals saved for a package came from its loaded
+#' namespace.
 #'
-#' A namespace unloaded since the original was saved, or replaced by loading
-#' the package again, took its hooked bindings with it, and a namespace
-#' loaded since has bindings of its own that were never hooked. Either way,
-#' the original must not be written back or hooked again.
+#' A namespace unloaded since they were saved, or replaced by loading the
+#' package again, took its hooked bindings with it, and a namespace loaded
+#' since has bindings of its own that were never hooked. Either way, the
+#' originals must not be written back or hooked again.
 #'
-#' @param original A function saved by `chat.addPreflightHook()`.
-#' @param package The name of the package it was saved from.
-.rs.addFunction("chat.isOriginalCurrent", function(original, package)
+#' @param package The name of the package.
+.rs.addFunction("chat.isHookedNamespaceCurrent", function(package)
 {
    isNamespaceLoaded(package) &&
-      identical(environment(original), asNamespace(package))
+      identical(.rs.chat.hookedNamespaces[[package]], asNamespace(package))
 })
 
 .rs.addFunction("chat.addPreflightHooks", function(package, hooks)
@@ -901,20 +908,15 @@ delayedAssign(
          originals <- .rs.chat.hookedBindings[[package]]
          bindings <- ls(envir = originals, all.names = TRUE)
 
-         for (binding in bindings)
+         # nothing to restore (see chat.isHookedNamespaceCurrent); for a
+         # namespace that was unloaded, replaceBinding() would also load it
+         # again, which fails if it can no longer be loaded
+         if (!.rs.chat.isHookedNamespaceCurrent(package))
+            rm(list = bindings, envir = originals)
+
+         for (binding in ls(envir = originals, all.names = TRUE))
          {
-            original <- originals[[binding]]
-
-            # nothing to restore (see chat.isOriginalCurrent); for a namespace
-            # that was unloaded, replaceBinding() would also load it again,
-            # which fails if it can no longer be loaded
-            if (!.rs.chat.isOriginalCurrent(original, package))
-            {
-               rm(list = binding, envir = originals)
-               next
-            }
-
-            status <- .rs.tryCatch(.rs.replaceBinding(binding, package, original))
+            status <- .rs.tryCatch(.rs.replaceBinding(binding, package, originals[[binding]]))
             if (inherits(status, "error"))
             {
                failures <- c(failures, sprintf(
@@ -931,7 +933,11 @@ delayedAssign(
          # only remove the package entry if all bindings were restored; a
          # later restore tries the rest again
          if (length(ls(envir = originals, all.names = TRUE)) == 0L)
+         {
             rm(list = package, envir = .rs.chat.hookedBindings)
+            if (exists(package, envir = .rs.chat.hookedNamespaces, inherits = FALSE))
+               rm(list = package, envir = .rs.chat.hookedNamespaces)
+         }
       }
 
       # cleared even if a binding couldn't be restored: the next

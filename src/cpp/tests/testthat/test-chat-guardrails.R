@@ -467,61 +467,102 @@ test_that("restoreBindings restores the bindings with interrupts suspended", {
 
 })
 
-test_that("restoreBindings doesn't load a namespace that was unloaded", {
+test_that("restoreBindings leaves alone a namespace that was unloaded or loaded again", {
 
    # e.g. code that ran unloadNamespace("fs") while fs was hooked; loading
-   # fs again to restore its bindings fails if it can't be loaded (#19806)
+   # fs again to restore its bindings fails if it can't be loaded, and a
+   # namespace loaded since has bindings that were never hooked (#19806)
    package <- "splines"
    skip_if(isNamespaceLoaded(package), "splines is already loaded")
 
    hooked <- .rs.chat.hookedBindings
+   namespaces <- .rs.chat.hookedNamespaces
    on.exit(.rs.chat.restoreBindings(), add = TRUE)
    on.exit({
       if (exists(package, envir = hooked, inherits = FALSE))
          rm(list = package, envir = hooked)
+      if (exists(package, envir = namespaces, inherits = FALSE))
+         rm(list = package, envir = namespaces)
       if (isNamespaceLoaded(package))
          unloadNamespace(package)
    }, add = TRUE, after = FALSE)
 
-   .rs.chat.injectBindings()
-   hooked[[package]] <- list2env(list(bs = function() NULL), parent = emptyenv())
+   # stands in for an original saved from the namespace by injectBindings()
+   original <- function(...) NULL
 
+   # unloaded
+   loadNamespace(package)
+   hooked[[package]] <- list2env(list(bs = original), parent = emptyenv())
+   namespaces[[package]] <- asNamespace(package)
+   unloadNamespace(package)
+
+   .rs.chat.injectBindings()
    expect_no_warning(.rs.chat.restoreBindings())
    expect_false(isNamespaceLoaded(package))
    expect_false(exists(package, envir = hooked, inherits = FALSE))
    expect_false(.rs.chat.bindingsInjected)
 
+   # unloaded, and loaded again
+   loadNamespace(package)
+   hooked[[package]] <- list2env(list(bs = original), parent = emptyenv())
+   namespaces[[package]] <- asNamespace(package)
+   unloadNamespace(package)
+   loadNamespace(package)
+   bs <- get("bs", envir = asNamespace(package))
+
+   .rs.chat.injectBindings()
+   expect_no_warning(.rs.chat.restoreBindings())
+   expect_identical(get("bs", envir = asNamespace(package)), bs)
+   expect_false(exists(package, envir = hooked, inherits = FALSE))
+   expect_false(.rs.chat.bindingsInjected)
+
 })
 
-test_that("originals saved from a namespace that was replaced aren't used", {
+test_that("originals saved from a namespace that was replaced aren't hooked from", {
 
    # e.g. one loaded again since: its bindings were never hooked (#19806)
-   stale <- function(...) NULL
-   environment(stale) <- new.env()
-
-   before <- list(download.file = utils::download.file, median = stats::median)
-   hooked <- .rs.chat.hookedBindings
+   path <- file.path(tempfile(), ".ssh", "file.txt")
+   before <- utils::download.file
    on.exit({
-      if (!identical(utils::download.file, before$download.file))
-         .rs.replaceBinding("download.file", "utils", before$download.file)
-      if (!identical(stats::median, before$median))
-         .rs.replaceBinding("median", "stats", before$median)
-      if (exists("stats", envir = hooked, inherits = FALSE))
-         rm(list = "stats", envir = hooked)
+      if (!identical(utils::download.file, before))
+         .rs.replaceBinding("download.file", "utils", before)
    }, add = TRUE)
 
-   # not hooked from, by the next activation
-   hooked[["utils"]] <- list2env(list(download.file = stale), parent = emptyenv())
-   expect_no_warning(.rs.chat.withGuardrails(NULL))
-   expect_identical(utils::download.file, before$download.file)
+   stale <- function(...) NULL
+   .rs.chat.hookedBindings[["utils"]] <- list2env(
+      list(download.file = stale),
+      parent = emptyenv()
+   )
+   .rs.chat.hookedNamespaces[["utils"]] <- new.env()
 
-   # nor written back, by the restore
-   .rs.chat.injectBindings()
-   on.exit(.rs.chat.restoreBindings(), add = TRUE, after = FALSE)
-   hooked[["stats"]] <- list2env(list(median = stale), parent = emptyenv())
-   expect_no_warning(.rs.chat.restoreBindings())
-   expect_identical(stats::median, before$median)
-   expect_false(exists("stats", envir = hooked, inherits = FALSE))
+   # hooked from the current binding instead
+   expect_error(
+      .rs.chat.withGuardrails(utils::download.file("http://127.0.0.1:9/", path)),
+      "Action: download.file()",
+      fixed = TRUE
+   )
+   expect_identical(utils::download.file, before)
+   expect_identical(get("download.file", envir = as.environment("package:utils")), before)
+
+})
+
+test_that("an original defined outside its namespace is still restored", {
+
+   # e.g. one mocked in the namespace before the guardrails were activated
+   before <- utils::download.file
+   attached <- as.environment("package:utils")
+   on.exit({
+      .rs.replaceBindingImpl(asNamespace("utils"), "download.file", before)
+      .rs.replaceBindingImpl(attached, "download.file", before)
+   }, add = TRUE)
+
+   replacement <- function(url, destfile, ...) "replaced"
+   .rs.replaceBindingImpl(asNamespace("utils"), "download.file", replacement)
+   .rs.replaceBindingImpl(attached, "download.file", replacement)
+
+   .rs.chat.withGuardrails(NULL)
+   expect_identical(body(utils::download.file), body(replacement))
+   expect_identical(body(get("download.file", envir = attached)), body(replacement))
 
 })
 
