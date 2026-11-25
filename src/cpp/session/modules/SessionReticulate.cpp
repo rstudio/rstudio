@@ -293,15 +293,5 @@ Error initialize()
 
 } // end namespace reticulate
 } // end namespace modules
-
-namespace module_context {
-
-bool isPythonReplActive()
-{
-   return modules::reticulate::isReplActive();
-}
-
-} // end namespace module_context
-
 } // end namespace session
 } // end namespace rstudio

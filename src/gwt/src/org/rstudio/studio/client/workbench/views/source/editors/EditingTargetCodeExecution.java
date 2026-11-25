@@ -460,11 +460,6 @@ public class EditingTargetCodeExecution
       }
    }
    
-   public void setLastExecuted(Position start, Position end)
-   {
-      setLastExecuted(start, end, "R");
-   }
-
    // 'language' is the one the code ran in, for Re-Run Previous to use again
    public void setLastExecuted(Position start, Position end, String language)
    {

@@ -2729,8 +2729,7 @@ assign(x = ".rs.acCompletionTypes",
    filePath <- .rs.setEncodingUnknownToUTF8(filePath)
    
    # If the R console is requesting completions, but the Julia REPL is
-   # active, then delegate to that. (Its readline() is on the stack, so this
-   # comes before the check below.)
+   # active, then delegate to that.
    if (isConsole && .rs.julia.replIsActive())
       return(.rs.julia.getCompletions(line))
 

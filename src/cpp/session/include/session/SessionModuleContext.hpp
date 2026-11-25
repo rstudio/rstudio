@@ -1109,8 +1109,6 @@ void onBackgroundProcessing(bool isIdle);
 
 void initializeConsoleCtrlHandler();
 
-bool isPythonReplActive();
-
 
 core::Error perFilePathStorage(const std::string& scope,
                                const core::FilePath& filePath,
