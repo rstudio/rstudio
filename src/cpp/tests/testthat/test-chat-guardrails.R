@@ -500,6 +500,7 @@ test_that("restoreBindings leaves alone a namespace that was unloaded or loaded 
    expect_no_warning(.rs.chat.restoreBindings())
    expect_false(isNamespaceLoaded(package))
    expect_false(exists(package, envir = hooked, inherits = FALSE))
+   expect_false(exists(package, envir = namespaces, inherits = FALSE))
    expect_false(.rs.chat.bindingsInjected)
 
    # unloaded, and loaded again
@@ -514,6 +515,7 @@ test_that("restoreBindings leaves alone a namespace that was unloaded or loaded 
    expect_no_warning(.rs.chat.restoreBindings())
    expect_identical(get("bs", envir = asNamespace(package)), bs)
    expect_false(exists(package, envir = hooked, inherits = FALSE))
+   expect_false(exists(package, envir = namespaces, inherits = FALSE))
    expect_false(.rs.chat.bindingsInjected)
 
 })
@@ -524,9 +526,10 @@ test_that("originals saved from a namespace that was replaced aren't hooked from
    path <- file.path(tempfile(), ".ssh", "file.txt")
    before <- utils::download.file
    attached <- as.environment("package:utils")
+   beforeAttached <- get("download.file", envir = attached)
    on.exit({
       .rs.replaceBindingImpl(asNamespace("utils"), "download.file", before)
-      .rs.replaceBindingImpl(attached, "download.file", before)
+      .rs.replaceBindingImpl(attached, "download.file", beforeAttached)
    }, add = TRUE)
 
    stale <- function(...) NULL
@@ -543,7 +546,7 @@ test_that("originals saved from a namespace that was replaced aren't hooked from
       fixed = TRUE
    )
    expect_identical(utils::download.file, before)
-   expect_identical(get("download.file", envir = attached), before)
+   expect_identical(get("download.file", envir = attached), beforeAttached)
 
 })
 
@@ -553,9 +556,10 @@ test_that("an original defined outside its namespace is still restored", {
    path <- file.path(tempfile(), ".ssh", "file.txt")
    before <- utils::download.file
    attached <- as.environment("package:utils")
+   beforeAttached <- get("download.file", envir = attached)
    on.exit({
       .rs.replaceBindingImpl(asNamespace("utils"), "download.file", before)
-      .rs.replaceBindingImpl(attached, "download.file", before)
+      .rs.replaceBindingImpl(attached, "download.file", beforeAttached)
    }, add = TRUE)
 
    replacement <- function(url, destfile, ...) "replaced"
@@ -583,6 +587,7 @@ test_that("a binding that fails to restore doesn't turn off later checks", {
       download.file = utils::download.file,
       write.table = utils::write.table
    )
+   beforeAttached <- mget(c("download.file", "write.table"), envir = attached)
    on.exit(.rs.chat.restoreBindings(), add = TRUE)
 
    # in case the restore above leaves any of them hooked
@@ -591,7 +596,7 @@ test_that("a binding that fails to restore doesn't turn off later checks", {
       for (name in c("download.file", "write.table"))
       {
          .rs.replaceBindingImpl(asNamespace("utils"), name, before[[name]])
-         .rs.replaceBindingImpl(attached, name, before[[name]])
+         .rs.replaceBindingImpl(attached, name, beforeAttached[[name]])
       }
    }, add = TRUE)
 
@@ -636,7 +641,7 @@ test_that("a binding that fails to restore doesn't turn off later checks", {
    expect_match(errors[[1L]], "Action: write.table()", fixed = TRUE)
    expect_match(errors[[2L]], "Action: writeLines()", fixed = TRUE)
    expect_identical(utils::write.table, before$write.table)
-   expect_identical(get("write.table", envir = attached), before$write.table)
+   expect_identical(get("write.table", envir = attached), beforeAttached$write.table)
 
    # likewise when options(warn = 2) makes the restore's warning an error,
    # and with a binding left hooked as well
@@ -656,17 +661,19 @@ test_that("a binding that fails to restore doesn't turn off later checks", {
    # the bindings after the failures were still restored
    expect_false(.rs.chat.bindingsInjected)
    expect_identical(utils::download.file, before$download.file)
-   expect_identical(get("download.file", envir = attached), before$download.file)
+   expect_identical(get("download.file", envir = attached), beforeAttached$download.file)
 
-   # and the next activation hooks writeChar() from its saved original, not
-   # from the hooked version
-   expect_error(
-      .rs.chat.withGuardrails(writeLines("x", path)),
-      "agent file operations were blocked"
-   )
+   # and the next activation checks again, hooking writeChar() from its
+   # saved original rather than from the hooked version
+   errors <- .rs.chat.withGuardrails(list(
+      tryCatch(writeChar("x", path), error = conditionMessage),
+      tryCatch(writeLines("x", path), error = conditionMessage)
+   ))
+   expect_match(errors[[1L]], "Action: writeChar()", fixed = TRUE)
+   expect_match(errors[[2L]], "Action: writeLines()", fixed = TRUE)
    expect_identical(base::writeChar, before$writeChar)
    expect_identical(utils::write.table, before$write.table)
-   expect_identical(get("write.table", envir = attached), before$write.table)
+   expect_identical(get("write.table", envir = attached), beforeAttached$write.table)
 
 })
 
