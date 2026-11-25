@@ -120,9 +120,14 @@ public class ShellWidget extends Composite implements ShellDisplay,
          syncOutputStyles();
       }
 
+      // Pending input only echoes a submitted command until R echoes it into
+      // the output, so it isn't a tab stop, and it stays hidden until there's
+      // a command to show.
       pendingInput_ = new PreWidget();
+      pendingInput_.getElement().removeAttribute("tabindex");
       pendingInput_.setStyleName(styles_.output());
       pendingInput_.addClickHandler(secondaryInputHandler);
+      pendingInput_.setVisible(false);
 
       prompt_ = new HTML();
       prompt_.setStylePrimaryName(styles_.prompt());
