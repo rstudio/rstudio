@@ -110,7 +110,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       container_ = new DockLayoutPanel(Unit.PX);
 
       output_ = new ConsoleOutputWriter(RStudioGinjector.INSTANCE.getVirtualConsoleFactory(), outputLabel);
-      output_.getWidget().setStylePrimaryName(styles_.output());
+      output_.getWidget().addStyleName(styles_.output());
       output_.getWidget().addClickHandler(secondaryInputHandler);
       ElementIds.assignElementId(output_.getElement(), ElementIds.CONSOLE_OUTPUT);
       output_.getWidget().addPasteHandler(secondaryInputHandler);

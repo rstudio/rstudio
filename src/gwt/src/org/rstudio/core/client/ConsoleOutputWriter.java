@@ -26,6 +26,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.SpanElement;
 
+import elemental2.dom.DomGlobal;
 import elemental2.dom.FocusEvent;
 import elemental2.dom.HTMLElement;
 import elemental2.dom.KeyboardEvent;
@@ -41,6 +42,7 @@ public class ConsoleOutputWriter
    {
       vcFactory_ = vcFactory;
       output_ = new PreWidget();
+      output_.getElement().addClassName(OUTPUT_CLASS);
       if (!StringUtil.isNullOrEmpty(a11yLabel))
       {
          output_.getElement().setAttribute("aria-label", a11yLabel);
@@ -51,8 +53,9 @@ public class ConsoleOutputWriter
 
    /**
     * Mark the output while the mouse put focus in it, so its focus outline
-    * stays hidden after a drag-select and a key press such as Shift or Cmd+C,
-    * which the browser would otherwise count as keyboard focus.
+    * stays hidden after a drag-select and a key press such as Shift or Cmd+C.
+    * The mark survives the window losing focus, since focus comes back to the
+    * same element without another mouse press.
     */
    private void trackPointerFocus()
    {
@@ -66,6 +69,8 @@ public class ConsoleOutputWriter
       });
       el.addEventListener("focusout", event ->
       {
+         if (!DomGlobal.document.hasFocus())
+            return;
          elemental2.dom.Node next = Js.uncheckedCast(((FocusEvent) event).relatedTarget);
          if (next == null || !el.contains(next))
             el.classList.remove(POINTER_FOCUS_CLASS);
@@ -225,7 +230,8 @@ public class ConsoleOutputWriter
    
    public static final String OUTPUT_ERROR_CLASS = "__error";
 
-   // Not obfuscated: focus-visible.css, loaded as plain CSS, refers to it.
+   // Not obfuscated: focus-visible.css, loaded as plain CSS, refers to them.
+   private static final String OUTPUT_CLASS = "rstudio-console-output";
    private static final String POINTER_FOCUS_CLASS = "rstudio-pointer-focus";
 
    private int maxLines_ = -1;
