@@ -16,6 +16,10 @@
 # NOTE: The guardrails implemented here are intended to prevent accidental
 # misuse and unintentionally destructive AI-generated code. They should
 # not be relied upon to defend against deliberately malicious code.
+#
+# Only the R functions hooked in chat.injectBindings are checked. Files
+# written by other means (e.g. a subprocess started with system(), or
+# package code that writes from compiled code) are out of scope.
 
 # Base package names, excluded from "trusted caller" detection
 # because the agent could call them directly to access files.
@@ -53,8 +57,25 @@ delayedAssign(
 # Cached state for guardrail checks: the sampled umask, the memoized
 # allowed roots, and the normalized home directory. See the individual
 # accessors (chat.umaskMasksWorldRead, chat.allowedRoots,
-# chat.homeDirectory) for the caching rationale.
+# chat.homeDirectory) for the caching rationale. Also holds the working
+# directories tracked by chat.recordUserWorkingDirectory.
 .rs.setVar("chat.guardrailState", new.env(parent = emptyenv()))
+
+# Functions from base packages that may change the working directory when
+# they call setwd() themselves (see chat.validateWorkingDirectory), as each
+# changes into a directory on its caller's behalf and restores the previous
+# one on exit: source(), sys.source() and compiler::loadcmp() for
+# 'chdir = TRUE', tools::checkMD5sums(), and the srcfile helpers, which read
+# a parsed file from the directory it was parsed in. Functions that write
+# in the directory they change into, such as tools::buildVignette(), are
+# left to the check: some of that writing (e.g. pandoc's) is out of the
+# hooks' sight.
+.rs.setVar("chat.workingDirectoryCallers", list(
+   base     = c("source", "sys.source", "open.srcfile"),
+   compiler = c("loadcmp"),
+   tools    = c("checkMD5sums"),
+   utils    = c(".normalizePath")
+))
 
 
 # PCRE patterns matched against normalized paths to deny reads.
@@ -391,7 +412,11 @@ delayedAssign(
 #' Edits are allowed within:
 #'
 #' - The R temporary directory
-#' - The current working directory
+#' - The working directory the user chose (see
+#'   `chat.recordUserWorkingDirectory()`), rather than the current one:
+#'   code exempt from the `setwd()` check (see
+#'   `chat.validateWorkingDirectory()`) can move anywhere, and the right to
+#'   edit files must not move with it
 #' - The RStudio user scratch path (tool-invoked code may update files there)
 #' - R library paths (e.g. for package installation)
 #' - The user library (R_LIBS_USER), even before it has been created
@@ -403,7 +428,7 @@ delayedAssign(
 #' permission check, since the session itself creates files there.
 #'
 #' The result is memoized on the inputs that can change while the
-#' session runs (working directory, library paths, `R_LIBS_USER`):
+#' session runs (that working directory, library paths, `R_LIBS_USER`):
 #' this runs on every hooked file operation, and enumerating the
 #' roots is comparatively expensive (the scratch-path lookup alone
 #' touches the filesystem).
@@ -411,14 +436,16 @@ delayedAssign(
 #' @return A character vector of normalized directory paths.
 .rs.addFunction("chat.allowedRoots", function()
 {
-   userLibs <- strsplit(Sys.getenv("R_LIBS_USER"), .Platform$path.sep, fixed = TRUE)[[1L]]
-   key <- list(getwd(), .libPaths(), userLibs)
-
    state <- .rs.chat.guardrailState
+   userDir <- state$userWorkingDirectory
+
+   userLibs <- strsplit(Sys.getenv("R_LIBS_USER"), .Platform$path.sep, fixed = TRUE)[[1L]]
+   key <- list(userDir, .libPaths(), userLibs)
+
    if (identical(state$allowedRootsKey, key))
       return(state$allowedRoots)
 
-   roots <- c(tempdir(), getwd(), .rs.chat.userScratchPath(), .libPaths())
+   roots <- c(tempdir(), userDir, .rs.chat.userScratchPath(), .libPaths())
 
    # include the user library even when it doesn't exist yet -- a nonexistent
    # user library is excluded from .libPaths(), but install.packages() offers
@@ -503,10 +530,11 @@ delayedAssign(
 #' (e.g. `~/.ssh`) are always denied.
 #'
 #' @param path A character vector of file paths.
+#' @param roots The roots within which edits are allowed.
 #' @return A character vector the same length as `path`, where
 #'   empty strings indicate allowed edits and non-empty strings
 #'   give the reason the edit was denied.
-.rs.addFunction("chat.isFileEditAllowed", function(path)
+.rs.addFunction("chat.isFileEditAllowed", function(path, roots = .rs.chat.allowedRoots())
 {
    # normalize path for comparison
    path <- .rs.chat.normalizePath(path)
@@ -518,7 +546,7 @@ delayedAssign(
    )
 
    # allow edits within the allowed roots
-   reasons[.rs.chat.isPathWithinAllowedRoots(path)] <- ""
+   reasons[.rs.chat.isPathWithinAllowedRoots(path, roots)] <- ""
 
    # deny edits matching sensitive path patterns (both read and edit
    # deny lists apply, since edits should be at least as restrictive)
@@ -532,9 +560,9 @@ delayedAssign(
    reasons
 })
 
-.rs.addFunction("chat.validateFileEdit", function(action, path)
+.rs.addFunction("chat.validateFileEdit", function(action, path, roots = .rs.chat.allowedRoots())
 {
-   reasons <- .rs.chat.isFileEditAllowed(path)
+   reasons <- .rs.chat.isFileEditAllowed(path, roots)
    denied <- nzchar(reasons)
    if (!any(denied))
       return(TRUE)
@@ -557,6 +585,152 @@ delayedAssign(
       action, path[denied], reasons[denied])
    msg <- paste(c("One or more agent file operations were blocked.", details), collapse = "\n\n")
    stop(msg, call. = FALSE)
+})
+
+#' Record the working directory the user chose.
+#'
+#' Called as the guardrails are activated. Edits are allowed within the
+#' directory recorded here, wherever the working directory later moves
+#' (see `chat.allowedRoots()`). The working directory counts as the user's
+#' choice unless it is where the previous guarded evaluation left it: then
+#' agent code moved there, and the directory recorded earlier stands.
+.rs.addFunction("chat.recordUserWorkingDirectory", function()
+{
+   state <- .rs.chat.guardrailState
+
+   workDir <- getwd()
+   if (identical(workDir, state$agentWorkingDirectory))
+      return(invisible())
+
+   # resolved now, so the record keeps naming the directory the user was
+   # in whatever later happens to that path. NULL when the working
+   # directory no longer exists.
+   state$userWorkingDirectory <- if (!is.null(workDir))
+      .rs.chat.normalizePath(workDir)
+})
+
+#' Check whether a function may change the working directory freely.
+#'
+#' @param fn The function calling `setwd()`.
+#' @return `TRUE` if `fn` is one of `chat.workingDirectoryCallers`.
+.rs.addFunction("chat.isWorkingDirectoryCaller", function(fn)
+{
+   if (!is.function(fn))
+      return(FALSE)
+
+   # resolved on each call rather than captured up front: source() and
+   # sys.source() are hooked themselves, so the function on the stack
+   # while the guardrails are active is usually the hooked one. A
+   # reference taken before they were activated is the original.
+   callers <- .rs.chat.workingDirectoryCallers
+   for (package in names(callers))
+   {
+      # skip a namespace that isn't loaded, rather than load it just to
+      # compare against it
+      if (!isNamespaceLoaded(package))
+         next
+
+      current <- asNamespace(package)
+      originals <- .rs.chat.hookedBindings[[package]]
+
+      for (name in callers[[package]])
+      {
+         if (identical(fn, get0(name, envir = current, inherits = FALSE)))
+            return(TRUE)
+
+         if (!is.null(originals) && identical(fn, originals[[name]]))
+            return(TRUE)
+      }
+   }
+
+   FALSE
+})
+
+#' Check whether a function was defined by a (non-base) package, or by
+#' RStudio itself.
+#'
+#' Unlike `chat.hasTrustedCallerImpl()`, this also recognizes functions
+#' defined within other functions, whose environment is a call frame, by
+#' following the enclosing environments. A function defined by agent code
+#' leads back to the global environment instead.
+#'
+#' @param fn A function.
+#' @return `TRUE` if `fn` was defined by a non-base package or by RStudio.
+.rs.addFunction("chat.isTrustedFunction", function(fn)
+{
+   # primitives have no environment
+   envir <- if (is.function(fn)) environment(fn)
+
+   toolsEnv <- .rs.toolsEnv()
+   searchEnvs <- lapply(seq_along(search()), as.environment)
+
+   while (is.environment(envir) && !identical(envir, emptyenv()))
+   {
+      if (identical(envir, toolsEnv))
+         return(TRUE)
+
+      if (isNamespace(envir))
+         return(!getNamespaceName(envir) %in% .rs.chat.basePackages)
+
+      # the global environment, and any other on the search path (e.g.
+      # one the user attached), has tools:rstudio among its enclosures
+      for (searchEnv in searchEnvs)
+      {
+         if (identical(envir, searchEnv))
+            return(FALSE)
+      }
+
+      envir <- parent.env(envir)
+   }
+
+   FALSE
+})
+
+#' Validate a change of working directory.
+#'
+#' Edits are checked against the directory the user chose rather than the
+#' current working directory (see `chat.allowedRoots()`), so moving
+#' elsewhere doesn't let the hooked functions edit files there. Agent code
+#' may still only move within the allowed roots: the move is then refused
+#' where it happens rather than at the first edit after it, and relative
+#' paths in code the hooks don't see (see the note at the top of this
+#' file) resolve within the allowed roots too.
+#'
+#' A change is not checked when the function calling `setwd()` belongs to
+#' a package or to RStudio, or is one of `chat.workingDirectoryCallers`
+#' -- many of these change directory temporarily. Only that caller
+#' counts, not the rest of the call stack: a `setwd()` call within a
+#' sourced script, or within a function the agent passes to a package, is
+#' as much agent code as one outside it.
+#'
+#' @param action The name of the function changing the working directory.
+#' @param dir The new working directory.
+#' @param caller The function that called `action`.
+.rs.addFunction("chat.validateWorkingDirectory", function(action, dir, caller)
+{
+   # leave the arguments setwd() rejects for it to report. It uses only the
+   # first element of a longer vector, so that's the one to check.
+   if (!is.character(dir) || !length(dir) || is.na(dir[[1L]]) || !nzchar(dir[[1L]]))
+      return(TRUE)
+   dir <- dir[[1L]]
+
+   # hasTrustedCallerImpl contributes the chat.safeFunctions allowlist
+   exempt <-
+      .rs.chat.isWorkingDirectoryCaller(caller) ||
+      .rs.chat.isTrustedFunction(caller) ||
+      .rs.chat.hasTrustedCallerImpl(list(caller))
+
+   if (exempt)
+      return(TRUE)
+
+   # matched exactly as well as used as a root: a filesystem root is never
+   # taken to contain other paths (see chat.isPathWithin), so one the user
+   # chose would otherwise be unreachable
+   userDir <- .rs.chat.guardrailState$userWorkingDirectory
+   if (identical(.rs.chat.normalizePath(dir), userDir))
+      return(TRUE)
+
+   .rs.chat.validateFileEdit(action, dir)
 })
 
 #' Validate a connection open based on the open mode.
@@ -601,10 +775,17 @@ delayedAssign(
    # cannot be influenced by the code the guardrails police
    .rs.chat.umaskMasksWorldRead()
 
+   # likewise, note where the user is before agent code can move
+   .rs.chat.recordUserWorkingDirectory()
+
    baseHooks <- list(
 
       unlink = function()
       {
+         # unlink() coerces its argument, so unlink(NULL) is a no-op.
+         # Coerced once, so the checks below see what is deleted.
+         x <- as.character(x)
+
          # Block recursive deletes in the user's home directory
          if ("*" %in% x)
          {
@@ -792,6 +973,11 @@ delayedAssign(
       {
          if (is.character(file) && nzchar(file))
             .rs.chat.validateFileEdit("sink", file)
+      },
+
+      setwd = function()
+      {
+         .rs.chat.validateWorkingDirectory("setwd", dir, sys.function(sys.parent()))
       }
 
    )
@@ -872,6 +1058,11 @@ delayedAssign(
    # and chat.bindingsInjected TRUE, so the next injectBindings() would skip
    # them. One that arrives meanwhile is delivered once the restore is done.
    suspendInterrupts({
+      # where the evaluation left the working directory; see
+      # chat.recordUserWorkingDirectory
+      if (.rs.chat.bindingsInjected)
+         .rs.chat.guardrailState$agentWorkingDirectory <- getwd()
+
       packages <- ls(envir = .rs.chat.hookedBindings, all.names = TRUE)
       allRestored <- TRUE
 
