@@ -65,7 +65,7 @@ test.describe.serial('Julia console preference', () => {
   test.afterAll(async ({ rstudioPage: page }) => {
     await clearPref(page, 'julia_console_enabled');
     await clearPref(page, 'rmd_chunk_output_inline');
-    await closeAndDeleteSandboxFiles(page, sandbox.dir, ['off.jl', 'on.jl', 'probe.Rmd']);
+    await closeAndDeleteSandboxFiles(page, sandbox.dir, ['off.jl', 'on.jl', 'toggle.jl', 'probe.Rmd']);
   });
 
   test('the console offers Julia by default', async ({ rstudioPage: page }) => {
@@ -127,17 +127,23 @@ test.describe.serial('Julia console preference', () => {
     await clearPref(page, 'rmd_chunk_output_inline');
   });
 
-  test("an open Julia script's Run button follows the preference as it changes", async ({ rstudioPage: page }) => {
-    await writeAndOpenFile(page, sandbox.dir, 'on.jl', 'y = 2\n');
+  test('an open Julia script follows the preference as it changes', async ({ rstudioPage: page }) => {
+    // a file not yet open, so it is activated with its run commands disabled
+    await setPref(page, 'julia_console_enabled', false);
+    await writeAndOpenFile(page, sandbox.dir, 'toggle.jl', 'z = 3\n');
     // the editor toolbar's Run button, titled with its command's description
     const run = page.locator('[title^="Run the current line or selection"]:visible');
-    await expect(run).toHaveCount(1);
-
-    await setPref(page, 'julia_console_enabled', false);
     await expect(run).toHaveCount(0);
 
     await setPref(page, 'julia_console_enabled', true);
     await expect(run).toHaveCount(1);
+    for (const id of RUN_COMMANDS)
+      await expect.poll(async () => (await commandState(page, id)).enabled, id).toBe(true);
+
+    await setPref(page, 'julia_console_enabled', false);
+    await expect(run).toHaveCount(0);
+    for (const id of RUN_COMMANDS)
+      await expect.poll(async () => (await commandState(page, id)).enabled, id).toBe(false);
   });
 
   test('the console follows the preference as it changes', async ({ rstudioPage: page }) => {

@@ -322,6 +322,11 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       // the gutter's commands come and go with the markers
       userPrefs.showGitDiffGutter().addValueChangeHandler(event -> manageCommands(true));
 
+      // a Julia file's run commands come and go with the Julia console (see
+      // JuliaFileType); the editor toolbar's buttons follow separately, in
+      // TextEditingTargetWidget
+      userPrefs.juliaConsoleEnabled().addValueChangeHandler(event -> manageCommands(false));
+
       userPrefs.allowSourceColumns().addValueChangeHandler(event ->
       {
          boolean enabled = userPrefs.allowSourceColumns().getValue();
