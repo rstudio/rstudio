@@ -23,6 +23,9 @@ public class TrustRequestEvent extends GwtEvent<TrustRequestEvent.Handler>
 {
    public static final GwtEvent.Type<Handler> TYPE = new GwtEvent.Type<>();
 
+   // Matches kTrustStatusUntrusted in SessionTrust.hpp
+   public static final String STATUS_UNTRUSTED = "untrusted";
+
    public interface Handler extends EventHandler
    {
       void onTrustRequest(TrustRequestEvent event);
