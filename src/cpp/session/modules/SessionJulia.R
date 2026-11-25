@@ -215,9 +215,7 @@
 
    if (!continuing)
    {
-      # mirrors isReplExit() in SessionConsoleInput.cpp; Julia has no
-      # 'quit', and its 'exit()' would end the Julia process itself
-      if (trimmed %in% c("exit", "quit", "exit()", "quit()"))
+      if (.rs.julia.isReplExit(contents))
          return("quit")
 
       if (!nzchar(trimmed))
