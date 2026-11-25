@@ -581,6 +581,7 @@ test_that("a binding that fails to restore doesn't turn off later checks", {
    attached <- as.environment("package:utils")
    before <- list(
       writeChar = base::writeChar,
+      writeLines = base::writeLines,
       download.file = utils::download.file,
       write.table = utils::write.table
    )
@@ -664,6 +665,7 @@ test_that("a binding that fails to restore doesn't turn off later checks", {
 
    # the bindings after the failures were still restored
    expect_false(.rs.chat.bindingsInjected)
+   expect_identical(base::writeLines, before$writeLines)
    expect_identical(utils::download.file, before$download.file)
    expect_identical(get("download.file", envir = attached), beforeAttached$download.file)
 
