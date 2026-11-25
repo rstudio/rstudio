@@ -1103,7 +1103,7 @@ TEST(AsyncConnectionImpl, UploadHandlerVisitedWithAFullRequestGetsItsWholeBody)
    pConnection->close();
 }
 
-TEST(AsyncConnectionImpl, OversizedBodyIsRefusedBeforeItIsRead)
+TEST(AsyncConnectionImpl, OversizedBodyIsRefusedWhileItIsStillBeingSent)
 {
    ScopedMaxBufferedBodySize limit(1024);
 
@@ -1133,28 +1133,45 @@ TEST(AsyncConnectionImpl, OversizedBodyIsRefusedBeforeItIsRead)
    acceptor.accept(peer, ec);
    ASSERT_FALSE(ec);
 
-   // a body declared far larger than the limit, of which only a little is sent
+   // the body below outgrows the socket buffers, so the server must be
+   // reading while it is written
+   bool closedByServer = false;
+   pConnection->startReading();
+   std::thread server([&]() {
+      ioc.run_for(std::chrono::seconds(10));
+      closedByServer = pConnection->closed();
+
+      // a server that never answers would leave the reads below blocked
+      pConnection->close();
+   });
+
+   // a body declared far larger than the limit, sent the way a client that
+   // has not yet seen the response sends it: far more of it than the server
+   // reads before refusing it. Were the server to close on that unread input,
+   // the reset would fail this write and take the response with it.
    std::string request =
          "POST /rpc/client_init HTTP/1.1\r\n"
          "Host: localhost\r\n"
          "Content-Type: application/json\r\n"
          "Content-Length: 104857600\r\n"
-         "\r\n" + std::string(64, 'x');
-   boost::asio::write(peer, boost::asio::buffer(request), ec);
-   ASSERT_FALSE(ec);
+         "\r\n" + std::string(4 * 1024 * 1024, 'x');
+   boost::system::error_code writeEc;
+   boost::asio::write(peer, boost::asio::buffer(request), writeEc);
+   EXPECT_FALSE(writeEc) << writeEc.message();
 
-   // a refused request is answered and closed at once; one that is not would
-   // wait for the rest of its body, so stop it before reading the reply
-   pConnection->startReading();
-   ioc.run_for(std::chrono::seconds(10));
-   pConnection->close();
-
-   std::vector<char> data(4096);
+   std::string received;
    boost::system::error_code readEc;
-   std::size_t n = boost::asio::read(peer, boost::asio::buffer(data), readEc);
-   std::string received(data.data(), n);
-
+   boost::asio::read(peer, boost::asio::dynamic_buffer(received), readEc);
+   EXPECT_EQ(boost::asio::error::eof, readEc) << readEc.message();
    EXPECT_EQ(0u, received.find("HTTP/1.1 413 Content Too Large")) << received;
+
+   // the server stops discarding input once we close, rather than holding
+   // the connection open until its linger timeout
+   auto closeTime = std::chrono::steady_clock::now();
+   peer.close();
+   server.join();
+   EXPECT_TRUE(closedByServer);
+   EXPECT_LT(std::chrono::steady_clock::now() - closeTime, std::chrono::seconds(2));
    EXPECT_EQ(0, handlerCalls);
 }
 
