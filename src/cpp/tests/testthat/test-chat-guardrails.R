@@ -487,16 +487,12 @@ test_that("restoreBindings leaves alone a namespace that was unloaded or loaded 
          unloadNamespace(package)
    }, add = TRUE, after = FALSE)
 
-   # stands in for an original saved from the namespace by injectBindings()
-   original <- function(...) NULL
-
    # unloaded
+   .rs.chat.injectBindings()
    loadNamespace(package)
-   hooked[[package]] <- list2env(list(bs = original), parent = emptyenv())
-   namespaces[[package]] <- asNamespace(package)
+   .rs.chat.addPreflightHook(package, "bs", function() NULL)
    unloadNamespace(package)
 
-   .rs.chat.injectBindings()
    expect_no_warning(.rs.chat.restoreBindings())
    expect_false(isNamespaceLoaded(package))
    expect_false(exists(package, envir = hooked, inherits = FALSE))
@@ -504,14 +500,13 @@ test_that("restoreBindings leaves alone a namespace that was unloaded or loaded 
    expect_false(.rs.chat.bindingsInjected)
 
    # unloaded, and loaded again
+   .rs.chat.injectBindings()
    loadNamespace(package)
-   hooked[[package]] <- list2env(list(bs = original), parent = emptyenv())
-   namespaces[[package]] <- asNamespace(package)
+   .rs.chat.addPreflightHook(package, "bs", function() NULL)
    unloadNamespace(package)
    loadNamespace(package)
    bs <- get("bs", envir = asNamespace(package))
 
-   .rs.chat.injectBindings()
    expect_no_warning(.rs.chat.restoreBindings())
    expect_identical(get("bs", envir = asNamespace(package)), bs)
    expect_false(exists(package, envir = hooked, inherits = FALSE))

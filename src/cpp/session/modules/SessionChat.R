@@ -943,12 +943,12 @@ delayedAssign(
       # cleared even if a binding couldn't be restored: the next
       # injectBindings() must hook again the bindings that were
       .rs.setVar("chat.bindingsInjected", FALSE)
-   })
 
-   # reported only now, and in one warning, since options(warn = 2) turns a
-   # warning into an error
-   if (length(failures))
-      warning(paste(failures, collapse = "\n"))
+      # reported only once the restore is done, and in one warning, since
+      # options(warn = 2) turns a warning into an error
+      if (length(failures))
+         warning(paste(failures, collapse = "\n"))
+   })
 })
 
 
