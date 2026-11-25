@@ -3022,12 +3022,12 @@ input[type="checkbox"]:checked:before {
 }
 
 .rstudio-trust-detail {
-   color: #888;
+   color: #666;
 }
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog .rstudio-trust-detail,
 .rstudio-themes-dark.rstudio-theme-aware-dialog .dialogContent .rstudio-trust-detail {
-   color: #aaa;
+   color: #ddd;
 }
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog .dialogTabPanel .gwt-TabLayoutPanelTab {
