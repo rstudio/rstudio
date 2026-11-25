@@ -21,6 +21,8 @@
 
 #include <cstdlib>
 
+#include <boost/assert.hpp>
+
 #include <core/FileLock.hpp>
 #include <core/Log.hpp>
 #include <core/ProgramStatus.hpp>
@@ -251,7 +253,8 @@ Error httpServerInit()
                                     boost::posix_time::milliseconds(500));
 
    // bodies read into memory are capped; 0 removes the cap
-   int maxRequestSizeMb = std::max(0, options().wwwMaxRequestSizeMb());
+   int maxRequestSizeMb = options().wwwMaxRequestSizeMb();
+   BOOST_ASSERT(maxRequestSizeMb >= 0);
    http::RequestParser::setMaxBufferedBodySize(static_cast<uintmax_t>(maxRequestSizeMb) * 1024 * 1024);
 
    // initialize
