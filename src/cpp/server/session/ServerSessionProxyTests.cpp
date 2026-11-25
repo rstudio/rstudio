@@ -637,14 +637,32 @@ void expectInterruptionsLeaveInFlightHeadersAlone(ProxySite site,
 
 } // anonymous namespace
 
+TEST(ProxyLocalStreamClientTests, ChecksBothPathOwnerAndConnectedPeer)
+{
+   boost::asio::io_context ioc;
+   const FilePath streamPath("/tmp/rstudio-proxy-client-test");
+
+   // Zero is a valid uid too; neither check may treat it as an unset value.
+   for (UidType uid : { UidType(0), UidType(1234) })
+   {
+      SCOPED_TRACE(uid);
+      auto pClient = session_proxy::createLocalStreamClientForTest(ioc, streamPath, uid);
+
+      ASSERT_TRUE(pClient->pathOwnerUidForTest().is_initialized());
+      EXPECT_EQ(uid, pClient->pathOwnerUidForTest().get());
+      ASSERT_TRUE(pClient->expectedPeerUidForTest().is_initialized());
+      EXPECT_EQ(uid, pClient->expectedPeerUidForTest().get());
+   }
+}
+
 // proxyLocalhostRequest() (in ServerSessionProxy.cpp) enforces that a
 // localhost-proxy request (/p/ and /p6/) may only reach a destination port
 // owned by the requesting user (rstudio-pro#11470). It does this by resolving
 // the caller's uid and calling setExpectedPeerUid() on the
 // LocalhostAsyncClient, failing closed (setNotFoundError) on *any* resolution
-// error -- because unlike other uid checks in this file, the destination port
-// here is attacker-controlled (decoded from a client-supplied token), so the
-// uid check is the sole access-control boundary on this path.
+// error. The destination port here is attacker-controlled (decoded from a
+// client-supplied token), so the uid check is the sole access-control boundary
+// on this path.
 //
 // The resolution helper (userIdForUsername) has internal linkage (anonymous
 // namespace) and the surrounding function needs a live HTTP connection/request

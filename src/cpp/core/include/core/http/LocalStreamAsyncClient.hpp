@@ -66,11 +66,31 @@ public:
       return peerPid_;
    }
 
+   // When set (default: no check), the request is only written to a peer
+   // that is running as this user. Unlike validateUid, which looks at the
+   // owner of the stream's path before connecting, this looks at the
+   // connection that was made.
+   void setExpectedPeerUid(UidType uid)
+   {
+      expectedPeerUid_ = uid;
+   }
+
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+   boost::optional<UidType> pathOwnerUidForTest() const { return validateUid_; }
+   boost::optional<UidType> expectedPeerUidForTest() const { return expectedPeerUid_; }
+#endif
+
 protected:
 
    virtual boost::asio::local::stream_protocol::socket& socket()
    {
       return socket_;
+   }
+
+   // which user the process at the other end of the connection runs as
+   virtual Error connectedPeerIdentity(core::system::user::UserIdentity* pIdentity)
+   {
+      return core::system::user::socketPeerIdentity(socket().native_handle(), pIdentity);
    }
 
 private:
@@ -128,6 +148,15 @@ private:
       {
          if (!ec)
          {
+            // not handleConnectionError(): it retries a permission error,
+            // and waiting doesn't change which user the peer runs as
+            Error peerError;
+            if (!verifyConnectedPeer(&peerError))
+            {
+               handleError(peerError);
+               return;
+            }
+
             notePeerPid();
 
             // the connection was successful call base to write the request
@@ -139,6 +168,34 @@ private:
          }
       }
       CATCH_UNEXPECTED_ASYNC_CLIENT_EXCEPTION
+   }
+
+   virtual bool verifyConnectedPeer(Error* pError)
+   {
+      if (!expectedPeerUid_.is_initialized())
+         return true;
+
+      core::system::user::UserIdentity peer;
+      Error error = connectedPeerIdentity(&peer);
+      if (error)
+      {
+         WLOGF("Not sending request to {}: unable to determine its peer's identity: {}", localStreamPath_.getAbsolutePath(), error.asString());
+
+         *pError = systemError(boost::system::errc::permission_denied, error, ERROR_LOCATION);
+         return false;
+      }
+
+      if (peer.userId != expectedPeerUid_.get())
+      {
+         WLOGF("Not sending request to {}: its peer runs as user {}, not user {}", localStreamPath_.getAbsolutePath(), peer.userId, expectedPeerUid_.get());
+
+         *pError = systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
+         pError->addProperty("peer-user-id", peer.userId);
+         pError->addProperty("expected-peer-user-id", expectedPeerUid_.get());
+         return false;
+      }
+
+      return true;
    }
 
    // the outcome of a request says something about the process that
@@ -201,6 +258,7 @@ private:
    boost::asio::local::stream_protocol::socket socket_;
    core::FilePath localStreamPath_;
    boost::optional<UidType> validateUid_;
+   boost::optional<UidType> expectedPeerUid_;
    PidType peerPid_ = -1;
    bool retriedPermDenied_;
 };

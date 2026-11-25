@@ -799,7 +799,8 @@ protected:
    // Verification hook invoked by connecting subclasses after the connection
    // (and any TLS handshake) succeeds but BEFORE any request bytes are written.
    // Default: no verification. Overridden by LocalhostAsyncClient[Ssl] to enforce
-   // destination-port ownership (rstudio-pro#11470). Return true to proceed with
+   // destination-port ownership (rstudio-pro#11470), and by LocalStreamAsyncClient
+   // to check which user the peer runs as. Return true to proceed with
    // the write; set *pError and return false to reject (fail closed).
    virtual bool verifyConnectedPeer(Error* /*pError*/) { return true; }
 
