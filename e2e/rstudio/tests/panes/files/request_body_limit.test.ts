@@ -1,6 +1,7 @@
 // Buffered request limits and streamed Files pane uploads.
-// For an external server with a non-default limit, set
-// PW_REQUEST_BODY_LIMIT_MB to its www-max-request-size-mb value.
+// The tests skip unless PW_REQUEST_BODY_LIMIT_MB is set: rserver's default
+// leaves bodies unlimited. An in-tree spawned server is started with that
+// limit; an external server must have www-max-request-size-mb set to match.
 
 import { once } from 'node:events';
 import * as fs from 'node:fs';
@@ -8,7 +9,7 @@ import * as http from 'node:http';
 import * as https from 'node:https';
 
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { externalServerUrl } from '@fixtures/server.fixture';
+import { externalServerUrl, requestBodyLimitMb } from '@fixtures/server.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { CONFIRM_BTN } from '@pages/modals.page';
 import { executeCommand } from '@utils/commands';
@@ -18,10 +19,7 @@ import { useSuiteSandbox } from '@utils/sandbox';
 const MB = 1024 * 1024;
 
 function maxRequestSizeBytes(): number {
-  const mb = Number(process.env.PW_REQUEST_BODY_LIMIT_MB ?? '100');
-  if (!Number.isSafeInteger(mb) || mb < 0 || !Number.isSafeInteger(mb * MB))
-    throw new Error('PW_REQUEST_BODY_LIMIT_MB must be a non-negative integer number of megabytes');
-  return mb * MB;
+  return requestBodyLimitMb() * MB;
 }
 
 // Stream the body from a small reusable buffer and stop on an early response.
@@ -65,12 +63,13 @@ async function postBody(url: URL, size: number): Promise<number> {
 }
 
 test.describe('Request body limit', { tag: ['@server_only'] }, () => {
+  test.skip(requestBodyLimitMb() === 0, 'set PW_REQUEST_BODY_LIMIT_MB to run with a limit');
+
   const sandbox = useSuiteSandbox();
 
   test('buffered body over the limit receives 413', async ({ rstudioPage: page }) => {
     test.setTimeout(180_000);
     const maxBytes = maxRequestSizeBytes();
-    test.skip(maxBytes === 0, 'www-max-request-size-mb=0 removes the limit');
 
     // Keep any reverse-proxy prefix configured for an external server.
     const baseUrl = externalServerUrl() ?? new URL(page.url()).origin;
@@ -86,7 +85,6 @@ test.describe('Request body limit', { tag: ['@server_only'] }, () => {
   ) => {
     test.setTimeout(300_000);
     const maxBytes = maxRequestSizeBytes();
-    test.skip(maxBytes === 0, 'www-max-request-size-mb=0 removes the limit');
 
     const fileName = 'large_upload.bin';
     const fileSize = maxBytes + MB;

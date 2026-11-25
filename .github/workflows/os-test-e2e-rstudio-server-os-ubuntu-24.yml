@@ -636,6 +636,13 @@ jobs:
         run: |
           echo "copilot-enabled=1" | sudo tee -a /etc/rstudio/rsession.conf >/dev/null
 
+      # Buffered request bodies are unlimited by default; set a limit so the
+      # request body limit tests run. Keep it equal to PW_REQUEST_BODY_LIMIT_MB
+      # in the Playwright step, which tells those tests what to expect.
+      - name: Limit buffered request bodies
+        run: |
+          echo "www-max-request-size-mb=100" | sudo tee -a /etc/rstudio/rserver.conf >/dev/null
+
       # The Playwright e2e tests drive RStudio through the window.rstudio
       # automation bridge, which is only exposed when rsession is started with
       # --automation-agent. server.fixture.ts forwards this flag when it
@@ -779,6 +786,8 @@ jobs:
           # wedged session costs one spec rather than every spec after it.
           # Run as root: the sessions belong to the per-run test user.
           PW_RSTUDIO_SERVER_RECOVER_CMD: sudo bash ${{ github.workspace }}/e2e/rstudio/scripts/ci/rsession-diagnostics.sh --kill ${{ github.workspace }}/rsession-diagnostics
+          # www-max-request-size-mb, as set in "Limit buffered request bodies"
+          PW_REQUEST_BODY_LIMIT_MB: 100
           # Platform-labelled project name; playwright.config.ts uses it both as
           # the project name in reports (so a cross-platform merged report can
           # distinguish these results) and to derive the platform+shard-unique

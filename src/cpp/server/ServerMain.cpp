@@ -252,7 +252,7 @@ Error httpServerInit()
    s_pHttpServer->setScheduledCommandInterval(
                                     boost::posix_time::milliseconds(500));
 
-   // bodies read into memory are capped; 0 removes the cap
+   // caps the bodies read into memory; 0, the default, leaves them unlimited
    int maxRequestSizeMb = options().wwwMaxRequestSizeMb();
    BOOST_ASSERT(maxRequestSizeMb >= 0);
    http::RequestParser::setMaxBufferedBodySize(static_cast<uintmax_t>(maxRequestSizeMb) * 1024 * 1024);

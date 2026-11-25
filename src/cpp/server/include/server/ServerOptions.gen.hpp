@@ -127,8 +127,8 @@ protected:
       value<int>(&wwwThreadPoolSize_)->default_value(6),
       "The size of the threadpool from which requests will be serviced. This needs to have enough threads to avoid bottlenecks due to certain requests that block the request thread (e.g. a login fail might run into a delay caused by the pam configuration). For systems with lots of users a larger value is recommended. For systems with only one or two users, a value of 2 will be slightly more efficient.")
       ("www-max-request-size-mb",
-      value<int>(&wwwMaxRequestSizeMb_)->default_value(100),
-      "The largest request body, in megabytes, that the server buffers in memory. The server returns 413 Content Too Large for a body above this limit. This includes buffered requests to proxied applications, such as Shiny apps. The limit does not apply to streamed multipart uploads from the Files pane. Set to 0 to remove the limit.")
+      value<int>(&wwwMaxRequestSizeMb_)->default_value(0),
+      "The largest request body, in megabytes, that the server buffers in memory. The server returns 413 Content Too Large for a body above this limit. This includes buffered requests to proxied applications, such as file uploads to Shiny apps. The limit does not apply to streamed multipart uploads from the Files pane. The default, 0, means no limit.")
       ("www-proxy-localhost",
       value<bool>(&wwwProxyLocalhost_)->default_value(true),
       "Indicates whether or not to proxy requests to localhost ports over the main server port. This should generally be enabled, and is used to proxy HTTP traffic within a session that belongs to code running within the session (e.g. Shiny or Plumber APIs)")
