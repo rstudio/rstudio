@@ -528,6 +528,31 @@ function iscomplete(code::AbstractString)
 end
 
 """
+    input_status(code)
+
+"incomplete" for input that isn't complete (see `iscomplete`); "docstring"
+for complete input that would document the line after it, as a string just
+before a definition does in a file; "complete" otherwise.
+"""
+function input_status(code::AbstractString)
+   code = String(code)
+   iscomplete(code) || return "incomplete"
+   return documents_next_line(code) ? "docstring" : "complete"
+end
+
+# The parser decides which strings are docstrings, and of what: a line after
+# `code` that ends up in a Core.@doc call is documented by it.
+function documents_next_line(code::String)
+   ast = Base.parse_input_line(code * "\nnothing"; depwarn = false)
+   args = ast isa Expr && ast.head === :toplevel ? ast.args : Any[ast]
+   index = findlast(arg -> !(arg isa LineNumberNode), args)
+   index === nothing && return false
+
+   last_expr = args[index]
+   return last_expr isa Expr && last_expr.head === :macrocall && last_expr.args[1] == GlobalRef(Core, Symbol("@doc"))
+end
+
+"""
     completions(line)
 
 Completions for the end of `line`, as the Julia REPL offers them on Tab: the

@@ -231,8 +231,12 @@
       }
    }
 
+   # a docstring run with the code after it (a selection, a chunk) documents
+   # that code, as in a file; one typed at the prompt is evaluated, as at
+   # Julia's own prompt
    code <- paste(c(state$buffer, contents), collapse = "\n")
-   if (!isTRUE(.rs.julia.call("RStudio.iscomplete", code)))
+   status <- .rs.julia.call("RStudio.input_status", code)
+   if (identical(status, "incomplete") || (identical(status, "docstring") && .rs.julia.nextQueuedLineIsCode()))
    {
       state$buffer <- c(state$buffer, contents)
       return("")
@@ -241,6 +245,34 @@
    state$buffer <- character()
    .rs.julia.evaluate(code, "julia")
    ""
+})
+
+#' Does This Line Leave the Julia REPL?
+#'
+#' Only as typed: this mirrors isReplExit() in SessionConsoleInput.cpp, and
+#' the client's ConsoleLanguageTracker, which follow the console's language
+#' through queued input. Julia has no 'quit', and its 'exit()' would end the
+#' Julia process itself.
+#'
+#' @param line A line of input, read at the prompt with an empty buffer.
+.rs.addFunction("julia.isReplExit", function(line)
+{
+   line %in% c("exit", "quit", "exit()", "quit()")
+})
+
+#' Is the Queued Input Next More Julia Code?
+#'
+#' @return TRUE when the REPL's next read gets a line from the console's
+#'   queue (the rest of a selection, say) that is Julia code: not blank, and
+#'   neither leaving the REPL nor entering another of its modes.
+.rs.addFunction("julia.nextQueuedLineIsCode", function()
+{
+   line <- .Call("rs_juliaNextQueuedLine", PACKAGE = "(embedding)")
+   if (is.null(line))
+      return(FALSE)
+
+   trimmed <- .rs.trimWhitespace(line)
+   nzchar(trimmed) && !.rs.julia.isReplExit(line) && identical(.rs.julia.inputMode(trimmed), "julia")
 })
 
 #' Read a Line of Julia Input

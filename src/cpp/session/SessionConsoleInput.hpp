@@ -45,6 +45,10 @@ std::string languageSwitchInput(const std::string& from, const std::string& to);
 // console input is queued for the read
 bool hasQueuedInput();
 
+// the line the next read returns from the queue, without prompting; false
+// when the queue is empty or holds an interrupt or EOF next
+bool nextQueuedLine(std::string* pLine);
+
 // console input is waiting to be read: queued, or a console_input request
 // a console read's wait has dequeued and not yet handed over (see
 // waitForMethod; such holds nest with the reads)

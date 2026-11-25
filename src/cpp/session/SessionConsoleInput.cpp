@@ -309,6 +309,20 @@ bool hasQueuedInput()
    return !s_consoleInputBuffer.empty();
 }
 
+bool nextQueuedLine(std::string* pLine)
+{
+   if (s_consoleInputBuffer.empty())
+      return false;
+
+   rstudio::r::session::RConsoleInput& input = s_consoleInputBuffer.front();
+   if (input.isCancel() || input.isEof())
+      return false;
+
+   // the read splits multi-line input into its lines (see fixupPendingConsoleInput)
+   *pLine = input.text.substr(0, input.text.find('\n'));
+   return true;
+}
+
 bool hasPendingInput()
 {
    return s_inputHeldDepth > 0 || hasQueuedInput();

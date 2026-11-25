@@ -293,6 +293,21 @@ test_that("display() shows text in the console, as values are", {
    expect_identical(output, c('"rstudio"', "42"))
 })
 
+test_that("a docstring waits for the line it documents", {
+   skipUnlessJulia()
+
+   on.exit(.rs.julia.stop(), add = TRUE)
+   .rs.julia.start()
+
+   status <- function(code) .rs.julia.call("RStudio.input_status", code)
+   expect_identical(status('"Add one."'), "docstring")
+   expect_identical(status('"""\nAdd one.\n"""'), "docstring")
+   expect_identical(status('"Add one."\nf(x) = x + 1'), "complete")
+   expect_identical(status('x = "not a docstring"'), "complete")
+   expect_identical(status('raw"not a docstring"'), "complete")
+   expect_identical(status('function f(x)'), "incomplete")
+})
+
 test_that("an interrupt that arrives while an error is reported doesn't cut the report short", {
    # the error's own report sends the signal, which Windows doesn't have
    skip_on_os("windows")

@@ -38,6 +38,8 @@
 #include <session/SessionOptions.hpp>
 #include <session/prefs/UserPrefs.hpp>
 
+#include "../SessionConsoleInput.hpp"
+
 #define R_NO_REMAP
 #include <Rinternals.h>
 
@@ -74,6 +76,18 @@ SEXP rs_juliaReadConsole(SEXP promptSEXP)
       line.pop_back();
 
    return Rf_ScalarString(Rf_mkCharLenCE(line.c_str(), static_cast<int>(line.size()), CE_NATIVE));
+}
+
+// The line the Julia REPL's next read will get without prompting (the rest of
+// a selection or chunk, say), or NULL when it would prompt.
+SEXP rs_juliaNextQueuedLine()
+{
+   std::string line;
+   if (!console_input::nextQueuedLine(&line))
+      return R_NilValue;
+
+   // console input is UTF-8, as it arrives from the client
+   return Rf_ScalarString(Rf_mkCharLenCE(line.c_str(), static_cast<int>(line.size()), CE_UTF8));
 }
 
 // Interrupt Julia as a terminal would: SIGINT to its process group, which
@@ -190,6 +204,7 @@ Error initialize()
    using namespace module_context;
 
    RS_REGISTER_CALL_METHOD(rs_juliaReadConsole, 1);
+   RS_REGISTER_CALL_METHOD(rs_juliaNextQueuedLine, 0);
    RS_REGISTER_CALL_METHOD(rs_juliaInterrupt, 1);
    RS_REGISTER_CALL_METHOD(rs_juliaKill, 1);
    RS_REGISTER_CALL_METHOD(rs_juliaAllowed, 0);

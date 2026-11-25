@@ -76,7 +76,7 @@ test.describe.serial('Julia console', () => {
     await setAlwaysShowCompletionPopup(page, false);
     await clearPref(page, 'rmd_chunk_output_inline');
     await leaveJulia(page);
-    await closeAndDeleteSandboxFiles(page, sandbox.dir, ['probe.jl', 'probe.Rmd', 'probe4.Rmd']);
+    await closeAndDeleteSandboxFiles(page, sandbox.dir, ['probe.jl', 'documented.jl', 'probe.Rmd', 'probe4.Rmd']);
   });
 
   test('the REPL evaluates as the Julia REPL does', async ({ rstudioPage: page }) => {
@@ -252,6 +252,38 @@ test.describe.serial('Julia console', () => {
     await clearConsole(page);
     await executeCommand(page, 'sourceActiveDocument');
     await expect.poll(() => consoleOutput(page), { timeout: 60_000 }).toContain('g(9) = 81');
+  });
+
+  test('a docstring run with the definition after it documents it', async ({ rstudioPage: page }) => {
+    test.setTimeout(120_000);
+
+    // leave for R first: the file is written and opened with R code
+    await leaveJulia(page);
+
+    // a selection runs line by line (Run All would include() the file): the
+    // docstring waits for the line after it, as it would in a file
+    const script = heredoc`
+      "Add one to x."
+      jl_add_one(x) = x + 1
+      println("documented: ", occursin("Add one", string(@doc jl_add_one)))
+    `;
+    await writeAndOpenFile(page, sandbox.dir, 'documented.jl', script);
+    await page.evaluate(() => {
+      const editor = window.rstudio!.documents.activeEditor()!;
+      editor.selectAll();
+      editor.focus();
+    });
+    await clearConsole(page);
+    await executeCommand(page, 'executeCode');
+    await expect.poll(() => consoleOutput(page), { timeout: 60_000 }).toMatch(/documented: (true|false)/);
+    const output = await consoleOutput(page);
+    expect(output).toContain('documented: true');
+
+    // the docstring is echoed, but isn't a value of its own
+    expect(output.split('"Add one to x."').length - 1).toBe(1);
+
+    // typed at the prompt, a string is a value, as at Julia's own prompt
+    expect(await runInConsole(page, '"just a string"')).toMatch(/julia> "just a string"\s+"just a string"/);
   });
 
   test('R and julia chunks run in turn in the console', async ({ rstudioPage: page }) => {
