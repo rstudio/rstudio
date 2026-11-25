@@ -27,6 +27,7 @@ import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.SpanElement;
 
 import elemental2.dom.DomGlobal;
+import elemental2.dom.EventListener;
 import elemental2.dom.FocusEvent;
 import elemental2.dom.HTMLElement;
 import elemental2.dom.KeyboardEvent;
@@ -54,12 +55,25 @@ public class ConsoleOutputWriter
    /**
     * Mark the output while the mouse put focus in it, so its focus outline
     * stays hidden after a drag-select and a key press such as Shift or Cmd+C.
-    * The mark survives the window losing focus, since focus comes back to the
-    * same element without another mouse press.
+    * The mark outlasts the window losing focus, but not focus landing outside
+    * the output, even while the window is inactive.
     */
    private void trackPointerFocus()
    {
       HTMLElement el = Js.cast(output_.getElement());
+      EventListener clearOnFocusElsewhere = event ->
+      {
+         elemental2.dom.Node target = Js.uncheckedCast(event.target);
+         if (target == null || !el.contains(target))
+            el.classList.remove(POINTER_FOCUS_CLASS);
+      };
+      output_.addAttachHandler(event ->
+      {
+         if (event.isAttached())
+            DomGlobal.document.addEventListener("focusin", clearOnFocusElsewhere, true);
+         else
+            DomGlobal.document.removeEventListener("focusin", clearOnFocusElsewhere, true);
+      });
       el.addEventListener("mousedown", event ->
          el.classList.add(POINTER_FOCUS_CLASS));
       el.addEventListener("keydown", event ->
