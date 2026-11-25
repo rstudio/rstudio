@@ -969,9 +969,11 @@ public class ShellWidget extends Composite implements ShellDisplay,
                if (event.isControlKeyDown() || event.isMetaKeyDown())
                   return;
                break;
+            // Tab moves focus whatever "Tab key always moves focus" says.
+            // Sent on to the input, it neither typed nor completed anything,
+            // and its default action then moved focus on past the input.
             case KeyCodes.KEY_TAB:
-               if (prefs_ == null || prefs_.tabKeyMoveFocus().getValue())
-                  return;
+               return;
          }
          input_.setFocus(true);
          delegateEvent(input_.asWidget(), event);
