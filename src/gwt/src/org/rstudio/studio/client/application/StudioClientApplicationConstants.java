@@ -54,6 +54,7 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     String closingProjectMessage();
     String quitRSessionMessage();
     String serverQuitSession();
+    String completionMessageAnnouncement();
     String consoleClearedAnnouncement();
     String consoleOutputAnnouncement();
     String consoleCommandAnnouncement();

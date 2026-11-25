@@ -19,6 +19,7 @@ import com.google.gwt.user.client.ui.HTML;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 
 public class CompletionListPopupPanel<TItem> extends ThemedPopupPanel
@@ -93,6 +94,8 @@ public class CompletionListPopupPanel<TItem> extends ThemedPopupPanel
       HTML html = new HTML();
       html.setText(s);
       setWidget(html);
+      CompletionListAria.announce(
+            RStudioGinjector.INSTANCE.getAriaLiveService(), s);
    }
 
    private final CompletionList<TItem> list_;

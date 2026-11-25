@@ -3,9 +3,12 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.SafeHtmlUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionListAria;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
@@ -47,9 +50,17 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
 
    public void setText(String text)
    {
+      // The popup is refreshed as the user types, often with the message it
+      // already shows; announce a message only when it changes.
+      String announced = announcedText_;
       JsArray<CppCompletion> completions = JsArray.createArray().cast();
       completions.push(CppCompletion.create(text));
       setCompletions(completions, null);
+
+      if (!StringUtil.equals(text, announced))
+         CompletionListAria.announce(
+               RStudioGinjector.INSTANCE.getAriaLiveService(), text);
+      announcedText_ = text;
    }
 
    public void setCompletions(JsArray<CppCompletion> completions,
@@ -59,6 +70,7 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
       completions_ = completions;
       onSelected_ = onSelected;
       announceable_ = false;
+      announcedText_ = null;
 
       // clear existing items
       updatingMenu_ = true;
@@ -71,13 +83,16 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
          final CppCompletion completion = completions.get(i);
 
          SafeHtmlBuilder sb = new SafeHtmlBuilder();
-         // The item's text names it; an unlabeled icon would only add noise.
+         // The item's text names it, and its kind follows the name as hidden
+         // text, so the icon is decorative.
          SafeHtmlUtil.appendPresentationImage(sb,
                                               RES.styles().itemImage(),
                                               completion.getIcon());
          SafeHtmlUtil.appendSpan(sb,
                                  RES.styles().itemName(),
                                  completion.getTypedText());
+         CompletionListAria.appendKind(
+               sb, CppCompletionKind.label(completion.getType()));
 
 
          MenuItem menuItem = new MenuItem(sb.toSafeHtml(),
@@ -213,11 +228,15 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
    private void addToolTipHandler()
    {
       toolTip_ = new CppCompletionToolTip();
+      DomUtils.ensureHasId(toolTip_.getElement());
 
       addSelectionHandler(new SelectionHandler<MenuItem>()
       {
          public void onSelection(SelectionEvent<MenuItem> event)
          {
+            // the tooltip describes only the item it's set for
+            describeItem(null);
+
             // bail if we are updating the menu
             if (updatingMenu_)
                return;
@@ -267,6 +286,7 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
 
             // set the tooltip text
             toolTip_.setText(completion.getText().get(0));
+            describeItem(selectedItem);
 
             // position it in the next event loop
             Scheduler.get().scheduleDeferred(new ScheduledCommand() {
@@ -340,6 +360,18 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
       });
    }
 
+   // Points the item's aria-describedby at the tooltip, so screen readers
+   // read the tooltip with the item; null unlinks the item last described.
+   private void describeItem(MenuItem item)
+   {
+      if (describedItem_ != null)
+         describedItem_.getElement().removeAttribute("aria-describedby");
+      describedItem_ = item;
+      if (item != null)
+         item.getElement().setAttribute(
+               "aria-describedby", toolTip_.getElement().getId());
+   }
+
    @Override
    protected int getMaxHeight()
    {
@@ -371,7 +403,10 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
    private boolean updatingMenu_ = false;
    private CppCompletionToolTip toolTip_;
    private MenuItem activeItem_;
+   private MenuItem describedItem_;
    private boolean announceable_ = false;
+   // The message last announced, until a list replaces it.
+   private String announcedText_;
 
    private static CppCompletionResources RES = CppCompletionResources.INSTANCE;
    private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);

@@ -16,8 +16,14 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.SafeHtmlUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.studio.client.application.AriaLiveService;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 
 /**
  * ARIA roles and states for completion popups whose items are announced
@@ -57,6 +63,33 @@ public final class CompletionListAria
          item.setAttribute(ACTIVE_STATE, "true");
       else
          item.removeAttribute(ACTIVE_STATE);
+   }
+
+   /**
+    * Appends an item's kind, which its icon shows, as text only screen
+    * readers see. Appended after the item's name, it reads e.g. as
+    * "cat, function". An empty kind appends nothing.
+    */
+   public static void appendKind(SafeHtmlBuilder sb, String kind)
+   {
+      if (!StringUtil.isNullOrEmpty(kind))
+         sb.append(SafeHtmlUtil.visuallyHiddenText(", " + kind));
+   }
+
+   /**
+    * Announces a message a popup shows in place of, or beside, its list,
+    * such as "No matches", which no list item can carry. An empty message
+    * announces nothing, rather than clearing what is waiting to be announced.
+    */
+   public static void announce(AriaLiveService ariaLive, String message)
+   {
+      if (StringUtil.isNullOrEmpty(message))
+         return;
+
+      ariaLive.announce(AriaLiveService.COMPLETION_MESSAGE,
+                        message,
+                        Timing.IMMEDIATE,
+                        Severity.STATUS);
    }
 
    // Ace's own completion popup uses menu roles in Safari, for VoiceOver;
