@@ -627,14 +627,23 @@
    if (nzchar(Sys.getenv("JULIA_BINDIR")) || nzchar(Sys.which("julia")))
       return(NULL)
 
-   exe <- if (identical(.Platform$OS.type, "windows")) "julia.exe" else "julia"
+   windows <- identical(.Platform$OS.type, "windows")
+   exe <- if (windows) "julia.exe" else "julia"
    candidates <- c(
       file.path(path.expand("~"), ".juliaup", "bin", exe),
-      file.path(Sys.getenv("LOCALAPPDATA"), "Programs", "Julia", "bin", exe),
       file.path("/opt/homebrew/bin", exe),
       file.path("/usr/local/bin", exe),
-      rev(sort(Sys.glob("/Applications/Julia-*.app/Contents/Resources/julia/bin/julia")))
+      .rs.julia.newestInstalls("/Applications/Julia-*.app/Contents/Resources/julia/bin/julia")
    )
+
+   # Julia's Windows installer puts each version in a directory of its own,
+   # for the user or for all users, and leaves the PATH alone by default
+   if (windows)
+   {
+      roots <- c(file.path(Sys.getenv("LOCALAPPDATA"), "Programs"), Sys.getenv("ProgramFiles"))
+      roots <- gsub("\\", "/", roots[nzchar(roots)], fixed = TRUE)
+      candidates <- c(candidates, .rs.julia.newestInstalls(file.path(roots, "Julia-*", "bin", exe)))
+   }
 
    for (candidate in candidates)
    {
@@ -643,6 +652,20 @@
    }
 
    NULL
+})
+
+#' Installed Julias, Newest First
+#'
+#' @param patterns Globs for Julia executables under a directory named for
+#'   the version, as Julia's installers name it ('Julia-1.12.0',
+#'   'Julia-1.12.app').
+#'
+#' @return The paths the globs match, the newest version's first.
+.rs.addFunction("julia.newestInstalls", function(patterns)
+{
+   paths <- Sys.glob(patterns)
+   versions <- sub(".*[/\\\\]Julia-([0-9]+(\\.[0-9]+)*)[^/\\\\]*[/\\\\].*", "\\1", paths)
+   paths[order(numeric_version(versions, strict = FALSE), decreasing = TRUE)]
 })
 
 #' Which JuliaConnectoR Internals the Console Needs Are Missing?

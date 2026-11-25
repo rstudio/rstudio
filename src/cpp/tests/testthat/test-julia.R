@@ -140,6 +140,27 @@ test_that("the help handler only answers completion help", {
    expect_null(.rs.julia.helpHandler("completion", "length", ""))
 })
 
+test_that("of several installed Julias, the newest is found first", {
+   root <- tempfile("julia-installs-")
+   on.exit(unlink(root, recursive = TRUE), add = TRUE)
+
+   # in the order a sort by name gives
+   for (version in c("1.10.0", "1.11.0-rc1", "1.9.3"))
+   {
+      bin <- file.path(root, paste0("Julia-", version), "bin")
+      dir.create(bin, recursive = TRUE)
+      file.create(file.path(bin, "julia"))
+   }
+
+   installs <- .rs.julia.newestInstalls(file.path(root, "Julia-*", "bin", "julia"))
+   expect_identical(
+      basename(dirname(dirname(installs))),
+      c("Julia-1.11.0-rc1", "Julia-1.10.0", "Julia-1.9.3")
+   )
+
+   expect_identical(.rs.julia.newestInstalls(file.path(root, "Julia-*", "bin", "julia.exe")), character())
+})
+
 # Skip a test that needs a live Julia the console supports, and turn the
 # Julia console on for the rest of a test that isn't skipped. The tests stop
 # Julia when they're done; don't take a running session with them, whether
