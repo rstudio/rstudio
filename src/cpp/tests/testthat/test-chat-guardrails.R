@@ -499,9 +499,11 @@ test_that("restoreBindings leaves alone a namespace that was unloaded or loaded 
    expect_false(exists(package, envir = namespaces, inherits = FALSE))
    expect_false(.rs.chat.bindingsInjected)
 
-   # unloaded, and loaded again
+   # unloaded, and loaded again; the first bs differs from the one a fresh
+   # load has, so writing it back would show
    .rs.chat.injectBindings()
    loadNamespace(package)
+   .rs.replaceBindingImpl(asNamespace(package), "bs", function(...) "replaced")
    .rs.chat.addPreflightHook(package, "bs", function() NULL)
    unloadNamespace(package)
    loadNamespace(package)
@@ -619,11 +621,18 @@ test_that("a binding that fails to restore doesn't turn off later checks", {
 
    .rs.chat.injectBindings()
    assign(".rs.replaceBinding", failingReplaceBinding, envir = rsEnv)
+   suspended <- NA
    expect_warning(
-      .rs.chat.restoreBindings(),
+      withCallingHandlers(
+         .rs.chat.restoreBindings(),
+         warning = function(w) suspended <<- .Internal(interruptsSuspended())
+      ),
       "failed to restore binding 'write.table'"
    )
    assign(".rs.replaceBinding", replaceBinding, envir = rsEnv)
+
+   # raised before an interrupt that arrived meanwhile is delivered
+   expect_true(suspended)
 
    # the next activation checks again (#19806), and hooks write.table() in
    # the namespace too, from the original saved for it. Its own restore
@@ -659,13 +668,36 @@ test_that("a binding that fails to restore doesn't turn off later checks", {
    expect_identical(get("download.file", envir = attached), beforeAttached$download.file)
 
    # and the next activation checks again, hooking writeChar() from its
-   # saved original rather than from the hooked version
+   # saved original rather than from the hooked version, so an allowed call
+   # is checked once
+   validateFileEdit <- get(".rs.chat.validateFileEdit", envir = rsEnv)
+   on.exit(
+      assign(".rs.chat.validateFileEdit", validateFileEdit, envir = rsEnv),
+      add = TRUE,
+      after = FALSE
+   )
+   actions <- character()
+   assign(".rs.chat.validateFileEdit", function(action, ...) {
+      actions <<- c(actions, action)
+      validateFileEdit(action, ...)
+   }, envir = rsEnv)
+
+   allowed <- tempfile()
+   on.exit(unlink(allowed), add = TRUE)
    errors <- .rs.chat.withGuardrails(list(
       tryCatch(writeChar("x", path), error = conditionMessage),
-      tryCatch(writeLines("x", path), error = conditionMessage)
+      tryCatch(writeLines("x", path), error = conditionMessage),
+      {
+         actions <- character()
+         writeChar("x", allowed)
+         actions
+      }
    ))
+   assign(".rs.chat.validateFileEdit", validateFileEdit, envir = rsEnv)
+
    expect_match(errors[[1L]], "Action: writeChar()", fixed = TRUE)
    expect_match(errors[[2L]], "Action: writeLines()", fixed = TRUE)
+   expect_equal(sum(errors[[3L]] == "writeChar"), 1L)
    expect_identical(base::writeChar, before$writeChar)
    expect_identical(utils::write.table, before$write.table)
    expect_identical(get("write.table", envir = attached), beforeAttached$write.table)
