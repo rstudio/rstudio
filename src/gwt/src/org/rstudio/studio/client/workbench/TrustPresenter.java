@@ -112,7 +112,7 @@ public class TrustPresenter implements WorkbenchLoadedEvent.Handler,
       if (trustData != null && trustData.getDirectory() != null)
       {
          if (trustStatusChanged(trustData))
-            showTrustRequestDialog(trustData);
+            showTrustRequestDialog(trustData, trustData.getStatus());
       }
    }
 
@@ -130,11 +130,10 @@ public class TrustPresenter implements WorkbenchLoadedEvent.Handler,
       if (data.hasKey("trust_request"))
       {
          TrustRequestEvent.Data trustData = data.getObject("trust_request").cast();
-         session_.getSessionInfo().setTrustRequest(trustData);
          if (trustData != null && trustData.getDirectory() != null)
          {
             if (trustStatusChanged(trustData))
-               showTrustRequestDialog(trustData);
+               showTrustRequestDialog(trustData, trustData.getStatus());
          }
       }
    }
@@ -146,7 +145,10 @@ public class TrustPresenter implements WorkbenchLoadedEvent.Handler,
          session_.getSessionInfo().getTrustRequest();
       if (trustData != null && trustData.getDirectory() != null)
       {
-         showTrustRequestDialog(trustData);
+         String status = trustDeclined_
+            ? TrustRequestEvent.STATUS_UNTRUSTED
+            : trustData.getStatus();
+         showTrustRequestDialog(trustData, status);
       }
    }
 
@@ -155,7 +157,8 @@ public class TrustPresenter implements WorkbenchLoadedEvent.Handler,
       return lastTrustStatus_ == null || !lastTrustStatus_.equals(data.getStatus());
    }
 
-   private void showTrustRequestDialog(TrustRequestEvent.Data data)
+   // `status` is the one the dialog shows; lastTrustStatus_ keeps the server's.
+   private void showTrustRequestDialog(TrustRequestEvent.Data data, String status)
    {
       if (dialog_ != null)
       {
@@ -168,7 +171,7 @@ public class TrustPresenter implements WorkbenchLoadedEvent.Handler,
 
       dialog_ = new TrustRequestDialog(
          directory,
-         data.getStatus(),
+         status,
          data.getRiskyFiles(),
          () ->
          {
@@ -200,11 +203,7 @@ public class TrustPresenter implements WorkbenchLoadedEvent.Handler,
                @Override
                public void onResponseReceived(VoidResponse response)
                {
-                  // The session's trust request still holds the status from
-                  // startup; record the decision so reopening the dialog from
-                  // the lock icon shows the project as restricted.
-                  data.setStatus(TrustRequestEvent.STATUS_UNTRUSTED);
-                  session_.getSessionInfo().setTrustRequest(data);
+                  trustDeclined_ = true;
                }
 
                @Override
@@ -227,6 +226,10 @@ public class TrustPresenter implements WorkbenchLoadedEvent.Handler,
    private final GlobalDisplay globalDisplay_;
    private final Button restrictedModeIcon_;
    private TrustRequestDialog dialog_;
+
+   // The server's trust request keeps the status this session started with,
+   // so a decline is remembered here for reopening the dialog from the lock.
+   private boolean trustDeclined_;
 
    // tracks last trust status to suppress re-showing dialog on restart
    // with the same status
