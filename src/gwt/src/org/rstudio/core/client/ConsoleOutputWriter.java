@@ -224,13 +224,16 @@ public class ConsoleOutputWriter
     */
    public boolean focusEnd()
    {
-      Node lastChild = output_.getElement().getLastChild();
-      if (lastChild == null)
+      // Skip empty output: a form feed (e.g. cat("\f")) clears the output but
+      // leaves its now-childless output chunk behind.
+      Node last = output_.getElement().getLastChild();
+      while (last != null && !last.hasChildNodes())
+         last = last.getPreviousSibling();
+      if (last == null)
          return false;
 
       output_.getElement().removeClassName(POINTER_FOCUS_CLASS);
-      Element last = lastChild.cast();
-      last.focus();
+      Element.as(last).focus();
       return true;
    }
    

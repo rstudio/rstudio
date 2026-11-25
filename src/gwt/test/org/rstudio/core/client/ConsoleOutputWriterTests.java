@@ -101,6 +101,27 @@ public class ConsoleOutputWriterTests extends GWTTestCase
       Assert.assertNotNull(output.getWidget());
    }
 
+   public void testFocusEndWithNoOutput()
+   {
+      Assert.assertFalse(getCOW().focusEnd());
+   }
+
+   public void testFocusEndAfterFormFeedClear()
+   {
+      // cat("\f") clears the output but leaves an empty output chunk behind
+      ConsoleOutputWriter output = getCOW();
+      output.outputToConsole("hello\n", nullClazz, notError, checkLineCount, false);
+      output.outputToConsole("\f", nullClazz, notError, checkLineCount, false);
+      Assert.assertFalse(output.focusEnd());
+   }
+
+   public void testFocusEndWithOutput()
+   {
+      ConsoleOutputWriter output = getCOW();
+      output.outputToConsole("hello\n", nullClazz, notError, checkLineCount, false);
+      Assert.assertTrue(output.focusEnd());
+   }
+
    public void testSetGetMaxLines()
    {
       ConsoleOutputWriter output = getCOW();
