@@ -33,6 +33,7 @@ typedef struct SEXPREC* SEXP;
 #define kConsoleInputCancel 1
 #define kConsoleInputEof    2
 #define kConsoleInputNoEcho 4
+#define kConsoleInputNoHistory 8
 
 #define EX_CONTINUE                         100
 #define EX_FORCE                            101
@@ -161,6 +162,11 @@ struct RConsoleInput
    bool isNoEcho()
    {
       return (flags & kConsoleInputNoEcho) != 0;
+   }
+
+   bool isNoHistory()
+   {
+      return (flags & kConsoleInputNoHistory) != 0;
    }
    
    // typically used for hand-constructed RPC requests

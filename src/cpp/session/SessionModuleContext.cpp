@@ -3717,15 +3717,18 @@ Error adaptToLanguage(const std::string& language)
 
    // the REPLs aren't nested, so the switch leaves one by way of R and then
    // enters the other. RStudio's own way into and out of the Julia console
-   // isn't echoed: the prompt shows where the console is. reticulate's is
+   // isn't echoed, nor kept in the history: the prompt shows where the
+   // console is. reticulate's is
    std::string leave = console_input::languageSwitchInput(activeLanguage, "R");
    std::string enter = console_input::languageSwitchInput("R", language);
 
+   const int juliaSwitchFlags = kConsoleInputNoEcho | kConsoleInputNoHistory;
+
    Error error;
    if (!leave.empty())
-      error = enqueueConsoleInputWithFlags(leave, activeLanguage == "Julia" ? kConsoleInputNoEcho : 0);
+      error = enqueueConsoleInputWithFlags(leave, activeLanguage == "Julia" ? juliaSwitchFlags : 0);
    if (!error && !enter.empty())
-      error = enqueueConsoleInputWithFlags(enter, language == "Julia" ? kConsoleInputNoEcho : 0);
+      error = enqueueConsoleInputWithFlags(enter, language == "Julia" ? juliaSwitchFlags : 0);
 
    if (error)
    {

@@ -391,8 +391,10 @@ int RReadConsole(const char *pmt,
       {
          // add prompt to console actions (we do this after consoleRead
          // completes so that we don't send both a console prompt event
-         // AND include the same prompt in the actions history)
-         consoleActions().add(kConsoleActionPrompt, prompt);
+         // AND include the same prompt in the actions history). input that
+         // isn't echoed shows neither, so a reload mustn't replay them
+         if (!consoleInput.isNoEcho())
+            consoleActions().add(kConsoleActionPrompt, prompt);
 
          if (consoleInput.isCancel())
          {
@@ -443,8 +445,9 @@ int RReadConsole(const char *pmt,
             // add to console actions and history (if requested). note that
             // we add the user's input rather than any transformed input we
             // created as a result of a shell escape
-            consoleActions().add(kConsoleActionInput, consoleInput.text);
-            if (addToHistory && !isInjectedBrowserCommand(consoleInput.text))
+            if (!consoleInput.isNoEcho())
+               consoleActions().add(kConsoleActionInput, consoleInput.text);
+            if (addToHistory && !consoleInput.isNoHistory() && !isInjectedBrowserCommand(consoleInput.text))
                consoleHistory().add(consoleInput.text, false);
 
             // call console input hook and interrupt if the hook tells us to
