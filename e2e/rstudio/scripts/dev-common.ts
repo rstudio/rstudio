@@ -388,6 +388,18 @@ export function checkGwtBuildReady(tag: string): void {
 
   const checkouts = gwtDevmodeCheckouts();
   if (checkouts.some((checkout) => isSameCheckout(checkout, REPO_ROOT))) {
+    // Devmode writes its Super Dev Mode stub only at startup. An `ant draft`
+    // since then overwrote it, and pages now load that draft: the devmode keeps
+    // running but no longer recompiles, until it restarts.
+    if (hasGwtBootstrap() && !isSuperDevModeBootstrap()) {
+      console.warn(
+        `[${tag}] WARNING: GWT devmode is up for this checkout, but an \`ant draft\` has replaced ` +
+          'its Super Dev Mode bootstrap in src/gwt/www, so tests run that precompiled draft, not live ' +
+          'source. Restart devmode to test live source again.',
+      );
+      warnIfPrecompiledGwtStale(tag);
+      return;
+    }
     console.log(`[${tag}] GWT devmode is running for this checkout.`);
     return;
   }
