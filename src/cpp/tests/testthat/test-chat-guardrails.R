@@ -477,6 +477,7 @@ test_that("restoreBindings leaves alone a namespace that was unloaded or loaded 
 
    hooked <- .rs.chat.hookedBindings
    namespaces <- .rs.chat.hookedNamespaces
+   writeTable <- utils::write.table
    on.exit(.rs.chat.restoreBindings(), add = TRUE)
    on.exit({
       if (exists(package, envir = hooked, inherits = FALSE))
@@ -498,6 +499,7 @@ test_that("restoreBindings leaves alone a namespace that was unloaded or loaded 
    expect_false(exists(package, envir = hooked, inherits = FALSE))
    expect_false(exists(package, envir = namespaces, inherits = FALSE))
    expect_false(.rs.chat.bindingsInjected)
+   expect_identical(utils::write.table, writeTable)
 
    # unloaded, and loaded again; the first bs differs from the one a fresh
    # load has, so writing it back would show
@@ -514,6 +516,7 @@ test_that("restoreBindings leaves alone a namespace that was unloaded or loaded 
    expect_false(exists(package, envir = hooked, inherits = FALSE))
    expect_false(exists(package, envir = namespaces, inherits = FALSE))
    expect_false(.rs.chat.bindingsInjected)
+   expect_identical(utils::write.table, writeTable)
 
 })
 
