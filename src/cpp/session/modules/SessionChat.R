@@ -61,14 +61,20 @@ delayedAssign(
 # directories tracked by chat.recordUserWorkingDirectory.
 .rs.setVar("chat.guardrailState", new.env(parent = emptyenv()))
 
-# Base functions that may change the working directory when they call
-# setwd() themselves (see chat.validateWorkingDirectory), as each changes
-# into a directory on its caller's behalf and restores the previous one
-# on exit: source() and sys.source() for 'chdir = TRUE', and the srcfile
-# helpers, which read a parsed file from the directory it was parsed in.
+# Functions from base packages that may change the working directory when
+# they call setwd() themselves (see chat.validateWorkingDirectory), as each
+# changes into a directory on its caller's behalf and restores the previous
+# one on exit: source(), sys.source() and compiler::loadcmp() for
+# 'chdir = TRUE', tools::checkMD5sums(), and the srcfile helpers, which read
+# a parsed file from the directory it was parsed in. Functions that write
+# in the directory they change into, such as tools::buildVignette(), are
+# left to the check: some of that writing (e.g. pandoc's) is out of the
+# hooks' sight.
 .rs.setVar("chat.workingDirectoryCallers", list(
-   base  = c("source", "sys.source", "open.srcfile"),
-   utils = c(".normalizePath")
+   base     = c("source", "sys.source", "open.srcfile"),
+   compiler = c("loadcmp"),
+   tools    = c("checkMD5sums"),
+   utils    = c(".normalizePath")
 ))
 
 
@@ -406,7 +412,11 @@ delayedAssign(
 #' Edits are allowed within:
 #'
 #' - The R temporary directory
-#' - The current working directory
+#' - The working directory the user chose (see
+#'   `chat.recordUserWorkingDirectory()`), rather than the current one:
+#'   code exempt from the `setwd()` check (see
+#'   `chat.validateWorkingDirectory()`) can move anywhere, and the right to
+#'   edit files must not move with it
 #' - The RStudio user scratch path (tool-invoked code may update files there)
 #' - R library paths (e.g. for package installation)
 #' - The user library (R_LIBS_USER), even before it has been created
@@ -418,7 +428,7 @@ delayedAssign(
 #' permission check, since the session itself creates files there.
 #'
 #' The result is memoized on the inputs that can change while the
-#' session runs (working directory, library paths, `R_LIBS_USER`):
+#' session runs (that working directory, library paths, `R_LIBS_USER`):
 #' this runs on every hooked file operation, and enumerating the
 #' roots is comparatively expensive (the scratch-path lookup alone
 #' touches the filesystem).
@@ -426,14 +436,16 @@ delayedAssign(
 #' @return A character vector of normalized directory paths.
 .rs.addFunction("chat.allowedRoots", function()
 {
-   userLibs <- strsplit(Sys.getenv("R_LIBS_USER"), .Platform$path.sep, fixed = TRUE)[[1L]]
-   key <- list(getwd(), .libPaths(), userLibs)
-
    state <- .rs.chat.guardrailState
+   userDir <- state$userWorkingDirectory
+
+   userLibs <- strsplit(Sys.getenv("R_LIBS_USER"), .Platform$path.sep, fixed = TRUE)[[1L]]
+   key <- list(userDir, .libPaths(), userLibs)
+
    if (identical(state$allowedRootsKey, key))
       return(state$allowedRoots)
 
-   roots <- c(tempdir(), getwd(), .rs.chat.userScratchPath(), .libPaths())
+   roots <- c(tempdir(), userDir, .rs.chat.userScratchPath(), .libPaths())
 
    # include the user library even when it doesn't exist yet -- a nonexistent
    # user library is excluded from .libPaths(), but install.packages() offers
@@ -577,10 +589,11 @@ delayedAssign(
 
 #' Record the working directory the user chose.
 #'
-#' Called as the guardrails are activated. The working directory counts
-#' as the user's choice unless it is where the previous guarded evaluation
-#' left it: then agent code moved there, and the directory recorded
-#' earlier stands.
+#' Called as the guardrails are activated. Edits are allowed within the
+#' directory recorded here, wherever the working directory later moves
+#' (see `chat.allowedRoots()`). The working directory counts as the user's
+#' choice unless it is where the previous guarded evaluation left it: then
+#' agent code moved there, and the directory recorded earlier stands.
 .rs.addFunction("chat.recordUserWorkingDirectory", function()
 {
    state <- .rs.chat.guardrailState
@@ -612,6 +625,11 @@ delayedAssign(
    callers <- .rs.chat.workingDirectoryCallers
    for (package in names(callers))
    {
+      # skip a namespace that isn't loaded, rather than load it just to
+      # compare against it
+      if (!isNamespaceLoaded(package))
+         next
+
       current <- asNamespace(package)
       originals <- .rs.chat.hookedBindings[[package]]
 
@@ -670,12 +688,13 @@ delayedAssign(
 
 #' Validate a change of working directory.
 #'
-#' The working directory is one of the allowed roots (see
-#' `chat.allowedRoots()`), so agent code free to change it could edit
-#' files anywhere. Agent code may therefore only move within the allowed
-#' roots, or back into the directory the user chose -- the working
-#' directory can be the only root containing that one, and it stops being
-#' a root as soon as agent code moves elsewhere.
+#' Edits are checked against the directory the user chose rather than the
+#' current working directory (see `chat.allowedRoots()`), so moving
+#' elsewhere doesn't let the hooked functions edit files there. Agent code
+#' may still only move within the allowed roots: the move is then refused
+#' where it happens rather than at the first edit after it, and relative
+#' paths in code the hooks don't see (see the note at the top of this
+#' file) resolve within the allowed roots too.
 #'
 #' A change is not checked when the function calling `setwd()` belongs to
 #' a package or to RStudio, or is one of `chat.workingDirectoryCallers`
@@ -689,6 +708,12 @@ delayedAssign(
 #' @param caller The function that called `action`.
 .rs.addFunction("chat.validateWorkingDirectory", function(action, dir, caller)
 {
+   # leave the arguments setwd() rejects for it to report. It uses only the
+   # first element of a longer vector, so that's the one to check.
+   if (!is.character(dir) || !length(dir) || is.na(dir[[1L]]) || !nzchar(dir[[1L]]))
+      return(TRUE)
+   dir <- dir[[1L]]
+
    # hasTrustedCallerImpl contributes the chat.safeFunctions allowlist
    exempt <-
       .rs.chat.isWorkingDirectoryCaller(caller) ||
@@ -698,20 +723,14 @@ delayedAssign(
    if (exempt)
       return(TRUE)
 
-   roots <- .rs.chat.allowedRoots()
+   # matched exactly as well as used as a root: a filesystem root is never
+   # taken to contain other paths (see chat.isPathWithin), so one the user
+   # chose would otherwise be unreachable
    userDir <- .rs.chat.guardrailState$userWorkingDirectory
-   if (!is.null(userDir))
-   {
-      # matched exactly as well as used as a root: a filesystem root is
-      # never taken to contain other paths (see chat.isPathWithin), so
-      # one the user chose would otherwise be unreachable
-      if (identical(.rs.chat.normalizePath(dir), userDir))
-         return(TRUE)
+   if (identical(.rs.chat.normalizePath(dir), userDir))
+      return(TRUE)
 
-      roots <- c(roots, userDir)
-   }
-
-   .rs.chat.validateFileEdit(action, dir, roots)
+   .rs.chat.validateFileEdit(action, dir)
 })
 
 #' Validate a connection open based on the open mode.
