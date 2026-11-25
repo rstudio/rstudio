@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 import java.util.HashMap;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
@@ -99,7 +100,7 @@ public class HelpStrategy
    private void showDefaultHelp(final QualifiedName selectedItem,
                                 final CompletionPopupDisplay display)
    {
-      ParsedInfo cachedHelp = cache_.get(selectedItem);
+      ParsedInfo cachedHelp = cache_.get(helpKey(selectedItem));
       if (cachedHelp != null)
       {
          display.displayHelp(cachedHelp);
@@ -117,26 +118,14 @@ public class HelpStrategy
             @Override
             public void onError(ServerError error)
             {
-               Debug.logError(error);
-               RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                     constants_.errorRetrievingHelp(), error.getUserMessage());
-               display.clearHelp(false);
+               onHelpError(error, selectedItem, display);
             }
 
             public void onResponseReceived(HelpInfo.Custom result)
             {
-               if (result != null)
-               {
-                  HelpInfo.ParsedInfo help = result.toParsedInfo();
-                  if (help.hasInfo())
-                  {
-                     cache_.put(selectedItem, help);
-                     display.displayHelp(help);
-                     return;
-                  }
-               }
-               display.setHelpVisible(false);
-               display.clearHelp(false);
+               HelpInfo.ParsedInfo help =
+                     result == null ? null : result.toParsedInfo();
+               showLoadedHelp(selectedItem, help, display);
             }
          });
       }
@@ -149,30 +138,53 @@ public class HelpStrategy
             @Override
             public void onError(ServerError error)
             {
-               Debug.logError(error);
-               RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                     constants_.errorRetrievingHelp(), error.getUserMessage());
-               display.clearHelp(false);
+               onHelpError(error, selectedItem, display);
             }
    
             public void onResponseReceived(HelpInfo result)
             {
-               if (result != null)
-               {
-                  HelpInfo.ParsedInfo help = result.parse(selectedItem.name);
-                  if (help.hasInfo())
-                  {
-                     cache_.put(selectedItem, help);
-                     display.displayHelp(help);
-                     return;
-                  }
-               }
-               display.setHelpVisible(false);
-               display.clearHelp(false);
+               HelpInfo.ParsedInfo help =
+                     result == null ? null : result.parse(selectedItem.name);
+               showLoadedHelp(selectedItem, help, display);
             }
          });
       }
 
+   }
+
+   private void onHelpError(ServerError error,
+                            QualifiedName item,
+                            CompletionPopupDisplay display)
+   {
+      Debug.logError(error);
+      if (!isSelected(item, display))
+         return;
+
+      RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+            constants_.errorRetrievingHelp(), error.getUserMessage());
+      display.clearHelp(false);
+   }
+
+   private void showLoadedHelp(QualifiedName item,
+                               HelpInfo.ParsedInfo help,
+                               CompletionPopupDisplay display)
+   {
+      boolean hasInfo = help != null && help.hasInfo();
+      if (hasInfo)
+         cache_.put(helpKey(item), help);
+
+      if (!isSelected(item, display))
+         return;
+
+      if (hasInfo)
+      {
+         display.displayHelp(help);
+      }
+      else
+      {
+         display.setHelpVisible(false);
+         display.clearHelp(false);
+      }
    }
    
    private void showParameterHelp(final QualifiedName selectedItem,
@@ -180,7 +192,7 @@ public class HelpStrategy
    {
       
       final String name = selectedItem.name.replaceAll("\\s*=\\s*$", "");
-      ParsedInfo cachedHelp = cache_.get(selectedItem);
+      ParsedInfo cachedHelp = cache_.get(helpKey(selectedItem));
       if (cachedHelp != null)
       {
          doShowParameterHelp(cachedHelp, name, display);
@@ -197,22 +209,15 @@ public class HelpStrategy
             @Override
             public void onError(ServerError error)
             {
-               display.clearHelp(false);
+               if (isSelected(selectedItem, display))
+                  display.clearHelp(false);
             }
 
             public void onResponseReceived(HelpInfo.Custom response)
             {
-               if (response != null)
-               {
-                  HelpInfo.ParsedInfo info = response.toParsedInfo();
-                  cache_.put(selectedItem, info);
-                  doShowParameterHelp(info, name, display);
-               }
-               else
-               {
-                  display.setHelpVisible(false);
-                  display.clearHelp(false);
-               }
+               ParsedInfo info =
+                     response == null ? null : response.toParsedInfo();
+               showLoadedParameterHelp(selectedItem, info, name, display);
             }
          });
       }
@@ -225,25 +230,40 @@ public class HelpStrategy
             @Override
             public void onError(ServerError error)
             {
-               display.clearHelp(false);
+               if (isSelected(selectedItem, display))
+                  display.clearHelp(false);
             }
 
             @Override
             public void onResponseReceived(HelpInfo response)
             {
-               if (response != null)
-               {
-                  ParsedInfo info = response.parse(selectedItem.source);
-                  cache_.put(selectedItem, info);
-                  doShowParameterHelp(info, name, display);
-               }
-               else
-               {
-                  display.setHelpVisible(false);
-                  display.clearHelp(false);
-               }
+               ParsedInfo info =
+                     response == null ? null : response.parse(selectedItem.source);
+               showLoadedParameterHelp(selectedItem, info, name, display);
             }
          });
+      }
+   }
+
+   private void showLoadedParameterHelp(QualifiedName item,
+                                        ParsedInfo info,
+                                        String parameter,
+                                        CompletionPopupDisplay display)
+   {
+      if (info != null)
+         cache_.put(helpKey(item), info);
+
+      if (!isSelected(item, display))
+         return;
+
+      if (info != null)
+      {
+         doShowParameterHelp(info, parameter, display);
+      }
+      else
+      {
+         display.setHelpVisible(false);
+         display.clearHelp(false);
       }
    }
    
@@ -288,7 +308,7 @@ public class HelpStrategy
    private void showPackageHelp(final QualifiedName selectedItem,
                                 final CompletionPopupDisplay display)
    {
-      ParsedInfo cachedHelp = cache_.get(selectedItem);
+      ParsedInfo cachedHelp = cache_.get(helpKey(selectedItem));
       if (cachedHelp != null)
       {
          doShowPackageHelp(cachedHelp, display);
@@ -305,16 +325,25 @@ public class HelpStrategy
          @Override
          public void onError(ServerError error)
          {
-            display.clearHelp(false);
+            if (isSelected(selectedItem, display))
+               display.clearHelp(false);
          }
 
          @Override
          public void onResponseReceived(HelpInfo response)
          {
+            ParsedInfo info = null;
             if (response != null)
             {
-               ParsedInfo info = response.parse(packageName);
-               cache_.put(selectedItem, info);
+               info = response.parse(packageName);
+               cache_.put(helpKey(selectedItem), info);
+            }
+
+            if (!isSelected(selectedItem, display))
+               return;
+
+            if (info != null)
+            {
                doShowPackageHelp(info, display);
             }
             else
@@ -339,8 +368,28 @@ public class HelpStrategy
          display.clearHelp(false);
       }
    }
-   
-   HashMap<QualifiedName, ParsedInfo> cache_;
+
+   // Identifies an item's help topic. QualifiedName.equals ignores the
+   // source, but e.g. filter {dplyr} and filter {stats} have different help,
+   // and custom help handlers resolve topics per language.
+   private static String helpKey(QualifiedName item)
+   {
+      return item.type + "\u0000" + item.name + "\u0000" +
+             StringUtil.notNull(item.source) + "\u0000" +
+             StringUtil.notNull(item.helpHandler) + "\u0000" +
+             StringUtil.notNull(item.language);
+   }
+
+   // The selection can move on while help loads; help that arrives for an
+   // item no longer selected would be shown beside, and read with, another.
+   private static boolean isSelected(QualifiedName item,
+                                     CompletionPopupDisplay display)
+   {
+      QualifiedName selected = display.getSelectedValue();
+      return selected != null && helpKey(item).equals(helpKey(selected));
+   }
+
+   HashMap<String, ParsedInfo> cache_;
    private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
 
 }

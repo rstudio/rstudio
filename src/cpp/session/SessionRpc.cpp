@@ -13,7 +13,10 @@
  *
  */
 
+#include <exception>
 #include <string>
+
+#include <boost/make_shared.hpp>
 
 #include "SessionRpc.hpp"
 #include "SessionHttpMethods.hpp"
@@ -26,12 +29,14 @@
 #include <core/json/JsonRpc.hpp>
 #include <core/Exec.hpp>
 #include <core/Log.hpp>
+#include <core/MainThread.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RSexp.hpp>
 #include <r/RJson.hpp>
 #include <r/RJsonRpc.hpp>
 #include <r/RRoutines.hpp>
+#include <r/RRuntime.hpp>
 
 using namespace rstudio::core;
 using namespace boost::placeholders;
@@ -49,15 +54,21 @@ std::set<std::string>& s_offlineableUris = core::make_leaked<std::set<std::strin
 // json rpc methods
 core::json::JsonRpcAsyncMethods* s_pJsonRpcMethods = nullptr;
    
-void endHandleRpcRequestDirect(boost::shared_ptr<HttpConnection> ptrConnection,
+void endHandleRpcRequestDirect(boost::shared_ptr<rpc::RpcDelivery> pDelivery,
+                         boost::shared_ptr<HttpConnection> ptrConnection,
                          boost::posix_time::ptime executeStartTime,
                          const core::Error& executeError,
                          json::JsonRpcResponse* pJsonRpcResponse)
 {
+   // a second response would be written to a connection already answered
+   if (!rpc::claimRpcDelivery(pDelivery.get()))
+      return;
+
    // return error or result then continue waiting for requests
    if (executeError)
    {
       ptrConnection->sendJsonRpcError(executeError);
+      rpc::markRpcDeliverySent(pDelivery.get());
    }
    else
    {
@@ -77,17 +88,11 @@ void endHandleRpcRequestDirect(boost::shared_ptr<HttpConnection> ptrConnection,
 
       // send the response
       ptrConnection->sendJsonRpcResponse(*pJsonRpcResponse);
+      rpc::markRpcDeliverySent(pDelivery.get());
 
       // run after response if we have one (then detect changes again)
       if (pJsonRpcResponse->hasAfterResponse())
-      {
-         pJsonRpcResponse->runAfterResponse();
-         if (!pJsonRpcResponse->suppressDetectChanges())
-         {
-            module_context::events().onDetectChanges(
-                  module_context::ChangeSourceRPC);
-         }
-      }
+         rpc::runAfterResponse(pDelivery.get(), pJsonRpcResponse);
    }
 }
 
@@ -187,6 +192,200 @@ void registerRpcMethod(const core::json::JsonRpcAsyncMethod& method)
 
 namespace rpc {
 
+namespace {
+
+// who claimed an RpcDelivery: the backstop, on the main thread, may release
+// only a claim the main thread made
+constexpr int kUnclaimed = 0;
+constexpr int kClaimedOnMainThread = 1;
+constexpr int kClaimedElsewhere = 2;
+
+struct RpcHandlerInvocation
+{
+   const json::JsonRpcAsyncFunction* pHandler;
+   const json::JsonRpcRequest* pRequest;
+   const json::JsonRpcFunctionContinuation* pContinuation;
+   RpcDelivery* pDelivery;
+
+   // a C++ exception must not unwind through R_UnwindProtect(), which would
+   // leave R's context stack pointing at its frame; it's rethrown after
+   std::exception_ptr exception;
+
+   // R's error message from before the handler ran, which is cleared while it
+   // runs. an interrupt writes no message, and clears R's pending flag and
+   // RStudio's wasInterrupted (the newline R prints) before it unwinds, so
+   // before R 4.0 an empty message is how the backstop tells one from an
+   // error; comparing with this one instead would take a repeat of the same
+   // error for one
+   std::string previousErrorMessage;
+
+   // set as R signals an error that nothing the handler ran caught (from
+   // R 4.0). the message alone can't tell such an error from an interrupt
+   // that follows one the handler caught, which leaves its message behind
+   bool errorSignaled;
+};
+
+// puts back R's error message from before the handler ran, unless the handler
+// wrote another: R code the request was handled during (the user's, say) may
+// read it with geterrmessage()
+void restorePreviousErrorMessage(const RpcHandlerInvocation& invocation)
+{
+   if (r::exec::getErrorMessage().empty())
+      r::exec::setErrorMessage(invocation.previousErrorMessage);
+}
+
+SEXP invokeRpcHandlerImpl(void* data)
+{
+   RpcHandlerInvocation* pInvocation = static_cast<RpcHandlerInvocation*>(data);
+   try
+   {
+      (*pInvocation->pHandler)(*pInvocation->pRequest, *pInvocation->pContinuation);
+   }
+   catch (...)
+   {
+      pInvocation->exception = std::current_exception();
+   }
+   return R_NilValue;
+}
+
+SEXP noteRpcHandlerError(SEXP /* conditionSEXP */, void* data)
+{
+   static_cast<RpcHandlerInvocation*>(data)->errorSignaled = true;
+   return R_NilValue;
+}
+
+SEXP invokeRpcHandlerNotingErrors(void* data)
+{
+   return r::runtime::withCallingErrorHandler(
+            invokeRpcHandlerImpl,
+            data,
+            noteRpcHandlerError,
+            data);
+}
+
+// runs as an R error (or interrupt) unwinds through the handler, after which
+// R continues unwinding; this runs after R has left the handler's context, so
+// it can send the response
+void answerInterruptedRpc(void* data, Rboolean jump)
+{
+   if (!jump)
+      return;
+
+   RpcHandlerInvocation* pInvocation = static_cast<RpcHandlerInvocation*>(data);
+   RpcDelivery* pDelivery = pInvocation->pDelivery;
+
+   std::string errorMessage = r::exec::getErrorMessage();
+   bool interrupted = r::runtime::hasCallingErrorHandler() ?
+            !pInvocation->errorSignaled :
+            errorMessage.empty();
+   restorePreviousErrorMessage(*pInvocation);
+
+   // the unwinding carries on past invokeRpcHandler(), so held after-response
+   // work is dropped, as the handler's remaining work is, and a continuation
+   // the handler kept runs its own
+   pDelivery->deferAfterResponse = false;
+   pDelivery->afterResponse.clear();
+
+   if (pDelivery->sent)
+      return;
+
+   // the handler's own response may have been claimed and then interrupted
+   // before it was sent; a claim made on another thread is left to it
+   int claimant = kClaimedOnMainThread;
+   pDelivery->claimant.compare_exchange_strong(claimant, kUnclaimed);
+
+   try
+   {
+      const std::string& method = pInvocation->pRequest->method;
+      Error error = r::rCodeExecutionError(
+               interrupted ?
+                  "R code was interrupted while handling '" + method + "'" :
+                  "R error while handling '" + method + "': " + errorMessage,
+               ERROR_LOCATION);
+      json::JsonRpcResponse response;
+      (*pInvocation->pContinuation)(error, &response);
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+}
+
+} // anonymous namespace
+
+bool claimRpcDelivery(RpcDelivery* pDelivery)
+{
+   int claimant = kUnclaimed;
+   return pDelivery->claimant.compare_exchange_strong(
+            claimant,
+            core::thread::isMainThread() ? kClaimedOnMainThread : kClaimedElsewhere);
+}
+
+void markRpcDeliverySent(RpcDelivery* pDelivery)
+{
+   pDelivery->sent = true;
+}
+
+namespace {
+
+void runAfterResponseNow(const boost::function<void()>& afterResponse, bool suppressDetectChanges)
+{
+   if (afterResponse)
+      afterResponse();
+
+   if (!suppressDetectChanges)
+      module_context::events().onDetectChanges(module_context::ChangeSourceRPC);
+}
+
+} // anonymous namespace
+
+void runAfterResponse(RpcDelivery* pDelivery, json::JsonRpcResponse* pResponse)
+{
+   // only the work is held, not the response it came with
+   if (pDelivery != nullptr && pDelivery->deferAfterResponse && core::thread::isMainThread())
+   {
+      pDelivery->afterResponse = pResponse->afterResponse();
+      pDelivery->suppressDetectChanges = pResponse->suppressDetectChanges();
+      return;
+   }
+
+   runAfterResponseNow(pResponse->afterResponse(), pResponse->suppressDetectChanges());
+}
+
+void invokeRpcHandler(const json::JsonRpcAsyncFunction& handler,
+                      const json::JsonRpcRequest& request,
+                      const json::JsonRpcFunctionContinuation& continuation,
+                      const boost::shared_ptr<RpcDelivery>& pDelivery)
+{
+   // offline requests are handled off the main thread without R, which
+   // can't be entered there
+   if (!core::thread::isMainThread())
+   {
+      handler(request, continuation);
+      return;
+   }
+
+   // R_UnwindProtect() rather than R_ToplevelExec(): it doesn't stop the
+   // unwinding, so an interrupt meant for R code that's running still
+   // reaches it. like any context, it restores R's handler stack when it
+   // ends, so after-response work (which can register calling handlers) is
+   // held until it has (see RpcDelivery)
+   RpcHandlerInvocation invocation = { &handler, &request, &continuation, pDelivery.get(), nullptr, r::exec::getErrorMessage(), false };
+   pDelivery->deferAfterResponse = true;
+   r::sexp::Protect protect;
+   SEXP tokenSEXP;
+   protect.add(tokenSEXP = R_MakeUnwindCont());
+   r::exec::setErrorMessage(std::string());
+   R_UnwindProtect(invokeRpcHandlerNotingErrors, &invocation, answerInterruptedRpc, &invocation, tokenSEXP);
+   restorePreviousErrorMessage(invocation);
+   pDelivery->deferAfterResponse = false;
+
+   boost::function<void()> afterResponse;
+   afterResponse.swap(pDelivery->afterResponse);
+   if (afterResponse)
+      runAfterResponseNow(afterResponse, pDelivery->suppressDetectChanges);
+
+   if (invocation.exception)
+      std::rethrow_exception(invocation.exception);
+}
+
 void formatRpcRequest(SEXP name,
                       SEXP args,
                       core::json::JsonRpcRequest* pRequest)
@@ -252,11 +451,19 @@ void sendJsonAsyncPendingResponse(const core::json::JsonRpcRequest &request,
    ptrConnection->sendJsonRpcResponse(response);
 }
 
-void endHandleRpcRequestIndirect(
+namespace {
+
+// pDelivery is null for a caller outside dispatch (AsyncRpcConnection)
+void endHandleRpcRequestIndirectImpl(
+        RpcDelivery* pDelivery,
         const std::string& asyncHandle,
         const core::Error& executeError,
         json::JsonRpcResponse* pJsonRpcResponse)
 {
+   // a second completion for the same handle would be dropped by the client
+   if (pDelivery != nullptr && !claimRpcDelivery(pDelivery))
+      return;
+
    // pJsonRpcResponse may be a nullptr, so handle that safely
    json::JsonRpcResponse emptyResponse;
    if (pJsonRpcResponse == nullptr)
@@ -264,26 +471,41 @@ void endHandleRpcRequestIndirect(
 
    if (executeError)
       pJsonRpcResponse->setError(executeError);
-   
+
    if (!pJsonRpcResponse->hasField(kEventsPending))
       pJsonRpcResponse->setField(kEventsPending, "false");
-   
+
    json::Object value;
    value["handle"] = asyncHandle;
    value["response"] = pJsonRpcResponse->getRawResponse();
    ClientEvent evt(client_events::kAsyncCompletion, value);
    module_context::enqueClientEvent(evt);
 
+   if (pDelivery != nullptr)
+      markRpcDeliverySent(pDelivery);
+
    // run after response if we have one (then detect changes again)
    if (pJsonRpcResponse->hasAfterResponse())
-   {
-      pJsonRpcResponse->runAfterResponse();
-      if (!pJsonRpcResponse->suppressDetectChanges())
-      {
-         module_context::events().onDetectChanges(
-                 module_context::ChangeSourceRPC);
-      }
-   }
+      runAfterResponse(pDelivery, pJsonRpcResponse);
+}
+
+void endHandleRpcRequestIndirectOnce(
+        boost::shared_ptr<RpcDelivery> pDelivery,
+        const std::string& asyncHandle,
+        const core::Error& executeError,
+        json::JsonRpcResponse* pJsonRpcResponse)
+{
+   endHandleRpcRequestIndirectImpl(pDelivery.get(), asyncHandle, executeError, pJsonRpcResponse);
+}
+
+} // anonymous namespace
+
+void endHandleRpcRequestIndirect(
+        const std::string& asyncHandle,
+        const core::Error& executeError,
+        json::JsonRpcResponse* pJsonRpcResponse)
+{
+   endHandleRpcRequestIndirectImpl(nullptr, asyncHandle, executeError, pJsonRpcResponse);
 }
 
 void handleRpcRequest(const core::json::JsonRpcRequest& request,
@@ -307,28 +529,35 @@ void handleRpcRequest(const core::json::JsonRpcRequest& request,
    {
       std::pair<bool, json::JsonRpcAsyncFunction> reg = it->second;
       json::JsonRpcAsyncFunction handlerFunction = reg.second;
+      boost::shared_ptr<RpcDelivery> pDelivery = boost::make_shared<RpcDelivery>();
 
       // For asyncRpc the http response was already sent - just call the handler and emit the event
       if (ptrConnection->isAsyncRpc())
       {
          boost::shared_ptr<rpc::AsyncRpcConnection> asyncConn =
                  boost::static_pointer_cast<rpc::AsyncRpcConnection>(ptrConnection);
-         handlerFunction(request,
-                         boost::bind(endHandleRpcRequestIndirect,
-                                     asyncConn->asyncHandle(),
-                                     _1,
-                                     _2));
+         invokeRpcHandler(handlerFunction,
+                          request,
+                          boost::bind(endHandleRpcRequestIndirectOnce,
+                                      pDelivery,
+                                      asyncConn->asyncHandle(),
+                                      _1,
+                                      _2),
+                          pDelivery);
       }
       // Sync rpc
       else if (reg.first)
       {
          // direct return
-         handlerFunction(request,
-                         boost::bind(endHandleRpcRequestDirect,
-                                     ptrConnection,
-                                     executeStartTime,
-                                     _1,
-                                     _2));
+         invokeRpcHandler(handlerFunction,
+                          request,
+                          boost::bind(endHandleRpcRequestDirect,
+                                      pDelivery,
+                                      ptrConnection,
+                                      executeStartTime,
+                                      _1,
+                                      _2),
+                          pDelivery);
       }
       // registerAsyncRpc - http connection is still open, send the async response, then emit the event
       else
@@ -336,11 +565,14 @@ void handleRpcRequest(const core::json::JsonRpcRequest& request,
          std::string asyncHandle = core::system::generateUuid(true);
          sendJsonAsyncPendingResponse(request, ptrConnection, asyncHandle);
 
-         handlerFunction(request,
-                         boost::bind(endHandleRpcRequestIndirect,
-                                     asyncHandle,
-                                     _1,
-                                     _2));
+         invokeRpcHandler(handlerFunction,
+                          request,
+                          boost::bind(endHandleRpcRequestIndirectOnce,
+                                      pDelivery,
+                                      asyncHandle,
+                                      _1,
+                                      _2),
+                          pDelivery);
       }
    }
    else
@@ -359,7 +591,13 @@ void handleRpcRequest(const core::json::JsonRpcRequest& request,
          endHandleRpcRequestIndirect(asyncConn->asyncHandle(), executeError, nullptr);
       }
       else
-         endHandleRpcRequestDirect(ptrConnection, executeStartTime, executeError, nullptr);
+      {
+         endHandleRpcRequestDirect(boost::make_shared<rpc::RpcDelivery>(),
+                                   ptrConnection,
+                                   executeStartTime,
+                                   executeError,
+                                   nullptr);
+      }
    }
 }
 

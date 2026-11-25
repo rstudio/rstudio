@@ -1431,21 +1431,38 @@ void readQuartoProjectConfig(const FilePath& configFile,
                auto node = it->second;
                if (node.Type() == YAML::NodeType::Map)
                {
+                  // a "\0" escape gives a string R can't hold, and R would
+                  // raise an error creating it -- at session startup, when
+                  // the session can't recover from one
                   r::sexp::Protect protect;
-                  auto editorSEXP = r::sexp::create(node, &protect);
-
-                  SEXP editorJsonSEXP;
-                  Error error = r::exec::RFunction(".rs.quarto.editorConfig", editorSEXP)
-                       .call(&editorJsonSEXP, &protect);
-                  if (!error)
+                  SEXP editorSEXP = R_NilValue;
+                  bool editorContainsNul = false;
                   {
-                     error = r::sexp::extract(editorJsonSEXP, pEditor);
-                     if (error)
-                        LOG_ERROR(error);
+                     r::sexp::NulCheckScope nulCheck;
+                     editorSEXP = r::sexp::create(node, &protect);
+                     editorContainsNul = nulCheck.foundNul();
+                  }
+
+                  if (editorContainsNul)
+                  {
+                     LOG_WARNING_MESSAGE("Ignoring editor options containing a nul character in " +
+                                         configFile.getAbsolutePath());
                   }
                   else
                   {
-                     LOG_ERROR(error);
+                     SEXP editorJsonSEXP;
+                     Error error = r::exec::RFunction(".rs.quarto.editorConfig", editorSEXP)
+                          .call(&editorJsonSEXP, &protect);
+                     if (!error)
+                     {
+                        error = r::sexp::extract(editorJsonSEXP, pEditor);
+                        if (error)
+                           LOG_ERROR(error);
+                     }
+                     else
+                     {
+                        LOG_ERROR(error);
+                     }
                   }
                }
                else if (node.Type() == YAML::NodeType::Scalar)

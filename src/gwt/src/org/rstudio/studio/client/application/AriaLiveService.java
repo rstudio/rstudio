@@ -37,6 +37,7 @@ public class AriaLiveService
    // Unique identifiers for aria-live announcements. Use the same text for the
    // value as the constant name to ensure uniqueness. Add here and in the constructor below to
    // associate description for preferences UI.
+   public static final String COMPLETION_MESSAGE = "completion_message";
    public static final String CONSOLE_CLEARED = "console_cleared";
    public static final String CONSOLE_LOG = "console_log";
    public static final String CONSOLE_COMMAND = "console_command";
@@ -70,6 +71,7 @@ public class AriaLiveService
       pUserPrefs_ = pUserPrefs;
 
       announcements_ = new HashMap<>();
+      announcements_.put(COMPLETION_MESSAGE, constants_.completionMessageAnnouncement());
       announcements_.put(CONSOLE_CLEARED, constants_.consoleClearedAnnouncement());
       announcements_.put(CONSOLE_LOG, constants_.consoleOutputAnnouncement());
       announcements_.put(CONSOLE_COMMAND, constants_.consoleCommandAnnouncement());

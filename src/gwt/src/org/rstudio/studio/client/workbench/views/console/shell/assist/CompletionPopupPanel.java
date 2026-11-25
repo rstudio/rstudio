@@ -31,6 +31,8 @@ import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
@@ -62,8 +64,14 @@ public class CompletionPopupPanel extends ThemedPopupPanel
 {
    public CompletionPopupPanel(InputEditorDisplay input)
    {
+      this(input, RStudioGinjector.INSTANCE.getAriaLiveService());
+   }
+
+   CompletionPopupPanel(InputEditorDisplay input, AriaLiveService ariaLive)
+   {
       super();
       input_ = input;
+      ariaLive_ = ariaLive;
       autoConstrain_ = false;
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
 
@@ -117,6 +125,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       // An offscreen list stays attached; stop announcing its selection.
       if (list_ != null)
          list_.setInput(null);
+      announced_ = null;
       placedBelow_ = null;
       setPopupPosition(-10000, -10000);
       help_.setPopupPosition(-10000, -10000);
@@ -128,16 +137,11 @@ public class CompletionPopupPanel extends ThemedPopupPanel
              getAbsoluteTop() + getOffsetHeight() < 0;
    }
 
-   public void showProgress(String progress, PositionCallback callback)
-   {
-      setText(progress);
-      show(callback);
-   }
-
    public void showErrorMessage(String error, PositionCallback callback)
    {
       setText(error);
       show(callback);
+      announce(error);
    }
 
    @Override
@@ -196,6 +200,22 @@ public class CompletionPopupPanel extends ThemedPopupPanel
 
       if (bottomUp)
          selectLast();
+
+      if (truncated)
+         announce(constants_.notAllItemsShownAnnouncement());
+      else
+         announced_ = null;
+   }
+
+   // The popup is refreshed as the user types, often with the message it
+   // already shows; announce a message only when it changes.
+   private void announce(String message)
+   {
+      if (StringUtil.equals(message, announced_))
+         return;
+
+      announced_ = message;
+      CompletionListAria.announce(ariaLive_, message);
    }
 
    private void setCompletionList(QualifiedName[] values,
@@ -293,6 +313,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    {
       unregisterIgnoredKeys();
       unregisterNativeHandler();
+      announced_ = null;
       super.hide();
    }
 
@@ -347,6 +368,16 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    public void setHelpVisible(boolean visible)
    {
       help_.setVisible(visible);
+      describeSelection(visible);
+   }
+
+   // Help arrives after the selection, usually from the server, so it's
+   // read when the screen reader reads the selection's description, e.g.
+   // when help was cached, not as it arrives.
+   private void describeSelection(boolean helpShown)
+   {
+      if (list_ != null)
+         list_.describeSelectedItem(helpShown ? help_.getDescriptionId() : null);
    }
 
    private boolean completionListIsOnScreen()
@@ -362,7 +393,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          return;
 
       help_.displayHelp(help);
-      resolveHelpPosition(help.hasInfo());
+      showHelpForSelection(help.hasInfo());
    }
 
    @Override
@@ -372,7 +403,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          return;
 
       help_.displayParameterHelp(map, parameterName);
-      resolveHelpPosition(map.get(parameterName) != null);
+      showHelpForSelection(map.get(parameterName) != null);
    }
 
    @Override
@@ -382,7 +413,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          return;
 
       help_.displayPackageHelp(help);
-      resolveHelpPosition(help.hasInfo());
+      showHelpForSelection(help.hasInfo());
 
    }
 
@@ -428,6 +459,15 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       help_.setVisible(setVisible);
    }
 
+   // Shows help just displayed for the selected item, and links it to that
+   // item. Help repositioned for a refreshed list may be for another item,
+   // so show() only repositions it.
+   private void showHelpForSelection(boolean visible)
+   {
+      resolveHelpPosition(visible);
+      describeSelection(visible);
+   }
+
    @Override
    public void displaySnippetHelp(String contents)
    {
@@ -435,7 +475,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          return;
 
       help_.displaySnippetHelp(contents);
-      resolveHelpPosition(!StringUtil.isNullOrEmpty(contents));
+      showHelpForSelection(!StringUtil.isNullOrEmpty(contents));
    }
 
    @Override
@@ -445,7 +485,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          return;
       
       help_.displayRoxygenHelp(title, description, hasVignette);
-      resolveHelpPosition(true);
+      showHelpForSelection(true);
    }
    
    @Override
@@ -467,12 +507,13 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       description = "<p style='padding-left: 3px;'>" + description + "</p>";
       
       help_.displayParameterHelp(value, description, false);
-      resolveHelpPosition(!StringUtil.isNullOrEmpty(description));
+      showHelpForSelection(!StringUtil.isNullOrEmpty(description));
    }
 
    public void clearHelp(boolean downloadOperationPending)
    {
       help_.clearHelp(downloadOperationPending);
+      describeSelection(false);
    }
 
    public HandlerRegistration addSelectionHandler(
@@ -576,6 +617,9 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    }
 
    private final InputEditorDisplay input_;
+   private final AriaLiveService ariaLive_;
+   // The message last announced while showing, or null.
+   private String announced_;
    private CompletionList<QualifiedName> list_;
    private HelpInfoPopupPanel help_;
    private final ConsoleResources.ConsoleStyles styles_;

@@ -66,21 +66,28 @@ Error closeSocket(SocketService& socket)
 
 inline bool isWrongProtocolTypeError(const core::Error& error)
 {
-   return error == systemError(boost::system::errc::wrong_protocol_type, ErrorLocation());
+   return error.matches(boost::system::errc::wrong_protocol_type);
 }
 
 inline bool isConnectionTerminatedError(const core::Error& error)
 {
-   // look for errors that indicate the client closing the connection
-   bool timedOut = error == boost::asio::error::timed_out;
+   // look for errors that indicate the client closing the connection; the
+   // errno-valued ones are conditions, since our own errors carry them as
+   // errno values while on Windows asio reports them as Winsock or Win32 codes
+   bool timedOut = error.matches(boost::system::errc::timed_out);
    bool eof = error == boost::asio::error::eof;
-   bool reset = error == boost::asio::error::connection_reset;
+   bool reset = error.matches(boost::system::errc::connection_reset);
    bool shortRead = error == boost::asio::ssl::error::stream_truncated; // "short read"
-   bool badFile = error == boost::asio::error::bad_descriptor;
-   bool brokenPipe = error == boost::asio::error::broken_pipe;
-   bool noFile = error == systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation());
+   bool badFile = error.matches(boost::system::errc::bad_file_descriptor);
+   bool brokenPipe = error.matches(boost::system::errc::broken_pipe);
+   bool noFile = error.matches(boost::system::errc::no_such_file_or_directory);
 
 #ifdef _WIN32
+   // of the native not-found codes, only ERROR_FILE_NOT_FOUND, as before; see
+   // #19756 for whether ERROR_PATH_NOT_FOUND and the others belong here too
+   if (error.getName() == boost::system::system_category().name())
+      noFile = error == boost::system::windows_error::file_not_found;
+
    int ec = error.getCode();
    bool noData = (error.getName() == boost::system::system_category().name()) && (ec == ERROR_NO_DATA);
 #else
@@ -94,13 +101,21 @@ inline bool isConnectionUnavailableError(const Error& error)
 {
    // determine whether the error connecting was caused by the session process 
    // not currently existing (and thus remediable by launching a new one)
-   
+
+   // a missing unix domain socket. On Windows only our own generic errors
+   // count: matches() would also accept permanent named-pipe errors such as
+   // ERROR_PATH_NOT_FOUND and ERROR_INVALID_NAME, and the retryable native
+   // codes are listed below
+   bool missingSocket = error.matches(boost::system::errc::no_such_file_or_directory);
+#ifdef _WIN32
+   missingSocket = missingSocket && error.getName() == boost::system::generic_category().name();
+#endif
+
    return (
-         // for unix domain sockets
-         error == systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()) ||
+         missingSocket ||
 
          // for tcp-ip and unix domain sockets
-         error == boost::asio::error::connection_refused
+         error.matches(boost::system::errc::connection_refused)
 
          // for windows named pipes
  #ifdef _WIN32

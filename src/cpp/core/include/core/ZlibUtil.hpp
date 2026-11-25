@@ -27,6 +27,11 @@ namespace rstudio {
 namespace core {
 namespace zlib {
 
+// An error for a zlib return code (e.g. Z_DATA_ERROR), with zlib's message for
+// it. A zlib code is neither an errno value nor a Win32 error code, so it
+// doesn't belong in the system category.
+Error zlibError(int code, const std::string& description, const ErrorLocation& location);
+
 Error compressString(const std::string& toCompress, std::vector<unsigned char>* compressedData);
 
 Error decompressString(const std::vector<unsigned char>& compressedData, std::string* str);

@@ -285,6 +285,9 @@ class CompletionList<TItem> extends Composite
    {
       if (selectedIndex_ != index)
       {
+         // The description was for the item it was set on.
+         describeSelectedItem(null);
+
          CellFormatter cf = grid_.getCellFormatter();
          if (selectedIndex_ >= 0)
          {
@@ -308,6 +311,26 @@ class CompletionList<TItem> extends Composite
 
          updateActiveDescendant();
       }
+   }
+
+   /**
+    * Points the selected item's aria-describedby at the element with the
+    * given id, such as help about the item, or removes it for null. Moving
+    * the selection removes it.
+    */
+   public void describeSelectedItem(String id)
+   {
+      if (describedIndex_ >= 0)
+         grid_.getRowFormatter().getElement(describedIndex_)
+               .removeAttribute("aria-describedby");
+      describedIndex_ = -1;
+
+      if (id == null || selectedIndex_ < 0)
+         return;
+
+      describedIndex_ = selectedIndex_;
+      grid_.getRowFormatter().getElement(describedIndex_)
+            .setAttribute("aria-describedby", id);
    }
 
    /**
@@ -339,6 +362,7 @@ class CompletionList<TItem> extends Composite
    }
 
    private int selectedIndex_ = -1;
+   private int describedIndex_ = -1;
    private InputEditorDisplay input_;
    private boolean announceable_;
 

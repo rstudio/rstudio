@@ -16,6 +16,9 @@
 #define R_INTERNAL_FUNCTIONS
 #include <r/RExec.hpp>
 
+#include <algorithm>
+#include <cstring>
+
 #include <boost/scoped_ptr.hpp>
 
 #include <shared_core/FilePath.hpp>
@@ -139,6 +142,16 @@ void parseStringImpl(void* data)
 
 Error parseString(const std::string& code, SEXP* pSEXP, sexp::Protect* pProtect)
 {
+   // R would raise an error making a string with an embedded nul, before the
+   // parse below runs protected; R code can't contain one in any case
+   if (sexp::containsNul(code))
+   {
+      Error error(errc::ExpressionParsingError, ERROR_LOCATION);
+      error.addProperty("code", code);
+      error.addProperty("reason", "code contains an embedded nul");
+      return error;
+   }
+
    // string to parse
    SEXP codeSEXP = sexp::create(code, pProtect);
 
@@ -458,11 +471,31 @@ RFunction& RFunction::addQuotedParam(const std::string& name, SEXP paramSEXP)
    if (!REQUIRE_MAIN_THREAD())
       return *this;
 
+   if (!acceptParam(name, false))
+      return *this;
+
    static SEXP s_quote = Rf_install("quote");
    SEXP quotedSEXP = Rf_lang2(s_quote, paramSEXP);
    preserver_.add(quotedSEXP);
    params_.push_back(Param(name, quotedSEXP));
    return *this;
+}
+
+bool RFunction::acceptParam(const std::string& name, bool valueContainsNul)
+{
+   if (!paramProblem_.empty())
+      return false;
+
+   // call() passes a name to Rf_install() as a C string, which cuts it off at
+   // a nul and raises an R error if it's longer than R's limit on symbol names
+   if (valueContainsNul || name.find('\0') != std::string::npos)
+      paramProblem_ = "a string with an embedded nul";
+   else if (name.size() > sexp::kMaxSymbolNameBytes)
+      paramProblem_ = "a parameter name longer than " + std::to_string(sexp::kMaxSymbolNameBytes) + " bytes";
+   else
+      return true;
+
+   return false;
 }
 
 void RFunction::commonInit(const std::string& functionName)
@@ -538,6 +571,20 @@ Error RFunction::call(SEXP evalNS,
       std::string functionName = functionName_.empty() ? "<unknown>" : functionName_;
       Error error = rCodeExecutionError(
                "R function '" + functionName + "' was used from a non-main thread",
+               ERROR_LOCATION);
+      if (!functionName_.empty())
+         error.addProperty("symbol", functionName_);
+      return error;
+   }
+
+   if (!paramProblem_.empty())
+   {
+      // callers may pass the result on before checking the error
+      *pResultSEXP = R_NilValue;
+
+      std::string functionName = functionName_.empty() ? "<unknown>" : functionName_;
+      Error error = rCodeExecutionError(
+               "R function '" + functionName + "' was passed " + paramProblem_,
                ERROR_LOCATION);
       if (!functionName_.empty())
          error.addProperty("symbol", functionName_);
@@ -649,6 +696,17 @@ void errorCall(SEXP call, const std::string& message)
 std::string getErrorMessage()
 {
    return R_curErrorBuf();
+}
+
+void setErrorMessage(const std::string& message)
+{
+   // R exports no setter (seterrmessage()'s is internal), but R_curErrorBuf()
+   // returns R's own buffer, which is writable; BUFSIZE in R's Defn.h
+   constexpr std::size_t kErrorBufSize = 8192;
+   char* pErrorBuf = const_cast<char*>(R_curErrorBuf());
+   std::size_t length = std::min(message.size(), kErrorBufSize - 1);
+   std::memcpy(pErrorBuf, message.data(), length);
+   pErrorBuf[length] = '\0';
 }
    
 

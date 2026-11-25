@@ -827,7 +827,8 @@ public class FilesList extends Composite
    private final Timer redrawTimer_;
 
    private static final int REDRAW_DELAY_MS = 100;
-   private static final int CHECK_COLUMN_WIDTH_PIXELS = 30;
+   // FilePathToolbar sizes its select-all checkbox layer to this column
+   static final int CHECK_COLUMN_WIDTH_PIXELS = 30;
    private static final int ICON_COLUMN_WIDTH_PIXELS = 26;
    private static final int SIZE_COLUMN_WIDTH_PIXELS = 80;
    private static final int MODIFIED_COLUMN_WIDTH_PIXELS = 160;

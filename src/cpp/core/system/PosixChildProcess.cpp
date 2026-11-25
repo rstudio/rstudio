@@ -1614,7 +1614,8 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
       else if (errorCode)
       {
          // this was no exit, but a legitimate error
-         Error error = systemError(errorCode.value(), errorCode.message(), ERROR_LOCATION);
+         Error error(errorCode, ERROR_LOCATION);
+         error.addProperty("description", errorCode.message());
          if (callbacks_.onError)
          {
             // copy members before posting the error to the thread pool

@@ -36,7 +36,6 @@
 #include <shared_core/SafeConvert.hpp>
 #include <core/BoostErrors.hpp>
 #include <core/Log.hpp>
-#include <core/Thread.hpp>
 #include <core/WaitUtils.hpp>
 #include <core/RegexUtils.hpp>
 
@@ -846,24 +845,26 @@ bool shouldBufferLocalStreamResponse(const http::Response& response)
 
 Error userIdForUsername(const std::string& username, UidType* pUID)
 {
-   static core::thread::ThreadsafeMap<std::string, UidType> cache;
+   // not cached here: getUserFromUsername() has a cache, which expires and is
+   // dropped when the user signs out, so a uid is looked up again after that
+   core::system::User user;
+   Error error = system::getUserFromUsername(username, user);
+   if (error)
+      return error;
 
-   if (cache.contains(username))
-   {
-      *pUID = cache.get(username);
-   }
-   else
-   {
-      core::system::User user;
-      Error error = system::getUserFromUsername(username, user);
-      if (error)
-         return error;
-
-      *pUID = user.getUserId();
-      cache.set(username, *pUID);
-   }
-
+   *pUID = user.getUserId();
    return Success();
+}
+
+boost::shared_ptr<http::LocalStreamAsyncClient> createLocalStreamClient(
+      boost::asio::io_context& ioContext,
+      const FilePath& streamPath,
+      UidType uid)
+{
+   // Check both the path's owner and the user the connected peer runs as.
+   auto pClient = boost::make_shared<http::LocalStreamAsyncClient>(ioContext, streamPath, false, uid);
+   pClient->setExpectedPeerUid(uid);
+   return pClient;
 }
 
 void proxyRequest(
@@ -899,43 +900,27 @@ void proxyRequest(
    std::string streamFile = r_util::sessionContextFile(context);
    FilePath streamPath = server_core::sessions::local_streams::streamPath(streamFile);
 
-   // determine the uid for the username (for validation)
+   // determine the uid for the username; the stream has to belong to that user
    UidType uid;
-   boost::optional<UidType> validateUid;
    Error error = userIdForUsername(context.username, &uid);
-   if (!error)
+   if (error)
    {
-      // if the user exists on the system, do uid validation
-      validateUid = uid;
-   }
-   else
-   {
-      if (error != systemError(boost::system::errc::permission_denied, ErrorLocation()))
-      {
-         // if the error returned was permission_denied then no user was found
-         // we consider user not found to be an acceptable error as it should
-         // be created later by PAM profiles
-         //
-         // other errors indicate potential issues enumerating the passwd file
-         // so reject access since we cannot verify the identity of the user
-         Error permissionError(boost::system::error_code(
-                                  boost::system::errc::permission_denied,
-                                  boost::system::system_category()),
-                               error,
-                               ERROR_LOCATION);
-         errorHandler(permissionError);
-         return;
-      }
+      // without the uid there is no way to tell whose stream this is, so
+      // reject the request. That includes a user who has no account yet: they
+      // have no session to connect to either
+      Error permissionError(boost::system::error_code(
+                               boost::system::errc::permission_denied,
+                               boost::system::generic_category()),
+                            error,
+                            ERROR_LOCATION);
+      errorHandler(permissionError);
+      return;
    }
 
-   // create client
-   // if the user is available on the system pass in the uid for validation to ensure
-   // that we only connect to the socket if it was created by the user
-   boost::shared_ptr<http::LocalStreamAsyncClient> pStreamClient(new http::LocalStreamAsyncClient(
-      ptrConnection->ioContext(),
-      streamPath,
-      false,
-      validateUid));
+   // create client, which only connects to a stream that the user created,
+   // and only sends the request to a peer that is running as the user
+   boost::shared_ptr<http::LocalStreamAsyncClient> pStreamClient =
+      createLocalStreamClient(ptrConnection->ioContext(), streamPath, uid);
    boost::shared_ptr<http::IAsyncClient> pClient = pStreamClient;
 
    // setup retry context
@@ -1048,6 +1033,14 @@ bool shouldRefreshCredentials(const http::Request& request)
 Error userIdForUsernameForTest(const std::string& username, UidType* pUID)
 {
    return userIdForUsername(username, pUID);
+}
+
+boost::shared_ptr<http::LocalStreamAsyncClient> createLocalStreamClientForTest(
+      boost::asio::io_context& ioContext,
+      const FilePath& streamPath,
+      UidType uid)
+{
+   return createLocalStreamClient(ioContext, streamPath, uid);
 }
 
 void prepareLocalhostResponseForTest(
@@ -1546,16 +1539,11 @@ void proxyLocalhostRequest(
    // destination port is actually owned by them before proxying (rstudio-pro#11470),
    // unless the admin has disabled this via www-proxy-localhost-verify-port-owner.
    //
-   // Unlike the local-stream uid validation above (which validates a target that is
-   // already scoped to context.username by construction -- the stream path is derived
-   // from the caller's own session context, so a resolution failure there can only
-   // affect the caller's own access), the target port here is attacker-controlled:
-   // it comes from decoding a client-supplied token and may name *any* user's port.
-   // The uid check is therefore the sole access-control boundary on this path, and we
-   // must fail closed on *any* resolution error, including "user not found"
-   // (permission_denied) -- a leftover-cache/NSS-lookup failure or a not-yet-provisioned
-   // account must not silently disable ownership enforcement for a request whose
-   // destination the caller fully controls.
+   // Both this path and the local-stream /s/ path fail closed on any uid-resolution
+   // error, including "user not found" (ENOENT). Here the target port is
+   // attacker-controlled: it comes from decoding a client-supplied token and may
+   // name any user's port. The uid check is the sole access-control boundary on
+   // this path, so a failed lookup must not silently disable ownership enforcement.
    if (server::options().wwwProxyLocalhostVerifyPortOwner())
    {
       UidType uid;
