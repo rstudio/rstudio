@@ -295,6 +295,14 @@ public class TextEditingTargetWidget
          adaptToFileType(editor_.getFileType());
       }));
 
+      releaseOnDismiss_.add(userPrefs_.juliaConsoleEnabled().addValueChangeHandler((evt) ->
+      {
+         // a Julia file's Run and Source buttons come and go with the Julia
+         // console (see JuliaFileType)
+         if (editor_.getFileType().isJulia())
+            adaptToFileType(editor_.getFileType());
+      }));
+
       Scheduler.get().scheduleDeferred(this::finishInit);
 
    }

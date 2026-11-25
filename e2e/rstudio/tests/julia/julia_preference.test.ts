@@ -127,6 +127,19 @@ test.describe.serial('Julia console preference', () => {
     await clearPref(page, 'rmd_chunk_output_inline');
   });
 
+  test("an open Julia script's Run button follows the preference as it changes", async ({ rstudioPage: page }) => {
+    await writeAndOpenFile(page, sandbox.dir, 'on.jl', 'y = 2\n');
+    // the editor toolbar's Run button, titled with its command's description
+    const run = page.locator('[title^="Run the current line or selection"]:visible');
+    await expect(run).toHaveCount(1);
+
+    await setPref(page, 'julia_console_enabled', false);
+    await expect(run).toHaveCount(0);
+
+    await setPref(page, 'julia_console_enabled', true);
+    await expect(run).toHaveCount(1);
+  });
+
   test('the console follows the preference as it changes', async ({ rstudioPage: page }) => {
     await setPref(page, 'julia_console_enabled', false);
     await expect.poll(async () => (await commandState(page, 'consoleActivateJulia')).visible).toBe(false);
