@@ -18,6 +18,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.workbench.events.TrustRequestEvent;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
@@ -52,7 +53,7 @@ public class TrustRequestDialog extends ModalDialogBase
       riskyFiles_ = riskyFiles;
       trustOperation_ = trustOperation;
       dontTrustOperation_ = dontTrustOperation;
-      isUntrusted_ = "untrusted".equals(status);
+      isUntrusted_ = TrustRequestEvent.STATUS_UNTRUSTED.equals(status);
 
       setEscapeDisabled(false);
       setThemeAware(true);

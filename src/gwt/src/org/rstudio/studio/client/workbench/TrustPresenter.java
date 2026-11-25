@@ -130,6 +130,7 @@ public class TrustPresenter implements WorkbenchLoadedEvent.Handler,
       if (data.hasKey("trust_request"))
       {
          TrustRequestEvent.Data trustData = data.getObject("trust_request").cast();
+         session_.getSessionInfo().setTrustRequest(trustData);
          if (trustData != null && trustData.getDirectory() != null)
          {
             if (trustStatusChanged(trustData))
@@ -199,6 +200,11 @@ public class TrustPresenter implements WorkbenchLoadedEvent.Handler,
                @Override
                public void onResponseReceived(VoidResponse response)
                {
+                  // The session's trust request still holds the status from
+                  // startup; record the decision so reopening the dialog from
+                  // the lock icon shows the project as restricted.
+                  data.setStatus(TrustRequestEvent.STATUS_UNTRUSTED);
+                  session_.getSessionInfo().setTrustRequest(data);
                }
 
                @Override

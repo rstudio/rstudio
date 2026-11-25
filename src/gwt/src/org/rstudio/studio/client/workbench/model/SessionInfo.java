@@ -732,6 +732,14 @@ public class SessionInfo extends JavaScriptObject
    }-*/;
 
    /**
+    * Refreshes the cached trust request, so that reopening the trust dialog
+    * reflects a restarted session or a decision made since startup.
+    */
+   public final native void setTrustRequest(TrustRequestEvent.Data trustRequest) /*-{
+      this.trust_request = trustRequest;
+   }-*/;
+
+   /**
     * @return Whether the current project is untrusted (either explicitly, or
     * because a trust decision is still pending). Untrusted projects run in
     * restricted mode; see SessionTrust.hpp for the consequences.
