@@ -128,6 +128,7 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     String positAssistantTitle();
     String hidePositAssistantButton();
     String restrictedModeTitle();
+    String restrictedModeButtonLabel();
     String toolBarButtonText();
     String popupMenuProgressMessage();
     String recentProjectsLabel();
