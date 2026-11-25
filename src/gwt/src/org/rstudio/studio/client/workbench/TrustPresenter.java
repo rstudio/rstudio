@@ -197,18 +197,20 @@ public class TrustPresenter implements WorkbenchLoadedEvent.Handler,
          () ->
          {
             // The toolbar lock icon already indicates restricted mode;
-            // no additional feedback needed here.
+            // no additional feedback needed here. The decline is recorded
+            // now, not on the response, in case the lock is activated first.
+            trustDeclined_ = true;
             server_.revokeTrust(directory, new ServerRequestCallback<VoidResponse>()
             {
                @Override
                public void onResponseReceived(VoidResponse response)
                {
-                  trustDeclined_ = true;
                }
 
                @Override
                public void onError(ServerError error)
                {
+                  trustDeclined_ = false;
                   globalDisplay_.showErrorMessage(
                      constants_.progressErrorCaption(),
                      error.getUserMessage());

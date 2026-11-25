@@ -49,7 +49,6 @@ public class TrustRequestDialog extends ModalDialogBase
    {
       super(Roles.getAlertdialogRole());
       directory_ = directory;
-      status_ = status;
       riskyFiles_ = riskyFiles;
       trustOperation_ = trustOperation;
       dontTrustOperation_ = dontTrustOperation;
@@ -278,7 +277,6 @@ public class TrustRequestDialog extends ModalDialogBase
    }
 
    private final String directory_;
-   private final String status_;
    private final boolean isUntrusted_;
    private final JsArrayString riskyFiles_;
    private final Operation trustOperation_;
