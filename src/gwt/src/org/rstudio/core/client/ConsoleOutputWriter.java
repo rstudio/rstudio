@@ -217,15 +217,21 @@ public class ConsoleOutputWriter
          return virtualConsole_.getNewText();
    }
 
-   public void focusEnd()
+   /**
+    * Focus the most recent output.
+    *
+    * @return false if there's no output to focus, e.g. just after a clear
+    */
+   public boolean focusEnd()
    {
-      output_.getElement().removeClassName(POINTER_FOCUS_CLASS);
       Node lastChild = output_.getElement().getLastChild();
       if (lastChild == null)
-         return;
-      
+         return false;
+
+      output_.getElement().removeClassName(POINTER_FOCUS_CLASS);
       Element last = lastChild.cast();
       last.focus();
+      return true;
    }
    
    public static final String OUTPUT_ERROR_CLASS = "__error";
