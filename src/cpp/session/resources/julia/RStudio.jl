@@ -800,8 +800,11 @@ function evaluate_mode(code::String, mode::String)
    end
 
    value = Core.eval(Main, ast)
+
+   # as the Julia REPL sets it: Main imports 'ans' from Base.MainInclude, and
+   # on Julia 1.10 and 1.11 assigning it in Main fails once it has been read
    if mode == "julia"
-      Core.eval(Main, Expr(:(=), :ans, QuoteNode(value)))
+      setglobal!(Base.MainInclude, :ans, value)
    end
 
    return value

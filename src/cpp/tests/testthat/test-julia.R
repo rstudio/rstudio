@@ -287,6 +287,18 @@ test_that("an interrupt that arrives while an error is reported doesn't cut the 
    expect_identical(capture.output(.rs.julia.evaluate("40 + 2")), "42")
 })
 
+test_that("ans holds the last value, also once it has been read", {
+   skipUnlessJulia()
+
+   on.exit(.rs.julia.stop(), add = TRUE)
+   .rs.julia.start()
+
+   # Julia 1.10 and 1.11 refuse to assign an 'ans' that Main has read
+   .rs.julia.evaluate("ans")
+   expect_identical(capture.output(.rs.julia.evaluate("40 + 2")), "42")
+   expect_identical(capture.output(.rs.julia.evaluate("ans + 1")), "43")
+})
+
 # Write a PNG of `colors`, a matrix of R colors, one pixel each: drawn at its
 # own size, and uninterpolated, it keeps them.
 writeTestPng <- function(colors, path)
