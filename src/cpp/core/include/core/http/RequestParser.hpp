@@ -170,6 +170,27 @@ public:
        return status::incomplete;
     }
 
+    // checked once, when parsing resumes after headers_parsed: by then the
+    // headers-parsed handler has had its chance to stream the body to a form
+    // handler, so this body is the one that will be held in memory. Checking
+    // before any body byte arrives also answers a client that is waiting on
+    // "Expect: 100-continue", which we never send.
+    if (parsingBody_ && checkContentLength_)
+    {
+       uintmax_t maxSize = maxBufferedBodySize();
+       if (maxSize > 0 && contentLength_ > maxSize)
+       {
+          LOG_WARNING_MESSAGE("Refusing request with uri " + req.uri_ + ": its body of " +
+                              std::to_string(contentLength_) + " bytes is larger than the " +
+                              std::to_string(maxSize) + " bytes allowed");
+          bodyTooLarge_ = true;
+          cleanup();
+          return error;
+       }
+
+       checkContentLength_ = false;
+    }
+
     while (begin != end)
     {
        // header parsing
@@ -208,25 +229,6 @@ public:
           }
           else
           {
-             // checked once, on the first body byte: by then the headers-parsed
-             // handler has had its chance to stream the body to a form handler,
-             // so this body is the one that will be held in memory
-             if (checkContentLength_)
-             {
-                uintmax_t maxSize = maxBufferedBodySize();
-                if (maxSize > 0 && contentLength_ > maxSize)
-                {
-                   LOG_WARNING_MESSAGE("Refusing request with uri " + req.uri_ + ": its body of " +
-                                       std::to_string(contentLength_) + " bytes is larger than the " +
-                                       std::to_string(maxSize) + " bytes allowed");
-                   bodyTooLarge_ = true;
-                   cleanup();
-                   return error;
-                }
-
-                checkContentLength_ = false;
-             }
-
              req.body_.push_back(*begin++);
              if (req.body_.size() == contentLength_)
              {

@@ -790,6 +790,18 @@ TEST(HttpTest, BufferedBodyOverTheLimitIsRefusedBeforeItIsRead)
    EXPECT_TRUE(request.body().empty());
 }
 
+TEST(HttpTest, BufferedBodyOverTheLimitIsRefusedBeforeAnyOfItArrives)
+{
+   // a client sending "Expect: 100-continue" holds its body back until it
+   // hears from us, so the refusal cannot wait for a body byte
+   ScopedMaxBufferedBodySize limit(1000);
+
+   RequestParser parser;
+   Request request;
+   EXPECT_EQ(RequestParser::error, parseAfterHeaders(parser, request, postRequest("text/plain", 1001, 0)));
+   EXPECT_TRUE(parser.bodyTooLarge());
+}
+
 TEST(HttpTest, BufferedBodyWithinTheLimitIsRead)
 {
    ScopedMaxBufferedBodySize limit(1000);
