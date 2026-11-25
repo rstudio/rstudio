@@ -438,6 +438,8 @@ options(
 
 .rs.addFunction("connectionReadInstallers", function() {
    if (!.rs.isDesktop()) return(list())
+   # offer no Posit Pro driver installers to ARM64 R on Windows, which can't load their x64 drivers
+   if (.rs.platform.isWindows && identical(R.version$arch, "aarch64")) return(list())
    
    installerPaths <- .rs.connectionFiles("\\.dcf$", .rs.connectionOdbcInstallerPath())
 
