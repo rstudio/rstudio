@@ -30,7 +30,6 @@ async function postBody(url: URL, size: number): Promise<number> {
   const req = client.request(url, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain', 'Content-Length': size },
-    rejectUnauthorized: false,
   });
   req.setTimeout(30_000, () => req.destroy(new Error('Request timed out')));
 
