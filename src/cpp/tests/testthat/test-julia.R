@@ -90,6 +90,16 @@ test_that("Julia won't start when an administrator turns it off", {
    expect_false(.rs.julia.replIsActive())
 })
 
+test_that("the console won't use a Julia server that other R processes share", {
+   skip_if_not_installed("JuliaConnectoR")
+   localJuliaConsole(TRUE)
+   withr::local_envvar(JULIACONNECTOR_SERVER = "localhost:11980")
+
+   expect_error(.rs.julia.start(), "shared Julia server at localhost:11980", fixed = TRUE)
+   expect_error(.rs.julia.repl(quiet = TRUE), "shared Julia server", fixed = TRUE)
+   expect_false(.rs.julia.replIsActive())
+})
+
 juliaIsSuspendable <- function()
 {
    .Call("rs_juliaIsSuspendable", PACKAGE = "(embedding)")

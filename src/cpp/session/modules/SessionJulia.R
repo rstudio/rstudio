@@ -456,13 +456,23 @@
       )
    }
 
-   # Julia starts with the console's own server, unless the user chose a
-   # server to share (see ?JULIACONNECTOR_SERVER); see .rs.julia.useConsoleServer
-   if (!nzchar(Sys.getenv("JULIACONNECTOR_SERVER")))
+   # a server that other R processes share (see ?JULIACONNECTOR_SERVER) runs
+   # their calls in the same Julia: the console would take over its output and
+   # interrupts, and end it with this R session (see RStudio.init)
+   server <- Sys.getenv("JULIACONNECTOR_SERVER")
+   if (nzchar(server))
    {
-      original <- .rs.julia.useConsoleServer()
-      on.exit(.rs.replaceBinding("juliaConnection", "JuliaConnectoR", original), add = TRUE)
+      stop(
+         sprintf("The Julia console can't use the shared Julia server at %s (JULIACONNECTOR_SERVER).\n", server),
+         "Call JuliaConnectoR::stopJulia() and Sys.unsetenv(\"JULIACONNECTOR_SERVER\") ",
+         "for the console to start a Julia of its own.",
+         call. = FALSE
+      )
    }
+
+   # Julia starts with the console's own server; see .rs.julia.useConsoleServer
+   original <- .rs.julia.useConsoleServer()
+   on.exit(.rs.replaceBinding("juliaConnection", "JuliaConnectoR", original), add = TRUE)
 
    # a Julia that has since gone away (say, it was killed) leaves
    # JuliaConnectoR holding a dead connection
