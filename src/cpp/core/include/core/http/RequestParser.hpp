@@ -170,6 +170,27 @@ public:
        return status::incomplete;
     }
 
+    // checked once, when parsing resumes after headers_parsed: by then the
+    // headers-parsed handler has had its chance to stream the body to a form
+    // handler, so this body is the one that will be held in memory. Checking
+    // before any body byte arrives also answers a client that is waiting on
+    // "Expect: 100-continue", which we never send.
+    if (parsingBody_ && checkContentLength_)
+    {
+       uintmax_t maxSize = maxBufferedBodySize();
+       if (maxSize > 0 && contentLength_ > maxSize)
+       {
+          LOG_WARNING_MESSAGE("Refusing request with uri " + req.uri_ + ": its body of " +
+                              std::to_string(contentLength_) + " bytes is larger than the " +
+                              std::to_string(maxSize) + " bytes allowed");
+          bodyTooLarge_ = true;
+          cleanup();
+          return error;
+       }
+
+       checkContentLength_ = false;
+    }
+
     while (begin != end)
     {
        // header parsing
@@ -192,6 +213,7 @@ public:
 
              // save buffer position so we can continue parsing the body when reinvoked
              parsingBody_ = true;
+             checkContentLength_ = true;
              bufferPos_ = std::distance(originalBegin, begin);
              bufferLen_ = std::distance(originalBegin, end);
              return headers_parsed;
@@ -207,19 +229,6 @@ public:
           }
           else
           {
-             if (checkContentLength_)
-             {
-                if (contentLength_ > maxContentLength && !formHandler_)
-                {
-                   // request will be buffered entirely in memory and exceeds the max size we can accept
-                   LOG_ERROR_MESSAGE("Max content length exceeded for request with uri " + req.uri_);
-                   cleanup();
-                   return error;
-                }
-
-                checkContentLength_ = false;
-             }
-
              req.body_.push_back(*begin++);
              if (req.body_.size() == contentLength_)
              {
@@ -234,9 +243,21 @@ public:
     return incomplete;
   }
 
+  /// The largest body, in bytes, that a request may have when it is held in
+  /// memory rather than streamed to a form handler; 0, the default, means no
+  /// limit. Set at startup, before any request is parsed.
+  static void setMaxBufferedBodySize(uintmax_t maxSize);
+  static uintmax_t maxBufferedBodySize();
+
+  /// Whether parse() returned error because the body was larger than
+  /// maxBufferedBodySize().
+  bool bodyTooLarge() const
+  {
+     return bodyTooLarge_;
+  }
+
 private:
   static constexpr uint64_t defaultMaxBufferSize = 1024*1024; // 1 MB
-  static constexpr uint64_t maxContentLength = 100*1024*1024; // 100 MB
 
   /// Handle the next character of input.
   status consume(Request& req, char input);
@@ -297,6 +318,7 @@ private:
   bool parsingContentLength_;
   bool parsingBody_;
   bool checkContentLength_;
+  bool bodyTooLarge_;
 
   bool isForm_;
   bool paused_;

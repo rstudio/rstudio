@@ -302,6 +302,16 @@ ProgramStatus Options::read(int argc,
    else
       wwwSameSite_ = rstudio::core::http::Cookie::SameSite::Undefined;
 
+   if (wwwMaxRequestSizeMb_ < 0)
+   {
+      program_options::reportError(
+         "Invalid www-max-request-size-mb: " + std::to_string(wwwMaxRequestSizeMb_) +
+            " (use 0 to remove the limit)",
+         ERROR_LOCATION,
+         true);
+      return ProgramStatus::exitFailure();
+   }
+
    // call overlay hooks
    resolveOverlayOptions();
    std::string errMsg;

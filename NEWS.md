@@ -1,6 +1,7 @@
 ## RStudio 2026.12.0 "Parrot Balsam" Release Notes
 
 ### New
+- Added the `www-max-request-size-mb` option to limit the size of request bodies that RStudio Server buffers in memory; requests with larger bodies receive HTTP 413. The default, 0, keeps bodies unlimited. The limit also applies to buffered requests to proxied applications, such as file uploads to Shiny apps, but not to streamed Files pane uploads.
 - ([#19108](https://github.com/rstudio/rstudio/issues/19108)): Application warnings now appear in separate rows, each with its own action and dismiss button. Dismissed messages stay dismissed when reconnecting to the session.
 - ([#19403](https://github.com/rstudio/rstudio/issues/19403)): On macOS, RStudio now offers to become the default application for R files, since Xcode otherwise claims `.R` files; the Global Options > General > Advanced pane also has a button for this.
 - ([#17173](https://github.com/rstudio/rstudio/issues/17173)): Open-source RStudio Desktop on macOS and Windows can now download an available update in the background and install it on restart ("Install and Restart"), instead of sending you to the download page. Administrators can keep the notification but turn off in-app installation with the `RSTUDIO_DISABLE_IN_APP_UPDATES` environment variable.
