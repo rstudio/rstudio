@@ -7,9 +7,15 @@
 /* Console output chunks are inline, so an outline on one traces each wrapped
    line; outline the whole output region instead. A separate rule, so browsers
    without :has() drop only this one and not the rule above. */
-#rstudio_console_output:has(> [role="document"]:focus-visible) {
+#rstudio_console_output:not(.rstudio-pointer-focus):has(> [role="document"]:focus-visible) {
     outline: #8AA9DB solid 2px !important;
     outline-offset: -1px !important;
+}
+
+/* ConsoleOutputWriter sets this class while the mouse put focus in the
+   output, where a key press would otherwise make the outline appear. */
+#rstudio_console_output.rstudio-pointer-focus:focus-visible {
+    outline: none !important;
 }
 
 .search input:focus-visible,

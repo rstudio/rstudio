@@ -26,6 +26,11 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.SpanElement;
 
+import elemental2.dom.FocusEvent;
+import elemental2.dom.HTMLElement;
+import elemental2.dom.KeyboardEvent;
+import jsinterop.base.Js;
+
 /**
  * Displays R Console output to user, with special behaviors for regular output
  * vs. error output.
@@ -41,6 +46,30 @@ public class ConsoleOutputWriter
          output_.getElement().setAttribute("aria-label", a11yLabel);
          Roles.getDocumentRole().set(output_.getElement());
       }
+      trackPointerFocus();
+   }
+
+   /**
+    * Mark the output while the mouse put focus in it, so its focus outline
+    * stays hidden after a drag-select and a key press such as Shift or Cmd+C,
+    * which the browser would otherwise count as keyboard focus.
+    */
+   private void trackPointerFocus()
+   {
+      HTMLElement el = Js.cast(output_.getElement());
+      el.addEventListener("mousedown", event ->
+         el.classList.add(POINTER_FOCUS_CLASS));
+      el.addEventListener("keydown", event ->
+      {
+         if (StringUtil.equals(((KeyboardEvent) event).key, "Tab"))
+            el.classList.remove(POINTER_FOCUS_CLASS);
+      });
+      el.addEventListener("focusout", event ->
+      {
+         elemental2.dom.Node next = Js.uncheckedCast(((FocusEvent) event).relatedTarget);
+         if (next == null || !el.contains(next))
+            el.classList.remove(POINTER_FOCUS_CLASS);
+      });
    }
 
    public PreWidget getWidget()
@@ -185,6 +214,7 @@ public class ConsoleOutputWriter
 
    public void focusEnd()
    {
+      output_.getElement().removeClassName(POINTER_FOCUS_CLASS);
       Node lastChild = output_.getElement().getLastChild();
       if (lastChild == null)
          return;
@@ -194,6 +224,9 @@ public class ConsoleOutputWriter
    }
    
    public static final String OUTPUT_ERROR_CLASS = "__error";
+
+   // Not obfuscated: focus-visible.css, loaded as plain CSS, refers to it.
+   private static final String POINTER_FOCUS_CLASS = "rstudio-pointer-focus";
 
    private int maxLines_ = -1;
    private int lines_ = 0;
