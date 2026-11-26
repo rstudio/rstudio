@@ -16,6 +16,7 @@ package org.rstudio.core.client;
 
 import java.util.List;
 
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
@@ -235,27 +236,52 @@ public class ConsoleOutputWriter
    }
 
    /**
-    * Focus the most recent output.
-    *
-    * @return false if there's no output to focus, e.g. just after a clear
+    * @return The most recent output chunk with content, or null if none.
     */
-   public boolean focusEnd()
+   private Element lastOutputChunk()
    {
       // Skip empty output: a form feed (e.g. cat("\f")) clears the output but
       // leaves its now-childless output chunk behind.
       Node last = output_.getElement().getLastChild();
       while (last != null && !last.hasChildNodes())
          last = last.getPreviousSibling();
+      return last == null ? null : Element.as(last);
+   }
+
+   /**
+    * @return false if there's no output, e.g. just after a clear
+    */
+   public boolean hasOutput()
+   {
+      return lastOutputChunk() != null;
+   }
+
+   /**
+    * @return Whether focusEnd() would land now. A minimized or hidden Console
+    *    renders nothing, and a pane being restored stays inert until its
+    *    animation ends.
+    */
+   public boolean canFocusEnd()
+   {
+      Element last = lastOutputChunk();
+      return last != null && last.getOffsetHeight() > 0 && !A11y.isInert(last);
+   }
+
+   /**
+    * Focus the most recent output, if there is any.
+    */
+   public void focusEnd()
+   {
+      Element last = lastOutputChunk();
       if (last == null)
-         return false;
+         return;
 
       // Chunks aren't in the tab order, so this is the only keyboard route onto
       // one. The mark stays when focus leaves, so a dialog or menu that hands
       // focus back to the chunk brings the outline back with it.
       output_.getElement().removeClassName(POINTER_FOCUS_CLASS);
       output_.getElement().addClassName(KEYBOARD_FOCUS_CLASS);
-      Element.as(last).focus();
-      return true;
+      last.focus();
    }
    
    public static final String OUTPUT_ERROR_CLASS = "__error";

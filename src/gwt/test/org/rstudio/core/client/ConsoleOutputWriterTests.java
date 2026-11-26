@@ -105,25 +105,66 @@ public class ConsoleOutputWriterTests extends GWTTestCase
       Assert.assertNotNull(output.getWidget());
    }
 
-   public void testFocusEndWithNoOutput()
+   public void testHasOutputWhenEmpty()
    {
-      Assert.assertFalse(getCOW().focusEnd());
+      Assert.assertFalse(getCOW().hasOutput());
    }
 
-   public void testFocusEndAfterFormFeedClear()
+   public void testHasOutputAfterFormFeedClear()
    {
       // cat("\f") clears the output but leaves an empty output chunk behind
       ConsoleOutputWriter output = getCOW();
       output.outputToConsole("hello\n", nullClazz, notError, checkLineCount, false);
       output.outputToConsole("\f", nullClazz, notError, checkLineCount, false);
-      Assert.assertFalse(output.focusEnd());
+      Assert.assertFalse(output.hasOutput());
    }
 
-   public void testFocusEndWithOutput()
+   public void testHasOutputWithOutput()
    {
       ConsoleOutputWriter output = getCOW();
       output.outputToConsole("hello\n", nullClazz, notError, checkLineCount, false);
-      Assert.assertTrue(output.focusEnd());
+      Assert.assertTrue(output.hasOutput());
+   }
+
+   public void testFocusEndWithNoOutputDoesNothing()
+   {
+      ConsoleOutputWriter output = getCOW();
+      output.focusEnd();
+      Assert.assertFalse(hasKeyboardMark(output));
+   }
+
+   public void testCanFocusEndWhenEmpty()
+   {
+      ConsoleOutputWriter output = getCOW();
+      RootPanel.get().add(output.getWidget());
+      try
+      {
+         Assert.assertFalse(output.canFocusEnd());
+      }
+      finally
+      {
+         RootPanel.get().clear();
+      }
+   }
+
+   // A minimized or hidden Console renders nothing, so focus can't land there.
+   // The shown case isn't tested: its inert check needs Element.closest, which
+   // the HtmlUnit test browser lacks.
+   public void testCanFocusEndWhenNotShown()
+   {
+      ConsoleOutputWriter output = getCOW();
+      output.outputToConsole("hello\n", nullClazz, notError, checkLineCount, false);
+      Assert.assertFalse(output.canFocusEnd());
+      RootPanel.get().add(output.getWidget());
+      try
+      {
+         output.getWidget().setVisible(false);
+         Assert.assertFalse(output.canFocusEnd());
+      }
+      finally
+      {
+         RootPanel.get().clear();
+      }
    }
 
    private boolean hasKeyboardMark(ConsoleOutputWriter output)
