@@ -29,8 +29,7 @@ public class FileTypeRegistryTests extends GWTTestCase
    @Override
    protected void gwtSetUp()
    {
-      // the constructor only stores its injected dependencies, so none are needed
-      // to look up file types
+      // file type and icon lookups don't use the injected dependencies
       registry_ = new FileTypeRegistry(null, null, null, null, null, null);
    }
 
