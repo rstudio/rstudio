@@ -446,9 +446,10 @@ bool isIndexableFile(const FilePath& documentPath)
    if (ext == ".rproj")
       return false;
 
-   // Handle Dockerfile with any extension (including none, the most common)
+   // Handle Dockerfile (or its Podman name, Containerfile) with any extension
+   // (including none, the most common)
    std::string stem = documentPath.getStem();
-   if (stem == "Dockerfile")
+   if (stem == "Dockerfile" || stem == "Containerfile")
       return true;
 
    // Handle extensionless Makefile / makefile
@@ -1899,9 +1900,16 @@ void syncOpenDocuments()
       }
       else
       {
+         // Ordered as in the didOpen sent while the agent runs: R documents
+         // first, then files known by name, such as Dockerfile, then the
+         // extension. But R documents only by extension, unlike
+         // languageIdFromDocument(), which would send hidden ones (~/.Rprofile).
          FilePath docPath(pDoc->path());
-         std::string ext = docPath.getExtensionLowerCase();
-         languageId = lsp::languageIdFromExtension(ext);
+         bool isR = pDoc->isRFile() || pDoc->isRMarkdownDocument();
+         if (!isR)
+            languageId = lsp::languageIdFromFilename(docPath);
+         if (languageId.empty())
+            languageId = lsp::languageIdFromExtension(docPath.getExtensionLowerCase());
       }
 
       if (languageId.empty())
@@ -3346,6 +3354,11 @@ void focusDocumentForTesting(const std::string& documentId)
 void resendFocusForTesting()
 {
    resendFocus();
+}
+
+void syncOpenDocumentsForTesting()
+{
+   syncOpenDocuments();
 }
 
 void resetForNewAgentForTesting()

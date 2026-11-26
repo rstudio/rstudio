@@ -1067,6 +1067,7 @@ private:
       bool hasKnownFilename =
             filename == ".env" ||
             filename == "CITATION" ||
+            filename == "Containerfile" ||
             filename == "DESCRIPTION" ||
             filename == "Dockerfile" ||
             filename == "LICENCE" ||
