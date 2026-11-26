@@ -6115,10 +6115,9 @@ void chatInstallUpdate(const json::JsonRpcRequest& request,
    if (!isPositAssistantEnabledByAdmin())
    {
       json::JsonRpcResponse response;
-      setErrorResponse(systemError(boost::system::errc::operation_not_permitted,
-                                   "Posit Assistant is disabled by your administrator",
-                                   ERROR_LOCATION),
-                       &response);
+      response.setError(
+         systemError(boost::system::errc::operation_not_permitted, ERROR_LOCATION),
+         json::Value("Posit Assistant is disabled by your administrator."));
       cont(Success(), &response);
       return;
    }
