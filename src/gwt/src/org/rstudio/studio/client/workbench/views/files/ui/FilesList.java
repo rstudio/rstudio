@@ -55,7 +55,6 @@ import com.google.gwt.user.cellview.client.ColumnSortList;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
 import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.DefaultSelectionEventManager;
@@ -90,7 +89,8 @@ public class FilesList extends Composite
          @Override
          public double getRowHeight()
          {
-            return 22.5;
+            // FilesListDataGridStyle.css sizes rows to 24px for WCAG 2.5.8
+            return 24;
          }
 
          @Override
@@ -210,7 +210,6 @@ public class FilesList extends Composite
 
 
          };
-      checkColumn.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
       // the column is too narrow for visible header text, so give its header
       // cell hidden text; an empty <th> leaves the column header unnamed
       filesDataGrid_.addColumn(checkColumn,

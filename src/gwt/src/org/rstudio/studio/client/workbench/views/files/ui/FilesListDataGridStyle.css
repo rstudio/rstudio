@@ -7,10 +7,34 @@
 }
 
 .dataGridCell input[type=checkbox] {
+  /* block, so the checkbox centers in its cell without line-box spacing */
+  display: block;
   margin-top: 0;
   margin-bottom: 0;
   margin-left: 5px;
   zoom: 1;
+}
+
+/* 20px plus the 2px top and bottom borders makes 24px rows, so adjacent
+   checkboxes are 24px apart and meet WCAG 2.5.8 by spacing. */
+.dataGridCell {
+  height: 20px;
+}
+
+/* The header's role=button div is its sort target. It fills the cell, so it
+   is 24px tall and its padding replaces the cell's. dataGridHeader is
+   @external, so the widget class keeps these rules to this grid and outranks
+   the global .dataGridHeader rule from PackagesDataGridCommon.css. */
+.dataGridWidget .dataGridHeader {
+  height: 24px;
+  padding: 0;
+}
+
+/* The 18px line keeps ResizableHeader's 18px splitter level with the text. */
+.dataGridWidget .dataGridHeader > div {
+  height: 18px;
+  line-height: 18px;
+  padding: 3px 6px;
 }
 
 .dataGridLastColumnHeader {
