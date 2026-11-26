@@ -92,6 +92,7 @@
 #include "../SessionConsoleInput.hpp"
 #include "../SessionDirs.hpp"
 #include "SessionConsole.hpp"
+#include "SessionLSP.hpp"
 #include "environment/EnvironmentUtils.hpp"
 
 #include "session-config.h"
@@ -2300,27 +2301,6 @@ void handleCancelExecution(const json::Object& params)
 // Workspace File Content Handlers (for databot file operations)
 // ============================================================================
 
-// Convert internal document type to standard language ID
-// Based on SessionAssistant.cpp:languageIdFromDocument()
-std::string languageIdFromDocument(boost::shared_ptr<source_database::SourceDocument> pDoc)
-{
-   // R files: r_source, r_markdown, quarto_markdown all map to "r"
-   if (pDoc->isRMarkdownDocument() || pDoc->isRFile())
-      return "r";
-
-   // Special cases for Makefiles and Dockerfiles
-   FilePath docPath(pDoc->path());
-   std::string name = docPath.getFilename();
-   std::string stem = docPath.getStem();
-   if (name == "Makefile" || name == "makefile")
-      return "makefile";
-   else if (stem == "Dockerfile")
-      return "dockerfile";
-
-   // Default: lowercase the internal type (cpp → cpp, python → python, etc.)
-   return boost::algorithm::to_lower_copy(pDoc->type());
-}
-
 // Map databot languageId values to RStudio document types
 // Used by workspace/insertIntoNewFile to create documents with correct type
 // NOTE: These values must match the constants in NewDocumentWithCodeEvent.java:
@@ -2659,7 +2639,7 @@ void handleReadFileContent(core::system::ProcessOperations& ops,
    json::Object result;
    result["content"] = doc->contents();
    result["isModified"] = doc->dirty();
-   result["languageId"] = languageIdFromDocument(doc);
+   result["languageId"] = lsp::languageIdFromDocument(doc);
 
    // Set fileName for display purposes
    if (doc->isUntitled())

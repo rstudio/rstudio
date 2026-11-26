@@ -50,6 +50,7 @@ using modules::assistant::resetForNewAgentForTesting;
 using modules::assistant::runBackgroundProcessingForTesting;
 using modules::assistant::resendFocusForTesting;
 using modules::assistant::ServicedClock;
+using modules::assistant::syncOpenDocumentsForTesting;
 using modules::assistant::writeQueuedAgentRequestsForTesting;
 using std::chrono::milliseconds;
 using std::chrono::seconds;
@@ -790,7 +791,20 @@ bool containsFocus(const std::vector<std::string>& writes, const std::string& ur
    return false;
 }
 
-// R documents in the source database, as the editor has them open.
+// The didOpen notification among the writes for uri, or "" if there is none.
+std::string didOpenFor(const std::vector<std::string>& writes, const std::string& uri)
+{
+   for (const std::string& write : writes)
+   {
+      if (write.find("textDocument/didOpen") != std::string::npos &&
+          write.find(uri) != std::string::npos)
+         return write;
+   }
+   return std::string();
+}
+
+// Documents (R, unless another type is given) in the source database, as the
+// editor has them open.
 class FocusedDocumentTest : public ::testing::Test
 {
 protected:
@@ -808,9 +822,10 @@ protected:
       dir_.removeIfExists();
    }
 
-   std::string openDocument(const std::string& fileName)
+   std::string openDocument(const std::string& fileName,
+                            const std::string& type = kSourceDocumentTypeRSource)
    {
-      auto pDoc = boost::make_shared<source_database::SourceDocument>(kSourceDocumentTypeRSource);
+      auto pDoc = boost::make_shared<source_database::SourceDocument>(type);
       moveTo(pDoc, fileName);
       ids_.push_back(pDoc->id());
       return pDoc->id();
@@ -879,6 +894,50 @@ TEST_F(FocusedDocumentTest, NewAgentIsNotSentFocusOfClosedDocument)
    resetForNewAgentForTesting();
    resendFocusForTesting();
    EXPECT_FALSE(containsFocus(writesAfterInitialization(), ""));
+}
+
+TEST_F(FocusedDocumentTest, NewAgentIsSentOpenContainerfileAsDockerfile)
+{
+   std::string id = openDocument("Containerfile", "dockerfile");
+
+   resetForNewAgentForTesting();
+   syncOpenDocumentsForTesting();
+   std::string didOpen = didOpenFor(writesAfterInitialization(), uri(id));
+   EXPECT_NE(didOpen.find("\"languageId\":\"dockerfile\""), std::string::npos) << didOpen;
+}
+
+TEST_F(FocusedDocumentTest, NewAgentIsSentDockerfileByNameAheadOfExtension)
+{
+   // As didOpen sends it when the document opens while the agent runs
+   std::string id = openDocument("Containerfile.py", kSourceDocumentTypePython);
+
+   resetForNewAgentForTesting();
+   syncOpenDocumentsForTesting();
+   std::string didOpen = didOpenFor(writesAfterInitialization(), uri(id));
+   EXPECT_NE(didOpen.find("\"languageId\":\"dockerfile\""), std::string::npos) << didOpen;
+}
+
+TEST_F(FocusedDocumentTest, NewAgentIsSentRDocumentWithDockerfileNameAsR)
+{
+   // As didOpen sends it when the document opens while the agent runs
+   std::string id = openDocument("Dockerfile.R");
+
+   resetForNewAgentForTesting();
+   syncOpenDocumentsForTesting();
+   std::string didOpen = didOpenFor(writesAfterInitialization(), uri(id));
+   EXPECT_NE(didOpen.find("\"languageId\":\"r\""), std::string::npos) << didOpen;
+}
+
+TEST_F(FocusedDocumentTest, NewAgentIsNotSentOpenRprofile)
+{
+   // R documents skip isIndexableFile()'s hidden-file checks, and .Rprofile
+   // often holds tokens, so the sync must not fall back to the R language ID
+   // for an extension it doesn't know.
+   std::string id = openDocument(".Rprofile");
+
+   resetForNewAgentForTesting();
+   syncOpenDocumentsForTesting();
+   EXPECT_EQ(didOpenFor(writesAfterInitialization(), uri(id)), "");
 }
 
 TEST(SessionAssistant, InitializeOutlastsRequestTimeout)
