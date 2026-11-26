@@ -167,7 +167,9 @@ public class ConsoleOutputWriterTests extends GWTTestCase
       {
          output.outputToConsole("hello\n", nullClazz, notError, checkLineCount, false);
          output.focusEnd();
+         Assert.assertSame(output.getElement().getLastChild(), DomUtils.getActiveElement());
          elsewhere.setFocus(true);
+         Assert.assertSame(elsewhere.getElement(), DomUtils.getActiveElement());
          Assert.assertTrue(hasKeyboardMark(output));
       }
       finally
