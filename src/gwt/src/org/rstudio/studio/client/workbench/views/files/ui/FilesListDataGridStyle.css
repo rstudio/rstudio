@@ -31,12 +31,20 @@
 }
 
 /* 3px of padding around an 18px line makes the button 24px tall with its
-   text centered. ResizableHeader's 18px splitter, offset -2px from the
-   content top, spans y=1-19 of it. */
+   text centered. */
 .dataGridWidget .dataGridHeader > [role="button"] {
   height: 18px;
   line-height: 18px;
   padding: 3px 6px;
+}
+
+/* ResizableHeader's splitter starts at the button's content top. Stretch it
+   over the button's full 24px so the whole column border resizes, rather
+   than its lower 6px sorting. data-index marks it here, since its class is
+   ResizableHeader's own. */
+.dataGridWidget .dataGridHeader [data-index] {
+  height: 24px;
+  margin-top: -3px;
 }
 
 .dataGridLastColumnHeader {
