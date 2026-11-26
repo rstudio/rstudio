@@ -127,22 +127,6 @@ std::map<std::string, std::string>& languageIdToExtMap()
    return instance;
 }
 
-std::string languageIdFromDocument(boost::shared_ptr<source_database::SourceDocument> pDoc)
-{
-   if (pDoc->isRMarkdownDocument() || pDoc->isRFile())
-      return "r";
-
-   FilePath docPath(pDoc->path());
-   std::string name = docPath.getFilename();
-   std::string stem = docPath.getStem();
-   if (name == "Makefile" || name == "makefile")
-      return "makefile";
-   else if (stem == "Dockerfile")
-      return "dockerfile";
-   
-   return boost::algorithm::to_lower_copy(pDoc->type());
-}
-
 void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    std::string uri = uriFromDocument(pDoc);
@@ -292,6 +276,30 @@ std::string uriFromDocumentPath(const core::FilePath& path)
 {
    std::string absolutePath = path.getAbsolutePath();
    return fmt::format("{}{}", kFilePrefix, absolutePath);
+}
+
+std::string languageIdFromFilename(const core::FilePath& path)
+{
+   std::string name = path.getFilename();
+   std::string stem = path.getStem();
+   if (name == "Makefile" || name == "makefile")
+      return "makefile";
+   else if (stem == "Dockerfile" || stem == "Containerfile")
+      return "dockerfile";
+
+   return std::string();
+}
+
+std::string languageIdFromDocument(boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   if (pDoc->isRMarkdownDocument() || pDoc->isRFile())
+      return "r";
+
+   std::string languageId = languageIdFromFilename(FilePath(pDoc->path()));
+   if (!languageId.empty())
+      return languageId;
+
+   return boost::algorithm::to_lower_copy(pDoc->type());
 }
 
 std::string languageIdFromExtension(const std::string& ext)

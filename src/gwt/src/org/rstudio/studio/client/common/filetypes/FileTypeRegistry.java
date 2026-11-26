@@ -352,6 +352,7 @@ public class FileTypeRegistry
       register("CITATION", TEXT, new ImageResource2x(icons.iconText2x()));
       register("COPYING", TEXT, new ImageResource2x(icons.iconText2x()));
       register("COPYING.LIB", TEXT, new ImageResource2x(icons.iconText2x()));
+      register("Containerfile", DOCKERFILE, new ImageResource2x(icons.iconDockerfile2x()));
       register("DESCRIPTION", DCF, new ImageResource2x(icons.iconDCF2x()));
       register("Dockerfile", DOCKERFILE, new ImageResource2x(icons.iconDockerfile2x()));
       register("GNUmakefile", MAKEFILE, new ImageResource2x(icons.iconMakefile2x()));
