@@ -174,7 +174,7 @@ static bool s_peerSentCapabilities = false;
 static std::set<std::string> s_peerCapabilities;
 
 // ============================================================================
-// Project-specific assistant options (for chat provider)
+// Project-specific assistant options (assistant and chat provider)
 // ============================================================================
 static projects::RProjectAssistantOptions s_chatProjectOptions;
 
@@ -6108,6 +6108,17 @@ void chatInstallUpdate(const json::JsonRpcRequest& request,
       response.setError(
          systemError(boost::system::errc::operation_not_permitted, ERROR_LOCATION),
          json::Value(kInstallationManagedMessage));
+      cont(Success(), &response);
+      return;
+   }
+
+   if (!isPositAssistantEnabledByAdmin())
+   {
+      json::JsonRpcResponse response;
+      setErrorResponse(systemError(boost::system::errc::operation_not_permitted,
+                                   "Posit Assistant is disabled by your administrator",
+                                   ERROR_LOCATION),
+                       &response);
       cont(Success(), &response);
       return;
    }
