@@ -19,10 +19,14 @@ import java.util.List;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.Text;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.TextBox;
 
 import junit.framework.Assert;
 
@@ -101,25 +105,118 @@ public class ConsoleOutputWriterTests extends GWTTestCase
       Assert.assertNotNull(output.getWidget());
    }
 
-   public void testFocusEndWithNoOutput()
+   public void testHasOutputWhenEmpty()
    {
-      Assert.assertFalse(getCOW().focusEnd());
+      Assert.assertFalse(getCOW().hasOutput());
    }
 
-   public void testFocusEndAfterFormFeedClear()
+   public void testHasOutputAfterFormFeedClear()
    {
       // cat("\f") clears the output but leaves an empty output chunk behind
       ConsoleOutputWriter output = getCOW();
       output.outputToConsole("hello\n", nullClazz, notError, checkLineCount, false);
       output.outputToConsole("\f", nullClazz, notError, checkLineCount, false);
-      Assert.assertFalse(output.focusEnd());
+      Assert.assertFalse(output.hasOutput());
    }
 
-   public void testFocusEndWithOutput()
+   public void testHasOutputWithOutput()
    {
       ConsoleOutputWriter output = getCOW();
       output.outputToConsole("hello\n", nullClazz, notError, checkLineCount, false);
-      Assert.assertTrue(output.focusEnd());
+      Assert.assertTrue(output.hasOutput());
+   }
+
+   public void testFocusEndWithNoOutputDoesNothing()
+   {
+      ConsoleOutputWriter output = getCOW();
+      output.focusEnd();
+      Assert.assertFalse(hasKeyboardMark(output));
+   }
+
+   public void testCanFocusEndWhenEmpty()
+   {
+      ConsoleOutputWriter output = getCOW();
+      RootPanel.get().add(output.getWidget());
+      try
+      {
+         Assert.assertFalse(output.canFocusEnd());
+      }
+      finally
+      {
+         RootPanel.get().clear();
+      }
+   }
+
+   // A minimized or hidden Console renders nothing, so focus can't land there.
+   // The shown case isn't tested: its inert check needs Element.closest, which
+   // the HtmlUnit test browser lacks.
+   public void testCanFocusEndWhenNotShown()
+   {
+      ConsoleOutputWriter output = getCOW();
+      output.outputToConsole("hello\n", nullClazz, notError, checkLineCount, false);
+      Assert.assertFalse(output.canFocusEnd());
+      RootPanel.get().add(output.getWidget());
+      try
+      {
+         output.getWidget().setVisible(false);
+         Assert.assertFalse(output.canFocusEnd());
+      }
+      finally
+      {
+         RootPanel.get().clear();
+      }
+   }
+
+   private boolean hasKeyboardMark(ConsoleOutputWriter output)
+   {
+      return output.getElement().hasClassName(ConsoleOutputWriter.KEYBOARD_FOCUS_CLASS);
+   }
+
+   private void mouseDown(Element el)
+   {
+      el.dispatchEvent(Document.get().createMouseDownEvent(
+            0, 0, 0, 0, 0, false, false, false, false, NativeEvent.BUTTON_LEFT));
+   }
+
+   public void testFocusEndMarksKeyboardFocus()
+   {
+      ConsoleOutputWriter output = getCOW();
+      output.outputToConsole("hello\n", nullClazz, notError, checkLineCount, false);
+      Assert.assertFalse(hasKeyboardMark(output));
+      output.focusEnd();
+      Assert.assertTrue(hasKeyboardMark(output));
+   }
+
+   public void testMouseDownClearsKeyboardFocus()
+   {
+      ConsoleOutputWriter output = getCOW();
+      output.outputToConsole("hello\n", nullClazz, notError, checkLineCount, false);
+      output.focusEnd();
+      mouseDown(output.getElement().getFirstChildElement());
+      Assert.assertFalse(hasKeyboardMark(output));
+   }
+
+   // A dialog or menu that takes focus and then restores it to the output must
+   // find the mark still set, so the outline comes back.
+   public void testKeyboardFocusSurvivesFocusElsewhere()
+   {
+      ConsoleOutputWriter output = getCOW();
+      TextBox elsewhere = new TextBox();
+      RootPanel.get().add(output.getWidget());
+      RootPanel.get().add(elsewhere);
+      try
+      {
+         output.outputToConsole("hello\n", nullClazz, notError, checkLineCount, false);
+         output.focusEnd();
+         Assert.assertSame(output.getElement().getLastChild(), DomUtils.getActiveElement());
+         elsewhere.setFocus(true);
+         Assert.assertSame(elsewhere.getElement(), DomUtils.getActiveElement());
+         Assert.assertTrue(hasKeyboardMark(output));
+      }
+      finally
+      {
+         RootPanel.get().clear();
+      }
    }
 
    public void testSetGetMaxLines()

@@ -17,9 +17,11 @@ package org.rstudio.studio.client.workbench.views.console.shell;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.ConsoleOutputWriter;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
@@ -335,27 +337,64 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    @Handler
    void onFocusConsoleOutputEnd()
    {
-      if (!view_.getConsoleOutputWriter().focusEnd())
+      if (!view_.getConsoleOutputWriter().hasOutput())
+      {
          announceFocusFailure(constants_.noConsoleOutputToFocusMessage());
+         return;
+      }
+
+      focusInConsole(() ->
+      {
+         ConsoleOutputWriter current = view_.getConsoleOutputWriter();
+         if (!current.hasOutput())
+         {
+            announceFocusFailure(constants_.noConsoleOutputToFocusMessage());
+            return true;
+         }
+         if (!current.canFocusEnd() || DualWindowLayoutPanel.isAnimating())
+            return false;
+         current.focusEnd();
+         return true;
+      }, constants_.consoleOutputNotFocusedMessage());
    }
 
    @Handler
    void onFocusLastConsoleError()
    {
-      ConsoleError error = view_.getLastError();
-      if (error == null)
+      if (view_.getLastError() == null)
       {
          announceNoErrorToFocus();
          return;
       }
 
-      // Already showing: focus it directly, so focus doesn't pass through the
-      // input (which would scroll the output and start a screen reader on it)
-      if (canFocusNow(error))
+      focusInConsole(() ->
       {
-         error.focus();
+         ConsoleError current = view_.getLastError();
+         if (current == null)
+         {
+            announceNoErrorToFocus();
+            return true;
+         }
+         if (!canFocusNow(current))
+            return false;
+         current.focus();
+         return true;
+      }, constants_.consoleErrorNotFocusedMessage());
+   }
+
+   /**
+    * Run a focus attempt, activating the Console first if it can't land yet.
+    *
+    * @param attempt Focuses or announces and returns true, or returns false
+    *    when focus can't land yet.
+    * @param failureMessage Announced if focus still can't land after retrying.
+    */
+   private void focusInConsole(BooleanSupplier attempt, String failureMessage)
+   {
+      // Already showing: focus directly, so focus doesn't pass through the
+      // input (which would scroll the output and start a screen reader on it)
+      if (attempt.getAsBoolean())
          return;
-      }
 
       // Activating shows a hidden Console and focuses its input. Showing it can
       // animate: a column stays inert until its animation ends, and a pane's
@@ -366,26 +405,17 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
          @Override
          public boolean execute()
          {
-            ConsoleError current = view_.getLastError();
-            if (current == null)
-            {
-               announceNoErrorToFocus();
+            if (attempt.getAsBoolean())
                return false;
-            }
-            if (canFocusNow(current))
-            {
-               current.focus();
-               return false;
-            }
-            if (++attempts_ < FOCUS_ERROR_MAX_ATTEMPTS)
+            if (++attempts_ < FOCUS_MAX_ATTEMPTS)
                return true;
 
-            announceFocusFailure(constants_.consoleErrorNotFocusedMessage());
+            announceFocusFailure(failureMessage);
             return false;
          }
 
          private int attempts_ = 0;
-      }, FOCUS_ERROR_RETRY_MS);
+      }, FOCUS_RETRY_MS);
    }
 
    private static boolean canFocusNow(ConsoleError error)
@@ -1060,8 +1090,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    private String initialInput_;
 
    // Long enough for the Console to finish an animated restore
-   private static final int FOCUS_ERROR_RETRY_MS = 50;
-   private static final int FOCUS_ERROR_MAX_ATTEMPTS = 40;
+   private static final int FOCUS_RETRY_MS = 50;
+   private static final int FOCUS_MAX_ATTEMPTS = 40;
 
    private static final String GROUP_CONSOLE = "console";
    private static final String STATE_INPUT = "input";
