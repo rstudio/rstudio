@@ -1440,6 +1440,15 @@ public class AssistantPreferencesPane extends PreferencesPane
     */
    private void performPositAssistantInstall(boolean forAssistant, RevertTarget revert)
    {
+      // A project that overrides the code assistant already selects Posit AI
+      // for the server's install check. The global preference is what other
+      // projects use, so it is left alone (#19803).
+      if (forAssistant && projectAssistantOverride_ != null)
+      {
+         doInstall(forAssistant, revert);
+         return;
+      }
+
       // Save the appropriate preference first - the server requires either
       // chatProvider or assistant to be set to "posit" before it will allow installation
       if (forAssistant)

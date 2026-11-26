@@ -230,10 +230,15 @@ const char* const kInstallationManagedMessage =
    "Posit Assistant installation is managed by your administrator and cannot "
    "be changed from RStudio.";
 
-// Returns true if the user has selected Posit AI as their assistant (for code completions)
+// Returns true if Posit AI is the selected assistant (for code completions).
+// Checks project-level setting first, then falls back to global preference
 bool isPaiSelected()
 {
-   return prefs::userPrefs().assistant() == kAssistantPosit;
+   std::string assistant = s_chatProjectOptions.assistant;
+   if (assistant.empty() || assistant == "default")
+      assistant = prefs::userPrefs().assistant();
+
+   return assistant == kAssistantPosit;
 }
 
 // Returns the configured chat provider, checking:
@@ -6432,8 +6437,10 @@ Error initialize()
    }
 
    // Validate assistant preference consistency
-   // If user has Posit AI selected but Posit Assistant is no longer available, reset to "none"
-   if (isPaiSelected() && !isPositAssistantEnabledByAdmin())
+   // If user has Posit AI selected but Posit Assistant is no longer available, reset to "none".
+   // This resets the global preference, so it reads that rather than isPaiSelected(),
+   // which a project's setting can answer.
+   if (prefs::userPrefs().assistant() == kAssistantPosit && !isPositAssistantEnabledByAdmin())
    {
       prefs::userPrefs().setAssistant(kAssistantNone);
    }
