@@ -1900,15 +1900,14 @@ void syncOpenDocuments()
       }
       else
       {
+         // Files known by name, such as Dockerfile, ahead of the extension, as
+         // in the didOpen sent while the agent runs. Not languageIdFromDocument():
+         // it gives "r" for any R document, so it would send hidden ones such
+         // as ~/.Rprofile.
          FilePath docPath(pDoc->path());
-         std::string ext = docPath.getExtensionLowerCase();
-         languageId = lsp::languageIdFromExtension(ext);
-
-         // Files known by name rather than extension, such as Dockerfile. Not
-         // languageIdFromDocument(): it gives "r" for any R document, so it
-         // would send hidden ones such as ~/.Rprofile.
+         languageId = lsp::languageIdFromFilename(docPath);
          if (languageId.empty())
-            languageId = lsp::languageIdFromFilename(docPath);
+            languageId = lsp::languageIdFromExtension(docPath.getExtensionLowerCase());
       }
 
       if (languageId.empty())

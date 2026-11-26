@@ -906,6 +906,17 @@ TEST_F(FocusedDocumentTest, NewAgentIsSentOpenContainerfileAsDockerfile)
    EXPECT_NE(didOpen.find("\"languageId\":\"dockerfile\""), std::string::npos) << didOpen;
 }
 
+TEST_F(FocusedDocumentTest, NewAgentIsSentDockerfileByNameAheadOfExtension)
+{
+   // As didOpen sends it when the document opens while the agent runs
+   std::string id = openDocument("Containerfile.py", kSourceDocumentTypePython);
+
+   resetForNewAgentForTesting();
+   syncOpenDocumentsForTesting();
+   std::string didOpen = didOpenFor(writesAfterInitialization(), uri(id));
+   EXPECT_NE(didOpen.find("\"languageId\":\"dockerfile\""), std::string::npos) << didOpen;
+}
+
 TEST_F(FocusedDocumentTest, NewAgentIsNotSentOpenRprofile)
 {
    // R documents skip isIndexableFile()'s hidden-file checks, and .Rprofile
