@@ -1,8 +1,8 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import {
-  clearPref,
   dismissAllModals,
   executeCommand,
+  getPref,
   openProject,
   setChatUpdateCheckOverride,
   setPref,
@@ -45,6 +45,17 @@ test.describe.serial(
   () => {
     const sandbox = useSuiteSandbox();
 
+    // Both tests change these prefs. Restore what the profile had rather than
+    // clearing them: they default to "posit", which would switch Posit
+    // Assistant on for whatever runs next in the session.
+    let originalChatProvider: string | null = null;
+    let originalAssistant: string | null = null;
+
+    test.beforeAll(async ({ rstudioPage: page }) => {
+      originalChatProvider = (await getPref(page, 'chat_provider')) as string | null;
+      originalAssistant = (await getPref(page, 'assistant')) as string | null;
+    });
+
     // Create a project whose options set its code assistant. The value is
     // seeded in the scratch-path options file before the project opens, so the
     // session reads it at startup; setting it through Project Options would
@@ -84,9 +95,10 @@ test.describe.serial(
       } catch (err) {
         console.warn('[check-for-updates-project-override] afterAll closeProjectIfOpen failed:', err);
       }
-      for (const pref of ['assistant', 'chat_provider']) {
-        await clearPref(page, pref);
-      }
+      if (originalChatProvider !== null)
+        await setPref(page, 'chat_provider', originalChatProvider);
+      if (originalAssistant !== null)
+        await setPref(page, 'assistant', originalAssistant);
     });
 
     test('offers the install when the project selects Posit AI over a global (None)', async ({
