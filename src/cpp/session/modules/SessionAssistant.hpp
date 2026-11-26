@@ -161,6 +161,7 @@ void queueAgentReplyForTesting(const std::string& reply);
 void queueAgentNotificationForTesting(const std::string& method);
 void focusDocumentForTesting(const std::string& documentId);
 void resendFocusForTesting();
+void syncOpenDocumentsForTesting();
 void resetForNewAgentForTesting();
 void writeQueuedAgentRequestsForTesting(core::system::ProcessOperations& operations);
 void runBackgroundProcessingForTesting(bool isIdle,

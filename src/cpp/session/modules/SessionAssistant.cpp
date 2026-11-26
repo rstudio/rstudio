@@ -1904,9 +1904,11 @@ void syncOpenDocuments()
          std::string ext = docPath.getExtensionLowerCase();
          languageId = lsp::languageIdFromExtension(ext);
 
-         // Files known by name rather than extension, such as Dockerfile
+         // Files known by name rather than extension, such as Dockerfile. Not
+         // languageIdFromDocument(): it gives "r" for any R document, so it
+         // would send hidden ones such as ~/.Rprofile.
          if (languageId.empty())
-            languageId = lsp::languageIdFromDocument(pDoc);
+            languageId = lsp::languageIdFromFilename(docPath);
       }
 
       if (languageId.empty())
@@ -3351,6 +3353,11 @@ void focusDocumentForTesting(const std::string& documentId)
 void resendFocusForTesting()
 {
    resendFocus();
+}
+
+void syncOpenDocumentsForTesting()
+{
+   syncOpenDocuments();
 }
 
 void resetForNewAgentForTesting()

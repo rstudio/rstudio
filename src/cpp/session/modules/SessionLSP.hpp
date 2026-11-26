@@ -297,6 +297,10 @@ std::string uriFromDocument(boost::shared_ptr<source_database::SourceDocument> p
 
 std::string uriFromDocumentPath(const core::FilePath& path);
 
+// The language ID for files known by name rather than extension, such as
+// Dockerfile and Makefile; empty for any other file.
+std::string languageIdFromFilename(const core::FilePath& path);
+
 std::string languageIdFromDocument(boost::shared_ptr<source_database::SourceDocument> pDoc);
 
 std::string languageIdFromExtension(const std::string& ext);
