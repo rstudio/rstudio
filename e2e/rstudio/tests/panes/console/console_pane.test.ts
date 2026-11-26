@@ -21,6 +21,8 @@ import { waitForConsoleFocus } from '@pages/console_pane.page';
 
 // Focus Last Console Error
 const FOCUS_LAST_ERROR = process.platform === 'darwin' ? 'Control+Alt+7' : 'Alt+Shift+7';
+// Focus Console Output
+const FOCUS_OUTPUT = 'Control+Backquote';
 const NO_ERROR_ANNOUNCEMENT = '[role="status"]:has-text("No Console error to focus")';
 // An error with a traceback, so its box has the Show Traceback button
 const NESTED_ERROR = 'g <- function() stop("boom"); f <- function() g(); f()';
@@ -384,54 +386,80 @@ test.describe('Console pane', () => {
       await expect(page.locator(`#rstudio_workbench_tab_${id}`)).toBeVisible({ visible: !alone });
   }
 
-  for (const hide of ['zoomed out', 'minimized', 'minimized alone in its pane'] as const) {
-    for (const reducedMotion of [true, false]) {
-      const motion = reducedMotion ? 'reduced motion' : 'animated';
-      test(`Focus Last Console Error brings a ${hide} Console forward (${motion})`, async ({
-        rstudioPage: page,
-      }) => {
-        const alone = hide === 'minimized alone in its pane';
-        const pane = consoleActions.consolePane;
-        try {
-          if (alone)
-            await setConsoleAlone(page, true);
-          await consoleActions.executeInConsole(NESTED_ERROR);
-          await expect(pane.tracebackBtn).toBeVisible({ timeout: 10000 });
+  // Each command, and the element it should focus once the Console is shown
+  const focusCommands = [
+    {
+      name: 'Focus Last Console Error',
+      key: FOCUS_LAST_ERROR,
+      target: () => consoleActions.consolePane.tracebackBtn,
+    },
+    {
+      name: 'Focus Console Output',
+      key: FOCUS_OUTPUT,
+      // A form feed can leave an empty chunk behind; the command skips it
+      target: (page: Page) =>
+        page.locator('.rstudio-console-output > [role="document"]:not(:empty)').last(),
+    },
+  ];
+  const hides = [
+    'zoomed out', 'minimized', 'minimized alone in its pane', 'behind another tab',
+  ] as const;
 
-          await setPref(page, 'reduced_motion', reducedMotion);
-          if (hide === 'zoomed out')
-            await executeCommand(page, 'layoutZoomRightColumn');
-          else
-            await page.locator('#rstudio_Console_pane [class*="rstudio_panel_min_btn"]')
-              .first().click();
-          // A zoomed-out column is inert only once its collapse animation ends
-          if (hide === 'zoomed out')
-            await expect.poll(() =>
-              pane.tracebackBtn.evaluate((el) => el.closest('[inert]') !== null)).toBe(true);
-          await expect(page.locator('body')).not.toHaveClass(/rstudio-animating/);
-          await expect(pane.tracebackBtn).not.toBeInViewport();
+  for (const command of focusCommands) {
+    for (const hide of hides) {
+      for (const reducedMotion of [true, false]) {
+        const motion = reducedMotion ? 'reduced motion' : 'animated';
+        test(`${command.name} brings a ${hide} Console forward (${motion})`, async ({
+          rstudioPage: page,
+        }) => {
+          const alone = hide === 'minimized alone in its pane';
+          const pane = consoleActions.consolePane;
+          const target = command.target(page);
+          try {
+            if (alone)
+              await setConsoleAlone(page, true);
+            await consoleActions.executeInConsole(NESTED_ERROR);
+            await expect(pane.tracebackBtn).toBeVisible({ timeout: 10000 });
 
-          await page.keyboard.press(FOCUS_LAST_ERROR);
-          await expect(pane.tracebackBtn).toBeInViewport();
-          await expect(pane.tracebackBtn).toBeFocused();
+            await setPref(page, 'reduced_motion', reducedMotion);
+            if (hide === 'zoomed out')
+              await executeCommand(page, 'layoutZoomRightColumn');
+            else if (hide === 'behind another tab')
+              await executeCommand(page, 'activateBackgroundJobs');
+            else
+              await page.locator('#rstudio_Console_pane [class*="rstudio_panel_min_btn"]')
+                .first().click();
+            // A zoomed-out column is inert only once its collapse animation ends
+            if (hide === 'zoomed out')
+              await expect.poll(() =>
+                target.evaluate((el) => el.closest('[inert]') !== null)).toBe(true);
+            await expect(page.locator('body')).not.toHaveClass(/rstudio-animating/);
+            await expect(target).not.toBeInViewport();
 
-          // Restoring the pane animates, and its end can move focus; the column
-          // animation sets no marker to wait on, so watch past its 300ms
-          for (let elapsed = 0; elapsed < 1000; elapsed += 50) {
-            expect(await pane.tracebackBtn.evaluate((el) => el === document.activeElement),
-              `Show Traceback still focused after ${elapsed}ms`).toBe(true);
-            await page.waitForTimeout(50);
+            await page.keyboard.press(command.key);
+            await expect(target).toBeInViewport();
+            await expect(target).toBeFocused();
+
+            // Restoring the pane animates, and its end can move focus; the column
+            // animation sets no marker to wait on, so watch past its 300ms
+            for (let elapsed = 0; elapsed < 1000; elapsed += 50) {
+              expect(await target.evaluate((el) => el === document.activeElement),
+                `${command.name} target still focused after ${elapsed}ms`).toBe(true);
+              await page.waitForTimeout(50);
+            }
+          } finally {
+            // The fixture's value, not the default: animations would slow every later test
+            await setPref(page, 'reduced_motion', true);
+            await resetLayoutZoom(page);
+            if (!(await page.locator('#rstudio_Console_pane').isVisible()))
+              await executeCommand(page, 'activateConsolePane');
+            if (hide === 'behind another tab')
+              await executeCommand(page, 'activateConsole');
+            if (alone)
+              await setConsoleAlone(page, false);
           }
-        } finally {
-          // The fixture's value, not the default: animations would slow every later test
-          await setPref(page, 'reduced_motion', true);
-          await resetLayoutZoom(page);
-          if (!(await page.locator('#rstudio_Console_pane').isVisible()))
-            await executeCommand(page, 'activateConsolePane');
-          if (alone)
-            await setConsoleAlone(page, false);
-        }
-      });
+        });
+      }
     }
   }
 
