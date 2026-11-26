@@ -446,9 +446,10 @@ bool isIndexableFile(const FilePath& documentPath)
    if (ext == ".rproj")
       return false;
 
-   // Handle Dockerfile with any extension (including none, the most common)
+   // Handle Dockerfile (or its Podman name, Containerfile) with any extension
+   // (including none, the most common)
    std::string stem = documentPath.getStem();
-   if (stem == "Dockerfile")
+   if (stem == "Dockerfile" || stem == "Containerfile")
       return true;
 
    // Handle extensionless Makefile / makefile
