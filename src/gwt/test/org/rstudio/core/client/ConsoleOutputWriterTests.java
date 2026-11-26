@@ -19,10 +19,14 @@ import java.util.List;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.Text;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.TextBox;
 
 import junit.framework.Assert;
 
@@ -120,6 +124,56 @@ public class ConsoleOutputWriterTests extends GWTTestCase
       ConsoleOutputWriter output = getCOW();
       output.outputToConsole("hello\n", nullClazz, notError, checkLineCount, false);
       Assert.assertTrue(output.focusEnd());
+   }
+
+   private boolean hasKeyboardMark(ConsoleOutputWriter output)
+   {
+      return output.getElement().hasClassName(ConsoleOutputWriter.KEYBOARD_FOCUS_CLASS);
+   }
+
+   private void mouseDown(Element el)
+   {
+      el.dispatchEvent(Document.get().createMouseDownEvent(
+            0, 0, 0, 0, 0, false, false, false, false, NativeEvent.BUTTON_LEFT));
+   }
+
+   public void testFocusEndMarksKeyboardFocus()
+   {
+      ConsoleOutputWriter output = getCOW();
+      output.outputToConsole("hello\n", nullClazz, notError, checkLineCount, false);
+      Assert.assertFalse(hasKeyboardMark(output));
+      output.focusEnd();
+      Assert.assertTrue(hasKeyboardMark(output));
+   }
+
+   public void testMouseDownClearsKeyboardFocus()
+   {
+      ConsoleOutputWriter output = getCOW();
+      output.outputToConsole("hello\n", nullClazz, notError, checkLineCount, false);
+      output.focusEnd();
+      mouseDown(output.getElement().getFirstChildElement());
+      Assert.assertFalse(hasKeyboardMark(output));
+   }
+
+   // A dialog or menu that takes focus and then restores it to the output must
+   // find the mark still set, so the outline comes back.
+   public void testKeyboardFocusSurvivesFocusElsewhere()
+   {
+      ConsoleOutputWriter output = getCOW();
+      TextBox elsewhere = new TextBox();
+      RootPanel.get().add(output.getWidget());
+      RootPanel.get().add(elsewhere);
+      try
+      {
+         output.outputToConsole("hello\n", nullClazz, notError, checkLineCount, false);
+         output.focusEnd();
+         elsewhere.setFocus(true);
+         Assert.assertTrue(hasKeyboardMark(output));
+      }
+      finally
+      {
+         RootPanel.get().clear();
+      }
    }
 
    public void testSetGetMaxLines()

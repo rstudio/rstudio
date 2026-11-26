@@ -53,8 +53,8 @@ public class ConsoleOutputWriter
    }
 
    /**
-    * Mark the output while the mouse put focus in it, so its focus outline
-    * stays hidden after a drag-select and a key press such as Shift or Cmd+C.
+    * Mark the output while the mouse put focus in it, so the outline on the
+    * output itself stays hidden after a key press such as Shift or Cmd+C.
     * The mark outlasts the window losing focus, but not focus landing outside
     * the output, even while the window is inactive.
     */
@@ -75,7 +75,10 @@ public class ConsoleOutputWriter
             DomGlobal.document.removeEventListener("focusin", clearOnFocusElsewhere, true);
       });
       el.addEventListener("mousedown", event ->
-         el.classList.add(POINTER_FOCUS_CLASS));
+      {
+         el.classList.add(POINTER_FOCUS_CLASS);
+         el.classList.remove(KEYBOARD_FOCUS_CLASS);
+      });
       el.addEventListener("keydown", event ->
       {
          if (StringUtil.equals(((KeyboardEvent) event).key, "Tab"))
@@ -246,7 +249,11 @@ public class ConsoleOutputWriter
       if (last == null)
          return false;
 
+      // Chunks aren't in the tab order, so this is the only keyboard route onto
+      // one. The mark stays when focus leaves, so a dialog or menu that hands
+      // focus back to the chunk brings the outline back with it.
       output_.getElement().removeClassName(POINTER_FOCUS_CLASS);
+      output_.getElement().addClassName(KEYBOARD_FOCUS_CLASS);
       Element.as(last).focus();
       return true;
    }
@@ -256,6 +263,8 @@ public class ConsoleOutputWriter
    // Not obfuscated: focus-visible.css, loaded as plain CSS, refers to them.
    private static final String OUTPUT_CLASS = "rstudio-console-output";
    private static final String POINTER_FOCUS_CLASS = "rstudio-pointer-focus";
+   // package-private for tests
+   static final String KEYBOARD_FOCUS_CLASS = "rstudio-keyboard-focus";
 
    private int maxLines_ = -1;
    private int lines_ = 0;
