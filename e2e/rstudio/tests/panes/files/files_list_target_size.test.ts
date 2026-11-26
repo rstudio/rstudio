@@ -24,7 +24,11 @@ function describeNode(node: NodeResult): string {
 }
 
 test.describe('Files pane file list target size (#19786)', () => {
-  test('sort headers and row checkboxes are 24px targets', async ({ rstudioPage: page }) => {
+  // axe opens a page of its own to merge its results, which Desktop's CDP
+  // connection to Electron refuses (Target.createTarget: Not supported).
+  test('sort headers and row checkboxes are 24px targets', { tag: '@server_only' }, async ({
+    rstudioPage: page,
+  }) => {
     const consoleActions = new ConsolePaneActions(page);
     const dir = 'file.path(tempdir(), "files-target-size")';
 
