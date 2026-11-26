@@ -1085,9 +1085,11 @@ public class AssistantPreferencesPane extends PreferencesPane
                   lblAssistantStatus_.setText(AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason, Assistant.getDisplayName(type)));
 
                   // Show Install button for Posit Assistant when not installed,
-                  // unless the backend would refuse the install the button
-                  // starts: the administrator manages the installation, or the
-                  // project sets another assistant. The locked selector can
+                  // unless the administrator manages the installation (the
+                  // backend refuses the install) or the project sets another
+                  // assistant: installing would not make Posit AI this
+                  // project's assistant, and the backend refuses it unless the
+                  // chat provider is Posit Assistant. The locked selector can
                   // still show Posit AI then, when the project's assistant
                   // isn't offered in this session.
                   boolean projectSelectsOther = projectAssistantOverride_ != null &&
