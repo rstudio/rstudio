@@ -6440,7 +6440,8 @@ Error initialize()
       }
    }
 
-   // Read project options (must be done before validation to get accurate state)
+   // Read project options. isPaiSelected() and getConfiguredChatProvider() answer from
+   // them first, so the install gate and the deferred startup update check depend on this.
    if (projects::projectContext().hasProject())
    {
       Error error = projects::projectContext().readAssistantOptions(&s_chatProjectOptions);
