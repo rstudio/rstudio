@@ -239,8 +239,12 @@ public class FilesList extends Composite
             }
          };
       iconColumn.setSortable(true);
-      filesDataGrid_.addColumn(iconColumn,
-            SafeHtmlUtil.visuallyHiddenText(constants_.fileTypeHeaderText()));
+      SafeHtmlBuilder iconHeader = new SafeHtmlBuilder();
+      iconHeader.append(SafeHtmlUtil.visuallyHiddenText(constants_.fileTypeHeaderText()));
+      // The hidden span takes up no space. When the column is sorted, the
+      // <br> gives the sort arrow's wrapper a line to center the arrow in.
+      iconHeader.appendHtmlConstant("<br/>");
+      filesDataGrid_.addColumn(iconColumn, iconHeader.toSafeHtml());
       filesDataGrid_.setColumnWidth(iconColumn, ICON_COLUMN_WIDTH_PIXELS, Unit.PX);
 
       sortHandler_.setComparator(iconColumn, new FilesListComparator() {
