@@ -1900,12 +1900,14 @@ void syncOpenDocuments()
       }
       else
       {
-         // Files known by name, such as Dockerfile, ahead of the extension, as
-         // in the didOpen sent while the agent runs. Not languageIdFromDocument():
-         // it gives "r" for any R document, so it would send hidden ones such
-         // as ~/.Rprofile.
+         // Ordered as in the didOpen sent while the agent runs: R documents
+         // first, then files known by name, such as Dockerfile, then the
+         // extension. But R documents only by extension, unlike
+         // languageIdFromDocument(), which would send hidden ones (~/.Rprofile).
          FilePath docPath(pDoc->path());
-         languageId = lsp::languageIdFromFilename(docPath);
+         bool isR = pDoc->isRFile() || pDoc->isRMarkdownDocument();
+         if (!isR)
+            languageId = lsp::languageIdFromFilename(docPath);
          if (languageId.empty())
             languageId = lsp::languageIdFromExtension(docPath.getExtensionLowerCase());
       }
