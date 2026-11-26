@@ -335,7 +335,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    @Handler
    void onFocusConsoleOutputEnd()
    {
-      view_.getConsoleOutputWriter().focusEnd();
+      if (!view_.getConsoleOutputWriter().focusEnd())
+         announceFocusFailure(constants_.noConsoleOutputToFocusMessage());
    }
 
    @Handler

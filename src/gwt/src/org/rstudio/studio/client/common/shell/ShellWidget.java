@@ -110,7 +110,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       container_ = new DockLayoutPanel(Unit.PX);
 
       output_ = new ConsoleOutputWriter(RStudioGinjector.INSTANCE.getVirtualConsoleFactory(), outputLabel);
-      output_.getWidget().setStylePrimaryName(styles_.output());
+      output_.getWidget().addStyleName(styles_.output());
       output_.getWidget().addClickHandler(secondaryInputHandler);
       ElementIds.assignElementId(output_.getElement(), ElementIds.CONSOLE_OUTPUT);
       output_.getWidget().addPasteHandler(secondaryInputHandler);
@@ -120,9 +120,14 @@ public class ShellWidget extends Composite implements ShellDisplay,
          syncOutputStyles();
       }
 
+      // Pending input only echoes a submitted command until R echoes it into
+      // the output, so it isn't a tab stop, and it stays hidden until there's
+      // a command to show.
       pendingInput_ = new PreWidget();
+      pendingInput_.getElement().removeAttribute("tabindex");
       pendingInput_.setStyleName(styles_.output());
       pendingInput_.addClickHandler(secondaryInputHandler);
+      pendingInput_.setVisible(false);
 
       prompt_ = new HTML();
       prompt_.setStylePrimaryName(styles_.prompt());
@@ -964,9 +969,11 @@ public class ShellWidget extends Composite implements ShellDisplay,
                if (event.isControlKeyDown() || event.isMetaKeyDown())
                   return;
                break;
+            // Tab moves focus whatever "Tab key always moves focus" says.
+            // Sent on to the input, it neither typed nor completed anything,
+            // and its default action then moved focus on past the input.
             case KeyCodes.KEY_TAB:
-               if (prefs_ == null || prefs_.tabKeyMoveFocus().getValue())
-                  return;
+               return;
          }
          input_.setFocus(true);
          delegateEvent(input_.asWidget(), event);

@@ -65,9 +65,9 @@
    outline: none;
 }
 
-/* .console needed to increase specificity so it wins over focus-visible.css */
-/* !important needed because :focus-visible uses it as well */
-.console .output:focus-visible,
+/* focus-visible.css outlines the whole output region instead; that rule can't
+   live here, as GWT's CSS parser drops :has(). .console and !important are
+   needed to win over focus-visible.css. */
 .console .outputChunk:focus-visible {
    outline-style: none !important;
 }

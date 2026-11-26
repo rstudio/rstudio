@@ -4,6 +4,21 @@
     outline-offset: -1px !important;
 }
 
+/* Console output chunks are inline, so an outline on one traces each wrapped
+   line; outline the whole output region instead. :focus also covers Focus
+   Console Output chosen from a menu. Kept separate from the rule above, so a
+   browser without :has() drops only this one. */
+.rstudio-console-output:not(.rstudio-pointer-focus):has(> [role="document"]:focus) {
+    outline: #8AA9DB solid 2px !important;
+    outline-offset: -1px !important;
+}
+
+/* A key press after the mouse put focus in the output would otherwise make
+   the outline appear. */
+.rstudio-console-output.rstudio-pointer-focus:focus-visible {
+    outline: none !important;
+}
+
 .search input:focus-visible,
 table[role="listbox"]:focus-visible {
     outline: none !important;
