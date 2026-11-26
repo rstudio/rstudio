@@ -297,6 +297,8 @@ std::string uriFromDocument(boost::shared_ptr<source_database::SourceDocument> p
 
 std::string uriFromDocumentPath(const core::FilePath& path);
 
+std::string languageIdFromDocument(boost::shared_ptr<source_database::SourceDocument> pDoc);
+
 std::string languageIdFromExtension(const std::string& ext);
 
 std::string extensionFromLanguageId(const std::string& languageId);

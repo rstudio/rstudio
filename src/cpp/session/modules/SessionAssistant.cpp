@@ -1903,6 +1903,10 @@ void syncOpenDocuments()
          FilePath docPath(pDoc->path());
          std::string ext = docPath.getExtensionLowerCase();
          languageId = lsp::languageIdFromExtension(ext);
+
+         // Files known by name rather than extension, such as Dockerfile
+         if (languageId.empty())
+            languageId = lsp::languageIdFromDocument(pDoc);
       }
 
       if (languageId.empty())
