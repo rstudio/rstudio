@@ -33,7 +33,7 @@
 /* 3px of padding around an 18px line makes the button 24px tall with its
    text centered. ResizableHeader's 18px splitter, offset -2px from the
    content top, spans y=1-19 of it. */
-.dataGridWidget .dataGridHeader > div {
+.dataGridWidget .dataGridHeader > [role="button"] {
   height: 18px;
   line-height: 18px;
   padding: 3px 6px;
