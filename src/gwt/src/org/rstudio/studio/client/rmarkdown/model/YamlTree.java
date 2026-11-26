@@ -404,28 +404,18 @@ public class YamlTree
       pending.clear();
    }
 
+   // Resolve the parent from the last keyed node, never from the previous
+   // line: continuation lines (block or multi-line scalar text) are not tree
+   // nodes, and their indentation must not move later keys up or down the
+   // tree. The root's negative indent level ends the walk.
    private static YamlTreeNode findParentForIndent(
          int childIndent,
-         int currentIndent,
-         YamlTreeNode currentParent,
-         YamlTreeNode lastNode,
-         YamlTreeNode root)
+         YamlTreeNode lastNode)
    {
-      if (childIndent > currentIndent)
-      {
-         return lastNode;
-      }
-      else if (childIndent < currentIndent)
-      {
-         YamlTreeNode parent = currentParent;
-         do
-         {
-            parent = parent.parent;
-         }
-         while (parent != null && parent.indentLevel >= childIndent);
-         return parent != null ? parent : root;
-      }
-      return currentParent;
+      YamlTreeNode parent = lastNode;
+      while (parent.indentLevel >= childIndent)
+         parent = parent.parent;
+      return parent;
    }
 
    private YamlTreeNode createYamlTree(String yaml)
@@ -435,7 +425,6 @@ public class YamlTree
       root.indentLevel = -2;
       YamlTreeNode currentParent = root;
       YamlTreeNode lastNode = root;
-      int currentIndentLevel = 0;
       List<YamlTreeNode> pending = new ArrayList<>();
       for (String line: lines)
       {
@@ -449,15 +438,9 @@ public class YamlTree
             continue;
          }
 
-         currentParent = findParentForIndent(
-               child.indentLevel,
-               currentIndentLevel,
-               currentParent,
-               lastNode,
-               root);
+         currentParent = findParentForIndent(child.indentLevel, lastNode);
 
          flushPending(pending, currentParent);
-         currentIndentLevel = child.indentLevel;
          if (currentParent.addChild(child))
             lastNode = child;
       }
