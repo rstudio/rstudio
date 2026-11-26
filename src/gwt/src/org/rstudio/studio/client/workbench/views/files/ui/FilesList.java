@@ -239,11 +239,8 @@ public class FilesList extends Composite
             }
          };
       iconColumn.setSortable(true);
-      SafeHtmlBuilder iconHeader = new SafeHtmlBuilder();
-      iconHeader.append(SafeHtmlUtil.visuallyHiddenText(constants_.fileTypeHeaderText()));
-      // The <br> gives the sort button a line of height; the hidden span takes up none.
-      iconHeader.appendHtmlConstant("<br/>");
-      filesDataGrid_.addColumn(iconColumn, iconHeader.toSafeHtml());
+      filesDataGrid_.addColumn(iconColumn,
+            SafeHtmlUtil.visuallyHiddenText(constants_.fileTypeHeaderText()));
       filesDataGrid_.setColumnWidth(iconColumn, ICON_COLUMN_WIDTH_PIXELS, Unit.PX);
 
       sortHandler_.setComparator(iconColumn, new FilesListComparator() {
