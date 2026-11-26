@@ -263,10 +263,12 @@ bool isChatProviderPosit()
 }
 
 // Returns true if the user wants Posit Assistant for either chat or completions
-// Used to determine if install/update operations should be allowed
+// Used to determine if install/update operations should be allowed.
+// A project's settings can select Posit Assistant where the administrator has
+// disabled it; startup resets only the global preferences, so that is checked here.
 bool isPositAssistantWanted()
 {
-   return isChatProviderPosit() || isPaiSelected();
+   return isPositAssistantEnabledByAdmin() && (isChatProviderPosit() || isPaiSelected());
 }
 
 // Selective imports from chat modules to avoid namespace pollution
@@ -6446,8 +6448,9 @@ Error initialize()
    }
 
    // Validate chat provider preference consistency
-   // If user has Posit selected as chat provider but PAI is no longer available, reset to "none"
-   if (isChatProviderPosit() && !isPositAssistantEnabledByAdmin())
+   // If user has Posit selected as chat provider but PAI is no longer available, reset to "none".
+   // Reads the global preference for the same reason as the assistant check above.
+   if (prefs::userPrefs().chatProvider() == kChatProviderPosit && !isPositAssistantEnabledByAdmin())
    {
       prefs::userPrefs().setChatProvider(kChatProviderNone);
    }
