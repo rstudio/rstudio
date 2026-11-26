@@ -1,6 +1,5 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import {
-  clearPref,
   dismissAllModals,
   getPref,
   numModalsShowing,
@@ -27,7 +26,16 @@ import {
 test.describe.serial('Global Assistant pane project override', () => {
   const sandbox = useSuiteSandbox();
 
+  // The test changes these prefs. Restore what the profile had rather than
+  // clearing them: `assistant` defaults to "posit", which would switch Posit
+  // Assistant on for whatever runs next in the session.
+  let originalAssistant: string | null = null;
+  let originalCopilotEnabled: boolean | null = null;
+
   test.beforeAll(async ({ rstudioPage: page }) => {
+    originalAssistant = (await getPref(page, 'assistant')) as string | null;
+    originalCopilotEnabled = (await getPref(page, 'copilot_enabled')) as boolean | null;
+
     // Seed the project's assistant in its scratch-path options file before
     // opening it, so the session reads it at startup just as the pane does.
     // Setting it through Project Options would raise a restart prompt.
@@ -58,9 +66,10 @@ test.describe.serial('Global Assistant pane project override', () => {
     } catch (err) {
       console.warn('[global_assistant_project_override] afterAll closeProjectIfOpen failed:', err);
     }
-    for (const pref of ['assistant', 'copilot_enabled']) {
-      await clearPref(page, pref);
-    }
+    if (originalAssistant !== null)
+      await setPref(page, 'assistant', originalAssistant);
+    if (originalCopilotEnabled !== null)
+      await setPref(page, 'copilot_enabled', originalCopilotEnabled);
   });
 
   test('OK keeps the global assistant while a project overrides it', async ({
