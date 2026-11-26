@@ -1085,11 +1085,17 @@ public class AssistantPreferencesPane extends PreferencesPane
                   lblAssistantStatus_.setText(AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason, Assistant.getDisplayName(type)));
 
                   // Show Install button for Posit Assistant when not installed,
-                  // unless the administrator manages the installation -- the
-                  // backend refuses the install the button would start.
+                  // unless the backend would refuse the install the button
+                  // starts: the administrator manages the installation, or the
+                  // project sets another assistant. The locked selector can
+                  // still show Posit AI then, when the project's assistant
+                  // isn't offered in this session.
+                  boolean projectSelectsOther = projectAssistantOverride_ != null &&
+                      !projectAssistantOverride_.equals(UserPrefsAccessor.ASSISTANT_POSIT);
                   if (reason == AssistantResponseTypes.AssistantAgentNotRunningReason.NotInstalled &&
                       type.equals(UserPrefsAccessor.ASSISTANT_POSIT) &&
-                      paiUtil_.isPositAssistantInstallationEnabled())
+                      paiUtil_.isPositAssistantInstallationEnabled() &&
+                      !projectSelectsOther)
                   {
                      showButtons(btnInstall_, btnRefresh_);
                   }
@@ -1440,10 +1446,10 @@ public class AssistantPreferencesPane extends PreferencesPane
     */
    private void performPositAssistantInstall(boolean forAssistant, RevertTarget revert)
    {
-      // A project that overrides the code assistant already selects Posit AI
+      // A project that sets the code assistant to Posit AI already selects it
       // for the server's install check. The global preference is what other
       // projects use, so it is left alone (#19803).
-      if (forAssistant && projectAssistantOverride_ != null)
+      if (forAssistant && UserPrefsAccessor.ASSISTANT_POSIT.equals(projectAssistantOverride_))
       {
          doInstall(forAssistant, revert);
          return;
