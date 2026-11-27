@@ -6,7 +6,6 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.KeyCombination;
 import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.core.client.command.KeyboardHelper;
@@ -19,15 +18,25 @@ public class AceCommandManager extends JavaScriptObject
    
    public static final AceCommandManager create()
    {
-      return _createImpl(BrowseCap.isWindows());
+      return _createImpl(usesMacBindings());
    }
-   
-   public static final native AceCommandManager _createImpl(boolean isWindows)
+
+   private static final native AceCommandManager _createImpl(boolean isMac)
    /*-{
       var CommandManager = $wnd.require("ace/commands/command_manager").CommandManager;
       var commands = $wnd.require("ace/commands/default_commands").commands;
-      var platform = isWindows ? "win" : "mac";
+      var platform = isMac ? "mac" : "win";
       return new CommandManager(platform, commands);
+   }-*/;
+
+   /**
+    * Whether Ace editors use the "mac" key bindings rather than the "win" ones.
+    * Ask Ace, which decides this for its editors: "mac" on macOS and iOS,
+    * "win" everywhere else, Linux included.
+    */
+   public static final native boolean usesMacBindings()
+   /*-{
+      return !!$wnd.require("ace/lib/useragent").isMac;
    }-*/;
    
    public static native final JsArray<AceCommand> getDefaultCommands()
@@ -73,22 +82,6 @@ public class AceCommandManager extends JavaScriptObject
       return this.byName[id] != null;
    }-*/;
    
-   public final boolean hasBinding(KeySequence keys)
-   {
-      String transformed = toAceStyleShortcutString(keys);
-      return hasBinding(transformed);
-   }
-   
-   public final boolean hasPrefix(KeySequence keys)
-   {
-      String transformed = toAceStyleShortcutString(keys);
-      return hasPrefix(transformed);
-   }
-   
-   public final native JsObject getCommandKeyBindings() /*-{
-      return this.commandKeyBinding;
-   }-*/;
-   
    public final native JsObject getCommands() /*-{
       return this.commands;
    }-*/;
@@ -132,16 +125,6 @@ public class AceCommandManager extends JavaScriptObject
       return builder.toString();
       
    }
-   
-   private final native boolean hasBinding(String shortcut) /*-{
-      var binding = this.commandKeyBinding[shortcut];
-      return binding != null && binding !== "chainKeys";
-   }-*/;
-   
-   private final native boolean hasPrefix(String shortcut) /*-{
-      var binding = this.commandKeyBinding[shortcut];
-      return binding != null && binding === "chainKeys";
-   }-*/;
    
    public final void rebindCommand(String id, List<KeySequence> keys)
    {

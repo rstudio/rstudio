@@ -17,27 +17,16 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsObject;
 
 public class AceCommand extends JavaScriptObject
 {
    protected AceCommand() {}
-   
-   public final native boolean isPlaceHolder()
-   /*-{
-      return this.bindKeys == null;
-   }-*/;
-   
+
    public final native String getInternalName()
    /*-{
          return this.name;
-   }-*/;
-
-   public final native JavaScriptObject getInternalBindings()
-   /*-{
-         return this.bindKeys;
    }-*/;
 
    public final String getDisplayName()
@@ -49,27 +38,14 @@ public class AceCommand extends JavaScriptObject
          return StringUtil.prettyCamel(internal);
    }
 
-   private final native String getDisplayName(String name, JavaScriptObject map)
-   /*-{
-      return map[name] || name;
-   }-*/;
-
-   public final JsArrayString getWindowsKeyBinding()
-   {
-      return getKeyBindings(true);
-   }
-
-   public final JsArrayString getMacKeyBinding()
-   {
-      return getKeyBindings(false);
-   }
-
    public final JsArrayString getBindingsForCurrentPlatform()
    {
-      return getKeyBindings(BrowseCap.isWindows());
+      return getKeyBindings(!AceCommandManager.usesMacBindings());
    }
 
-   private final native JsArrayString getKeyBindings(boolean isWindows)
+   // Ace names its binding set for platforms other than macOS and iOS "win",
+   // but Linux uses it too.
+   private final native JsArrayString getKeyBindings(boolean useWinBindings)
    /*-{
       var binding = this.bindKey;
 
@@ -81,7 +57,7 @@ public class AceCommand extends JavaScriptObject
          return binding.split("|");
       }
 
-      var shortcut = isWindows ? binding.win : binding.mac;
+      var shortcut = useWinBindings ? binding.win : binding.mac;
       if (typeof shortcut === "string") {
          return shortcut.split("|");
       } else {

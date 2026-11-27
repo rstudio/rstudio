@@ -187,16 +187,6 @@ public class EditorCommandManager
       return $wnd.require("ace/commands/default_commands").commands;
    }-*/;
 
-   public boolean hasBinding(KeySequence keys)
-   {
-      return manager_.hasBinding(keys);
-   }
-
-   public boolean hasPrefix(KeySequence keys)
-   {
-      return manager_.hasPrefix(keys);
-   }
-
    public void rebindCommand(String id, List<KeySequence> keys)
    {
       manager_.rebindCommand(id, keys);
