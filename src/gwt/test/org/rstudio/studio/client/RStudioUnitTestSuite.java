@@ -87,6 +87,7 @@ import org.rstudio.studio.client.workbench.views.output.lint.model.LintItemTests
 import org.rstudio.studio.client.workbench.views.packages.ui.PackageLinkColumnTests;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorControlTests;
 import org.rstudio.studio.client.workbench.views.source.editors.text.VimrcLoaderTests;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommandManagerTests;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionPopupPanelTests;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositionerTests;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.QualifiedNameTests;
@@ -199,6 +200,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(ServerErrorCauseTests.class);
       suite.addTestSuite(RVersionChooserTests.class);
       suite.addTestSuite(ChooseRVersionDialogTests.class);
+      suite.addTestSuite(AceCommandManagerTests.class);
 
       return suite;
    }

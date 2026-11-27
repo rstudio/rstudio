@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsObject;
 
@@ -66,10 +65,11 @@ public class AceCommand extends JavaScriptObject
 
    public final JsArrayString getBindingsForCurrentPlatform()
    {
-      return getKeyBindings(BrowseCap.isWindows());
+      return getKeyBindings(!AceCommandManager.usesMacBindings());
    }
 
-   private final native JsArrayString getKeyBindings(boolean isWindows)
+   // Ace names its non-macOS binding set "win", but Linux uses it too.
+   private final native JsArrayString getKeyBindings(boolean useWinBindings)
    /*-{
       var binding = this.bindKey;
 
@@ -81,7 +81,7 @@ public class AceCommand extends JavaScriptObject
          return binding.split("|");
       }
 
-      var shortcut = isWindows ? binding.win : binding.mac;
+      var shortcut = useWinBindings ? binding.win : binding.mac;
       if (typeof shortcut === "string") {
          return shortcut.split("|");
       } else {

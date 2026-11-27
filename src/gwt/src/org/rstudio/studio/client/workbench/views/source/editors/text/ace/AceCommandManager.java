@@ -6,7 +6,6 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.KeyCombination;
 import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.core.client.command.KeyboardHelper;
@@ -19,15 +18,25 @@ public class AceCommandManager extends JavaScriptObject
    
    public static final AceCommandManager create()
    {
-      return _createImpl(BrowseCap.isWindows());
+      return _createImpl(usesMacBindings());
    }
-   
-   public static final native AceCommandManager _createImpl(boolean isWindows)
+
+   public static final native AceCommandManager _createImpl(boolean isMac)
    /*-{
       var CommandManager = $wnd.require("ace/commands/command_manager").CommandManager;
       var commands = $wnd.require("ace/commands/default_commands").commands;
-      var platform = isWindows ? "win" : "mac";
+      var platform = isMac ? "mac" : "win";
       return new CommandManager(platform, commands);
+   }-*/;
+
+   /**
+    * Whether Ace editors use the "mac" key bindings rather than the "win" ones.
+    * Ask Ace, which decides this for its editors: "mac" on macOS, "win" on
+    * Windows and Linux.
+    */
+   public static final native boolean usesMacBindings()
+   /*-{
+      return !!$wnd.require("ace/lib/useragent").isMac;
    }-*/;
    
    public static native final JsArray<AceCommand> getDefaultCommands()
