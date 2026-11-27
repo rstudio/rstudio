@@ -55,7 +55,6 @@ import com.google.gwt.user.cellview.client.ColumnSortList;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
 import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.DefaultSelectionEventManager;
@@ -90,7 +89,8 @@ public class FilesList extends Composite
          @Override
          public double getRowHeight()
          {
-            return 22.5;
+            // FilesListDataGridStyle.css sizes rows to 24px for WCAG 2.5.8
+            return 24;
          }
 
          @Override
@@ -210,7 +210,6 @@ public class FilesList extends Composite
 
 
          };
-      checkColumn.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
       // the column is too narrow for visible header text, so give its header
       // cell hidden text; an empty <th> leaves the column header unnamed
       filesDataGrid_.addColumn(checkColumn,
@@ -242,7 +241,8 @@ public class FilesList extends Composite
       iconColumn.setSortable(true);
       SafeHtmlBuilder iconHeader = new SafeHtmlBuilder();
       iconHeader.append(SafeHtmlUtil.visuallyHiddenText(constants_.fileTypeHeaderText()));
-      // The <br> gives the sort button a line of height; the hidden span takes up none.
+      // The hidden span takes up no space. When the column is sorted, the
+      // <br> gives the sort arrow's wrapper a line to center the arrow in.
       iconHeader.appendHtmlConstant("<br/>");
       filesDataGrid_.addColumn(iconColumn, iconHeader.toSafeHtml());
       filesDataGrid_.setColumnWidth(iconColumn, ICON_COLUMN_WIDTH_PIXELS, Unit.PX);
