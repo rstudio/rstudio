@@ -174,7 +174,7 @@ static bool s_peerSentCapabilities = false;
 static std::set<std::string> s_peerCapabilities;
 
 // ============================================================================
-// Project-specific assistant options (for chat provider)
+// Project-specific assistant options (assistant and chat provider)
 // ============================================================================
 static projects::RProjectAssistantOptions s_chatProjectOptions;
 
@@ -230,10 +230,15 @@ const char* const kInstallationManagedMessage =
    "Posit Assistant installation is managed by your administrator and cannot "
    "be changed from RStudio.";
 
-// Returns true if the user has selected Posit AI as their assistant (for code completions)
+// Returns true if Posit AI is the selected assistant (for code completions).
+// Checks project-level setting first, then falls back to global preference
 bool isPaiSelected()
 {
-   return prefs::userPrefs().assistant() == kAssistantPosit;
+   std::string assistant = s_chatProjectOptions.assistant;
+   if (assistant.empty() || assistant == "default")
+      assistant = prefs::userPrefs().assistant();
+
+   return assistant == kAssistantPosit;
 }
 
 // Returns the configured chat provider, checking:
@@ -258,10 +263,12 @@ bool isChatProviderPosit()
 }
 
 // Returns true if the user wants Posit Assistant for either chat or completions
-// Used to determine if install/update operations should be allowed
+// Used to determine if install/update operations should be allowed.
+// A project's settings can select Posit Assistant where the administrator has
+// disabled it; startup resets only the global preferences, so that is checked here.
 bool isPositAssistantWanted()
 {
-   return isChatProviderPosit() || isPaiSelected();
+   return isPositAssistantEnabledByAdmin() && (isChatProviderPosit() || isPaiSelected());
 }
 
 // Selective imports from chat modules to avoid namespace pollution
@@ -6105,6 +6112,16 @@ void chatInstallUpdate(const json::JsonRpcRequest& request,
       return;
    }
 
+   if (!isPositAssistantEnabledByAdmin())
+   {
+      json::JsonRpcResponse response;
+      response.setError(
+         systemError(boost::system::errc::operation_not_permitted, ERROR_LOCATION),
+         json::Value("Posit Assistant is disabled by your administrator."));
+      cont(Success(), &response);
+      return;
+   }
+
    if (!isPositAssistantWanted())
    {
       json::JsonRpcResponse response;
@@ -6423,7 +6440,8 @@ Error initialize()
       }
    }
 
-   // Read project options (must be done before validation to get accurate state)
+   // Read project options. isPaiSelected() and getConfiguredChatProvider() answer from
+   // them first, so the install gate and the deferred startup update check depend on this.
    if (projects::projectContext().hasProject())
    {
       Error error = projects::projectContext().readAssistantOptions(&s_chatProjectOptions);
@@ -6432,15 +6450,18 @@ Error initialize()
    }
 
    // Validate assistant preference consistency
-   // If user has Posit AI selected but Posit Assistant is no longer available, reset to "none"
-   if (isPaiSelected() && !isPositAssistantEnabledByAdmin())
+   // If user has Posit AI selected but Posit Assistant is no longer available, reset to "none".
+   // This resets the global preference, so it reads that rather than isPaiSelected(),
+   // which a project's setting can answer.
+   if (prefs::userPrefs().assistant() == kAssistantPosit && !isPositAssistantEnabledByAdmin())
    {
       prefs::userPrefs().setAssistant(kAssistantNone);
    }
 
    // Validate chat provider preference consistency
-   // If user has Posit selected as chat provider but PAI is no longer available, reset to "none"
-   if (isChatProviderPosit() && !isPositAssistantEnabledByAdmin())
+   // If user has Posit selected as chat provider but PAI is no longer available, reset to "none".
+   // Reads the global preference for the same reason as the assistant check above.
+   if (prefs::userPrefs().chatProvider() == kChatProviderPosit && !isPositAssistantEnabledByAdmin())
    {
       prefs::userPrefs().setChatProvider(kChatProviderNone);
    }
