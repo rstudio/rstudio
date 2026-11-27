@@ -3,10 +3,6 @@
    height: 15px;
 }
 
-.findTopicTextbox {
-   top: -1px !important;
-}
-
 button.topicNavigationButton {
    height: 18px;
    margin-top: 1px;

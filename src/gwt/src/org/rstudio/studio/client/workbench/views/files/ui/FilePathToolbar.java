@@ -29,6 +29,7 @@ import org.rstudio.core.client.files.filedialog.PathBreadcrumbWidget;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CheckBoxHiddenLabel;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.workbench.views.files.Files;
@@ -124,8 +125,6 @@ public class FilePathToolbar extends Composite
       initWidget(layout);
       addStyleName(ThemeStyles.INSTANCE.rstheme_toolbarWrapper());
       addStyleName(ThemeStyles.INSTANCE.rstheme_secondaryToolbar());
-      // size the toolbar to fill the layout slot reserved by getHeight()
-      addStyleName(ThemeStyles.INSTANCE.tallerToolbarWrapper());
 
       navigationObserver_ = navigationObserver;
 
@@ -188,11 +187,11 @@ public class FilePathToolbar extends Composite
             lastBrowseable);
    }
 
-   // Matches SecondaryToolbar: 24px of toolbar shows, room for 24px
-   // breadcrumb links (WCAG 2.5.8), over a 1px bottom border.
+   // Matches Toolbar: 24px of toolbar shows, room for 24px breadcrumb links
+   // (WCAG 2.5.8), over a 1px bottom border.
    public int getHeight()
    {
-      return 25;
+      return Toolbar.DEFAULT_HEIGHT;
    }
 
    public void onResize()

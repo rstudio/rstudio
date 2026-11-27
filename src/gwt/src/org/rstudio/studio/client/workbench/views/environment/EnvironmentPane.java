@@ -237,9 +237,6 @@ public class EnvironmentPane extends WorkbenchPane
             languageMenu_);
       ElementIds.assignElementId(languageButton_, ElementIds.MB_ENV_LANGUAGE);
 
-      languageButton_.addStyleName(
-            EnvironmentPaneResources.INSTANCE.environmentPaneStyle().languageButton());
-
       toolbar.addLeftWidget(languageButton_);
       toolbar.addLeftSeparator();
 

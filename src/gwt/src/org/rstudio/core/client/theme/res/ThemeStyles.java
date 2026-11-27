@@ -195,7 +195,6 @@ public interface ThemeStyles extends CssResource
    String consoleMinimizeLayout();
    String consoleMaximizeLayout();
 
-   String tallerToolbarWrapper();
    String rstheme_toolbarWrapper();
    String webGlobalToolbarWrapper();
    String desktopGlobalToolbarWrapper();

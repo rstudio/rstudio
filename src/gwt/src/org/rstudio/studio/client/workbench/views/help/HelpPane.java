@@ -638,7 +638,6 @@ public class HelpPane extends WorkbenchPane
 
 
       findTextBox_ = new FindTextBox(constants_.findInTopicLabel());
-      findTextBox_.addStyleName(RES.styles().findTopicTextbox());
       findTextBox_.setOverrideWidth(90);
       ElementIds.assignElementId(findTextBox_, ElementIds.SW_HELP_FIND_IN_TOPIC);
       toolbar.addLeftWidget(findTextBox_);
@@ -1039,7 +1038,6 @@ public class HelpPane extends WorkbenchPane
 
    public interface Styles extends CssResource
    {
-      String findTopicTextbox();
       String topicNavigationButton();
       String topicTitle();
    }
