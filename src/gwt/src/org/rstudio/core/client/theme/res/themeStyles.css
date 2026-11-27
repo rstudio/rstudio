@@ -1069,7 +1069,8 @@ table.header > tbody > tr > td {
    display: none;
 }
 
-/* WindowFrame sizes these buttons to 24px targets around their 14px icons */
+/* WindowFrame sizes these buttons to 24px targets that fill the title bar's
+   height. Each 14px icon sits 2px below center, level with the tab labels. */
 .windowframe .minimize,
 .windowframe .maximize,
 .windowframe .close {
