@@ -1085,6 +1085,13 @@ table.header > tbody > tr > td {
    background-position: center 7px;
 }
 
+/* The console-only frame's header is a 24px row of its own, where the
+   icons are centered like those of the buttons beside them. */
+.windowFrameObject.consoleOnlyWindowFrame > div > .minimize,
+.windowFrameObject.consoleOnlyWindowFrame > div > .maximize {
+   background-position: center;
+}
+
 .windowframe .close {
    background-image: CLOSEPANE;
    z-index: 50;
@@ -1725,8 +1732,10 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 /* Toolbar buttons are 24px targets (WCAG 2.5.8), filling the 24px row.
    Every button's content sits 2px in from its edges, as a 20px icon does in
    a 24px button, and the separators' margins then even out the gaps beside
-   them. Buttons drop their margins, keeping icon buttons 24px apart. */
-.toolbar .toolbarButton {
+   them. Buttons drop their margins, keeping icon buttons 24px apart. The
+   console-only frame shows its toolbar's buttons in its 24px header. */
+.toolbar .toolbarButton,
+.primaryWindowFrameHeader .toolbarButton {
    box-sizing: border-box;
    height: 24px;
    min-width: 24px;
@@ -1735,7 +1744,8 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    padding: 0 2px;
 }
 
-.toolbar .toolbarButton > table {
+.toolbar .toolbarButton > table,
+.primaryWindowFrameHeader .toolbarButton > table {
    margin: 0 auto;
 }
 
