@@ -66,7 +66,6 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
       refreshButton_ = 
             commands.reloadShinyApp().createToolbarButton();
       refreshButton_.setLeftImage(commands.viewerRefresh().getImageResource());
-      refreshButton_.getElement().getStyle().setMarginTop(1, Unit.PX);
       toolbar.addLeftWidget(refreshButton_);
       
       publishButton_ = new RSConnectPublishButton(

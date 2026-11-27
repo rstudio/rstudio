@@ -909,7 +909,6 @@ public class TextEditingTargetWidget
          mgr.getSourceCommand(commands_.quartoRenderDocument(), column_).createUnsyncedToolbarButton());
       knitDocumentButton_ =
          mgr.getSourceCommand(commands_.knitDocument(), column_).createUnsyncedToolbarButton();
-      knitDocumentButton_.getElement().getStyle().setMarginRight(0, Unit.PX);
       toolbar.addLeftWidget(knitDocumentButton_);
       
       toolbar.addLeftWidget(
@@ -2178,7 +2177,6 @@ public class TextEditingTargetWidget
       quartoRenderButton_.setLeftImage(new ImageResource2x(StandardIcons.INSTANCE.run2x()));
 
       runDocumentMenuButton_.setVisible(isShinyPrerendered);
-      setKnitDocumentMenuVisible(isShinyPrerendered);
 
       if (publishButton_ != null)
          publishButton_.setIsStatic(false);
@@ -2220,13 +2218,6 @@ public class TextEditingTargetWidget
    private void setRmdFormatButtonVisible(boolean visible)
    {
       rmdFormatButton_.setVisible(visible);
-      setKnitDocumentMenuVisible(visible);
-   }
-
-   private void setKnitDocumentMenuVisible(boolean visible)
-   {
-      knitDocumentButton_.getElement().getStyle().setMarginRight(
-            visible ? 0 : 8, Unit.PX);
    }
 
    @Override

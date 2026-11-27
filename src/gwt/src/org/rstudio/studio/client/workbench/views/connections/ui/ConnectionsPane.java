@@ -511,11 +511,7 @@ public class ConnectionsPane extends WorkbenchPane
                               connection.getId(), action.getName()));
                      }
                   });
-            
-            // move the toolbar button up 5px to account for missing icon if
-            // none was supplied
-            if (StringUtil.isNullOrEmpty(action.getIconData()))
-               button.getElement().getStyle().setMarginTop(-5, Unit.PX);
+
             toolbar_.addLeftWidget(button);
             toolbar_.addLeftSeparator();
          }

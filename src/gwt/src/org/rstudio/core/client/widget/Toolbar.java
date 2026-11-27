@@ -457,11 +457,7 @@ public class Toolbar extends ResizeComposite implements HasResizeHandlers
 
    public int getHeight()
    {
-      int offsetHeight = getOffsetHeight();
-      if (offsetHeight != 0)
-         return offsetHeight;
-      else
-         return DEFAULT_HEIGHT;
+      return DEFAULT_HEIGHT;
    }
 
    @Override
@@ -539,5 +535,7 @@ public class Toolbar extends ResizeComposite implements HasResizeHandlers
    protected final ThemeStyles styles_ = ThemeResources.INSTANCE.themeStyles();
    private boolean separatorsInvalidated_ = false;
 
-   public static final int DEFAULT_HEIGHT = 22;
+   // The layout slot a toolbar takes: 24px of toolbar, room for a 24px target
+   // (WCAG 2.5.8), over the wrapper's 1px bottom border.
+   public static final int DEFAULT_HEIGHT = 25;
 }

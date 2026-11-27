@@ -1069,12 +1069,27 @@ table.header > tbody > tr > td {
    display: none;
 }
 
-/* WindowFrame sizes these buttons to 24px targets around their 14px icons */
 .windowframe .minimize,
 .windowframe .maximize,
 .windowframe .close {
    background-position: center;
    background-repeat: no-repeat;
+}
+
+/* WindowFrame sizes its title bar buttons to 24px targets that fill the
+   title bar's height. Each 14px icon sits 2px below center, level with the
+   tab labels. */
+.windowFrameObject > div > .minimize,
+.windowFrameObject > div > .maximize,
+.windowFrameObject > div > .close {
+   background-position: center 7px;
+}
+
+/* The console-only frame's header is a 24px row of its own, where the
+   icons are centered like those of the buttons beside them. */
+.windowFrameObject.consoleOnlyWindowFrame > div > .minimize,
+.windowFrameObject.consoleOnlyWindowFrame > div > .maximize {
+   background-position: center;
 }
 
 .windowframe .close {
@@ -1204,6 +1219,15 @@ table.header > tbody > tr > td {
    display: flex;
    align-items: center;
    margin-left: auto;
+}
+
+/* The header centers its content in the 19px row under its top padding,
+   which is 3px short of a 24px button at the bottom. This margin lays the
+   button out as 21px tall, so it fills the header and stays clear of the
+   console below; the padding keeps its icon where centering put it. */
+.windowFrameObject.consoleOnlyWindowFrame .primaryWindowFrameHeader .toolbarButton {
+   margin-top: -3px;
+   padding-top: 3px;
 }
 
 .windowFrameObject.consoleOnlyWindowFrame div.consoleWidgetLayout {
@@ -1544,10 +1568,12 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 
 /** Toolbar **/
 
+/* The 3px left margin, with the 3px on the checkbox itself, keeps a 13px
+   checkbox's center 12px from a button before it (WCAG 2.5.8 spacing). */
 .toolbar .gwt-CheckBox {
    position: relative;
    top: 1px;
-   margin: 0 9px 0 0;
+   margin: 0 9px 0 3px;
    padding: 0;
    white-space: nowrap;
 }
@@ -1555,13 +1581,9 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 .toolbar {
    font-size: 11px;
    width: 100%;
-   height: 23px;
+   height: 24px;
    padding: 0 0 0 6px;
    white-space: nowrap;
-}
-
-body.windows .toolbar {
-   margin-top: 1px;
 }
 
 /**
@@ -1576,11 +1598,21 @@ body.windows .toolbar {
    }
 }
 
+/* The -1px top margin tucks the wrapper's first pixel row under the pane
+   above, so the 25px slot Toolbar.getHeight() reserves shows 24px of toolbar,
+   room for a 24px target (WCAG 2.5.8), over the 1px bottom border. */
 .rstheme_toolbarWrapper {
-   height: 22px;
+   height: 24px;
+   padding-top: 1px;
    border-bottom: 1px solid #d6dadc;
    overflow: hidden;
    margin-top: -1px;
+}
+
+/* Absolutely positioned, the toolbar ignores the padding above and would
+   start under the wrapper's hidden first row. */
+.rstheme_toolbarWrapper .toolbar {
+   margin-top: 1px;
 }
 
 .toolbar {
@@ -1594,6 +1626,12 @@ body.windows .toolbar {
 .toolbar input[type=checkbox] {
    margin: 0 3px 0 0;
    max-height: 14px;
+}
+
+/* macOS, Linux and high-DPI Windows give a checkbox this left margin
+   already; this gives it to Windows at standard DPI too. */
+.toolbar .gwt-CheckBox input[type=checkbox] {
+   margin-left: 3px;
 }
 
 .toolbarButton {
@@ -1685,7 +1723,6 @@ body.windows .toolbar {
 
 .rstheme_secondaryToolbar {
    background: TABBACKGROUND bottom repeat-x;
-   height: 21px !important;
 }
 
 .secondaryToolbarPanel {
@@ -1701,17 +1738,72 @@ body.windows .toolbar {
    visibility: hidden;
 }
 
-.tallerToolbarWrapper {
-   border-bottom: solid 1px #d6dadc;
-   height: 24px !important;
-   padding-top: 1px;
+/* Toolbar buttons are 24px targets (WCAG 2.5.8), filling the 24px row.
+   Every button's content sits 2px in from its edges, as a 20px icon does in
+   a 24px button, and the separators' margins then even out the gaps beside
+   them. Buttons drop their margins, keeping icon buttons 24px apart. The
+   console-only frame shows its toolbar's buttons in its 24px header. */
+.toolbar .toolbarButton,
+.primaryWindowFrameHeader .toolbarButton {
+   box-sizing: border-box;
+   height: 24px;
+   min-width: 24px;
+   margin-top: 0;
+   margin-right: 0;
+   padding: 0 2px;
 }
 
-/* Absolutely positioned, the toolbar ignores the padding above and would
-   start under the wrapper's -1px top margin, out of view. Windows already
-   moves every toolbar down by this margin. */
-.tallerToolbarWrapper .toolbar {
-   margin-top: 1px;
+.toolbar .toolbarButton > table,
+.primaryWindowFrameHeader .toolbarButton > table {
+   margin: 0 auto;
+}
+
+/* A button with no icon is only as tall as its label, so centering would
+   set the label 3px lower than those of the buttons with icons beside it.
+   Giving every button's icon cell the height of an 18px icon's levels them.
+   Latching buttons and split-button arrows place their content themselves. */
+.toolbar .toolbarButton > table td:first-child {
+   height: 23px;
+}
+
+.toolbar .toolbarButtonLatchable > table td:first-child,
+.toolbar .toolbarButtonMenuOnly > table td:first-child {
+   height: auto;
+}
+
+/* Keeps a 20px icon at the right-hand group's end 4px from the toolbar's
+   edge, where its margin put it. */
+.toolbar td:last-child > .toolbarButton {
+   margin-right: 2px;
+}
+
+/* A latching button's frame is its edge, so it keeps its own padding and
+   takes the margin the others get from their padding. */
+.toolbar .toolbarButton.toolbarButtonLatchable {
+   padding: 0 6px 0 4px;
+   margin-right: 2px;
+}
+
+/* A split button's narrow arrow keeps its earlier size; its design and
+   target size are to be addressed separately. */
+.toolbar .toolbarButton.toolbarButtonMenuOnly {
+   height: 21px;
+   min-width: 0;
+   margin-right: 2px;
+   padding: 0;
+}
+
+/* The separator image is a line with a 1px highlight to its right, mirrored
+   in dark themes. These margins leave 4px between the line and the content
+   of the buttons on either side. */
+.toolbar .toolbarSeparator {
+   margin-left: 2px;
+   margin-right: 1px;
+}
+
+.rstudio-themes-dark .toolbar .toolbarSeparator {
+   margin-left: 1px;
+   margin-right: 2px;
 }
 
 .toolbarButtonRightImage {
@@ -1755,13 +1847,10 @@ body.windows .toolbar {
    border-color: transparent;
 }
 
-/* The side-by-side Git diff toggle (TextEditingTargetWidget) carries a full
-   size icon, where the other latching buttons' are small: its box grows to
-   fit the icon, and the icon sits at the top of it, level with the icons of
-   the plain buttons beside it. With no label to make room for, it is padded
-   evenly, so the icon sits centered in its latched frame. */
-.rstudio_editor_diff_view_toggle {
-   height: 19px;
+/* The side-by-side Git diff toggle (TextEditingTargetWidget) has no label
+   to make room for, so it is padded evenly and its icon sits centered in
+   its latched frame. */
+.toolbar .toolbarButton.rstudio_editor_diff_view_toggle {
    padding-left: 5px;
    padding-right: 5px;
 }
@@ -1823,57 +1912,18 @@ body.windows .toolbar {
    z-index: 1;
 }
 
-/* Main toolbar buttons are 24px targets (WCAG 2.5.8), filling the 24px row.
-   Every button's content sits 2px in from its edges, as a 20px icon does in
-   a 24px button, and the separators' margins then even out the gaps beside
-   them. Buttons drop their margins, keeping icon buttons 24px apart. */
-.globalToolbar .toolbarButton {
-   box-sizing: border-box;
-   height: 24px;
-   min-width: 24px;
-   margin-top: 0;
-   margin-right: 0;
-   padding: 0 2px;
-}
-
-.globalToolbar .toolbarButton > table {
-   margin: 0 auto;
-}
-
 /* Keeps the last button of each group where its 8px margin put it; this
    shows only at the right-hand group's end, by the toolbar's edge. */
 .globalToolbar td:last-child > .toolbarButton {
    margin-right: 6px;
 }
 
-/* A latching button's frame is its edge, so it keeps its own padding and
-   takes the margin the others get from their padding. */
-.globalToolbar .toolbarButton.toolbarButtonLatchable {
-   padding: 0 6px 0 4px;
-   margin-right: 2px;
-}
-
-/* A split button's narrow arrow keeps its earlier size; its design and
-   target size are to be addressed separately. */
 .globalToolbar .toolbarButton.toolbarButtonMenuOnly {
-   height: 21px;
-   min-width: 0;
    margin-top: -1px;
-   margin-right: 2px;
-   padding: 0;
 }
 
-/* The separator image is a line with a 1px highlight to its right, mirrored
-   in dark themes. These margins leave 4px between the line and the content
-   of the buttons on either side. */
-.globalToolbar .toolbarSeparator {
-   margin-left: 2px;
-   margin-right: 1px;
-}
-
-.rstudio-themes-dark .globalToolbar .toolbarSeparator {
-   margin-left: 1px;
-   margin-right: 2px;
+.globalToolbar .toolbarButton > table td:first-child {
+   height: auto;
 }
 
 .globalToolbar .search {
@@ -1947,12 +1997,6 @@ body.windows .toolbar {
    background: none;
 }
 
-/* The web header shows its toolbar's top row, so it doesn't need the 1px
-   that Windows otherwise moves every toolbar down. */
-body.windows table.webGlobalToolbar {
-   margin-top: 0;
-}
-
 .webGlobalToolbarWrapper {
 
 }
@@ -1961,11 +2005,17 @@ body.windows table.webGlobalToolbar {
 
 }
 
-/* 24px tall, reaching 2px further up into the gap below the menu bar */
+/* 24px tall, reaching 2px further up into the gap below the menu bar. All
+   of it shows, so it takes none of the pane toolbars' top padding. */
 .rstheme_toolbarWrapper.webGlobalToolbarWrapper {
    border-bottom: 0;
    height: 24px;
    margin-top: -3px;
+   padding-top: 0;
+}
+
+.webGlobalToolbarWrapper .globalToolbar {
+   margin-top: 0;
 }
 
  @if user.agent gecko1_8 { .webGlobalToolbar {
@@ -1989,10 +2039,10 @@ body.windows table.webGlobalToolbar {
  }
 
 /* The wrapper's -1px top margin puts its first pixel row above the window,
-   so 25px shows 24px of toolbar; the toolbar starts below that row, as
-   Windows already moves every toolbar down. */
+   so 25px shows 24px of toolbar; the toolbar starts below that row. */
 .desktopGlobalToolbarWrapper {
    height: 25px;
+   padding-top: 0;
 }
 
 .desktopGlobalToolbarWrapper .globalToolbar {
@@ -2018,12 +2068,6 @@ body.windows table.webGlobalToolbar {
    margin-right: 6px;
 }
 
-
-/* Align text-only Packages toolbar actions with their neighboring icons. */
-body.windows .packagesToolbarTextButton .toolbarButtonLabel {
-   position: relative;
-   top: -2px;
-}
 
 /** Search widgets **/
 .search {
@@ -3131,10 +3175,6 @@ body.windows .search {
 
 .gwt-MenuBar .search {
    margin-top: 1px;
-}
-
-.tallerToolbarWrapper .search {
-   top: 2px;
 }
 
 .rstudio-themes-dark .search {

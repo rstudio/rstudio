@@ -24,7 +24,6 @@ import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 
@@ -45,9 +44,7 @@ public class EditingTargetToolbar extends Toolbar
 
       id_ = id;
       addLeftWidget(commands.sourceNavigateBack().createToolbarButton());
-      Widget forwardButton = commands.sourceNavigateForward().createToolbarButton();
-      forwardButton.getElement().getStyle().setMarginLeft(-6, Unit.PX);
-      addLeftWidget(forwardButton);
+      addLeftWidget(commands.sourceNavigateForward().createToolbarButton());
       addLeftSeparator();
       if (includePopout)
       {

@@ -483,9 +483,11 @@ public class WindowFrame extends Composite
                             CONTENT_REGION_TOP = 26;
 
    // Title bar buttons are 24px squares, the WCAG 2.5.8 minimum target size,
-   // laid out right to left in slots; CSS centers each 14px icon in its square.
+   // laid out right to left in slots. They end where the title bar does, so
+   // they don't cover the top of the toolbar buttons beneath them; CSS places
+   // each 14px icon in its square.
    private static final int FRAME_BUTTON_SIZE = 24,
-                            FRAME_BUTTON_TOP = 2,
+                            FRAME_BUTTON_TOP = 0,
                             FRAME_BUTTON_RIGHT = RIGHT_SHADOW_WIDTH + 2,
                             FRAME_BUTTONS_EXTENT = FRAME_BUTTON_RIGHT + 2 * FRAME_BUTTON_SIZE;
    // Injected ----

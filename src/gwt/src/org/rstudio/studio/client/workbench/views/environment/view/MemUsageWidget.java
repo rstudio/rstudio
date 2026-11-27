@@ -44,12 +44,12 @@ public class MemUsageWidget extends Composite
       Style style = host_.getElement().getStyle();
       style.setProperty("display", "flex");
       style.setProperty("flexDirection", "row");
+      style.setProperty("alignItems", "center");
 
       pieCrust_ = new HTMLPanel("");
       pieCrust_.setHeight("13px");
       pieCrust_.setWidth("13px");
       style = pieCrust_.getElement().getStyle();
-      style.setMarginTop(3, Style.Unit.PX);
       style.setMarginRight(3, Style.Unit.PX);
       host_.add(pieCrust_);
       ElementIds.assignElementId(pieCrust_, ElementIds.MEMORY_PIE_MINI);
@@ -71,7 +71,6 @@ public class MemUsageWidget extends Composite
          (ImageResource) null,
          memoryMenu);
       ElementIds.assignElementId(menu_, ElementIds.MEMORY_DROPDOWN);
-      menu_.getElement().getStyle().setMarginTop(-3, Style.Unit.PX);
       host_.add(menu_);
 
       setMemoryUsage(usage);

@@ -44,7 +44,6 @@ import org.rstudio.studio.client.workbench.views.presentation2.model.RevealSlide
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -126,7 +125,6 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
       slidesMenuLabel_.addStyleName(ThemeResources.INSTANCE.themeStyles().toolbarButtonLabel());   
       slidesMenu_ = new SlidesPopupMenu();
       slidesMenuWidget_ = toolbar.addLeftPopupMenu(slidesMenuLabel_, slidesMenu_);
-      slidesMenuWidget_.getElement().getStyle().setMarginTop(-3, Unit.PX);
       
       return toolbar;
       

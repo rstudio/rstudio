@@ -393,12 +393,6 @@ public class ViewFilePanel extends Composite implements TextDisplay
       {
          super(constants_.viewFileTabLabel());
       }
-      
-      @Override
-      public int getHeight()
-      {
-         return 23;
-      }
    }
   
    private final GlobalDisplay globalDisplay_;

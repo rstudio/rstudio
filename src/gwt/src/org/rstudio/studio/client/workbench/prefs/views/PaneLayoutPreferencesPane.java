@@ -239,7 +239,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
       columnToolbar_ = new Toolbar(constants_.columnToolbarLabel());
       columnToolbar_.setStyleName(res_.styles().newSection());
-      columnToolbar_.setHeight("20px");
+      columnToolbar_.setHeight("24px");
 
       ToolbarButton addButton = new ToolbarButton(
          constants_.addButtonText(),
@@ -285,7 +285,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       // Create a wrapper panel for the toolbar row
       FlowPanel toolbarWrapper = new FlowPanel();
       toolbarWrapper.getElement().getStyle().setProperty("position", "relative");
-      toolbarWrapper.getElement().getStyle().setProperty("height", "20px");
+      toolbarWrapper.getElement().getStyle().setProperty("height", "24px");
 
       toolbarWrapper.add(columnToolbar_);
 

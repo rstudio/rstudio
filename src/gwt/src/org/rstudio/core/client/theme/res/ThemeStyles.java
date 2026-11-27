@@ -81,7 +81,6 @@ public interface ThemeStyles extends CssResource
    String toolbarButtonMenu();
    String toolbarButtonMenuOnly();
    String toolbarButtonLabel();
-   String packagesToolbarTextButton();
    String toolbarButtonInfoLabel();
    String toolbarButtonLeftImage();
    String toolbarButtonRightImage();
@@ -195,7 +194,6 @@ public interface ThemeStyles extends CssResource
    String consoleMinimizeLayout();
    String consoleMaximizeLayout();
 
-   String tallerToolbarWrapper();
    String rstheme_toolbarWrapper();
    String webGlobalToolbarWrapper();
    String desktopGlobalToolbarWrapper();

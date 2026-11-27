@@ -163,10 +163,15 @@ body.windows .breadcrumb table.path span {
    background-size: 24px 18px;
 }
 
-.project {
-   margin-top: 1px;
-   margin-bottom: 2px;
-   margin-right: 4px;
+/* The "Go to project directory" button, 24px wide with its 16px icon
+   centered. */
+.projectButton {
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   float: left;
+   width: 24px;
+   height: 20px;
 }
 
 .breadcrumb table.path .last {
@@ -222,9 +227,6 @@ body.windows .breadcrumb table.path span {
 }
 
 .browse {
-}
-
-.browse {
    color: #000;
    float: right;
    padding-left: 5px;
@@ -232,10 +234,17 @@ body.windows .breadcrumb table.path span {
    border: none;
    border-left: solid 1px #c2c7cb;
    background: none;
-   width: 20px;
+   width: 24px;
    height: 20px;
    overflow: hidden;
    margin-top: 0px;
+}
+
+/* In the Files pane, both buttons fill the breadcrumb's 24px of height, so
+   each is a WCAG 2.5.8 24px target. */
+.filePane .projectButton,
+.filePane .browse {
+   height: 24px;
 }
 
 button.browse:focus {
