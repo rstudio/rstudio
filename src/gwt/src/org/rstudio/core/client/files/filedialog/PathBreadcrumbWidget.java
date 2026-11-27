@@ -92,7 +92,7 @@ public class PathBreadcrumbWidget
       browse.setTitle(buttonTitle);
       Roles.getButtonRole().setAriaLabelProperty(browse.getElement(), buttonTitle);
       eastFrame_.add(browse);
-      frame_.addEast(eastFrame_, 22);
+      frame_.addEast(eastFrame_, BUTTON_WIDTH);
 
       frame_.add(outer_);
       frame_.setStyleName(STYLES.breadcrumbFrame());
@@ -122,15 +122,12 @@ public class PathBreadcrumbWidget
          ImageButton projIcon = new ImageButton(constants_.projectIconDesc(), new ImageResource2x(RES.projectImage2x()));
 
          projIcon.addClickHandler(event -> SelectionCommitEvent.fire(PathBreadcrumbWidget.this, projDir));
-         projIcon.getImage().addStyleName(RES.styles().project());
+         projIcon.addStyleName(RES.styles().projectButton());
          projIcon.setTitle(constants_.projectIconDesc());
 
          eastFrame_.insert(projIcon, 0);
 
-         // TODO: infer from contents
-         double width = 42;
-
-         frame_.setWidgetSize(eastFrame_, width);
+         frame_.setWidgetSize(eastFrame_, 2 * BUTTON_WIDTH);
          projectIconsAdded_ = true;
       }
    }
@@ -281,6 +278,9 @@ public class PathBreadcrumbWidget
    private FileDialogStyles STYLES = RES.styles();
    private SimplePanel outer_;
    private FlowPanel eastFrame_;
+
+   // The width FileDialogStyles.css gives the project and browse buttons
+   private static final int BUTTON_WIDTH = 24;
    private boolean projectIconsAdded_ = false;
    private final DockLayoutPanel frame_;
    private HTMLPanel fadeWrapper_;

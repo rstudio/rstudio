@@ -31,7 +31,7 @@ public interface FileDialogStyles extends CssResource
    String path();
    String home();
    String cloudHome();
-   String project();
+   String projectButton();
    String last();
    String fade();
    String goUp();
