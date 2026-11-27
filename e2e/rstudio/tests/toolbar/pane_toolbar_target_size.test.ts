@@ -27,18 +27,14 @@ const EXPECTED_TARGETS = [
   '#rstudio_tb_consoleclear',
 ];
 
-function messages(node: NodeResult): string[] {
-  return [...node.any, ...node.all, ...node.none].map((check) => check.message);
-}
-
-// A split button's dropdown arrow is still 5x21; its design and target size
+// The one split-button dropdown arrow in these toolbars, beside Environment's
+// refresh button. It is still 5x21; split buttons' design and target size
 // are tracked separately on #19786.
-function isSplitButtonArrow(node: NodeResult): boolean {
-  return messages(node).some((message) => message.includes('(5px by 21px'));
-}
+const SPLIT_BUTTON_ARROW = `${ENVIRONMENT_PANEL} [id^="rstudio_mb_refresh_opts"]`;
 
 function describeNode(node: NodeResult): string {
-  return `${node.html.replace(/\s+/g, ' ').slice(0, 120)}: ${messages(node).join(' | ')}`;
+  const messages = [...node.any, ...node.all, ...node.none].map((check) => check.message);
+  return `${node.html.replace(/\s+/g, ' ').slice(0, 120)}: ${messages.join(' | ')}`;
 }
 
 test.describe('Pane toolbar target size (#19786)', () => {
@@ -61,6 +57,7 @@ test.describe('Pane toolbar target size (#19786)', () => {
       .include(CONSOLE_PANEL)
       .exclude(`${FILES_PANEL} [role="table"]`)
       .exclude(`${ENVIRONMENT_PANEL} [role="table"]`)
+      .exclude(SPLIT_BUTTON_ARROW)
       .withRules(['target-size'])
       .analyze();
 
@@ -73,7 +70,6 @@ test.describe('Pane toolbar target size (#19786)', () => {
 
     const failing = [...results.violations, ...results.incomplete]
       .flatMap((rule) => rule.nodes)
-      .filter((node) => !isSplitButtonArrow(node))
       .map(describeNode);
     expect(failing, 'targets axe reports as violations or Needs Review').toEqual([]);
   });
