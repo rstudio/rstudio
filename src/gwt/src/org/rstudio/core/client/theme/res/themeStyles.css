@@ -1552,8 +1552,8 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 
 /** Toolbar **/
 
-/* The 3px left margin keeps a 13px checkbox's center 12px from a button
-   before it (WCAG 2.5.8 spacing). */
+/* The 3px left margin, with the 3px on the checkbox itself, keeps a 13px
+   checkbox's center 12px from a button before it (WCAG 2.5.8 spacing). */
 .toolbar .gwt-CheckBox {
    position: relative;
    top: 1px;
@@ -1610,6 +1610,12 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 .toolbar input[type=checkbox] {
    margin: 0 3px 0 0;
    max-height: 14px;
+}
+
+/* macOS, Linux and high-DPI Windows give a checkbox this left margin
+   already; this gives it to Windows at standard DPI too. */
+.toolbar .gwt-CheckBox input[type=checkbox] {
+   margin-left: 3px;
 }
 
 .toolbarButton {
