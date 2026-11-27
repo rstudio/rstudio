@@ -82,10 +82,6 @@ public class AceCommandManager extends JavaScriptObject
       return this.byName[id] != null;
    }-*/;
    
-   public final native JsObject getCommandKeyBindings() /*-{
-      return this.commandKeyBinding;
-   }-*/;
-   
    public final native JsObject getCommands() /*-{
       return this.commands;
    }-*/;
