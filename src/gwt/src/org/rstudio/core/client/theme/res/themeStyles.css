@@ -1221,6 +1221,15 @@ table.header > tbody > tr > td {
    margin-left: auto;
 }
 
+/* The header centers its content in the 19px row under its top padding,
+   which is 3px short of a 24px button at the bottom. This margin lays the
+   button out as 21px tall, so it fills the header and stays clear of the
+   console below; the padding keeps its icon where centering put it. */
+.windowFrameObject.consoleOnlyWindowFrame .primaryWindowFrameHeader .toolbarButton {
+   margin-top: -3px;
+   padding-top: 3px;
+}
+
 .windowFrameObject.consoleOnlyWindowFrame div.consoleWidgetLayout {
    border: none;
    left: 0px !important;
