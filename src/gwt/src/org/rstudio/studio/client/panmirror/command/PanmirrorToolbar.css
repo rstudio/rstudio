@@ -22,17 +22,11 @@
    background: THEME_DARKGREY_MENU_SELECTED;
 }
 
-.toolbarButton {
-  margin-top: 2px;
-  height: 20px;
-}
-
 .toolbarButton img {
   margin-top: 1px;
 }
 
 .toolbarTextMenuButton {
-   margin-top: -1px;
    color: #393939;
 }
 

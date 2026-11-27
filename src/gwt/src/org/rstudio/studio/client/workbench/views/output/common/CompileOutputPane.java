@@ -16,7 +16,6 @@ package org.rstudio.studio.client.workbench.views.output.common;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Widget;
@@ -68,7 +67,6 @@ public class CompileOutputPane extends WorkbenchPane
       if (hasLogs_)
       {
          showLogButton_ = new ToolbarButton(constants_.viewLogText(), ToolbarButton.NoTitle, showLogImage);
-         showLogButton_.getElement().getStyle().setMarginBottom(3, Unit.PX);
          showLogButton_.setTitle(logTitle_);
          showLogSeparator_ = toolbar.addLeftSeparator();
          setShowLogVisible(false);

@@ -1069,13 +1069,20 @@ table.header > tbody > tr > td {
    display: none;
 }
 
-/* WindowFrame sizes these buttons to 24px targets that fill the title bar's
-   height. Each 14px icon sits 2px below center, level with the tab labels. */
 .windowframe .minimize,
 .windowframe .maximize,
 .windowframe .close {
-   background-position: center 7px;
+   background-position: center;
    background-repeat: no-repeat;
+}
+
+/* WindowFrame sizes its title bar buttons to 24px targets that fill the
+   title bar's height. Each 14px icon sits 2px below center, level with the
+   tab labels. */
+.windowFrameObject > div > .minimize,
+.windowFrameObject > div > .maximize,
+.windowFrameObject > div > .close {
+   background-position: center 7px;
 }
 
 .windowframe .close {
@@ -1815,13 +1822,10 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    border-color: transparent;
 }
 
-/* The side-by-side Git diff toggle (TextEditingTargetWidget) carries a full
-   size icon, where the other latching buttons' are small: its box grows to
-   fit the icon, and the icon sits at the top of it, level with the icons of
-   the plain buttons beside it. With no label to make room for, it is padded
-   evenly, so the icon sits centered in its latched frame. */
-.rstudio_editor_diff_view_toggle {
-   height: 19px;
+/* The side-by-side Git diff toggle (TextEditingTargetWidget) has no label
+   to make room for, so it is padded evenly and its icon sits centered in
+   its latched frame. */
+.toolbar .toolbarButton.rstudio_editor_diff_view_toggle {
    padding-left: 5px;
    padding-right: 5px;
 }
@@ -1968,12 +1972,6 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    background: none;
 }
 
-/* The web header shows its toolbar's top row, so it doesn't need the 1px
-   that Windows otherwise moves every toolbar down. */
-body.windows table.webGlobalToolbar {
-   margin-top: 0;
-}
-
 .webGlobalToolbarWrapper {
 
 }
@@ -1993,10 +1991,6 @@ body.windows table.webGlobalToolbar {
 
 .webGlobalToolbarWrapper .globalToolbar {
    margin-top: 0;
-}
-
-body.windows .webGlobalToolbarWrapper .globalToolbar {
-   margin-top: 1px;
 }
 
  @if user.agent gecko1_8 { .webGlobalToolbar {
@@ -2049,12 +2043,6 @@ body.windows .webGlobalToolbarWrapper .globalToolbar {
    margin-right: 6px;
 }
 
-
-/* Align text-only Packages toolbar actions with their neighboring icons. */
-body.windows .packagesToolbarTextButton .toolbarButtonLabel {
-   position: relative;
-   top: -2px;
-}
 
 /** Search widgets **/
 .search {
