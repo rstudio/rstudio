@@ -23,20 +23,10 @@ import org.rstudio.core.client.js.JsObject;
 public class AceCommand extends JavaScriptObject
 {
    protected AceCommand() {}
-   
-   public final native boolean isPlaceHolder()
-   /*-{
-      return this.bindKeys == null;
-   }-*/;
-   
+
    public final native String getInternalName()
    /*-{
          return this.name;
-   }-*/;
-
-   public final native JavaScriptObject getInternalBindings()
-   /*-{
-         return this.bindKeys;
    }-*/;
 
    public final String getDisplayName()
@@ -46,21 +36,6 @@ public class AceCommand extends JavaScriptObject
          return DISPLAY_NAME_MAP.getString(internal);
       else
          return StringUtil.prettyCamel(internal);
-   }
-
-   private final native String getDisplayName(String name, JavaScriptObject map)
-   /*-{
-      return map[name] || name;
-   }-*/;
-
-   public final JsArrayString getWindowsKeyBinding()
-   {
-      return getKeyBindings(true);
-   }
-
-   public final JsArrayString getMacKeyBinding()
-   {
-      return getKeyBindings(false);
    }
 
    public final JsArrayString getBindingsForCurrentPlatform()
