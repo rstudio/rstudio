@@ -21,7 +21,7 @@ public class AceCommandManager extends JavaScriptObject
       return _createImpl(usesMacBindings());
    }
 
-   public static final native AceCommandManager _createImpl(boolean isMac)
+   private static final native AceCommandManager _createImpl(boolean isMac)
    /*-{
       var CommandManager = $wnd.require("ace/commands/command_manager").CommandManager;
       var commands = $wnd.require("ace/commands/default_commands").commands;
