@@ -43,7 +43,8 @@ public class AceCommand extends JavaScriptObject
       return getKeyBindings(!AceCommandManager.usesMacBindings());
    }
 
-   // Ace names its non-macOS binding set "win", but Linux uses it too.
+   // Ace names its binding set for platforms other than macOS and iOS "win",
+   // but Linux uses it too.
    private final native JsArrayString getKeyBindings(boolean useWinBindings)
    /*-{
       var binding = this.bindKey;

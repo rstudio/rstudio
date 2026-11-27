@@ -31,8 +31,8 @@ public class AceCommandManager extends JavaScriptObject
 
    /**
     * Whether Ace editors use the "mac" key bindings rather than the "win" ones.
-    * Ask Ace, which decides this for its editors: "mac" on macOS, "win" on
-    * Windows and Linux.
+    * Ask Ace, which decides this for its editors: "mac" on macOS and iOS,
+    * "win" everywhere else, Linux included.
     */
    public static final native boolean usesMacBindings()
    /*-{
