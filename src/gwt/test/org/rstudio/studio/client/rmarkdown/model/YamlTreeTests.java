@@ -361,4 +361,79 @@ public class YamlTreeTests extends GWTTestCase
       assertEquals("Single-key reorder should move that key to front",
             expected, output);
    }
+
+   // https://github.com/rstudio/rstudio/issues/19820
+   public void testBlockScalarDedentKeepsLaterSiblings()
+   {
+      String yaml = """
+            title: "Test"
+            format:
+              pdf:
+                include-in-header:
+                  - text: |
+                      % First header
+                  - text: |
+                      \\newcommand{\\example}{%
+                        {%
+                          {%
+                            Example%
+                          }%
+                        }%
+                      }
+              docx: default
+              html: default
+            """;
+      YamlTree tree = new YamlTree(yaml);
+
+      assertEquals(Arrays.asList("pdf", "docx", "html"),
+            tree.getChildKeys("format"));
+      assertEquals("Round-trip should preserve input", yaml, tree.toString());
+   }
+
+   // https://github.com/rstudio/rstudio/issues/19820
+   public void testBlockScalarDedentKeepsNestingLevel()
+   {
+      String yaml = """
+            title: Test
+            format:
+              pdf:
+                include-in-header:
+                  - text: |
+                      % Example:
+                           % Indented comment
+                          % Less indented comment
+                      % Final comment
+                  - file: header.tex
+                include-before-body:
+                  - text: |
+                      \\relax
+              docx: default
+            """;
+      YamlTree tree = new YamlTree(yaml);
+
+      assertEquals(Arrays.asList("pdf", "docx"),
+            tree.getChildKeys("format"));
+      assertEquals(Arrays.asList("include-in-header", "include-before-body"),
+            tree.getChildKeys("pdf"));
+   }
+
+   public void testPlainScalarDedentKeepsNestingLevel()
+   {
+      String yaml = """
+            format:
+              pdf:
+                abstract: A long
+                    abstract that
+                  wraps
+                toc: true
+              html: default
+            """;
+      YamlTree tree = new YamlTree(yaml);
+
+      assertEquals(Arrays.asList("pdf", "html"),
+            tree.getChildKeys("format"));
+      assertEquals(Arrays.asList("abstract", "toc"),
+            tree.getChildKeys("pdf"));
+      assertEquals("Round-trip should preserve input", yaml, tree.toString());
+   }
 }
