@@ -35,7 +35,7 @@ namespace {
 
 std::string languageIdForName(const std::string& fileName)
 {
-   return languageIdFromFilename(FilePath("/project").completeChildPath(fileName));
+   return languageIdFromFilename(FilePath(fileName));
 }
 
 // Saved documents of the given type, as the editor has them open.
