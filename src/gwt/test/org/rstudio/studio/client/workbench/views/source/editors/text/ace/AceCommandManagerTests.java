@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
 import org.rstudio.core.client.ExternalJavaScriptLoader;
-import org.rstudio.core.client.command.KeySequence;
 
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -38,8 +37,6 @@ public class AceCommandManagerTests extends GWTTestCase
       {
          AceCommandManager manager = AceCommandManager.create();
          assertEquals("Ctrl-Shift-Z|Ctrl-Y", redoBindings(manager));
-         assertTrue(manager.hasBinding(KeySequence.fromShortcutString("Ctrl-Y")));
-         assertFalse(manager.hasBinding(KeySequence.fromShortcutString("Cmd-Y")));
       });
    }
 
@@ -52,8 +49,6 @@ public class AceCommandManagerTests extends GWTTestCase
       {
          AceCommandManager manager = AceCommandManager.create();
          assertEquals("Command-Shift-Z|Command-Y", redoBindings(manager));
-         assertTrue(manager.hasBinding(KeySequence.fromShortcutString("Cmd-Y")));
-         assertFalse(manager.hasBinding(KeySequence.fromShortcutString("Ctrl-Y")));
       });
    }
 

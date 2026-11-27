@@ -82,18 +82,6 @@ public class AceCommandManager extends JavaScriptObject
       return this.byName[id] != null;
    }-*/;
    
-   public final boolean hasBinding(KeySequence keys)
-   {
-      String transformed = toAceStyleShortcutString(keys);
-      return hasBinding(transformed);
-   }
-   
-   public final boolean hasPrefix(KeySequence keys)
-   {
-      String transformed = toAceStyleShortcutString(keys);
-      return hasPrefix(transformed);
-   }
-   
    public final native JsObject getCommandKeyBindings() /*-{
       return this.commandKeyBinding;
    }-*/;
@@ -141,16 +129,6 @@ public class AceCommandManager extends JavaScriptObject
       return builder.toString();
       
    }
-   
-   private final native boolean hasBinding(String shortcut) /*-{
-      var binding = this.commandKeyBinding[shortcut];
-      return binding != null && binding !== "chainKeys";
-   }-*/;
-   
-   private final native boolean hasPrefix(String shortcut) /*-{
-      var binding = this.commandKeyBinding[shortcut];
-      return binding != null && binding === "chainKeys";
-   }-*/;
    
    public final void rebindCommand(String id, List<KeySequence> keys)
    {
